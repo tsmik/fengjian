@@ -527,7 +527,7 @@ async function exportPNG() {
       scale: 2,
       useCORS: true,
       scrollX: 0,
-      scrollY: -overlay.scrollTop,
+      scrollY: 0,
       windowWidth: overlay.scrollWidth,
       width: overlay.scrollWidth,
       height: overlay.scrollHeight
@@ -574,61 +574,6 @@ function fallbackDownload(canvas) {
     link.href = dataUrl;
     link.click();
   }
-}
-
-function openReportWindow() {
-  const reportEl = document.getElementById('report-overlay');
-  const w = window.open('', '_blank');
-  const css = `:root{--bg:#fcfaf8;--text:#1d1c16;--active:#d97757;--static:#8ba888;--border:#e8e3dd;--dark:#2d2d2d;--gold:#d4a373;}
-  *{box-sizing:border-box;}
-  body{margin:0;padding:16px;background:white;font-family:'Noto Serif TC',serif;color:var(--text);}
-  .hint{text-align:center;color:#aaa;font-size:14px;margin-bottom:12px;letter-spacing:1px;}
-  .report-actions{display:none!important;}
-  .report-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-  .report-name{width:50%;border-bottom:2px solid var(--text);padding:8px 0;font-size:28px;font-weight:900;}
-  .report-title{font-size:28px;font-weight:900;letter-spacing:1px;}
-  .stat-grid{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;margin-bottom:4px;}
-  .stat-item{padding:6px 10px;display:flex;flex-direction:column;justify-content:center;border-radius:4px;}
-  .stat-item span{font-size:14px;font-weight:900;white-space:nowrap;}
-  .stat-val{font-size:15px;font-weight:900;font-family:monospace;}
-  .s-overall{grid-column:2/span 13;background:var(--dark);color:white;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;}
-  .s-pre{grid-column:2/8;background:#f0ebe5;border-radius:4px 0 0 4px;}
-  .s-luck{grid-column:8/11;background:#e5edf0;}
-  .s-post{grid-column:11/15;background:#e8f0e5;border-radius:0 4px 4px 0;}
-  .s-lead{grid-column:2/5;background:#ebe6e0;border-radius:4px 0 0 0;}
-  .s-sub{grid-column:5/8;background:#f5f2ed;border-radius:0 4px 0 0;}
-  .ds-bar-wrap{display:grid;grid-template-columns:35px 1fr;gap:1px;margin-bottom:4px;}
-  .ds-bar{height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee;display:flex;align-items:center;}
-  .ds-bar-static{height:100%;background:var(--static);}
-  .ds-bar-dynamic{height:100%;background:var(--active);}
-  .ds-bar-label{position:absolute;left:8px;color:white;font-size:15px;font-weight:900;}
-  .ds-bar-label-r{position:absolute;right:8px;color:white;font-size:15px;font-weight:900;}
-  .matrix-wrap{width:100%;margin-top:5px;}
-  .matrix-layout{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;}
-  .matrix-labels{grid-column:1;display:flex;flex-direction:column;gap:2px;}
-  .row-label{height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;font-weight:900;position:relative;}
-  .matrix-col{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .dim-header-v{height:70px;font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;padding:4px 0;border-radius:3px 3px 0 0;line-height:1.3;}
-  .prop-bar{height:12px;background:#eee;border-radius:2px;}
-  .prop-bar.red{background:var(--active);}
-  .prop-bar.green{background:var(--static);}
-  .coeff-lbl{height:14px;font-size:12px;font-weight:900;color:#666;display:flex;align-items:center;justify-content:center;font-family:monospace;}
-  .stack-area{height:60px;display:flex;flex-direction:column-reverse;gap:1px;background:var(--bg);border-bottom:1px solid #eee;border-radius:2px;}
-  .stack-unit{width:100%;height:5px;background:var(--gold);opacity:0.8;}
-  .im-cell{height:28px;width:100%;background:#f9f7f4;border-radius:2px;}
-  .im-box{height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;border-radius:2px;}
-  .im-box.red{background:var(--active);opacity:0.95;}
-  .im-box.green{background:var(--static);opacity:0.95;}
-  .legend{font-size:13px;color:#aaa;margin-top:10px;display:flex;justify-content:center;gap:20px;font-weight:900;}`;
-
-  w.document.write(`<!DOCTYPE html><html lang="zh-Hant"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
-<style>${css}</style></head><body>
-<div class="hint">截圖後即可傳送至 LINE ✦ 截圖完成後關閉此頁</div>
-${reportEl.innerHTML}
-</body></html>`);
-  w.document.close();
 }
 
 function closeReport() { document.getElementById('report-overlay').style.display = 'none'; }
