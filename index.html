@@ -538,7 +538,7 @@ async function exportPNG() {
 
     if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: '人相兵法報告', text: `${userName || ''} 的人相兵法戰略報告` });
+        await navigator.share({ files: [file], title: '人相兵法報告', text: `${userName || ''} 的人相兵法報告` });
       } catch(e) {
         if (e.name !== 'AbortError') fallbackDownload(canvas);
       }
