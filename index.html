@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="2026">
+<meta property="og:title" content="風鑑學堂 人相兵法">
+<meta property="og:description" content="2026">
+<meta property="og:type" content="website">
+<meta name="twitter:title" content="風鑑學堂 人相兵法">
+<meta name="twitter:description" content="2026">
+<title>風鑑學堂 人相兵法</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fcfaf8; --sidebar: #f7f2ed; --text: #1d1c16;
+  --active: #d97757; --static: #8ba888; --border: #e8e3dd;
+  --dark: #2d2d2d; --gold: #d4a373;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); font-family: 'Noto Serif TC', serif; margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text); padding-top: env(safe-area-inset-top); }
+
+/* Sidebar */
+.sidebar { width: 33.33%; background: var(--sidebar); display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid var(--border); flex-shrink: 0; }
+.cat-header { padding: clamp(14px,2vw,22px) clamp(15px,1.5vw,18px); font-size: clamp(15px,2vw,20px); font-weight: 900; letter-spacing: 2px; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
+.dim-item { padding: clamp(15px,2vw,22px); font-size: clamp(15px,2vw,20px); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+.dim-item.active { background: white !important; color: var(--text) !important; font-weight: 900; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.1); flex-shrink: 0; margin-left: 10px; }
+.status-dot.done { background: var(--static); }
+
+/* Main */
+.main-panel { width: 66.66%; display: flex; flex-direction: column; height: 100vh; }
+.main-header { padding: 15px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: white; }
+.main-header h2 { margin: 0; font-size: clamp(16px,2.2vw,24px); font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoring-area { flex-grow: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
+.score-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.part-label { width: clamp(75px,8vw,100px); text-align: center; font-size: clamp(13px,1.5vw,18px); font-weight: 700; background: #f0ede8; padding: 8px 0; border-radius: 6px; }
+.option-box { flex: 1; position: relative; }
+.option-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+.option-label { display: block; padding: clamp(12px,1.5vw,18px) 4px; text-align: center; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-radius: 8px; font-size: clamp(15px,2vw,20px); font-weight: 500; color: #bbb; transition: all 0.2s; }
+.static-type input:checked + .option-label { background: var(--static); color: white; box-shadow: none; }
+.dynamic-type input:checked + .option-label { background: var(--active); color: white; box-shadow: none; }
+.footer-analysis { background: white; border-top: 1px solid var(--border); padding: 12px 15px; padding-bottom: max(12px, env(safe-area-inset-bottom)); flex-shrink: 0; }
+.result-row { display: flex; align-items: stretch; gap: 8px; }
+.result-box { flex: 1; background: #f4f1ed; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: clamp(20px,2.5vw,28px); font-weight: 700; color: #888; }
+.result-mid { flex: 1.5; text-align: center; font-size: clamp(20px,2.5vw,28px); font-weight: 700; background: white; padding: 10px 0; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+
+/* Report */
+#report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 3000; padding: 15px; padding-top: max(15px, env(safe-area-inset-top)); padding-bottom: max(80px, env(safe-area-inset-bottom)); overflow-y: auto; }
+.report-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.report-name { width: 50%; border-bottom: 2px solid var(--text); padding: 8px 0; font-size: clamp(22px,3vw,32px); font-weight: 900; font-family: 'Noto Serif TC', serif; }
+.report-title { font-size: clamp(22px,3vw,32px); font-weight: 900; letter-spacing: 1px; }
+.stat-grid { display: grid; grid-template-columns: 35px repeat(13, 1fr); gap: 1px; margin-bottom: 4px; }
+.stat-item { padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; border-radius: 4px; }
+.stat-item span { font-size: clamp(14px,1.5vw,18px); font-weight: 900; white-space: nowrap; }
+.stat-val { font-size: clamp(15px,1.5vw,20px); font-weight: 900; font-family: monospace; }
+.s-overall { grid-column: 2/span 13; background: var(--dark); color: white; flex-direction: row; justify-content: flex-start; align-items: center; gap: 8px; }
+.s-pre   { grid-column: 2/8;   background: #f0ebe5; border-radius: 4px 0 0 4px; }
+.s-luck  { grid-column: 8/11;  background: #e5edf0; }
+.s-post  { grid-column: 11/15; background: #e8f0e5; border-radius: 0 4px 4px 0; }
+.s-lead  { grid-column: 2/5;   background: #ebe6e0; border-radius: 4px 0 0 0; }
+.s-sub   { grid-column: 5/8;   background: #f5f2ed; border-radius: 0 4px 0 0; }
+/* 動靜 bar */
+.ds-bar-wrap { display: grid; grid-template-columns: 35px 1fr; gap: 1px; margin-bottom: 4px; }
+.ds-bar { height: 28px; border-radius: 4px; overflow: hidden; position: relative; background: #eee; display: flex; align-items: center; }
+.ds-bar-static { height: 100%; background: var(--static); transition: width 0.4s ease; }
+.ds-bar-dynamic { height: 100%; background: var(--active); transition: width 0.4s ease; }
+.ds-bar-label { position: absolute; left: 8px; color: white; font-size: clamp(14px,1.5vw,18px); font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.ds-bar-label-r { position: absolute; right: 8px; color: white; font-size: clamp(14px,1.5vw,18px); font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+/* Name edit overlay */
+#name-edit-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 8000; align-items: center; justify-content: center; }
+#name-edit-overlay.show { display: flex; }
+.name-edit-box { background: white; border-radius: 12px; padding: 28px 24px; width: 80%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+.name-edit-box h3 { margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 2px; }
+.name-edit-input { border: none; border-bottom: 2px solid var(--text); padding: 8px 0; font-size: 22px; font-weight: 900; font-family: 'Noto Serif TC', serif; outline: none; width: 100%; }
+.name-edit-btns { display: flex; gap: 8px; }
+.name-edit-btns button { flex: 1; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 900; font-family: 'Noto Serif TC', serif; cursor: pointer; border: none; }
+.name-edit-confirm { background: var(--dark); color: white; }
+.name-edit-cancel { background: #f0ede8; color: var(--text); }
+/* Entry page */
+#entry-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; padding-top: max(30px, env(safe-area-inset-top)); padding-bottom: max(30px, env(safe-area-inset-bottom)); }
+.entry-logo { font-size: clamp(32px,8vw,56px); font-weight: 900; letter-spacing: 4px; color: var(--text); margin-bottom: 4px; }
+.entry-sub { font-size: clamp(32px,8vw,56px); font-weight: 900; color: var(--text); letter-spacing: 4px; margin-bottom: 48px; }
+.entry-label { font-size: clamp(13px,1.5vw,16px); font-weight: 700; color: #888; letter-spacing: 2px; margin-bottom: 10px; align-self: flex-start; width: 100%; max-width: 340px; }
+.entry-input { width: 100%; max-width: 340px; border: none; border-bottom: 2px solid var(--text); padding: 12px 0; font-size: clamp(22px,4vw,30px); font-weight: 900; background: transparent; outline: none; font-family: 'Noto Serif TC', serif; color: var(--text); margin-bottom: 32px; }
+.entry-input::placeholder { color: #ccc; }
+.entry-btn { width: 100%; max-width: 340px; height: 54px; background: var(--dark); color: white; border: none; border-radius: 8px; font-size: clamp(16px,2vw,20px); font-weight: 900; letter-spacing: 3px; cursor: pointer; font-family: 'Noto Serif TC', serif; transition: opacity 0.2s; }
+.entry-btn:active { opacity: 0.8; }
+.entry-deco { position: absolute; bottom: 30px; font-size: 12px; color: #ccc; letter-spacing: 2px; }
+/* LINE share button */
+.btn-line { width: clamp(40%,45%,50%); height: clamp(45px,5vw,55px); background: #06C755; color: white; border: none; border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; margin: 8px 0 0; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Noto Serif TC', serif; }
+.btn-line svg { flex-shrink: 0; }
+.report-actions { display: flex; flex-direction: column; align-items: flex-start; }
+.matrix-wrap { width: 100%; margin-top: 5px; }
+.matrix-layout { display: grid; grid-template-columns: 35px repeat(13, 1fr); gap: 1px; }
+.matrix-labels { grid-column: 1; display: flex; flex-direction: column; gap: 2px; }
+.row-label { height: 28px; display: flex; align-items: center; justify-content: center; font-size: clamp(13px,1.6vw,17px); color: #666; font-weight: 900; }
+.matrix-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dim-header-v { height: clamp(60px,7vw,80px); font-size: clamp(14px,1.6vw,18px); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; padding: 4px 0; border-radius: 3px 3px 0 0; line-height: 1.3; }
+.prop-bar { height: 12px; background: #eee; border-radius: 2px; }
+.prop-bar.red { background: var(--active); }
+.prop-bar.green { background: var(--static); }
+.coeff-lbl { height: 14px; font-size: 12px; font-weight: 900; color: #666; display: flex; align-items: center; justify-content: center; font-family: monospace; }
+.stack-area { height: clamp(50px,6vw,80px); display: flex; flex-direction: column-reverse; gap: 1px; background: var(--bg); border-bottom: 1px solid #eee; border-radius: 2px; }
+.stack-unit { width: 100%; height: clamp(4px,0.5vw,7px); background: var(--gold); opacity: 0.8; }
+.im-cell { height: 28px; width: 100%; background: #f9f7f4; border-radius: 2px; }
+.im-box { height: 100%; display: flex; align-items: center; justify-content: center; font-size: clamp(13px,1.6vw,17px); font-weight: 900; color: white; border-radius: 2px; }
+.im-box.red { background: var(--active); opacity: 0.95; }
+.im-box.green { background: var(--static); opacity: 0.95; }
+.legend { font-size: clamp(12px,1.5vw,16px); color: #aaa; margin-top: 10px; display: flex; justify-content: center; gap: clamp(12px,2vw,24px); font-weight: 900; }
+.btn-back { width: clamp(40%,45%,50%); height: clamp(45px,5vw,55px); background: transparent; color: var(--dark); border: 2px solid var(--dark); border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; margin: 15px 0 30px; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif TC', serif; }
+</style>
+</head>
+<body>
+
+<div id="entry-page">
+  <div class="entry-logo">風鑑學堂</div>
+  <div class="entry-sub">人相兵法</div>
+  <input class="entry-input" id="entry-name" placeholder="輸入姓名" maxlength="20">
+  <div style="width:100%;max-width:340px;font-size:clamp(16px,2vw,20px);font-weight:900;color:#888;letter-spacing:2px;margin-bottom:24px;margin-top:-16px;">存檔後，請用相同姓名登入</div>
+  <button class="entry-btn" onclick="startApp()">開始</button>
+  <div class="entry-deco">2026</div>
+</div>
+
+<div id="name-edit-overlay" style="display:none">
+  <div class="name-edit-box">
+    <h3>修改姓名</h3>
+    <input class="name-edit-input" id="name-edit-input" maxlength="20">
+    <div class="name-edit-btns">
+      <button class="name-edit-cancel" onclick="closeEditName()">取消</button>
+      <button class="name-edit-confirm" onclick="confirmEditName()">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar" id="sidebar" style="display:none"></div>
+<div class="main-panel" id="main-panel" style="display:none">
+  <div class="main-header">
+    <h2 id="dim-title">系統載入中...</h2>
+    <button onclick="showReport()" style="margin-left:auto;background:var(--dark);border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-family:'Noto Serif TC',serif;cursor:pointer;color:white;white-space:nowrap;" id="report-btn">報告</button>
+  </div>
+  <div class="scoring-area" id="scoring-area"></div>
+  <div class="footer-analysis" id="footer"></div>
+</div>
+
+<div id="report-overlay">
+  <div class="report-top">
+    <div class="report-name" id="report-name-display"></div>
+    <div class="report-title">人相兵法</div>
+  </div>
+  <div class="stat-grid">
+    <div></div>
+    <div class="stat-item s-overall"><span>總合係數 - <strong class="stat-val" id="v-total">0.0</strong></span></div>
+  </div>
+  <div class="ds-bar-wrap">
+    <div></div>
+    <div class="ds-bar" id="ds-bar">
+      <div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div>
+      <div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div>
+      <span class="ds-bar-label" id="ds-label-s">靜 0</span>
+      <span class="ds-bar-label-r" id="ds-label-d">動 0</span>
+    </div>
+  </div>
+  <div class="stat-grid">
+    <div></div>
+    <div class="stat-item s-pre"><span>先天</span><strong class="stat-val" id="v-pre">0.0</strong></div>
+    <div class="stat-item s-luck"><span>運氣</span><strong class="stat-val" id="v-luck">0.0</strong></div>
+    <div class="stat-item s-post"><span>後天</span><strong class="stat-val" id="v-post">0.0</strong></div>
+  </div>
+  <div class="stat-grid">
+    <div></div>
+    <div class="stat-item s-lead"><span>領導</span><strong class="stat-val" id="v-lead">0.0</strong></div>
+    <div class="stat-item s-sub"><span>從屬</span><strong class="stat-val" id="v-sub">0.0</strong></div>
+  </div>
+  <div class="matrix-wrap">
+    <div class="matrix-layout" id="matrix-layout">
+      <div class="matrix-labels" id="matrix-labels"></div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><span style="color:var(--static)">■</span> 靜</span>
+    <span><span style="color:var(--active)">■</span> 動</span>
+    <span><span style="color:var(--gold)">■</span> 係數</span>
+  </div>
+  <div class="report-actions" style="flex-direction:row;gap:8px;margin-top:16px;padding-bottom:max(20px,env(safe-area-inset-bottom));">
+    <button class="btn-back" onclick="closeReport()" style="flex:1;margin:0;">
+      ← 修改評分
+    </button>
+    <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">
+      儲存評分
+    </button>
+    <button class="btn-line" onclick="openReportWindow()" id="btn-export" style="flex:1;margin:0;">
+      分享報告
+    </button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// Firebase 初始化
+const firebaseConfig = {
+  apiKey: "AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",
+  authDomain: "renxiangbingfa.firebaseapp.com",
+  projectId: "renxiangbingfa",
+  storageBucket: "renxiangbingfa.firebasestorage.app",
+  messagingSenderId: "912262878667",
+  appId: "1:912262878667:web:cd7a74f1378221dbe3524e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const PARTS = ["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
+const PARTS_SHORT = ["頭","上","中","下","耳","眉","眼","鼻","口"];
+
+const PALETTE = [
+  {bg:"#f0ebe5",tx:"#4a453e"},{bg:"#ece4db",tx:"#4a4138"},{bg:"#ebe6e0",tx:"#45403a"},
+  {bg:"#f5efe6",tx:"#4d463d"},{bg:"#f2ece4",tx:"#4a433b"},{bg:"#e8e2d9",tx:"#403a31"},
+  {bg:"#e5edf0",tx:"#3b4d54"},{bg:"#d9e5eb",tx:"#2d3a40"},{bg:"#cedde6",tx:"#253138"},
+  {bg:"#e8f0e5",tx:"#3d4a3b"},{bg:"#dce8d9",tx:"#2e3a2c"},{bg:"#d1e0cc",tx:"#243122"},{bg:"#c6d8bf",tx:"#1d291b"}
+];
+
+const DIMS = [
+  {cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},
+  {cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},
+  {cat:"先天指數",a:"方",b:"圓",aT:"動",bT:"靜",view:"成就"},
+  {cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},
+  {cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},
+  {cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},
+  {cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},
+  {cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},
+  {cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},
+  {cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},
+  {cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},
+  {cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},
+  {cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}
+];
+
+const CAT_STYLE = {"先天指數":"background:#4a453e;color:#fcfaf8","運氣指數":"background:#3b4d54;color:#fcfaf8","後天指數":"background:#3d4a3b;color:#fcfaf8"};
+const KEY = 'human_strategy_v13_strict';
+const emptyData = () => Array(13).fill(null).map(() => Array(9).fill(null));
+let cur = 0;
+let data = emptyData();
+
+function save() {
+  if (!userName) return;
+  const btn = document.getElementById('save-btn');
+  const payload = { dataJson: JSON.stringify(data), updatedAt: new Date().toISOString() };
+  db.collection('users').doc(userName).set(payload)
+    .then(() => {
+      if (btn) { btn.innerText = '已儲存 ✓'; btn.style.background = 'var(--static)'; setTimeout(() => { btn.innerText = '儲存'; btn.style.background = 'var(--dark)'; }, 2000); }
+    })
+    .catch(e => {
+      console.log('雲端儲存失敗', e);
+      if (btn) { btn.innerText = '失敗 ✗'; btn.style.background = '#c0392b'; setTimeout(() => { btn.innerText = '儲存'; btn.style.background = 'var(--dark)'; }, 2000); }
+    });
+}
+
+function calcDim(i) {
+  const r = data[i], a = r.filter(v=>v==='A').length, b = r.filter(v=>v==='B').length;
+  return (a+b<9) ? null : { a, b, coeff: Math.min(a,b)/Math.max(a,b), type: a>b ? DIMS[i].aT : DIMS[i].bT };
+}
+
+function avgCoeff(ids) {
+  const vals = ids.map(i => calcDim(i)?.coeff).filter(v => v != null);
+  return vals.length ? (vals.reduce((a,b)=>a+b)/vals.length).toFixed(1) : "0.0";
+}
+
+function renderSidebar() {
+  const el = document.getElementById('sidebar');
+  let html = '', lastCat = '';
+  DIMS.forEach((d,i) => {
+    if (d.cat !== lastCat) {
+      html += `<div class="cat-header" style="${CAT_STYLE[d.cat]}">${d.cat}</div>`;
+      lastCat = d.cat;
+    }
+    const c = PALETTE[i], res = calcDim(i);
+    const label = res ? `${d.a}${d.b} · ${res.type}[${res.coeff.toFixed(1)}]` : `${d.a}${d.b}`;
+    const activeStyle = i===cur ? `background:white;border-left:8px solid ${c.tx}` : `background:${c.bg};color:${c.tx}`;
+    html += `<div class="dim-item${i===cur?' active':''}" style="${activeStyle}" onclick="goto(${i})">
+      <span>${label}</span><div class="status-dot${res?' done':''}"></div>
+    </div>`;
+  });
+  html += `<div class="dim-item" style="background:var(--dark);color:#fff;font-weight:900;position:sticky;bottom:0;margin-top:auto;" onclick="showReport()">
+    <span>總合係數</span><span style="font-size:18px">➔</span></div>`;
+  html += `<div style="height:max(20px,env(safe-area-inset-bottom));background:var(--dark);"></div>`;
+  el.innerHTML = html;
+}
+
+function renderMain() {
+  const d = DIMS[cur], r = data[cur];
+  document.getElementById('dim-title').innerText = `${d.a}${d.b} - ${d.view}`;
+  const aC = d.aT==='動' ? 'dynamic-type' : 'static-type';
+  const bC = d.bT==='動' ? 'dynamic-type' : 'static-type';
+  document.getElementById('scoring-area').innerHTML = PARTS.map((p,i) =>
+    `<div class="score-row">
+      <div class="option-box ${aC}">
+        <input type="radio" name="p${i}" value="A" ${r[i]==='A'?'checked':''} onclick="toggle(${i},'A',this)">
+        <span class="option-label">${d.a} (${d.aT})</span>
+      </div>
+      <div class="part-label">${p}</div>
+      <div class="option-box ${bC}">
+        <input type="radio" name="p${i}" value="B" ${r[i]==='B'?'checked':''} onclick="toggle(${i},'B',this)">
+        <span class="option-label">${d.b} (${d.bT})</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderFooter() {
+  const d = DIMS[cur], res = calcDim(cur);
+  const mid = res ? `[${res.coeff.toFixed(1)}] | ${res.type}` : '評估中';
+  const bg = res ? (res.type==='靜' ? 'var(--static)' : 'var(--active)') : 'white';
+  const color = res ? 'white' : 'var(--text)';
+  const border = res ? 'transparent' : 'var(--border)';
+  document.getElementById('footer').innerHTML = `<div class="result-row">
+    <div class="result-box">${d.a} ${res?.a??0}</div>
+    <div class="result-mid" style="background:${bg};color:${color};border-color:${border}">${mid}</div>
+    <div class="result-box">${d.b} ${res?.b??0}</div>
+  </div>`;
+}
+
+function toggle(i, v, el) {
+  if (data[cur][i] === v) {
+    // 再按一次同選項 → 取消
+    data[cur][i] = null;
+    el.checked = false;
+  } else {
+    data[cur][i] = v;
+  }
+  save();
+  renderMain();
+  renderFooter();
+  renderSidebar();
+}
+
+function pick(i, v) {
+  data[cur][i] = v;
+  save();
+  renderMain();
+  renderFooter();
+  renderSidebar();
+  const res = calcDim(cur);
+  if (res) {
+    const footer = document.getElementById('footer');
+    footer.style.transition = 'transform 0.2s';
+    footer.style.transform = 'scale(1.02)';
+    setTimeout(() => footer.style.transform = 'scale(1)', 200);
+  }
+}
+
+function manualSave() { save(); }
+
+function reportSave() {
+  const btn = document.getElementById('report-save-btn');
+  if (!userName) return;
+  const payload = { dataJson: JSON.stringify(data), updatedAt: new Date().toISOString() };
+  db.collection('users').doc(userName).set(payload)
+    .then(() => {
+      btn.innerText = '已儲存 ✓';
+      btn.style.color = 'var(--static)';
+      btn.style.borderColor = 'var(--static)';
+      setTimeout(() => { btn.innerText = '儲存評分'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+    })
+    .catch(() => {
+      btn.innerText = '失敗，請重試';
+      setTimeout(() => { btn.innerText = '儲存評分'; }, 2000);
+    });
+}
+
+function goto(i) { cur = i; renderSidebar(); renderMain(); renderFooter(); }
+
+function showReport() {
+  document.getElementById('report-overlay').style.display = 'block';
+  document.getElementById('report-name-display').innerText = userName || '未命名';
+  [['v-total',[0,1,2,3,4,5,6,7,8,9,10,11,12]],['v-pre',[0,1,2,3,4,5]],['v-luck',[6,7,8]],
+   ['v-post',[9,10,11,12]],['v-lead',[0,1,2]],['v-sub',[3,4,5]]].forEach(([id,ids]) => {
+    document.getElementById(id).innerText = avgCoeff(ids);
+  });
+
+  // 動靜 bar：統計全部 117 票
+  let staticTotal = 0, dynamicTotal = 0;
+  DIMS.forEach((d, i) => {
+    data[i].forEach(v => {
+      if (!v) return;
+      const type = v === 'A' ? d.aT : d.bT;
+      type === '靜' ? staticTotal++ : dynamicTotal++;
+    });
+  });
+  const total = staticTotal + dynamicTotal || 1;
+  const sPct = (staticTotal / total * 100).toFixed(1);
+  const dPct = (dynamicTotal / total * 100).toFixed(1);
+  document.getElementById('ds-bar-s').style.width = sPct + '%';
+  document.getElementById('ds-bar-d').style.width = dPct + '%';
+  document.getElementById('ds-label-s').innerText = `靜 ${staticTotal}`;
+  document.getElementById('ds-label-d').innerText = `動 ${dynamicTotal}`;
+
+  const labelsEl = document.getElementById('matrix-labels');
+  const layoutEl = document.getElementById('matrix-layout');
+  layoutEl.querySelectorAll('.matrix-col').forEach(c=>c.remove());
+  labelsEl.innerHTML = `<div id="label-spacer"></div>` + PARTS_SHORT.map((p,pi) => {
+    const extra = pi === 4 ? 'margin-top:6px;' : '';
+    const divider = '';
+    return `<div class="row-label" style="position:relative;${extra}">${divider}${p}</div>`;
+  }).join('');
+
+  DIMS.forEach((d,i) => {
+    const c = PALETTE[i], res = calcDim(i);
+    const coeff = res?.coeff ?? 0;
+    const col = document.createElement('div'); col.className = 'matrix-col';
+
+    const hdr = document.createElement('div'); hdr.className = 'dim-header-v';
+    hdr.style.cssText = `background:${c.bg};color:${c.tx}`;
+    hdr.innerHTML = `<span>${d.a}</span><span>${d.b}</span>`;
+    col.appendChild(hdr);
+
+    const bar = document.createElement('div'); bar.className = 'prop-bar';
+    if (res) bar.classList.add(res.type==='動'?'red':'green');
+    col.appendChild(bar);
+
+    const lbl = document.createElement('div'); lbl.className = 'coeff-lbl';
+    lbl.innerText = res ? coeff.toFixed(1) : '-';
+    col.appendChild(lbl);
+
+    const stack = document.createElement('div'); stack.className = 'stack-area';
+    if (res) for(let j=0; j<Math.round(coeff*10); j++) {
+      const u = document.createElement('div'); u.className = 'stack-unit'; stack.appendChild(u);
+    }
+    col.appendChild(stack);
+
+    data[i].forEach((v,pi) => {
+      const cell = document.createElement('div'); cell.className = 'im-cell';
+      if (pi === 4) cell.style.marginTop = '6px'; // 虛線間距
+      const box = document.createElement('div'); box.className = 'im-box';
+      if (v) { const t = v==='A'?d.aT:d.bT; box.classList.add(t==='動'?'red':'green'); box.innerText = v==='A'?d.a:d.b; }
+      cell.appendChild(box); col.appendChild(cell);
+    });
+    layoutEl.appendChild(col);
+  });
+
+  // 動態對齊：量第一欄的 header+bar+lbl+stack 實際高度
+  requestAnimationFrame(() => {
+    const firstCol = layoutEl.querySelector('.matrix-col');
+    if (!firstCol) return;
+    const children = [...firstCol.children];
+    // 量到第一個 im-cell 之前所有元素的總高度（含 gap）
+    let offset = 0;
+    for (const el of children) {
+      if (el.classList.contains('im-cell')) break;
+      offset += el.offsetHeight + 2; // 2 = gap
+    }
+    const spacer = document.getElementById('label-spacer');
+    if (spacer) spacer.style.height = offset + 'px';
+  });
+}
+
+let userName = '';
+
+async function startApp() {
+  const name = document.getElementById('entry-name').value.trim();
+  if (!name) { document.getElementById('entry-name').focus(); return; }
+  userName = name;
+  localStorage.setItem('rxbf_username', userName);
+
+  const btn = document.querySelector('.entry-btn');
+  btn.innerText = '載入中...';
+  btn.disabled = true;
+
+  // 每次都從雲端載入，確保資料是這個用戶的
+  try {
+    const doc = await db.collection('users').doc(userName).get();
+    if (doc.exists && doc.data().dataJson) {
+      data = JSON.parse(doc.data().dataJson);
+    } else if (doc.exists && doc.data().data) {
+      data = doc.data().data; // 向下相容舊格式
+    } else {
+      data = emptyData();
+    }
+  } catch(e) {
+    console.log('載入失敗', e);
+    data = emptyData();
+  }
+
+  document.getElementById('entry-page').style.display = 'none';
+  document.getElementById('sidebar').style.display = 'flex';
+  document.getElementById('main-panel').style.display = 'flex';
+  btn.innerText = '開始';
+  btn.disabled = false;
+  renderSidebar(); renderMain(); renderFooter();
+}
+
+function editName() {
+  document.getElementById('name-edit-input').value = userName;
+  document.getElementById('name-edit-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('name-edit-input').focus(), 100);
+}
+
+function confirmEditName() {
+  const newName = document.getElementById('name-edit-input').value.trim();
+  if (newName) {
+    userName = newName;
+    localStorage.setItem('rxbf_username', userName);
+    document.getElementById('name-btn').innerText = '✎ ' + userName;
+  }
+  closeEditName();
+}
+
+function closeEditName() {
+  document.getElementById('name-edit-overlay').style.display = 'none';
+}
+
+async function exportPNG() {
+  const btn = document.getElementById('btn-export');
+  const actions = document.querySelector('.report-actions');
+  const overlay = document.getElementById('report-overlay');
+  btn.innerText = '產生中...';
+  btn.disabled = true;
+  actions.style.display = 'none';
+
+  // 捲回頂部再截圖
+  overlay.scrollTop = 0;
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    const canvas = await html2canvas(overlay, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      scrollX: 0,
+      scrollY: -overlay.scrollTop,
+      windowWidth: overlay.scrollWidth,
+      width: overlay.scrollWidth,
+      height: overlay.scrollHeight
+    });
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const file = new File([await new Promise(r => canvas.toBlob(r, 'image/png'))], `人相兵法_${userName || '報告'}.png`, { type: 'image/png' });
+
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: '人相兵法報告', text: `${userName || ''} 的人相兵法戰略報告` });
+      } catch(e) {
+        if (e.name !== 'AbortError') fallbackDownload(canvas);
+      }
+    } else {
+      fallbackDownload(canvas);
+    }
+  } catch(e) {
+    alert('產生失敗，請截圖儲存');
+  }
+
+  actions.style.display = 'flex';
+  btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>分享報告`;
+  btn.disabled = false;
+}
+
+function fallbackDownload(canvas) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    const w = window.open('');
+    w.document.write(`<html><body style="margin:0;background:#000;display:flex;flex-direction:column;align-items:center;padding:20px">
+      <p style="color:white;font-family:sans-serif;font-size:16px;margin-bottom:12px">長按圖片 → 儲存到照片</p>
+      <img src="${canvas.toDataURL('image/png')}" style="max-width:100%;border-radius:8px">
+      </body></html>`);
+  } else {
+    const link = document.createElement('a');
+    link.download = `人相兵法_${userName || '報告'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+}
+
+function openReportWindow() {
+  const reportEl = document.getElementById('report-overlay');
+  const w = window.open('', '_blank');
+  const css = `:root{--bg:#fcfaf8;--text:#1d1c16;--active:#d97757;--static:#8ba888;--border:#e8e3dd;--dark:#2d2d2d;--gold:#d4a373;}
+  *{box-sizing:border-box;}
+  body{margin:0;padding:16px;background:white;font-family:'Noto Serif TC',serif;color:var(--text);}
+  .hint{text-align:center;color:#aaa;font-size:14px;margin-bottom:12px;letter-spacing:1px;}
+  .report-actions{display:none!important;}
+  .report-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .report-name{width:50%;border-bottom:2px solid var(--text);padding:8px 0;font-size:28px;font-weight:900;}
+  .report-title{font-size:28px;font-weight:900;letter-spacing:1px;}
+  .stat-grid{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;margin-bottom:4px;}
+  .stat-item{padding:6px 10px;display:flex;flex-direction:column;justify-content:center;border-radius:4px;}
+  .stat-item span{font-size:14px;font-weight:900;white-space:nowrap;}
+  .stat-val{font-size:15px;font-weight:900;font-family:monospace;}
+  .s-overall{grid-column:2/span 13;background:var(--dark);color:white;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;}
+  .s-pre{grid-column:2/8;background:#f0ebe5;border-radius:4px 0 0 4px;}
+  .s-luck{grid-column:8/11;background:#e5edf0;}
+  .s-post{grid-column:11/15;background:#e8f0e5;border-radius:0 4px 4px 0;}
+  .s-lead{grid-column:2/5;background:#ebe6e0;border-radius:4px 0 0 0;}
+  .s-sub{grid-column:5/8;background:#f5f2ed;border-radius:0 4px 0 0;}
+  .ds-bar-wrap{display:grid;grid-template-columns:35px 1fr;gap:1px;margin-bottom:4px;}
+  .ds-bar{height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee;display:flex;align-items:center;}
+  .ds-bar-static{height:100%;background:var(--static);}
+  .ds-bar-dynamic{height:100%;background:var(--active);}
+  .ds-bar-label{position:absolute;left:8px;color:white;font-size:15px;font-weight:900;}
+  .ds-bar-label-r{position:absolute;right:8px;color:white;font-size:15px;font-weight:900;}
+  .matrix-wrap{width:100%;margin-top:5px;}
+  .matrix-layout{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;}
+  .matrix-labels{grid-column:1;display:flex;flex-direction:column;gap:2px;}
+  .row-label{height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;font-weight:900;position:relative;}
+  .matrix-col{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .dim-header-v{height:70px;font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;padding:4px 0;border-radius:3px 3px 0 0;line-height:1.3;}
+  .prop-bar{height:12px;background:#eee;border-radius:2px;}
+  .prop-bar.red{background:var(--active);}
+  .prop-bar.green{background:var(--static);}
+  .coeff-lbl{height:14px;font-size:12px;font-weight:900;color:#666;display:flex;align-items:center;justify-content:center;font-family:monospace;}
+  .stack-area{height:60px;display:flex;flex-direction:column-reverse;gap:1px;background:var(--bg);border-bottom:1px solid #eee;border-radius:2px;}
+  .stack-unit{width:100%;height:5px;background:var(--gold);opacity:0.8;}
+  .im-cell{height:28px;width:100%;background:#f9f7f4;border-radius:2px;}
+  .im-box{height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;border-radius:2px;}
+  .im-box.red{background:var(--active);opacity:0.95;}
+  .im-box.green{background:var(--static);opacity:0.95;}
+  .legend{font-size:13px;color:#aaa;margin-top:10px;display:flex;justify-content:center;gap:20px;font-weight:900;}`;
+
+  w.document.write(`<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>${css}</style></head><body>
+<div class="hint">截圖後即可傳送至 LINE ✦ 截圖完成後關閉此頁</div>
+${reportEl.innerHTML}
+</body></html>`);
+  w.document.close();
+}
+
+function closeReport() { document.getElementById('report-overlay').style.display = 'none'; }
+window.onload = () => {
+  // 自動填入上次的姓名
+  const savedName = localStorage.getItem('rxbf_username');
+  if (savedName) document.getElementById('entry-name').value = savedName;
+
+  document.getElementById('entry-name').addEventListener('keydown', e => { if(e.key==='Enter') startApp(); });
+  document.getElementById('name-edit-input').addEventListener('keydown', e => { if(e.key==='Enter') confirmEditName(); });
+};
+</script>
+</body>
+</html>
