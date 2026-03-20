@@ -192,11 +192,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;margin:0;display:fle
   </div>
   <div class="stat-grid"><div></div><div class="stat-item s-overall"><span>總合係數 <strong class="stat-val" id="v-total">0.0</strong></span></div></div>
   <div class="stat-grid"><div></div><div class="stat-item s-pre"><span>先天</span><strong class="stat-val" id="v-pre">0.0</strong></div><div class="stat-item s-luck"><span>運氣</span><strong class="stat-val" id="v-luck">0.0</strong></div><div class="stat-item s-post"><span>後天</span><strong class="stat-val" id="v-post">0.0</strong></div></div>
-  <div class="stat-grid"><div></div><div class="stat-item s-lead"><span>領導</span><strong class="stat-val" id="v-lead">0.0</strong></div><div class="stat-item s-sub"><span>從屬</span><strong class="stat-val" id="v-sub">0.0</strong></div></div>
+  <div class="stat-grid"><div></div><div class="stat-item s-lead"><span>老闆</span><strong class="stat-val" id="v-lead">0.0</strong></div><div class="stat-item s-sub"><span>主管</span><strong class="stat-val" id="v-sub">0.0</strong></div></div>
   <div class="ds-bar-wrap"><div></div><div class="ds-bar" id="ds-bar"><div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div><span class="ds-bar-label" id="ds-label-s">靜 0</span><span class="ds-bar-label-r" id="ds-label-d">動 0</span></div></div>
   <div class="matrix-wrap"><div class="matrix-layout" id="matrix-layout"><div class="matrix-labels" id="matrix-labels"></div></div></div>
   <div class="legend"><span><span style="color:var(--static)">■</span> 靜</span><span><span style="color:var(--active)">■</span> 動</span><span><span style="color:var(--gold)">■</span> 係數</span></div>
-  <div id="detail-conditions-area"></div>
   <div id="ai-analysis-area"></div>
   <div class="report-actions" style="flex-direction:row;gap:8px;margin-top:16px;flex-wrap:wrap;padding-bottom:max(20px,env(safe-area-inset-bottom));">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">← 回到觀察</button>
@@ -521,16 +520,40 @@ function evalBasisPass(item){
   try{return !!(new Function('ck','gv','_v','return '+item.pass)(ck,gv,_basisVars));}catch(e){return false;}
 }
 
+function _partNameFromIds(ids){const id=ids[0]||'';if(id.startsWith('ear_'))return'耳';if(id.startsWith('brow_'))return'眉';if(id.startsWith('eye_'))return'眼';if(id.startsWith('zy_'))return'顴';if(id.startsWith('jaw_'))return'頤';return'';}
+
 function toggleBasis(btn){
   const panel=btn.parentElement.querySelector('.obs-basis-panel');
   if(panel){panel.remove();btn.innerText='⌄ 依據';return;}
   const dim=parseInt(btn.dataset.dim),pi=parseInt(btn.dataset.part);
   const items=DIM_BASIS_MAP[dim]?.[pi]||[];
+  const skip=new Set();
   let html='<div class="obs-basis-panel">';
-  items.forEach(item=>{
-    const passed=evalBasisPass(item);
-    const mark=passed?'<span style="color:var(--static);font-weight:900">✓</span>':'<span style="color:var(--active);font-weight:900">✗</span>';
-    html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark">'+mark+'</span>'+item.label+'</div>';
+  items.forEach((item,idx)=>{
+    if(skip.has(idx))return;
+    // 非成對：正常顯示
+    if(!item.side){
+      const p=evalBasisPass(item);
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark">'+(p?'<span style="color:var(--static);font-weight:900">✓</span>':'<span style="color:var(--active);font-weight:900">✗</span>')+'</span>'+item.label+'</div>';
+      return;
+    }
+    if(item.side==='R')return; // R 項由 L 項處理
+    // L 項：找對應 R 項
+    const idsKey=JSON.stringify(item.ids);
+    let rItem=null;
+    for(let j=idx+1;j<items.length;j++){if(!skip.has(j)&&items[j].side==='R'&&JSON.stringify(items[j].ids)===idsKey){rItem=items[j];skip.add(j);break;}}
+    const lP=evalBasisPass(item);
+    const rP=rItem?evalBasisPass(rItem):evalBasisPass({...item,side:'R'});
+    const pn=_partNameFromIds(item.ids);
+    const sl=item.label.replace(/^[左右]/,'').split('（')[0];
+    if(lP&&rP){
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--static);font-weight:900">✓</span></span>'+sl+'</div>';
+    }else if(!lP&&!rP){
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--active);font-weight:900">✗</span></span>'+sl+'</div>';
+    }else{
+      const fs=lP?'右':'左';
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--gold);font-weight:900">◑</span></span>'+sl+'（<span style="color:var(--active);font-weight:900">✗</span> '+fs+pn+' '+sl+'）</div>';
+    }
   });
   html+='</div>';btn.insertAdjacentHTML('afterend',html);btn.innerText='⌃ 收起';
 }
@@ -580,7 +603,6 @@ function showReport(){
     const stack=document.createElement('div');stack.className='stack-area';if(res)for(let j=0;j<Math.round(coeff*10);j++){const u=document.createElement('div');u.className='stack-unit';stack.appendChild(u);}col.appendChild(stack);
     data[i].forEach((v,pi)=>{const cell=document.createElement('div');cell.className='im-cell';if(pi===4)cell.style.marginTop='6px';const box=document.createElement('div');box.className='im-box';if(v){const t=v==='A'?d.aT:d.bT;box.classList.add(t==='動'?'red':'green');box.innerText=v==='A'?d.a:d.b;}cell.appendChild(box);col.appendChild(cell);});
     layoutEl.appendChild(col);});
-  renderDetailConditions();
   requestAnimationFrame(()=>{const fc=layoutEl.querySelector('.matrix-col');if(!fc)return;let off=0;for(const el of[...fc.children]){if(el.classList.contains('im-cell'))break;off+=el.offsetHeight+2;}const sp=document.getElementById('label-spacer');if(sp)sp.style.height=off+'px';});
 }
 function closeReport(){document.getElementById('report-overlay').style.display='none';}
