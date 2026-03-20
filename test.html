@@ -130,7 +130,7 @@ body { background: var(--bg); font-family: 'Noto Serif TC', serif; margin: 0; di
 .scoring-area .detail-group { flex-shrink: 0; }
 .obs-basis-btn { background:none;border:none;color:#999;font-size:11px;cursor:pointer;padding:2px 8px;font-family:'Noto Serif TC',serif; }
 .obs-basis-btn:hover { color:var(--text); }
-.obs-basis-panel { background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:4px 0 8px;font-size:clamp(12px,1.3vw,14px); }
+.obs-basis-panel { background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:4px 0 8px;font-size:clamp(12px,1.3vw,14px);text-align:center; }
 .obs-basis-panel .basis-item { padding:3px 0;color:#bbb; }
 .obs-basis-panel .basis-item.checked { color:var(--text);font-weight:700; }
 .obs-basis-panel .basis-mark { display:inline-block;width:18px;text-align:center; }
@@ -312,6 +312,8 @@ function recalcFromObs(){
   const d3k=cnt(ck('k09'),ck('k03'),ck('k05'));data[3][8]=d3k>=3?'B':'A';
   s=cnt(d3mL>=1,d3mR>=1,d3yL>=3,d3yR>=3,d3n>=3,ck('qL04'),ck('qR04'));data[3][2]=s>=4?'B':'A';
   s=cnt(d3k>=3,ck('r03'),ck('g02'),ck('g04'),ck('iL04'),ck('iR04'));data[3][3]=s>=3?'B':'A';
+  // 快取中間變數供依據面板使用
+  _basisVars={d0mL,d0mR,d0yL,d0yR,d0n,d0k,d1mL,d1mR,d1yL,d1yR,d1n,d1k,d1qL,d1qR,d2mL,d2mR,d2yL,d2yR,d2n,d2k,d3mL,d3mR,d3yL,d3yR,d3n,d3k};
 }
 
 /* ===== 觀察頁 ===== */
@@ -403,47 +405,75 @@ function renderSidebar(){
   html+='<div class="dim-item" style="background:var(--dark);color:#fff;font-weight:900;position:sticky;bottom:0;margin-top:auto;" onclick="showReport()"><span>總合係數</span><span style="font-size:18px">➔</span></div>';
   html+='<div style="height:max(20px,env(safe-area-inset-bottom));background:var(--dark);"></div>';el.innerHTML=html;
 }
-// dim(0-3) × part(0-8) → 相關觀察條件 id 清單
-const DIM_OBS_MAP={
-0:{0:['h01','h02','h07','h09','h10','h11'],1:['f02','f04','f01'],
-  2:['mL01','mL05','mL04','mL06','mR01','mR05','mR04','mR06','yL01a','yL01b','yL04','yL05','yR01a','yR01b','yR04','yR05','n01','n02','n04','n05','qL03','qR03'],
-  3:['k01','k02','k03','k04','r01','r02','g01','iL01','iR01'],
-  4:['eL01','eL04','eL08','eL09','eL02','eL10','eR01','eR04','eR08','eR09','eR02','eR10'],
-  5:['mL01','mL05','mL04','mL06','mR01','mR05','mR04','mR06'],
-  6:['yL01a','yL01b','yL04','yL05','yR01a','yR01b','yR04','yR05'],7:['n01','n02','n04','n05'],8:['k01','k02','k03','k04']},
-1:{0:['h03','h08','h12'],1:['f01','f03','f07','f06'],
-  2:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00','mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','yL01a','yL02','yL04','yL05','yR01a','yR02','yR04','yR05','y00','n02','n03','n01','n05','qL01','qL02','qL03','qR01','qR02','qR03'],
-  3:['k01','k07','k05','k10','r01','r02','g02','g04','iL02','iR02','i00'],
-  4:['eL02','eL03','eL05','eL06','eL07','eR02','eR03','eR05','eR06','eR07','e00'],
-  5:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00','mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','m00'],
-  6:['yL01a','yL02','yL04','yL05','yR01a','yR02','yR04','yR05','y00'],7:['n02','n03','n01','n05'],8:['k01','k07','k05','k10']},
-2:{0:['h04L','h04R','h09','h10','h11'],1:['f03','f04'],
-  2:['mL02','mL04','mR02','mR04','yL03','yL04','yL05','yR03','yR04','yR05','n01','n05','qL03','qL01','qR03','qR01'],
-  3:['k02','k08','k03','r01','r02','g03','iL03','iR03'],
-  4:['eL04','eL08','eL09','eR04','eR08','eR09'],5:['mL02','mL04','mR02','mR04'],
-  6:['yL03','yL04','yL05','yR03','yR04','yR05'],7:['n01','n05'],8:['k02','k08','k03']},
-3:{0:['h05','h06','h13','h14'],1:['f05','f07'],
-  2:['mL03','mL04','mL15','mR03','mR04','mR15','yL01a','yL04','yL05','yR01a','yR04','yR05','n02','n01','n03','qL04','qR04'],
-  3:['k09','k03','k05','r03','g02','g04','iL04','iR04'],
-  4:['eL02','eL03','eL01','eR02','eR03','eR01'],5:['mL03','mL04','mL15','mR03','mR04','mR15'],
-  6:['yL01a','yL04','yL05','yR01a','yR04','yR05'],7:['n02','n01','n03'],8:['k09','k03','k05']}
+const DIM_BASIS_MAP={
+0:{0:[{label:'左頂骨龜背隆起',ids:['h01'],pass:true},{label:'右頂骨龜背隆起',ids:['h02'],pass:true},{label:'枕骨圓且無凹凸自剋骨',ids:['h07','h09'],pass:'h07&&!h09'},{label:'左華陽圓隆起',ids:['h10'],pass:true},{label:'右華陽圓隆起',ids:['h11'],pass:true}],
+  1:[{label:'額平寬',ids:['f02'],pass:true},{label:'額隆',ids:['f04'],pass:true},{label:'額無疵',ids:['f01'],pass:false}],
+  2:[{label:'左眉為形（4項全中）',ids:['mL01','mL05','mL04','mL06'],pass:'d0mL>=4'},{label:'右眉為形（4項全中）',ids:['mR01','mR05','mR04','mR06'],pass:'d0mR>=4'},{label:'左眼為形（3項全中）',ids:['yL01a','yL01b','yL04','yL05'],pass:'d0yL>=3'},{label:'右眼為形（3項全中）',ids:['yR01a','yR01b','yR04','yR05'],pass:'d0yR>=3'},{label:'鼻為形（4項全中）',ids:['n01','n02','n04','n05'],pass:'d0n>=4'},{label:'左顴肉多於骨',ids:['qL03'],pass:true},{label:'右顴肉多於骨',ids:['qR03'],pass:true}],
+  3:[{label:'口為形（4項全中）',ids:['k01','k02','k03','k04'],pass:'d0k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣起',ids:['g01'],pass:true},{label:'左頤豐',ids:['iL01'],pass:true},{label:'右頤豐',ids:['iR01'],pass:true}],
+  4:[{label:'左耳長',ids:['eL01'],pass:true},{label:'左耳圓輪包廓',ids:['eL04','eL08','eL09'],pass:'eL04&&eL08&&eL09'},{label:'左耳高',ids:['eL02'],pass:true},{label:'左耳有垂珠',ids:['eL10'],pass:true},{label:'右耳長',ids:['eR01'],pass:true},{label:'右耳圓輪包廓',ids:['eR04','eR08','eR09'],pass:'eR04&&eR08&&eR09'},{label:'右耳高',ids:['eR02'],pass:true},{label:'右耳有垂珠',ids:['eR10'],pass:true}],
+  5:[{label:'左眉長過目',ids:['mL01'],pass:true},{label:'左眉質勻',ids:['mL05'],pass:true},{label:'左眉無鷹角',ids:['mL04'],pass:false},{label:'左眉無中斷',ids:['mL06'],pass:false},{label:'右眉長過目',ids:['mR01'],pass:true},{label:'右眉質勻',ids:['mR05'],pass:true},{label:'右眉無鷹角',ids:['mR04'],pass:false},{label:'右眉無中斷',ids:['mR06'],pass:false}],
+  6:[{label:'左眼長（細或大）',ids:['yL01a','yL01b'],pass:'yL01a||yL01b'},{label:'左眼頭有鉤',ids:['yL04'],pass:true},{label:'左眼尾有刀裁',ids:['yL05'],pass:true},{label:'右眼長（細或大）',ids:['yR01a','yR01b'],pass:'yR01a||yR01b'},{label:'右眼頭有鉤',ids:['yR04'],pass:true},{label:'右眼尾有刀裁',ids:['yR05'],pass:true}],
+  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻高',ids:['n02'],pass:true},{label:'鼻肉多於骨',ids:['n04'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'口大',ids:['k01'],pass:true},{label:'涯岸分明',ids:['k02'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角不朝下',ids:['k04'],pass:false}]},
+1:{0:[{label:'左右頂骨大小一致',ids:['h03'],pass:true},{label:'枕骨兩側一致',ids:['h08'],pass:true},{label:'左右華陽大小一致',ids:['h12'],pass:true}],
+  1:[{label:'額無疵且無凹凸',ids:['f01','f03'],pass:'!f01&&f03'},{label:'日月角開',ids:['f07'],pass:true},{label:'日月角隆',ids:['f06'],pass:true}],
+  2:[{label:'左眉為經（7/12以上）',ids:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00'],pass:'d1mL>=7'},{label:'右眉為經（7/12以上）',ids:['mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','m00'],pass:'d1mR>=7'},{label:'左眼為經（4項全中）',ids:['yL01a','yL02','yL04','yL05'],pass:'d1yL>=4'},{label:'右眼為經（4項全中）',ids:['yR01a','yR02','yR04','yR05'],pass:'d1yR>=4'},{label:'鼻為經（4項全中）',ids:['n02','n03','n01','n05'],pass:'d1n>=4'},{label:'左顴高隆且有肉',ids:['qL01','qL02','qL03'],pass:'d1qL'},{label:'右顴高隆且有肉',ids:['qR01','qR02','qR03'],pass:'d1qR'}],
+  3:[{label:'口為經（4項全中）',ids:['k01','k07','k05','k10'],pass:'d1k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'頤不削',ids:['iL02','iR02'],pass:false},{label:'左右頤一致',ids:['i00'],pass:true}],
+  4:[{label:'左耳高',ids:['eL02'],pass:true},{label:'左耳立',ids:['eL03'],pass:true},{label:'左耳大',ids:['eL05'],pass:true},{label:'左耳厚',ids:['eL06'],pass:true},{label:'左耳堅',ids:['eL07'],pass:true},{label:'右耳高',ids:['eR02'],pass:true},{label:'右耳立',ids:['eR03'],pass:true},{label:'右耳大',ids:['eR05'],pass:true},{label:'右耳厚',ids:['eR06'],pass:true},{label:'右耳堅',ids:['eR07'],pass:true},{label:'左右耳一致',ids:['e00'],pass:true}],
+  5:[{label:'左眉頭退印',ids:['mL07'],pass:true},{label:'左眉尾有聚',ids:['mL08'],pass:true},{label:'左眉身鋪陳有致',ids:['mL09'],pass:true},{label:'左眉長過目',ids:['mL01'],pass:true},{label:'左眉附骨位',ids:['mL10'],pass:true},{label:'左眉長有揚',ids:['mL11'],pass:true},{label:'左根根見肉',ids:['mL16'],pass:true},{label:'左眉高居額',ids:['mL12'],pass:true},{label:'左眉不壓眼',ids:['mL13'],pass:true},{label:'左眉不沖根',ids:['mL14'],pass:true},{label:'左眉彎長有鷹角',ids:['mL01','mL04'],pass:'mL01&&mL04'},{label:'雙眉一致',ids:['m00'],pass:true},{label:'右眉頭退印',ids:['mR07'],pass:true},{label:'右眉尾有聚',ids:['mR08'],pass:true},{label:'右眉身鋪陳有致',ids:['mR09'],pass:true},{label:'右眉長過目',ids:['mR01'],pass:true},{label:'右眉附骨位',ids:['mR10'],pass:true},{label:'右眉長有揚',ids:['mR11'],pass:true},{label:'右根根見肉',ids:['mR16'],pass:true},{label:'右眉高居額',ids:['mR12'],pass:true},{label:'右眉不壓眼',ids:['mR13'],pass:true},{label:'右眉不沖根',ids:['mR14'],pass:true},{label:'右眉彎長有鷹角',ids:['mR01','mR04'],pass:'mR01&&mR04'}],
+  6:[{label:'左眼細長',ids:['yL01a'],pass:true},{label:'左眼平',ids:['yL02'],pass:true},{label:'左眼頭有鉤',ids:['yL04'],pass:true},{label:'左眼尾有刀裁',ids:['yL05'],pass:true},{label:'右眼細長',ids:['yR01a'],pass:true},{label:'右眼平',ids:['yR02'],pass:true},{label:'右眼頭有鉤',ids:['yR04'],pass:true},{label:'右眼尾有刀裁',ids:['yR05'],pass:true},{label:'左右眼一致',ids:['y00'],pass:true}],
+  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻直',ids:['n03'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'口大',ids:['k01'],pass:true},{label:'唇厚均',ids:['k07'],pass:true},{label:'嘴角平',ids:['k05'],pass:true},{label:'口中線正',ids:['k10'],pass:true}]},
+2:{0:[{label:'左頂骨圓',ids:['h04L'],pass:true},{label:'右頂骨圓',ids:['h04R'],pass:true},{label:'枕骨無凹凸自剋骨',ids:['h09'],pass:false},{label:'左華陽圓',ids:['h10'],pass:true},{label:'右華陽圓',ids:['h11'],pass:true}],
+  1:[{label:'額無凹凸',ids:['f03'],pass:true},{label:'額隆',ids:['f04'],pass:true}],
+  2:[{label:'左眉為圓（2項全中）',ids:['mL02','mL04'],pass:'d2mL>=2'},{label:'右眉為圓（2項全中）',ids:['mR02','mR04'],pass:'d2mR>=2'},{label:'左眼為圓（3項全中）',ids:['yL03','yL04','yL05'],pass:'d2yL>=3'},{label:'右眼為圓（3項全中）',ids:['yR03','yR04','yR05'],pass:'d2yR>=3'},{label:'鼻為圓（2項全中）',ids:['n01','n05'],pass:'d2n>=2'},{label:'左顴肉多且位置高',ids:['qL03','qL01'],pass:'qL03&&qL01'},{label:'右顴肉多且位置高',ids:['qR03','qR01'],pass:'qR03&&qR01'}],
+  3:[{label:'口為圓（3項全中）',ids:['k02','k08','k03'],pass:'d2k>=3'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣圓',ids:['g03'],pass:true},{label:'左頤圓',ids:['iL03'],pass:true},{label:'右頤圓',ids:['iR03'],pass:true}],
+  4:[{label:'左耳圓',ids:['eL04'],pass:true},{label:'左耳輪廓分明',ids:['eL08'],pass:true},{label:'左耳輪包廓',ids:['eL09'],pass:true},{label:'右耳圓',ids:['eR04'],pass:true},{label:'右耳輪廓分明',ids:['eR08'],pass:true},{label:'右耳輪包廓',ids:['eR09'],pass:true}],
+  5:[{label:'左眉彎',ids:['mL02'],pass:true},{label:'左眉無鷹角',ids:['mL04'],pass:false},{label:'右眉彎',ids:['mR02'],pass:true},{label:'右眉無鷹角',ids:['mR04'],pass:false}],
+  6:[{label:'左眼有弧度',ids:['yL03'],pass:true},{label:'左眼頭有鉤',ids:['yL04'],pass:true},{label:'左眼尾有刀裁',ids:['yL05'],pass:true},{label:'右眼有弧度',ids:['yR03'],pass:true},{label:'右眼頭有鉤',ids:['yR04'],pass:true},{label:'右眼尾有刀裁',ids:['yR05'],pass:true}],
+  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'涯岸分明',ids:['k02'],pass:true},{label:'閉合線有弧度',ids:['k08'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true}]},
+3:{0:[{label:'中線直前',ids:['h05'],pass:true},{label:'中線直後',ids:['h06'],pass:true},{label:'左華陽平直',ids:['h13'],pass:true},{label:'右華陽平直',ids:['h14'],pass:true}],
+  1:[{label:'額立',ids:['f05'],pass:true},{label:'日月角開',ids:['f07'],pass:true}],
+  2:[{label:'左眉為直（1項以上）',ids:['mL03','mL15'],pass:'d3mL>=1'},{label:'右眉為直（1項以上）',ids:['mR03','mR15'],pass:'d3mR>=1'},{label:'左眼為直（3項全中）',ids:['yL01a','yL04','yL05'],pass:'d3yL>=3'},{label:'右眼為直（3項全中）',ids:['yR01a','yR04','yR05'],pass:'d3yR>=3'},{label:'鼻為直（3項全中）',ids:['n02','n01','n03'],pass:'d3n>=3'},{label:'左顴鼻相稱',ids:['qL04'],pass:true},{label:'右顴鼻相稱',ids:['qR04'],pass:true}],
+  3:[{label:'口為直（3項全中）',ids:['k09','k03','k05'],pass:'d3k>=3'},{label:'人中直',ids:['r03'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'左頤平直',ids:['iL04'],pass:true},{label:'右頤平直',ids:['iR04'],pass:true}],
+  4:[{label:'左耳高',ids:['eL02'],pass:true},{label:'左耳立',ids:['eL03'],pass:true},{label:'左耳長',ids:['eL01'],pass:true},{label:'右耳高',ids:['eR02'],pass:true},{label:'右耳立',ids:['eR03'],pass:true},{label:'右耳長',ids:['eR01'],pass:true}],
+  5:[{label:'左眉平（無彎無鷹角）',ids:['mL03','mL04'],pass:'mL03&&!mL04'},{label:'左眉短且濃',ids:['mL15'],pass:true},{label:'右眉平（無彎無鷹角）',ids:['mR03','mR04'],pass:'mR03&&!mR04'},{label:'右眉短且濃',ids:['mR15'],pass:true}],
+  6:[{label:'左眼細長',ids:['yL01a'],pass:true},{label:'左眼無鉤',ids:['yL04'],pass:false},{label:'左眼無刀裁',ids:['yL05'],pass:false},{label:'右眼細長',ids:['yR01a'],pass:true},{label:'右眼無鉤',ids:['yR04'],pass:false},{label:'右眼無刀裁',ids:['yR05'],pass:false}],
+  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻直',ids:['n03'],pass:true}],
+  8:[{label:'閉合線水平一字',ids:['k09'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角平',ids:['k05'],pass:true}]}
 };
 
-// 取得 obs id 的顯示 label
-function getObsLabel(id){for(const g of OBS_GROUPS)for(const it of g.items)if(it.id===id)return it.label;return id;}
+function evalBasisPass(item){
+  const ck=id=>!!obsData[id];
+  if(item.pass===true) return item.ids.every(ck);
+  if(item.pass===false) return item.ids.every(id=>!ck(id));
+  // 複合邏輯字串：將 id 替換為 ck('id') 求值
+  let expr=item.pass;
+  item.ids.forEach(id=>{expr=expr.replace(new RegExp('(?<!\\w)'+id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?!\\w)','g'),"ck('"+id+"')");});
+  // 處理 recalcFromObs 中間變數（d0mL, d1n 等）
+  expr=expr.replace(/d(\d)(mL|mR|yL|yR|eL|eR|n|k|qL|qR)/g,(m,dim,v)=>{
+    return '_v.d'+dim+v;
+  });
+  try{return !!(new Function('ck','_v','return '+expr))(ck,_basisVars);}catch(e){return false;}
+}
+
+// 快取 recalcFromObs 中間變數供 evalBasisPass 使用
+let _basisVars={};
 
 function toggleBasis(btn){
-  const panel=btn.nextElementSibling;
-  if(panel&&panel.classList.contains('obs-basis-panel')){panel.remove();btn.innerText='⌄ 依據';}
-  else{
-    const dim=parseInt(btn.dataset.dim),pi=parseInt(btn.dataset.part);
-    const ids=DIM_OBS_MAP[dim]?.[pi]||[];
-    let html='<div class="obs-basis-panel">';
-    const seen=new Set();
-    ids.forEach(id=>{if(seen.has(id))return;seen.add(id);const checked=!!obsData[id];
-      html+='<div class="basis-item'+(checked?' checked':'')+'"><span class="basis-mark">'+(checked?'✓':'')+'</span>'+getObsLabel(id)+'</div>';});
-    html+='</div>';btn.insertAdjacentHTML('afterend',html);btn.innerText='⌃ 收起';
-  }
+  const panel=btn.parentElement.querySelector('.obs-basis-panel');
+  if(panel){panel.remove();btn.innerText='⌄ 依據';return;}
+  const dim=parseInt(btn.dataset.dim),pi=parseInt(btn.dataset.part);
+  const items=DIM_BASIS_MAP[dim]?.[pi]||[];
+  let html='<div class="obs-basis-panel">';
+  items.forEach(item=>{
+    const passed=evalBasisPass(item);
+    const mark=passed?'<span style="color:var(--static);font-weight:900">✓</span>':'<span style="color:var(--active);font-weight:900">✗</span>';
+    html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark">'+mark+'</span>'+item.label+'</div>';
+  });
+  html+='</div>';
+  btn.insertAdjacentHTML('afterend',html);btn.innerText='⌃ 收起';
 }
 
 function renderMain(){
@@ -451,8 +481,8 @@ function renderMain(){
   const aC=d.aT==='動'?'dynamic-type':'static-type',bC=d.bT==='動'?'dynamic-type':'static-type';
   const hasBasis=cur<=3;
   document.getElementById('scoring-area').innerHTML=PARTS.map((p,i)=>{
-    const basisBtn=hasBasis?'<button class="obs-basis-btn" data-dim="'+cur+'" data-part="'+i+'" onclick="toggleBasis(this)">⌄ 依據</button>':'';
-    return '<div class="score-row"><div class="option-box '+aC+'"><input type="radio" name="p'+i+'" value="A" '+(r[i]==='A'?'checked':'')+' onclick="toggle('+i+',\'A\',this)"><span class="option-label">'+d.a+' ('+d.aT+')</span></div><div class="part-label">'+p+'</div><div class="option-box '+bC+'"><input type="radio" name="p'+i+'" value="B" '+(r[i]==='B'?'checked':'')+' onclick="toggle('+i+',\'B\',this)"><span class="option-label">'+d.b+' ('+d.bT+')</span></div></div>'+(hasBasis?'<div style="text-align:right;margin-top:-4px;margin-bottom:4px">'+basisBtn+'</div>':'');
+    const basisBtn=hasBasis?'<div style="text-align:center;margin-top:2px;margin-bottom:4px"><button class="obs-basis-btn" style="display:block;text-align:center;width:100%" data-dim="'+cur+'" data-part="'+i+'" onclick="toggleBasis(this)">⌄ 依據</button></div>':'';
+    return '<div class="score-row"><div class="option-box '+aC+'"><input type="radio" name="p'+i+'" value="A" '+(r[i]==='A'?'checked':'')+' onclick="toggle('+i+',\'A\',this)"><span class="option-label">'+d.a+' ('+d.aT+')</span></div><div class="part-label">'+p+'</div><div class="option-box '+bC+'"><input type="radio" name="p'+i+'" value="B" '+(r[i]==='B'?'checked':'')+' onclick="toggle('+i+',\'B\',this)"><span class="option-label">'+d.b+' ('+d.bT+')</span></div></div>'+basisBtn;
   }).join('');
 }
 function renderFooter(){
