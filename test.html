@@ -341,9 +341,9 @@ function renderObsMain(){
       const c=same&&lv?'checked':'';
       const ind=!same;
       html+='<div class="detail-check"><input type="checkbox" id="obs-'+it.id+'" '+c+' data-ind="'+(ind?'1':'')+'" onchange="onObsDefaultChange(\''+it.id+'\',this,'+(group.paired?'true':'false')+')"><label for="obs-'+it.id+'">'+it.label+'</label>';
-      if(group.paired) html+='<button class="pair-expand-btn" onclick="togglePairRow(this,\''+it.id+'\',\''+gn+'\')">▶ 雙'+gn+'不同</button>';
+      if(group.paired) html+='<button class="pair-expand-btn" onclick="togglePairRow(this,\''+it.id+'\',\''+gn+'\')">▶ 左右'+gn+'不同</button>';
       html+='</div>';
-      if(group.paired) html+='<div class="pair-row" id="pr-'+it.id+'" style="display:none"><div><input type="checkbox" id="ovL-'+it.id+'" '+(lv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'L\',this.checked)"><label for="ovL-'+it.id+'"> 左'+gn+'</label></div><div><input type="checkbox" id="ovR-'+it.id+'" '+(rv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'R\',this.checked)"><label for="ovR-'+it.id+'"> 右'+gn+'</label></div></div>';
+      if(group.paired){const sl=it.label.split('（')[0];html+='<div class="pair-row" id="pr-'+it.id+'" style="display:none"><div><input type="checkbox" id="ovL-'+it.id+'" '+(lv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'L\',this.checked)"><label for="ovL-'+it.id+'"> 左'+gn+' '+sl+'</label></div><div><input type="checkbox" id="ovR-'+it.id+'" '+(rv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'R\',this.checked)"><label for="ovR-'+it.id+'"> 右'+gn+' '+sl+'</label></div></div>';}
     }
     if(group.sharedItem){const si=group.sharedItem,c=obsData[si.id]?'checked':'';
       html+='<div class="detail-check" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px"><input type="checkbox" id="obs-'+si.id+'" '+c+' onchange="onObsDefaultChange(\''+si.id+'\',this,false)"><label for="obs-'+si.id+'">'+si.label+'</label></div>';}
@@ -364,8 +364,8 @@ function gotoObsPart(i){curObsPart=i;renderObsSidebar();renderObsMain();}
 function togglePairRow(btn,id,gn){
   const row=document.getElementById('pr-'+id);
   if(!row)return;
-  if(row.style.display==='none'){row.style.display='flex';btn.innerText='▼ 雙'+gn+'不同';}
-  else{row.style.display='none';btn.innerText='▶ 雙'+gn+'不同';}
+  if(row.style.display==='none'){row.style.display='flex';btn.innerText='▼ 左右'+gn+'不同';}
+  else{row.style.display='none';btn.innerText='▶ 左右'+gn+'不同';}
 }
 
 function onObsDefaultChange(id,el,isPaired){
