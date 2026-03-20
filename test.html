@@ -129,10 +129,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;margin:0;display:fle
 .obs-basis-panel{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:4px 0 8px;font-size:clamp(12px,1.3vw,14px);text-align:center}
 .obs-basis-panel .basis-item{padding:3px 0;color:var(--text)}
 .obs-basis-panel .basis-mark{display:inline-block;width:18px;text-align:center}
-.override-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:clamp(12px,1.3vw,14px);font-family:'Noto Serif TC',serif;cursor:pointer;color:#999;margin:6px 0;width:100%;text-align:center;font-weight:700}
-.override-toggle:hover{color:var(--text);border-color:var(--text)}
-.override-section{background:#f9f7f4;border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:8px}
-.override-section h4{margin:0 0 6px;font-size:clamp(13px,1.4vw,15px);font-weight:900;color:var(--gold)}
+.pair-expand-btn{float:right;font-size:12px;color:#aaa;cursor:pointer;background:none;border:none;font-family:'Noto Serif TC',serif;padding:0;line-height:1.5}
+.pair-expand-btn:hover{color:var(--text)}
+.pair-row{background:#f9f7f4;padding:4px 14px 6px;margin:-4px 0 4px;display:flex;gap:16px;font-size:clamp(12px,1.3vw,14px);border-top:1px dashed var(--border)}
+.pair-row label{color:#666;cursor:pointer}
+.pair-row input:checked+label{color:var(--text);font-weight:700}
 </style>
 </head>
 <body>
@@ -333,29 +334,24 @@ function renderObsMain(){
     const group=OBS_GROUPS[gi],items=group.items;
     let tot=items.length,cc=items.filter(it=>obsData[it.id]).length;
     if(group.sharedItem){tot++;if(obsData[group.sharedItem.id])cc++;}
+    const gn=group.pairLabel||group.name;
     html+='<div class="detail-group"><div class="detail-group-header" onclick="toggleDetailGroup(this)"><span>'+group.name+'（'+cc+'/'+tot+'）</span><span class="toggle-arrow">▼</span></div><div class="detail-group-body">';
-    // 預設層 checkboxes
     for(const it of items){
-      const c=obsData[it.id]?'checked':'';
-      html+='<div class="detail-check"><input type="checkbox" id="obs-'+it.id+'" '+c+' onchange="onObsChange(\''+it.id+'\',this.checked)"><label for="obs-'+it.id+'">'+it.label+'</label></div>';
-    }
-    // sharedItem
-    if(group.sharedItem){const si=group.sharedItem,c=obsData[si.id]?'checked':'';
-      html+='<div class="detail-check" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px"><input type="checkbox" id="obs-'+si.id+'" '+c+' onchange="onObsChange(\''+si.id+'\',this.checked)"><label for="obs-'+si.id+'">'+si.label+'</label></div>';}
-    // 成對展開按鈕
-    if(group.paired){
-      const pl=group.pairLabel||'雙側';
-      html+='<button class="override-toggle" onclick="toggleOverride(this,'+gi+')">▶ '+pl+'不同</button>';
-      html+='<div class="override-section" style="display:none" data-gi="'+gi+'">';
-      html+='<h4>左側</h4>';
-      for(const it of items){const v=gv(it.id,'L');html+='<div class="detail-check"><input type="checkbox" id="ovL-'+it.id+'" '+(v?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'L\',this.checked)"><label for="ovL-'+it.id+'">'+it.label+'</label></div>';}
-      html+='<h4 style="margin-top:10px">右側</h4>';
-      for(const it of items){const v=gv(it.id,'R');html+='<div class="detail-check"><input type="checkbox" id="ovR-'+it.id+'" '+(v?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'R\',this.checked)"><label for="ovR-'+it.id+'">'+it.label+'</label></div>';}
+      const lv=gv(it.id,'L'),rv=gv(it.id,'R'),same=lv===rv;
+      const c=same&&lv?'checked':'';
+      const ind=!same;
+      html+='<div class="detail-check"><input type="checkbox" id="obs-'+it.id+'" '+c+' data-ind="'+(ind?'1':'')+'" onchange="onObsDefaultChange(\''+it.id+'\',this,'+(group.paired?'true':'false')+')"><label for="obs-'+it.id+'">'+it.label+'</label>';
+      if(group.paired) html+='<button class="pair-expand-btn" onclick="togglePairRow(this,\''+it.id+'\',\''+gn+'\')">▶ 雙'+gn+'不同</button>';
       html+='</div>';
+      if(group.paired) html+='<div class="pair-row" id="pr-'+it.id+'" style="display:none"><div><input type="checkbox" id="ovL-'+it.id+'" '+(lv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'L\',this.checked)"><label for="ovL-'+it.id+'"> 左'+gn+'</label></div><div><input type="checkbox" id="ovR-'+it.id+'" '+(rv?'checked':'')+' onchange="onOverrideChange(\''+it.id+'\',\'R\',this.checked)"><label for="ovR-'+it.id+'"> 右'+gn+'</label></div></div>';
     }
+    if(group.sharedItem){const si=group.sharedItem,c=obsData[si.id]?'checked':'';
+      html+='<div class="detail-check" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px"><input type="checkbox" id="obs-'+si.id+'" '+c+' onchange="onObsDefaultChange(\''+si.id+'\',this,false)"><label for="obs-'+si.id+'">'+si.label+'</label></div>';}
     html+='</div></div>';
   });
   area.innerHTML=html;
+  // 設定 indeterminate 狀態
+  area.querySelectorAll('input[data-ind="1"]').forEach(el=>{el.indeterminate=true;});
 }
 
 function renderObsFooter(){
@@ -365,25 +361,28 @@ function renderObsFooter(){
 
 function gotoObsPart(i){curObsPart=i;renderObsSidebar();renderObsMain();}
 
-function toggleOverride(btn,gi){
-  const sec=btn.nextElementSibling;
-  if(sec.style.display==='none'){sec.style.display='block';btn.innerText=btn.innerText.replace('▶','▼');}
-  else{sec.style.display='none';btn.innerText=btn.innerText.replace('▼','▶');}
+function togglePairRow(btn,id,gn){
+  const row=document.getElementById('pr-'+id);
+  if(!row)return;
+  if(row.style.display==='none'){row.style.display='flex';btn.innerText='▼ 雙'+gn+'不同';}
+  else{row.style.display='none';btn.innerText='▶ 雙'+gn+'不同';}
 }
 
-function onObsChange(id,checked){
-  if(checked)obsData[id]=true;else delete obsData[id];
+function onObsDefaultChange(id,el,isPaired){
+  if(isPaired&&el.indeterminate){
+    // indeterminate → 全勾，清除覆蓋
+    el.indeterminate=false;el.checked=true;
+    obsData[id]=true;
+    delete obsOverride['L_'+id];delete obsOverride['R_'+id];
+  }else{
+    if(el.checked)obsData[id]=true;else delete obsData[id];
+    // 清除覆蓋，左右恢復一致
+    if(isPaired){delete obsOverride['L_'+id];delete obsOverride['R_'+id];}
+  }
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
   recalcFromObs();save();
-  const area=document.getElementById('obs-area'),st=area.scrollTop;
-  const collapsed=new Set();
-  area.querySelectorAll('.detail-group-header.collapsed').forEach(h=>{const t=h.querySelector('span');if(t)collapsed.add(t.innerText.replace(/（\d+\/\d+）/,''));});
-  const openOverrides=new Set();
-  area.querySelectorAll('.override-section').forEach(s=>{if(s.style.display!=='none')openOverrides.add(s.dataset.gi);});
-  renderObsMain();
-  area.querySelectorAll('.detail-group-header').forEach(h=>{const t=h.querySelector('span');if(t){const name=t.innerText.replace(/（\d+\/\d+）/,'');if(collapsed.has(name)){h.classList.add('collapsed');h.nextElementSibling.classList.add('hidden');}}});
-  area.querySelectorAll('.override-section').forEach(s=>{if(openOverrides.has(s.dataset.gi)){s.style.display='block';const btn=s.previousElementSibling;if(btn)btn.innerText=btn.innerText.replace('▶','▼');}});
-  area.scrollTop=st;renderObsSidebar();renderObsFooter();
+  _refreshObsUI();
 }
 
 function onOverrideChange(baseId,side,checked){
@@ -392,6 +391,26 @@ function onOverrideChange(baseId,side,checked){
   if(checked===defaultVal){delete obsOverride[key];}else{obsOverride[key]=checked;}
   localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
   recalcFromObs();save();
+  // 更新預設層 checkbox 的 indeterminate
+  const lv=gv(baseId,'L'),rv=gv(baseId,'R');
+  const defCb=document.getElementById('obs-'+baseId);
+  if(defCb){
+    if(lv===rv){defCb.indeterminate=false;defCb.checked=lv;}
+    else{defCb.indeterminate=true;defCb.checked=false;}
+  }
+  renderObsSidebar();renderObsFooter();
+}
+
+function _refreshObsUI(){
+  const area=document.getElementById('obs-area'),st=area.scrollTop;
+  const collapsed=new Set();
+  area.querySelectorAll('.detail-group-header.collapsed').forEach(h=>{const t=h.querySelector('span');if(t)collapsed.add(t.innerText.replace(/（\d+\/\d+）/,''));});
+  const openPairs=new Set();
+  area.querySelectorAll('.pair-row').forEach(r=>{if(r.style.display!=='none')openPairs.add(r.id);});
+  renderObsMain();
+  area.querySelectorAll('.detail-group-header').forEach(h=>{const t=h.querySelector('span');if(t){const name=t.innerText.replace(/（\d+\/\d+）/,'');if(collapsed.has(name)){h.classList.add('collapsed');h.nextElementSibling.classList.add('hidden');}}});
+  openPairs.forEach(rid=>{const r=document.getElementById(rid);if(r){r.style.display='flex';const btn=r.previousElementSibling?.querySelector('.pair-expand-btn');if(btn)btn.innerText=btn.innerText.replace('▶','▼');}});
+  area.scrollTop=st;renderObsSidebar();renderObsFooter();
 }
 
 function toggleDetailGroup(header){header.classList.toggle('collapsed');header.nextElementSibling.classList.toggle('hidden');}
