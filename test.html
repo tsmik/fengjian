@@ -221,28 +221,35 @@ const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"}
 
 /* ===== 觀察條件資料 ===== */
 const OBS_GROUPS=[
-  {name:'頭',items:[{id:'h01',label:'左頂骨龜背，緩緩向中間隆起'},{id:'h02',label:'右頂骨龜背，緩緩向中間隆起'},{id:'h03',label:'左右頂骨大小一致'},{id:'h04L',label:'左頂骨圓而不方'},{id:'h04R',label:'右頂骨圓而不方'},{id:'h05',label:'中線直前（百會穴→前方為直線）'},{id:'h06',label:'中線直後（百會穴→枕骨為直線）'},{id:'h07',label:'枕骨圓（後腦為圓不為平）'},{id:'h08',label:'枕骨兩側一致，無傾斜'},{id:'h09',label:'枕骨有凹凸或自剋骨'},{id:'h10',label:'左華陽圓隆起，不尖平凹'},{id:'h11',label:'右華陽圓隆起，不尖平凹'},{id:'h12',label:'左右華陽大小一致'},{id:'h13',label:'左華陽平直'},{id:'h14',label:'右華陽平直'}]},
+  {name:'頭 — 頂骨',items:[{id:'h01',label:'左頂骨龜背，緩緩向中間隆起'},{id:'h02',label:'右頂骨龜背，緩緩向中間隆起'},{id:'h04L',label:'左頂骨圓而不方'},{id:'h04R',label:'右頂骨圓而不方'},{id:'h03',label:'左右頂骨大小一致'}]},
+  {name:'頭 — 枕骨',items:[{id:'h07',label:'枕骨圓（後腦為圓不為平）'},{id:'h08',label:'枕骨兩側一致，無傾斜'},{id:'h09',label:'枕骨有凹凸或自剋骨'},{id:'h05',label:'中線直前（百會穴→前方為直線）'},{id:'h06',label:'中線直後（百會穴→枕骨為直線）'}]},
+  {name:'頭 — 華陽骨',items:[{id:'h10',label:'左華陽圓隆起，不尖平凹'},{id:'h11',label:'右華陽圓隆起，不尖平凹'},{id:'h13',label:'左華陽平直'},{id:'h14',label:'右華陽平直'},{id:'h12',label:'左右華陽大小一致'}]},
   {name:'上停（額）',items:[{id:'f01',label:'額有疵（有痕紋痣疤）'},{id:'f02',label:'額平寬（正面看平且寬）'},{id:'f03',label:'額無凹凸（無左低右傾）'},{id:'f04',label:'額隆（側面有隆起弧度）'},{id:'f05',label:'額立（側面偏直上非斜上）'},{id:'f06',label:'日月角隆（側看隆起）'},{id:'f07',label:'日月角開（正面看偏兩側）'}]},
   {name:'左耳',items:[{id:'eL01',label:'耳長（超過眼到鼻準底2/3）'},{id:'eL02',label:'耳高（耳上緣齊眉或以上）'},{id:'eL03',label:'耳立（接近垂直，無提耳）'},{id:'eL04',label:'耳圓（輪圓無凹陷波浪）'},{id:'eL05',label:'耳大'},{id:'eL06',label:'耳厚（耳肉多）'},{id:'eL07',label:'耳堅（耳肉不軟）'},{id:'eL08',label:'輪廓分明'},{id:'eL09',label:'輪包廓（廓不擋輪）'},{id:'eL10',label:'有垂珠'}]},
   {name:'右耳',items:[{id:'eR01',label:'耳長（超過眼到鼻準底2/3）'},{id:'eR02',label:'耳高（耳上緣齊眉或以上）'},{id:'eR03',label:'耳立（接近垂直，無提耳）'},{id:'eR04',label:'耳圓（輪圓無凹陷波浪）'},{id:'eR05',label:'耳大'},{id:'eR06',label:'耳厚（耳肉多）'},{id:'eR07',label:'耳堅（耳肉不軟）'},{id:'eR08',label:'輪廓分明'},{id:'eR09',label:'輪包廓（廓不擋輪）'},{id:'eR10',label:'有垂珠'}]},
   {name:'耳（整體）',items:[{id:'e00',label:'左右耳高度、大小、耳型一致'}]},
-  {name:'左眉',items:[{id:'mL01',label:'眉長過目'},{id:'mL02',label:'眉彎（尾1/3有彎朝下）'},{id:'mL03',label:'眉平（一條線，無彎）'},{id:'mL04',label:'有鷹角（2/3處有轉折）'},{id:'mL05',label:'眉質好（毛順濃淡均勻）'},{id:'mL06',label:'左眉有中斷'},{id:'mL07',label:'眉頭退印（不蓋印堂）'},{id:'mL08',label:'眉尾有聚（收攏不散）'},{id:'mL09',label:'眉身鋪陳有致（毛距相等）'},{id:'mL10',label:'眉附骨位'},{id:'mL11',label:'眉長有揚（眉尾往上）'},{id:'mL12',label:'眉高居額'},{id:'mL13',label:'眉不壓眼（間距一指幅以上）'},{id:'mL14',label:'眉不沖根'},{id:'mL15',label:'眉不過目（一小段濃短）'},{id:'mL16',label:'根根見肉（毛距見皮膚）'}]},
-  {name:'右眉',items:[{id:'mR01',label:'眉長過目'},{id:'mR02',label:'眉彎（尾1/3有彎朝下）'},{id:'mR03',label:'眉平（一條線，無彎）'},{id:'mR04',label:'有鷹角（2/3處有轉折）'},{id:'mR05',label:'眉質好（毛順濃淡均勻）'},{id:'mR06',label:'右眉有中斷'},{id:'mR07',label:'眉頭退印（不蓋印堂）'},{id:'mR08',label:'眉尾有聚（收攏不散）'},{id:'mR09',label:'眉身鋪陳有致（毛距相等）'},{id:'mR10',label:'眉附骨位'},{id:'mR11',label:'眉長有揚（眉尾往上）'},{id:'mR12',label:'眉高居額'},{id:'mR13',label:'眉不壓眼（間距一指幅以上）'},{id:'mR14',label:'眉不沖根'},{id:'mR15',label:'眉不過目（一小段濃短）'},{id:'mR16',label:'根根見肉（毛距見皮膚）'}]},
+  {name:'左眉眉型',items:[{id:'mL01',label:'眉長過目'},{id:'mL02',label:'眉彎（尾1/3有彎朝下）'},{id:'mL03',label:'眉平（一條線，無彎）'},{id:'mL04',label:'眉有鷹角（2/3處有轉折）'},{id:'mL06',label:'左眉有中斷'},{id:'mL07',label:'印堂無眉毛'},{id:'mL14',label:'眉頭延伸線不到山根'},{id:'mL08',label:'眉尾有聚（收攏不散）'},{id:'mL11',label:'眉長有揚（眉尾往上）'},{id:'mL15',label:'眉短且濃（眉不過目且一小段濃短）'}]},
+  {name:'左眉眉質',items:[{id:'mL05',label:'眉質勻（毛順濃淡均勻）'},{id:'mL09',label:'眉身鋪陳有致（毛距相等）'},{id:'mL16',label:'根根見肉（毛距可見皮膚）'}]},
+  {name:'左眉眉位',items:[{id:'mL10',label:'眉附骨位（眉毛長在眉骨上）'},{id:'mL12',label:'眉高居額（眉毛高過或在眉骨上）'},{id:'mL13',label:'眉不壓眼（間距一指幅以上）'}]},
+  {name:'右眉眉型',items:[{id:'mR01',label:'眉長過目'},{id:'mR02',label:'眉彎（尾1/3有彎朝下）'},{id:'mR03',label:'眉平（一條線，無彎）'},{id:'mR04',label:'眉有鷹角（2/3處有轉折）'},{id:'mR06',label:'右眉有中斷'},{id:'mR07',label:'印堂無眉毛'},{id:'mR14',label:'眉頭延伸線不到山根'},{id:'mR08',label:'眉尾有聚（收攏不散）'},{id:'mR11',label:'眉長有揚（眉尾往上）'},{id:'mR15',label:'眉短且濃（眉不過目且一小段濃短）'}]},
+  {name:'右眉眉質',items:[{id:'mR05',label:'眉質勻（毛順濃淡均勻）'},{id:'mR09',label:'眉身鋪陳有致（毛距相等）'},{id:'mR16',label:'根根見肉（毛距可見皮膚）'}]},
+  {name:'右眉眉位',items:[{id:'mR10',label:'眉附骨位（眉毛長在眉骨上）'},{id:'mR12',label:'眉高居額（眉毛高過或在眉骨上）'},{id:'mR13',label:'眉不壓眼（間距一指幅以上）'}]},
   {name:'眉（整體）',items:[{id:'m00',label:'雙眉大小、高低一致'}]},
-  {name:'左眼',items:[{id:'yL01',label:'眼長（細長或大而長）'},{id:'yL02',label:'眼平（眼尾不朝上或朝下）'},{id:'yL03',label:'眼弧（上下眼瞼有弧度）'},{id:'yL04',label:'眼頭有鉤'},{id:'yL05',label:'眼尾有刀裁'}]},
-  {name:'右眼',items:[{id:'yR01',label:'眼長（細長或大而長）'},{id:'yR02',label:'眼平（眼尾不朝上或朝下）'},{id:'yR03',label:'眼弧（上下眼瞼有弧度）'},{id:'yR04',label:'眼頭有鉤'},{id:'yR05',label:'眼尾有刀裁'}]},
+  {name:'左眼',items:[{id:'yL01a',label:'眼細長'},{id:'yL01b',label:'眼大長'},{id:'yL02',label:'眼平（眼尾不朝上或朝下）'},{id:'yL03',label:'眼弧（上下眼瞼有弧度）'},{id:'yL04',label:'眼頭有鉤'},{id:'yL05',label:'眼尾有刀裁'}]},
+  {name:'右眼',items:[{id:'yR01a',label:'眼細長'},{id:'yR01b',label:'眼大長'},{id:'yR02',label:'眼平（眼尾不朝上或朝下）'},{id:'yR03',label:'眼弧（上下眼瞼有弧度）'},{id:'yR04',label:'眼頭有鉤'},{id:'yR05',label:'眼尾有刀裁'}]},
   {name:'眼（整體）',items:[{id:'y00',label:'左右眼高度、大小、眼型一致'}]},
   {name:'鼻',items:[{id:'n01',label:'鼻長'},{id:'n02',label:'鼻高（鼻樑年壽高）'},{id:'n03',label:'鼻直（與面部中線重合）'},{id:'n04',label:'鼻肉多於骨'},{id:'n05',label:'鼻樑有明顯起節'}]},
-  {name:'口',items:[{id:'k01',label:'口大（開大合小）'},{id:'k02',label:'涯岸分明（唇邊界明顯，有肉）'},{id:'k03',label:'嘴角有收'},{id:'k04',label:'嘴角朝下'},{id:'k05',label:'嘴角平（水平一字）'},{id:'k06',label:'嘴角朝上'},{id:'k07',label:'唇厚均（上下唇差不多）'},{id:'k08',label:'閉合線有曲度弧度'},{id:'k09',label:'閉合線為水平一字'},{id:'k10',label:'口中線在臉中線上'}]},
-  {name:'左顴',items:[{id:'qL01',label:'顴高（靠近眼下緣）'},{id:'qL02',label:'顴隆（骨感明顯）'},{id:'qL03',label:'顴肉多於骨'},{id:'qL04',label:'顴鼻相稱'}]},
-  {name:'右顴',items:[{id:'qR01',label:'顴高（靠近眼下緣）'},{id:'qR02',label:'顴隆（骨感明顯）'},{id:'qR03',label:'顴肉多於骨'},{id:'qR04',label:'顴鼻相稱'}]},
+  {name:'口 — 口型',items:[{id:'k01',label:'口大（開大合小）'},{id:'k02',label:'涯岸分明（唇邊界明顯，有肉）'},{id:'k07',label:'唇厚均（上下唇差不多）'},{id:'k09',label:'閉合線為水平一字'},{id:'k08',label:'閉合線有曲度弧度'},{id:'k10',label:'口中線在臉中線上'},{id:'k11',label:'口左右一致（無歪無大小區別）'}]},
+  {name:'口 — 嘴角',items:[{id:'k03',label:'嘴角有收'},{id:'k06',label:'嘴角朝上'},{id:'k05',label:'嘴角平（水平一字）'},{id:'k04',label:'嘴角朝下'}]},
+  {name:'左顴',items:[{id:'qL01',label:'顴高（靠近眼下緣）'},{id:'qL02',label:'顴隆（顴骨視覺明顯且隆起有肉）'},{id:'qL03',label:'顴肉多於骨'},{id:'qL04',label:'顴鼻相稱'}]},
+  {name:'右顴',items:[{id:'qR01',label:'顴高（靠近眼下緣）'},{id:'qR02',label:'顴隆（顴骨視覺明顯且隆起有肉）'},{id:'qR03',label:'顴肉多於骨'},{id:'qR04',label:'顴鼻相稱'}]},
   {name:'人中',items:[{id:'r01',label:'人中深（如剖竹狀）'},{id:'r02',label:'人中長（至少食指寬）'},{id:'r03',label:'人中直（與中線重合）'}]},
   {name:'地閣',items:[{id:'g01',label:'地閣起（豐滿有起，承漿凹）'},{id:'g02',label:'地閣平（下巴骨平，無凹凸）'},{id:'g03',label:'地閣圓（下巴骨圓）'},{id:'g04',label:'地閣寬（至少與口同寬）'}]},
-  {name:'左頤',items:[{id:'iL01',label:'頤豐（豐隆有肉）'},{id:'iL02',label:'頤不削'},{id:'iL03',label:'頤圓（有弧度有肉）'},{id:'iL04',label:'頤平直（不隆不凹不尖削）'}]},
-  {name:'右頤',items:[{id:'iR01',label:'頤豐（豐隆有肉）'},{id:'iR02',label:'頤不削'},{id:'iR03',label:'頤圓（有弧度有肉）'},{id:'iR04',label:'頤平直（不隆不凹不尖削）'}]},
+  {name:'左頤',items:[{id:'iL01',label:'頤豐（豐隆有肉）'},{id:'iL02',label:'頤削'},{id:'iL03',label:'頤圓（有弧度有肉）'},{id:'iL04',label:'頤平直（不隆不凹不尖削）'}]},
+  {name:'右頤',items:[{id:'iR01',label:'頤豐（豐隆有肉）'},{id:'iR02',label:'頤削'},{id:'iR03',label:'頤圓（有弧度有肉）'},{id:'iR04',label:'頤平直（不隆不凹不尖削）'}]},
   {name:'頤（整體）',items:[{id:'i00',label:'左右頤大小一致'}]}
 ];
-const OBS_PARTS=[{name:'頭',groups:[0]},{name:'上停',groups:[1]},{name:'耳',groups:[2,3,4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8,9,10]},{name:'鼻',groups:[11]},{name:'口',groups:[12]},{name:'顴骨',groups:[13,14]},{name:'人中',groups:[15]},{name:'地閣',groups:[16]},{name:'頤',groups:[17,18,19]}];
+const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4,5,6]},{name:'眉',groups:[7,8,9,10,11,12,13]},{name:'眼',groups:[14,15,16]},{name:'鼻',groups:[17]},{name:'口',groups:[18,19]},{name:'顴骨',groups:[20,21]},{name:'人中',groups:[22]},{name:'地閣',groups:[23]},{name:'頤',groups:[24,25,26]}];
 
 let obsData={}, curObsPart=0;
 
@@ -258,7 +265,7 @@ function recalcFromObs(){
   data[0][4]=(d0eL+d0eR)>=8?'A':'B';
   const d0mL=cnt(ck('mL01'),ck('mL05'),!ck('mL04'),!ck('mL06')),d0mR=cnt(ck('mR01'),ck('mR05'),!ck('mR04'),!ck('mR06'));
   data[0][5]=(d0mL+d0mR)>=8?'A':'B';
-  const d0yL=cnt(ck('yL01'),ck('yL04'),ck('yL05')),d0yR=cnt(ck('yR01'),ck('yR04'),ck('yR05'));
+  const d0yL=cnt(ck('yL01a')||ck('yL01b'),ck('yL04'),ck('yL05')),d0yR=cnt(ck('yR01a')||ck('yR01b'),ck('yR04'),ck('yR05'));
   data[0][6]=(d0yL+d0yR)>=6?'A':'B';
   const d0n=cnt(ck('n01'),ck('n02'),ck('n04'),!ck('n05'));data[0][7]=d0n>=4?'A':'B';
   const d0k=cnt(ck('k01'),ck('k02'),ck('k03'),!ck('k04'));data[0][8]=d0k>=4?'A':'B';
@@ -272,13 +279,13 @@ function recalcFromObs(){
   const d1mL=cnt(ck('mL07'),ck('mL08'),ck('mL09'),ck('mL01'),ck('mL10'),ck('mL11'),ck('mL16'),ck('mL12'),ck('mL13'),ck('mL14'),ck('mL01')&&ck('mL04'),ck('m00'));
   const d1mR=cnt(ck('mR07'),ck('mR08'),ck('mR09'),ck('mR01'),ck('mR10'),ck('mR11'),ck('mR16'),ck('mR12'),ck('mR13'),ck('mR14'),ck('mR01')&&ck('mR04'),ck('m00'));
   data[1][5]=(d1mL>=7&&d1mR>=7)?'A':'B';
-  const d1yL=cnt(ck('yL01'),ck('yL02'),ck('yL04'),ck('yL05')),d1yR=cnt(ck('yR01'),ck('yR02'),ck('yR04'),ck('yR05'));
+  const d1yL=cnt(ck('yL01a'),ck('yL02'),ck('yL04'),ck('yL05')),d1yR=cnt(ck('yR01a'),ck('yR02'),ck('yR04'),ck('yR05'));
   data[1][6]=(d1yL+d1yR+(ck('y00')?1:0))>=9?'A':'B';
   const d1n=cnt(ck('n02'),ck('n03'),ck('n01'),!ck('n05'));data[1][7]=d1n>=4?'A':'B';
   const d1k=cnt(ck('k01'),ck('k07'),ck('k05'),ck('k10'));data[1][8]=d1k>=4?'A':'B';
   const d1qL=ck('qL01')&&ck('qL02')&&ck('qL03'),d1qR=ck('qR01')&&ck('qR02')&&ck('qR03');
   s=cnt(d1mL>=7,d1mR>=7,d1yL>=4,d1yR>=4,d1n>=4,d1qL,d1qR);data[1][2]=s>=4?'A':'B';
-  s=cnt(d1k>=4,ck('r01'),ck('r02'),ck('g02'),ck('g04'),ck('iL02')&&ck('iR02'),ck('i00'));data[1][3]=s>=3?'A':'B';
+  s=cnt(d1k>=4,ck('r01'),ck('r02'),ck('g02'),ck('g04'),!ck('iL02')&&!ck('iR02'),ck('i00'));data[1][3]=s>=3?'A':'B';
   // Dim 2 方圓 pass→B=圓
   s=cnt(ck('h04L'),ck('h04R'),!ck('h09'),ck('h10'),ck('h11'));data[2][0]=s>=3?'B':'A';
   s=cnt(ck('f03'),ck('f04'));data[2][1]=s>=2?'B':'A';
@@ -299,7 +306,7 @@ function recalcFromObs(){
   data[3][4]=(d3eL+d3eR)>=6?'B':'A';
   const d3mL=cnt(ck('mL03')&&!ck('mL04'),ck('mL15')),d3mR=cnt(ck('mR03')&&!ck('mR04'),ck('mR15'));
   data[3][5]=(d3mL>=1&&d3mR>=1)?'B':'A';
-  const d3yL=cnt(ck('yL01'),!ck('yL04'),!ck('yL05')),d3yR=cnt(ck('yR01'),!ck('yR04'),!ck('yR05'));
+  const d3yL=cnt(ck('yL01a'),!ck('yL04'),!ck('yL05')),d3yR=cnt(ck('yR01a'),!ck('yR04'),!ck('yR05'));
   data[3][6]=(d3yL+d3yR)>=6?'B':'A';
   const d3n=cnt(ck('n02'),ck('n01'),ck('n03'));data[3][7]=d3n>=3?'B':'A';
   const d3k=cnt(ck('k09'),ck('k03'),ck('k05'));data[3][8]=d3k>=3?'B':'A';
@@ -399,27 +406,27 @@ function renderSidebar(){
 // dim(0-3) × part(0-8) → 相關觀察條件 id 清單
 const DIM_OBS_MAP={
 0:{0:['h01','h02','h07','h09','h10','h11'],1:['f02','f04','f01'],
-  2:['mL01','mL05','mL04','mL06','mR01','mR05','mR04','mR06','yL01','yL04','yL05','yR01','yR04','yR05','n01','n02','n04','n05','qL03','qR03'],
+  2:['mL01','mL05','mL04','mL06','mR01','mR05','mR04','mR06','yL01a','yL01b','yL04','yL05','yR01a','yR01b','yR04','yR05','n01','n02','n04','n05','qL03','qR03'],
   3:['k01','k02','k03','k04','r01','r02','g01','iL01','iR01'],
   4:['eL01','eL04','eL08','eL09','eL02','eL10','eR01','eR04','eR08','eR09','eR02','eR10'],
   5:['mL01','mL05','mL04','mL06','mR01','mR05','mR04','mR06'],
-  6:['yL01','yL04','yL05','yR01','yR04','yR05'],7:['n01','n02','n04','n05'],8:['k01','k02','k03','k04']},
+  6:['yL01a','yL01b','yL04','yL05','yR01a','yR01b','yR04','yR05'],7:['n01','n02','n04','n05'],8:['k01','k02','k03','k04']},
 1:{0:['h03','h08','h12'],1:['f01','f03','f07','f06'],
-  2:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00','mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','yL01','yL02','yL04','yL05','yR01','yR02','yR04','yR05','y00','n02','n03','n01','n05','qL01','qL02','qL03','qR01','qR02','qR03'],
+  2:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00','mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','yL01a','yL02','yL04','yL05','yR01a','yR02','yR04','yR05','y00','n02','n03','n01','n05','qL01','qL02','qL03','qR01','qR02','qR03'],
   3:['k01','k07','k05','k10','r01','r02','g02','g04','iL02','iR02','i00'],
   4:['eL02','eL03','eL05','eL06','eL07','eR02','eR03','eR05','eR06','eR07','e00'],
   5:['mL07','mL08','mL09','mL01','mL10','mL11','mL16','mL12','mL13','mL14','mL04','m00','mR07','mR08','mR09','mR01','mR10','mR11','mR16','mR12','mR13','mR14','mR04','m00'],
-  6:['yL01','yL02','yL04','yL05','yR01','yR02','yR04','yR05','y00'],7:['n02','n03','n01','n05'],8:['k01','k07','k05','k10']},
+  6:['yL01a','yL02','yL04','yL05','yR01a','yR02','yR04','yR05','y00'],7:['n02','n03','n01','n05'],8:['k01','k07','k05','k10']},
 2:{0:['h04L','h04R','h09','h10','h11'],1:['f03','f04'],
   2:['mL02','mL04','mR02','mR04','yL03','yL04','yL05','yR03','yR04','yR05','n01','n05','qL03','qL01','qR03','qR01'],
   3:['k02','k08','k03','r01','r02','g03','iL03','iR03'],
   4:['eL04','eL08','eL09','eR04','eR08','eR09'],5:['mL02','mL04','mR02','mR04'],
   6:['yL03','yL04','yL05','yR03','yR04','yR05'],7:['n01','n05'],8:['k02','k08','k03']},
 3:{0:['h05','h06','h13','h14'],1:['f05','f07'],
-  2:['mL03','mL04','mL15','mR03','mR04','mR15','yL01','yL04','yL05','yR01','yR04','yR05','n02','n01','n03','qL04','qR04'],
+  2:['mL03','mL04','mL15','mR03','mR04','mR15','yL01a','yL04','yL05','yR01a','yR04','yR05','n02','n01','n03','qL04','qR04'],
   3:['k09','k03','k05','r03','g02','g04','iL04','iR04'],
   4:['eL02','eL03','eL01','eR02','eR03','eR01'],5:['mL03','mL04','mL15','mR03','mR04','mR15'],
-  6:['yL01','yL04','yL05','yR01','yR04','yR05'],7:['n02','n01','n03'],8:['k09','k03','k05']}
+  6:['yL01a','yL04','yL05','yR01a','yR04','yR05'],7:['n02','n01','n03'],8:['k09','k03','k05']}
 };
 
 // 取得 obs id 的顯示 label
