@@ -16,21 +16,21 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 /* ===== Nav Bar ===== */
 #top-nav{height:48px;background:#1e1c18;display:none;align-items:center;padding:0 16px;gap:0;flex-shrink:0;z-index:100}
-.nav-brand{color:#e8e2d8;font-size:14px;font-weight:900;letter-spacing:2px;cursor:pointer;padding:0 16px 0 0;white-space:nowrap}
-.nav-tab{height:48px;display:flex;align-items:center;padding:0 14px;color:#999;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s,color 0.15s;letter-spacing:1px}
+.nav-brand{color:#e8e2d8;font-size:15px;font-weight:900;letter-spacing:2px;cursor:pointer;padding:0 16px 0 0;white-space:nowrap}
+.nav-tab{height:48px;display:flex;align-items:center;padding:0 14px;color:#999;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s,color 0.15s;letter-spacing:1px}
 .nav-tab:hover{color:#ccc}
 .nav-tab.active{background:#2c2a24;color:#e8e2d8}
 .nav-spacer{flex:1}
-.nav-name{color:#a09888;font-size:12px;font-weight:700;padding:0 12px;white-space:nowrap;cursor:pointer}
+.nav-name{color:#a09888;font-size:13px;font-weight:700;padding:0 12px;white-space:nowrap;cursor:pointer}
 .nav-report{height:32px;padding:0 14px;background:var(--active);color:white;border:none;border-radius:4px;font-size:12px;font-weight:900;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px;white-space:nowrap}
 .nav-report:hover{opacity:0.9}
 
 /* ===== Three-column layout ===== */
 #app-body{flex:1;display:none;overflow:hidden;width:100%}
-.three-col{display:grid;grid-template-columns:200px 1fr 160px;width:100%;height:100%;overflow:hidden}
-.col-left{width:200px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.three-col{display:grid;grid-template-columns:240px 1fr 280px;width:100%;height:100%;overflow:hidden}
+.col-left{width:240px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .col-center{overflow-y:auto;padding:16px 20px;border-right:1px solid var(--border);min-width:0}
-.col-right{width:160px;flex-shrink:0;background:var(--sidebar);overflow:hidden;display:flex;flex-direction:row}
+.col-right{width:280px;flex-shrink:0;background:var(--sidebar);overflow:hidden;display:flex;flex-direction:row}
 
 /* ===== Entry Page ===== */
 #entry-page{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px}
@@ -56,10 +56,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .mode-card p{font-size:13px;color:#888;line-height:1.6}
 
 /* ===== Face Map (Left Column) ===== */
-.face-map{display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:46px 40px 34px 34px 34px 34px 28px 28px 28px;gap:2px;padding:10px 8px}
+.face-map{display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:52px 44px 44px 44px 44px 44px 36px 36px 36px;gap:3px;padding:8px;flex:1}
 .face-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;transition:all 0.15s;border:1.5px solid #ddd6c8;background:transparent}
-.face-cell .fc-name{font-size:11px;font-weight:700;line-height:1.2}
-.face-cell .fc-count{font-size:8px;color:#999;line-height:1.2}
+.face-cell .fc-name{font-size:13px;font-weight:700;line-height:1.2}
+.face-cell .fc-count{font-size:11px;color:#888;line-height:1.2}
 .face-cell.partial{background:#fdf8f0;border-color:#d8c898}
 .face-cell.complete{background:#f2f7f2;border-color:#b8d0b4}
 .face-cell.active-part{background:#fff9f7;border-color:var(--active)}
@@ -69,38 +69,38 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 /* ===== Center Column - Obs Questions ===== */
 .obs-header{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px}
-.obs-header h2{font-size:16px;font-weight:900;letter-spacing:1px}
-.obs-header .obs-count{font-size:12px;color:#999;font-weight:700}
-.obs-section-label{font-size:10px;color:#999;font-weight:700;letter-spacing:1px;margin:14px 0 6px;text-transform:uppercase;padding:4px 0;border-bottom:1px dashed var(--border)}
-.obs-q{display:flex;gap:8px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
-.obs-q-num{font-size:10px;color:#bbb;font-weight:700;min-width:20px;text-align:right;padding-top:3px}
-.obs-q-body{flex:1;display:flex;flex-direction:column;gap:6px}
-.obs-q-text{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.obs-paired-tag{font-size:10px;color:#bbb;font-weight:400;letter-spacing:1px}
+.obs-header h2{font-size:22px;font-weight:900;letter-spacing:2px}
+.obs-header .obs-count{font-size:14px;color:#aaa;font-weight:700}
+.obs-section-label{font-size:12px;color:#1e1c18;font-weight:900;letter-spacing:2px;margin:20px 0 10px;padding:8px 12px;background:#f0ece4;border-radius:4px;grid-column:1/-1}
+.obs-two-col{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:2px;border-radius:6px;overflow:hidden}
+.obs-q-card{background:var(--bg);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.obs-q-num{font-size:11px;color:#ccc;font-weight:700}
+.obs-q-text{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;line-height:1.4}
+.obs-paired-tag{font-size:11px;color:#bbb;font-weight:400;letter-spacing:1px}
 .obs-opts-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .obs-opt-col{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:60px}
-.obs-opt-hint{font-size:10px;color:#aaa;line-height:1.4;letter-spacing:0.3px;max-width:140px;min-height:14px}
-.obs-pill{font-size:12px;padding:4px 12px;border-radius:12px;border:1px solid var(--border);background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-weight:500;color:#999;transition:all 0.15s;white-space:nowrap}
+.obs-opt-hint{font-size:11px;color:#aaa;line-height:1.5;letter-spacing:0.3px;max-width:160px;min-height:16px;margin-top:2px}
+.obs-pill{font-size:13px;padding:6px 14px;border-radius:12px;border:1px solid var(--border);background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-weight:500;color:#999;transition:all 0.15s;white-space:nowrap}
 .obs-pill:hover{border-color:#bbb}
 .obs-pill.selected{background:var(--static);color:white;border-color:var(--static)}
-.obs-pill-lr{font-size:10px;padding:2px 6px;border-radius:10px;border:1px solid var(--border);background:#faf8f5;cursor:pointer;font-family:'Noto Serif TC',serif;color:#bbb;transition:all 0.15s;white-space:nowrap}
+.obs-pill-lr{font-size:12px;padding:4px 10px;border-radius:10px;border:1px solid var(--border);background:#faf8f5;cursor:pointer;font-family:'Noto Serif TC',serif;color:#bbb;transition:all 0.15s;white-space:nowrap}
 .obs-pill-lr.selected{background:var(--active);color:white;border-color:var(--active)}
-.obs-expand-btn{font-size:11px;color:#bbb;cursor:pointer;background:none;border:none;padding:2px 4px;font-family:'Noto Serif TC',serif}
+.obs-expand-btn{font-size:12px;color:#bbb;cursor:pointer;background:none;border:none;padding:4px 0;font-family:'Noto Serif TC',serif;letter-spacing:1px}
 .obs-expand-btn:hover{color:var(--text)}
 .obs-lr-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:4px 0 2px 0}
 
 /* ===== Right Column - Dim Index ===== */
-.dim-strip{width:42px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow-y:auto}
+.dim-strip{width:52px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow-y:auto}
 .dim-strip-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;padding:2px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
 .dim-strip-item:hover{background:rgba(0,0,0,0.03)}
-.dim-strip-item.active{background:white}
-.dim-strip-num{font-size:9px;font-weight:900;color:#999;line-height:1}
-.dim-strip-name{font-size:10px;font-weight:700;writing-mode:vertical-rl;letter-spacing:1px;color:var(--text);line-height:1}
+.dim-strip-item.active{background:white;border-left:3px solid var(--active)}
+.dim-strip-num{font-size:11px;font-weight:900;color:#999;line-height:1}
+.dim-strip-name{font-size:12px;font-weight:700;writing-mode:vertical-rl;letter-spacing:1px;color:var(--text);line-height:1}
 .dim-detail{flex:1;min-width:0;padding:6px 4px;overflow-y:auto}
-.dim-detail-title{font-size:11px;font-weight:900;text-align:center;margin-bottom:6px;letter-spacing:1px}
+.dim-detail-title{font-size:14px;font-weight:900;padding:10px 10px 8px;letter-spacing:2px;border-bottom:1px solid var(--border);margin-bottom:8px}
 .dim-part-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
-.dim-part-label{font-size:10px;width:24px;text-align:right;color:#888;font-weight:700;flex-shrink:0}
-.dim-ab-block{flex:1;height:16px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white}
+.dim-part-label{font-size:12px;width:28px;text-align:right;color:#888;font-weight:700;flex-shrink:0}
+.dim-ab-block{flex:1;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white}
 .dim-ab-block.static-fill{background:var(--static)}
 .dim-ab-block.dynamic-fill{background:var(--active)}
 .dim-ab-block.unfilled{background:#f0e8d8;color:#ccc}
@@ -377,17 +377,17 @@ const OBS_PART_PREFIX={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q
 const FACE_MAP_PARTS=[
   {name:'頭',obsIdx:0,col:'1/4',row:'1/2'},
   {name:'額',obsIdx:1,col:'1/4',row:'2/3'},
-  {name:'左耳',obsIdx:2,col:'1/2',row:'3/7'},
-  {name:'右耳',obsIdx:2,col:'3/4',row:'3/7'},
+  {name:'耳',obsIdx:2,col:'1/2',row:'3/6'},
   {name:'眉',obsIdx:3,col:'2/3',row:'3/4'},
   {name:'眼',obsIdx:4,col:'2/3',row:'4/5'},
   {name:'顴',obsIdx:6,col:'2/3',row:'5/6'},
   {name:'鼻',obsIdx:5,col:'2/3',row:'6/7'},
-  {name:'左頤',obsIdx:10,col:'1/2',row:'7/10'},
-  {name:'右頤',obsIdx:10,col:'3/4',row:'7/10'},
+  {name:'耳2',obsIdx:2,col:'3/4',row:'3/6'},
+  {name:'頤',obsIdx:10,col:'1/2',row:'7/10'},
   {name:'人中',obsIdx:8,col:'2/3',row:'7/8'},
   {name:'口',obsIdx:7,col:'2/3',row:'8/9'},
-  {name:'地閣',obsIdx:9,col:'2/3',row:'9/10'}
+  {name:'地閣',obsIdx:9,col:'2/3',row:'9/10'},
+  {name:'頤2',obsIdx:10,col:'3/4',row:'7/10'}
 ];
 
 let obsData={}, obsOverride={}, curObsPart=0;
@@ -489,15 +489,16 @@ function renderFaceMap(){
     else if(c.ck>=c.tot&&c.tot>0) cls+=' complete';
     else if(c.ck>0) cls+=' partial';
     html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+'" onclick="gotoObsPart('+fp.obsIdx+')">';
-    html+='<span class="fc-name">'+fp.name+'</span>';
+    const displayName=fp.name.replace('耳2','耳').replace('頤2','頤');
+    html+='<span class="fc-name">'+displayName+'</span>';
     html+='<span class="fc-count">'+c.ck+'/'+c.tot+'</span>';
     html+='</div>';
   });
   html+='</div>';
-  html+='<div style="padding:10px 8px;border-top:1px solid var(--border);margin-top:auto;">';
-  html+='<div style="font-size:9px;color:#bbb;letter-spacing:3px;margin-bottom:6px;">填寫進度</div>';
-  html+='<div style="height:4px;background:#e8e3dd;border-radius:2px;overflow:hidden;margin-bottom:8px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:2px;width:0%;transition:width 0.3s;"></div></div>';
-  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:22px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:10px;color:#bbb;letter-spacing:1px;">0 / 119 題</div></div>';
+  html+='<div style="padding:12px 10px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0;">';
+  html+='<div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-bottom:8px;">填寫進度</div>';
+  html+='<div style="height:5px;background:#e8e3dd;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:3px;width:0%;transition:width 0.3s;"></div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:28px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:#aaa;letter-spacing:1px;">0 / 119 題</div></div>';
   html+='</div>';
   el.innerHTML=html;
   updateObsProgress();
@@ -515,29 +516,32 @@ function renderObsCenter(){
   let qNum=1;
   partData.sections.forEach(sec=>{
     html+='<div class="obs-section-label">'+sec.label+'</div>';
+    html+='<div class="obs-two-col">';
     sec.qs.forEach(q=>{
       const isPaired=!!q.paired;
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
-      html+='<div class="obs-q"><span class="obs-q-num">'+qNum+'</span><div class="obs-q-body"><div class="obs-q-text">'+q.text+(isPaired?'<span class="obs-paired-tag">可分左右</span>':'')+'</div><div class="obs-opts-grid">';
+      html+='<div class="obs-q-card"><div><span class="obs-q-num">'+qNum+'</span><div class="obs-q-text">'+q.text+(isPaired?'<span class="obs-paired-tag">可分左右</span>':'')+'</div></div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
         const hint=(typeof opt==='object'&&opt.hint)?opt.hint:'';
         const sel=val===ov?' selected':'';
-        html+='<div class="obs-opt-col"><span class="obs-pill'+sel+'" onclick="selectOpt(\''+q.id+'\','+isPaired+',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span><div class="obs-opt-hint">'+hint+'</div></div>';
+        html+='<div class="obs-opt-col"><span class="obs-pill'+sel+'" onclick="selectOpt(\''+q.id+'\','+isPaired+',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>'+(hint?'<div class="obs-opt-hint">'+hint+'</div>':'<div class="obs-opt-hint"></div>')+'</div>';
       });
+      if(isPaired) html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+q.id+'\',this)">&#9654; 分左右</button>';
       html+='</div>';
       if(isPaired){
-        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;"><span style="font-size:10px;color:#bbb;margin-right:6px;">左：</span>';
+        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;"><span style="font-size:11px;color:#bbb;margin-right:6px;">左：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valL===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'L\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
-        html+='<span style="font-size:10px;color:#bbb;margin:0 6px;">右：</span>';
+        html+='<span style="font-size:11px;color:#bbb;margin:0 8px;">右：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valR===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'R\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
         html+='</div>';
       }
-      html+='</div></div>';
+      html+='</div>';
       qNum++;
     });
+    html+='</div>';
   });
   el.innerHTML=html;
   el.scrollTop=0;
@@ -645,7 +649,7 @@ function renderDimIndex(){
   });
   const res=calcDim(curDimIdx);
   if(res){
-    html+='<div style="text-align:center;margin-top:8px;font-size:11px;font-weight:900;color:'+(res.type==='靜'?'var(--static)':'var(--active)')+'">'+res.type+' ['+res.coeff.toFixed(1)+']</div>';
+    html+='<div style="text-align:center;margin-top:12px;padding:8px;background:white;border-radius:6px;font-size:13px;font-weight:900;color:'+(res.type==='靜'?'var(--static)':'var(--active)')+'">'+res.type+' · '+res.coeff.toFixed(2)+'</div>';
   }
   html+='</div>';
   el.innerHTML=html;
