@@ -10,7 +10,7 @@
 <title>風鑑學堂 人相兵法 - Desktop</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fcfaf8;--sidebar:#f7f2ed;--text:#1d1c16;--active:#d97757;--static:#8ba888;--border:#e8e3dd;--dark:#2d2d2d;--gold:#d4a373}
+:root{--bg:#fcfaf8;--sidebar:#f7f2ed;--text:#1d1c16;--active:#d97757;--static:#8ba888;--border:#e0dbd0;--dark:#2d2d2d;--gold:#d4a373;--text-primary:#1a1917;--text-secondary:#4a4845;--text-hint:#6b6865;--bg-main:#fafaf8;--bg-sidebar:#f0ede6;--bg-hover:#f5f2ec;--accent:#c96a3a;--green:#5a9068}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
 
@@ -27,10 +27,9 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 /* ===== Three-column layout ===== */
 #app-body{flex:1;display:none;overflow:hidden;width:100%}
-.three-col{display:grid;grid-template-columns:240px 1fr 280px;width:100%;height:100%;overflow:hidden}
-.col-left{width:240px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
-.col-center{overflow-y:auto;padding:16px 20px;border-right:1px solid var(--border);min-width:0}
-.col-right{width:280px;flex-shrink:0;background:var(--sidebar);overflow:hidden;display:flex;flex-direction:row}
+.three-col{display:grid;grid-template-columns:220px 1fr 260px;width:100%;height:100%;overflow:hidden}
+.col-left{width:220px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.col-right{width:260px;flex-shrink:0;background:var(--sidebar);overflow:hidden;display:flex;flex-direction:row}
 
 /* ===== Entry Page ===== */
 #entry-page{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px}
@@ -68,21 +67,26 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .face-progress-bar{height:100%;background:var(--static);border-radius:3px;transition:width 0.3s}
 
 /* ===== Center Column - Obs Questions ===== */
-.obs-header{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px}
-.obs-header h2{font-size:22px;font-weight:900;letter-spacing:2px}
-.obs-header .obs-count{font-size:14px;color:#aaa;font-weight:700}
-.obs-section-label{font-size:12px;color:#1e1c18;font-weight:900;letter-spacing:2px;margin:20px 0 10px;padding:8px 12px;background:#f0ece4;border-radius:4px;grid-column:1/-1}
-.obs-two-col{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:2px;border-radius:6px;overflow:hidden}
-.obs-q-card{background:var(--bg);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.obs-q-num{font-size:11px;color:#ccc;font-weight:700}
-.obs-q-text{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;line-height:1.4}
-.obs-paired-tag{font-size:11px;color:#bbb;font-weight:400;letter-spacing:1px}
-.obs-opts-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.obs-opt-col{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:60px}
-.obs-opt-hint{font-size:11px;color:#aaa;line-height:1.5;letter-spacing:0.3px;max-width:160px;min-height:16px;margin-top:2px}
-.obs-pill{font-size:13px;padding:6px 14px;border-radius:12px;border:1px solid var(--border);background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-weight:500;color:#999;transition:all 0.15s;white-space:nowrap}
-.obs-pill:hover{border-color:#bbb}
-.obs-pill.selected{background:var(--static);color:white;border-color:var(--static)}
+.col-center{overflow-y:auto;padding:0;border-right:1px solid var(--border);min-width:0}
+.obs-header{padding:16px 24px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:baseline;gap:10px}
+.obs-header h2{font-size:22px;font-weight:700;letter-spacing:2px}
+.obs-header .obs-count{font-size:13px;color:var(--text-hint)}
+.obs-section-label{font-size:11px;color:#aaa;letter-spacing:3px;padding:10px 24px 8px;border-bottom:0.5px solid #f0ede6;background:#fafaf8;position:sticky;top:0;z-index:1}
+.obs-q{display:grid;grid-template-columns:28px 1fr;padding:0 24px;border-bottom:0.5px solid #f0ede6;transition:background 0.1s}
+.obs-q:hover{background:var(--bg-hover)}
+.obs-q-num{font-size:11px;color:#ccc;padding-top:18px;font-family:monospace}
+.obs-q-body{padding:14px 0 14px 8px;display:flex;flex-direction:column;gap:10px}
+.obs-q-text{font-size:15px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:10px;letter-spacing:0.5px}
+.obs-paired-tag{font-size:10px;color:#bbb;font-weight:400;border:0.5px solid #ddd;border-radius:3px;padding:1px 6px;letter-spacing:1px}
+.obs-opts-grid{display:flex;flex-direction:column;gap:8px}
+.obs-opt-col{display:grid;grid-template-columns:auto 1fr;gap:0;align-items:start;cursor:pointer}
+.obs-opt-left{display:flex;align-items:center;gap:10px;min-width:100px;padding-right:16px}
+.obs-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.obs-radio.sel{border-color:var(--green);background:var(--green)}
+.obs-radio.sel::after{content:'';width:6px;height:6px;border-radius:50%;background:white}
+.obs-opt-label{font-size:14px;color:var(--text-secondary);white-space:nowrap;letter-spacing:0.5px}
+.obs-opt-label.sel{color:var(--text-primary);font-weight:700}
+.obs-opt-hint{font-size:12px;color:var(--text-hint);line-height:1.6;padding-top:1px;letter-spacing:0.3px}
 .obs-pill-lr{font-size:12px;padding:4px 10px;border-radius:10px;border:1px solid var(--border);background:#faf8f5;cursor:pointer;font-family:'Noto Serif TC',serif;color:#bbb;transition:all 0.15s;white-space:nowrap}
 .obs-pill-lr.selected{background:var(--active);color:white;border-color:var(--active)}
 .obs-expand-btn{font-size:12px;color:#bbb;cursor:pointer;background:none;border:none;padding:4px 0;font-family:'Noto Serif TC',serif;letter-spacing:1px}
@@ -97,10 +101,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .dim-strip-num{font-size:11px;font-weight:900;color:#999;line-height:1}
 .dim-strip-name{font-size:12px;font-weight:700;writing-mode:vertical-rl;letter-spacing:1px;color:var(--text);line-height:1}
 .dim-detail{flex:1;min-width:0;padding:6px 4px;overflow-y:auto}
-.dim-detail-title{font-size:14px;font-weight:900;padding:10px 10px 8px;letter-spacing:2px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.dim-detail-title{font-size:14px;font-weight:700;padding:12px 10px 10px;letter-spacing:2px;border-bottom:1px solid var(--border);margin-bottom:8px}
 .dim-part-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
 .dim-part-label{font-size:12px;width:28px;text-align:right;color:#888;font-weight:700;flex-shrink:0}
-.dim-ab-block{flex:1;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white}
+.dim-ab-block{flex:1;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white}
 .dim-ab-block.static-fill{background:var(--static)}
 .dim-ab-block.dynamic-fill{background:var(--active)}
 .dim-ab-block.unfilled{background:#f0e8d8;color:#ccc}
@@ -516,32 +520,29 @@ function renderObsCenter(){
   let qNum=1;
   partData.sections.forEach(sec=>{
     html+='<div class="obs-section-label">'+sec.label+'</div>';
-    html+='<div class="obs-two-col">';
     sec.qs.forEach(q=>{
       const isPaired=!!q.paired;
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
-      html+='<div class="obs-q-card"><div><span class="obs-q-num">'+qNum+'</span><div class="obs-q-text">'+q.text+(isPaired?'<span class="obs-paired-tag">可分左右</span>':'')+'</div></div><div class="obs-opts-grid">';
+      html+='<div class="obs-q"><div class="obs-q-num">'+qNum+'</div><div class="obs-q-body"><div class="obs-q-text">'+q.text+(isPaired?'<span class="obs-paired-tag">可分左右</span>':'')+'</div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
         const hint=(typeof opt==='object'&&opt.hint)?opt.hint:'';
-        const sel=val===ov?' selected':'';
-        html+='<div class="obs-opt-col"><span class="obs-pill'+sel+'" onclick="selectOpt(\''+q.id+'\','+isPaired+',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>'+(hint?'<div class="obs-opt-hint">'+hint+'</div>':'<div class="obs-opt-hint"></div>')+'</div>';
+        const isSel=val===ov;
+        html+='<div class="obs-opt-col" onclick="selectOpt(\''+q.id+'\','+isPaired+',\''+ov.replace(/'/g,"\\'")+'\',this)"><div class="obs-opt-left"><div class="obs-radio'+(isSel?' sel':'')+'"></div><div class="obs-opt-label'+(isSel?' sel':'')+'">'+ov+'</div></div>'+(hint?'<div class="obs-opt-hint">'+hint+'</div>':'<div></div>')+'</div>';
       });
-      if(isPaired) html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+q.id+'\',this)">&#9654; 分左右</button>';
       html+='</div>';
       if(isPaired){
-        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;"><span style="font-size:11px;color:#bbb;margin-right:6px;">左：</span>';
+        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;"><span style="font-size:11px;color:#bbb;margin-right:8px;">左：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valL===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'L\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
         html+='<span style="font-size:11px;color:#bbb;margin:0 8px;">右：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valR===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'R\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
-        html+='</div>';
+        html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+q.id+'\',this)" style="margin-left:8px;">&#9654; 分左右</button></div>';
       }
-      html+='</div>';
+      html+='</div></div>';
       qNum++;
     });
-    html+='</div>';
   });
   el.innerHTML=html;
   el.scrollTop=0;
@@ -550,11 +551,15 @@ function renderObsCenter(){
 function selectOpt(id,isPaired,val,el){
   obsData[id]=val;
   if(isPaired){delete obsData[id+'_L'];delete obsData[id+'_R'];}
-  const row=el.closest('.obs-q-pills');
-  row.querySelectorAll('.obs-pill').forEach(p=>p.classList.remove('selected'));
-  el.classList.add('selected');
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   recalcFromObs();save();updateObsProgress();renderFaceMap();renderDimIndex();
+  const qBody=el.closest('.obs-q-body');
+  if(qBody){
+    qBody.querySelectorAll('.obs-radio').forEach(r=>r.classList.remove('sel'));
+    qBody.querySelectorAll('.obs-opt-label').forEach(l=>l.classList.remove('sel'));
+    const clicked=el.classList.contains('obs-opt-col')?el:el.closest('.obs-opt-col');
+    if(clicked){clicked.querySelector('.obs-radio')?.classList.add('sel');clicked.querySelector('.obs-opt-label')?.classList.add('sel');}
+  }
   const partName=OBS_PART_NAMES[curObsPart],pd=OBS_PARTS_DATA[partName];
   let ans=0;if(pd)pd.sections.forEach(s=>s.qs.forEach(q=>{if(obsData[q.id]!==undefined)ans++;}));
   const ce=document.querySelector('.obs-count');if(ce&&pd)ce.textContent=ans+' / '+pd.total+' 已填';
