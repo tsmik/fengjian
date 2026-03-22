@@ -27,9 +27,9 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 
 /* ===== Three-column layout ===== */
 #app-body{flex:1;display:none;overflow:hidden}
-.three-col{display:flex;height:100%;overflow:hidden}
+.three-col{display:grid;grid-template-columns:200px 1fr 160px;height:100%;overflow:hidden}
 .col-left{width:200px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
-.col-center{flex:1;max-width:680px;overflow-y:auto;padding:16px 20px;border-right:1px solid var(--border)}
+.col-center{overflow-y:auto;padding:16px 20px;border-right:1px solid var(--border);min-width:0}
 .col-right{width:160px;flex-shrink:0;background:var(--sidebar);overflow-y:auto;display:flex}
 
 /* ===== Entry Page ===== */
@@ -354,20 +354,35 @@ const OBS_GROUPS=[
 ];
 const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
 
-/* Face map part mapping for left column */
+const OBS_PARTS_DATA = {
+  '頭':{total:15,sections:[{label:'頂骨',qs:[{id:'h1',text:'頂骨型相',opts:['龜背','圓','平寬'],paired:true},{id:'h2',text:'頂骨中央接合',opts:['突起','平順','凹陷']},{id:'h3',text:'頂骨左右一致性',opts:['左右一致','左右不一致']},{id:'h4',text:'頂骨中線',opts:['中線直','中線斜歪']}]},{label:'枕骨',qs:[{id:'h5',text:'枕骨型相',opts:['後腦圓','後腦平']},{id:'h6',text:'枕骨凹凸',opts:['順無凹凸','有凹凸']},{id:'h7',text:'枕骨自剋骨',opts:['有自剋骨','無自剋骨']},{id:'h8',text:'枕骨橫條骨',opts:['有橫條骨','無橫條骨']},{id:'h9',text:'枕骨中線',opts:['中線直','中線歪']},{id:'h10',text:'枕骨左右一致性',opts:['兩側一致','兩側不一致']}]},{label:'華陽骨',qs:[{id:'h11',text:'華陽骨型相',opts:['圓隆','平直','突露','凹陷'],paired:true},{id:'h12',text:'華陽骨銜接',opts:['順接','有轉折起伏'],paired:true},{id:'h13',text:'華陽骨左右一致性',opts:['左右一致','左右不一致']}]},{label:'頭骨整體',qs:[{id:'h14',text:'頭骨寬窄',opts:['頭窄','頭寬']},{id:'h15',text:'頭骨硬度',opts:['偏硬','一般']}]}]},
+  '額':{total:17,sections:[{label:'額型',qs:[{id:'e1',text:'額高低',opts:['額高','額低']},{id:'e2',text:'額圓方',opts:['額圓','額方']},{id:'e3',text:'額寬窄',opts:['額寬','額窄']},{id:'e4',text:'額平整',opts:['額平','額不平']},{id:'e5',text:'額乾淨',opts:['額淨','額有缺陷']},{id:'e6',text:'額隆起',opts:['額隆','額均','額陷']},{id:'e7',text:'額立斜',opts:['額立','額斜']},{id:'e8',text:'額長方',opts:['額長','額方']},{id:'e9',text:'額順折',opts:['額順','額折']},{id:'e10',text:'額鬆緊',opts:['額緊','額鬆']},{id:'e11',text:'大小天庭',opts:['大天庭','小天庭','無大小天庭']}]},{label:'髮際線',qs:[{id:'e12',text:'美人尖',opts:['有美人尖','無美人尖']}]},{label:'額內部位',qs:[{id:'e13',text:'日月角隆',opts:['日月角起','日月角不清晰']},{id:'e14',text:'日月角開合',opts:['日月角開','日月角合']},{id:'e15',text:'日月角骨肉',opts:['日月角有肉包','日月角骨感明顯']},{id:'e16',text:'輔角骨',opts:['有輔角骨','輔角骨不明顯']},{id:'e17',text:'佐串骨',opts:['有佐串骨','佐串骨不明顯']}]}]},
+  '耳':{total:14,sections:[{label:'耳形',qs:[{id:'er1',text:'耳長短',opts:['耳長','耳短'],paired:true},{id:'er2',text:'耳立提',opts:['耳立','耳提'],paired:true},{id:'er3',text:'耳圓缺',opts:['耳圓','耳尖','耳缺'],paired:true},{id:'er4',text:'耳貼程度',opts:['貼耳','一般','招風耳'],paired:true},{id:'er5',text:'耳孔',opts:['耳孔大','耳孔小'],paired:true},{id:'er6',text:'耳勢',opts:['耳勢朝上','一般'],paired:true}]},{label:'耳位置',qs:[{id:'er7',text:'耳高低',opts:['耳高','耳低'],paired:true}]},{label:'輪廓',qs:[{id:'er8',text:'輪廓有無',opts:['有輪有廓','有輪無廓','無輪有廓'],paired:true},{id:'er9',text:'輪包廓',opts:['輪包廓','輪不包廓'],paired:true}]},{label:'耳質',qs:[{id:'er10',text:'耳厚薄',opts:['耳厚','耳正常','耳薄'],paired:true},{id:'er11',text:'耳質硬軟',opts:['耳堅','耳硬','耳軟'],paired:true}]},{label:'垂珠',qs:[{id:'er12',text:'垂珠',opts:['有垂珠','無垂珠'],paired:true},{id:'er13',text:'耳垂方向',opts:['耳垂朝口','耳垂朝下','其他'],paired:true}]},{label:'一致性',qs:[{id:'er14',text:'雙耳一致性',opts:['雙耳一致','雙耳不一致']}]}]},
+  '眉':{total:18,sections:[{label:'眉型',qs:[{id:'br1',text:'眉長短',opts:['眉長','眉短'],paired:true},{id:'br2',text:'眉形走向',opts:['眉彎','眉平'],paired:true},{id:'br3',text:'鷹角',opts:['有鷹角','無鷹角'],paired:true},{id:'br4',text:'眉毛中斷',opts:['無中斷','有中斷'],paired:true},{id:'br5',text:'眉尾',opts:['有聚','散'],paired:true}]},{label:'眉勢',qs:[{id:'br6',text:'眉尾方向',opts:['有揚','平','往下'],paired:true},{id:'br7',text:'眉頭與印堂',opts:['不沖印','沖印'],paired:true},{id:'br8',text:'眉頭與山根',opts:['不沖根','沖根'],paired:true}]},{label:'眉位',qs:[{id:'br9',text:'眉的位置高低',opts:['眉高居額','一般'],paired:true},{id:'br10',text:'眉眼間距',opts:['不壓眼','壓眼'],paired:true},{id:'br11',text:'眉頭位置',opts:['退印','蓋印堂'],paired:true},{id:'br12',text:'眉附骨位',opts:['貼附眉骨','不貼附'],paired:true}]},{label:'眉質',qs:[{id:'br13',text:'眉毛順亂',opts:['眉順','眉亂'],paired:true},{id:'br14',text:'眉毛硬軟',opts:['柔順','質硬'],paired:true},{id:'br15',text:'眉毛量',opts:['眉毛多','眉毛稀少'],paired:true},{id:'br16',text:'眉身鋪陳',opts:['鋪陳有致','一般','有交叉'],paired:true},{id:'br17',text:'眉毛單根長度',opts:['毛不過短','眉毛短'],paired:true}]},{label:'一致性',qs:[{id:'br18',text:'雙眉一致性',opts:['雙眉一致','雙眉不一致']}]}]},
+  '眼':{total:11,sections:[{label:'眼型',qs:[{id:'ey1',text:'眼長短',opts:['眼長','眼短'],paired:true},{id:'ey2',text:'眼大小',opts:['眼大','眼小'],paired:true},{id:'ey3',text:'眼細圓',opts:['眼細','眼圓'],paired:true},{id:'ey4',text:'眼尾方向',opts:['眼尾平','眼尾朝上','眼尾朝下'],paired:true},{id:'ey5',text:'睛凸',opts:['睛凸','正常'],paired:true}]},{label:'眼輪廓',qs:[{id:'ey6',text:'眼鉤',opts:['有眼鉤','無眼鉤'],paired:true},{id:'ey7',text:'刀裁',opts:['有刀裁','無刀裁'],paired:true},{id:'ey8',text:'上眼瞼',opts:['眼上弧','有較硬轉角'],paired:true},{id:'ey9',text:'下眼瞼',opts:['下眼瞼平直','下眼瞼有弧'],paired:true}]},{label:'睛瞳',qs:[{id:'ey10',text:'黑睛大小',opts:['睛大','適中','睛小'],paired:true}]},{label:'一致性',qs:[{id:'ey11',text:'雙眼一致性',opts:['雙眼一致','雙眼不一致']}]}]},
+  '鼻':{total:12,sections:[{label:'鼻型',qs:[{id:'n1',text:'鼻長短',opts:['鼻長','鼻短']},{id:'n2',text:'鼻高低',opts:['鼻高','鼻低']},{id:'n3',text:'鼻直曲',opts:['鼻直','鼻曲']},{id:'n4',text:'鼻寬窄',opts:['鼻寬','鼻窄小']},{id:'n5',text:'鼻準形',opts:['鼻準圓','鼻準尖']},{id:'n6',text:'鼻順',opts:['鼻順','鼻不順']},{id:'n7',text:'鼻接印',opts:['鼻接印','鼻不接印']},{id:'n8',text:'鼻橫張',opts:['有橫張','無橫張']},{id:'n9',text:'山根寬窄',opts:['山根寬','山根窄']}]},{label:'鼻骨肉',qs:[{id:'n10',text:'鼻骨肉比',opts:['肉多於骨','骨肉勻稱','骨多於肉']},{id:'n11',text:'鼻起節',opts:['無起節','有起節突露']},{id:'n12',text:'鼻聚散',opts:['鼻聚','鼻散']}]}]},
+  '顴':{total:6,sections:[{label:'顴形',qs:[{id:'q1',text:'顴骨形態',opts:['顴高且隆','顴有而不明','顴平'],paired:true},{id:'q2',text:'顴骨大小',opts:['顴大','顴不過大','顴小尖'],paired:true}]},{label:'顴骨肉',qs:[{id:'q3',text:'顴骨肉比',opts:['顴有肉','顴無肉少肉'],paired:true}]},{label:'顴柄',qs:[{id:'q4',text:'顴柄走向',opts:['顴柄插天','顴柄平','無明顯顴柄'],paired:true}]},{label:'顴整體',qs:[{id:'q5',text:'顴鼻相稱',opts:['相稱','不相稱']},{id:'q6',text:'雙顴一致性',opts:['雙顴一致','雙顴不一致']}]}]},
+  '口':{total:13,sections:[{label:'口型',qs:[{id:'m1',text:'口大小',opts:['口開大合小','口小']},{id:'m2',text:'涯岸',opts:['涯岸分明','唇緣較不明顯']},{id:'m3',text:'嘴角收斂',opts:['嘴角收','嘴角不收']},{id:'m4',text:'嘴角方向',opts:['嘴角朝上','嘴角水平','嘴角朝下']},{id:'m5',text:'上唇V形',opts:['水星明顯','水星不明顯']},{id:'m6',text:'閉合線',opts:['閉合線平','閉合線有曲度']},{id:'m7',text:'口閉緊',opts:['閉合線密','閉合線較鬆','放鬆見齒']}]},{label:'唇型',qs:[{id:'m8',text:'唇厚度',opts:['唇一般','唇明顯厚','唇薄']},{id:'m9',text:'唇厚均',opts:['唇厚平均','唇厚不均']},{id:'m10',text:'唇起',opts:['唇凸','唇不凸']},{id:'m11',text:'唇垂珠',opts:['有唇珠','無唇珠']}]},{label:'一致性',qs:[{id:'m12',text:'口中線',opts:['口位置適中','口位置不中']},{id:'m13',text:'口對稱',opts:['口對稱','口不對稱']}]}]},
+  '人中':{total:4,sections:[{label:'人中',qs:[{id:'p1',text:'人中深淺',opts:['人中深','人中淺']},{id:'p2',text:'人中長短',opts:['人中長','人中短']},{id:'p3',text:'人中寬窄',opts:['人中寬度適中','人中窄']},{id:'p4',text:'人中方向',opts:['人中直','人中不直']}]}]},
+  '地閣':{total:5,sections:[{label:'地閣型',qs:[{id:'c1',text:'地閣朝',opts:['地閣起','地閣凸','地閣縮']},{id:'c2',text:'地閣平',opts:['地閣平','地閣圓','地閣凹']}]},{label:'地閣大小',qs:[{id:'c3',text:'地閣長短',opts:['地閣長','地閣適中','地閣短']},{id:'c4',text:'地閣寬窄',opts:['地閣寬','地閣窄尖']}]},{label:'地閣骨肉',qs:[{id:'c5',text:'地閣骨肉',opts:['地閣有肉','地閣無肉']}]}]},
+  '頤':{total:4,sections:[{label:'頤',qs:[{id:'y1',text:'頤角度',opts:['頤寬','頤平','頤削'],paired:true},{id:'y2',text:'頤肉量',opts:['頤豐','頤有肉','頤露尖'],paired:true},{id:'y3',text:'頤長短',opts:['頤長度正常','頤短'],paired:true},{id:'y4',text:'雙頤一致性',opts:['雙頤一致','雙頤不一致']}]}]}
+};
+const OBS_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+const OBS_PART_PREFIX={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
+
 const FACE_MAP_PARTS=[
   {name:'頭',obsIdx:0,col:'1/4',row:'1/2'},
   {name:'額',obsIdx:1,col:'1/4',row:'2/3'},
-  {name:'左耳',obsIdx:2,col:'1/2',row:'3/7',side:'L'},
-  {name:'右耳',obsIdx:2,col:'3/4',row:'3/7',side:'R'},
+  {name:'左耳',obsIdx:2,col:'1/2',row:'3/7'},
+  {name:'右耳',obsIdx:2,col:'3/4',row:'3/7'},
   {name:'眉',obsIdx:3,col:'2/3',row:'3/4'},
   {name:'眼',obsIdx:4,col:'2/3',row:'4/5'},
-  {name:'顴',obsIdx:7,col:'2/3',row:'5/6'},
+  {name:'顴',obsIdx:6,col:'2/3',row:'5/6'},
   {name:'鼻',obsIdx:5,col:'2/3',row:'6/7'},
-  {name:'左頤',obsIdx:10,col:'1/2',row:'7/10',side:'L'},
-  {name:'右頤',obsIdx:10,col:'3/4',row:'7/10',side:'R'},
+  {name:'左頤',obsIdx:10,col:'1/2',row:'7/10'},
+  {name:'右頤',obsIdx:10,col:'3/4',row:'7/10'},
   {name:'人中',obsIdx:8,col:'2/3',row:'7/8'},
-  {name:'口',obsIdx:6,col:'2/3',row:'8/9'},
+  {name:'口',obsIdx:7,col:'2/3',row:'8/9'},
   {name:'地閣',obsIdx:9,col:'2/3',row:'9/10'}
 ];
 
@@ -438,23 +453,36 @@ function recalcFromObs(){
   _basisVars={d0mL,d0mR,d0yL,d0yR,d0n,d0k,d1mL,d1mR,d1yL,d1yR,d1n,d1k,d1qL,d1qR,d2mL,d2mR,d2yL,d2yR,d2n,d2k,d3mL,d3mR,d3yL,d3yR,d3n,d3k};
 }
 
-/* ===== Face Map Rendering (Left Column) ===== */
+/* ===== Face Map + Obs Center ===== */
 function getPartCounts(obsIdx){
-  const part=OBS_PARTS[obsIdx];
-  let ck=0,tot=0;
-  part.groups.forEach(gi=>{const g=OBS_GROUPS[gi];tot+=g.items.length;if(g.sharedItem)tot++;ck+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem&&obsData[g.sharedItem.id])ck++;});
-  return{ck,tot};
+  const pn=OBS_PART_NAMES[obsIdx];if(!pn)return{ck:0,tot:0};
+  const pd=OBS_PARTS_DATA[pn];if(!pd)return{ck:0,tot:0};
+  const prefix=OBS_PART_PREFIX[pn]||'';
+  const answered=Object.keys(obsData).filter(k=>k.match(new RegExp('^'+prefix+'\\d'))).length;
+  return{ck:answered,tot:pd.total};
+}
+
+function updateObsProgress(){
+  const answered=Object.keys(obsData).length;
+  const total=119;
+  const pct=Math.min(100,Math.round(answered/total*100));
+  const bar=document.getElementById('obs-prog-bar');
+  const pctEl=document.getElementById('obs-prog-pct');
+  const numEl=document.getElementById('obs-prog-num');
+  if(bar)bar.style.width=pct+'%';
+  if(pctEl)pctEl.textContent=pct+'%';
+  if(numEl)numEl.textContent=answered+' / '+total+' 題';
 }
 
 function renderFaceMap(){
   const el=document.getElementById('face-map-col');
-  let html='<div style="padding:10px 8px 4px;font-size:12px;font-weight:900;letter-spacing:1px;color:#888;text-align:center">面部觀察圖</div>';
+  let html='<div style="padding:10px 8px 4px;font-size:12px;font-weight:900;letter-spacing:1px;color:#888;text-align:center">部位地圖</div>';
   html+='<div class="face-map">';
-  FACE_MAP_PARTS.forEach((fp,fi)=>{
+  FACE_MAP_PARTS.forEach(fp=>{
     const c=getPartCounts(fp.obsIdx);
     let cls='face-cell';
     if(fp.obsIdx===curObsPart) cls+=' active-part';
-    else if(c.ck===c.tot && c.tot>0) cls+=' complete';
+    else if(c.ck>=c.tot&&c.tot>0) cls+=' complete';
     else if(c.ck>0) cls+=' partial';
     html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+'" onclick="gotoObsPart('+fp.obsIdx+')">';
     html+='<span class="fc-name">'+fp.name+'</span>';
@@ -462,119 +490,85 @@ function renderFaceMap(){
     html+='</div>';
   });
   html+='</div>';
-  // Total progress bar
-  let totalCk=0,totalTot=0;
-  OBS_GROUPS.forEach(g=>{totalTot+=g.items.length;totalCk+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem){totalTot++;if(obsData[g.sharedItem.id])totalCk++;}});
-  const pct=totalTot>0?(totalCk/totalTot*100):0;
-  html+='<div class="face-progress"><div class="face-progress-bar" style="width:'+pct.toFixed(1)+'%"></div></div>';
-  html+='<div style="text-align:center;font-size:10px;color:#999;padding:2px 0">'+totalCk+' / '+totalTot+'</div>';
-  // Part list below map
-  html+='<div style="flex:1;overflow-y:auto;border-top:1px solid var(--border);margin-top:6px">';
-  OBS_PARTS.forEach((part,i)=>{
-    const c=getPartCounts(i);
-    const active=i===curObsPart;
-    const st=active?'background:white;border-left:3px solid var(--active);font-weight:900':'border-left:3px solid transparent';
-    html+='<div style="padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;justify-content:space-between;'+st+'" onclick="gotoObsPart('+i+')">';
-    html+='<span>'+part.name+'</span><span style="color:#999;font-size:10px">'+c.ck+'/'+c.tot+'</span></div>';
-  });
+  html+='<div style="padding:10px 8px;border-top:1px solid var(--border);margin-top:auto;">';
+  html+='<div style="font-size:9px;color:#bbb;letter-spacing:3px;margin-bottom:6px;">填寫進度</div>';
+  html+='<div style="height:4px;background:#e8e3dd;border-radius:2px;overflow:hidden;margin-bottom:8px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:2px;width:0%;transition:width 0.3s;"></div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:22px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:10px;color:#bbb;letter-spacing:1px;">0 / 119 題</div></div>';
   html+='</div>';
   el.innerHTML=html;
+  updateObsProgress();
 }
 
-/* ===== Observation Center Column ===== */
+/* ===== Observation Center Column (Question Pills) ===== */
 function renderObsCenter(){
-  const part=OBS_PARTS[curObsPart];
-  const el=document.getElementById('obs-center');
-  let totalCk=0,totalTot=0;
-  part.groups.forEach(gi=>{const g=OBS_GROUPS[gi];totalTot+=g.items.length;if(g.sharedItem)totalTot++;totalCk+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem&&obsData[g.sharedItem.id])totalCk++;});
-
-  let html='<div class="obs-header"><h2>'+part.name+'</h2><span class="obs-count">'+totalCk+' / '+totalTot+'</span></div>';
+  const el=document.getElementById('obs-center');if(!el)return;
+  const partName=OBS_PART_NAMES[curObsPart];
+  const partData=OBS_PARTS_DATA[partName];
+  if(!partData){el.innerHTML='';return;}
+  let answered=0;
+  partData.sections.forEach(sec=>{sec.qs.forEach(q=>{if(obsData[q.id]!==undefined)answered++;});});
+  let html='<div class="obs-header"><h2>'+partName+'</h2><span class="obs-count">'+answered+' / '+partData.total+' 已填</span></div>';
   let qNum=1;
-  part.groups.forEach(gi=>{
-    const group=OBS_GROUPS[gi];
-    const items=group.items;
-    html+='<div class="obs-section-label">'+group.name+'</div>';
-    for(const it of items){
-      const isPaired=!!group.paired;
-      const gn=group.pairLabel||group.name;
-      const lv=gv(it.id,'L'),rv=gv(it.id,'R'),same=lv===rv;
-      const checked=same&&lv;
-      const ind=!same;
-      html+='<div class="obs-q">';
-      html+='<span class="obs-q-num">'+qNum+'</span>';
-      html+='<span class="obs-q-text">'+it.label+'</span>';
-      html+='<span class="obs-q-pills">';
-      html+='<span class="obs-pill'+(checked?' selected':'')+'" onclick="onObsPillClick(\''+it.id+'\','+isPaired+',this)">'+(checked?'符合':'符合')+'</span>';
+  partData.sections.forEach(sec=>{
+    html+='<div class="obs-section-label">'+sec.label+'</div>';
+    sec.qs.forEach(q=>{
+      const isPaired=!!q.paired;
+      const val=obsData[q.id];
+      const valL=obsData[q.id+'_L'];
+      const valR=obsData[q.id+'_R'];
+      html+='<div class="obs-q"><span class="obs-q-num">'+qNum+'</span><div style="flex:1;"><div class="obs-q-text" style="margin-bottom:5px;">'+q.text+'</div><div class="obs-q-pills">';
+      q.opts.forEach(opt=>{
+        const sel=val===opt?' selected':'';
+        html+='<span class="obs-pill'+sel+'" onclick="selectOpt(\''+q.id+'\','+isPaired+',\''+opt.replace(/'/g,"\\'")+'\',this)">'+opt+'</span>';
+      });
+      if(isPaired) html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+q.id+'\',this)">&#9654;</button>';
+      html+='</div>';
       if(isPaired){
-        html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+it.id+'\',\''+gn+'\',this)">&#9654;</button>';
-      }
-      html+='</span></div>';
-      if(isPaired){
-        const sl=it.label.split('（')[0];
-        html+='<div class="obs-lr-row" id="lr-'+it.id+'" style="display:none">';
-        html+='<span class="obs-pill-lr'+(lv?' selected':'')+'" onclick="onLRClick(\''+it.id+'\',\'L\',this)">左'+gn+'</span>';
-        html+='<span class="obs-pill-lr'+(rv?' selected':'')+'" onclick="onLRClick(\''+it.id+'\',\'R\',this)">右'+gn+'</span>';
+        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;margin-top:4px;"><span style="font-size:10px;color:#bbb;margin-right:6px;">左：</span>';
+        q.opts.forEach(opt=>{const sel=valL===opt?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'L\',\''+opt.replace(/'/g,"\\'")+'\',this)">'+opt+'</span>';});
+        html+='<span style="font-size:10px;color:#bbb;margin:0 6px;">右：</span>';
+        q.opts.forEach(opt=>{const sel=valR===opt?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'R\',\''+opt.replace(/'/g,"\\'")+'\',this)">'+opt+'</span>';});
         html+='</div>';
       }
+      html+='</div></div>';
       qNum++;
-    }
-    if(group.sharedItem){
-      const si=group.sharedItem;
-      const sChecked=!!obsData[si.id];
-      html+='<div class="obs-q" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px">';
-      html+='<span class="obs-q-num">'+qNum+'</span>';
-      html+='<span class="obs-q-text">'+si.label+'</span>';
-      html+='<span class="obs-q-pills"><span class="obs-pill'+(sChecked?' selected':'')+'" onclick="onObsPillClick(\''+si.id+'\',false,this)">符合</span></span>';
-      html+='</div>';
-      qNum++;
-    }
+    });
   });
   el.innerHTML=html;
   el.scrollTop=0;
 }
 
-function onObsPillClick(id,isPaired,el){
-  const isSelected=el.classList.contains('selected');
-  if(isSelected){
-    delete obsData[id];
-    el.classList.remove('selected');
-  }else{
-    obsData[id]=true;
-    el.classList.add('selected');
-  }
-  if(isPaired){delete obsOverride['L_'+id];delete obsOverride['R_'+id];}
+function selectOpt(id,isPaired,val,el){
+  obsData[id]=val;
+  if(isPaired){delete obsData[id+'_L'];delete obsData[id+'_R'];}
+  const row=el.closest('.obs-q-pills');
+  row.querySelectorAll('.obs-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
-  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
-  recalcFromObs();save();
-  _refreshObsUI();
+  recalcFromObs();save();updateObsProgress();renderFaceMap();renderDimIndex();
+  const partName=OBS_PART_NAMES[curObsPart],pd=OBS_PARTS_DATA[partName];
+  let ans=0;if(pd)pd.sections.forEach(s=>s.qs.forEach(q=>{if(obsData[q.id]!==undefined)ans++;}));
+  const ce=document.querySelector('.obs-count');if(ce&&pd)ce.textContent=ans+' / '+pd.total+' 已填';
 }
 
-function toggleLRRow(id,gn,btn){
-  const row=document.getElementById('lr-'+id);
-  if(!row)return;
-  if(row.style.display==='none'){row.style.display='flex';btn.innerHTML='&#9660;';}
+function selectLROpt(id,side,val,el){
+  obsData[id+'_'+side]=val;
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  const row=el.closest('.obs-lr-row');
+  const partName=OBS_PART_NAMES[curObsPart],pd=OBS_PARTS_DATA[partName];
+  let optCount=2;
+  if(pd)pd.sections.forEach(s=>s.qs.forEach(q=>{if(q.id===id)optCount=q.opts.length;}));
+  const spans=[...row.querySelectorAll('.obs-pill-lr')];
+  const target=side==='L'?spans.slice(0,optCount):spans.slice(optCount);
+  target.forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  recalcFromObs();save();updateObsProgress();
+}
+
+function toggleLRRow(id,btn){
+  const row=document.getElementById('lr-'+id);if(!row)return;
+  if(row.style.display==='none'){row.style.display='flex';row.style.flexWrap='wrap';row.style.alignItems='center';row.style.gap='4px';btn.innerHTML='&#9660;';}
   else{row.style.display='none';btn.innerHTML='&#9654;';}
-}
-
-function onLRClick(baseId,side,el){
-  const key=side+'_'+baseId;
-  const curVal=gv(baseId,side);
-  if(curVal){
-    // turning off
-    if(obsData[baseId]){obsOverride[key]=false;}else{delete obsOverride[key];}
-    el.classList.remove('selected');
-  }else{
-    // turning on
-    if(!obsData[baseId]){obsOverride[key]=true;}else{delete obsOverride[key];}
-    el.classList.add('selected');
-  }
-  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
-  recalcFromObs();save();
-  // Update the main pill state
-  const lv=gv(baseId,'L'),rv=gv(baseId,'R');
-  const mainPills=document.querySelectorAll('.obs-pill');
-  // refresh properly
-  _refreshObsUI();
 }
 
 function onObsDefaultChange(id,el,isPaired){
