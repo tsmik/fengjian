@@ -595,7 +595,28 @@ function selectLROpt(id,side,val,el){
   const target=side==='L'?spans.slice(0,optCount):spans.slice(optCount);
   target.forEach(s=>s.classList.remove('selected'));
   el.classList.add('selected');
-  recalcFromObs();save();updateObsProgress();
+  recalcFromObs();save();updateObsProgress();renderDimIndex();
+  requestAnimationFrame(()=>{
+    if(pd){pd.sections.forEach(sec=>{sec.qs.forEach(q=>{
+      if(!q.paired)return;
+      const vL=obsData[q.id+'_L'],vR=obsData[q.id+'_R'];
+      if(vL!==undefined||vR!==undefined){
+        const lrRow=document.getElementById('lr-'+q.id);
+        const btn=document.getElementById('btn-lr-'+q.id);
+        if(lrRow){lrRow.style.display='flex';lrRow.style.flexWrap='wrap';lrRow.style.alignItems='center';lrRow.style.gap='6px';lrRow.style.marginTop='8px';}
+        if(btn){btn.innerHTML='可分左右 ▲';btn.classList.add('active');}
+        if(lrRow){
+          const allPills=[...lrRow.querySelectorAll('.obs-pill-lr')];
+          let oCount=2;
+          pd.sections.forEach(s=>s.qs.forEach(qq=>{if(qq.id===q.id)oCount=qq.opts.length;}));
+          const leftPills=allPills.slice(0,oCount),rightPills=allPills.slice(oCount);
+          leftPills.forEach(p=>{if(p.textContent===vL)p.classList.add('selected');else p.classList.remove('selected');});
+          rightPills.forEach(p=>{if(p.textContent===vR)p.classList.add('selected');else p.classList.remove('selected');});
+        }
+      }
+    });});
+    }
+  });
 }
 
 function toggleLRRow(id,btn){
