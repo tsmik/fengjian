@@ -718,24 +718,35 @@ function toggleDetailGroup(header){header.classList.toggle('collapsed');header.n
 
 function collectDetailForPrompt(){
   const checked=[],unchecked=[];
-  for(const g of OBS_GROUPS){
-    for(const it of g.items){if(obsData[it.id])checked.push(g.name+'：'+it.label);else unchecked.push(g.name+'：'+it.label);}
-    if(g.sharedItem){if(obsData[g.sharedItem.id])checked.push(g.name+'：'+g.sharedItem.label);else unchecked.push(g.name+'：'+g.sharedItem.label);}
-  }
+  OBS_PART_NAMES.forEach(pn=>{
+    const pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    pd.sections.forEach(sec=>{sec.qs.forEach(q=>{
+      const val=obsData[q.id];
+      if(val!==undefined)checked.push(pn+'·'+q.text+'：'+val);
+      else unchecked.push(pn+'·'+q.text);
+    });});
+  });
   return{checked,unchecked};
 }
 
 function renderDetailConditions(){
   const area=document.getElementById('detail-conditions-area');if(!area)return;
-  let tot=0,ck=0,html='<div class="detail-section"><h3>觀察條件紀錄</h3>';
-  for(const g of OBS_GROUPS){let cc=g.items.filter(it=>obsData[it.id]).length;let tt=g.items.length;
-    if(g.sharedItem){tt++;if(obsData[g.sharedItem.id])cc++;}
-    tot+=tt;ck+=cc;
-    html+='<div class="detail-group"><div class="detail-group-header collapsed" onclick="toggleDetailGroup(this)"><span>'+g.name+'（'+cc+'/'+tt+'）</span><span class="toggle-arrow">&#9660;</span></div><div class="detail-group-body hidden">';
-    for(const it of g.items){html+='<div class="detail-check"><input type="checkbox" id="rpt-'+it.id+'" '+(obsData[it.id]?'checked':'')+' disabled><label for="rpt-'+it.id+'">'+it.label+'</label></div>';}
-    if(g.sharedItem){const si=g.sharedItem;html+='<div class="detail-check"><input type="checkbox" id="rpt-'+si.id+'" '+(obsData[si.id]?'checked':'')+' disabled><label for="rpt-'+si.id+'">'+si.label+'</label></div>';}
-    html+='</div></div>';}
-  html+='<div class="detail-stats">已觀察：'+ck+' / '+tot+'</div></div>';area.innerHTML=html;
+  let html='<div class="detail-section"><h3>觀察條件紀錄</h3>';
+  OBS_PART_NAMES.forEach(pn=>{
+    const pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    let ck=0,tt=0;
+    pd.sections.forEach(sec=>sec.qs.forEach(q=>{tt++;if(obsData[q.id]!==undefined)ck++;}));
+    html+='<div class="detail-group"><div class="detail-group-header collapsed" onclick="toggleDetailGroup(this)"><span>'+pn+'（'+ck+'/'+tt+'）</span><span class="toggle-arrow">&#9660;</span></div><div class="detail-group-body hidden">';
+    pd.sections.forEach(sec=>{
+      html+='<div style="font-size:11px;color:var(--text-3);padding:6px 0 2px;letter-spacing:2px;">'+sec.label+'</div>';
+      sec.qs.forEach(q=>{
+        const val=obsData[q.id];
+        html+='<div class="detail-check"><span style="color:'+(val?'var(--static)':'#ccc')+';margin-right:6px;">'+(val?'●':'○')+'</span><span style="font-size:13px;color:var(--text-2);">'+q.text+(val?'：<strong>'+val+'</strong>':'')+'</span></div>';
+      });
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';area.innerHTML=html;
 }
 
 /* ===== Page Switching ===== */
