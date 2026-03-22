@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="2026">
+<meta property="og:title" content="風鑑學堂 人相兵法">
+<meta property="og:description" content="2026">
+<meta property="og:type" content="website">
+<title>風鑑學堂 人相兵法 - Desktop</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fcfaf8;--sidebar:#f7f2ed;--text:#1d1c16;--active:#d97757;--static:#8ba888;--border:#e8e3dd;--dark:#2d2d2d;--gold:#d4a373}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column}
+
+/* ===== Nav Bar ===== */
+#top-nav{height:48px;background:#1e1c18;display:none;align-items:center;padding:0 16px;gap:0;flex-shrink:0;z-index:100}
+.nav-brand{color:#e8e2d8;font-size:14px;font-weight:900;letter-spacing:2px;cursor:pointer;padding:0 16px 0 0;white-space:nowrap}
+.nav-tab{height:48px;display:flex;align-items:center;padding:0 14px;color:#999;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s,color 0.15s;letter-spacing:1px}
+.nav-tab:hover{color:#ccc}
+.nav-tab.active{background:#2c2a24;color:#e8e2d8}
+.nav-spacer{flex:1}
+.nav-name{color:#a09888;font-size:12px;font-weight:700;padding:0 12px;white-space:nowrap;cursor:pointer}
+.nav-report{height:32px;padding:0 14px;background:var(--active);color:white;border:none;border-radius:4px;font-size:12px;font-weight:900;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px;white-space:nowrap}
+.nav-report:hover{opacity:0.9}
+
+/* ===== Three-column layout ===== */
+#app-body{flex:1;display:none;overflow:hidden}
+.three-col{display:flex;height:100%;overflow:hidden}
+.col-left{width:200px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.col-center{flex:1;max-width:680px;overflow-y:auto;padding:16px 20px;border-right:1px solid var(--border)}
+.col-right{width:160px;flex-shrink:0;background:var(--sidebar);overflow-y:auto;display:flex}
+
+/* ===== Entry Page ===== */
+#entry-page{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+.entry-logo{font-size:48px;font-weight:900;letter-spacing:4px;color:var(--text);margin-bottom:4px}
+.entry-sub{font-size:48px;font-weight:900;color:var(--text);letter-spacing:4px;margin-bottom:48px}
+.entry-input{width:100%;max-width:340px;border:none;border-bottom:2px solid var(--text);padding:12px 0;font-size:24px;font-weight:900;background:transparent;outline:none;font-family:'Noto Serif TC',serif;color:var(--text);margin-bottom:32px}
+.entry-input::placeholder{color:#ccc}
+.entry-hint{width:100%;max-width:340px;font-size:16px;font-weight:900;color:#888;letter-spacing:2px;margin-bottom:24px;margin-top:-16px}
+.api-key-row{width:100%;max-width:340px;margin-bottom:20px}
+.api-key-row label{font-size:14px;font-weight:700;color:#888;letter-spacing:2px;display:block;margin-bottom:6px}
+.api-key-row input{width:100%;border:none;border-bottom:2px solid #ccc;padding:8px 0;font-size:16px;font-weight:500;background:transparent;outline:none;font-family:'Noto Serif TC',serif;color:var(--text)}
+.api-key-row input:focus{border-bottom-color:var(--text)}
+.entry-btn{width:100%;max-width:340px;height:54px;background:var(--dark);color:white;border:none;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px;cursor:pointer;font-family:'Noto Serif TC',serif;transition:opacity 0.2s}
+.entry-btn:active{opacity:0.8}
+.entry-deco{position:absolute;bottom:30px;font-size:12px;color:#ccc;letter-spacing:2px}
+
+/* ===== Mode Page ===== */
+#mode-page{position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:8500;display:none;align-items:center;justify-content:center}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:520px;width:100%;padding:30px}
+.mode-card{background:white;border-radius:10px;padding:28px 24px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-top:4px solid #ccc}
+.mode-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px)}
+.mode-card h3{font-size:18px;font-weight:900;margin-bottom:6px;letter-spacing:2px}
+.mode-card p{font-size:13px;color:#888;line-height:1.6}
+
+/* ===== Face Map (Left Column) ===== */
+.face-map{display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:46px 40px 34px 34px 34px 34px 28px 28px 28px;gap:2px;padding:10px 8px}
+.face-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;transition:all 0.15s;border:1.5px solid #ddd6c8;background:transparent}
+.face-cell .fc-name{font-size:11px;font-weight:700;line-height:1.2}
+.face-cell .fc-count{font-size:8px;color:#999;line-height:1.2}
+.face-cell.partial{background:#fdf8f0;border-color:#d8c898}
+.face-cell.complete{background:#f2f7f2;border-color:#b8d0b4}
+.face-cell.active-part{background:#fff9f7;border-color:var(--active)}
+.face-cell.active-part .fc-name{color:var(--active)}
+.face-progress{margin:10px 8px;height:6px;background:#e8e3dd;border-radius:3px;overflow:hidden}
+.face-progress-bar{height:100%;background:var(--static);border-radius:3px;transition:width 0.3s}
+
+/* ===== Center Column - Obs Questions ===== */
+.obs-header{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.obs-header h2{font-size:16px;font-weight:900;letter-spacing:1px}
+.obs-header .obs-count{font-size:12px;color:#999;font-weight:700}
+.obs-section-label{font-size:10px;color:#999;font-weight:700;letter-spacing:1px;margin:14px 0 6px;text-transform:uppercase;padding:4px 0;border-bottom:1px dashed var(--border)}
+.obs-q{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.03)}
+.obs-q-num{font-size:10px;color:#bbb;font-weight:700;min-width:20px;text-align:right;padding-top:3px}
+.obs-q-text{font-size:13px;color:var(--text);flex:1;line-height:1.5}
+.obs-q-pills{display:flex;gap:4px;flex-shrink:0;align-items:center}
+.obs-pill{font-size:12px;padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-weight:500;color:#999;transition:all 0.15s;white-space:nowrap}
+.obs-pill:hover{border-color:#bbb}
+.obs-pill.selected{background:var(--static);color:white;border-color:var(--static)}
+.obs-pill-lr{font-size:10px;padding:2px 6px;border-radius:10px;border:1px solid var(--border);background:#faf8f5;cursor:pointer;font-family:'Noto Serif TC',serif;color:#bbb;transition:all 0.15s;white-space:nowrap}
+.obs-pill-lr.selected{background:var(--active);color:white;border-color:var(--active)}
+.obs-expand-btn{font-size:11px;color:#bbb;cursor:pointer;background:none;border:none;padding:2px 4px;font-family:'Noto Serif TC',serif}
+.obs-expand-btn:hover{color:var(--text)}
+.obs-lr-row{display:flex;gap:4px;align-items:center;padding:2px 0 2px 28px}
+
+/* ===== Right Column - Dim Index ===== */
+.dim-strip{width:42px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.dim-strip-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;padding:2px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
+.dim-strip-item:hover{background:rgba(0,0,0,0.03)}
+.dim-strip-item.active{background:white}
+.dim-strip-num{font-size:9px;font-weight:900;color:#999;line-height:1}
+.dim-strip-name{font-size:10px;font-weight:700;writing-mode:vertical-rl;letter-spacing:1px;color:var(--text);line-height:1}
+.dim-detail{flex:1;padding:6px 4px;overflow-y:auto}
+.dim-detail-title{font-size:11px;font-weight:900;text-align:center;margin-bottom:6px;letter-spacing:1px}
+.dim-part-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
+.dim-part-label{font-size:10px;width:24px;text-align:right;color:#888;font-weight:700;flex-shrink:0}
+.dim-ab-block{flex:1;height:16px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white}
+.dim-ab-block.static-fill{background:var(--static)}
+.dim-ab-block.dynamic-fill{background:var(--active)}
+.dim-ab-block.unfilled{background:#f0e8d8;color:#ccc}
+
+/* ===== Dim Scoring Page ===== */
+#dim-page{display:none}
+.dim-sidebar{width:200px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.dim-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.dim-main-header{padding:12px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;background:white}
+.dim-main-header h2{margin:0;font-size:18px;font-weight:700;flex:1}
+.dim-scoring-area{flex:1;padding:10px 20px;overflow-y:auto}
+.dim-footer{background:white;border-top:1px solid var(--border);padding:10px 20px;flex-shrink:0}
+.cat-header{padding:14px 16px;font-size:14px;font-weight:900;letter-spacing:2px;border-bottom:1px solid rgba(0,0,0,0.05);position:sticky;top:0;z-index:10}
+.dim-item{padding:14px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
+.dim-item.active{background:white!important;color:var(--text)!important;font-weight:900}
+.status-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.1);flex-shrink:0;margin-left:10px}
+.status-dot.done{background:var(--static)}
+.score-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.part-label{width:80px;text-align:center;font-size:14px;font-weight:700;background:#f0ede8;padding:8px 0;border-radius:6px}
+.option-box{flex:1;position:relative}
+.option-box input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;z-index:2}
+.option-label{display:block;padding:14px 4px;text-align:center;background:white;box-shadow:0 1px 2px rgba(0,0,0,0.05);border-radius:8px;font-size:16px;font-weight:500;color:#bbb;transition:all 0.2s}
+.static-type input:checked+.option-label{background:var(--static);color:white;box-shadow:none}
+.dynamic-type input:checked+.option-label{background:var(--active);color:white;box-shadow:none}
+.result-row{display:flex;align-items:stretch;gap:8px}
+.result-box{flex:1;background:#f4f1ed;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#888}
+.result-mid{flex:1.5;text-align:center;font-size:22px;font-weight:700;background:white;padding:10px 0;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.obs-basis-btn{background:none;border:none;color:#999;font-size:11px;cursor:pointer;padding:2px 8px;font-family:'Noto Serif TC',serif}
+.obs-basis-btn:hover{color:var(--text)}
+.obs-basis-panel{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:4px 0 8px;font-size:13px;text-align:center}
+.obs-basis-panel .basis-item{padding:3px 0;color:var(--text)}
+.obs-basis-panel .basis-mark{display:inline-block;width:18px;text-align:center}
+
+/* ===== Report Overlay ===== */
+#report-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:3000;padding:15px;overflow-y:auto}
+.report-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.report-name{width:50%;border-bottom:2px solid var(--text);padding:8px 0;font-size:28px;font-weight:900;font-family:'Noto Serif TC',serif}
+.report-title{font-size:28px;font-weight:900;letter-spacing:1px}
+.stat-grid{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;margin-bottom:4px}
+.stat-item{padding:6px 10px;display:flex;flex-direction:column;justify-content:center;border-radius:4px}
+.stat-item span{font-size:16px;font-weight:900;white-space:nowrap}
+.stat-val{font-size:18px;font-weight:900;font-family:monospace}
+.s-overall{grid-column:2/span 13;background:var(--dark);color:white;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px}
+.s-pre{grid-column:2/8;background:#f0ebe5;border-radius:4px 0 0 4px}
+.s-luck{grid-column:8/11;background:#e5edf0}
+.s-post{grid-column:11/15;background:#e8f0e5;border-radius:0 4px 4px 0}
+.s-lead{grid-column:2/5;background:#ebe6e0;border-radius:4px 0 0 0}
+.s-sub{grid-column:5/8;background:#f5f2ed;border-radius:0 4px 0 0}
+.ds-bar-wrap{display:grid;grid-template-columns:35px 1fr;gap:1px;margin-bottom:4px}
+.ds-bar{height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee;display:flex;align-items:center}
+.ds-bar-static{height:100%;background:var(--static);transition:width 0.4s ease}
+.ds-bar-dynamic{height:100%;background:var(--active);transition:width 0.4s ease}
+.ds-bar-label{position:absolute;left:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.ds-bar-label-r{position:absolute;right:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.matrix-wrap{width:100%;margin-top:5px}
+.matrix-layout{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px}
+.matrix-labels{grid-column:1;display:flex;flex-direction:column;gap:2px}
+.row-label{height:28px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#666;font-weight:900}
+.matrix-col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dim-header-v{height:70px;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;padding:4px 0;border-radius:3px 3px 0 0;line-height:1.3}
+.prop-bar{height:12px;background:#eee;border-radius:2px}
+.prop-bar.red{background:var(--active)}
+.prop-bar.green{background:var(--static)}
+.coeff-lbl{height:14px;font-size:12px;font-weight:900;color:#666;display:flex;align-items:center;justify-content:center;font-family:monospace}
+.stack-area{height:60px;display:flex;flex-direction:column-reverse;gap:1px;background:var(--bg);border-bottom:1px solid #eee;border-radius:2px}
+.stack-unit{width:100%;height:5px;background:var(--gold);opacity:0.8}
+.im-cell{height:28px;width:100%;background:#f9f7f4;border-radius:2px}
+.im-box{height:100%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;border-radius:2px}
+.im-box.red{background:var(--active);opacity:0.95}
+.im-box.green{background:var(--static);opacity:0.95}
+.legend{font-size:14px;color:#aaa;margin-top:10px;display:flex;justify-content:center;gap:20px;font-weight:900}
+.report-actions{display:flex;flex-direction:row;gap:8px;margin-top:16px;flex-wrap:wrap;padding-bottom:20px}
+.btn-back{flex:1;height:48px;background:transparent;color:var(--dark);border:2px solid var(--dark);border-radius:8px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif}
+.btn-line{flex:1;height:48px;background:#06C755;color:white;border:none;border-radius:8px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Noto Serif TC',serif}
+.btn-ai{flex-basis:100%;height:48px;background:var(--gold);color:white;border:none;border-radius:8px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;margin:0}
+.btn-ai:disabled{opacity:0.6;cursor:not-allowed}
+.ai-section{margin-top:16px;padding:16px;background:#faf8f5;border-radius:10px;border:1px solid var(--border)}
+.ai-section h3{margin:0 0 12px;font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text)}
+.ai-block{margin-bottom:14px}
+.ai-block h4{margin:0 0 4px;font-size:15px;font-weight:900;color:var(--gold)}
+.ai-block p{margin:0;font-size:15px;line-height:1.8;color:#444}
+.ai-loading{text-align:center;padding:30px 0;color:#999;font-size:16px;font-weight:700}
+.ai-loading .dots::after{content:'';animation:dots 1.5s steps(4,end) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.detail-section{margin-top:16px}
+.detail-section h3{margin:0 0 10px;font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text)}
+.detail-group{margin-bottom:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.detail-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f0ede8;cursor:pointer;font-size:14px;font-weight:900;color:var(--text);user-select:none}
+.detail-group-header .toggle-arrow{transition:transform 0.2s;font-size:12px;color:#999}
+.detail-group-header.collapsed .toggle-arrow{transform:rotate(-90deg)}
+.detail-group-body{padding:6px 14px 10px}
+.detail-group-body.hidden{display:none}
+.detail-check{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04);cursor:pointer}
+.detail-check:last-child{border-bottom:none}
+.detail-check input[type="checkbox"]{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:var(--static);cursor:pointer}
+.detail-check label{font-size:14px;color:#666;cursor:pointer;line-height:1.5;transition:color 0.2s}
+.detail-check input:checked+label{color:var(--text);font-weight:700}
+.detail-stats{font-size:13px;color:#999;font-weight:700;padding:8px 0 0;text-align:right}
+
+/* ===== Name Edit Overlay ===== */
+#name-edit-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:8000;display:none;align-items:center;justify-content:center}
+#name-edit-overlay.show{display:flex}
+.name-edit-box{background:white;border-radius:12px;padding:28px 24px;width:80%;max-width:320px;display:flex;flex-direction:column;gap:16px}
+.name-edit-box h3{margin:0;font-size:18px;font-weight:900;letter-spacing:2px}
+.name-edit-input{border:none;border-bottom:2px solid var(--text);padding:8px 0;font-size:22px;font-weight:900;font-family:'Noto Serif TC',serif;outline:none;width:100%}
+.name-edit-btns{display:flex;gap:8px}
+.name-edit-btns button{flex:1;height:44px;border-radius:8px;font-size:16px;font-weight:900;font-family:'Noto Serif TC',serif;cursor:pointer;border:none}
+.name-edit-confirm{background:var(--dark);color:white}
+.name-edit-cancel{background:#f0ede8;color:var(--text)}
+
+/* ===== Knowledge placeholder ===== */
+#knowledge-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:7000;align-items:center;justify-content:center}
+#knowledge-overlay .k-msg{font-size:24px;font-weight:900;color:#ccc;letter-spacing:4px}
+</style>
+</head>
+<body>
+
+<!-- Entry Page -->
+<div id="entry-page">
+  <div class="entry-logo">風鑑學堂</div>
+  <div class="entry-sub">人相兵法</div>
+  <input class="entry-input" id="entry-name" placeholder="輸入姓名" maxlength="20">
+  <div class="entry-hint">存檔後，請用相同姓名登入</div>
+  <div class="api-key-row">
+    <label>Anthropic API Key（選填，用於 AI 評析）</label>
+    <input type="password" id="entry-api-key" placeholder="sk-ant-..." autocomplete="off">
+  </div>
+  <button class="entry-btn" onclick="startApp()">開始</button>
+  <div class="entry-deco">2026</div>
+</div>
+
+<!-- Top Nav Bar -->
+<nav id="top-nav">
+  <div class="nav-brand" onclick="showModePage()">風鑑學堂 人相兵法</div>
+  <div class="nav-tab" id="nav-obs" onclick="showObsPage()">各部位觀察</div>
+  <div class="nav-tab" id="nav-dim" onclick="showDimPage()">13係數評分</div>
+  <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">13項目標準</div>
+  <div class="nav-spacer"></div>
+  <div class="nav-name" id="nav-name" onclick="editName()"></div>
+  <button class="nav-report" onclick="showReport()">兵法報告 &#x2197;</button>
+</nav>
+
+<!-- Mode Page -->
+<div id="mode-page">
+  <div class="mode-grid">
+    <div class="mode-card" style="border-top-color:#d97757" onclick="showObsPage()">
+      <h3>各部位觀察</h3>
+      <p>逐一觀察頭、額、耳、眉、眼、鼻、口等各部位特徵條件</p>
+    </div>
+    <div class="mode-card" style="border-top-color:#8ba888" onclick="showDimPage()">
+      <h3>13係數評分</h3>
+      <p>根據觀察結果，對形勢、經緯、方圓等13個維度進行靜動評分</p>
+    </div>
+    <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
+      <h3>13項目標準</h3>
+      <p>查看每個維度的判斷標準與依據說明</p>
+    </div>
+    <div class="mode-card" style="border-top-color:#8a9aaa" onclick="showReport()">
+      <h3>兵法報告</h3>
+      <p>查看綜合係數矩陣、動靜比例與AI評析報告</p>
+    </div>
+  </div>
+</div>
+
+<!-- App Body: 3-column layout for Obs page -->
+<div id="app-body">
+  <!-- Obs page -->
+  <div id="obs-page" class="three-col" style="display:none">
+    <div class="col-left" id="face-map-col"></div>
+    <div class="col-center" id="obs-center"></div>
+    <div class="col-right" id="dim-index-col"></div>
+  </div>
+  <!-- Dim scoring page -->
+  <div id="dim-page" class="three-col">
+    <div class="dim-sidebar" id="sidebar"></div>
+    <div class="dim-main">
+      <div class="dim-main-header">
+        <h2 id="dim-title">系統載入中...</h2>
+      </div>
+      <div class="dim-scoring-area" id="scoring-area"></div>
+      <div class="dim-footer" id="footer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Name Edit Overlay -->
+<div id="name-edit-overlay">
+  <div class="name-edit-box">
+    <h3>修改姓名</h3>
+    <input class="name-edit-input" id="name-edit-input" maxlength="20">
+    <div class="name-edit-btns">
+      <button class="name-edit-cancel" onclick="closeEditName()">取消</button>
+      <button class="name-edit-confirm" onclick="confirmEditName()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Knowledge Overlay -->
+<div id="knowledge-overlay">
+  <div class="k-msg">建置中</div>
+</div>
+
+<!-- Report Overlay -->
+<div id="report-overlay">
+  <div class="report-top">
+    <div class="report-name" id="report-name-display"></div>
+    <div class="report-title">人相兵法</div>
+  </div>
+  <div class="stat-grid"><div></div><div class="stat-item s-overall"><span>總合係數 <strong class="stat-val" id="v-total">0.0</strong></span></div></div>
+  <div class="stat-grid"><div></div><div class="stat-item s-pre"><span>先天</span><strong class="stat-val" id="v-pre">0.0</strong></div><div class="stat-item s-luck"><span>運氣</span><strong class="stat-val" id="v-luck">0.0</strong></div><div class="stat-item s-post"><span>後天</span><strong class="stat-val" id="v-post">0.0</strong></div></div>
+  <div class="stat-grid"><div></div><div class="stat-item s-lead"><span>老闆</span><strong class="stat-val" id="v-lead">0.0</strong></div><div class="stat-item s-sub"><span>主管</span><strong class="stat-val" id="v-sub">0.0</strong></div></div>
+  <div class="ds-bar-wrap"><div></div><div class="ds-bar" id="ds-bar"><div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div><span class="ds-bar-label" id="ds-label-s">靜 0</span><span class="ds-bar-label-r" id="ds-label-d">動 0</span></div></div>
+  <div class="matrix-wrap"><div class="matrix-layout" id="matrix-layout"><div class="matrix-labels" id="matrix-labels"></div></div></div>
+  <div class="legend"><span><span style="color:var(--static)">&#9632;</span> 靜</span><span><span style="color:var(--active)">&#9632;</span> 動</span><span><span style="color:var(--gold)">&#9632;</span> 係數</span></div>
+  <div id="ai-analysis-area"></div>
+  <div class="report-actions">
+    <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
+    <button class="btn-back" onclick="closeReport()" style="flex:1;margin:0;">&#8592; 修改評分</button>
+    <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
+    <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-ai" onclick="generateAI()" id="btn-ai">生成 AI 評析</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
+const PARTS_SHORT=["頭","上","中","下","耳","眉","眼","鼻","口"];
+const PALETTE=[{bg:"#f0ebe5",tx:"#4a453e"},{bg:"#ece4db",tx:"#4a4138"},{bg:"#ebe6e0",tx:"#45403a"},{bg:"#f5efe6",tx:"#4d463d"},{bg:"#f2ece4",tx:"#4a433b"},{bg:"#e8e2d9",tx:"#403a31"},{bg:"#e5edf0",tx:"#3b4d54"},{bg:"#d9e5eb",tx:"#2d3a40"},{bg:"#cedde6",tx:"#253138"},{bg:"#e8f0e5",tx:"#3d4a3b"},{bg:"#dce8d9",tx:"#2e3a2c"},{bg:"#d1e0cc",tx:"#243122"},{bg:"#c6d8bf",tx:"#1d291b"}];
+const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"方",b:"圓",aT:"動",bT:"靜",view:"成就"},{cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
+
+/* ===== Observation Data ===== */
+const OBS_GROUPS=[
+  {name:'頭 — 頂骨',items:[{id:'h01',label:'左頂骨龜背，緩緩向中間隆起'},{id:'h02',label:'右頂骨龜背，緩緩向中間隆起'},{id:'h04L',label:'左頂骨圓而不方'},{id:'h04R',label:'右頂骨圓而不方'},{id:'h03',label:'左右頂骨大小一致'}]},
+  {name:'頭 — 枕骨',items:[{id:'h07',label:'枕骨圓（後腦為圓不為平）'},{id:'h08',label:'枕骨兩側一致，無傾斜'},{id:'h09',label:'枕骨有凹凸或自剋骨'},{id:'h05',label:'中線直前（百會穴→前方為直線）'},{id:'h06',label:'中線直後（百會穴→枕骨為直線）'}]},
+  {name:'頭 — 華陽骨',items:[{id:'h10',label:'左華陽圓隆起，不尖平凹'},{id:'h11',label:'右華陽圓隆起，不尖平凹'},{id:'h13',label:'左華陽平直'},{id:'h14',label:'右華陽平直'},{id:'h12',label:'左右華陽大小一致'}]},
+  {name:'上停（額）',items:[{id:'f01',label:'額有疵（有痕紋痣疤）'},{id:'f02',label:'額平寬（正面看平且寬）'},{id:'f03',label:'額無凹凸（無左低右傾）'},{id:'f04',label:'額隆（側面有隆起弧度）'},{id:'f05',label:'額立（側面偏直上非斜上）'},{id:'f06',label:'日月角隆（側看隆起）'},{id:'f07',label:'日月角開（正面看偏兩側）'}]},
+  {name:'耳',paired:true,pairLabel:'耳',items:[{id:'ear_01',label:'耳長（耳尖端到耳垂長度超過眼到鼻準底的 2/3）'},{id:'ear_02',label:'耳高（耳上緣在眉眼之間、齊眉或以上）'},{id:'ear_03',label:'耳立（耳上端與耳垂中央一直線，接近垂直，無提耳）'},{id:'ear_04',label:'耳圓（上半部圓弧完整，上耳輪不往下翻，耳輪圓無凹陷或波浪）'},{id:'ear_05',label:'耳大'},{id:'ear_06',label:'耳厚（耳肉多）'},{id:'ear_07',label:'耳堅（耳肉不軟）'},{id:'ear_08',label:'輪廓（有輪有廓，輪廓分明）'},{id:'ear_09',label:'輪包廓（正面看耳廓不擋耳輪）'},{id:'ear_10',label:'有垂珠'}],sharedItem:{id:'e00',label:'左右耳高度、大小、耳型一致'}},
+  {name:'眉 — 眉型',paired:true,pairLabel:'眉',items:[{id:'brow_01',label:'眉長過目'},{id:'brow_02',label:'眉彎（尾1/3有彎朝下）'},{id:'brow_03',label:'眉平（一條線，無彎）'},{id:'brow_04',label:'眉有鷹角（眉 2/3 處上緣有明顯轉折，類似三角形）'},{id:'brow_06',label:'眉有中斷'},{id:'brow_07',label:'印堂無眉毛（眉頭不蓋到印堂）'},{id:'brow_14',label:'眉頭延伸線不到山根（眉頭方向不朝山根延伸）'},{id:'brow_08',label:'眉尾有聚（收攏不散）'},{id:'brow_11',label:'眉長有揚（眉尾往上）'},{id:'brow_15',label:'眉短且濃（眉不過目且一小段濃短）'}]},
+  {name:'眉 — 眉質',paired:true,pairLabel:'眉',items:[{id:'brow_05',label:'眉質勻（毛順，濃淡均勻，不粗不亂）'},{id:'brow_09',label:'眉身鋪陳有致（毛距相等，根根見肉）'},{id:'brow_16',label:'根根見肉（毛距可見皮膚）'}]},
+  {name:'眉 — 眉位',paired:true,pairLabel:'眉',items:[{id:'brow_10',label:'眉附骨位（眉毛長在眉骨上）'},{id:'brow_12',label:'眉高居額（眉毛高過或在眉骨上方，位置高在額中）'},{id:'brow_13',label:'眉不壓眼（間距一指幅以上）'}],sharedItem:{id:'m00',label:'雙眉大小、高低一致'}},
+  {name:'眼',paired:true,pairLabel:'眼',items:[{id:'eye_01a',label:'眼細長'},{id:'eye_01b',label:'眼大長'},{id:'eye_02',label:'眼平（眼尾不朝上或朝下）'},{id:'eye_03',label:'眼弧（眼型有弧度，上眼瞼不偏三角，下眼瞼稍有弧度）'},{id:'eye_04',label:'眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）'},{id:'eye_05',label:'刀裁（眼尾有刀裁，後眥如刀裁平整）'}],sharedItem:{id:'y00',label:'左右眼高度、大小、眼型一致'}},
+  {name:'鼻',items:[{id:'n01',label:'鼻長（山根到鼻準，與鼻準到下巴接近或更長，與印堂到髮際線接近或更長）'},{id:'n02',label:'鼻高（鼻樑（年壽）要高）'},{id:'n03',label:'鼻直（山根到鼻準直線與面部中線重合）'},{id:'n04',label:'鼻肉多於骨'},{id:'n05',label:'鼻樑有明顯起節'}]},
+  {name:'口 — 口型',items:[{id:'k01',label:'口大（開大合小）'},{id:'k02',label:'涯岸（唇邊界明顯，唇線清晰，唇有肉）'},{id:'k07',label:'唇厚均（上下唇差不多）'},{id:'k09',label:'閉合線為水平一字'},{id:'k08',label:'閉合線有曲度弧度'},{id:'k10',label:'口中線在臉中線上'},{id:'k11',label:'口左右一致（口無歪斜，左右無大小區別）'}]},
+  {name:'口 — 嘴角',items:[{id:'k03',label:'嘴角有收'},{id:'k06',label:'嘴角朝上'},{id:'k05',label:'嘴角平（水平一字）'},{id:'k04',label:'嘴角朝下'}]},
+  {name:'顴',paired:true,pairLabel:'顴',items:[{id:'zy_01',label:'顴高（靠近眼下緣）'},{id:'zy_02',label:'顴隆（顴骨視覺明顯且隆起有肉）'},{id:'zy_03',label:'顴肉多於骨'},{id:'zy_04',label:'顴鼻相稱（顴骨隆起幅度與鼻相稱：鼻低顴低或鼻高顴高）'}]},
+  {name:'人中',items:[{id:'r01',label:'人中深（人中溝深，如剖竹狀）'},{id:'r02',label:'人中長（人中夠長，至少食指寬）'},{id:'r03',label:'人中直（人中到承漿連線垂直，與面部中線重合，且切分之左右唇大小相等）'}]},
+  {name:'地閣',items:[{id:'g01',label:'地閣起（豐滿有起，承漿凹）'},{id:'g02',label:'地閣平（下巴骨平，無凹凸）'},{id:'g03',label:'地閣圓（下巴骨圓）'},{id:'g04',label:'地閣寬（至少與口同寬）'}]},
+  {name:'頤',paired:true,pairLabel:'頤',items:[{id:'jaw_01',label:'頤豐（頤骨豐隆有肉）'},{id:'jaw_02',label:'頤削'},{id:'jaw_03',label:'頤圓（頤骨有弧度，有肉）'},{id:'jaw_04',label:'頤平直（頤骨平直，不隆不凹不尖削）'}],sharedItem:{id:'i00',label:'左右頤大小一致'}}
+];
+const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
+
+/* Face map part mapping for left column */
+const FACE_MAP_PARTS=[
+  {name:'頭',obsIdx:0,col:'1/4',row:'1/2'},
+  {name:'額',obsIdx:1,col:'1/4',row:'2/3'},
+  {name:'左耳',obsIdx:2,col:'1/2',row:'3/7',side:'L'},
+  {name:'右耳',obsIdx:2,col:'3/4',row:'3/7',side:'R'},
+  {name:'眉',obsIdx:3,col:'2/3',row:'3/4'},
+  {name:'眼',obsIdx:4,col:'2/3',row:'4/5'},
+  {name:'顴',obsIdx:7,col:'2/3',row:'5/6'},
+  {name:'鼻',obsIdx:5,col:'2/3',row:'6/7'},
+  {name:'左頤',obsIdx:10,col:'1/2',row:'7/10',side:'L'},
+  {name:'右頤',obsIdx:10,col:'3/4',row:'7/10',side:'R'},
+  {name:'人中',obsIdx:8,col:'2/3',row:'7/8'},
+  {name:'口',obsIdx:6,col:'2/3',row:'8/9'},
+  {name:'地閣',obsIdx:9,col:'2/3',row:'9/10'}
+];
+
+let obsData={}, obsOverride={}, curObsPart=0;
+
+function gv(id,side){if(!side)return !!obsData[id];const k=side+'_'+id;return k in obsOverride?!!obsOverride[k]:!!obsData[id];}
+
+/* ===== recalcFromObs ===== */
+function recalcFromObs(){
+  const hasAny=Object.keys(obsData).length>0;
+  if(!hasAny){for(let d=0;d<4;d++)data[d]=Array(9).fill(null);return;}
+  const ck=id=>!!obsData[id],cnt=(...c)=>c.filter(Boolean).length;let s;
+  s=cnt(ck('h01'),ck('h02'),ck('h07')&&!ck('h09'),ck('h10'),ck('h11'));data[0][0]=s>=3?'A':'B';
+  s=cnt(ck('f02'),ck('f04'),!ck('f01'));data[0][1]=s>=3?'A':'B';
+  const d0eL=cnt(gv('ear_01','L'),gv('ear_04','L')&&gv('ear_08','L')&&gv('ear_09','L'),gv('ear_02','L'),gv('ear_10','L'));
+  const d0eR=cnt(gv('ear_01','R'),gv('ear_04','R')&&gv('ear_08','R')&&gv('ear_09','R'),gv('ear_02','R'),gv('ear_10','R'));
+  data[0][4]=(d0eL+d0eR)>=8?'A':'B';
+  const d0mL=cnt(gv('brow_01','L'),gv('brow_05','L'),!gv('brow_04','L'),!gv('brow_06','L'));
+  const d0mR=cnt(gv('brow_01','R'),gv('brow_05','R'),!gv('brow_04','R'),!gv('brow_06','R'));
+  data[0][5]=(d0mL+d0mR)>=8?'A':'B';
+  const d0yL=cnt(gv('eye_01a','L')||gv('eye_01b','L'),gv('eye_04','L'),gv('eye_05','L'));
+  const d0yR=cnt(gv('eye_01a','R')||gv('eye_01b','R'),gv('eye_04','R'),gv('eye_05','R'));
+  data[0][6]=(d0yL+d0yR)>=6?'A':'B';
+  const d0n=cnt(ck('n01'),ck('n02'),ck('n04'),!ck('n05'));data[0][7]=d0n>=4?'A':'B';
+  const d0k=cnt(ck('k01'),ck('k02'),ck('k03'),!ck('k04'));data[0][8]=d0k>=4?'A':'B';
+  s=cnt(d0mL>=4,d0mR>=4,d0yL>=3,d0yR>=3,d0n>=4,gv('zy_03','L'),gv('zy_03','R'));data[0][2]=s>=4?'A':'B';
+  s=cnt(d0k>=4,ck('r01'),ck('r02'),ck('g01'),gv('jaw_01','L'),gv('jaw_01','R'));data[0][3]=s>=3?'A':'B';
+  s=(ck('h03')?2:0)+(ck('h08')?1:0)+(ck('h12')?2:0);data[1][0]=s>=3?'A':'B';
+  s=cnt(!ck('f01')&&ck('f03'),ck('f07'),ck('f06'));data[1][1]=s>=3?'A':'B';
+  const d1eL=cnt(gv('ear_02','L'),gv('ear_03','L'),gv('ear_05','L'),gv('ear_06','L'),gv('ear_07','L'));
+  const d1eR=cnt(gv('ear_02','R'),gv('ear_03','R'),gv('ear_05','R'),gv('ear_06','R'),gv('ear_07','R'));
+  data[1][4]=(d1eL+d1eR+(ck('e00')?1:0))>=11?'A':'B';
+  const d1mL=cnt(gv('brow_07','L'),gv('brow_08','L'),gv('brow_09','L'),gv('brow_01','L'),gv('brow_10','L'),gv('brow_11','L'),gv('brow_16','L'),gv('brow_12','L'),gv('brow_13','L'),gv('brow_14','L'),gv('brow_01','L')&&gv('brow_04','L'),ck('m00'));
+  const d1mR=cnt(gv('brow_07','R'),gv('brow_08','R'),gv('brow_09','R'),gv('brow_01','R'),gv('brow_10','R'),gv('brow_11','R'),gv('brow_16','R'),gv('brow_12','R'),gv('brow_13','R'),gv('brow_14','R'),gv('brow_01','R')&&gv('brow_04','R'),ck('m00'));
+  data[1][5]=(d1mL>=7&&d1mR>=7)?'A':'B';
+  const d1yL=cnt(gv('eye_01a','L'),gv('eye_02','L'),gv('eye_04','L'),gv('eye_05','L'));
+  const d1yR=cnt(gv('eye_01a','R'),gv('eye_02','R'),gv('eye_04','R'),gv('eye_05','R'));
+  data[1][6]=(d1yL+d1yR+(ck('y00')?1:0))>=9?'A':'B';
+  const d1n=cnt(ck('n02'),ck('n03'),ck('n01'),!ck('n05'));data[1][7]=d1n>=4?'A':'B';
+  const d1k=cnt(ck('k01'),ck('k07'),ck('k05'),ck('k10'));data[1][8]=d1k>=4?'A':'B';
+  const d1qL=gv('zy_01','L')&&gv('zy_02','L')&&gv('zy_03','L'),d1qR=gv('zy_01','R')&&gv('zy_02','R')&&gv('zy_03','R');
+  s=cnt(d1mL>=7,d1mR>=7,d1yL>=4,d1yR>=4,d1n>=4,d1qL,d1qR);data[1][2]=s>=4?'A':'B';
+  s=cnt(d1k>=4,ck('r01'),ck('r02'),ck('g02'),ck('g04'),!gv('jaw_02','L')&&!gv('jaw_02','R'),ck('i00'));data[1][3]=s>=3?'A':'B';
+  s=cnt(ck('h04L'),ck('h04R'),!ck('h09'),ck('h10'),ck('h11'));data[2][0]=s>=3?'B':'A';
+  s=cnt(ck('f03'),ck('f04'));data[2][1]=s>=2?'B':'A';
+  const d2eL=cnt(gv('ear_04','L'),gv('ear_08','L'),gv('ear_09','L')),d2eR=cnt(gv('ear_04','R'),gv('ear_08','R'),gv('ear_09','R'));
+  data[2][4]=(d2eL+d2eR)>=6?'B':'A';
+  const d2mL=cnt(gv('brow_02','L'),!gv('brow_04','L')),d2mR=cnt(gv('brow_02','R'),!gv('brow_04','R'));
+  data[2][5]=(d2mL+d2mR)>=4?'B':'A';
+  const d2yL=cnt(gv('eye_03','L'),gv('eye_04','L'),gv('eye_05','L')),d2yR=cnt(gv('eye_03','R'),gv('eye_04','R'),gv('eye_05','R'));
+  data[2][6]=(d2yL+d2yR)>=6?'B':'A';
+  const d2n=cnt(ck('n01'),!ck('n05'));data[2][7]=d2n>=2?'B':'A';
+  const d2k=cnt(ck('k02'),ck('k08'),ck('k03'));data[2][8]=d2k>=3?'B':'A';
+  s=cnt(d2mL>=2,d2mR>=2,d2yL>=3,d2yR>=3,d2n>=2,gv('zy_03','L')&&gv('zy_01','L'),gv('zy_03','R')&&gv('zy_01','R'));data[2][2]=s>=4?'B':'A';
+  s=cnt(d2k>=3,ck('r01'),ck('r02'),ck('g03'),gv('jaw_03','L'),gv('jaw_03','R'));data[2][3]=s>=3?'B':'A';
+  s=(ck('h05')?2:0)+(ck('h06')?1:0)+(ck('h13')?1:0)+(ck('h14')?1:0);data[3][0]=s>=3?'B':'A';
+  s=cnt(ck('f05'),ck('f07'));data[3][1]=s>=2?'B':'A';
+  const d3eL=cnt(gv('ear_02','L'),gv('ear_03','L'),gv('ear_01','L')),d3eR=cnt(gv('ear_02','R'),gv('ear_03','R'),gv('ear_01','R'));
+  data[3][4]=(d3eL+d3eR)>=6?'B':'A';
+  const d3mL=cnt(gv('brow_03','L')&&!gv('brow_04','L'),gv('brow_15','L')),d3mR=cnt(gv('brow_03','R')&&!gv('brow_04','R'),gv('brow_15','R'));
+  data[3][5]=(d3mL>=1&&d3mR>=1)?'B':'A';
+  const d3yL=cnt(gv('eye_01a','L'),!gv('eye_04','L'),!gv('eye_05','L')),d3yR=cnt(gv('eye_01a','R'),!gv('eye_04','R'),!gv('eye_05','R'));
+  data[3][6]=(d3yL+d3yR)>=6?'B':'A';
+  const d3n=cnt(ck('n02'),ck('n01'),ck('n03'));data[3][7]=d3n>=3?'B':'A';
+  const d3k=cnt(ck('k09'),ck('k03'),ck('k05'));data[3][8]=d3k>=3?'B':'A';
+  s=cnt(d3mL>=1,d3mR>=1,d3yL>=3,d3yR>=3,d3n>=3,gv('zy_04','L'),gv('zy_04','R'));data[3][2]=s>=4?'B':'A';
+  s=cnt(d3k>=3,ck('r03'),ck('g02'),ck('g04'),gv('jaw_04','L'),gv('jaw_04','R'));data[3][3]=s>=3?'B':'A';
+  _basisVars={d0mL,d0mR,d0yL,d0yR,d0n,d0k,d1mL,d1mR,d1yL,d1yR,d1n,d1k,d1qL,d1qR,d2mL,d2mR,d2yL,d2yR,d2n,d2k,d3mL,d3mR,d3yL,d3yR,d3n,d3k};
+}
+
+/* ===== Face Map Rendering (Left Column) ===== */
+function getPartCounts(obsIdx){
+  const part=OBS_PARTS[obsIdx];
+  let ck=0,tot=0;
+  part.groups.forEach(gi=>{const g=OBS_GROUPS[gi];tot+=g.items.length;if(g.sharedItem)tot++;ck+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem&&obsData[g.sharedItem.id])ck++;});
+  return{ck,tot};
+}
+
+function renderFaceMap(){
+  const el=document.getElementById('face-map-col');
+  let html='<div style="padding:10px 8px 4px;font-size:12px;font-weight:900;letter-spacing:1px;color:#888;text-align:center">面部觀察圖</div>';
+  html+='<div class="face-map">';
+  FACE_MAP_PARTS.forEach((fp,fi)=>{
+    const c=getPartCounts(fp.obsIdx);
+    let cls='face-cell';
+    if(fp.obsIdx===curObsPart) cls+=' active-part';
+    else if(c.ck===c.tot && c.tot>0) cls+=' complete';
+    else if(c.ck>0) cls+=' partial';
+    html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+'" onclick="gotoObsPart('+fp.obsIdx+')">';
+    html+='<span class="fc-name">'+fp.name+'</span>';
+    html+='<span class="fc-count">'+c.ck+'/'+c.tot+'</span>';
+    html+='</div>';
+  });
+  html+='</div>';
+  // Total progress bar
+  let totalCk=0,totalTot=0;
+  OBS_GROUPS.forEach(g=>{totalTot+=g.items.length;totalCk+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem){totalTot++;if(obsData[g.sharedItem.id])totalCk++;}});
+  const pct=totalTot>0?(totalCk/totalTot*100):0;
+  html+='<div class="face-progress"><div class="face-progress-bar" style="width:'+pct.toFixed(1)+'%"></div></div>';
+  html+='<div style="text-align:center;font-size:10px;color:#999;padding:2px 0">'+totalCk+' / '+totalTot+'</div>';
+  // Part list below map
+  html+='<div style="flex:1;overflow-y:auto;border-top:1px solid var(--border);margin-top:6px">';
+  OBS_PARTS.forEach((part,i)=>{
+    const c=getPartCounts(i);
+    const active=i===curObsPart;
+    const st=active?'background:white;border-left:3px solid var(--active);font-weight:900':'border-left:3px solid transparent';
+    html+='<div style="padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;justify-content:space-between;'+st+'" onclick="gotoObsPart('+i+')">';
+    html+='<span>'+part.name+'</span><span style="color:#999;font-size:10px">'+c.ck+'/'+c.tot+'</span></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* ===== Observation Center Column ===== */
+function renderObsCenter(){
+  const part=OBS_PARTS[curObsPart];
+  const el=document.getElementById('obs-center');
+  let totalCk=0,totalTot=0;
+  part.groups.forEach(gi=>{const g=OBS_GROUPS[gi];totalTot+=g.items.length;if(g.sharedItem)totalTot++;totalCk+=g.items.filter(it=>obsData[it.id]).length;if(g.sharedItem&&obsData[g.sharedItem.id])totalCk++;});
+
+  let html='<div class="obs-header"><h2>'+part.name+'</h2><span class="obs-count">'+totalCk+' / '+totalTot+'</span></div>';
+  let qNum=1;
+  part.groups.forEach(gi=>{
+    const group=OBS_GROUPS[gi];
+    const items=group.items;
+    html+='<div class="obs-section-label">'+group.name+'</div>';
+    for(const it of items){
+      const isPaired=!!group.paired;
+      const gn=group.pairLabel||group.name;
+      const lv=gv(it.id,'L'),rv=gv(it.id,'R'),same=lv===rv;
+      const checked=same&&lv;
+      const ind=!same;
+      html+='<div class="obs-q">';
+      html+='<span class="obs-q-num">'+qNum+'</span>';
+      html+='<span class="obs-q-text">'+it.label+'</span>';
+      html+='<span class="obs-q-pills">';
+      html+='<span class="obs-pill'+(checked?' selected':'')+'" onclick="onObsPillClick(\''+it.id+'\','+isPaired+',this)">'+(checked?'符合':'符合')+'</span>';
+      if(isPaired){
+        html+='<button class="obs-expand-btn" onclick="toggleLRRow(\''+it.id+'\',\''+gn+'\',this)">&#9654;</button>';
+      }
+      html+='</span></div>';
+      if(isPaired){
+        const sl=it.label.split('（')[0];
+        html+='<div class="obs-lr-row" id="lr-'+it.id+'" style="display:none">';
+        html+='<span class="obs-pill-lr'+(lv?' selected':'')+'" onclick="onLRClick(\''+it.id+'\',\'L\',this)">左'+gn+'</span>';
+        html+='<span class="obs-pill-lr'+(rv?' selected':'')+'" onclick="onLRClick(\''+it.id+'\',\'R\',this)">右'+gn+'</span>';
+        html+='</div>';
+      }
+      qNum++;
+    }
+    if(group.sharedItem){
+      const si=group.sharedItem;
+      const sChecked=!!obsData[si.id];
+      html+='<div class="obs-q" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px">';
+      html+='<span class="obs-q-num">'+qNum+'</span>';
+      html+='<span class="obs-q-text">'+si.label+'</span>';
+      html+='<span class="obs-q-pills"><span class="obs-pill'+(sChecked?' selected':'')+'" onclick="onObsPillClick(\''+si.id+'\',false,this)">符合</span></span>';
+      html+='</div>';
+      qNum++;
+    }
+  });
+  el.innerHTML=html;
+  el.scrollTop=0;
+}
+
+function onObsPillClick(id,isPaired,el){
+  const isSelected=el.classList.contains('selected');
+  if(isSelected){
+    delete obsData[id];
+    el.classList.remove('selected');
+  }else{
+    obsData[id]=true;
+    el.classList.add('selected');
+  }
+  if(isPaired){delete obsOverride['L_'+id];delete obsOverride['R_'+id];}
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  recalcFromObs();save();
+  _refreshObsUI();
+}
+
+function toggleLRRow(id,gn,btn){
+  const row=document.getElementById('lr-'+id);
+  if(!row)return;
+  if(row.style.display==='none'){row.style.display='flex';btn.innerHTML='&#9660;';}
+  else{row.style.display='none';btn.innerHTML='&#9654;';}
+}
+
+function onLRClick(baseId,side,el){
+  const key=side+'_'+baseId;
+  const curVal=gv(baseId,side);
+  if(curVal){
+    // turning off
+    if(obsData[baseId]){obsOverride[key]=false;}else{delete obsOverride[key];}
+    el.classList.remove('selected');
+  }else{
+    // turning on
+    if(!obsData[baseId]){obsOverride[key]=true;}else{delete obsOverride[key];}
+    el.classList.add('selected');
+  }
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  recalcFromObs();save();
+  // Update the main pill state
+  const lv=gv(baseId,'L'),rv=gv(baseId,'R');
+  const mainPills=document.querySelectorAll('.obs-pill');
+  // refresh properly
+  _refreshObsUI();
+}
+
+function onObsDefaultChange(id,el,isPaired){
+  if(isPaired&&el.indeterminate){
+    el.indeterminate=false;el.checked=true;
+    obsData[id]=true;
+    delete obsOverride['L_'+id];delete obsOverride['R_'+id];
+  }else{
+    if(el.checked)obsData[id]=true;else delete obsData[id];
+    if(isPaired){delete obsOverride['L_'+id];delete obsOverride['R_'+id];}
+  }
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  recalcFromObs();save();
+  _refreshObsUI();
+}
+
+function onOverrideChange(baseId,side,checked){
+  const key=side+'_'+baseId;
+  const defaultVal=!!obsData[baseId];
+  if(checked===defaultVal){delete obsOverride[key];}else{obsOverride[key]=checked;}
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  recalcFromObs();save();
+  _refreshObsUI();
+}
+
+function _refreshObsUI(){
+  const center=document.getElementById('obs-center');
+  const st=center?center.scrollTop:0;
+  const openLRs=new Set();
+  if(center){center.querySelectorAll('.obs-lr-row').forEach(r=>{if(r.style.display!=='none')openLRs.add(r.id);});}
+  renderObsCenter();
+  openLRs.forEach(rid=>{const r=document.getElementById(rid);if(r){r.style.display='flex';const btn=r.previousElementSibling?.querySelector('.obs-expand-btn');if(btn)btn.innerHTML='&#9660;';}});
+  if(center)center.scrollTop=st;
+  renderFaceMap();
+  renderDimIndex();
+}
+
+/* ===== Right Column - Dim Index ===== */
+let curDimIdx=0;
+
+function renderDimIndex(){
+  const el=document.getElementById('dim-index-col');
+  let html='<div class="dim-strip">';
+  DIMS.forEach((d,i)=>{
+    const active=i===curDimIdx;
+    html+='<div class="dim-strip-item'+(active?' active':'')+'" onclick="selectDimIdx('+i+')">';
+    html+='<span class="dim-strip-num">'+(i+1)+'</span>';
+    html+='<span class="dim-strip-name">'+d.a+d.b+'</span>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<div class="dim-detail">';
+  const d=DIMS[curDimIdx];
+  html+='<div class="dim-detail-title">'+d.a+d.b+' '+d.view+'</div>';
+  PARTS_SHORT.forEach((p,pi)=>{
+    const v=data[curDimIdx][pi];
+    html+='<div class="dim-part-row">';
+    html+='<span class="dim-part-label">'+p+'</span>';
+    if(v){
+      const t=v==='A'?d.aT:d.bT;
+      const label=v==='A'?d.a:d.b;
+      const cls=t==='靜'?'static-fill':'dynamic-fill';
+      html+='<div class="dim-ab-block '+cls+'">'+label+'</div>';
+    }else{
+      html+='<div class="dim-ab-block unfilled">-</div>';
+    }
+    html+='</div>';
+  });
+  const res=calcDim(curDimIdx);
+  if(res){
+    html+='<div style="text-align:center;margin-top:8px;font-size:11px;font-weight:900;color:'+(res.type==='靜'?'var(--static)':'var(--active)')+'">'+res.type+' ['+res.coeff.toFixed(1)+']</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function selectDimIdx(i){curDimIdx=i;renderDimIndex();}
+
+/* ===== Obs page legacy functions ===== */
+function gotoObsPart(i){curObsPart=i;renderFaceMap();renderObsCenter();renderDimIndex();}
+
+function toggleDetailGroup(header){header.classList.toggle('collapsed');header.nextElementSibling.classList.toggle('hidden');}
+
+function collectDetailForPrompt(){
+  const checked=[],unchecked=[];
+  for(const g of OBS_GROUPS){
+    for(const it of g.items){if(obsData[it.id])checked.push(g.name+'：'+it.label);else unchecked.push(g.name+'：'+it.label);}
+    if(g.sharedItem){if(obsData[g.sharedItem.id])checked.push(g.name+'：'+g.sharedItem.label);else unchecked.push(g.name+'：'+g.sharedItem.label);}
+  }
+  return{checked,unchecked};
+}
+
+function renderDetailConditions(){
+  const area=document.getElementById('detail-conditions-area');if(!area)return;
+  let tot=0,ck=0,html='<div class="detail-section"><h3>觀察條件紀錄</h3>';
+  for(const g of OBS_GROUPS){let cc=g.items.filter(it=>obsData[it.id]).length;let tt=g.items.length;
+    if(g.sharedItem){tt++;if(obsData[g.sharedItem.id])cc++;}
+    tot+=tt;ck+=cc;
+    html+='<div class="detail-group"><div class="detail-group-header collapsed" onclick="toggleDetailGroup(this)"><span>'+g.name+'（'+cc+'/'+tt+'）</span><span class="toggle-arrow">&#9660;</span></div><div class="detail-group-body hidden">';
+    for(const it of g.items){html+='<div class="detail-check"><input type="checkbox" id="rpt-'+it.id+'" '+(obsData[it.id]?'checked':'')+' disabled><label for="rpt-'+it.id+'">'+it.label+'</label></div>';}
+    if(g.sharedItem){const si=g.sharedItem;html+='<div class="detail-check"><input type="checkbox" id="rpt-'+si.id+'" '+(obsData[si.id]?'checked':'')+' disabled><label for="rpt-'+si.id+'">'+si.label+'</label></div>';}
+    html+='</div></div>';}
+  html+='<div class="detail-stats">已觀察：'+ck+' / '+tot+'</div></div>';area.innerHTML=html;
+}
+
+/* ===== Page Switching ===== */
+function setNavActive(tab){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(tab)document.getElementById(tab)?.classList.add('active');
+}
+
+function showModePage(){
+  document.getElementById('entry-page').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('mode-page').style.display='flex';
+  document.getElementById('report-overlay').style.display='none';
+  document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive(null);
+}
+
+function showObsPage(){
+  document.getElementById('entry-page').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('mode-page').style.display='none';
+  document.getElementById('app-body').style.display='flex';
+  document.getElementById('obs-page').style.display='flex';
+  document.getElementById('dim-page').style.display='none';
+  document.getElementById('report-overlay').style.display='none';
+  document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-obs');
+  renderFaceMap();renderObsCenter();renderDimIndex();
+}
+
+function showDimPage(){
+  document.getElementById('entry-page').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('mode-page').style.display='none';
+  document.getElementById('app-body').style.display='flex';
+  document.getElementById('obs-page').style.display='none';
+  document.getElementById('dim-page').style.display='flex';
+  document.getElementById('report-overlay').style.display='none';
+  document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-dim');
+  renderSidebar();renderMain();renderFooter();
+}
+
+function showKnowledgePage(){
+  document.getElementById('entry-page').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('mode-page').style.display='none';
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('report-overlay').style.display='none';
+  document.getElementById('knowledge-overlay').style.display='flex';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-know');
+}
+
+/* ===== 13 Dim Scoring Page ===== */
+const CAT_STYLE={"先天指數":"background:#4a453e;color:#fcfaf8","運氣指數":"background:#3b4d54;color:#fcfaf8","後天指數":"background:#3d4a3b;color:#fcfaf8"};
+const emptyData=()=>Array(13).fill(null).map(()=>Array(9).fill(null));
+let cur=0,data=emptyData(),_basisVars={};
+
+function save(){
+  if(!userName)return;
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()}).catch(e=>console.log('雲端儲存失敗',e));
+}
+function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
+function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=null);return vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(1):"0.0";}
+
+function renderSidebar(){
+  const el=document.getElementById('sidebar');let html='',lastCat='';
+  DIMS.forEach((d,i)=>{if(d.cat!==lastCat){html+='<div class="cat-header" style="'+CAT_STYLE[d.cat]+'">'+d.cat+'</div>';lastCat=d.cat;}
+    const c=PALETTE[i],res=calcDim(i),label=res?d.a+d.b+' · '+res.type+'['+res.coeff.toFixed(1)+']':d.a+d.b;
+    const ast=i===cur?'background:white;border-left:8px solid '+c.tx:'background:'+c.bg+';color:'+c.tx;
+    html+='<div class="dim-item'+(i===cur?' active':'')+'" style="'+ast+'" onclick="goto('+i+')"><span>'+label+'</span><div class="status-dot'+(res?' done':'')+'"></div></div>';});
+  el.innerHTML=html;
+}
+
+/* ===== DIM_BASIS_MAP ===== */
+const DIM_BASIS_MAP={
+0:{0:[{label:'左頂骨龜背隆起',ids:['h01'],pass:true},{label:'右頂骨龜背隆起',ids:['h02'],pass:true},{label:'枕骨圓且無凹凸自剋骨',ids:['h07','h09'],pass:"ck('h07')&&!ck('h09')"},{label:'左華陽圓隆起',ids:['h10'],pass:true},{label:'右華陽圓隆起',ids:['h11'],pass:true}],
+  1:[{label:'額平寬',ids:['f02'],pass:true},{label:'額隆',ids:['f04'],pass:true},{label:'額無疵',ids:['f01'],pass:false}],
+  2:[{label:'左眉為形（4項全中）',ids:['brow_01','brow_05','brow_04','brow_06'],pass:'_v.d0mL>=4',side:'L'},{label:'右眉為形（4項全中）',ids:['brow_01','brow_05','brow_04','brow_06'],pass:'_v.d0mR>=4',side:'R'},{label:'左眼為形（3項全中）',ids:['eye_01a','eye_01b','eye_04','eye_05'],pass:'_v.d0yL>=3',side:'L'},{label:'右眼為形（3項全中）',ids:['eye_01a','eye_01b','eye_04','eye_05'],pass:'_v.d0yR>=3',side:'R'},{label:'鼻為形（4項全中）',ids:['n01','n02','n04','n05'],pass:'_v.d0n>=4'},{label:'左顴肉多於骨',ids:['zy_03'],pass:true,side:'L'},{label:'右顴肉多於骨',ids:['zy_03'],pass:true,side:'R'}],
+  3:[{label:'口為形（4項全中）',ids:['k01','k02','k03','k04'],pass:'_v.d0k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣起',ids:['g01'],pass:true},{label:'左頤豐',ids:['jaw_01'],pass:true,side:'L'},{label:'右頤豐',ids:['jaw_01'],pass:true,side:'R'}],
+  4:[{label:'左耳長',ids:['ear_01'],pass:true,side:'L'},{label:'左耳圓輪包廓',ids:['ear_04','ear_08','ear_09'],pass:"gv('ear_04','L')&&gv('ear_08','L')&&gv('ear_09','L')",side:'L'},{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳有垂珠',ids:['ear_10'],pass:true,side:'L'},{label:'右耳長',ids:['ear_01'],pass:true,side:'R'},{label:'右耳圓輪包廓',ids:['ear_04','ear_08','ear_09'],pass:"gv('ear_04','R')&&gv('ear_08','R')&&gv('ear_09','R')",side:'R'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳有垂珠',ids:['ear_10'],pass:true,side:'R'}],
+  5:[{label:'左眉長過目',ids:['brow_01'],pass:true,side:'L'},{label:'左眉質勻',ids:['brow_05'],pass:true,side:'L'},{label:'左眉無鷹角',ids:['brow_04'],pass:false,side:'L'},{label:'左眉無中斷',ids:['brow_06'],pass:false,side:'L'},{label:'右眉長過目',ids:['brow_01'],pass:true,side:'R'},{label:'右眉質勻',ids:['brow_05'],pass:true,side:'R'},{label:'右眉無鷹角',ids:['brow_04'],pass:false,side:'R'},{label:'右眉無中斷',ids:['brow_06'],pass:false,side:'R'}],
+  6:[{label:'左眼長（細或大）',ids:['eye_01a','eye_01b'],pass:"gv('eye_01a','L')||gv('eye_01b','L')",side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼長（細或大）',ids:['eye_01a','eye_01b'],pass:"gv('eye_01a','R')||gv('eye_01b','R')",side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'}],
+  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻高',ids:['n02'],pass:true},{label:'鼻肉多於骨',ids:['n04'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'口大',ids:['k01'],pass:true},{label:'涯岸分明',ids:['k02'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角不朝下',ids:['k04'],pass:false}]},
+1:{0:[{label:'左右頂骨一致',ids:['h03'],pass:true},{label:'枕骨兩側一致',ids:['h08'],pass:true},{label:'左右華陽一致',ids:['h12'],pass:true}],
+  1:[{label:'額無疵且無凹凸',ids:['f01','f03'],pass:"!ck('f01')&&ck('f03')"},{label:'日月角開',ids:['f07'],pass:true},{label:'日月角隆',ids:['f06'],pass:true}],
+  2:[{label:'左眉為經（7/12以上）',ids:['brow_07','brow_08','brow_09','brow_01','brow_10','brow_11','brow_16','brow_12','brow_13','brow_14','brow_04','m00'],pass:'_v.d1mL>=7',side:'L'},{label:'右眉為經（7/12以上）',ids:['brow_07','brow_08','brow_09','brow_01','brow_10','brow_11','brow_16','brow_12','brow_13','brow_14','brow_04','m00'],pass:'_v.d1mR>=7',side:'R'},{label:'左眼為經（4項全中）',ids:['eye_01a','eye_02','eye_04','eye_05'],pass:'_v.d1yL>=4',side:'L'},{label:'右眼為經（4項全中）',ids:['eye_01a','eye_02','eye_04','eye_05'],pass:'_v.d1yR>=4',side:'R'},{label:'鼻為經（4項全中）',ids:['n02','n03','n01','n05'],pass:'_v.d1n>=4'},{label:'左顴高隆有肉',ids:['zy_01','zy_02','zy_03'],pass:'_v.d1qL',side:'L'},{label:'右顴高隆有肉',ids:['zy_01','zy_02','zy_03'],pass:'_v.d1qR',side:'R'}],
+  3:[{label:'口為經（4項全中）',ids:['k01','k07','k05','k10'],pass:'_v.d1k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'頤不削',ids:['jaw_02'],pass:false,side:'L'},{label:'左右頤一致',ids:['i00'],pass:true}],
+  4:[{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳立',ids:['ear_03'],pass:true,side:'L'},{label:'左耳大',ids:['ear_05'],pass:true,side:'L'},{label:'左耳厚',ids:['ear_06'],pass:true,side:'L'},{label:'左耳堅',ids:['ear_07'],pass:true,side:'L'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳立',ids:['ear_03'],pass:true,side:'R'},{label:'右耳大',ids:['ear_05'],pass:true,side:'R'},{label:'右耳厚',ids:['ear_06'],pass:true,side:'R'},{label:'右耳堅',ids:['ear_07'],pass:true,side:'R'},{label:'左右耳一致',ids:['e00'],pass:true}],
+  5:[{label:'左眉頭退印',ids:['brow_07'],pass:true,side:'L'},{label:'左眉尾有聚',ids:['brow_08'],pass:true,side:'L'},{label:'左眉身鋪陳有致',ids:['brow_09'],pass:true,side:'L'},{label:'左眉長過目',ids:['brow_01'],pass:true,side:'L'},{label:'左眉附骨位',ids:['brow_10'],pass:true,side:'L'},{label:'左眉長有揚',ids:['brow_11'],pass:true,side:'L'},{label:'左根根見肉',ids:['brow_16'],pass:true,side:'L'},{label:'左眉高居額',ids:['brow_12'],pass:true,side:'L'},{label:'左眉不壓眼',ids:['brow_13'],pass:true,side:'L'},{label:'左眉不沖根',ids:['brow_14'],pass:true,side:'L'},{label:'左眉彎長有鷹角',ids:['brow_01','brow_04'],pass:"gv('brow_01','L')&&gv('brow_04','L')",side:'L'},{label:'雙眉一致',ids:['m00'],pass:true},{label:'右眉頭退印',ids:['brow_07'],pass:true,side:'R'},{label:'右眉尾有聚',ids:['brow_08'],pass:true,side:'R'},{label:'右眉身鋪陳有致',ids:['brow_09'],pass:true,side:'R'},{label:'右眉長過目',ids:['brow_01'],pass:true,side:'R'},{label:'右眉附骨位',ids:['brow_10'],pass:true,side:'R'},{label:'右眉長有揚',ids:['brow_11'],pass:true,side:'R'},{label:'右根根見肉',ids:['brow_16'],pass:true,side:'R'},{label:'右眉高居額',ids:['brow_12'],pass:true,side:'R'},{label:'右眉不壓眼',ids:['brow_13'],pass:true,side:'R'},{label:'右眉不沖根',ids:['brow_14'],pass:true,side:'R'},{label:'右眉彎長有鷹角',ids:['brow_01','brow_04'],pass:"gv('brow_01','R')&&gv('brow_04','R')",side:'R'}],
+  6:[{label:'左眼細長',ids:['eye_01a'],pass:true,side:'L'},{label:'左眼平',ids:['eye_02'],pass:true,side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼細長',ids:['eye_01a'],pass:true,side:'R'},{label:'右眼平',ids:['eye_02'],pass:true,side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'},{label:'左右眼一致',ids:['y00'],pass:true}],
+  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻直',ids:['n03'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'口大',ids:['k01'],pass:true},{label:'唇厚均',ids:['k07'],pass:true},{label:'嘴角平',ids:['k05'],pass:true},{label:'口中線正',ids:['k10'],pass:true}]},
+2:{0:[{label:'左頂骨圓',ids:['h04L'],pass:true},{label:'右頂骨圓',ids:['h04R'],pass:true},{label:'枕骨無凹凸自剋骨',ids:['h09'],pass:false},{label:'左華陽圓',ids:['h10'],pass:true},{label:'右華陽圓',ids:['h11'],pass:true}],
+  1:[{label:'額無凹凸',ids:['f03'],pass:true},{label:'額隆',ids:['f04'],pass:true}],
+  2:[{label:'左眉為圓（2項全中）',ids:['brow_02','brow_04'],pass:'_v.d2mL>=2',side:'L'},{label:'右眉為圓（2項全中）',ids:['brow_02','brow_04'],pass:'_v.d2mR>=2',side:'R'},{label:'左眼為圓（3項全中）',ids:['eye_03','eye_04','eye_05'],pass:'_v.d2yL>=3',side:'L'},{label:'右眼為圓（3項全中）',ids:['eye_03','eye_04','eye_05'],pass:'_v.d2yR>=3',side:'R'},{label:'鼻為圓（2項全中）',ids:['n01','n05'],pass:'_v.d2n>=2'},{label:'左顴肉多且位置高',ids:['zy_03','zy_01'],pass:"gv('zy_03','L')&&gv('zy_01','L')",side:'L'},{label:'右顴肉多且位置高',ids:['zy_03','zy_01'],pass:"gv('zy_03','R')&&gv('zy_01','R')",side:'R'}],
+  3:[{label:'口為圓（3項全中）',ids:['k02','k08','k03'],pass:'_v.d2k>=3'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣圓',ids:['g03'],pass:true},{label:'左頤圓',ids:['jaw_03'],pass:true,side:'L'},{label:'右頤圓',ids:['jaw_03'],pass:true,side:'R'}],
+  4:[{label:'左耳圓',ids:['ear_04'],pass:true,side:'L'},{label:'左耳輪廓分明',ids:['ear_08'],pass:true,side:'L'},{label:'左耳輪包廓',ids:['ear_09'],pass:true,side:'L'},{label:'右耳圓',ids:['ear_04'],pass:true,side:'R'},{label:'右耳輪廓分明',ids:['ear_08'],pass:true,side:'R'},{label:'右耳輪包廓',ids:['ear_09'],pass:true,side:'R'}],
+  5:[{label:'左眉彎',ids:['brow_02'],pass:true,side:'L'},{label:'左眉無鷹角',ids:['brow_04'],pass:false,side:'L'},{label:'右眉彎',ids:['brow_02'],pass:true,side:'R'},{label:'右眉無鷹角',ids:['brow_04'],pass:false,side:'R'}],
+  6:[{label:'左眼有弧度',ids:['eye_03'],pass:true,side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼有弧度',ids:['eye_03'],pass:true,side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'}],
+  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
+  8:[{label:'涯岸分明',ids:['k02'],pass:true},{label:'閉合線有弧度',ids:['k08'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true}]},
+3:{0:[{label:'中線直前',ids:['h05'],pass:true},{label:'中線直後',ids:['h06'],pass:true},{label:'左華陽平直',ids:['h13'],pass:true},{label:'右華陽平直',ids:['h14'],pass:true}],
+  1:[{label:'額立',ids:['f05'],pass:true},{label:'日月角開',ids:['f07'],pass:true}],
+  2:[{label:'左眉為直（1項以上）',ids:['brow_03','brow_15'],pass:'_v.d3mL>=1',side:'L'},{label:'右眉為直（1項以上）',ids:['brow_03','brow_15'],pass:'_v.d3mR>=1',side:'R'},{label:'左眼為直（3項全中）',ids:['eye_01a','eye_04','eye_05'],pass:'_v.d3yL>=3',side:'L'},{label:'右眼為直（3項全中）',ids:['eye_01a','eye_04','eye_05'],pass:'_v.d3yR>=3',side:'R'},{label:'鼻為直（3項全中）',ids:['n02','n01','n03'],pass:'_v.d3n>=3'},{label:'左顴鼻相稱',ids:['zy_04'],pass:true,side:'L'},{label:'右顴鼻相稱',ids:['zy_04'],pass:true,side:'R'}],
+  3:[{label:'口為直（3項全中）',ids:['k09','k03','k05'],pass:'_v.d3k>=3'},{label:'人中直',ids:['r03'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'左頤平直',ids:['jaw_04'],pass:true,side:'L'},{label:'右頤平直',ids:['jaw_04'],pass:true,side:'R'}],
+  4:[{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳立',ids:['ear_03'],pass:true,side:'L'},{label:'左耳長',ids:['ear_01'],pass:true,side:'L'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳立',ids:['ear_03'],pass:true,side:'R'},{label:'右耳長',ids:['ear_01'],pass:true,side:'R'}],
+  5:[{label:'左眉平（無彎無鷹角）',ids:['brow_03','brow_04'],pass:"gv('brow_03','L')&&!gv('brow_04','L')",side:'L'},{label:'左眉短且濃',ids:['brow_15'],pass:true,side:'L'},{label:'右眉平（無彎無鷹角）',ids:['brow_03','brow_04'],pass:"gv('brow_03','R')&&!gv('brow_04','R')",side:'R'},{label:'右眉短且濃',ids:['brow_15'],pass:true,side:'R'}],
+  6:[{label:'左眼細長',ids:['eye_01a'],pass:true,side:'L'},{label:'左眼無鉤',ids:['eye_04'],pass:false,side:'L'},{label:'左眼無刀裁',ids:['eye_05'],pass:false,side:'L'},{label:'右眼細長',ids:['eye_01a'],pass:true,side:'R'},{label:'右眼無鉤',ids:['eye_04'],pass:false,side:'R'},{label:'右眼無刀裁',ids:['eye_05'],pass:false,side:'R'}],
+  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻直',ids:['n03'],pass:true}],
+  8:[{label:'閉合線水平一字',ids:['k09'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角平',ids:['k05'],pass:true}]}
+};
+
+function evalBasisPass(item){
+  const ck=id=>!!obsData[id],s=item.side;
+  if(item.pass===true) return item.ids.every(id=>s?gv(id,s):ck(id));
+  if(item.pass===false) return item.ids.every(id=>s?!gv(id,s):!ck(id));
+  try{return !!(new Function('ck','gv','_v','return '+item.pass)(ck,gv,_basisVars));}catch(e){return false;}
+}
+
+function _partNameFromIds(ids){const id=ids[0]||'';if(id.startsWith('ear_'))return'耳';if(id.startsWith('brow_'))return'眉';if(id.startsWith('eye_'))return'眼';if(id.startsWith('zy_'))return'顴';if(id.startsWith('jaw_'))return'頤';return'';}
+
+function toggleBasis(btn){
+  const panel=btn.parentElement.querySelector('.obs-basis-panel');
+  if(panel){panel.remove();btn.innerText='\u2304 依據';return;}
+  const dim=parseInt(btn.dataset.dim),pi=parseInt(btn.dataset.part);
+  const items=DIM_BASIS_MAP[dim]?.[pi]||[];
+  const skip=new Set();
+  let html='<div class="obs-basis-panel">';
+  items.forEach((item,idx)=>{
+    if(skip.has(idx))return;
+    if(!item.side){
+      const p=evalBasisPass(item);
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark">'+(p?'<span style="color:var(--static);font-weight:900">\u2713</span>':'<span style="color:var(--active);font-weight:900">\u2717</span>')+'</span>'+item.label+'</div>';
+      return;
+    }
+    if(item.side==='R')return;
+    const idsKey=JSON.stringify(item.ids);
+    let rItem=null;
+    for(let j=idx+1;j<items.length;j++){if(!skip.has(j)&&items[j].side==='R'&&JSON.stringify(items[j].ids)===idsKey){rItem=items[j];skip.add(j);break;}}
+    const lP=evalBasisPass(item);
+    const rP=rItem?evalBasisPass(rItem):evalBasisPass({...item,side:'R'});
+    const pn=_partNameFromIds(item.ids);
+    const sl=item.label.replace(/^[左右]/,'').split('（')[0];
+    if(lP&&rP){
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--static);font-weight:900">\u2713</span></span>'+sl+'</div>';
+    }else if(!lP&&!rP){
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--active);font-weight:900">\u2717</span></span>'+sl+'</div>';
+    }else{
+      const fs=lP?'右':'左';
+      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--gold);font-weight:900">\u25D1</span></span>'+sl+'（<span style="color:var(--active);font-weight:900">\u2717</span> '+fs+pn+' '+sl+'）</div>';
+    }
+  });
+  html+='</div>';btn.insertAdjacentHTML('afterend',html);btn.innerText='\u2303 收起';
+}
+
+function renderMain(){
+  const d=DIMS[cur],r=data[cur];document.getElementById('dim-title').innerText=d.a+d.b+' - '+d.view;
+  const aC=d.aT==='動'?'dynamic-type':'static-type',bC=d.bT==='動'?'dynamic-type':'static-type';
+  const hasBasis=cur<=3;
+  document.getElementById('scoring-area').innerHTML=PARTS.map((p,i)=>{
+    const basisBtn=hasBasis?'<div style="text-align:center;margin-top:2px;margin-bottom:4px"><button class="obs-basis-btn" style="display:block;text-align:center;width:100%" data-dim="'+cur+'" data-part="'+i+'" onclick="toggleBasis(this)">\u2304 依據</button></div>':'';
+    return '<div class="score-row"><div class="option-box '+aC+'"><input type="radio" name="p'+i+'" value="A" '+(r[i]==='A'?'checked':'')+' onclick="toggle('+i+',\'A\',this)"><span class="option-label">'+d.a+' ('+d.aT+')</span></div><div class="part-label">'+p+'</div><div class="option-box '+bC+'"><input type="radio" name="p'+i+'" value="B" '+(r[i]==='B'?'checked':'')+' onclick="toggle('+i+',\'B\',this)"><span class="option-label">'+d.b+' ('+d.bT+')</span></div></div>'+basisBtn;
+  }).join('');
+}
+
+function renderFooter(){
+  const d=DIMS[cur],res=calcDim(cur),mid=res?'['+res.coeff.toFixed(1)+'] | '+res.type:'評估中';
+  const bg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'white',color=res?'white':'var(--text)',border=res?'transparent':'var(--border)';
+  document.getElementById('footer').innerHTML='<div class="result-row"><div class="result-box">'+d.a+' '+(res?.a??0)+'</div><div class="result-mid" style="background:'+bg+';color:'+color+';border-color:'+border+'">'+mid+'</div><div class="result-box">'+d.b+' '+(res?.b??0)+'</div></div>';
+}
+
+function toggle(i,v,el){if(data[cur][i]===v){data[cur][i]=null;el.checked=false;}else{data[cur][i]=v;}save();renderMain();renderFooter();renderSidebar();}
+function pick(i,v){data[cur][i]=v;save();renderMain();renderFooter();renderSidebar();}
+function goto(i){cur=i;renderSidebar();renderMain();renderFooter();}
+
+/* ===== Report ===== */
+function reportSave(){
+  const btn=document.getElementById('report-save-btn');if(!userName)return;
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
+  db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()})
+    .then(()=>{btn.innerText='已儲存 \u2713';btn.style.color='var(--static)';btn.style.borderColor='var(--static)';setTimeout(()=>{btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';},2000);})
+    .catch(()=>{btn.innerText='失敗，請重試';setTimeout(()=>{btn.innerText='儲存評分';},2000);});
+}
+
+function showReport(){
+  document.getElementById('report-overlay').style.display='block';
+  document.getElementById('report-name-display').innerText=userName||'未命名';
+  [['v-total',[0,1,2,3,4,5,6,7,8,9,10,11,12]],['v-pre',[0,1,2,3,4,5]],['v-luck',[6,7,8]],['v-post',[9,10,11,12]],['v-lead',[0,1,2]],['v-sub',[3,4,5]]].forEach(([id,ids])=>{document.getElementById(id).innerText=avgCoeff(ids);});
+  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
+  const total=sT+dT||1;
+  document.getElementById('ds-bar-s').style.width=(sT/total*100).toFixed(1)+'%';document.getElementById('ds-bar-d').style.width=(dT/total*100).toFixed(1)+'%';
+  document.getElementById('ds-label-s').innerText='靜 '+sT;document.getElementById('ds-label-d').innerText='動 '+dT;
+  const labelsEl=document.getElementById('matrix-labels'),layoutEl=document.getElementById('matrix-layout');
+  layoutEl.querySelectorAll('.matrix-col').forEach(c=>c.remove());
+  labelsEl.innerHTML='<div id="label-spacer"></div>'+PARTS_SHORT.map((p,pi)=>'<div class="row-label" style="position:relative;'+(pi===4?'margin-top:6px;':'')+'">'+p+'</div>').join('');
+  DIMS.forEach((d,i)=>{const c=PALETTE[i],res=calcDim(i),coeff=res?.coeff??0,col=document.createElement('div');col.className='matrix-col';
+    const hdr=document.createElement('div');hdr.className='dim-header-v';hdr.style.cssText='background:'+c.bg+';color:'+c.tx;hdr.innerHTML='<span>'+d.a+'</span><span>'+d.b+'</span>';col.appendChild(hdr);
+    const bar=document.createElement('div');bar.className='prop-bar';if(res)bar.classList.add(res.type==='動'?'red':'green');col.appendChild(bar);
+    const lbl=document.createElement('div');lbl.className='coeff-lbl';lbl.innerText=res?coeff.toFixed(1):'-';col.appendChild(lbl);
+    const stack=document.createElement('div');stack.className='stack-area';if(res)for(let j=0;j<Math.round(coeff*10);j++){const u=document.createElement('div');u.className='stack-unit';stack.appendChild(u);}col.appendChild(stack);
+    data[i].forEach((v,pi)=>{const cell=document.createElement('div');cell.className='im-cell';if(pi===4)cell.style.marginTop='6px';const box=document.createElement('div');box.className='im-box';if(v){const t=v==='A'?d.aT:d.bT;box.classList.add(t==='動'?'red':'green');box.innerText=v==='A'?d.a:d.b;}cell.appendChild(box);col.appendChild(cell);});
+    layoutEl.appendChild(col);});
+  requestAnimationFrame(()=>{const fc=layoutEl.querySelector('.matrix-col');if(!fc)return;let off=0;for(const el of[...fc.children]){if(el.classList.contains('im-cell'))break;off+=el.offsetHeight+2;}const sp=document.getElementById('label-spacer');if(sp)sp.style.height=off+'px';});
+}
+
+function closeReport(){document.getElementById('report-overlay').style.display='none';}
+
+/* ===== App ===== */
+let userName='';
+async function startApp(){
+  const name=document.getElementById('entry-name').value.trim();if(!name){document.getElementById('entry-name').focus();return;}
+  userName=name;localStorage.setItem('rxbf_username',userName);
+  const btn=document.querySelector('.entry-btn');btn.innerText='載入中...';btn.disabled=true;
+  try{const doc=await db.collection('users').doc(userName).get();
+    if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else if(doc.exists&&doc.data().data)data=doc.data().data;else data=emptyData();
+    if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else{try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e){obsData={};}}
+    if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else{try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e){obsOverride={};}}
+  }catch(e){console.log('載入失敗',e);data=emptyData();try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e2){obsData={};}try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e3){obsOverride={};}}
+  recalcFromObs();
+  document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
+  showModePage();
+}
+
+function editName(){document.getElementById('name-edit-input').value=userName;document.getElementById('name-edit-overlay').style.display='flex';setTimeout(()=>document.getElementById('name-edit-input').focus(),100);}
+function confirmEditName(){const n=document.getElementById('name-edit-input').value.trim();if(n){userName=n;localStorage.setItem('rxbf_username',userName);document.getElementById('nav-name').innerText=userName;}closeEditName();}
+function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
+
+async function exportPNG(){
+  const btn=document.getElementById('btn-export'),actions=document.querySelector('.report-actions'),overlay=document.getElementById('report-overlay');
+  btn.innerText='產生中...';btn.disabled=true;actions.style.display='none';overlay.scrollTop=0;await new Promise(r=>setTimeout(r,100));
+  try{const canvas=await html2canvas(overlay,{backgroundColor:'#ffffff',scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:overlay.scrollWidth,width:overlay.scrollWidth,height:overlay.scrollHeight});
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);const file=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'人相兵法_'+(userName||'報告')+'.png',{type:'image/png'});
+    if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'人相兵法報告',text:(userName||'')+' 的人相兵法報告'});}catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}}else{fallbackDownload(canvas);}
+  }catch(e){alert('產生失敗，請截圖儲存');}
+  actions.style.display='flex';btn.innerText='分享報告';btn.disabled=false;
+}
+function fallbackDownload(canvas){const dataUrl=canvas.toDataURL('image/png');const link=document.createElement('a');link.download='人相兵法_'+(userName||'報告')+'.png';link.href=dataUrl;link.click();}
+
+async function generateAI(){
+  const apiKey=localStorage.getItem('anthropic_api_key');if(!apiKey){alert('請先在登入頁輸入 Anthropic API Key');return;}
+  const btn=document.getElementById('btn-ai'),area=document.getElementById('ai-analysis-area');btn.disabled=true;btn.innerText='分析中...';
+  area.innerHTML='<div class="ai-section"><div class="ai-loading">風鑑師正在解讀面相<span class="dots"></span></div></div>';
+  const dimSummary=DIMS.map((d,i)=>{const res=calcDim(i);if(!res)return d.a+d.b+'（'+d.view+'）：尚未評分';return d.a+d.b+'（'+d.view+'，'+d.cat+'）：'+d.a+'='+res.a+', '+d.b+'='+res.b+', 係數='+res.coeff.toFixed(2)+', 屬性='+res.type;}).join('\n');
+  const totalCoeff=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),preCoeff=avgCoeff([0,1,2,3,4,5]),luckCoeff=avgCoeff([6,7,8]),postCoeff=avgCoeff([9,10,11,12]);
+  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
+  const detail=collectDetailForPrompt(),detailText=detail.checked.length?'\n\n【觀察條件紀錄】\n符合的觀察條件：'+detail.checked.join('、')+'\n（共 '+detail.checked.length+'/'+(detail.checked.length+detail.unchecked.length)+' 項符合）':'';
+  const userPrompt='以下是「'+userName+'」的人相兵法評分結果：\n\n各維度評分：\n'+dimSummary+'\n\n綜合統計：\n- 總合係數：'+totalCoeff+'\n- 先天指數：'+preCoeff+'\n- 運氣指數：'+luckCoeff+'\n- 後天指數：'+postCoeff+'\n- 動態票數：'+dT+'，靜態票數：'+sT+detailText+'\n\n請根據以上數據進行評析。';
+  try{const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-dangerous-direct-browser-access':'true','anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'你是一位精通人相兵法的風鑑師，擅長從面相的動靜、形勢、經緯等維度分析一個人的命格與運勢。你的分析風格穩重而深刻，引經據典但不晦澀，用繁體中文回覆。\n\n請根據提供的人相兵法各維度係數數據，分五段進行評析，每段約150字：\n1. 【性格分析】從先天指數的形勢、經緯、方圓等維度分析其性格特質\n2. 【事業運勢】從後天指數的攻守、奇正、虛實、進退分析事業格局\n3. 【人際關係】從動靜比例與分合、真假等維度分析人際互動模式\n4. 【健康提示】從整體係數平衡與各部位評分提出養生建議\n5. 【流年運程】從運氣指數的順逆、分合、真假綜合判斷當前運勢走向\n\n係數越接近1.0表示該維度越平衡和諧，越接近0表示越偏向單一極端。動與靜的比例反映其人整體的行動傾向。',messages:[{role:'user',content:userPrompt}]})});
+    if(!resp.ok)throw new Error('API 錯誤 '+resp.status+': '+await resp.text());
+    const result=await resp.json(),text=result.content[0].text;
+    const sections=text.split(/【(性格分析|事業運勢|人際關係|健康提示|流年運程)】/).filter(s=>s.trim());
+    let html='<div class="ai-section"><h3>風鑑師 AI 評析</h3>';for(let i=0;i<sections.length;i+=2){html+='<div class="ai-block"><h4>【'+sections[i]+'】</h4><p>'+(sections[i+1]||'').trim()+'</p></div>';}html+='</div>';area.innerHTML=html;
+  }catch(e){area.innerHTML='<div class="ai-section"><p style="color:#c0392b;font-weight:700;">評析失敗：'+e.message+'</p></div>';}
+  btn.disabled=false;btn.innerText='生成 AI 評析';
+}
+
+window.onload=()=>{
+  const savedName=localStorage.getItem('rxbf_username');if(savedName)document.getElementById('entry-name').value=savedName;
+  const savedKey=localStorage.getItem('anthropic_api_key');if(savedKey)document.getElementById('entry-api-key').value=savedKey;
+  document.getElementById('entry-api-key').addEventListener('change',e=>{const val=e.target.value.trim();if(val)localStorage.setItem('anthropic_api_key',val);else localStorage.removeItem('anthropic_api_key');});
+  document.getElementById('entry-name').addEventListener('keydown',e=>{if(e.key==='Enter')startApp();});
+  document.getElementById('name-edit-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEditName();});
+};
+</script>
+</body>
+</html>
