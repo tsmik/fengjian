@@ -15,14 +15,14 @@
 body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
 
 /* ===== Nav Bar ===== */
-#top-nav{height:48px;background:var(--nav);display:none;align-items:center;padding:0 16px;gap:0;flex-shrink:0;z-index:100}
-.nav-brand{color:#e8e2d8;font-size:15px;font-weight:900;letter-spacing:2px;cursor:pointer;padding:0 16px 0 0;white-space:nowrap}
-.nav-tab{height:48px;display:flex;align-items:center;padding:0 14px;color:#999;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s,color 0.15s;letter-spacing:1px}
-.nav-tab:hover{color:#ccc}
-.nav-tab.active{background:rgba(255,255,255,0.12);color:white;border-bottom:2px solid var(--active)}
+#top-nav{height:48px;background:var(--nav);display:none;align-items:center;padding:0 20px;gap:0;flex-shrink:0;z-index:100}
+.nav-brand{color:#e8e0d0;font-size:15px;font-weight:700;letter-spacing:3px;cursor:pointer;padding-right:24px;border-right:1px solid rgba(255,255,255,0.1);margin-right:8px;white-space:nowrap}
+.nav-tab{height:48px;display:flex;align-items:center;padding:0 16px;color:rgba(255,255,255,0.45);font-size:13px;font-weight:500;cursor:pointer;letter-spacing:1px;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap}
+.nav-tab:hover{color:rgba(255,255,255,0.75)}
+.nav-tab.active{color:#e8e0d0;border-bottom:2px solid var(--active)}
 .nav-spacer{flex:1}
-.nav-name{color:#a09888;font-size:13px;font-weight:700;padding:0 12px;white-space:nowrap;cursor:pointer}
-.nav-report{height:32px;padding:0 14px;background:var(--active);color:white;border:none;border-radius:4px;font-size:12px;font-weight:900;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px;white-space:nowrap}
+.nav-name{color:rgba(255,255,255,0.4);font-size:13px;padding:0 14px;white-space:nowrap;cursor:pointer}
+.nav-report{height:32px;padding:0 16px;background:var(--active);color:white;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px;white-space:nowrap}
 .nav-report:hover{opacity:0.9}
 
 /* ===== Three-column layout ===== */
@@ -59,8 +59,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .face-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;transition:all 0.15s;border:1.5px solid #ddd6c8;background:transparent}
 .face-cell .fc-name{font-size:14px;font-weight:700;line-height:1.2}
 .face-cell .fc-count{font-size:11px;color:var(--text-3);line-height:1.2}
-.face-cell.partial{background:#fdf8f0;border-color:#d8c898}
-.face-cell.complete{background:#f2f7f2;border-color:#b8d0b4}
+.face-cell.partial{background:#f5efe0;border-color:var(--gold)}
+.face-cell.partial .fc-name{color:var(--gold)}
+.face-cell.complete{background:#e8eff2;border-color:var(--static)}
+.face-cell.complete .fc-name{color:var(--static)}
 .face-cell.active-part{background:#fff9f7;border-color:var(--active)}
 .face-cell.active-part .fc-name{color:var(--active)}
 .face-progress{margin:10px 8px;height:6px;background:#e8e3dd;border-radius:3px;overflow:hidden}
@@ -69,14 +71,15 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 /* ===== Center Column - Obs Questions ===== */
 /* ===== Center Column - Obs Questions ===== */
 .col-center{overflow-y:auto;padding:0;border-right:1px solid var(--border);min-width:0}
-.obs-header{padding:16px 24px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:baseline;gap:10px}
-.obs-header h2{font-size:22px;font-weight:700;letter-spacing:2px}
-.obs-header .obs-count{font-size:13px;color:var(--text-3)}
-.obs-section-label{font-size:13px;color:var(--text);font-weight:700;letter-spacing:3px;padding:12px 20px 10px;border-bottom:1px solid var(--border);border-top:1px solid var(--border);background:var(--hover);position:sticky;top:0;z-index:1;grid-column:1/-1}
-.obs-two-col{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);align-items:start}
-.obs-q-card{padding:18px 20px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);display:flex;flex-direction:column;gap:14px;min-height:100%;transition:background 0.1s}
+.obs-header{padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:14px;flex-shrink:0}
+.obs-header h2{font-size:24px;font-weight:700;letter-spacing:3px;color:var(--text)}
+.obs-header .obs-count{font-size:14px;color:var(--text-3);font-weight:500}
+.obs-section-label{font-size:13px;color:var(--text);font-weight:700;letter-spacing:3px;padding:12px 20px 10px 17px;border-bottom:1px solid var(--border);border-top:1px solid var(--border);border-left:3px solid var(--static);background:var(--hover);position:sticky;top:0;z-index:1;grid-column:1/-1}
+.obs-two-col{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.obs-q-card{padding:18px 22px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:14px;background:var(--bg);transition:background 0.1s}
 .obs-q-card:hover{background:var(--hover)}
 .obs-q-card:nth-child(even){border-right:none}
+.obs-q-card:nth-last-child(-n+2){border-bottom:none}
 .obs-q-top{display:flex;align-items:center;gap:8px}
 .obs-q-num2{font-size:11px;color:var(--text-3);font-family:monospace;flex-shrink:0}
 .obs-q-text2{font-size:15px;font-weight:700;color:var(--text);letter-spacing:0.5px}
@@ -95,7 +98,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .obs-opt-hint{font-size:12px;color:var(--text-2);line-height:1.6;padding-top:1px;letter-spacing:0.3px}
 .obs-pill-lr{font-size:12px;padding:4px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:'Noto Serif TC',serif;color:var(--text-3);transition:all 0.15s;white-space:nowrap}
 .obs-pill-lr.selected{background:var(--active);color:white;border-color:var(--active)}
-.obs-lr-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:4px 0 2px 0}
+.obs-lr-row{gap:6px;padding:0;margin:0;align-items:center;flex-wrap:wrap}
 
 /* ===== Right Column - Dim Index ===== */
 .dim-right-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
@@ -115,10 +118,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .dim-detail-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:2px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 .dim-part-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .dim-part-label{font-size:13px;width:28px;text-align:right;color:var(--text-3);font-weight:500;flex-shrink:0}
-.dim-ab-block{flex:1;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white}
+.dim-ab-block{flex:1;height:28px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;letter-spacing:1px}
 .dim-ab-block.static-fill{background:var(--static)}
 .dim-ab-block.dynamic-fill{background:var(--active)}
-.dim-ab-block.unfilled{background:#e8e0d0;color:var(--text-3);font-weight:400}
+.dim-ab-block.unfilled{background:#e8e0d0;color:var(--text-3);font-weight:400;font-size:12px}
 
 /* ===== Dim Scoring Page ===== */
 #dim-page{display:none}
@@ -137,13 +140,13 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .part-label{width:80px;text-align:center;font-size:14px;font-weight:700;background:#f0ede8;padding:8px 0;border-radius:6px}
 .option-box{flex:1;position:relative}
 .option-box input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;z-index:2}
-.option-label{display:block;padding:14px 4px;text-align:center;background:white;box-shadow:0 1px 2px rgba(0,0,0,0.05);border-radius:8px;font-size:16px;font-weight:500;color:#bbb;transition:all 0.2s}
+.option-label{display:block;padding:14px 4px;text-align:center;background:white;box-shadow:0 1px 2px rgba(0,0,0,0.05);border-radius:8px;font-size:16px;font-weight:500;color:var(--text-3);transition:all 0.2s}
 .static-type input:checked+.option-label{background:var(--static);color:white;box-shadow:none}
 .dynamic-type input:checked+.option-label{background:var(--active);color:white;box-shadow:none}
 .result-row{display:flex;align-items:stretch;gap:8px}
 .result-box{flex:1;background:#f4f1ed;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#888}
 .result-mid{flex:1.5;text-align:center;font-size:22px;font-weight:700;background:white;padding:10px 0;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
-.obs-basis-btn{background:none;border:none;color:#999;font-size:11px;cursor:pointer;padding:2px 8px;font-family:'Noto Serif TC',serif}
+.obs-basis-btn{background:none;border:none;color:var(--text-3);font-size:11px;cursor:pointer;padding:2px 8px;font-family:'Noto Serif TC',serif}
 .obs-basis-btn:hover{color:var(--text)}
 .obs-basis-panel{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:4px 0 8px;font-size:13px;text-align:center}
 .obs-basis-panel .basis-item{padding:3px 0;color:var(--text)}
@@ -186,7 +189,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .im-box{height:100%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;border-radius:2px}
 .im-box.red{background:var(--active);opacity:0.95}
 .im-box.green{background:var(--static);opacity:0.95}
-.legend{font-size:14px;color:#aaa;margin-top:10px;display:flex;justify-content:center;gap:20px;font-weight:900}
+.legend{font-size:14px;color:var(--text-3);margin-top:10px;display:flex;justify-content:center;gap:20px;font-weight:900}
 .report-actions{display:flex;flex-direction:row;gap:8px;margin-top:16px;flex-wrap:wrap;padding-bottom:20px}
 .btn-back{flex:1;height:48px;background:transparent;color:var(--dark);border:2px solid var(--dark);border-radius:8px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif}
 .btn-line{flex:1;height:48px;background:#06C755;color:white;border:none;border-radius:8px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Noto Serif TC',serif}
@@ -197,14 +200,14 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .ai-block{margin-bottom:14px}
 .ai-block h4{margin:0 0 4px;font-size:15px;font-weight:900;color:var(--gold)}
 .ai-block p{margin:0;font-size:15px;line-height:1.8;color:#444}
-.ai-loading{text-align:center;padding:30px 0;color:#999;font-size:16px;font-weight:700}
+.ai-loading{text-align:center;padding:30px 0;color:var(--text-3);font-size:16px;font-weight:700}
 .ai-loading .dots::after{content:'';animation:dots 1.5s steps(4,end) infinite}
 @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 .detail-section{margin-top:16px}
 .detail-section h3{margin:0 0 10px;font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text)}
 .detail-group{margin-bottom:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .detail-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f0ede8;cursor:pointer;font-size:14px;font-weight:900;color:var(--text);user-select:none}
-.detail-group-header .toggle-arrow{transition:transform 0.2s;font-size:12px;color:#999}
+.detail-group-header .toggle-arrow{transition:transform 0.2s;font-size:12px;color:var(--text-3)}
 .detail-group-header.collapsed .toggle-arrow{transform:rotate(-90deg)}
 .detail-group-body{padding:6px 14px 10px}
 .detail-group-body.hidden{display:none}
@@ -213,7 +216,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .detail-check input[type="checkbox"]{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:var(--static);cursor:pointer}
 .detail-check label{font-size:14px;color:#666;cursor:pointer;line-height:1.5;transition:color 0.2s}
 .detail-check input:checked+label{color:var(--text);font-weight:700}
-.detail-stats{font-size:13px;color:#999;font-weight:700;padding:8px 0 0;text-align:right}
+.detail-stats{font-size:13px;color:var(--text-3);font-weight:700;padding:8px 0 0;text-align:right}
 
 /* ===== Name Edit Overlay ===== */
 #name-edit-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:8000;display:none;align-items:center;justify-content:center}
@@ -261,11 +264,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- Mode Page -->
 <div id="mode-page">
   <div class="mode-grid">
-    <div class="mode-card" style="border-top-color:#d97757" onclick="showObsPage()">
+    <div class="mode-card" style="border-top-color:var(--active)" onclick="showObsPage()">
       <h3>各部位觀察</h3>
       <p>逐一觀察頭、額、耳、眉、眼、鼻、口等各部位特徵條件</p>
     </div>
-    <div class="mode-card" style="border-top-color:#8ba888" onclick="showDimPage()">
+    <div class="mode-card" style="border-top-color:var(--static)" onclick="showDimPage()">
       <h3>13係數評分</h3>
       <p>根據觀察結果，對形勢、經緯、方圓等13個維度進行靜動評分</p>
     </div>
@@ -476,13 +479,14 @@ function recalcFromObs(){
 function getPartCounts(obsIdx){
   const pn=OBS_PART_NAMES[obsIdx];if(!pn)return{ck:0,tot:0};
   const pd=OBS_PARTS_DATA[pn];if(!pd)return{ck:0,tot:0};
-  const prefix=OBS_PART_PREFIX[pn]||'';
-  const answered=Object.keys(obsData).filter(k=>k.match(new RegExp('^'+prefix+'\\d'))).length;
+  let answered=0;
+  pd.sections.forEach(sec=>{sec.qs.forEach(q=>{if(obsData[q.id]!==undefined)answered++;});});
   return{ck:answered,tot:pd.total};
 }
 
 function updateObsProgress(){
-  const answered=Object.keys(obsData).length;
+  let answered=0;
+  OBS_PART_NAMES.forEach(pn=>{const pd=OBS_PARTS_DATA[pn];if(!pd)return;pd.sections.forEach(sec=>{sec.qs.forEach(q=>{if(obsData[q.id]!==undefined)answered++;});});});
   const total=119;
   const pct=Math.min(100,Math.round(answered/total*100));
   const bar=document.getElementById('obs-prog-bar');
@@ -511,9 +515,9 @@ function renderFaceMap(){
   });
   html+='</div>';
   html+='<div style="padding:12px 10px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0;">';
-  html+='<div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-bottom:8px;">填寫進度</div>';
+  html+='<div style="font-size:11px;color:var(--text-3);letter-spacing:2px;margin-bottom:8px;font-weight:500;">填寫進度</div>';
   html+='<div style="height:5px;background:#e8e3dd;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:3px;width:0%;transition:width 0.3s;"></div></div>';
-  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:28px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:#aaa;letter-spacing:1px;">0 / 119 題</div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:28px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:var(--text-3);letter-spacing:1px;font-weight:500;">0 / 119 題</div></div>';
   html+='</div>';
   el.innerHTML=html;
   updateObsProgress();
@@ -537,7 +541,7 @@ function renderObsCenter(){
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
-      html+='<div class="obs-q-card"><div class="obs-q-top"><span class="obs-q-num2">'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 ▼</button>':'')+'</div><div class="obs-opts-grid">';
+      html+='<div class="obs-q-card"><div class="obs-q-top"><span class="obs-q-num2">'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+((valL||valR)?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+((valL||valR)?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
         const hint=(typeof opt==='object'&&opt.hint)?opt.hint:'';
@@ -546,9 +550,11 @@ function renderObsCenter(){
       });
       html+='</div>';
       if(isPaired){
-        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="display:none;"><span style="font-size:11px;color:var(--c-muted);margin-right:8px;">左：</span>';
+        const hasLR=valL!==undefined||valR!==undefined;
+        html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="'+(hasLR?'display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;':'display:none;')+'">';
+        html+='<span style="font-size:12px;color:var(--text-3);margin-right:4px;">左：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valL===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'L\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
-        html+='<span style="font-size:11px;color:var(--c-muted);margin:0 8px;">右：</span>';
+        html+='<span style="font-size:12px;color:var(--text-3);margin:0 4px 0 12px;">右：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valR===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'R\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
         html+='</div>';
       }
@@ -594,12 +600,12 @@ function selectLROpt(id,side,val,el){
 
 function toggleLRRow(id,btn){
   const row=document.getElementById('lr-'+id);if(!row)return;
-  if(row.style.display==='none'){
+  const isOpen=row.style.display!=='none';
+  if(isOpen){
+    row.style.display='none';btn.innerHTML='可分左右 ▼';btn.classList.remove('active');
+  }else{
     row.style.display='flex';row.style.flexWrap='wrap';row.style.alignItems='center';row.style.gap='6px';row.style.marginTop='8px';
     btn.innerHTML='可分左右 ▲';btn.classList.add('active');
-  }else{
-    row.style.display='none';
-    btn.innerHTML='可分左右 ▼';btn.classList.remove('active');
   }
 }
 
@@ -757,7 +763,7 @@ function showKnowledgePage(){
 }
 
 /* ===== 13 Dim Scoring Page ===== */
-const CAT_STYLE={"先天指數":"background:#4a453e;color:#fcfaf8","運氣指數":"background:#3b4d54;color:#fcfaf8","後天指數":"background:#3d4a3b;color:#fcfaf8"};
+const CAT_STYLE={"先天指數":"background:#3a3530;color:#f7f4ef","運氣指數":"background:#3a4a50;color:#f7f4ef","後天指數":"background:#3a4a3a;color:#f7f4ef"};
 const emptyData=()=>Array(13).fill(null).map(()=>Array(9).fill(null));
 let cur=0,data=emptyData(),_basisVars={};
 
