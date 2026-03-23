@@ -135,12 +135,12 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .dim-sidebar{width:200px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .dim-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .dim-main-header{padding:12px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;background:white}
-.dim-main-header h2{margin:0;font-size:18px;font-weight:700;flex:1}
+.dim-main-header h2{margin:0;font-size:16px;font-weight:700;flex:1}
 .dim-scoring-area{flex:1;padding:10px 20px;overflow-y:auto}
 /* 新版維度條件頁 */
 .dim-cond-main{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:16px}
 .dim-cond-header{padding-bottom:12px;border-bottom:2px solid var(--border)}
-.dim-cond-title{font-size:18px;font-weight:700;color:var(--text)}
+.dim-cond-title{font-size:16px;font-weight:700;color:var(--text)}
 .dim-cond-essence{font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.7}
 .dim-cond-result{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:white}
 .dim-part-block{background:var(--card-bg,#fafaf8);border-radius:8px;border:1px solid var(--border);overflow:hidden}
@@ -2824,7 +2824,7 @@ function cpRenderRight(){
   });
   html+='<div style="margin-top:14px;padding:12px;background:white;border-radius:8px;text-align:center;border:1px solid var(--border)">'+
     '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">整體</div>'+
-    '<div style="font-size:20px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+    '<div style="font-size:16px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
     '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
   '</div>';
   el.innerHTML=html;
@@ -2837,7 +2837,7 @@ function cpRenderMain(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
 
   var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-    '<div style="font-size:22px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:14px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
+    '<div style="font-size:16px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:13px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
     '<div style="font-size:14px;color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
     '<span style="display:inline-block;margin-top:8px;padding:5px 18px;border-radius:16px;background:'+resBg+';color:white;font-size:15px;font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
   '</div>';
@@ -2846,6 +2846,20 @@ function cpRenderMain(){
   if(!cr){
     el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;text-align:center">請先至「各部位觀察」填寫觀察題</div>';
     return;
+  }
+
+  // 預建題目 lookup map，避免每個條件項目都三層遍歷
+  var qMap={};
+  OBS_PART_NAMES.forEach(function(n){
+    var pd=OBS_PARTS_DATA[n];if(!pd)return;
+    pd.sections.forEach(function(s){s.qs.forEach(function(qq){qMap[qq.id]=qq;});});
+  });
+
+  function statusRow(ok,label){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
+      '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+      '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+label+'</div>'+
+    '</div>';
   }
 
   var partOrder=[0,1,4,5,6,7,8,2,3];
@@ -2867,49 +2881,32 @@ function cpRenderMain(){
       '</div>'+
       '<div style="padding:8px 14px;display:flex;flex-direction:column;gap:4px">';
 
-    p.items.forEach(function(item,ii){
+    p.items.forEach(function(item){
       if(!item.ids||item.ids.length===0){
-        // 無對應題目（如中停/下停的達標判斷），只顯示結果
-        var ok=item.ok;
-        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
-          '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
-        '</div>';
+        html+=statusRow(item.ok,item.label);
         return;
       }
-      // 找到對應的題目和選項
       var qid=item.ids[0];
       var side=item.side||'';
-      var q=null;
-      OBS_PART_NAMES.forEach(function(n){
-        var pd=OBS_PARTS_DATA[n];if(!pd)return;
-        pd.sections.forEach(function(s){s.qs.forEach(function(qq){if(qq.id===qid)q=qq;});});
-      });
+      var q=qMap[qid];
       if(!q){
-        // 找不到題目，只顯示結果
-        var ok=item.ok;
-        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
-          '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
-        '</div>';
+        html+=statusRow(item.ok,item.label);
         return;
       }
       var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
       var sideTag=side?'<span style="font-size:11px;padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(side==='L'?'左':'右')+'</span>':'';
-      // 顯示題目名稱＋所有選項橫排
       html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
         '<div style="font-size:12px;color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+q.text+sideTag+'</div>'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap;flex:1">';
+      var qidSafe=qid.replace(/'/g,"\'");
+      var sideSafe=side.replace(/'/g,"\'");
       q.opts.forEach(function(opt){
         var v=typeof opt==='string'?opt:opt.v;
-        var hint=typeof opt==='object'?opt.hint:'';
         var isSel=v===curVal;
         var btnBg=isSel?'var(--static)':'white';
         var btnColor=isSel?'white':'var(--text-2)';
         var btnBorder=isSel?'var(--static)':'var(--border)';
-        var qidSafe=qid.replace(/'/g,"\'");
         var vSafe=v.replace(/"/g,'&quot;');
-        var sideSafe=side.replace(/'/g,"\'");
         html+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
           ' style="padding:6px 14px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:12px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:nowrap">'+
           (isSel?'&#x2713; ':'')+v+
@@ -3062,7 +3059,7 @@ function renderDimCondPage(){
     var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
     rhtml+='<div style="margin-top:12px;padding:10px;background:var(--sidebar);border-radius:8px;text-align:center">'+
       '<div style="font-size:11px;color:var(--text-3);margin-bottom:6px">整體</div>'+
-      '<div style="font-size:18px;font-weight:900;padding:4px 20px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+      '<div style="font-size:16px;font-weight:900;padding:4px 20px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
       '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
     '</div>';
     rhtml+='</div>';
