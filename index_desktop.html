@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260323-160000 -->
+<!-- BUILD 20260323-170000 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -2850,16 +2850,51 @@ function cpRenderMain(){
     return;
   }
 
-  // 預建題目 lookup map，避免每個條件項目都三層遍歷
+  // 預建題目 lookup map
   var qMap={};
   OBS_PART_NAMES.forEach(function(n){
     var pd=OBS_PARTS_DATA[n];if(!pd)return;
     pd.sections.forEach(function(s){s.qs.forEach(function(qq){qMap[qq.id]=qq;});});
   });
 
+  // 取得選項的 hint 文字
+  function getHint(q,val){
+    if(!q||!q.opts)return '';
+    for(var i=0;i<q.opts.length;i++){
+      var o=q.opts[i];
+      var v=typeof o==='string'?o:o.v;
+      var h=typeof o==='string'?'':o.hint||'';
+      if(v===val&&h)return h;
+    }
+    return '';
+  }
+
+  // 渲染一列選項按鈕（含 hint）
+  function renderOpts(q,qid,side,curVal){
+    var out='<div style="display:flex;gap:6px;flex-wrap:wrap;flex:1">';
+    var qidSafe=qid.replace(/'/g,"\\'");
+    var sideSafe=(side||'').replace(/'/g,"\\'");
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      var hint=typeof opt==='string'?'':opt.hint||'';
+      var isSel=v===curVal;
+      var btnBg=isSel?'var(--static)':'white';
+      var btnColor=isSel?'white':'var(--text-2)';
+      var btnBorder=isSel?'var(--static)':'var(--border)';
+      var vSafe=v.replace(/"/g,'&quot;');
+      var hintHtml=hint?'<span style="font-size:11px;color:'+(isSel?'rgba(255,255,255,0.75)':'var(--text-3)')+';margin-left:4px">'+hint+'</span>':'';
+      out+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
+        ' style="padding:6px 12px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:14px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:normal;text-align:left;line-height:1.5">'+
+        (isSel?'&#x2713; ':'')+v+hintHtml+
+      '</button>';
+    });
+    out+='</div>';
+    return out;
+  }
+
   function statusRow(ok,label){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
-      '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border)">'+
+      '<div style="width:24px;height:24px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
       '<div style="font-size:14px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+label+'</div>'+
     '</div>';
   }
@@ -2873,54 +2908,142 @@ function cpRenderMain(){
     var passBg=p.pass?'var(--static)':'var(--active)';
     var passLabel=p.pass?(data[cpCur][pi]==='B'?d.b:d.a):'未達';
 
-    html+='<div style="background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)">'+
-        '<span style="font-weight:700;font-size:16px;color:var(--text-2)">'+label+'</span>'+
-        '<span style="display:flex;align-items:center;gap:8px">'+
-          '<span style="font-size:13px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-          '<span style="font-size:14px;padding:3px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
-        '</span>'+
-      '</div>'+
-      '<div style="padding:8px 14px;display:flex;flex-direction:column;gap:4px">';
+    // --- section label（比照觀察頁樣式）---
+    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">'+
+      '<span>'+label+'</span>'+
+      '<span style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:12px;color:var(--text-3);font-weight:400">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+        '<span style="font-size:12px;padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
+      '</span>'+
+    '</div>';
 
-    p.items.forEach(function(item){
-      if(!item.ids||item.ids.length===0){
-        html+=statusRow(item.ok,item.label);
+    // --- 合併左右配對項 ---
+    // 將 items 分組：配對題(side=L/R 且 qid 相同)合併，無 side 或無配對的獨立顯示
+    var merged=[];
+    var usedIdx={};
+    for(var i=0;i<p.items.length;i++){
+      if(usedIdx[i])continue;
+      var item=p.items[i];
+      var qid=item.ids&&item.ids.length?item.ids[0]:'';
+      var q=qid?qMap[qid]:null;
+      // 找配對：同 qid、一個 L 一個 R
+      if(item.side&&q&&q.paired){
+        var pairIdx=-1;
+        var otherSide=item.side==='L'?'R':'L';
+        for(var j=i+1;j<p.items.length;j++){
+          if(usedIdx[j])continue;
+          var jItem=p.items[j];
+          if(jItem.ids&&jItem.ids.length&&jItem.ids[0]===qid&&jItem.side===otherSide){
+            pairIdx=j;break;
+          }
+        }
+        if(pairIdx>=0){
+          usedIdx[i]=true;usedIdx[pairIdx]=true;
+          var lItem=item.side==='L'?item:p.items[pairIdx];
+          var rItem=item.side==='R'?item:p.items[pairIdx];
+          merged.push({type:'paired',qid:qid,q:q,lItem:lItem,rItem:rItem});
+          continue;
+        }
+      }
+      usedIdx[i]=true;
+      merged.push({type:'single',item:item,qid:qid,q:q});
+    }
+
+    html+='<div style="display:flex;flex-direction:column">';
+    merged.forEach(function(m){
+      if(m.type==='single'){
+        var item=m.item;
+        if(!m.qid||!m.q){
+          html+=statusRow(item.ok,item.label);
+          return;
+        }
+        var curVal=item.side?(obsData[m.qid+'_'+item.side]||obsData[m.qid]||''):obsData[m.qid]||'';
+        var sideTag=item.side?'<span style="font-size:11px;padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(item.side==='L'?'左':'右')+'</span>':'';
+        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
+          '<div style="font-size:14px;color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+m.q.text+sideTag+'</div>'+
+          renderOpts(m.q,m.qid,item.side||'',curVal)+
+        '</div>';
         return;
       }
-      var qid=item.ids[0];
-      var side=item.side||'';
-      var q=qMap[qid];
-      if(!q){
-        html+=statusRow(item.ok,item.label);
-        return;
+
+      // --- 配對題：合併顯示 ---
+      var qid=m.qid,q=m.q;
+      var vL=obsData[qid+'_L']||obsData[qid]||'';
+      var vR=obsData[qid+'_R']||obsData[qid]||'';
+      var bothSame=vL===vR;
+      var lrKey=cpCur+'_'+qid;
+      var isExpanded=!!_cpLrExpanded[lrKey]||(!bothSame&&(vL||vR));
+
+      // 合併列
+      var mergedVal=bothSame?vL:'';
+      var diffMark=(!bothSame&&(vL||vR));
+
+      html+='<div style="border-bottom:1px solid var(--border);padding:8px 8px">';
+      // 題目名稱 + 展開按鈕
+      html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
+        '<div style="font-size:14px;color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
+        '<button onclick="cpToggleLR(\''+lrKey+'\')" style="font-size:11px;color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>'+
+        (diffMark&&!isExpanded?'<span style="font-size:11px;color:var(--active);font-weight:700">L≠R</span>':'') +
+      '</div>';
+
+      // 合併選項列（不展開時顯示）
+      if(!isExpanded){
+        html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        var qidSafe=qid.replace(/'/g,"\\'");
+        q.opts.forEach(function(opt){
+          var v=typeof opt==='string'?opt:opt.v;
+          var hint=typeof opt==='string'?'':opt.hint||'';
+          var isSel=v===mergedVal;
+          var isHalf=!isSel&&diffMark&&(v===vL||v===vR);
+          var btnBg=isSel?'var(--static)':(isHalf?'rgba(76,100,114,0.15)':'white');
+          var btnColor=isSel?'white':'var(--text-2)';
+          var btnBorder=isSel?'var(--static)':(isHalf?'var(--static)':'var(--border)');
+          var fontWeight=isSel?'700':(isHalf?'500':'400');
+          var vSafe=v.replace(/"/g,'&quot;');
+          var hintHtml=hint?'<span style="font-size:11px;color:'+(isSel?'rgba(255,255,255,0.75)':'var(--text-3)')+';margin-left:4px">'+hint+'</span>':'';
+          var halfTag=isHalf?'<span style="font-size:10px;color:var(--active);margin-left:3px">'+(v===vL?'左':'右')+'</span>':'';
+          html+='<button data-qid="'+qidSafe+'" data-side="" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
+            ' style="padding:6px 12px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:14px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
+            (isSel?'&#x2713; ':'')+v+halfTag+hintHtml+
+          '</button>';
+        });
+        html+='</div>';
       }
-      var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
-      var sideTag=side?'<span style="font-size:11px;padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(side==='L'?'左':'右')+'</span>':'';
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
-        '<div style="font-size:14px;color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+q.text+sideTag+'</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;flex:1">';
-      var qidSafe=qid.replace(/'/g,"\'");
-      var sideSafe=side.replace(/'/g,"\'");
-      q.opts.forEach(function(opt){
-        var v=typeof opt==='string'?opt:opt.v;
-        var isSel=v===curVal;
-        var btnBg=isSel?'var(--static)':'white';
-        var btnColor=isSel?'white':'var(--text-2)';
-        var btnBorder=isSel?'var(--static)':'var(--border)';
-        var vSafe=v.replace(/"/g,'&quot;');
-        html+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-          ' style="padding:6px 14px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:14px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:nowrap">'+
-          (isSel?'&#x2713; ':'')+v+
-        '</button>';
-      });
-      html+='</div></div>';
+
+      // 展開時：左右各一列
+      if(isExpanded){
+        ['L','R'].forEach(function(side){
+          var sideLabel=side==='L'?'左':'右';
+          var cv=obsData[qid+'_'+side]||obsData[qid]||'';
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:8px">'+
+            '<span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
+            renderOpts(q,qid,side,cv)+
+          '</div>';
+        });
+      }
+
+      html+='</div>';
     });
-
-    html+='</div></div>';
+    html+='</div>';
   });
 
   el.innerHTML=html;
+}
+
+function cpToggleLR(lrKey){
+  _cpLrExpanded[lrKey]=!_cpLrExpanded[lrKey];
+  // 展開時預填：若 _L/_R 未設定，從主值帶入
+  if(_cpLrExpanded[lrKey]){
+    var sep=lrKey.indexOf('_');
+    var qid=lrKey.substring(sep+1);
+    var mainVal=obsData[qid]||'';
+    if(mainVal){
+      if(obsData[qid+'_L']===undefined)obsData[qid+'_L']=mainVal;
+      if(obsData[qid+'_R']===undefined)obsData[qid+'_R']=mainVal;
+      localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+    }
+  }
+  cpRenderMain();
 }
 
 function cpQuickChange(btn){
@@ -2930,9 +3053,10 @@ function cpQuickChange(btn){
   if(side){
     obsData[qid+'_'+side]=val;
   }else{
+    // 合併模式：同時寫入 _L 和 _R
     obsData[qid]=val;
-    if(obsData[qid+'_L']!==undefined)obsData[qid+'_L']=val;
-    if(obsData[qid+'_R']!==undefined)obsData[qid+'_R']=val;
+    obsData[qid+'_L']=val;
+    obsData[qid+'_R']=val;
   }
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   recalcFromObs();save();
