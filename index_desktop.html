@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260323-142922 -->
+<!-- BUILD 20260323-143337 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -2790,15 +2790,15 @@ function cpRenderSidebar(){
   let html='',lastCat='';
   DIMS.forEach(function(d,i){
     if(d.cat!==lastCat){
-      html+='<div style="font-size:20px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px">'+d.cat+'</div>';
+      html+='<div style="font-size:12px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px">'+d.cat+'</div>';
       lastCat=d.cat;
     }
     var res=calcDim(i);
     var chipBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
     var isActive=i===cpCur;
-    html+='<div onclick="cpGoto('+i+')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;border-left:4px solid '+(isActive?'var(--accent)':'transparent')+';background:'+(isActive?'white':'transparent')+';font-weight:'+(isActive?'700':'400')+';font-size:30px;color:var(--text-2)">'+
+    html+='<div onclick="cpGoto('+i+')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;border-left:4px solid '+(isActive?'var(--accent)':'transparent')+';background:'+(isActive?'white':'transparent')+';font-weight:'+(isActive?'700':'400')+';font-size:15px;color:var(--text-2)">'+
       '<span>'+d.a+d.b+'</span>'+
-      '<span style="font-size:22px;padding:2px 7px;border-radius:8px;background:'+chipBg+';color:white;font-weight:700">'+(res?res.type:'—')+'</span>'+
+      '<span style="font-size:12px;padding:2px 7px;border-radius:8px;background:'+chipBg+';color:white;font-weight:700">'+(res?res.type:'—')+'</span>'+
     '</div>';
   });
   el.innerHTML=html;
@@ -2811,21 +2811,21 @@ function cpRenderRight(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
   var partOrder=[0,1,4,5,6,7,8,2,3];
   var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
-  var html='<div style="font-size:22px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:2px 2px 10px">'+d.a+d.b+'　各部位</div>';
+  var html='<div style="font-size:12px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:2px 2px 10px">'+d.a+d.b+'　各部位</div>';
   partOrder.forEach(function(pi,i){
     var v=data[cpCur][pi];
     var label=partLabels[i];
     var bg='#ccc',txt='—';
     if(v){var t=v==='A'?d.aT:d.bT;bg=t==='靜'?'var(--static)':'var(--active)';txt=v==='A'?d.a:d.b;}
     html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 2px;border-bottom:1px solid var(--border)">'+
-      '<span style="font-size:30px;color:var(--text-2)">'+label+'</span>'+
-      '<span style="font-size:26px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
+      '<span style="font-size:15px;color:var(--text-2)">'+label+'</span>'+
+      '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
     '</div>';
   });
   html+='<div style="margin-top:14px;padding:12px;background:white;border-radius:8px;text-align:center;border:1px solid var(--border)">'+
-    '<div style="font-size:22px;color:var(--text-3);margin-bottom:6px">整體</div>'+
-    '<div style="font-size:40px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
-    '<div style="font-size:24px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">整體</div>'+
+    '<div style="font-size:20px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
   '</div>';
   el.innerHTML=html;
 }
@@ -2837,14 +2837,14 @@ function cpRenderMain(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
 
   var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-    '<div style="font-size:44px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:28px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
-    '<div style="font-size:28px;color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
-    '<span style="display:inline-block;margin-top:8px;padding:5px 18px;border-radius:16px;background:'+resBg+';color:white;font-size:30px;font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
+    '<div style="font-size:22px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:14px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
+    '<div style="font-size:14px;color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
+    '<span style="display:inline-block;margin-top:8px;padding:5px 18px;border-radius:16px;background:'+resBg+';color:white;font-size:15px;font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
   '</div>';
 
   var cr=condResults[cpCur];
   if(!cr){
-    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:26px;text-align:center">請先至「各部位觀察」填寫觀察題</div>';
+    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;text-align:center">請先至「各部位觀察」填寫觀察題</div>';
     return;
   }
 
@@ -2859,10 +2859,10 @@ function cpRenderMain(){
 
     html+='<div style="background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)">'+
-        '<span style="font-weight:700;font-size:32px;color:var(--text-2)">'+label+'</span>'+
+        '<span style="font-weight:700;font-size:16px;color:var(--text-2)">'+label+'</span>'+
         '<span style="display:flex;align-items:center;gap:8px">'+
-          '<span style="font-size:26px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-          '<span style="font-size:28px;padding:3px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
+          '<span style="font-size:13px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+          '<span style="font-size:14px;padding:3px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
         '</span>'+
       '</div>'+
       '<div style="padding:8px 14px;display:flex;flex-direction:column;gap:4px">';
@@ -2872,8 +2872,8 @@ function cpRenderMain(){
         // 無對應題目（如中停/下停的達標判斷），只顯示結果
         var ok=item.ok;
         html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
-          '<div style="font-size:16px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+          '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
         '</div>';
         return;
       }
@@ -2889,15 +2889,16 @@ function cpRenderMain(){
         // 找不到題目，只顯示結果
         var ok=item.ok;
         html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
-          '<div style="font-size:16px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+          '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
         '</div>';
         return;
       }
       var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
+      var sideTag=side?'<span style="font-size:11px;padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(side==='L'?'左':'右')+'</span>':'';
       // 顯示題目名稱＋所有選項橫排
       html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
-        '<div style="font-size:15px;color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
+        '<div style="font-size:12px;color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+q.text+sideTag+'</div>'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap;flex:1">';
       q.opts.forEach(function(opt){
         var v=typeof opt==='string'?opt:opt.v;
@@ -2910,7 +2911,7 @@ function cpRenderMain(){
         var vSafe=v.replace(/"/g,'&quot;');
         var sideSafe=side.replace(/'/g,"\'");
         html+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-          ' style="padding:6px 14px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:15px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:nowrap">'+
+          ' style="padding:6px 14px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:12px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:nowrap">'+
           (isSel?'&#x2713; ':'')+v+
         '</button>';
       });
