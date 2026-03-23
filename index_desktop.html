@@ -96,6 +96,9 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .obs-radio{width:20px;height:20px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
 .obs-radio.sel{border-color:var(--static);background:var(--static)}
 .obs-radio.sel::after{content:'';width:8px;height:8px;border-radius:50%;background:white}
+.obs-radio.half{border-color:var(--static);background:linear-gradient(135deg,var(--static) 50%,white 50%)}
+.obs-radio.half::after{content:'L≠R';font-size:7px;color:var(--static);font-weight:900;position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.obs-opt-col{position:relative}
 .obs-opt-label{font-size:14px;color:var(--text-2);white-space:nowrap;letter-spacing:0.5px}
 .obs-opt-label.sel{color:var(--text);font-weight:700}
 .obs-opt-hint{font-size:12px;color:var(--text-2);line-height:1.6;padding-top:1px;letter-spacing:0.3px}
@@ -133,6 +136,40 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .dim-main-header{padding:12px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;background:white}
 .dim-main-header h2{margin:0;font-size:18px;font-weight:700;flex:1}
 .dim-scoring-area{flex:1;padding:10px 20px;overflow-y:auto}
+/* 新版維度條件頁 */
+.dim-cond-main{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:16px}
+.dim-cond-header{padding-bottom:12px;border-bottom:2px solid var(--border)}
+.dim-cond-title{font-size:18px;font-weight:700;color:var(--text)}
+.dim-cond-essence{font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.7}
+.dim-cond-result{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:white}
+.dim-part-block{background:var(--card-bg,#fafaf8);border-radius:8px;border:1px solid var(--border);overflow:hidden}
+.dim-part-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)}
+.dim-part-name{font-weight:700;font-size:13px;color:var(--text-2)}
+.dim-part-badge{font-size:11px;padding:2px 10px;border-radius:10px;color:white;font-weight:700}
+.dim-part-score{font-size:11px;color:var(--text-3)}
+.dim-part-body{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.dim-cond-item{display:flex;align-items:flex-start;gap:10px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background 0.1s}
+.dim-cond-item:hover{background:var(--sidebar)}
+.dim-cond-mark{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-top:1px}
+.dim-cond-mark.ok{background:var(--static);color:white}
+.dim-cond-mark.ng{background:#f0f0f0;color:#bbb;border:1px solid #ddd}
+.dim-cond-label{font-size:12px;line-height:1.6;color:var(--text-2);flex:1}
+.dim-cond-label.ok{color:var(--text)}
+.dim-cond-label.ng{color:var(--text-3)}
+.dim-cond-side{font-size:10px;padding:1px 6px;border-radius:8px;background:var(--sidebar);color:var(--text-3);flex-shrink:0;align-self:flex-start;margin-top:3px}
+/* 彈窗 */
+.cond-popup{position:fixed;background:white;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,0.18);padding:16px;z-index:5000;min-width:200px;max-width:280px}
+.cond-popup-title{font-size:12px;color:var(--text-3);margin-bottom:10px;line-height:1.5}
+.cond-popup-opts{display:flex;flex-direction:column;gap:6px}
+.cond-popup-opt{padding:8px 12px;border-radius:6px;border:1px solid var(--border);font-size:13px;cursor:pointer;text-align:left;background:white;font-family:'Noto Serif TC',serif;color:var(--text-2)}
+.cond-popup-opt:hover{background:var(--sidebar);border-color:var(--static)}
+.cond-popup-opt.cur{background:var(--static);color:white;border-color:var(--static)}
+.cond-popup-cancel{margin-top:8px;width:100%;padding:6px;border:none;background:none;color:var(--text-3);font-size:12px;cursor:pointer;font-family:'Noto Serif TC',serif}
+.dim-sidebar-new-item{padding:10px 14px;cursor:pointer;border-left:4px solid transparent;font-size:13px;display:flex;align-items:center;justify-content:space-between;color:var(--text-2);transition:all 0.1s}
+.dim-sidebar-new-item:hover{background:var(--sidebar)}
+.dim-sidebar-new-item.active{border-left-color:var(--accent);background:white;font-weight:700;color:var(--text)}
+.dim-sidebar-cat{font-size:10px;font-weight:900;letter-spacing:2px;padding:8px 14px 4px;color:var(--text-3)}
+.dim-sidebar-chip{font-size:10px;padding:2px 6px;border-radius:8px;color:white;font-weight:700}
 .dim-footer{background:white;border-top:1px solid var(--border);padding:10px 20px;flex-shrink:0}
 .cat-header{padding:14px 16px;font-size:14px;font-weight:900;letter-spacing:2px;border-bottom:1px solid rgba(0,0,0,0.05);position:sticky;top:0;z-index:10}
 .dim-item{padding:14px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
@@ -259,6 +296,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-obs" onclick="showObsPage()">各部位觀察</div>
   <div class="nav-tab" id="nav-dim" onclick="showDimPage()">13係數評分</div>
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">13項目標準</div>
+  <div class="nav-tab" id="nav-cond" onclick="showCondPage()">維度條件評分</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
   <button class="nav-report" onclick="showReport()">兵法報告 &#x2197;</button>
@@ -294,16 +332,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     <div class="col-center" id="obs-center"></div>
     <div class="col-right" id="dim-index-col"></div>
   </div>
-  <!-- Dim scoring page -->
+  <!-- Dim scoring page (新版：維度條件評分) -->
   <div id="dim-page" class="three-col">
-    <div class="dim-sidebar" id="sidebar"></div>
-    <div class="dim-main">
-      <div class="dim-main-header">
-        <h2 id="dim-title">系統載入中...</h2>
-      </div>
-      <div class="dim-scoring-area" id="scoring-area"></div>
-      <div class="dim-footer" id="footer"></div>
-    </div>
+    <div class="dim-sidebar" id="dim-sidebar-new"></div>
+    <div class="dim-cond-main" id="dim-cond-main"></div>
+    <div class="obs-right-col" id="dim-right-col"></div>
   </div>
 </div>
 
@@ -321,8 +354,296 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 <!-- Knowledge Overlay -->
 <div id="knowledge-overlay">
-  <div class="k-msg">建置中</div>
+<style>
+#knowledge-overlay{overflow:hidden;flex-direction:column;align-items:stretch;padding:0}
+.k-wrap{display:grid;grid-template-columns:200px 1fr;width:100%;height:100%;overflow:hidden}
+.k-sidebar{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.k-sidebar-item{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;border-left:3px solid transparent;transition:background 0.1s}
+.k-sidebar-item:hover{background:var(--hover-bg,rgba(0,0,0,0.04))}
+.k-sidebar-item.active{background:var(--active-bg,rgba(76,100,114,0.12));border-left-color:var(--active,#4c6472)}
+.k-sidebar-cat{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
+.k-sidebar-title{font-size:14px;font-weight:700;color:var(--text)}
+.k-sidebar-view{font-size:10px;color:var(--text-3);margin-top:1px}
+.k-sidebar-section{font-size:9px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:12px 14px 4px;text-transform:uppercase}
+.k-main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.k-main-header{padding:16px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.k-main-title{font-size:20px;font-weight:900;color:var(--text);margin:0}
+.k-main-sub{font-size:12px;color:var(--text-3);margin-top:3px}
+.k-content{padding:20px 24px 40px;flex:1}
+.k-essence{font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.8;background:var(--card-bg,#fafaf8);padding:12px 16px;border-radius:8px;border-left:3px solid var(--accent,#c03830)}
+.k-essence b{color:var(--text)}
+.k-section-title{font-size:11px;font-weight:900;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin:20px 0 10px}
+.k-table{width:100%;border-collapse:collapse;font-size:13px}
+.k-table th{text-align:left;padding:8px 12px;background:var(--bg);color:var(--text-3);font-weight:700;font-size:11px;letter-spacing:1px;border-bottom:2px solid var(--border)}
+.k-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;line-height:1.5}
+.k-table tr:last-child td{border-bottom:none}
+.k-table td:first-child{font-weight:700;color:var(--text-2);white-space:nowrap;width:90px;vertical-align:top}.k-table td:first-child small{font-weight:400;font-size:10px;color:var(--text-3);display:block;margin-top:2px}.k-table td:nth-child(2){color:var(--text-2);font-size:12px;line-height:1.9}
+.k-coeff{margin-top:16px;font-size:12px;color:var(--text-3);background:var(--bg);padding:10px 14px;border-radius:7px;line-height:1.7;border:1px solid var(--border)}
+</style>
+<div class="k-wrap">
+  <div class="k-sidebar" id="k-sidebar"></div>
+  <div class="k-main">
+    <div class="k-main-header">
+      <div class="k-main-title" id="k-main-title">請選擇維度</div>
+      <div class="k-main-sub" id="k-main-sub"></div>
+    </div>
+    <div class="k-content" id="k-content">
+      <div style="color:var(--text-3);font-size:14px;margin-top:40px;text-align:center">← 點選左側維度查看判斷標準</div>
+    </div>
+  </div>
 </div>
+
+<!-- 維度條件評分頁 -->
+<div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000">
+  <div style="display:grid;grid-template-columns:200px 1fr 280px;height:100%;overflow:hidden">
+    <div id="cp-sidebar" style="background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column"></div>
+    <div id="cp-main" style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px"></div>
+    <div id="cp-right" style="background:var(--sidebar);border-left:1px solid var(--border);overflow-y:auto;padding:12px"></div>
+  </div>
+</div>
+<script>
+(function(){
+const KD=[
+{title:'形勢',cat:'先天指數',view:'格局',
+ essence:'測量五官與骨骼是否達到「大、寬、闊、長、厚」的絕對體積標準。<br><b>形（靜）</b>= 先天容量足，靠本質取勝；<b>勢（動）</b>= 先天容量不足，需靠後天拼搏彌補',
+ rows:[
+  ['頭<br><small>滿分5，≥3→形</small>','□ 左頂骨龜背（無凹凸，緩緩向中間隆起）×1<br>□ 右頂骨龜背（無凹凸，緩緩向中間隆起）×1<br>□ 枕骨圓＋順＋無自剋＋無橫條 ×1<br>□ 左華陽圓隆（不可尖、平、凹）×1<br>□ 右華陽圓隆（不可尖、平、凹）×1','3分以上 → 形（靜）'],
+  ['上停<br><small>滿分4，全中→形</small>','□ 額高（眉到髮際長度佔臉1/3或以上）<br>□ 額寬（額頭兩側寬闊）<br>□ 額平（正面看額無凹凸、高低不平）<br>□ 額隆（側面有隆起弧度）OR 大天庭（整體隆起）','4項全中 → 形（靜）'],
+  ['耳<br><small>左右各4，全中→形</small>','□ 耳長（超過眼到鼻準底的2/3）<br>□ 耳圓＋有輪有廓＋輪包廓（3全中得1分）<br>□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 有垂珠','左右耳各4全中 → 形（靜）'],
+  ['眉<br><small>左右各6，全中→形</small>','□ 眉長（眉長過目）<br>□ 眉順（毛向一致，不逆生）<br>□ 柔順（不粗硬，質地柔順）<br>□ 鋪陳有致（毛距相等，根根見肉）<br>□ 無鷹角（眉2/3處上緣無明顯轉折）<br>□ 無中斷（眉毛無斷裂空隙）','左右眉各6全中 → 形（靜）'],
+  ['眼<br><small>左右各3，全中→形</small>','□ 眼長（眼長度等於或大於眼距）<br>□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）','左右眼各3全中 → 形（靜）'],
+  ['鼻<br><small>滿分4，全中→形</small>','□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻肉（肉多於骨）<br>□ 無起節（鼻樑無明顯起節）','4項全中 → 形（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆（位置在眼和鼻準間，有明顯隆起感）<br>□ 顴有肉（肉多於骨，感覺有肉包起）','左右各2全中得1分，中停計7分'],
+  ['口<br><small>滿分4，全中→形</small>','□ 口大（開大合小）<br>□ 涯岸（唇邊界明顯，唇線清晰，唇有肉）<br>□ 嘴角收（嘴角明顯有收）<br>□ 嘴角朝上','4項全中 → 形（靜）'],
+  ['中停<br><small>滿分7，≥4→形</small>','□ 左眉達形（6全中）<br>□ 右眉達形（6全中）<br>□ 左眼達形（3全中）<br>□ 右眼達形（3全中）<br>□ 鼻達形（4全中）<br>□ 左顴達形（2全中）<br>□ 右顴達形（2全中）','7部位≥4 → 形（靜）'],
+  ['下停<br><small>滿分5，≥3→形</small>','□ 口達形（4全中）<br>□ 人中深（溝深如剖竹）AND 人中長（至少食指寬）<br>□ 地閣起（地閣豐滿有起，承漿凹，朝拱）<br>□ 左頤（寬OR平）AND 頤豐（豐隆有肉）<br>□ 右頤（寬OR平）AND 頤豐','5部位≥3 → 形（靜）'],
+ ],
+ coeff:'形的部位數 > 勢 → 維度「靜」；越平衡係數越高（最高0.80），越偏極端係數越低（最低0.00）'},
+{title:'經緯',cat:'先天指數',view:'核心價值',
+ essence:'測量五官與骨骼的「左右對稱性」與「中軸線的端正」。<br><b>經（靜）</b>= 左右對稱、內在穩定、六親和諧；<b>緯（動）</b>= 左右不一、內在衝突、六親刑剋',
+ rows:[
+  ['頭<br><small>滿分5，≥3→經</small>','□ 頂骨左右一致（大小凹凸坡度一致）×2<br>□ 枕骨左右一致（兩側一致，無傾斜）×1<br>□ 華陽左右一致（大小一致，微微隆起）×2','3分以上 → 經（靜）'],
+  ['上停<br><small>滿分2，≥1→經</small>','□ 額隆（側面看額有隆起弧度）<br>□ 日月角起（上方髮際兩側下方有明顯隆起）','1項以上 → 經（靜）'],
+  ['耳<br><small>左右各5＋一致，全中→經</small>','□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 耳立（上端與耳垂中央一直線，接近垂直）<br>□ 耳大（耳朵大）<br>□ 耳厚（耳肉多）<br>□ 耳堅（耳肉不軟，有硬度）<br>□ 雙耳一致（高度、大小、耳型一致）','左右耳各5全中＋一致 → 經（靜）'],
+  ['眉<br><small>左右各10，各≥7→經</small>','□ 退印（眉頭不蓋到印堂）<br>□ 有聚（眉尾收攏不散）<br>□ 鋪陳有致（毛距相等，根根見肉）<br>□ 眉長（眉長過目）<br>□ 貼附眉骨（眉毛貼附眉骨）<br>□ 有揚（眉尾往上）<br>□ 眉高居額（眉位置高在額中）<br>□ 不壓眼（眉眼間距一指幅以上）<br>□ 不沖根（眉頭不朝山根方向）<br>□ 眉彎（尾1/3處有彎朝下）','左右眉各≥7 → 經（靜）'],
+  ['眼<br><small>左右各5＋一致，全中→經</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）<br>□ 眼尾平（眼型平，眼尾不朝上或朝下）<br>□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）<br>□ 雙眼一致（大小、形狀、高低一致）','左右眼各5全中＋一致 → 經（靜）'],
+  ['鼻<br><small>滿分3，全中→經</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻直（山根到鼻準與面部中線重合）<br>□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）','3項全中 → 經（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆（位置在眼和鼻準間，有明顯隆起感）<br>□ 顴有肉（肉多於骨，感覺有肉包起）','左右各2全中得1分，中停計7分'],
+  ['口<br><small>滿分6，全中→經</small>','□ 口大（開大合小）<br>□ 嘴角朝上 OR 嘴角水平（任1）<br>□ 口對稱（口不歪斜，左右對稱）<br>□ 口位置適中（口中線在臉的中線上）<br>□ 唇厚平均（上下唇厚度差不多）<br>□ 閉合線平 AND 閉合線密（2全中得1分）','6項全中 → 經（靜）'],
+  ['中停<br><small>滿分7，≥4→經</small>','□ 左眉達經（≥7）<br>□ 右眉達經（≥7）<br>□ 左眼達經（5全中）<br>□ 右眼達經（5全中）<br>□ 鼻達經（3全中）<br>□ 左顴達經（2全中）<br>□ 右顴達經（2全中）','7部位≥4 → 經（靜）'],
+  ['下停<br><small>滿分5，≥3→經</small>','□ 口達經（6全中）<br>□ 人中深（溝深如剖竹）AND 人中直（垂直不歪）<br>□ 地閣平（無凹凸）AND 地閣寬（約等口寬或更寬）AND 地閣置中<br>□ 左頤寬（腮角明顯）AND 雙頤一致<br>□ 右頤寬 AND 雙頤一致','5部位≥3 → 經（靜）'],
+ ],
+ coeff:'經的部位數 > 緯 → 維度「靜」'},
+{title:'方圓',cat:'先天指數',view:'成就',
+ essence:'測量五官與骨骼的幾何形狀，是偏向平直方正還是圓滑隆起。<br><b>方（靜）</b>= 平直有稜角，剛正守規矩，方主貴；<b>圓（動）</b>= 線條圓滑隆起，圓融善交際，圓主富',
+ rows:[
+  ['頭<br><small>滿分5，≥3→圓</small>','□ 左頂骨圓（圓而不方，非龜背）×1<br>□ 右頂骨圓（圓而不方，非龜背）×1<br>□ 枕骨無自剋骨（枕骨無凹凸或突起）×1<br>□ 左華陽圓隆（不可尖、平、凹）×1<br>□ 右華陽圓隆（不可尖、平、凹）×1','3分以上 → 圓（動）'],
+  ['上停<br><small>滿分2，全中→圓</small>','□ 額平（正面看額無凹凸、高低不平）<br>□ 額隆（側面看額有隆起弧度）','2項全中 → 圓（動）'],
+  ['耳<br><small>左右各3，各自全中→圓</small>','□ 耳圓（圓弧完整，耳輪無凹陷波浪）<br>□ 有輪有廓（輪廓分明）<br>□ 輪包廓（正面看耳廓不擋耳輪）','左右耳各3全中 → 圓（動）'],
+  ['眉<br><small>左右各2，各自全中→圓</small>','□ 眉彎（尾1/3處有彎朝下）<br>□ 無鷹角（眉2/3處上緣無明顯轉折）','左右眉各2全中 → 圓（動）'],
+  ['眼<br><small>左右各1＋一致→圓</small>','□ 眼上弧（上眼瞼有弧度）AND（眼鉤 OR 刀裁）（左）<br>□ 眼上弧 AND（眼鉤 OR 刀裁）（右）<br>□ 雙眼一致（大小、形狀、高低一致）','3條全中 → 圓（動）'],
+  ['鼻<br><small>滿分2，全中→圓</small>','□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 無起節（鼻樑無明顯起節）','2項全中 → 圓（動）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆（位置在眼和鼻準間，有明顯隆起感）<br>□ 顴有肉（肉多於骨，感覺有肉包起）','左右各2全中得1分，中停計7分'],
+  ['口<br><small>滿分4，全中→圓</small>','□ 涯岸（唇邊界明顯，唇線清晰，唇有肉）<br>□ 閉合線有曲度弓線（口闔時接合線有弓線弧度）<br>□ 唇厚一般 OR 唇明顯厚（任1）<br>□ 嘴角收（嘴角明顯有收）','4項全中 → 圓（動）'],
+  ['中停<br><small>滿分7，≥4→圓</small>','□ 左眉達圓（2全中）<br>□ 右眉達圓（2全中）<br>□ 左眼達圓（1全中）<br>□ 右眼達圓（1全中）<br>□ 鼻達圓（2全中）<br>□ 左顴達圓（2全中）<br>□ 右顴達圓（2全中）','7部位≥4 → 圓（動）'],
+  ['下停<br><small>滿分5，≥3→圓</small>','□ 口達圓（4全中）<br>□ 人中深（溝深如剖竹）AND 人中長（至少食指寬）<br>□ 地閣圓（下巴骨圓）<br>□ 左頤（寬OR平）AND（頤豐OR頤有肉）<br>□ 右頤（寬OR平）AND（頤豐OR頤有肉）','5部位≥3 → 圓（動）'],
+ ],
+ coeff:'⚠️ 圓的部位數 > 方 → 維度「動」（此維度靜=方）'},
+{title:'曲直',cat:'先天指數',view:'責任',
+ essence:'測量五官與骨骼的生長路徑，是否呈現無彎折、單一方向的直線。<br><b>直（靜）</b>= 生長路徑為直線，個性直接不妥協；<b>曲（動）</b>= 彎折迂迴，手段婉轉甚至虛偽',
+ rows:[
+  ['頭<br><small>滿分5，≥3→直</small>','□ 頂骨中線直（後囪門起點，矢狀縫中線向前無偏斜）×2<br>□ 枕骨中線直（後囪門起點到枕骨下緣中點為直線）×1<br>□ 左華陽平直（不隆不凹）×1<br>□ 右華陽平直（不隆不凹）×1','3分以上 → 直（靜）'],
+  ['上停<br><small>滿分3，全中→直</small>','□ 額立（側面看額偏直上而非斜上）<br>□ 額高（眉到髮際長度佔臉1/3或以上）<br>□ 日月角起（上方髮際兩側下方有明顯隆起）','3項全中 → 直（靜）'],
+  ['耳<br><small>左右各3，全中→直</small>','□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 耳立（上端與耳垂中央一直線，接近垂直）<br>□ 耳長（超過眼到鼻準底的2/3）','左右耳各3全中 → 直（靜）'],
+  ['眉<br><small>左右各1，各≥1→直</small>','□ 眉平（眉形呈一條線）AND 無鷹角（2全中得1分）<br>□ 短粗眉（眉型粗且短濃，特殊眉型）','左右眉各≥1 → 直（靜）'],
+  ['眼<br><small>左右各4，全中→直</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）<br>□ 無眼鉤（眼頭無鉤）<br>□ 無刀裁（眼尾無刀裁）','左右眼各4全中 → 直（靜）'],
+  ['鼻<br><small>滿分3，全中→直</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 鼻直（山根到鼻準與面部中線重合）','3項全中 → 直（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴鼻相稱（顴高鼻高，或顴低鼻低；隆起幅度與鼻相稱）','左右各1分，中停計7分'],
+  ['口<br><small>滿分4，全中→直</small>','□ 閉合線平（口闔時接合線水平）<br>□ 嘴角收（嘴角明顯有收）<br>□ 嘴角水平（不朝上不朝下）<br>□ 閉合線密（雙唇閉合緊密，無明顯間隙）','4項全中 → 直（靜）'],
+  ['中停<br><small>滿分7，≥4→直</small>','□ 左眉達直（≥1）<br>□ 右眉達直（≥1）<br>□ 左眼達直（4全中）<br>□ 右眼達直（4全中）<br>□ 鼻達直（3全中）<br>□ 左顴達直（鼻相稱）<br>□ 右顴達直（鼻相稱）','7部位≥4 → 直（靜）'],
+  ['下停<br><small>滿分5，≥3→直</small>','□ 口達直（4全中）<br>□ 人中直（垂直不歪，與面部中線重合）<br>□ 地閣平（下巴骨平，無凹凸）<br>□ 左頤平直（頤骨角度適中，非頤寬非頤削）<br>□ 右頤平直（頤骨角度適中，非頤寬非頤削）','5部位≥3 → 直（靜）'],
+ ],
+ coeff:'⚠️ 此維度 a=曲=動、b=直=靜；直的部位數 > 曲 → 維度「靜」'},
+{title:'收放',cat:'先天指數',view:'能耐',
+ essence:'測量五官邊緣的封閉性與收斂力，能量是向內包覆還是向外擴散。<br><b>收（靜）</b>= 聚攏包覆，能留住財富、精神與感情；<b>放（動）</b>= 擴散外露，精力與財富容易外洩',
+ rows:[
+  ['頭<br><small>滿分5，≥3→收</small>','□ 左頂骨圓（有圓，不可平、不可凹，非龜背）×1<br>□ 右頂骨圓 ×1<br>□ 枕骨圓（後腦為圓不為平）×1<br>□ 左華陽圓隆（不可尖、平、凹）×1<br>□ 右華陽圓隆 ×1','3分以上 → 收（靜）'],
+  ['上停<br><small>滿分2，≥1→收</small>','□ 小天庭（額頭中間區域較隆起，形成局部高點）<br>□ 日月角合（日月角兩側較靠近中線）','1項以上 → 收（靜）'],
+  ['耳<br><small>左右各2，全中→收</small>','□ 耳圓（圓弧完整，耳輪無凹陷波浪）<br>□ 輪包廓（正面看耳廓不擋耳輪）','左右耳各2全中 → 收（靜）'],
+  ['眉<br><small>左右各1，全中→收</small>','□ 眉尾有聚（眉尾收攏不散）','左右眉各1全中 → 收（靜）'],
+  ['眼<br><small>左右各2，全中→收</small>','□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）','左右眼各2全中 → 收（靜）'],
+  ['鼻<br><small>滿分1→收</small>','□ 鼻聚（準頭要聚，跟鼻樑寬度差不多）','1項 → 收（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴柄插天（顴柄明顯，尾端朝上往太陽穴方向延伸）','左右各1分，中停計7分'],
+  ['口<br><small>滿分4，全中→收</small>','□ 嘴角收（嘴角明顯有收）<br>□ 嘴角不朝下（朝上或水平，非朝下）<br>□ 閉合線密（雙唇閉合緊密，無明顯間隙）<br>□ 涯岸（唇邊界明顯，唇線清晰，唇有肉）','4項全中 → 收（靜）'],
+  ['中停<br><small>滿分7，≥4→收</small>','□ 左眉達收（1全中）<br>□ 右眉達收（1全中）<br>□ 左眼達收（2全中）<br>□ 右眼達收（2全中）<br>□ 鼻達收（1全中）<br>□ 左顴達收（柄插天）<br>□ 右顴達收（柄插天）','7部位≥4 → 收（靜）'],
+  ['下停<br><small>滿分5，≥3→收</small>','□ 口達收（4全中）<br>□ 人中深（溝深如剖竹）AND 人中長（至少食指寬）<br>□ 地閣平（無凹凸）OR 地閣圓（下巴骨圓）<br>□ 左頤寬（腮角明顯）AND（頤豐OR頤有肉）<br>□ 右頤寬 AND（頤豐OR頤有肉）','5部位≥3 → 收（靜）'],
+ ],
+ coeff:'收的部位數 > 放 → 維度「靜」'},
+{title:'緩急',cat:'先天指數',view:'成敗',
+ essence:'透過外在的寬度、柔度與細緻度，測量性格中決策與反應的節奏快慢。<br><b>緩（靜）</b>= 寬、柔、細緻、有肉，深謀遠慮、溫和沉穩；<b>急（動）</b>= 短、粗、硬，急躁易怒、短視近利',
+ rows:[
+  ['頭<br><small>滿分5，≥3→緩</small>','□ 左頂骨（龜背OR圓）AND 中央平順 ×1<br>□ 右頂骨（龜背OR圓）AND 中央平順 ×1<br>□ 枕骨圓＋無自剋＋無橫條＋順無凹凸（4全中）×1<br>□ 左華陽圓隆 OR 平直（任1）×1<br>□ 右華陽圓隆 OR 平直（任1）×1','3分以上 → 緩（靜）'],
+  ['上停<br><small>滿分3，全中→緩</small>','□ 額圓（正看偏橢圓形、厚度隆起、飽滿感）<br>□ 額寬（額頭兩側寬闊）<br>□ 額隆（側面看額有隆起弧度）','3項全中 → 緩（靜）'],
+  ['耳<br><small>左右各3，全中→緩</small>','□ 有輪有廓（有明顯的耳輪耳廓，輪廓分明）<br>□ 耳厚（耳肉多）OR 耳正常（任1）<br>□ 有垂珠','左右耳各3全中 → 緩（靜）'],
+  ['眉<br><small>左右各5，全中→緩</small>','□ 眉形細（眉型細，非粗眉）<br>□ 眉長（眉長過目）<br>□ 柔順（不粗硬，質地柔順）<br>□ 眉順（毛向一致，不逆生）<br>□ 不沖印（眉頭不朝印堂方向沖）','左右眉各5全中 → 緩（靜）'],
+  ['眼<br><small>左右各2，全中→緩</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）','左右眼各2全中 → 緩（靜）'],
+  ['鼻<br><small>滿分2，全中→緩</small>','□ 鼻寬（鼻樑寬）<br>□ 鼻肉（肉多於骨）','2項全中 → 緩（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆 OR 顴有而不明（稍看得出、摸得到凸起）（任1）<br>□ 顴有肉（肉多於骨）','左右各2全中得1分，中停計7分'],
+  ['口<br><small>滿分4，全中→緩</small>','□ 涯岸（唇邊界明顯，唇線清晰，唇有肉）<br>□ 嘴角收（嘴角明顯有收）<br>□ 嘴角朝上<br>□ 唇厚一般 OR 唇薄（任1）','4項全中 → 緩（靜）'],
+  ['中停<br><small>滿分7，≥4→緩</small>','□ 左眉達緩（5全中）<br>□ 右眉達緩（5全中）<br>□ 左眼達緩（2全中）<br>□ 右眼達緩（2全中）<br>□ 鼻達緩（2全中）<br>□ 左顴達緩（2全中）<br>□ 右顴達緩（2全中）','7部位≥4 → 緩（靜）'],
+  ['下停<br><small>滿分5，≥3→緩</small>','□ 口達緩（4全中）<br>□ 人中長（至少食指寬）<br>□（地閣圓OR地閣平）AND 地閣寬（約等口寬或更寬）<br>□ 左頤豐（豐隆有肉）OR 頤有肉（任1）<br>□ 右頤豐 OR 頤有肉（任1）','5部位≥3 → 緩（靜）'],
+ ],
+ coeff:'緩的部位數 > 急 → 維度「靜」'},
+{title:'順逆',cat:'運氣指數',view:'天運天機',
+ essence:'測量骨肉生長表面的平順度與方向性，是否有逆生、突起的摩擦特徵。<br><b>順（靜）</b>= 平貼往下，一生阻力小，運程綿長；<b>逆（動）</b>= 逆生突起，一生多波折，性格剛烈',
+ rows:[
+  ['頭<br><small>滿分5，≥3→順</small>','□ 左頂骨平寬（往外側平展才向下）AND 中央平順 ×1<br>□ 右頂骨平寬 AND 中央平順 ×1<br>□ 枕骨圓＋無自剋骨＋無橫條骨（3全中）×1<br>□ 左華陽平直（不隆不凹）×1<br>□ 右華陽平直 ×1','3分以上 → 順（靜）'],
+  ['上停<br><small>滿分2，全中→順</small>','□ 大天庭（額頭整體隆起，正面和側面皆有隆起感）<br>□ 額順（眉骨與額頭銜接處無明顯凹槽）','2項全中 → 順（靜）'],
+  ['耳<br><small>左右各4，全中→順</small>','□ 耳圓（圓弧完整，耳輪無凹陷波浪）<br>□ 有輪有廓（有明顯的耳輪耳廓，輪廓分明）<br>□ 輪包廓（正面看耳廓不擋耳輪）<br>□ 耳立（上端與耳垂中央一直線，接近垂直）','左右耳各4全中 → 順（靜）'],
+  ['眉<br><small>左右各5，全中→順</small>','□ 眉長（眉長過目）<br>□ 眉彎（尾1/3處有彎朝下）<br>□ 無鷹角（眉2/3處上緣無明顯轉折）<br>□ 眉順（毛向一致，不逆生）<br>□ 柔順（不粗硬，質地柔順）','左右眉各5全中 → 順（靜）'],
+  ['眼<br><small>左右各3，全中→順</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）<br>□ 上下不白（黑睛遮住上下眼白，無三白四白）','左右眼各3全中 → 順（靜）'],
+  ['鼻<br><small>滿分4，全中→順</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻直（山根到鼻準與面部中線重合）<br>□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 無起節（鼻樑無明顯起節）','4項全中 → 順（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴有肉（肉多於骨）<br>□ 顴不過大（顴骨不過大）','左右各2全中得1分，中停計7分'],
+  ['口<br><small>滿分3，全中→順</small>','□ 唇厚平均（上下唇厚度差不多）<br>□ 嘴角水平 OR 嘴角朝上（任1）<br>□ 嘴角收（嘴角明顯有收）','3項全中 → 順（靜）'],
+  ['中停<br><small>滿分7，≥4→順</small>','□ 左眉達順（5全中）<br>□ 右眉達順（5全中）<br>□ 左眼達順（3全中）<br>□ 右眼達順（3全中）<br>□ 鼻達順（4全中）<br>□ 左顴達順（2全中）<br>□ 右顴達順（2全中）','7部位≥4 → 順（靜）'],
+  ['下停<br><small>滿分5，≥3→順</small>','□ 口達順（3全中）<br>□ 人中深＋人中長（至少食指寬）＋人中直（垂直不歪）（3全中）<br>□（地閣圓OR地閣平）AND 地閣有肉（不露骨）<br>□ 左頤寬 OR 頤平（角度適中）（任1）<br>□ 右頤寬 OR 頤平（任1）','5部位≥3 → 順（靜）'],
+ ],
+ coeff:'順的部位數 > 逆 → 維度「靜」'},
+{title:'分合',cat:'運氣指數',view:'地運資源',
+ essence:'測量特徵的隆起高度與部位間的連貫性，氣勢是否能順利連接並支撐。<br><b>合（靜）</b>= 高起互接，能獲得天地資源與外力提攜；<b>分（動）</b>= 平塌低陷斷裂，缺乏外援靠自己硬撐',
+ rows:[
+  ['頭<br><small>滿分5，≥3→合</small>','□ 左頂骨（龜背OR圓）AND 中央平順 ×1<br>□ 右頂骨（龜背OR圓）AND 中央平順 ×1<br>□ 枕骨圓（後腦為圓不為平）×1<br>□ 左華陽圓隆 ×1<br>□ 右華陽圓隆 ×1','3分以上 → 合（靜）'],
+  ['上停<br><small>滿分2，≥1→合</small>','□ 大天庭（額頭整體隆起）<br>□ 小天庭（額頭中間較隆起）AND 日月角不清晰（2全中得1分）','1分以上 → 合（靜）'],
+  ['耳<br><small>左右各3，全中→合</small>','□ 耳高（上緣在眉眼之間或齊眉以上）必要<br>□ 耳圓（圓弧完整，耳輪無凹陷波浪）必要<br>□ 耳提 OR 耳提強（朝前約30度以上）OR 耳垂朝口（三選一）','左右耳各3全中 → 合（靜）'],
+  ['眉<br><small>左右各4，全中→合</small>','□ 有鷹角（眉2/3處上緣有明顯轉折，類似三角形）<br>□ 眉彎（尾1/3處有彎朝下）<br>□ 不沖印（眉頭不朝印堂方向沖）<br>□ 不沖根（眉頭不朝山根方向）','左右眉各4全中 → 合（靜）'],
+  ['眼<br><small>左右各3，全中→合</small>','□ 眼上弧（上眼瞼有弧度，不偏三角）<br>□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）','左右眼各3全中 → 合（靜）'],
+  ['鼻<br><small>滿分3，全中→合</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻準圓（鼻準不尖，形圓有肉）<br>□ 鼻接印（山根高接印堂，下接年壽）','3項全中 → 合（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆（有明顯隆起感）<br>□ 顴有肉（肉多於骨）<br>□ 顴柄插天（朝太陽穴延伸）OR 顴柄平（隱約不明顯）（任1）','左右各3全中得1分，中停計7分'],
+  ['口<br><small>滿分4，全中→合</small>','□ 嘴角朝上<br>□ 水星明顯（上嘴唇與人中間的V形明顯）<br>□ 唇厚一般 OR 唇明顯厚（任1）<br>□ 唇厚平均（上下唇厚度差不多）','4項全中 → 合（靜）'],
+  ['中停<br><small>滿分7，≥4→合</small>','□ 左眉達合（4全中）<br>□ 右眉達合（4全中）<br>□ 左眼達合（3全中）<br>□ 右眼達合（3全中）<br>□ 鼻達合（3全中）<br>□ 左顴達合（3全中）<br>□ 右顴達合（3全中）','7部位≥4 → 合（靜）'],
+  ['下停<br><small>滿分5，≥3→合</small>','□ 口達合（4全中）<br>□ 人中深（溝深如剖竹）<br>□ 地閣圓（下巴骨圓）<br>□ 左頤寬（腮角明顯）OR 頤平（角度適中）（任1）<br>□ 右頤寬 OR 頤平（任1）','5部位≥3 → 合（靜）'],
+ ],
+ coeff:'⚠️ 此維度 a=分=動、b=合=靜；合的部位數 > 分 → 維度「靜」'},
+{title:'真假',cat:'運氣指數',view:'人運人和',
+ essence:'測量五官的完整度與無損性，是否有斷層、凹陷、缺角等破壞格局的瑕疵。<br><b>真（靜）</b>= 完整無缺，人生基礎穩固；<b>假（動）</b>= 斷裂破損歪斜，暗藏凶險或關係斷裂',
+ rows:[
+  ['頭<br><small>5取3→真，頂骨一致必要</small>','□ 頂骨左右一致（必要條件，大小凹凸坡度一致）<br>□ 左頂骨龜背<br>□ 右頂骨龜背<br>□ 枕骨順無凹凸＋無自剋骨＋無橫條骨（3全中得1）<br>□ 左華陽順接（與頂骨間無太大轉折起伏）<br>□ 右華陽順接','頂骨一致必要，其餘5取3 → 真（靜）'],
+  ['上停<br><small>滿分2，全中→真</small>','□ 額平（正面看額無凹凸、高低不平）<br>□ 額順（眉骨與額頭銜接處無明顯凹槽）','2項全中 → 真（靜）'],
+  ['耳<br><small>左右各5，全中→真</small>','□ 耳圓（圓弧完整，耳輪無凹陷波浪）<br>□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 輪包廓（正面看耳廓不擋耳輪）<br>□ 有垂珠<br>□ 雙耳一致（高度、大小、耳型一致）','左右耳各5全中 → 真（靜）'],
+  ['眉<br><small>左右各4，全中→真</small>','□ 眉長（眉長過目）<br>□ 柔順（不粗硬，質地柔順）<br>□ 眉順（毛向一致，不逆生）<br>□ 雙眉一致（大小、高低一致）','左右眉各4全中 → 真（靜）'],
+  ['眼<br><small>左右各6，全中→真</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）<br>□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）<br>□ 下眼瞼平直<br>□ 雙眼一致（大小、形狀、高低一致）','左右眼各6全中 → 真（靜）'],
+  ['鼻<br><small>滿分6，全中→真</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 鼻準圓（鼻準不尖，形圓有肉）<br>□ 無起節（鼻樑無明顯起節）<br>□ 鼻順（山根年壽鼻準側面順接，不折不凹凸）<br>□ 鼻直（山根到鼻準與面部中線重合）','6項全中 → 真（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆 OR 顴有而不明（稍看得出、摸得到凸起）（任1）<br>□ 顴有肉（肉多於骨）<br>□ 顴柄平（隱約不明顯）OR 無明顯顴柄（任1）','左右各3全中得1分，中停計7分'],
+  ['口<br><small>滿分5，全中→真</small>','□ 涯岸（唇邊界明顯，唇線清晰，唇有肉）<br>□ 嘴角收（嘴角明顯有收）<br>□ 閉合線密（雙唇閉合緊密，無明顯間隙）<br>□ 口對稱（口不歪斜，左右對稱）<br>□ 口位置適中（口中線在臉的中線上）','5項全中 → 真（靜）'],
+  ['中停<br><small>滿分7，≥4→真</small>','□ 左眉達真（4全中）<br>□ 右眉達真（4全中）<br>□ 左眼達真（6全中）<br>□ 右眼達真（6全中）<br>□ 鼻達真（6全中）<br>□ 左顴達真（3全中）<br>□ 右顴達真（3全中）','7部位≥4 → 真（靜）'],
+  ['下停<br><small>滿分5，≥3→真</small>','□ 口達真（5全中）<br>□ 人中深＋人中長（至少食指寬）＋人中直（垂直不歪）（3全中）<br>□ 地閣平（無凹凸）AND 地閣有肉（不露骨）<br>□ 左頤平（角度適中）AND 雙頤一致<br>□ 右頤平 AND 雙頤一致','5部位≥3 → 真（靜）'],
+ ],
+ coeff:'真的部位數 > 假 → 維度「靜」'},
+{title:'攻守',cat:'後天指數',view:'戰略',
+ essence:'測量面部帶有「銳角、外露、堅硬」的特徵，對應侵略性與好鬥程度。<br><b>攻（動）</b>= 尖露凸硬，有侵略性；<b>守（靜）</b>= 無銳利特徵，溫和被動<br>⚠️ 以下列出判「攻」的條件',
+ rows:[
+  ['頭<br><small>任1→攻</small>','□ 頭骨偏硬（按壓骨感明顯，肉偏少）<br>□ 頂骨中央突起<br>□ 枕骨有自剋骨（後端有圓或尖突起）OR 有橫條骨<br>□ 左華陽突露（有明顯突起骨）<br>□ 右華陽突露','任1符合 → 攻（動）'],
+  ['上停<br><small>任1→攻</small>','□ 有美人尖（髮際中央有向下突出）<br>□ 額緊（額骨感明顯、硬度高、無皺紋）<br>□ 日月角骨感明顯 AND（大天庭OR小天庭）（2全中）','任1符合 → 攻（動）'],
+  ['耳<br><small>左右各任1，任一耳→攻</small>','□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 輪不包廓（耳廓外露擋輪）<br>□ 耳尖（上耳輪形尖起）<br>□ 耳硬（中段偏硬）<br>□ 耳勢朝上（整體耳型朝上長）','任一耳有1條以上 → 攻（動）'],
+  ['眉<br><small>左右各4取3，任一眉→攻</small>','□ 有鷹角（眉2/3處上緣有明顯轉折）<br>□ 眉毛稀少（無眉毛或稀疏）<br>□ 質硬（粗硬不柔順）<br>□ 有揚（眉尾往上）','任一眉3條以上 → 攻（動）'],
+  ['眼<br><small>左右各任1，任一眼→攻</small>','□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 眼大 AND 眼圓 AND 眼尾朝上（3全中）<br>□ 睛凸（眼球較突出眼瞼）','任一眼1條以上 → 攻（動）'],
+  ['鼻<br><small>任1→攻</small>','□ 鼻高（鼻樑年壽夠突起）<br>□ 有起節突露<br>□ 鼻骨感強（骨多於肉，明顯看得到鼻骨）<br>□ 山根細（山根寬度明顯短於鼻樑鼻準）','任1符合 → 攻（動）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆<br>□ 顴無肉少肉（骨感明顯堅硬）<br>□ 顴小尖（顴骨是小塊突起）','左右各任1符合得1分，中停計7分'],
+  ['口<br><small>任1→攻</small>','□ 嘴角朝上<br>□ 放鬆見齒（放鬆時口不緊閉且看得到齒）<br>□ 有唇珠（上嘴唇與人中間有小顆突起）<br>□ 唇凸（嘴唇往外突出或翹起明顯）<br>□ 唇薄（上下唇皆薄）','任1符合 → 攻（動）'],
+  ['中停<br><small>滿分7，攻≥4→攻</small>','□ 左眉達攻（4取3）<br>□ 右眉達攻（4取3）<br>□ 左眼達攻（任1）<br>□ 右眼達攻（任1）<br>□ 鼻達攻（任1）<br>□ 左顴達攻（任1）<br>□ 右顴達攻（任1）','7部位攻≥4 → 攻（動）'],
+  ['下停<br><small>攻≥3→攻</small>','□ 口達攻（任1）<br>□ 人中窄（人中凹下部分窄，或為一直線）<br>□ 地閣長 OR 短 OR 窄尖 OR 無肉（任1）<br>□ 左頤露尖（肉少或尖，視覺上薄）OR 頤短（任1）<br>□ 右頤露尖 OR 頤短（任1）','5部位攻≥3 → 攻（動）'],
+ ],
+ coeff:'攻的部位數 > 守 → 維度「動」'},
+{title:'奇正',cat:'後天指數',view:'戰術',
+ essence:'測量偏離中庸的特異配置，如極端的不對稱、罕見的奇骨突起、異常比例。<br><b>奇（動）</b>= 思維跳躍，具備特殊才能或擅用險招；<b>正（靜）</b>= 循規蹈矩，中庸穩重<br>⚠️ 以下列出判「奇」的條件',
+ rows:[
+  ['頭<br><small>滿分5，≥3→奇</small>','□ 頂骨左右不一致 ×2<br>□ 枕骨左右不一致 ×1<br>□ 華陽左右不一致 ×2','3分以上 → 奇（動）'],
+  ['上停<br><small>任1→奇</small>','□ 日月角起（上方髮際兩側下方有明顯隆起）<br>□ 有輔角骨（眉尾上方外側到髮際線有隆起）<br>□ 有佐串骨（接近髮際角落轉折處有隆起）','任1符合 → 奇（動）'],
+  ['耳<br><small>左右各任1，兩耳都有→奇</small>','□ 耳提強（朝前約30度以上）<br>□ 招風耳（耳和頭顱夾角大於40度，整面看明顯超過臉廓）<br>□ 耳孔大（耳中央盆地範圍等於或超過耳面積1/2）','左耳有1 AND 右耳有1 → 奇（動）'],
+  ['眉<br><small>左右各任1，兩眉都有→奇</small>','□ 有鷹角（眉2/3處上緣有明顯轉折，類似三角形）<br>□ 眉尾有揚（眉尾往上）','左眉有1 AND 右眉有1 → 奇（動）'],
+  ['眼<br><small>左右各3全中，任一眼→奇</small>','□ 眼細（眼長＞2倍眼寬）<br>□ 眼長（眼長度等於或大於眼距）<br>□ 黑睛大小適中（黑睛寬度約眼長1/3）','任一眼3全中 → 奇（動）'],
+  ['鼻<br><small>2全中→奇</small>','□ 鼻長（山根到鼻準，與鼻準到下巴接近或更長）<br>□ 有橫張（年壽寬度接近鼻翼寬度）','2項全中 → 奇（動）'],
+  ['顴<br><small>中停計分</small>','□ 顴柄插天（朝太陽穴延伸）OR 顴柄平（隱約不明顯）（任1）','左右各1分，中停計7分'],
+  ['口<br><small>2全中→奇</small>','□ 閉合線密（雙唇閉合緊密，無明顯間隙）<br>□ 嘴角收（嘴角明顯有收）','2項全中 → 奇（動）'],
+  ['中停<br><small>滿分7，奇≥4→奇</small>','□ 左眉達奇（任1）<br>□ 右眉達奇（任1）<br>□ 左眼達奇（3全中）<br>□ 右眼達奇（3全中）<br>□ 鼻達奇（2全中）<br>□ 左顴達奇（任1）<br>□ 右顴達奇（任1）','7部位奇≥4 → 奇（動）'],
+  ['下停<br><small>奇≥3→奇</small>','□ 口達奇（2全中）<br>□ 人中長（至少食指寬）AND 人中窄（凹下部分窄）<br>□ 地閣短 OR（地閣窄尖AND地閣長）（任1）<br>□ 左頤削（耳下到下巴缺乏明顯轉折角）<br>□ 右頤削','5部位奇≥3 → 奇（動）'],
+ ],
+ coeff:'奇的部位數 > 正 → 維度「動」'},
+{title:'虛實',cat:'後天指數',view:'算略',
+ essence:'測量骨骼上肉的厚度與毛髮的覆蓋率，判斷氣質是豐厚踏實還是單薄孤露。<br><b>實（靜）</b>= 有骨有肉有氣，能厚積成業；<b>虛（動）</b>= 孤露無援，勞而無功',
+ rows:[
+  ['頭<br><small>滿分5，≥3→實</small>','□ 左頂骨龜背（無凹凸，緩緩向中間隆起）×1<br>□ 右頂骨龜背 ×1<br>□ 枕骨圓＋順＋無橫條骨（3全中）×1<br>□ 左華陽圓隆 OR 突露（任1）×1<br>□ 右華陽圓隆 OR 突露（任1）×1','3分以上 → 實（靜）'],
+  ['上停<br><small>滿分3，全中→實</small>','□ 額高（眉到髮際長度佔臉1/3或以上）<br>□ 額隆（側面看額有隆起弧度）<br>□ 額立（側面看額偏直上而非斜上）','3項全中 → 實（靜）'],
+  ['耳<br><small>左右各4，全中→實</small>','□ 有輪有廓（有明顯的耳輪耳廓，輪廓分明）<br>□ 輪包廓（正面看耳廓不擋耳輪）<br>□ 耳圓（圓弧完整，耳輪無凹陷波浪）<br>□ 耳高（上緣在眉眼之間或齊眉以上）','左右耳各4全中 → 實（靜）'],
+  ['眉<br><small>左右各3，全中→實</small>','□ 眉長（眉長過目）<br>□ 眉無中斷（眉毛無斷裂空隙）<br>□ 眉毛多（量足夠，可粗可長可密，不可稀疏）','左右眉各3全中 → 實（靜）'],
+  ['眼<br><small>左右各3，全中→實</small>','□（眼細AND眼長）OR（眼大AND眼長）（任1）<br>□ 有眼鉤（眼頭有鉤，前眥鉤曲如鳥嘴）<br>□ 有刀裁（眼尾如刀裁平整）','左右眼各3全中 → 實（靜）'],
+  ['鼻<br><small>1分，起節否決→實</small>','□ 骨肉勻稱 OR 骨多於肉（任1）<br>⚠️ 有起節突露 → 強制虛','符合且無起節 → 實（靜）'],
+  ['顴<br><small>中停計分</small>','□ 顴高且隆 OR 顴有而不明（稍看得出、摸得到凸起）（任1）','左右各1分，中停計7分'],
+  ['口<br><small>滿分2，全中→實</small>','□ 嘴角收（嘴角明顯有收）<br>□ 口適中（口寬過鼻翼，在兩瞳孔距離之內）OR 口大（開大合小）（任1）','2項全中 → 實（靜）'],
+  ['中停<br><small>滿分7，≥4→實</small>','□ 左眉達實（3全中）<br>□ 右眉達實（3全中）<br>□ 左眼達實（3全中）<br>□ 右眼達實（3全中）<br>□ 鼻達實（1條且無起節）<br>□ 左顴達實（任1）<br>□ 右顴達實（任1）','7部位≥4 → 實（靜）'],
+  ['下停<br><small>滿分5，≥3→實</small>','□ 口達實（2全中）<br>□ 人中深（溝深如剖竹）<br>□ 地閣平（無凹凸）OR 地閣圓（下巴骨圓）（任1）<br>□ 左頤不削（平或凸，角度適中或偏寬）<br>□ 右頤不削（平或凸）','5部位≥3 → 實（靜）'],
+ ],
+ coeff:'⚠️ 此維度 a=虛=動、b=實=靜；實的部位數 > 虛 → 維度「靜」'},
+{title:'進退',cat:'後天指數',view:'智略',
+ essence:'測量五官長度或寬度是否「過短、過小或過窄」，對應面對利益時的克制力。<br><b>進（動）</b>= 見機即行事，拼運氣；<b>退（靜）</b>= 深謀遠慮，伺機而動<br>⚠️ 以下列出判「進」的條件',
+ rows:[
+  ['頭<br><small>滿分5，≥3→進</small>','□ 頭窄（前後距離≥左右距離）×2<br>□ 枕骨不一致 OR 有自剋骨 OR 有橫條骨（任1）×1<br>□ 左華陽突露（有明顯突起骨）OR 凹陷（任1）×1<br>□ 右華陽突露 OR 凹陷（任1）×1','3分以上 → 進（動）'],
+  ['上停<br><small>任1→進</small>','□ 額方（兩眼角距離約等於眉到髮際距離，形似正方）','符合 → 進（動）'],
+  ['耳<br><small>左右各任1，任一耳→進</small>','□ 耳短（耳尖端到耳垂長度不及眼到鼻準底的2/3）<br>□ 耳高（上緣在眉眼之間或齊眉以上）<br>□ 招風耳（耳和頭顱夾角大於40度，整面看明顯超過臉廓）','任一耳1條以上 → 進（動）'],
+  ['眉<br><small>左右各任1，任一眉→進</small>','□ 質硬（眉毛粗硬不柔順）<br>□ 眉短（眉短不及目）<br>□ 眉毛短（眉毛單根長度較短）','任一眉1條以上 → 進（動）'],
+  ['眼<br><small>左右任1→進</small>','□ 眼短（眼長度短於眼距）','任一眼符合 → 進（動）'],
+  ['鼻<br><small>任1→進</small>','□ 鼻肉（肉多於骨）<br>□ 鼻短（山根到鼻準，小於鼻準到下巴，或小於印堂到髮際）<br>□ 鼻窄小（鼻翼寬度小於雙眼眼距）<br>□ 無起節（鼻樑無明顯起節）','任1符合 → 進（動）'],
+  ['顴<br><small>中停計分</small>','□ 顴無肉少肉（顴骨感明顯堅硬，或顴骨是小塊突起）','左右各1分，中停計7分'],
+  ['口<br><small>任1→進</small>','□ 口大（開大合小）<br>□ 口適中（口寬過鼻翼，寬度在兩瞳孔距離之內）','任1符合 → 進（動）'],
+  ['中停<br><small>滿分7，進≥4→進</small>','□ 左眉達進（任1）<br>□ 右眉達進（任1）<br>□ 左眼達進（眼短）<br>□ 右眼達進（眼短）<br>□ 鼻達進（任1）<br>□ 左顴達進（顴無肉）<br>□ 右顴達進（顴無肉）','7部位進≥4 → 進（動）'],
+  ['下停<br><small>進≥3→進</small>','□ 口達進（任1）<br>□ 人中短（短於食指寬）<br>□ 地閣窄尖（寬度等於或小於鼻翼）<br>□ 左頤削（缺乏明顯轉折角）AND 頤露尖（肉少或尖）（2全中）<br>□ 右頤削 AND 頤露尖（2全中）','5部位進≥3 → 進（動）'],
+ ],
+ coeff:'進的部位數 > 退 → 維度「動」'}
+];
+
+const CAT_COLOR={'先天指數':'background:#5a3e35;color:#f7d9c4','運氣指數':'background:#2d4a5a;color:#c4dff7','後天指數':'background:#3a4a35;color:#c4f7d4'};
+let curK=-1;
+function kRender(){
+  const sb=document.getElementById('k-sidebar');
+  if(!sb)return;
+  let lastCat='',html='';
+  KD.forEach((d,i)=>{
+    if(d.cat!==lastCat){
+      html+=`<div class="k-sidebar-section">${d.cat}</div>`;
+      lastCat=d.cat;
+    }
+    html+=`<div class="k-sidebar-item" id="ksi-${i}" onclick="kSelect(${i})">
+      <div>
+        <div class="k-sidebar-title">${d.title}</div>
+        <div class="k-sidebar-view">${d.view}</div>
+      </div>
+    </div>`;
+  });
+  sb.innerHTML=html;
+}
+window.kSelect=function(i){
+  if(curK===i)return;
+  if(curK>=0){const old=document.getElementById('ksi-'+curK);if(old)old.classList.remove('active');}
+  curK=i;
+  const el=document.getElementById('ksi-'+i);if(el)el.classList.add('active');
+  const d=KD[i];
+  document.getElementById('k-main-title').textContent=d.title;
+  document.getElementById('k-main-sub').textContent=d.cat+' ・ '+d.view;
+  const rows=d.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  document.getElementById('k-content').innerHTML=
+    `<div class="k-essence">${d.essence}</div>
+     <div class="k-section-title">各部位判斷標準</div>
+     <table class="k-table">
+       <thead><tr><th>部位</th><th>條件</th><th>門檻</th></tr></thead>
+       <tbody>${rows}</tbody>
+     </table>
+     <div class="k-coeff">${d.coeff}</div>`;
+};
+document.addEventListener('DOMContentLoaded',kRender);
+setTimeout(kRender,100);
+})();
+</script>
+
 
 <!-- Report Overlay -->
 <div id="report-overlay">
@@ -356,7 +677,7 @@ const db=firebase.firestore();
 const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
 const PARTS_SHORT=["頭","上","中","下","耳","眉","眼","鼻","口"];
 const PALETTE=[{bg:"#f0ebe5",tx:"#4a453e"},{bg:"#ece4db",tx:"#4a4138"},{bg:"#ebe6e0",tx:"#45403a"},{bg:"#f5efe6",tx:"#4d463d"},{bg:"#f2ece4",tx:"#4a433b"},{bg:"#e8e2d9",tx:"#403a31"},{bg:"#e5edf0",tx:"#3b4d54"},{bg:"#d9e5eb",tx:"#2d3a40"},{bg:"#cedde6",tx:"#253138"},{bg:"#e8f0e5",tx:"#3d4a3b"},{bg:"#dce8d9",tx:"#2e3a2c"},{bg:"#d1e0cc",tx:"#243122"},{bg:"#c6d8bf",tx:"#1d291b"}];
-const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"方",b:"圓",aT:"動",bT:"靜",view:"成就"},{cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
+const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"方",b:"圓",aT:"靜",bT:"動",view:"成就"},{cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
 
 /* ===== Observation Data ===== */
 const OBS_GROUPS=[
@@ -382,14 +703,14 @@ const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]}
 const OBS_PARTS_DATA = {
 '頭':{total:15,sections:[{label:'頂骨',qs:[{id:'h1',text:'頂骨型相',paired:true,opts:[{v:'龜背',hint:'無凹凸，緩緩向中間隆起'},{v:'圓',hint:'往下側偏圓弧'},{v:'平寬',hint:'往外側平展才向下'}]},{id:'h2',text:'頂骨中央接合',opts:[{v:'突起',hint:''},{v:'平順',hint:''},{v:'凹陷',hint:''}]},{id:'h3',text:'頂骨左右一致性',opts:[{v:'左右一致',hint:'大小、高低、凹凸、坡度一致'},{v:'左右不一致',hint:''}]},{id:'h4',text:'頂骨中線',opts:[{v:'中線直',hint:'百會穴為起點，矢狀縫中線向前為直線到髮際中央'},{v:'中線斜歪',hint:''}]}]},{label:'枕骨',qs:[{id:'h5',text:'枕骨型相',opts:[{v:'後腦圓',hint:''},{v:'後腦平',hint:''}]},{id:'h6',text:'枕骨凹凸',opts:[{v:'順無凹凸',hint:''},{v:'有凹凸',hint:''}]},{id:'h7',text:'枕骨自剋骨',opts:[{v:'有自剋骨',hint:'後端有圓或尖突起'},{v:'無自剋骨',hint:''}]},{id:'h8',text:'枕骨橫條骨',opts:[{v:'有橫條骨',hint:'有明顯橫向骨突起'},{v:'無橫條骨',hint:''}]},{id:'h9',text:'枕骨中線',opts:[{v:'中線直',hint:'百會穴為起點到枕骨下緣中點為直線'},{v:'中線歪',hint:''}]},{id:'h10',text:'枕骨左右一致性',opts:[{v:'兩側一致',hint:''},{v:'兩側不一致',hint:''}]}]},{label:'華陽骨',qs:[{id:'h11',text:'華陽骨型相',paired:true,opts:[{v:'圓隆',hint:'圓隆起'},{v:'平直',hint:'不隆不凹'},{v:'突露',hint:'有明顯突起骨'},{v:'凹陷',hint:''}]},{id:'h12',text:'華陽骨銜接',paired:true,opts:[{v:'順接',hint:'與頂骨間無太大轉折起伏，順著銜接'},{v:'有轉折起伏',hint:''}]},{id:'h13',text:'華陽骨左右一致性',opts:[{v:'左右一致',hint:'大小、高低等一致'},{v:'左右不一致',hint:''}]}]},{label:'頭骨整體',qs:[{id:'h14',text:'頭骨寬窄',opts:[{v:'頭窄',hint:'百會穴到枕骨下端長度 ≥ 兩側華陽骨上緣間距'},{v:'頭寬',hint:'百會穴到枕骨下端長度 < 兩側華陽骨上緣間距'}]},{id:'h15',text:'頭骨硬度',opts:[{v:'偏硬',hint:'按壓骨感明顯，肉偏少'},{v:'一般',hint:''}]}]}]},
 '額':{total:17,sections:[{label:'額型',qs:[{id:'e1',text:'額高低',opts:[{v:'額高',hint:'眉到髮際長度佔臉 1/3 或以上'},{v:'額低',hint:''}]},{id:'e2',text:'額圓方',opts:[{v:'額圓',hint:'形狀偏橢圓'},{v:'額方',hint:'類似橫躺長方形'}]},{id:'e3',text:'額寬窄',opts:[{v:'額寬',hint:'兩側寬闊'},{v:'額窄',hint:''}]},{id:'e4',text:'額平整',opts:[{v:'額平',hint:'正面看無凹凸、高低不平'},{v:'額不平',hint:''}]},{id:'e5',text:'額乾淨',opts:[{v:'額淨',hint:'無痕紋痣疤疵陷'},{v:'額有缺陷',hint:''}]},{id:'e6',text:'額隆起',opts:[{v:'額隆',hint:'側面看有隆起弧度'},{v:'額均',hint:'側面較平'},{v:'額陷',hint:''}]},{id:'e7',text:'額立斜',opts:[{v:'額立',hint:'側面偏直上'},{v:'額斜',hint:'側面斜上'}]},{id:'e8',text:'額長方',opts:[{v:'額長',hint:'兩眼角距離小於眉到髮際距離'},{v:'額方',hint:'兩眼角距離約等於眉到髮際距離'}]},{id:'e9',text:'額順折',opts:[{v:'額順',hint:'眉骨與額頭銜接處無明顯凹槽'},{v:'額折',hint:'銜接處有明顯凹槽'}]},{id:'e10',text:'額鬆緊',opts:[{v:'額緊',hint:'額骨感明顯、硬度高、無皺紋'},{v:'額鬆',hint:''}]},{id:'e11',text:'大小天庭',opts:[{v:'大天庭',hint:'額頭整體隆起'},{v:'小天庭',hint:'額頭中間區域較隆起，兩側不特別寬'},{v:'無',hint:'整體偏平'}]}]},{label:'髮際線',qs:[{id:'e12',text:'美人尖',opts:[{v:'有美人尖',hint:'髮際中央有向下突出'},{v:'無美人尖',hint:''}]}]},{label:'額內部位',qs:[{id:'e13',text:'日月角隆',opts:[{v:'日月角起',hint:'上方髮際兩側下方有明顯隆起'},{v:'不清晰',hint:''}]},{id:'e14',text:'日月角開合',opts:[{v:'日月角開',hint:'兩側偏外，靠近邊城方向'},{v:'日月角合',hint:'較靠近中線'}]},{id:'e15',text:'日月角骨肉',opts:[{v:'有肉包',hint:'肉感為主，骨不凸'},{v:'骨感明顯',hint:'骨較突出'}]},{id:'e16',text:'輔角骨',opts:[{v:'有輔角骨',hint:'眉尾上方外側到髮際線有隆起'},{v:'不明顯',hint:''}]},{id:'e17',text:'佐串骨',opts:[{v:'有佐串骨',hint:'接近髮際角落轉折處有隆起'},{v:'不明顯',hint:''}]}]}]},
-'耳':{total:14,sections:[{label:'耳形',qs:[{id:'er1',text:'耳長短',paired:true,opts:[{v:'耳長',hint:'長度超過眼到鼻準底的 2/3'},{v:'耳短',hint:'長度不及眼到鼻準底的 2/3'}]},{id:'er2',text:'耳立提',paired:true,opts:[{v:'耳立',hint:'耳上端與耳垂中央一直線，接近垂直'},{v:'耳提',hint:'朝前傾，不垂直'}]},{id:'er3',text:'耳圓缺',paired:true,opts:[{v:'耳圓',hint:'圓弧完整，耳輪無凹陷波浪，上耳輪不往內翻'},{v:'耳尖',hint:'上耳輪形尖起'},{v:'耳缺',hint:'開花／內翻／方形有角等'}]},{id:'er4',text:'耳貼程度',paired:true,opts:[{v:'貼耳',hint:'夾角偏小，幾乎貼頭顱'},{v:'一般',hint:''},{v:'招風耳',hint:'夾角 > 40度，正面超出臉廓'}]},{id:'er5',text:'耳孔',paired:true,opts:[{v:'耳孔大',hint:'盆地範圍 ≥ 耳面積 1/2'},{v:'耳孔小',hint:''}]},{id:'er6',text:'耳勢',paired:true,opts:[{v:'耳勢朝上',hint:'整體耳型朝上長'},{v:'一般',hint:''}]}]},{label:'耳位置',qs:[{id:'er7',text:'耳高低',paired:true,opts:[{v:'耳高',hint:'上緣在眉眼之間或齊眉以上'},{v:'耳低',hint:'上緣低於眼'}]}]},{label:'輪廓',qs:[{id:'er8',text:'輪廓有無',paired:true,opts:[{v:'有輪有廓',hint:'輪廓分明'},{v:'有輪無廓',hint:''},{v:'無輪有廓',hint:''}]},{id:'er9',text:'輪包廓',paired:true,opts:[{v:'輪包廓',hint:'耳廓不擋耳輪'},{v:'輪不包廓',hint:'耳廓外露擋輪'}]}]},{label:'耳質',qs:[{id:'er10',text:'耳厚薄',paired:true,opts:[{v:'耳厚',hint:'耳肉多'},{v:'耳正常',hint:''},{v:'耳薄',hint:'薄如紙'}]},{id:'er11',text:'耳質硬軟',paired:true,opts:[{v:'耳堅',hint:'有硬度不軟'},{v:'耳硬',hint:'中段偏硬'},{v:'耳軟',hint:''}]}]},{label:'垂珠',qs:[{id:'er12',text:'垂珠',paired:true,opts:[{v:'有垂珠',hint:'耳垂大小明顯，且耳垂上有凸起耳珠'},{v:'無垂珠',hint:''}]},{id:'er13',text:'耳垂方向',paired:true,opts:[{v:'耳垂朝口',hint:''},{v:'耳垂朝下',hint:''},{v:'其他',hint:''}]}]},{label:'一致性',qs:[{id:'er14',text:'雙耳一致性',opts:[{v:'雙耳一致',hint:'大小、形狀、高低一致'},{v:'雙耳不一致',hint:''}]}]}]},
-'眉':{total:18,sections:[{label:'眉型',qs:[{id:'br1',text:'眉長短',paired:true,opts:[{v:'眉長',hint:'眉長過目'},{v:'眉短',hint:'眉短不及目'}]},{id:'br2',text:'眉形走向',paired:true,opts:[{v:'眉彎',hint:'尾 1/3 處有彎朝下'},{v:'眉平',hint:'眉形呈一條線，無彎'}]},{id:'br3',text:'鷹角',paired:true,opts:[{v:'有鷹角',hint:'眉 2/3 處上緣有明顯轉折'},{v:'無鷹角',hint:''}]},{id:'br4',text:'眉毛中斷',paired:true,opts:[{v:'無中斷',hint:''},{v:'有中斷',hint:'有空隙'}]},{id:'br5',text:'眉尾',paired:true,opts:[{v:'有聚',hint:'眉尾收攏不散'},{v:'散',hint:'眉尾散開'}]}]},{label:'眉勢',qs:[{id:'br6',text:'眉尾方向',paired:true,opts:[{v:'有揚',hint:'眉尾往上'},{v:'平',hint:''},{v:'往下',hint:''}]},{id:'br7',text:'眉頭與印堂',paired:true,opts:[{v:'不沖印',hint:'眉頭不延伸到印堂'},{v:'沖印',hint:'眉頭蓋到印堂'}]},{id:'br8',text:'眉頭與山根',paired:true,opts:[{v:'不沖根',hint:'眉頭方向不朝山根延伸'},{v:'沖根',hint:''}]}]},{label:'眉位',qs:[{id:'br9',text:'眉的位置高低',paired:true,opts:[{v:'眉高居額',hint:'眉位置高在額中'},{v:'一般',hint:''}]},{id:'br10',text:'眉眼間距',paired:true,opts:[{v:'不壓眼',hint:'眉眼間距一指幅以上'},{v:'壓眼',hint:'間距不足一指幅'}]},{id:'br11',text:'眉頭位置',paired:true,opts:[{v:'退印',hint:'眉頭不蓋到印堂'},{v:'蓋印堂',hint:''}]},{id:'br12',text:'眉附骨位',paired:true,opts:[{v:'貼附眉骨',hint:'眉毛長在眉骨上'},{v:'不貼附',hint:''}]}]},{label:'眉質',qs:[{id:'br13',text:'眉毛順亂',paired:true,opts:[{v:'眉順',hint:'毛向一致，不逆生'},{v:'眉亂',hint:'有逆生或雜亂'}]},{id:'br14',text:'眉毛硬軟',paired:true,opts:[{v:'柔順',hint:''},{v:'質硬',hint:'粗硬不柔順'}]},{id:'br15',text:'眉毛量',paired:true,opts:[{v:'眉毛多',hint:'量足'},{v:'眉毛稀少',hint:'稀疏或無眉'}]},{id:'br16',text:'眉身鋪陳',paired:true,opts:[{v:'鋪陳有致',hint:'毛距相等，根根見肉'},{v:'一般',hint:''},{v:'有交叉',hint:'疏密不均'}]},{id:'br17',text:'眉毛單根長度',paired:true,opts:[{v:'毛不過短',hint:''},{v:'眉毛短',hint:'毛短，不長，蓋不住'}]}]},{label:'一致性',qs:[{id:'br18',text:'雙眉一致性',opts:[{v:'雙眉一致',hint:'大小、高低一致'},{v:'雙眉不一致',hint:''}]}]}]},
-'眼':{total:11,sections:[{label:'眼型',qs:[{id:'ey1',text:'眼長短',paired:true,opts:[{v:'眼長',hint:'眼長度 ≥ 眼距，或極寸約 3.3 公分'},{v:'眼短',hint:'眼長度 < 眼距'}]},{id:'ey2',text:'眼大小',paired:true,opts:[{v:'眼大',hint:'眼寬可見 80% 以上黑睛'},{v:'眼小',hint:''}]},{id:'ey3',text:'眼細圓',paired:true,opts:[{v:'眼細',hint:'眼長 > 2 倍眼寬'},{v:'眼圓',hint:''}]},{id:'ey4',text:'眼尾方向',paired:true,opts:[{v:'眼尾平',hint:''},{v:'眼尾朝上',hint:''},{v:'眼尾朝下',hint:''}]},{id:'ey5',text:'睛凸',paired:true,opts:[{v:'睛凸',hint:'眼球較突出眼瞼'},{v:'正常',hint:''}]}]},{label:'眼輪廓',qs:[{id:'ey6',text:'眼鉤',paired:true,opts:[{v:'有眼鉤',hint:'眼頭有鉤，前眥鉤曲如鳥嘴'},{v:'無眼鉤',hint:''}]},{id:'ey7',text:'刀裁',paired:true,opts:[{v:'有刀裁',hint:'眼尾如刀裁收緊，後眥平整'},{v:'無刀裁',hint:''}]},{id:'ey8',text:'上眼瞼',paired:true,opts:[{v:'眼上弧',hint:'上眼瞼有弧度'},{v:'有較硬轉角',hint:'偏三角兩邊感'}]},{id:'ey9',text:'下眼瞼',paired:true,opts:[{v:'下眼瞼平直',hint:''},{v:'下眼瞼有弧',hint:''}]}]},{label:'睛瞳',qs:[{id:'ey10',text:'黑睛大小',paired:true,opts:[{v:'睛大',hint:''},{v:'適中',hint:'約眼長 1/3–1/2'},{v:'睛小',hint:''}]}]},{label:'一致性',qs:[{id:'ey11',text:'雙眼一致性',opts:[{v:'雙眼一致',hint:'大小、形狀、高低一致'},{v:'雙眼不一致',hint:''}]}]}]},
+'耳':{total:15,sections:[{label:'耳形',qs:[{id:'er1',text:'耳長短',paired:true,opts:[{v:'耳長',hint:'長度超過眼到鼻準底的 2/3'},{v:'耳短',hint:'長度不及眼到鼻準底的 2/3'}]},{id:'er2',text:'耳大小',paired:true,opts:[{v:'耳大',hint:''},{v:'耳適中',hint:''},{v:'耳小',hint:''}]},{id:'er3',text:'耳立提',paired:true,opts:[{v:'耳立',hint:'耳上端與耳垂中央一直線，接近垂直'},{v:'耳提',hint:'朝前傾，不垂直'},{v:'耳提強',hint:'朝前約 30 度以上'}]},{id:'er4',text:'耳圓缺',paired:true,opts:[{v:'耳圓',hint:'圓弧完整，耳輪無凹陷波浪，上耳輪不往內翻'},{v:'耳尖',hint:'上耳輪形尖起'},{v:'耳缺',hint:'開花／內翻／方形有角等'}]},{id:'er5',text:'耳貼程度',paired:true,opts:[{v:'貼耳',hint:'夾角偏小，幾乎貼頭顱'},{v:'一般',hint:''},{v:'招風耳',hint:'夾角 > 40 度，正面超出臉廓'}]},{id:'er6',text:'耳孔',paired:true,opts:[{v:'耳孔大',hint:'盆地範圍 ≥ 耳面積 1/2'},{v:'耳孔小',hint:''}]}]},{label:'耳位置',qs:[{id:'er7',text:'耳高低',paired:true,opts:[{v:'耳高',hint:'上緣在眉眼之間或齊眉以上'},{v:'耳低',hint:'上緣低於眼'}]}]},{label:'輪廓',qs:[{id:'er8',text:'輪廓有無',paired:true,opts:[{v:'有輪有廓',hint:'輪廓分明'},{v:'有輪無廓',hint:''},{v:'無輪有廓',hint:''}]},{id:'er9',text:'輪包廓',paired:true,opts:[{v:'輪包廓',hint:'耳廓不擋耳輪'},{v:'輪不包廓',hint:'耳廓外露擋輪'}]}]},{label:'耳質',qs:[{id:'er10',text:'耳厚薄',paired:true,opts:[{v:'耳厚',hint:'耳肉多'},{v:'耳正常',hint:''},{v:'耳薄',hint:'薄如紙'}]},{id:'er11',text:'耳質硬軟',paired:true,opts:[{v:'耳堅',hint:'有硬度不軟'},{v:'耳硬',hint:'中段偏硬'},{v:'耳軟',hint:''}]}]},{label:'垂珠',qs:[{id:'er12',text:'垂珠',paired:true,opts:[{v:'有垂珠',hint:'耳垂大小明顯，且耳垂上有凸起耳珠'},{v:'無垂珠',hint:''}]},{id:'er13',text:'耳垂方向',paired:true,opts:[{v:'耳垂朝口',hint:''},{v:'耳垂朝下',hint:''},{v:'其他',hint:''}]}]},{label:'一致性',qs:[{id:'er14',text:'雙耳一致性',opts:[{v:'雙耳一致',hint:'大小、形狀、高低一致'},{v:'雙耳不一致',hint:''}]}]},{label:'耳勢',qs:[{id:'er15',text:'耳勢',paired:true,opts:[{v:'耳勢朝上',hint:'整體耳型朝上長'},{v:'一般',hint:''}]}]}]},
+'眉':{total:20,sections:[{label:'眉型',qs:[{id:'br1',text:'眉長短',paired:true,opts:[{v:'眉長',hint:'眉長過目'},{v:'眉短',hint:'眉短不及目'}]},{id:'br2',text:'眉粗細',paired:true,opts:[{v:'眉形細',hint:''},{v:'眉型適中',hint:''},{v:'眉型粗',hint:''}]},{id:'br3',text:'眉形走向',paired:true,opts:[{v:'眉彎',hint:'尾 1/3 處有彎朝下'},{v:'眉平',hint:'眉形呈一條線，無彎'}]},{id:'br4',text:'鷹角',paired:true,opts:[{v:'有鷹角',hint:'眉 2/3 處上緣有明顯轉折'},{v:'無鷹角',hint:''}]},{id:'br5',text:'眉毛中斷',paired:true,opts:[{v:'無中斷',hint:''},{v:'有中斷',hint:'有空隙'}]},{id:'br6',text:'眉尾',paired:true,opts:[{v:'有聚',hint:'眉尾收攏不散'},{v:'散',hint:'眉尾散開'}]},{id:'br7',text:'特殊眉型',paired:true,opts:[{v:'短粗眉',hint:'眉型粗且短濃'},{v:'將軍眉',hint:'眉尾大幅飛揚朝斜上'},{v:'無',hint:''}]}]},{label:'眉勢',qs:[{id:'br8',text:'眉尾方向',paired:true,opts:[{v:'有揚',hint:'眉尾往上'},{v:'平',hint:''},{v:'往下',hint:''}]},{id:'br9',text:'眉頭與山根',paired:true,opts:[{v:'不沖根',hint:'眉頭方向不朝山根延伸'},{v:'沖根',hint:''}]},{id:'br10',text:'眉的位置高低',paired:true,opts:[{v:'眉高居額',hint:'眉位置高在額中'},{v:'一般',hint:''}]}]},{label:'眉位',qs:[{id:'br11',text:'眉眼間距',paired:true,opts:[{v:'不壓眼',hint:'眉眼間距一指幅以上'},{v:'壓眼',hint:'間距不足一指幅'}]},{id:'br12',text:'眉頭位置',paired:true,opts:[{v:'退印',hint:'眉頭不蓋到印堂'},{v:'蓋印堂',hint:''}]},{id:'br13',text:'眉附骨位',paired:true,opts:[{v:'貼附眉骨',hint:'眉毛長在眉骨上'},{v:'不貼附',hint:''}]},{id:'br14',text:'眉毛順亂',paired:true,opts:[{v:'眉順',hint:'毛向一致，不逆生'},{v:'眉亂',hint:'有逆生或雜亂'}]}]},{label:'眉質',qs:[{id:'br15',text:'眉毛硬軟',paired:true,opts:[{v:'柔順',hint:''},{v:'質硬',hint:'粗硬不柔順'}]},{id:'br16',text:'眉毛量',paired:true,opts:[{v:'眉毛多',hint:'量足'},{v:'眉毛稀少',hint:'稀疏或無眉'}]},{id:'br17',text:'眉身鋪陳',paired:true,opts:[{v:'鋪陳有致',hint:'毛距相等，根根見肉'},{v:'一般',hint:''},{v:'有交叉',hint:'疏密不均'}]},{id:'br18',text:'眉毛單根長度',paired:true,opts:[{v:'毛不過短',hint:''},{v:'眉毛短',hint:'毛短，不長，蓋不住'}]},{id:'br19',text:'眉頭與印堂',paired:true,opts:[{v:'不沖印',hint:'眉頭不延伸到印堂'},{v:'沖印',hint:'眉頭蓋到印堂'}]}]},{label:'一致性',qs:[{id:'br20',text:'雙眉一致性',opts:[{v:'雙眉一致',hint:'大小、高低一致'},{v:'雙眉不一致',hint:''}]}]}]},
+'眼':{total:12,sections:[{label:'眼型',qs:[{id:'ey1',text:'眼長短',paired:true,opts:[{v:'眼長',hint:'眼長度 ≥ 眼距，或極寸約 3.3 公分'},{v:'眼短',hint:'眼長度 < 眼距'}]},{id:'ey2',text:'眼大小',paired:true,opts:[{v:'眼大',hint:'眼寬可見 80% 以上黑睛'},{v:'眼小',hint:''}]},{id:'ey3',text:'眼細圓',paired:true,opts:[{v:'眼細',hint:'眼長 > 2 倍眼寬'},{v:'眼圓',hint:''}]},{id:'ey4',text:'眼尾方向',paired:true,opts:[{v:'眼尾平',hint:''},{v:'眼尾朝上',hint:''},{v:'眼尾朝下',hint:''}]},{id:'ey5',text:'睛凸',paired:true,opts:[{v:'睛凸',hint:'眼球較突出眼瞼'},{v:'正常',hint:''}]}]},{label:'眼輪廓',qs:[{id:'ey6',text:'眼鉤',paired:true,opts:[{v:'有眼鉤',hint:'眼頭有鉤，前眥鉤曲如鳥嘴'},{v:'無眼鉤',hint:''}]},{id:'ey7',text:'刀裁',paired:true,opts:[{v:'有刀裁',hint:'眼尾如刀裁收緊，後眥平整'},{v:'無刀裁',hint:''}]},{id:'ey8',text:'上眼瞼',paired:true,opts:[{v:'眼上弧',hint:'上眼瞼有弧度'},{v:'有較硬轉角',hint:'偏三角兩邊感'}]},{id:'ey9',text:'下眼瞼',paired:true,opts:[{v:'下眼瞼平直',hint:''},{v:'下眼瞼有弧',hint:''}]}]},{label:'睛瞳',qs:[{id:'ey10',text:'黑睛大小',paired:true,opts:[{v:'睛大',hint:''},{v:'適中',hint:'約眼長 1/3–1/2'},{v:'睛小',hint:''}]},{id:'ey11',text:'眼白',paired:true,opts:[{v:'上下不白',hint:'黑睛遮住上下眼白'},{v:'上三白',hint:'黑睛下移，上方露白'},{v:'下三白',hint:'黑睛上移，下方露白'},{v:'四白',hint:'黑睛居中，上下皆露白'}]}]},{label:'一致性',qs:[{id:'ey12',text:'雙眼一致性',opts:[{v:'雙眼一致',hint:'大小、形狀、高低一致'},{v:'雙眼不一致',hint:''}]}]}]},
 '鼻':{total:12,sections:[{label:'鼻型',qs:[{id:'n1',text:'鼻長短',opts:[{v:'鼻長',hint:'山根到鼻準，與鼻準到下巴接近或更長，與印堂到髮際線接近或更長'},{v:'鼻短',hint:''}]},{id:'n2',text:'鼻高低',opts:[{v:'鼻高',hint:'鼻樑年壽夠突起'},{v:'鼻低',hint:''}]},{id:'n3',text:'鼻直曲',opts:[{v:'鼻直',hint:'山根到鼻準與中線重合'},{v:'鼻曲',hint:''}]},{id:'n4',text:'鼻寬窄',opts:[{v:'鼻寬',hint:''},{v:'鼻窄小',hint:'鼻翼寬度小於眼距'}]},{id:'n5',text:'鼻準形',opts:[{v:'鼻準圓',hint:'不尖，形圓有肉'},{v:'鼻準尖',hint:''}]},{id:'n6',text:'鼻順',opts:[{v:'鼻順',hint:'山根年壽鼻準側面順接，不折不凹凸'},{v:'鼻不順',hint:''}]},{id:'n7',text:'鼻接印',opts:[{v:'鼻接印',hint:'山根隆起上接印堂、下接年壽'},{v:'鼻不接印',hint:''}]},{id:'n8',text:'鼻橫張',opts:[{v:'有橫張',hint:'年壽寬度接近鼻翼寬度'},{v:'無橫張',hint:''}]},{id:'n9',text:'山根寬窄',opts:[{v:'山根寬',hint:''},{v:'山根窄',hint:'明顯短於鼻樑鼻準'}]}]},{label:'鼻骨肉',qs:[{id:'n10',text:'鼻骨肉比',opts:[{v:'肉多於骨',hint:''},{v:'骨肉勻稱',hint:''},{v:'骨多於肉',hint:'骨感強'}]},{id:'n11',text:'鼻起節',opts:[{v:'無起節',hint:''},{v:'有起節突露',hint:''}]},{id:'n12',text:'鼻聚散',opts:[{v:'鼻聚',hint:'準頭聚，跟鼻樑寬度差不多'},{v:'鼻散',hint:''}]}]}]},
 '顴':{total:6,sections:[{label:'顴形',qs:[{id:'q1',text:'顴骨形態',paired:true,opts:[{v:'顴高且隆',hint:'位置在眼和鼻準間，有明顯隆起感'},{v:'顴有而不明',hint:'稍看得出，摸得到凸起'},{v:'顴平',hint:'無明顯隆起'}]},{id:'q2',text:'顴骨大小',paired:true,opts:[{v:'顴大',hint:''},{v:'顴不過大',hint:''},{v:'顴小尖',hint:''}]}]},{label:'顴骨肉',qs:[{id:'q3',text:'顴骨肉比',paired:true,opts:[{v:'顴有肉',hint:'肉多於骨，感覺有肉包起'},{v:'顴無肉少肉',hint:'骨感明顯堅硬，或小塊突起'}]}]},{label:'顴柄',qs:[{id:'q4',text:'顴柄走向',paired:true,opts:[{v:'顴柄插天',hint:'明顯，尾端朝上往太陽穴方向延伸'},{v:'顴柄平',hint:'隱約不明顯，平不起不凹'},{v:'無明顯顴柄',hint:''}]}]},{label:'顴整體',qs:[{id:'q5',text:'顴鼻相稱',opts:[{v:'相稱',hint:'顴高鼻高，或顴低鼻低'},{v:'不相稱',hint:''}]},{id:'q6',text:'雙顴一致性',opts:[{v:'雙顴一致',hint:''},{v:'雙顴不一致',hint:''}]}]}]},
-'口':{total:13,sections:[{label:'口型',qs:[{id:'m1',text:'口大小',opts:[{v:'口開大合小',hint:'合起大於鼻翼/眼頭，開時超過瞳孔'},{v:'口小',hint:'合起約等於或小於鼻翼'}]},{id:'m2',text:'涯岸',opts:[{v:'涯岸分明',hint:'唇邊界明顯，唇線清晰'},{v:'唇緣較不明顯',hint:''}]},{id:'m3',text:'嘴角收斂',opts:[{v:'嘴角收',hint:'嘴角明顯有收緊'},{v:'嘴角不收',hint:''}]},{id:'m4',text:'嘴角方向',opts:[{v:'嘴角朝上',hint:''},{v:'嘴角水平',hint:''},{v:'嘴角朝下',hint:''}]},{id:'m5',text:'上唇V形',opts:[{v:'水星明顯',hint:'上嘴唇與人中間的 V 形明顯'},{v:'水星不明顯',hint:''}]},{id:'m6',text:'閉合線',opts:[{v:'閉合線平',hint:'口闔時接合線水平'},{v:'閉合線有曲度',hint:'有弓線'}]},{id:'m7',text:'口閉緊',opts:[{v:'閉合線密',hint:'雙唇放鬆緊密，無明顯間隙'},{v:'閉合線較鬆',hint:''},{v:'放鬆見齒',hint:''}]}]},{label:'唇型',qs:[{id:'m8',text:'唇厚度',opts:[{v:'唇一般',hint:''},{v:'唇明顯厚',hint:''},{v:'唇薄',hint:''}]},{id:'m9',text:'唇厚均',opts:[{v:'唇厚平均',hint:'上下唇厚度差不多，上唇可略厚於下唇'},{v:'唇厚不均',hint:''}]},{id:'m10',text:'唇起',opts:[{v:'唇凸',hint:'嘴唇往外突出或翹起明顯'},{v:'唇不凸',hint:''}]},{id:'m11',text:'唇垂珠',opts:[{v:'有唇珠',hint:'上嘴唇與人中間有小顆突起'},{v:'無唇珠',hint:''}]}]},{label:'一致性',qs:[{id:'m12',text:'口中線',opts:[{v:'口位置適中',hint:'口中線在臉的中線上'},{v:'口位置不中',hint:''}]},{id:'m13',text:'口對稱',opts:[{v:'口對稱',hint:'口不歪斜，左右對稱'},{v:'口不對稱',hint:''}]}]}]},
+'口':{total:13,sections:[{label:'口型',qs:[{id:'m1',text:'口大小',opts:[{v:'口開大合小',hint:'合起大於鼻翼/眼頭，開時超過瞳孔'},{v:'口適中',hint:'口寬過鼻翼，寬度在兩瞳孔距離之內'},{v:'口小',hint:'合起約等於或小於鼻翼'}]},{id:'m2',text:'涯岸',opts:[{v:'涯岸分明',hint:'唇邊界明顯，唇線清晰'},{v:'唇緣較不明顯',hint:''}]},{id:'m3',text:'嘴角收斂',opts:[{v:'嘴角收',hint:'嘴角明顯有收緊'},{v:'嘴角不收',hint:''}]},{id:'m4',text:'嘴角方向',opts:[{v:'嘴角朝上',hint:''},{v:'嘴角水平',hint:''},{v:'嘴角朝下',hint:''}]},{id:'m5',text:'上唇V形',opts:[{v:'水星明顯',hint:'上嘴唇與人中間的 V 形明顯'},{v:'水星不明顯',hint:''}]},{id:'m6',text:'閉合線',opts:[{v:'閉合線平',hint:'口闔時接合線水平'},{v:'閉合線有曲度',hint:'有弓線'}]},{id:'m7',text:'口閉緊',opts:[{v:'閉合線密',hint:'雙唇放鬆緊密，無明顯間隙'},{v:'閉合線較鬆',hint:''},{v:'放鬆見齒',hint:''}]}]},{label:'唇型',qs:[{id:'m8',text:'唇厚度',opts:[{v:'唇一般',hint:''},{v:'唇明顯厚',hint:''},{v:'唇薄',hint:''}]},{id:'m9',text:'唇厚均',opts:[{v:'唇厚平均',hint:'上下唇厚度差不多，上唇可略厚於下唇'},{v:'唇厚不均',hint:''}]},{id:'m10',text:'唇起',opts:[{v:'唇凸',hint:'嘴唇往外突出或翹起明顯'},{v:'唇不凸',hint:''}]},{id:'m11',text:'唇垂珠',opts:[{v:'有唇珠',hint:'上嘴唇與人中間有小顆突起'},{v:'無唇珠',hint:''}]}]},{label:'一致性',qs:[{id:'m12',text:'口中線',opts:[{v:'口位置適中',hint:'口中線在臉的中線上'},{v:'口位置不中',hint:''}]},{id:'m13',text:'口對稱',opts:[{v:'口對稱',hint:'口不歪斜，左右對稱'},{v:'口不對稱',hint:''}]}]}]},
 '人中':{total:4,sections:[{label:'人中',qs:[{id:'p1',text:'人中深淺',opts:[{v:'人中深',hint:'溝深，如剖竹狀'},{v:'人中淺',hint:'溝淺或無明顯溝'}]},{id:'p2',text:'人中長短',opts:[{v:'人中長',hint:'至少食指寬'},{v:'人中短',hint:'短於食指寬'}]},{id:'p3',text:'人中寬窄',opts:[{v:'人中寬度適中',hint:''},{v:'人中窄',hint:''}]},{id:'p4',text:'人中方向',opts:[{v:'人中直',hint:'人中到口連線垂直不歪'},{v:'人中不直',hint:''}]}]}]},
-'地閣':{total:5,sections:[{label:'地閣型',qs:[{id:'c1',text:'地閣朝',opts:[{v:'地閣起',hint:'承漿凹，朝拱，凸起適中'},{v:'地閣凸',hint:'下巴尖端超過嘴唇垂直線'},{v:'地閣縮',hint:'側面下巴尖端短於嘴唇垂直線'}]},{id:'c2',text:'地閣平',opts:[{v:'地閣平',hint:'無凹凸'},{v:'地閣圓',hint:'下巴骨圓'},{v:'地閣凹',hint:'中間有凹如 W 型'}]}]},{label:'地閣大小',qs:[{id:'c3',text:'地閣長短',opts:[{v:'地閣長',hint:'長過鼻準到下巴的 1/3'},{v:'地閣適中',hint:''},{v:'地閣短',hint:'短於鼻準到下巴的 1/3'}]},{id:'c4',text:'地閣寬窄',opts:[{v:'地閣寬',hint:'約等口寬或更寬'},{v:'地閣窄尖',hint:'寬度等於或小於鼻翼'}]}]},{label:'地閣骨肉',qs:[{id:'c5',text:'地閣骨肉',opts:[{v:'地閣有肉',hint:'肉包起不露骨'},{v:'地閣無肉',hint:'骨感明顯'}]}]}]},
+'地閣':{total:6,sections:[{label:'地閣型',qs:[{id:'c1',text:'地閣朝',opts:[{v:'地閣起',hint:'承漿凹，朝拱，凸起適中'},{v:'地閣凸',hint:'下巴尖端超過嘴唇垂直線'},{v:'地閣縮',hint:'側面下巴尖端短於嘴唇垂直線'}]},{id:'c2',text:'地閣平',opts:[{v:'地閣平',hint:'無凹凸'},{v:'地閣圓',hint:'下巴骨圓'},{v:'地閣凹',hint:'中間有凹如 W 型'}]}]},{label:'地閣大小',qs:[{id:'c3',text:'地閣長短',opts:[{v:'地閣長',hint:'長過鼻準到下巴的 1/3'},{v:'地閣適中',hint:''},{v:'地閣短',hint:'短於鼻準到下巴的 1/3'}]},{id:'c4',text:'地閣寬窄',opts:[{v:'地閣寬',hint:'約等口寬或更寬'},{v:'地閣窄尖',hint:'寬度等於或小於鼻翼'}]}]},{label:'地閣位置',qs:[{id:'c5',text:'地閣位置',opts:[{v:'地閣置中',hint:'地閣中線與臉部中線重合'},{v:'地閣歪',hint:''}]}]},{label:'地閣骨肉',qs:[{id:'c6',text:'地閣骨肉',opts:[{v:'地閣有肉',hint:'肉包起不露骨'},{v:'地閣無肉',hint:'骨感明顯'}]}]}]},
 '頤':{total:4,sections:[{label:'頤',qs:[{id:'y1',text:'頤角度',paired:true,opts:[{v:'頤寬',hint:'耳下到下巴連線角度大，腮角明顯'},{v:'頤平',hint:'角度適中'},{v:'頤削',hint:'角度小，趨近垂直線'}]},{id:'y2',text:'頤肉量',paired:true,opts:[{v:'頤豐',hint:'頤骨豐隆有肉，弧度飽滿'},{v:'頤有肉',hint:'有肉但不過豐'},{v:'頤露尖',hint:'肉少或尖，視覺上薄'}]},{id:'y3',text:'頤長短',paired:true,opts:[{v:'頤長度正常',hint:''},{v:'頤短',hint:''}]},{id:'y4',text:'雙頤一致性',opts:[{v:'雙頤一致',hint:''},{v:'雙頤不一致',hint:''}]}]}]}
 };
 const OBS_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
@@ -415,67 +736,1655 @@ let obsData={}, obsOverride={}, curObsPart=0;
 
 function gv(id,side){if(!side)return !!obsData[id];const k=side+'_'+id;return k in obsOverride?!!obsOverride[k]:!!obsData[id];}
 
-/* ===== recalcFromObs ===== */
+/* ===== recalcFromObs v2 — v2.2 ID格式 + 字串比較 ===== */
 function recalcFromObs(){
   const hasAny=Object.keys(obsData).length>0;
   if(!hasAny){for(let d=0;d<4;d++)data[d]=Array(9).fill(null);return;}
-  const ck=id=>!!obsData[id],cnt=(...c)=>c.filter(Boolean).length;let s;
-  s=cnt(ck('h01'),ck('h02'),ck('h07')&&!ck('h09'),ck('h10'),ck('h11'));data[0][0]=s>=3?'A':'B';
-  s=cnt(ck('f02'),ck('f04'),!ck('f01'));data[0][1]=s>=3?'A':'B';
-  const d0eL=cnt(gv('ear_01','L'),gv('ear_04','L')&&gv('ear_08','L')&&gv('ear_09','L'),gv('ear_02','L'),gv('ear_10','L'));
-  const d0eR=cnt(gv('ear_01','R'),gv('ear_04','R')&&gv('ear_08','R')&&gv('ear_09','R'),gv('ear_02','R'),gv('ear_10','R'));
-  data[0][4]=(d0eL+d0eR)>=8?'A':'B';
-  const d0mL=cnt(gv('brow_01','L'),gv('brow_05','L'),!gv('brow_04','L'),!gv('brow_06','L'));
-  const d0mR=cnt(gv('brow_01','R'),gv('brow_05','R'),!gv('brow_04','R'),!gv('brow_06','R'));
-  data[0][5]=(d0mL+d0mR)>=8?'A':'B';
-  const d0yL=cnt(gv('eye_01a','L')||gv('eye_01b','L'),gv('eye_04','L'),gv('eye_05','L'));
-  const d0yR=cnt(gv('eye_01a','R')||gv('eye_01b','R'),gv('eye_04','R'),gv('eye_05','R'));
-  data[0][6]=(d0yL+d0yR)>=6?'A':'B';
-  const d0n=cnt(ck('n01'),ck('n02'),ck('n04'),!ck('n05'));data[0][7]=d0n>=4?'A':'B';
-  const d0k=cnt(ck('k01'),ck('k02'),ck('k03'),!ck('k04'));data[0][8]=d0k>=4?'A':'B';
-  s=cnt(d0mL>=4,d0mR>=4,d0yL>=3,d0yR>=3,d0n>=4,gv('zy_03','L'),gv('zy_03','R'));data[0][2]=s>=4?'A':'B';
-  s=cnt(d0k>=4,ck('r01'),ck('r02'),ck('g01'),gv('jaw_01','L'),gv('jaw_01','R'));data[0][3]=s>=3?'A':'B';
-  s=(ck('h03')?2:0)+(ck('h08')?1:0)+(ck('h12')?2:0);data[1][0]=s>=3?'A':'B';
-  s=cnt(!ck('f01')&&ck('f03'),ck('f07'),ck('f06'));data[1][1]=s>=3?'A':'B';
-  const d1eL=cnt(gv('ear_02','L'),gv('ear_03','L'),gv('ear_05','L'),gv('ear_06','L'),gv('ear_07','L'));
-  const d1eR=cnt(gv('ear_02','R'),gv('ear_03','R'),gv('ear_05','R'),gv('ear_06','R'),gv('ear_07','R'));
-  data[1][4]=(d1eL+d1eR+(ck('e00')?1:0))>=11?'A':'B';
-  const d1mL=cnt(gv('brow_07','L'),gv('brow_08','L'),gv('brow_09','L'),gv('brow_01','L'),gv('brow_10','L'),gv('brow_11','L'),gv('brow_16','L'),gv('brow_12','L'),gv('brow_13','L'),gv('brow_14','L'),gv('brow_01','L')&&gv('brow_04','L'),ck('m00'));
-  const d1mR=cnt(gv('brow_07','R'),gv('brow_08','R'),gv('brow_09','R'),gv('brow_01','R'),gv('brow_10','R'),gv('brow_11','R'),gv('brow_16','R'),gv('brow_12','R'),gv('brow_13','R'),gv('brow_14','R'),gv('brow_01','R')&&gv('brow_04','R'),ck('m00'));
-  data[1][5]=(d1mL>=7&&d1mR>=7)?'A':'B';
-  const d1yL=cnt(gv('eye_01a','L'),gv('eye_02','L'),gv('eye_04','L'),gv('eye_05','L'));
-  const d1yR=cnt(gv('eye_01a','R'),gv('eye_02','R'),gv('eye_04','R'),gv('eye_05','R'));
-  data[1][6]=(d1yL+d1yR+(ck('y00')?1:0))>=9?'A':'B';
-  const d1n=cnt(ck('n02'),ck('n03'),ck('n01'),!ck('n05'));data[1][7]=d1n>=4?'A':'B';
-  const d1k=cnt(ck('k01'),ck('k07'),ck('k05'),ck('k10'));data[1][8]=d1k>=4?'A':'B';
-  const d1qL=gv('zy_01','L')&&gv('zy_02','L')&&gv('zy_03','L'),d1qR=gv('zy_01','R')&&gv('zy_02','R')&&gv('zy_03','R');
-  s=cnt(d1mL>=7,d1mR>=7,d1yL>=4,d1yR>=4,d1n>=4,d1qL,d1qR);data[1][2]=s>=4?'A':'B';
-  s=cnt(d1k>=4,ck('r01'),ck('r02'),ck('g02'),ck('g04'),!gv('jaw_02','L')&&!gv('jaw_02','R'),ck('i00'));data[1][3]=s>=3?'A':'B';
-  s=cnt(ck('h04L'),ck('h04R'),!ck('h09'),ck('h10'),ck('h11'));data[2][0]=s>=3?'B':'A';
-  s=cnt(ck('f03'),ck('f04'));data[2][1]=s>=2?'B':'A';
-  const d2eL=cnt(gv('ear_04','L'),gv('ear_08','L'),gv('ear_09','L')),d2eR=cnt(gv('ear_04','R'),gv('ear_08','R'),gv('ear_09','R'));
-  data[2][4]=(d2eL+d2eR)>=6?'B':'A';
-  const d2mL=cnt(gv('brow_02','L'),!gv('brow_04','L')),d2mR=cnt(gv('brow_02','R'),!gv('brow_04','R'));
-  data[2][5]=(d2mL+d2mR)>=4?'B':'A';
-  const d2yL=cnt(gv('eye_03','L'),gv('eye_04','L'),gv('eye_05','L')),d2yR=cnt(gv('eye_03','R'),gv('eye_04','R'),gv('eye_05','R'));
-  data[2][6]=(d2yL+d2yR)>=6?'B':'A';
-  const d2n=cnt(ck('n01'),!ck('n05'));data[2][7]=d2n>=2?'B':'A';
-  const d2k=cnt(ck('k02'),ck('k08'),ck('k03'));data[2][8]=d2k>=3?'B':'A';
-  s=cnt(d2mL>=2,d2mR>=2,d2yL>=3,d2yR>=3,d2n>=2,gv('zy_03','L')&&gv('zy_01','L'),gv('zy_03','R')&&gv('zy_01','R'));data[2][2]=s>=4?'B':'A';
-  s=cnt(d2k>=3,ck('r01'),ck('r02'),ck('g03'),gv('jaw_03','L'),gv('jaw_03','R'));data[2][3]=s>=3?'B':'A';
-  s=(ck('h05')?2:0)+(ck('h06')?1:0)+(ck('h13')?1:0)+(ck('h14')?1:0);data[3][0]=s>=3?'B':'A';
-  s=cnt(ck('f05'),ck('f07'));data[3][1]=s>=2?'B':'A';
-  const d3eL=cnt(gv('ear_02','L'),gv('ear_03','L'),gv('ear_01','L')),d3eR=cnt(gv('ear_02','R'),gv('ear_03','R'),gv('ear_01','R'));
-  data[3][4]=(d3eL+d3eR)>=6?'B':'A';
-  const d3mL=cnt(gv('brow_03','L')&&!gv('brow_04','L'),gv('brow_15','L')),d3mR=cnt(gv('brow_03','R')&&!gv('brow_04','R'),gv('brow_15','R'));
-  data[3][5]=(d3mL>=1&&d3mR>=1)?'B':'A';
-  const d3yL=cnt(gv('eye_01a','L'),!gv('eye_04','L'),!gv('eye_05','L')),d3yR=cnt(gv('eye_01a','R'),!gv('eye_04','R'),!gv('eye_05','R'));
-  data[3][6]=(d3yL+d3yR)>=6?'B':'A';
-  const d3n=cnt(ck('n02'),ck('n01'),ck('n03'));data[3][7]=d3n>=3?'B':'A';
-  const d3k=cnt(ck('k09'),ck('k03'),ck('k05'));data[3][8]=d3k>=3?'B':'A';
-  s=cnt(d3mL>=1,d3mR>=1,d3yL>=3,d3yR>=3,d3n>=3,gv('zy_04','L'),gv('zy_04','R'));data[3][2]=s>=4?'B':'A';
-  s=cnt(d3k>=3,ck('r03'),ck('g02'),ck('g04'),gv('jaw_04','L'),gv('jaw_04','R'));data[3][3]=s>=3?'B':'A';
-  _basisVars={d0mL,d0mR,d0yL,d0yR,d0n,d0k,d1mL,d1mR,d1yL,d1yR,d1n,d1k,d1qL,d1qR,d2mL,d2mR,d2yL,d2yR,d2n,d2k,d3mL,d3mR,d3yL,d3yR,d3n,d3k};
+
+  // Helper: 取字串值（配對題帶 side='L'/'R'，單題不帶）
+  const va=(id,side)=>{if(!side)return obsData[id]||'';const k=id+'_'+side;return k in obsOverride?(obsOverride[k]||''):(obsData[k]||obsData[id]||'');};
+  const is=(id,val,side)=>va(id,side)===val;
+  const any=(id,vals,side)=>vals.includes(va(id,side));
+  const cnt=(...c)=>c.filter(Boolean).length;
+  let s;
+
+  // ===== 頭部各子函數 =====
+  // 頂骨
+  const hTopL_guitang=()=>is('h1','龜背','L');
+  const hTopR_guitang=()=>is('h1','龜背','R');
+  const hTop_center_flat=()=>is('h2','平順');
+  const hTop_center_raise=()=>is('h2','突起');
+  const hTop_consistent=()=>is('h3','左右一致');
+  const hTop_inconsistent=()=>is('h3','左右不一致');
+  // 枕骨
+  const hOcc_round=()=>is('h5','後腦圓');
+  const hOcc_flat=()=>is('h6','順無凹凸');
+  const hOcc_no_self=()=>is('h7','無自剋骨');
+  const hOcc_has_self=()=>is('h7','有自剋骨');
+  const hOcc_no_cross=()=>is('h8','無橫條骨');
+  const hOcc_has_cross=()=>is('h8','有橫條骨');
+  const hOcc_consistent=()=>is('h10','兩側一致');
+  const hHuayang_join_L=()=>is('h12','順接','L');
+  const hHuayang_join_R=()=>is('h12','順接','R');
+  const hHuayang_consistent=()=>is('h13','左右一致');
+  const hHuayang_inconsistent=()=>is('h13','左右不一致');
+  // 華陽
+  const hHua_roundL=()=>is('h11','圓隆','L');
+  const hHua_roundR=()=>is('h11','圓隆','R');
+  const hHua_okL=()=>any('h11',['圓隆','平直'],'L');
+  const hHua_okR=()=>any('h11',['圓隆','平直'],'R');
+  const hTop_pingkuan_L=()=>is('h1','平寬','L')&&hTop_center_flat();
+  const hTop_pingkuan_R=()=>is('h1','平寬','R')&&hTop_center_flat();
+  const hHua_bumpL=()=>is('h11','突露','L');
+  const hHua_bumpR=()=>is('h11','突露','R');
+  const hHua_hollowL=()=>is('h11','凹陷','L');
+  const hHua_hollowR=()=>is('h11','凹陷','R');
+  // 整體
+  const hHard=()=>is('h15','偏硬');
+
+  // ===== 額部子函數 =====
+  const eHigh=()=>is('e1','額高');
+  const eRound=()=>is('e2','額圓');
+  const eWide=()=>is('e3','額寬');
+  const eFlat=()=>is('e4','額平');
+  const eRise=()=>is('e6','額隆');
+  const eUpright=()=>is('e7','額立');
+  const eSmooth=()=>is('e9','額順');
+  const eTight=()=>is('e10','額緊');
+  const eBigTian=()=>is('e11','大天庭');
+  const eSmallTian=()=>is('e11','小天庭');
+  const ePeak=()=>is('e12','有美人尖');
+  const eRiyue=()=>is('e13','日月角起');
+  const eRiyue_notclear=()=>is('e13','不清晰');
+  const eRiyue_close=()=>is('e14','日月角合');
+  const eRiyue_bone=()=>is('e15','骨感明顯');
+  const eFuBone=()=>is('e16','有輔角骨');
+  const eZuoBone=()=>is('e17','有佐串骨');
+
+  // ===== 耳部子函數 (v2.2: er1-15) =====
+  const erLong=s=>is('er1','耳長',s);
+  const erBig=s=>is('er2','耳大',s);
+  const erStand=s=>is('er3','耳立',s);
+  const erTilt=s=>is('er3','耳提',s);
+  const erTiltStrong=s=>is('er3','耳提強',s);
+  const erTiltAny=s=>any('er3',['耳提','耳提強'],s);
+  const erRound=s=>is('er4','耳圓',s);
+  const erSharp=s=>is('er4','耳尖',s);
+  const erBeifeng=s=>is('er5','招風耳',s);
+  const erHoleBig=s=>is('er6','耳孔大',s);
+  const erHigh=s=>is('er7','耳高',s);
+  const erCircleOk=s=>is('er8','有輪有廓',s);
+  const erWrap=s=>is('er9','輪包廓',s);
+  const erThick=s=>is('er10','耳厚',s);
+  const erNormal=s=>is('er10','耳正常',s);
+  const erThickOk=s=>any('er10',['耳厚','耳正常'],s);
+  const erHard=s=>is('er11','耳硬',s);
+  const erSolid=s=>is('er11','耳堅',s);
+  const erPearl=s=>is('er12','有垂珠',s);
+  const erLobemouth=s=>is('er13','耳垂朝口',s);
+  const erConsistent=()=>is('er14','雙耳一致');
+  const erUpward=s=>is('er15','耳勢朝上',s);
+
+  // ===== 眉部子函數 (v2.2: br1-20) =====
+  const brLong=s=>is('br1','眉長',s);
+  const brThin=s=>is('br2','眉形細',s);
+  const brBend=s=>is('br3','眉彎',s);
+  const brFlat_form=s=>is('br3','眉平',s);
+  const brEagle=s=>is('br4','有鷹角',s);
+  const brNoEagle=s=>is('br4','無鷹角',s);
+  const brNoBreak=s=>is('br5','無中斷',s);
+  const brBreak=s=>is('br5','有中斷',s);
+  const brGather=s=>is('br6','有聚',s);
+  const brSpecial_short=s=>is('br7','短粗眉',s);
+  const brSpecial_general=s=>is('br7','將軍眉',s);
+  const brUp=s=>is('br8','有揚',s);
+  const brNoRoot=s=>is('br9','不沖根',s);
+  const brHighPos=s=>is('br10','眉高居額',s);
+  const brNoPress=s=>is('br11','不壓眼',s);
+  const brRetire=s=>is('br12','退印',s);
+  const brBone=s=>is('br13','貼附眉骨',s);
+  const brOrder=s=>is('br14','眉順',s);
+  const brSoft=s=>is('br15','柔順',s);
+  const brMany=s=>is('br16','眉毛多',s);
+  const brFew=s=>is('br16','眉毛稀少',s);
+  const brSpread=s=>is('br17','鋪陳有致',s);
+  const brLongHair=s=>is('br18','毛不過短',s);
+  const brShortHair=s=>is('br18','眉毛短',s);
+  const brNoSeal=s=>is('br19','不沖印',s);
+  const brSeal=s=>is('br19','沖印',s);
+  const brConsistent=()=>is('br20','雙眉一致');
+
+  // ===== 眼部子函數 (v2.2: ey1-12) =====
+  const eyLong=s=>is('ey1','眼長',s);
+  const eyShort=s=>is('ey1','眼短',s);
+  const eyBig=s=>is('ey2','眼大',s);
+  const eyThin=s=>is('ey3','眼細',s);
+  const eyRound=s=>is('ey3','眼圓',s);
+  const eyTail_flat=s=>is('ey4','眼尾平',s);
+  const eyTail_up=s=>is('ey4','眼尾朝上',s);
+  const eyPop=s=>is('ey5','睛凸',s);
+  const eyHook=s=>is('ey6','有眼鉤',s);
+  const eyKnife=s=>is('ey7','有刀裁',s);
+  const eyArc=s=>is('ey8','眼上弧',s);
+  const eyLowFlat=s=>is('ey9','下眼瞼平直',s);
+  const eyBlack_mid=s=>is('ey10','適中',s);
+  const eyWhite_none=s=>is('ey11','上下不白',s);  // 黑睛遮住上下眼白
+  const eyConsistent=()=>is('ey12','雙眼一致');
+
+  // ===== 鼻部子函數 =====
+  const nLong=()=>is('n1','鼻長');
+  const nHigh=()=>is('n2','鼻高');
+  const nStraight=()=>is('n3','鼻直');
+  const nWide=()=>is('n4','鼻寬');
+  const nTip_round=()=>is('n5','鼻準圓');
+  const nSmooth=()=>is('n6','鼻順');
+  const nJoin_seal=()=>is('n7','鼻接印');
+  const nHoriz=()=>is('n8','有橫張');
+  const nRoot_narrow=()=>is('n9','山根窄');
+  const nMeat=()=>is('n10','肉多於骨');
+  const nBalance=()=>is('n10','骨肉勻稱');
+  const nBone=()=>is('n10','骨多於肉');
+  const nNoNode=()=>is('n11','無起節');
+  const nNode=()=>is('n11','有起節突露');
+  const nGather=()=>is('n12','鼻聚');
+
+  // ===== 顴部子函數 =====
+  const qHighBig=s=>is('q1','顴高且隆',s);
+  const qMid=s=>is('q1','顴有而不明',s);
+  const qFlat=s=>is('q1','顴平',s);
+  const qHighAny=s=>any('q1',['顴高且隆','顴有而不明'],s);
+  const qBig=s=>is('q2','顴大',s);
+  const qOk=s=>is('q2','顴不過大',s);
+  const qSmall=s=>is('q2','顴小尖',s);
+  const qMeat=s=>is('q3','顴有肉',s);
+  const qNoMeat=s=>is('q3','顴無肉少肉',s);
+  const qSky=s=>is('q4','顴柄插天',s);
+  const qFlat_pillar=s=>is('q4','顴柄平',s);
+  const qNoPillar=s=>is('q4','無明顯顴柄',s);
+  const qPillarOk=s=>any('q4',['顴柄插天','顴柄平'],s);
+  const qPillarHide=s=>any('q4',['顴柄平','無明顯顴柄'],s);
+
+  // ===== 口部子函數 =====
+  const mBig=()=>is('m1','口開大合小');
+  const mMid=()=>is('m1','口適中');
+  const mBigAny=()=>any('m1',['口開大合小','口適中']);
+  const mEdge=()=>is('m2','涯岸分明');
+  const mGather=()=>is('m3','嘴角收');
+  const mUp=()=>is('m4','嘴角朝上');
+  const mFlat_corner=()=>is('m4','嘴角水平');
+  const mDown=()=>is('m4','嘴角朝下');
+  const mUpOrFlat=()=>any('m4',['嘴角朝上','嘴角水平']);
+  const mNotDown=()=>!is('m4','嘴角朝下');
+  const mV=()=>is('m5','水星明顯');
+  const mLineFlat=()=>is('m6','閉合線平');
+  const mLineCurve=()=>is('m6','閉合線有曲度');
+  const mLineDense=()=>is('m7','閉合線密');
+  const mSeeTeeth=()=>is('m7','放鬆見齒');
+  const mThickNorm=()=>is('m8','唇一般');
+  const mThickBig=()=>is('m8','唇明顯厚');
+  const mThickOk=()=>any('m8',['唇一般','唇明顯厚']);
+  const mThin=()=>is('m8','唇薄');
+  const mThickEqual=()=>is('m9','唇厚平均');
+  const mPop=()=>is('m10','唇凸');
+  const mPearl=()=>is('m11','有唇珠');
+  const mCenter=()=>is('m12','口位置適中');
+  const mSymm=()=>is('m13','口對稱');
+
+  // ===== 人中子函數 =====
+  const pDeep=()=>is('p1','人中深');
+  const pLong=()=>is('p2','人中長');
+  const pNarrow=()=>is('p3','人中窄');
+  const pStraight=()=>is('p4','人中直');
+
+  // ===== 地閣子函數 (v2.2: c1-6) =====
+  const cRise=()=>is('c1','地閣起');
+  const cFlatShape=()=>is('c2','地閣平');
+  const cRoundShape=()=>is('c2','地閣圓');
+  const cConcave=()=>is('c2','地閣凹');
+  const cFlatOrRound=()=>any('c2',['地閣平','地閣圓']);
+  const cLong=()=>is('c3','地閣長');
+  const cShort=()=>is('c3','地閣短');
+  const cWide=()=>is('c4','地閣寬');
+  const cNarrow=()=>is('c4','地閣窄尖');
+  const cCenter=()=>is('c5','地閣置中');
+  const cMeat=()=>is('c6','地閣有肉');
+  const cNoMeat=()=>is('c6','地閣無肉');
+
+  // ===== 頤部子函數 =====
+  const yWide=s=>is('y1','頤寬',s);
+  const yFlat_angle=s=>is('y1','頤平',s);
+  const yThin=s=>is('y1','頤削',s);
+  const yWideOrFlat=s=>any('y1',['頤寬','頤平'],s);
+  const yFull=s=>is('y2','頤豐',s);
+  const yMeat=s=>is('y2','頤有肉',s);
+  const yBare=s=>is('y2','頤露尖',s);
+  const yMeatOk=s=>any('y2',['頤豐','頤有肉'],s);
+  const yShort=s=>is('y3','頤短',s);
+  const yConsistent=()=>is('y4','雙頤一致');
+
+  // ===================================================
+  // data 陣列：[維度組][部位]
+  // 維度組0=先天(形勢/經緯/方圓/曲直/收放)  組1=運氣  組2=後天  組3=其他
+  // 部位索引: 0=頭 1=上停 2=中停 3=下停 4=耳 5=眉 6=眼 7=鼻 8=口
+  // A=靜(形/經/方/直/收/緩/順/合/真/守/正/實/退) B=動(勢/緯/圓/曲/放/急/逆/分/假/攻/奇/虛/進)
+  // ===================================================
+
+  // ========== 01 形勢 — data[0] ==========
+  // 頭：左/右頂骨龜背各1 + 枕骨圓且順且無損1 + 左/右華陽圓各1 = 5，≥3→形(A)
+  s=cnt(hTopL_guitang(),hTopR_guitang(),
+        hOcc_round()&&hOcc_flat()&&hOcc_no_self()&&hOcc_no_cross(),
+        hHua_roundL(),hHua_roundR());
+  data[0][0]=s>=3?'A':'B';
+  // 上停：額高+額寬+額平+(額隆OR大天庭) 4項全中→形(A)
+  s=cnt(eHigh(),eWide(),eFlat(),eRise()||eBigTian());
+  data[0][1]=s>=4?'A':'B';
+  // 耳：左耳(長+圓輪包廓+高+垂珠=4) + 右耳同 = 8全中→形(A)
+  const d01eL=cnt(erLong('L'), erRound('L')&&erCircleOk('L')&&erWrap('L'), erHigh('L'), erPearl('L'));
+  const d01eR=cnt(erLong('R'), erRound('R')&&erCircleOk('R')&&erWrap('R'), erHigh('R'), erPearl('R'));
+  data[0][4]=(d01eL>=4&&d01eR>=4)?'A':'B';
+  // 眉：左眉(長+順+柔順+鋪陳+無鷹角+無中斷=6) + 右眉同 = 12全中→形(A)
+  const d01mL=cnt(brLong('L'),brOrder('L'),brSoft('L'),brSpread('L'),brNoEagle('L'),brNoBreak('L'));
+  const d01mR=cnt(brLong('R'),brOrder('R'),brSoft('R'),brSpread('R'),brNoEagle('R'),brNoBreak('R'));
+  data[0][5]=(d01mL>=6&&d01mR>=6)?'A':'B';
+  // 眼：左眼(長+鉤+刀裁=3全中) AND 右眼同 → 眼形(A)
+  const d01yL=cnt(eyLong('L'),eyHook('L'),eyKnife('L'));
+  const d01yR=cnt(eyLong('R'),eyHook('R'),eyKnife('R'));
+  data[0][6]=(d01yL>=3&&d01yR>=3)?'A':'B';
+  // 鼻：長+高+肉多+無起節 4項全中→形(A)
+  const d01n=cnt(nLong(),nHigh(),nMeat(),nNoNode());
+  data[0][7]=d01n>=4?'A':'B';
+  // 口：口大+涯岸+嘴角收+嘴角朝上 4項全中→形(A)
+  const d01k=cnt(mBig(),mEdge(),mGather(),mUp());
+  data[0][8]=d01k>=4?'A':'B';
+  // 中停：左眉形+右眉形+左眼形+右眼形+鼻形+左顴(高且隆+有肉)+右顴(高且隆+有肉) ≥4→形(A)
+  const d01qL=qHighBig('L')&&qMeat('L'), d01qR=qHighBig('R')&&qMeat('R');
+  s=cnt(d01mL>=6,d01mR>=6,d01yL>=3,d01yR>=3,d01n>=4,d01qL,d01qR);
+  data[0][2]=s>=4?'A':'B';
+  // 下停：口形+人中(深AND長)+地閣起+左頤(寬OR平AND豐)+右頤同 ≥3→形(A)
+  s=cnt(d01k>=4,
+        pDeep()&&pLong(),
+        cRise(),
+        yWideOrFlat('L')&&yFull('L'),
+        yWideOrFlat('R')&&yFull('R'));
+  data[0][3]=s>=3?'A':'B';
+
+  // ========== 02 經緯 — data[1] ==========
+  // 頭：頂骨一致2+枕骨一致1+華陽一致2=5，≥3→經(A)
+  s=(hTop_consistent()?2:0)+(hOcc_consistent()?1:0)+(hHuayang_consistent()?2:0);
+  data[1][0]=s>=3?'A':'B';
+  // 上停：額隆OR日月角起 任1→經(A)
+  data[1][1]=(eRise()||eRiyue())?'A':'B';
+  // 耳：左耳(高+立+大+厚+堅=5)+右耳同+一致=11全中→經(A)
+  const d02eL=cnt(erHigh('L'),erStand('L'),erBig('L'),erThick('L'),erSolid('L'));
+  const d02eR=cnt(erHigh('R'),erStand('R'),erBig('R'),erThick('R'),erSolid('R'));
+  data[1][4]=(d02eL>=5&&d02eR>=5&&erConsistent())?'A':'B';
+  // 眉：左眉(退印+有聚+鋪陳+長+附骨+揚+高居+不壓+不沖根+眉彎=10，≥7)且右眉同→經(A)
+  const d02mL=cnt(brRetire('L'),brGather('L'),brSpread('L'),brLong('L'),brBone('L'),brUp('L'),brHighPos('L'),brNoPress('L'),brNoRoot('L'),brBend('L'));
+  const d02mR=cnt(brRetire('R'),brGather('R'),brSpread('R'),brLong('R'),brBone('R'),brUp('R'),brHighPos('R'),brNoPress('R'),brNoRoot('R'),brBend('R'));
+  data[1][5]=(d02mL>=7&&d02mR>=7)?'A':'B';
+  // 眼：左眼(細+長+平+鉤+刀裁=5)+右眼同+一致=11全中→經(A)
+  const d02yL=cnt(eyThin('L'),eyLong('L'),eyTail_flat('L'),eyHook('L'),eyKnife('L'));
+  const d02yR=cnt(eyThin('R'),eyLong('R'),eyTail_flat('R'),eyHook('R'),eyKnife('R'));
+  data[1][6]=(d02yL>=5&&d02yR>=5&&eyConsistent())?'A':'B';
+  // 鼻：高+直+長 3項全中→經(A)
+  const d02n=cnt(nHigh(),nStraight(),nLong());
+  data[1][7]=d02n>=3?'A':'B';
+  // 口：口大+嘴角(朝上OR水平)+對稱+置中+唇厚平均+(閉合線平AND密) 6項全中→經(A)
+  const d02k=cnt(mBig(),mUpOrFlat(),mSymm(),mCenter(),mThickEqual(),mLineFlat()&&mLineDense());
+  data[1][8]=d02k>=6?'A':'B';
+  // 中停：左眉經+右眉經+左眼經+右眼經+鼻經+左顴(高且隆+有肉)+右顴同 ≥4→經(A)
+  const d02qL=qHighBig('L')&&qMeat('L'), d02qR=qHighBig('R')&&qMeat('R');
+  s=cnt(d02mL>=7,d02mR>=7,d02yL>=5,d02yR>=5,d02n>=3,d02qL,d02qR);
+  data[1][2]=s>=4?'A':'B';
+  // 下停：口經+人中(深AND直)+地閣(平AND寬AND置中)+左頤(寬AND一致)+右頤同 ≥3→經(A)
+  s=cnt(d02k>=6,
+        pDeep()&&pStraight(),
+        cFlatShape()&&cWide()&&cCenter(),
+        yWide('L')&&yConsistent(),
+        yWide('R')&&yConsistent());
+  data[1][3]=s>=3?'A':'B';
+
+  // ========== 03 方圓 — data[2] ==========
+  // 頭：左頂骨圓(h1='圓')各1+枕骨無自剋骨1+左右華陽圓各1=5，≥3→圓(B)
+  s=cnt(is('h1','圓','L'), is('h1','圓','R'),
+        hOcc_no_self(), hHua_roundL(), hHua_roundR());
+  data[2][0]=s>=3?'B':'A';
+  // 上停：額平+額隆 2項全中→圓(B)
+  s=cnt(eFlat(),eRise());
+  data[2][1]=s>=2?'B':'A';
+  // 耳：左耳(圓+有輪廓+輪包廓=3 全中→圓)+右耳同=6全中→圓(B) (但左右各自需3全中)
+  const d03eL=cnt(erRound('L'),erCircleOk('L'),erWrap('L'));
+  const d03eR=cnt(erRound('R'),erCircleOk('R'),erWrap('R'));
+  data[2][4]=(d03eL>=3&&d03eR>=3)?'B':'A';
+  // 眉：左眉(眉彎AND無鷹角=2全中→圓)+右眉同→圓(B)
+  const d03mL=cnt(brBend('L'),brNoEagle('L'));
+  const d03mR=cnt(brBend('R'),brNoEagle('R'));
+  data[2][5]=(d03mL>=2&&d03mR>=2)?'B':'A';
+  // 眼：左眼(眼上弧AND(鉤OR刀裁)=1)+右眼同+眼一致=3全中→圓(B)
+  const d03yL=(eyArc('L')&&(eyHook('L')||eyKnife('L')))?1:0;
+  const d03yR=(eyArc('R')&&(eyHook('R')||eyKnife('R')))?1:0;
+  data[2][6]=(d03yL>=1&&d03yR>=1&&eyConsistent())?'B':'A';
+  // 鼻：長+無起節 2項全中→圓(B)
+  const d03n=cnt(nLong(),nNoNode());
+  data[2][7]=d03n>=2?'B':'A';
+  // 口：涯岸+閉合弓線+唇厚(一般OR大)+嘴角收 4項全中→圓(B)
+  const d03k=cnt(mEdge(),mLineCurve(),mThickOk(),mGather());
+  data[2][8]=d03k>=4?'B':'A';
+  // 中停：左眉圓+右眉圓+左眼圓+右眼圓+鼻圓+左顴(高且隆+有肉)+右顴同 ≥4→圓(B)
+  const d03qL=qHighBig('L')&&qMeat('L'), d03qR=qHighBig('R')&&qMeat('R');
+  s=cnt(d03mL>=2,d03mR>=2,d03yL>=1,d03yR>=1,d03n>=2,d03qL,d03qR);
+  data[2][2]=s>=4?'B':'A';
+  // 下停：口圓+人中(深AND長)+地閣圓+左頤(寬OR平AND豐OR有肉)+右頤同 ≥3→圓(B)
+  s=cnt(d03k>=4,
+        pDeep()&&pLong(),
+        cRoundShape(),
+        yWideOrFlat('L')&&yMeatOk('L'),
+        yWideOrFlat('R')&&yMeatOk('R'));
+  data[2][3]=s>=3?'B':'A';
+
+  // ========== 04 曲直 — data[3] ==========
+  // DIMS[3]={a:'曲',b:'直',aT:'動',bT:'靜'} → 直=B(靜)，曲=A(動)
+  // 頭：頂骨中線直(h4=2分)+枕骨中線直(h9=1分)+左華陽平直(1分)+右華陽平直(1分)=5，≥3→直(B)
+  s=(is('h4','中線直')?2:0)+(is('h9','中線直')?1:0)+
+    (is('h11','平直','L')?1:0)+(is('h11','平直','R')?1:0);
+  data[3][0]=s>=3?'B':'A';
+  // 上停：額立+額高+日月角起 3項全中→直(B)
+  s=cnt(eUpright(),eHigh(),eRiyue());
+  data[3][1]=s>=3?'B':'A';
+  // 耳：左耳(高+立+長=3全中)+右耳同=6全中→直(B)
+  const d04eL=cnt(erHigh('L'),erStand('L'),erLong('L'));
+  const d04eR=cnt(erHigh('R'),erStand('R'),erLong('R'));
+  data[3][4]=(d04eL>=3&&d04eR>=3)?'B':'A';
+  // 眉：左眉((眉平AND無鷹角) OR 短粗眉，任1得分)且右眉同→直(B)
+  const d04mL=((brFlat_form('L')&&brNoEagle('L'))||brSpecial_short('L'))?1:0;
+  const d04mR=((brFlat_form('R')&&brNoEagle('R'))||brSpecial_short('R'))?1:0;
+  data[3][5]=(d04mL>=1&&d04mR>=1)?'B':'A';
+  // 眼：左眼(細+長+無鉤+無刀裁=4全中)+右眼同=8全中→直(B)
+  const d04yL=cnt(eyThin('L'),eyLong('L'),!eyHook('L'),!eyKnife('L'));
+  const d04yR=cnt(eyThin('R'),eyLong('R'),!eyHook('R'),!eyKnife('R'));
+  data[3][6]=(d04yL>=4&&d04yR>=4)?'B':'A';
+  // 鼻：高+長+直 3項全中→直(B)
+  const d04n=cnt(nHigh(),nLong(),nStraight());
+  data[3][7]=d04n>=3?'B':'A';
+  // 口：閉合線平+嘴角收+嘴角水平+閉合線密 4項全中→直(B)
+  const d04k=cnt(mLineFlat(),mGather(),mFlat_corner(),mLineDense());
+  data[3][8]=d04k>=4?'B':'A';
+  // 中停：左眉直+右眉直+左眼直+右眼直+鼻直+左顴(相稱)+右顴同 ≥4→直(B)
+  const d04qL=is('q5','相稱'), d04qR=is('q5','相稱');
+  s=cnt(d04mL>=1,d04mR>=1,d04yL>=4,d04yR>=4,d04n>=3,d04qL,d04qR);
+  data[3][2]=s>=4?'B':'A';
+  // 下停：口直+人中直+地閣平+左頤平直+右頤平直 ≥3→直(B)
+  s=cnt(d04k>=4, pStraight(), cFlatShape(), yFlat_angle('L'), yFlat_angle('R'));
+  data[3][3]=s>=3?'B':'A';
+
+  // ========== 05 收放 — data[4] ==========
+  // 頭：左頂骨圓(h1='圓')各1+枕骨圓1+左右華陽圓各1=5，≥3→收(A)
+  s=cnt(is('h1','圓','L'), is('h1','圓','R'),
+        hOcc_round(), hHua_roundL(), hHua_roundR());
+  data[4][0]=s>=3?'A':'B';
+  // 上停：小天庭 OR 日月角合 任1→收(A)
+  data[4][1]=(eSmallTian()||eRiyue_close())?'A':'B';
+  // 耳：左耳(圓+輪包廓=2全中)+右耳同=4全中→收(A)
+  const d05eL=cnt(erRound('L'),erWrap('L'));
+  const d05eR=cnt(erRound('R'),erWrap('R'));
+  data[4][4]=(d05eL>=2&&d05eR>=2)?'A':'B';
+  // 眉：左眉(眉尾有聚=1)+右眉同=2全中→收(A)
+  const d05mL=brGather('L')?1:0, d05mR=brGather('R')?1:0;
+  data[4][5]=(d05mL>=1&&d05mR>=1)?'A':'B';
+  // 眼：左眼(鉤+刀裁=2全中)+右眼同=4全中→收(A)
+  const d05yL=cnt(eyHook('L'),eyKnife('L'));
+  const d05yR=cnt(eyHook('R'),eyKnife('R'));
+  data[4][6]=(d05yL>=2&&d05yR>=2)?'A':'B';
+  // 鼻：鼻聚=1→收(A)
+  data[4][7]=nGather()?'A':'B';
+  // 口：嘴角收+嘴角不朝下+閉合線密+涯岸 4項全中→收(A)
+  const d05k=cnt(mGather(),mNotDown(),mLineDense(),mEdge());
+  data[4][8]=d05k>=4?'A':'B';
+  // 中停：左眉收+右眉收+左眼收+右眼收+鼻收+左顴(柄插天)+右顴同 ≥4→收(A)
+  s=cnt(d05mL>=1,d05mR>=1,d05yL>=2,d05yR>=2,nGather(),qSky('L'),qSky('R'));
+  data[4][2]=s>=4?'A':'B';
+  // 下停：口收+人中(深AND長)+地閣(平OR圓)+左頤(寬AND(豐OR有肉))+右頤同 ≥3→收(A)
+  s=cnt(d05k>=4, pDeep()&&pLong(), cFlatOrRound(),
+        yWide('L')&&yMeatOk('L'), yWide('R')&&yMeatOk('R'));
+  data[4][3]=s>=3?'A':'B';
+
+  // ========== 06 緩急 — data[5] ==========
+  // 頭：左頂骨((龜背OR圓)AND中央平順)+右頂骨同+枕骨(圓AND無自剋AND無橫條AND順)+左華陽(圓隆OR平直)+右華陽同=5，≥3→緩(A)
+  s=cnt(any('h1',['龜背','圓'],'L')&&hTop_center_flat(),
+        any('h1',['龜背','圓'],'R')&&hTop_center_flat(),
+        hOcc_round()&&hOcc_no_self()&&hOcc_no_cross()&&hOcc_flat(),
+        hHua_okL(), hHua_okR());
+  data[5][0]=s>=3?'A':'B';
+  // 上停：額圓+額寬+額隆 3項全中→緩(A)
+  s=cnt(eRound(),eWide(),eRise());
+  data[5][1]=s>=3?'A':'B';
+  // 耳：左耳(有輪有廓+(厚OR正常)+垂珠=3全中)+右耳同=6全中→緩(A)
+  const d06eL=cnt(erCircleOk('L'),erThickOk('L'),erPearl('L'));
+  const d06eR=cnt(erCircleOk('R'),erThickOk('R'),erPearl('R'));
+  data[5][4]=(d06eL>=3&&d06eR>=3)?'A':'B';
+  // 眉：左眉(形細+長+柔順+眉順+不沖印=5全中)+右眉同=10全中→緩(A)
+  const d06mL=cnt(brThin('L'),brLong('L'),brSoft('L'),brOrder('L'),brNoSeal('L'));
+  const d06mR=cnt(brThin('R'),brLong('R'),brSoft('R'),brOrder('R'),brNoSeal('R'));
+  data[5][5]=(d06mL>=5&&d06mR>=5)?'A':'B';
+  // 眼：左眼(細+長=2全中)+右眼同=4全中→緩(A)
+  const d06yL=cnt(eyThin('L'),eyLong('L'));
+  const d06yR=cnt(eyThin('R'),eyLong('R'));
+  data[5][6]=(d06yL>=2&&d06yR>=2)?'A':'B';
+  // 鼻：寬+肉多 2項全中→緩(A)
+  const d06n=cnt(nWide(),nMeat());
+  data[5][7]=d06n>=2?'A':'B';
+  // 口：涯岸+嘴角收+嘴角朝上+(唇一般OR唇薄) 4項全中→緩(A)
+  const d06k=cnt(mEdge(),mGather(),mUp(),mThickNorm()||mThin());
+  data[5][8]=d06k>=4?'A':'B';
+  // 中停：左眉緩+右眉緩+左眼緩+右眼緩+鼻緩+左顴((高且隆OR有而不明)AND有肉)+右顴同 ≥4→緩(A)
+  const d06qL=(qHighAny('L'))&&qMeat('L'), d06qR=(qHighAny('R'))&&qMeat('R');
+  s=cnt(d06mL>=5,d06mR>=5,d06yL>=2,d06yR>=2,d06n>=2,d06qL,d06qR);
+  data[5][2]=s>=4?'A':'B';
+  // 下停：口緩+人中長+(地閣(圓OR平)AND寬)+左頤(豐OR有肉)+右頤同 ≥3→緩(A)
+  s=cnt(d06k>=4, pLong(), cFlatOrRound()&&cWide(), yMeatOk('L'), yMeatOk('R'));
+  data[5][3]=s>=3?'A':'B';
+
+  // ========== 07 順逆 — data[6] ==========
+  // 頭：左頂骨(平寬AND中央平順)+右頂骨同+枕骨(圓AND無自剋AND無橫條=3全中)+左華陽平直+右華陽平直=5，≥3→順(A)
+  s=cnt(hTop_pingkuan_L(), hTop_pingkuan_R(),
+        hOcc_round()&&hOcc_no_self()&&hOcc_no_cross(),
+        is('h11','平直','L'), is('h11','平直','R'));
+  data[6][0]=s>=3?'A':'B';
+  // 上停：大天庭+額順 2項全中→順(A)
+  data[6][1]=(eBigTian()&&eSmooth())?'A':'B';
+  // 耳：左耳(圓+有輪有廓+輪包廓+立=4全中)+右耳同=8全中→順(A)
+  const d07eL=cnt(erRound('L'),erCircleOk('L'),erWrap('L'),erStand('L'));
+  const d07eR=cnt(erRound('R'),erCircleOk('R'),erWrap('R'),erStand('R'));
+  data[6][4]=(d07eL>=4&&d07eR>=4)?'A':'B';
+  // 眉：左眉(長+揚+退印+不沖根+眉順=5全中)+右眉同=10全中→順(A)
+  const d07mL=cnt(brLong('L'),brBend('L'),brNoEagle('L'),brOrder('L'),brSoft('L'));
+  const d07mR=cnt(brLong('R'),brBend('R'),brNoEagle('R'),brOrder('R'),brSoft('R'));
+  data[6][5]=(d07mL>=5&&d07mR>=5)?'A':'B';
+  // 眼：左眼(細+長+上下不白=3全中)+右眼同=6全中→順(A)
+  const d07yL=cnt(eyThin('L'),eyLong('L'),eyWhite_none('L'));
+  const d07yR=cnt(eyThin('R'),eyLong('R'),eyWhite_none('R'));
+  data[6][6]=(d07yL>=3&&d07yR>=3)?'A':'B';
+  // 鼻：高+直+長+無起節 4項全中→順(A)
+  const d07n=cnt(nHigh(),nStraight(),nLong(),nNoNode());
+  data[6][7]=d07n>=4?'A':'B';
+  // 口：唇厚平均+嘴角(平OR上)+嘴角收 3項全中→順(A)
+  const d07k=cnt(mThickEqual(),mUpOrFlat(),mGather());
+  data[6][8]=d07k>=3?'A':'B';
+  // 中停：左眉順+右眉順+左眼順+右眼順+鼻順+左顴(有肉AND不過大)+右顴同 ≥4→順(A)
+  const d07qL=qMeat('L')&&qOk('L'), d07qR=qMeat('R')&&qOk('R');
+  s=cnt(d07mL>=5,d07mR>=5,d07yL>=3,d07yR>=3,d07n>=4,d07qL,d07qR);
+  data[6][2]=s>=4?'A':'B';
+  // 下停：口順+人中(深AND長AND直)+((地閣圓OR平)AND有肉)+左頤(寬OR平)+右頤同 ≥3→順(A)
+  s=cnt(d07k>=3, pDeep()&&pLong()&&pStraight(),
+        cFlatOrRound()&&cMeat(), yWideOrFlat('L'), yWideOrFlat('R'));
+  data[6][3]=s>=3?'A':'B';
+
+  // ========== 08 分合 — data[7] ==========
+  // 注意：合=靜(A) 分=動(B) — 此維度「合」對應DIMS的bT=靜，需確認
+  // DIMS[7]={a:'分',b:'合',aT:'動',bT:'靜'} — 所以合=B，分=A
+  // 頭：左頂骨((龜背OR圓)AND中央平順)+右頂骨同+枕骨圓+左華陽圓隆+右華陽圓隆=5，≥3→合(B)
+  s=cnt(any('h1',['龜背','圓'],'L')&&hTop_center_flat(),
+        any('h1',['龜背','圓'],'R')&&hTop_center_flat(),
+        hOcc_round(), hHua_roundL(), hHua_roundR());
+  data[7][0]=s>=3?'B':'A';
+  // 上停：大天庭 OR (小天庭AND日月角不清晰) 任1→合(B)
+  data[7][1]=(eBigTian()||(eSmallTian()&&eRiyue_notclear()))?'B':'A';
+  // 耳：左耳(高+圓+(提OR提強OR垂朝口)=3全中)+右耳同=6全中→合(B)
+  const d08eL=cnt(erHigh('L'), erRound('L'), erTiltAny('L')||erLobemouth('L'));
+  const d08eR=cnt(erHigh('R'), erRound('R'), erTiltAny('R')||erLobemouth('R'));
+  data[7][4]=(d08eL>=3&&d08eR>=3)?'B':'A';
+  // 眉：左眉(鷹角+眉彎+不沖印+不沖根=4全中)+右眉同=8全中→合(B)
+  const d08mL=cnt(brEagle('L'),brBend('L'),brNoSeal('L'),brNoRoot('L'));
+  const d08mR=cnt(brEagle('R'),brBend('R'),brNoSeal('R'),brNoRoot('R'));
+  data[7][5]=(d08mL>=4&&d08mR>=4)?'B':'A';
+  // 眼：左眼(眼上弧+鉤+刀裁=3全中)+右眼同=6全中→合(B)
+  const d08yL=cnt(eyArc('L'),eyHook('L'),eyKnife('L'));
+  const d08yR=cnt(eyArc('R'),eyHook('R'),eyKnife('R'));
+  data[7][6]=(d08yL>=3&&d08yR>=3)?'B':'A';
+  // 鼻：高+準圓+接印 3項全中→合(B)
+  const d08n=cnt(nHigh(),nTip_round(),nJoin_seal());
+  data[7][7]=d08n>=3?'B':'A';
+  // 口：嘴角朝上+水星明顯+(唇厚一般OR厚大)+唇厚平均 4項全中→合(B)
+  const d08k=cnt(mUp(),mV(),mThickOk(),mThickEqual());
+  data[7][8]=d08k>=4?'B':'A';
+  // 中停：左眉合+右眉合+左眼合+右眼合+鼻合+左顴(高且隆+有肉+顴柄(插天OR平))+右顴同 ≥4→合(B)
+  const d08qL=qHighBig('L')&&qMeat('L')&&qPillarOk('L');
+  const d08qR=qHighBig('R')&&qMeat('R')&&qPillarOk('R');
+  s=cnt(d08mL>=4,d08mR>=4,d08yL>=3,d08yR>=3,d08n>=3,d08qL,d08qR);
+  data[7][2]=s>=4?'B':'A';
+  // 下停：口合+人中深+地閣圓+左頤(寬OR平)+右頤同 ≥3→合(B)
+  s=cnt(d08k>=4, pDeep(), cRoundShape(), yWideOrFlat('L'), yWideOrFlat('R'));
+  data[7][3]=s>=3?'B':'A';
+
+  // ========== 09 真假 — data[8] ==========
+  // 頭：頂骨一致(必要)+左頂骨龜背+右頂骨龜背+枕骨(順無凹凸AND無自剋AND無橫條)+左華陽順接+右華陽順接，5取3→真(A)
+  const hd09_req=hTop_consistent();
+  s=cnt(hTopL_guitang(),hTopR_guitang(),
+        hOcc_flat()&&hOcc_no_self()&&hOcc_no_cross(),
+        hHuayang_join_L(), hHuayang_join_R());
+  data[8][0]=(hd09_req&&s>=3)?'A':'B';
+  // 上停：額平+額順 2項全中→真(A)
+  s=cnt(eFlat(),eSmooth());
+  data[8][1]=s>=2?'A':'B';
+  // 耳：左耳(圓+高+輪包廓+垂珠+一致=5全中)+右耳同(一致共用)→真(A)
+  const d09eL=cnt(erRound('L'),erHigh('L'),erWrap('L'),erPearl('L'),erConsistent());
+  const d09eR=cnt(erRound('R'),erHigh('R'),erWrap('R'),erPearl('R'),erConsistent());
+  data[8][4]=(d09eL>=5&&d09eR>=5)?'A':'B';
+  // 眉：左眉(長+柔順+眉順+雙眉一致=4全中)+右眉同(一致共用)→真(A)
+  const d09mL=cnt(brLong('L'),brSoft('L'),brOrder('L'),brConsistent());
+  const d09mR=cnt(brLong('R'),brSoft('R'),brOrder('R'),brConsistent());
+  data[8][5]=(d09mL>=4&&d09mR>=4)?'A':'B';
+  // 眼：左眼(細+長+鉤+刀裁+下眼平+雙眼一致=6全中)+右眼同(一致共用)→真(A)
+  const d09yL=cnt(eyThin('L'),eyLong('L'),eyHook('L'),eyKnife('L'),eyLowFlat('L'),eyConsistent());
+  const d09yR=cnt(eyThin('R'),eyLong('R'),eyHook('R'),eyKnife('R'),eyLowFlat('R'),eyConsistent());
+  data[8][6]=(d09yL>=6&&d09yR>=6)?'A':'B';
+  // 鼻：高+長+準圓+無起節+鼻順+鼻直 6項全中→真(A)
+  const d09n=cnt(nHigh(),nLong(),nTip_round(),nNoNode(),nSmooth(),nStraight());
+  data[8][7]=d09n>=6?'A':'B';
+  // 口：涯岸+嘴角收+閉合密+對稱+置中 5項全中→真(A)
+  const d09k=cnt(mEdge(),mGather(),mLineDense(),mSymm(),mCenter());
+  data[8][8]=d09k>=5?'A':'B';
+  // 中停：左眉真+右眉真+左眼真+右眼真+鼻真+左顴((高且隆OR有而不明)AND有肉AND(柄平OR無柄))+右顴同 ≥4→真(A)
+  const d09qL=qHighAny('L')&&qMeat('L')&&qPillarHide('L');
+  const d09qR=qHighAny('R')&&qMeat('R')&&qPillarHide('R');
+  s=cnt(d09mL>=4,d09mR>=4,d09yL>=6,d09yR>=6,d09n>=6,d09qL,d09qR);
+  data[8][2]=s>=4?'A':'B';
+  // 下停：口真+人中(深AND長AND直)+地閣(平AND有肉)+左頤(平AND一致)+右頤同 ≥3→真(A)
+  s=cnt(d09k>=5, pDeep()&&pLong()&&pStraight(),
+        cFlatShape()&&cMeat(),
+        yFlat_angle('L')&&yConsistent(),
+        yFlat_angle('R')&&yConsistent());
+  data[8][3]=s>=3?'A':'B';
+
+  // ========== 10 攻守 — data[9] ==========
+  // DIMS[9]={a:'攻',b:'守',aT:'動',bT:'靜'} 攻=A(動) 守=B(靜)
+  // 頭：任1條符合→攻(A)
+  data[9][0]=cnt(hHard(), hTop_center_raise(),
+                 hOcc_has_self()||hOcc_has_cross(),
+                 hHua_bumpL(), hHua_bumpR())>=1?'A':'B';
+  // 上停：3條任1→攻(A)
+  // 美人尖 OR 額緊 OR (日月角骨感AND(大天庭OR小天庭))
+  data[9][1]=cnt(ePeak(), eTight(),
+                 eRiyue_bone()&&(eBigTian()||eSmallTian()))>=1?'A':'B';
+  // 耳：左耳(高OR輪不包廓OR耳尖OR耳硬OR耳勢朝上=5任1→攻)+右耳同，任一耳攻→耳攻(A)
+  const d10eL=cnt(erHigh('L'),!erWrap('L'),erSharp('L'),erHard('L'),erUpward('L'))>=1;
+  const d10eR=cnt(erHigh('R'),!erWrap('R'),erSharp('R'),erHard('R'),erUpward('R'))>=1;
+  data[9][4]=(d10eL||d10eR)?'A':'B';
+  // 眉：左眉(鷹角+稀少+質硬+揚=4，≥3→攻)+右眉同，任一眉攻→眉攻(A)
+  const d10mL=cnt(brEagle('L'),brFew('L'),!brSoft('L'),brUp('L'))>=3;
+  const d10mR=cnt(brEagle('R'),brFew('R'),!brSoft('R'),brUp('R'))>=3;
+  data[9][5]=(d10mL||d10mR)?'A':'B';
+  // 眼：左眼(鉤 OR (眼大AND圓AND尾上) OR 睛凸=3任1→攻)+右眼同，任一眼攻→眼攻(A)
+  const d10yL=cnt(eyHook('L'), eyBig('L')&&eyRound('L')&&eyTail_up('L'), eyPop('L'))>=1;
+  const d10yR=cnt(eyHook('R'), eyBig('R')&&eyRound('R')&&eyTail_up('R'), eyPop('R'))>=1;
+  data[9][6]=(d10yL||d10yR)?'A':'B';
+  // 鼻：4條任1→攻(A)  高OR起節OR鼻無肉OR山根細
+  data[9][7]=cnt(nHigh(),nNode(),nBone(),nRoot_narrow())>=1?'A':'B';
+  // 口：5條任1→攻(A)  嘴角朝上OR見齒OR唇珠OR唇凸OR唇薄
+  data[9][8]=cnt(mUp(),mSeeTeeth(),mPearl(),mPop(),mThin())>=1?'A':'B';
+  // 中停：≥4→攻(A)
+  const d10qL=qHighBig('L')||qNoMeat('L')||qSmall('L');
+  const d10qR=qHighBig('R')||qNoMeat('R')||qSmall('R');
+  s=cnt(d10mL,d10mR,d10yL,d10yR,nHigh()||nNode()||nBone()||nRoot_narrow(),d10qL,d10qR);
+  data[9][2]=s>=4?'A':'B';
+  // 下停：≥3→攻(A)  口攻+人中窄+地閣(長OR短OR窄OR無肉)+左頤(露尖OR短)+右頤同
+  s=cnt(data[9][8]==='A', pNarrow(),
+        cLong()||cShort()||cNarrow()||cNoMeat(),
+        yBare('L')||yShort('L'), yBare('R')||yShort('R'));
+  data[9][3]=s>=3?'A':'B';
+
+  // ========== 11 奇正 — data[10] ==========
+  // DIMS[10]={a:'奇',b:'正',aT:'動',bT:'靜'} 奇=A 正=B
+  // 頭：不一致分數≥3→奇(A)
+  s=(hTop_inconsistent()?2:0)+(is('h10','兩側不一致')?1:0)+(hHuayang_inconsistent()?2:0);
+  data[10][0]=s>=3?'A':'B';
+  // 上停：日月角起 OR 有輔角骨 OR 有佐串骨 任1→奇(A)
+  data[10][1]=(eRiyue()||eFuBone()||eZuoBone())?'A':'B';
+  // 耳：左耳(提強OR招風OR孔大=3任1)且右耳同→耳奇(A)
+  const d11eL=erTiltStrong('L')||erBeifeng('L')||erHoleBig('L');
+  const d11eR=erTiltStrong('R')||erBeifeng('R')||erHoleBig('R');
+  data[10][4]=(d11eL&&d11eR)?'A':'B';
+  // 眉：左眉(鷹角OR揚=2任1)且右眉同→眉奇(A)
+  const d11mL=brEagle('L')||brUp('L');
+  const d11mR=brEagle('R')||brUp('R');
+  data[10][5]=(d11mL&&d11mR)?'A':'B';
+  // 眼：左眼(細+長+黑睛適中=3全中→奇) OR 右眼同→眼奇(A)
+  const d11yL=eyThin('L')&&eyLong('L')&&eyBlack_mid('L');
+  const d11yR=eyThin('R')&&eyLong('R')&&eyBlack_mid('R');
+  data[10][6]=(d11yL||d11yR)?'A':'B';
+  // 鼻：長+橫張 2項全中→奇(A)
+  data[10][7]=(nLong()&&nHoriz())?'A':'B';
+  // 口：閉合密+嘴角收 2項全中→奇(A)
+  data[10][8]=(mLineDense()&&mGather())?'A':'B';
+  // 中停：≥4→奇(A)
+  const d11qL=qSky('L')||qFlat_pillar('L');
+  const d11qR=qSky('R')||qFlat_pillar('R');
+  s=cnt(d11mL,d11mR,d11yL,d11yR,nLong()&&nHoriz(),d11qL,d11qR);
+  data[10][2]=s>=4?'A':'B';
+  // 下停：≥3→奇(A) 口奇+人中(長AND窄)+地閣(短 OR (窄AND長))+左頤削+右頤削
+  s=cnt(mLineDense()&&mGather(), pLong()&&pNarrow(),
+        cShort()||(cNarrow()&&cLong()), yThin('L'), yThin('R'));
+  data[10][3]=s>=3?'A':'B';
+
+  // ========== 12 虛實 — data[11] ==========
+  // DIMS[11]={a:'虛',b:'實',aT:'動',bT:'靜'} 實=B 虛=A
+  // 頭：左/右頂骨龜背各1+枕骨(圓且順且無橫條)1+左/右華陽(圓OR突露)各1=5，≥3→實(B)
+  s=cnt(hTopL_guitang(), hTopR_guitang(),
+        hOcc_round()&&hOcc_flat()&&hOcc_no_cross(),
+        hHua_roundL()||hHua_bumpL(), hHua_roundR()||hHua_bumpR());
+  data[11][0]=s>=3?'B':'A';
+  // 上停：額高+額隆+額立 3項全中→實(B)
+  s=cnt(eHigh(),eRise(),eUpright());
+  data[11][1]=s>=3?'B':'A';
+  // 耳：左耳(高+厚+立+堅+圓+輪包廓+垂珠+有輪有廓=8全中)+右耳同=16全中→實(B)
+  // 根據v1.4：左耳8項全中+右耳8項全中，實際每耳4項滿分8，已確認v1.3版本
+  // v1.3版本：上停3項；耳左4+右4=8全中→實
+  // 查評分標準：耳滿分8，左耳(高+厚OR正常+立+堅=4，此為v1.1)
+  // v1.4：上停改為額高AND額隆AND額立，滿分3→同本計算；耳保持8項全中
+  // 實際v1.3版：左耳(高+厚+立+堅+圓+輪包廓+垂珠+有輪有廓)=8全中？ 再確認
+  // 查12_虛實 v1.4：耳滿分8=左耳4+右耳4，門檻8全中
+  // 左耳4項：高+厚(OR正常)+立+堅 → 用 v1.3 的耳6全中計算
+  // 重新查：v1.3 耳：左耳(高+厚OR正常+立+堅=4)+右耳同=8全中→實
+  // 但 v1.4 加入了「鼻條件改為骨肉勻稱OR骨多於肉AND無起節」，耳條件無變動
+  // 所以仍是 左耳(高+厚OR正常+立+堅=4)+右耳同=8全中→實(B)
+  const d12eL=cnt(erCircleOk('L'),erWrap('L'),erRound('L'),erHigh('L'));
+  const d12eR=cnt(erCircleOk('R'),erWrap('R'),erRound('R'),erHigh('R'));
+  data[11][4]=(d12eL+d12eR)>=8?'B':'A';
+  // 眉：左眉(長+柔順+眉順+不壓眼+鋪陳+不沖印=6全中)+右眉同=12全中→實(B)
+  // 查v1.3原版：眉滿分6=左右各3；v1.3改為左右各4，「眉量多+眉長+柔順+眉順」
+  // 查12_虛實：眉左右各3項=長+柔順+眉順，門檻6全中
+  const d12mL=cnt(brLong('L'),brNoBreak('L'),brMany('L'));
+  const d12mR=cnt(brLong('R'),brNoBreak('R'),brMany('R'));
+  data[11][5]=(d12mL+d12mR)>=6?'B':'A';
+  // 眼：左眼(長+鉤+刀裁=3全中)+右眼同=6全中→實(B)
+  // 眼：左眼((眼細AND眼長)OR(眼大AND眼長)+鉤+刀裁=3全中)+右眼同=6全中→實(B)
+  const d12yL=cnt((eyThin('L')&&eyLong('L'))||(eyBig('L')&&eyLong('L')),eyHook('L'),eyKnife('L'));
+  const d12yR=cnt((eyThin('R')&&eyLong('R'))||(eyBig('R')&&eyLong('R')),eyHook('R'),eyKnife('R'));
+  data[11][6]=(d12yL+d12yR)>=6?'B':'A';
+  // 鼻：(骨肉勻稱 OR 骨多於肉) AND 無起節 → 實(B)
+  data[11][7]=((nBalance()||nBone())&&nNoNode())?'B':'A';
+  // 口：嘴角收+(口適中OR口大) 2項全中→實(B)
+  const d12k=cnt(mGather(),mBigAny());
+  data[11][8]=d12k>=2?'B':'A';
+  // 中停：左眉實+右眉實+左眼實+右眼實+鼻實+左顴(高且隆OR有而不明)+右顴同 ≥4→實(B)
+  const d12qL=qHighAny('L'), d12qR=qHighAny('R');
+  s=cnt(d12mL>=3,d12mR>=3,d12yL>=3,d12yR>=3,((nBalance()||nBone())&&nNoNode()),d12qL,d12qR);
+  data[11][2]=s>=4?'B':'A';
+  // 下停：口實+人中深+地閣(平OR圓)+左頤不削+右頤同 ≥3→實(B)
+  s=cnt(d12k>=2, pDeep(), cFlatOrRound(), !yThin('L'), !yThin('R'));
+  data[11][3]=s>=3?'B':'A';
+
+  // ========== 13 進退 — data[12] ==========
+  // DIMS[12]={a:'進',b:'退',aT:'動',bT:'靜'} 進=A 退=B
+  // 頭：頭窄(2分)+枕骨(不一致OR自剋OR橫條，任1=1分)+左華陽(突露OR凹陷=1分)+右華陽同=5，≥3→進(A)
+  s=(is('h14','頭窄')?2:0)+
+    (is('h10','兩側不一致')||hOcc_has_self()||hOcc_has_cross()?1:0)+
+    (hHua_bumpL()||hHua_hollowL()?1:0)+
+    (hHua_bumpR()||hHua_hollowR()?1:0);
+  data[12][0]=s>=3?'A':'B';
+  // 上停：額立+額高 2項全中→進(A)
+  // 查v1.3：「額方」一條→進。 額方=e8的額方選項
+  data[12][1]=is('e8','額方')?'A':'B';
+  // 耳：左耳(耳短OR耳高OR招風耳=3任1→進)+右耳同，任一耳進→進(A)
+  const d13eL=(is('er1','耳短','L')||erHigh('L')||erBeifeng('L'));
+  const d13eR=(is('er1','耳短','R')||erHigh('R')||erBeifeng('R'));
+  data[12][4]=(d13eL||d13eR)?'A':'B';
+  // 眉：左眉(短+無中斷 OR 眉順=2任1→進且右眉同→眉進(A)
+  // 查v1.3：左眉(短 OR 長不過目 OR 眉平...); 根據13_進退：每邊3條任1=長過目→不進？
+  // 查v1.3：眉條件=「眉短不及目」就進；短OR細OR...
+  // 查評分標準v1.3：眉部 左眉(眉短+不沖印+眉散3條任1→進)
+  const d13mL=(!brSoft('L')||is('br1','眉短','L')||brShortHair('L'));
+  const d13mR=(!brSoft('R')||is('br1','眉短','R')||brShortHair('R'));
+  data[12][5]=(d13mL||d13mR)?'A':'B';
+  // 眼：左眼(眼短=1→進)+右眼同，任一眼進→眼進(A) [v1.4: 改回眼短]
+  data[12][6]=(eyShort('L')||eyShort('R'))?'A':'B';
+  // 鼻：鼻肉OR鼻短OR鼻小(窄小)OR無起節 4任1→進(A) [v1.4: 新增無起節]
+  data[12][7]=(nMeat()||is('n1','鼻短')||is('n4','鼻窄小')||nNoNode())?'A':'B';
+  // 口：(口大OR口適中)=1任1→進(A)
+  data[12][8]=mBigAny()?'A':'B';
+  // 中停：≥4→進(A)
+  const d13qL=qNoMeat('L'), d13qR=qNoMeat('R');  // 顴無肉=骨感→進
+  s=cnt(d13mL,d13mR,eyShort('L'),eyShort('R'),nMeat()||is('n1','鼻短')||is('n4','鼻窄小')||nNoNode(),d13qL,d13qR);
+  data[12][2]=s>=4?'A':'B';
+  // 下停：≥3→進(A) 口進+人中短+地閣(窄尖)+左頤(削AND露尖)+右頤同
+  s=cnt(mBigAny(), is('p2','人中短'),
+        cNarrow(),
+        yThin('L')&&yBare('L'), yThin('R')&&yBare('R'));
+  data[12][3]=s>=3?'A':'B';
+
+  _basisVars={
+    d01mL,d01mR,d01yL,d01yR,d01n,d01k,
+    d02mL,d02mR,d02yL,d02yR,d02n,d02k,
+    d03mL,d03mR,d03yL,d03yR,d03n,d03k,
+    d04mL,d04mR,d04yL,d04yR,d04n,d04k
+  };
+
+  // ===== condResults：每個維度每個部位的條件明細 =====
+  // 格式: condResults[dimIdx][partIdx] = {pass:bool, score:n, max:n, items:[{label,ok,ids,side,val}]}
+  // partIdx: 0=頭 1=上停 2=中停 3=下停 4=耳 5=眉 6=眼 7=鼻 8=口
+  condResults = {};
+
+  // helper: 建條件項目
+  const ci=(label,ok,ids,side,val)=>({label,ok,ids:ids||[],side:side||null,val:val||null});
+  // helper: 建部位結果
+  const part=(items,threshold,passScore)=>{
+    const score=items.reduce((s,i)=>s+(i.ok?1:0),0);
+    return {items,score,max:items.length,pass:score>=passScore,threshold};
+  };
+  const partWt=(itemsWt,threshold,passScore)=>{
+    // itemsWt: [{label,ok,ids,side,val,wt}] wt=分值
+    const score=itemsWt.reduce((s,i)=>s+(i.ok?(i.wt||1):0),0);
+    const max=itemsWt.reduce((s,i)=>s+(i.wt||1),0);
+    return {items:itemsWt,score,max,pass:score>=passScore,threshold};
+  };
+  const boolPart=(ok,label)=>({items:[{label,ok,ids:[],side:null,val:null}],score:ok?1:0,max:1,pass:ok,threshold:label});
+
+  // ===== 01 形勢 =====
+  condResults[0]={
+    0:partWt([
+      ci('左頂骨龜背（無凹凸，緩緩向中間隆起）',hTopL_guitang(),['h1'],'L','龜背'),
+      ci('右頂骨龜背',hTopR_guitang(),['h1'],'R','龜背'),
+      ci('枕骨圓＋順＋無自剋＋無橫條',hOcc_round()&&hOcc_flat()&&hOcc_no_self()&&hOcc_no_cross(),['h5','h6','h7','h8'],null,null),
+      ci('左華陽圓隆（不可尖、平、凹）',hHua_roundL(),['h11'],'L','圓隆'),
+      ci('右華陽圓隆',hHua_roundR(),['h11'],'R','圓隆'),
+    ],'滿分5，≥3→形',3),
+    1:part([
+      ci('額高（眉到髮際佔臉1/3以上）',eHigh(),['e1'],null,'額高'),
+      ci('額寬（額頭兩側寬闊）',eWide(),['e3'],null,'額寬'),
+      ci('額平（正面看無凹凸）',eFlat(),['e4'],null,'額平'),
+      ci('額隆（側面有隆起弧度）OR 大天庭',eRise()||eBigTian(),['e6','e11'],null,null),
+    ],'4項全中→形',4),
+    4:part([
+      ci('左耳長（超過眼到鼻準底2/3）',erLong('L'),['er1'],'L','耳長'),
+      ci('左耳圓＋有輪有廓＋輪包廓',erRound('L')&&erCircleOk('L')&&erWrap('L'),['er4','er8','er9'],'L',null),
+      ci('左耳高（上緣齊眉或以上）',erHigh('L'),['er7'],'L','耳高'),
+      ci('左有垂珠',erPearl('L'),['er12'],'L','有垂珠'),
+      ci('右耳長',erLong('R'),['er1'],'R','耳長'),
+      ci('右耳圓＋有輪有廓＋輪包廓',erRound('R')&&erCircleOk('R')&&erWrap('R'),['er4','er8','er9'],'R',null),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右有垂珠',erPearl('R'),['er12'],'R','有垂珠'),
+    ],'左右各4全中→形',8),
+    5:part([
+      ci('左眉長過目',brLong('L'),['br1'],'L','眉長'),
+      ci('左眉順（毛向一致）',brOrder('L'),['br14'],'L','眉順'),
+      ci('左柔順（不粗硬）',brSoft('L'),['br15'],'L','柔順'),
+      ci('左鋪陳有致（根根見肉）',brSpread('L'),['br17'],'L','鋪陳有致'),
+      ci('左無鷹角',brNoEagle('L'),['br4'],'L','無鷹角'),
+      ci('左無中斷',brNoBreak('L'),['br5'],'L','無中斷'),
+      ci('右眉長過目',brLong('R'),['br1'],'R','眉長'),
+      ci('右眉順',brOrder('R'),['br14'],'R','眉順'),
+      ci('右柔順',brSoft('R'),['br15'],'R','柔順'),
+      ci('右鋪陳有致',brSpread('R'),['br17'],'R','鋪陳有致'),
+      ci('右無鷹角',brNoEagle('R'),['br4'],'R','無鷹角'),
+      ci('右無中斷',brNoBreak('R'),['br5'],'R','無中斷'),
+    ],'左右各6全中→形',12),
+    6:part([
+      ci('左眼長（眼長≥眼距）',eyLong('L'),['ey1'],'L','眼長'),
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+    ],'左右各3全中→形',6),
+    7:part([
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('鼻高（鼻樑年壽突起）',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻肉（肉多於骨）',nMeat(),['n10'],null,'肉多於骨'),
+      ci('無起節（鼻樑無明顯起節）',nNoNode(),['n11'],null,'無起節'),
+    ],'4項全中→形',4),
+    8:part([
+      ci('口大（開大合小）',mBig(),['m1'],null,'口開大合小'),
+      ci('涯岸分明',mEdge(),['m2'],null,'涯岸分明'),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('嘴角朝上',mUp(),['m4'],null,'嘴角朝上'),
+    ],'4項全中→形',4),
+    2:{items:[
+      ci('左眉達形（6全中）',d01mL>=6,[],'L',null),
+      ci('右眉達形（6全中）',d01mR>=6,[],'R',null),
+      ci('左眼達形（3全中）',d01yL>=3,[],'L',null),
+      ci('右眼達形（3全中）',d01yR>=3,[],'R',null),
+      ci('鼻達形（4全中）',d01n>=4,[],null,null),
+      ci('左顴高且隆＋有肉',qHighBig('L')&&qMeat('L'),['q1','q3'],'L',null),
+      ci('右顴高且隆＋有肉',qHighBig('R')&&qMeat('R'),['q1','q3'],'R',null),
+    ],score:(d01mL>=6?1:0)+(d01mR>=6?1:0)+(d01yL>=3?1:0)+(d01yR>=3?1:0)+(d01n>=4?1:0)+(qHighBig('L')&&qMeat('L')?1:0)+(qHighBig('R')&&qMeat('R')?1:0),max:7,pass:data[0][2]==='A',threshold:'7部位≥4→形'},
+    3:{items:[
+      ci('口達形（4全中）',d01k>=4,[],null,null),
+      ci('人中深AND人中長',pDeep()&&pLong(),['p1','p2'],null,null),
+      ci('地閣起（地閣朝拱）',cRise(),['c1'],null,'地閣起'),
+      ci('左頤（寬OR平）AND頤豐',yWideOrFlat('L')&&yFull('L'),['y1','y2'],'L',null),
+      ci('右頤（寬OR平）AND頤豐',yWideOrFlat('R')&&yFull('R'),['y1','y2'],'R',null),
+    ],score:(d01k>=4?1:0)+(pDeep()&&pLong()?1:0)+(cRise()?1:0)+(yWideOrFlat('L')&&yFull('L')?1:0)+(yWideOrFlat('R')&&yFull('R')?1:0),max:5,pass:data[0][3]==='A',threshold:'5部位≥3→形'},
+  };
+
+  // ===== 02 經緯 =====
+  condResults[1]={
+    0:partWt([
+      {...ci('頂骨左右一致',hTop_consistent(),['h3'],null,'左右一致'),wt:2},
+      {...ci('枕骨左右一致',hOcc_consistent(),['h10'],null,'兩側一致'),wt:1},
+      {...ci('華陽左右一致',hHuayang_consistent(),['h13'],null,'左右一致'),wt:2},
+    ],'滿分5，≥3→經',3),
+    1:part([
+      ci('額隆（側面有隆起弧度）',eRise(),['e6'],null,'額隆'),
+      ci('日月角起（髮際兩側有明顯隆起）',eRiyue(),['e13'],null,'日月角起'),
+    ],'≥1→經',1),
+    4:part([
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('左耳立（接近垂直）',erStand('L'),['er3'],'L','耳立'),
+      ci('左耳大',erBig('L'),['er2'],'L','耳大'),
+      ci('左耳厚（耳肉多）',erThick('L'),['er10'],'L','耳厚'),
+      ci('左耳堅（有硬度）',erSolid('L'),['er11'],'L','耳堅'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右耳立',erStand('R'),['er3'],'R','耳立'),
+      ci('右耳大',erBig('R'),['er2'],'R','耳大'),
+      ci('右耳厚',erThick('R'),['er10'],'R','耳厚'),
+      ci('右耳堅',erSolid('R'),['er11'],'R','耳堅'),
+      ci('雙耳一致',erConsistent(),['er14'],null,'雙耳一致'),
+    ],'左右各5全中＋一致→經',11),
+    5:part([
+      ci('左退印（眉頭不蓋印堂）',brRetire('L'),['br12'],'L','退印'),
+      ci('左有聚（眉尾收攏）',brGather('L'),['br6'],'L','有聚'),
+      ci('左鋪陳有致',brSpread('L'),['br17'],'L','鋪陳有致'),
+      ci('左眉長',brLong('L'),['br1'],'L','眉長'),
+      ci('左貼附眉骨',brBone('L'),['br13'],'L','貼附眉骨'),
+      ci('左有揚（眉尾往上）',brUp('L'),['br8'],'L','有揚'),
+      ci('左眉高居額',brHighPos('L'),['br10'],'L','眉高居額'),
+      ci('左不壓眼（間距一指幅以上）',brNoPress('L'),['br11'],'L','不壓眼'),
+      ci('左不沖根',brNoRoot('L'),['br9'],'L','不沖根'),
+      ci('左眉彎（尾1/3有彎）',brBend('L'),['br3'],'L','眉彎'),
+      ci('右退印',brRetire('R'),['br12'],'R','退印'),
+      ci('右有聚',brGather('R'),['br6'],'R','有聚'),
+      ci('右鋪陳有致',brSpread('R'),['br17'],'R','鋪陳有致'),
+      ci('右眉長',brLong('R'),['br1'],'R','眉長'),
+      ci('右貼附眉骨',brBone('R'),['br13'],'R','貼附眉骨'),
+      ci('右有揚',brUp('R'),['br8'],'R','有揚'),
+      ci('右眉高居額',brHighPos('R'),['br10'],'R','眉高居額'),
+      ci('右不壓眼',brNoPress('R'),['br11'],'R','不壓眼'),
+      ci('右不沖根',brNoRoot('R'),['br9'],'R','不沖根'),
+      ci('右眉彎',brBend('R'),['br3'],'R','眉彎'),
+    ],'左右各≥7→經',14),
+    6:part([
+      ci('左眼細（眼長>2倍眼寬）',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
+      ci('左眼尾平',eyTail_flat('L'),['ey4'],'L','眼尾平'),
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右眼細',eyThin('R'),['ey3'],'R','眼細'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+      ci('右眼尾平',eyTail_flat('R'),['ey4'],'R','眼尾平'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+      ci('雙眼一致',eyConsistent(),['ey12'],null,'雙眼一致'),
+    ],'左右各5全中＋一致→經',11),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻直',nStraight(),['n3'],null,'鼻直'),
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+    ],'3項全中→經',3),
+    8:part([
+      ci('口大',mBig(),['m1'],null,'口開大合小'),
+      ci('嘴角朝上OR水平',mUpOrFlat(),['m4'],null,null),
+      ci('口對稱',mSymm(),['m13'],null,'口對稱'),
+      ci('口位置適中',mCenter(),['m12'],null,'口位置適中'),
+      ci('唇厚平均',mThickEqual(),['m9'],null,'唇厚平均'),
+      ci('閉合線平AND閉合線密',mLineFlat()&&mLineDense(),['m6','m7'],null,null),
+    ],'6項全中→經',6),
+    2:{items:[
+      ci('左眉達經（≥7）',d02mL>=7,[],'L',null),
+      ci('右眉達經（≥7）',d02mR>=7,[],'R',null),
+      ci('左眼達經（5全中）',d02yL>=5,[],'L',null),
+      ci('右眼達經（5全中）',d02yR>=5,[],'R',null),
+      ci('鼻達經（3全中）',d02n>=3,[],null,null),
+      ci('左顴高且隆＋有肉',qHighBig('L')&&qMeat('L'),['q1','q3'],'L',null),
+      ci('右顴高且隆＋有肉',qHighBig('R')&&qMeat('R'),['q1','q3'],'R',null),
+    ],score:(d02mL>=7?1:0)+(d02mR>=7?1:0)+(d02yL>=5?1:0)+(d02yR>=5?1:0)+(d02n>=3?1:0)+(qHighBig('L')&&qMeat('L')?1:0)+(qHighBig('R')&&qMeat('R')?1:0),max:7,pass:data[1][2]==='A',threshold:'7部位≥4→經'},
+    3:{items:[
+      ci('口達經（6全中）',d02k>=6,[],null,null),
+      ci('人中深AND人中直',pDeep()&&pStraight(),['p1','p4'],null,null),
+      ci('地閣平AND寬AND置中',cFlatShape()&&cWide()&&cCenter(),['c2','c4','c5'],null,null),
+      ci('左頤寬AND雙頤一致',yWide('L')&&yConsistent(),['y1','y4'],'L',null),
+      ci('右頤寬AND雙頤一致',yWide('R')&&yConsistent(),['y1','y4'],'R',null),
+    ],score:(d02k>=6?1:0)+(pDeep()&&pStraight()?1:0)+(cFlatShape()&&cWide()&&cCenter()?1:0)+(yWide('L')&&yConsistent()?1:0)+(yWide('R')&&yConsistent()?1:0),max:5,pass:data[1][3]==='A',threshold:'5部位≥3→經'},
+  };
+
+  // ===== 03 方圓 =====
+  const d03qL_c=qHighBig('L')&&qMeat('L'), d03qR_c=qHighBig('R')&&qMeat('R');
+  condResults[2]={
+    0:part([
+      ci('左頂骨圓（非龜背）',is('h1','圓','L'),['h1'],'L','圓'),
+      ci('右頂骨圓（非龜背）',is('h1','圓','R'),['h1'],'R','圓'),
+      ci('枕骨無自剋骨',hOcc_no_self(),['h7'],null,'無自剋骨'),
+      ci('左華陽圓隆',hHua_roundL(),['h11'],'L','圓隆'),
+      ci('右華陽圓隆',hHua_roundR(),['h11'],'R','圓隆'),
+    ],'滿分5，≥3→圓',3),
+    1:part([
+      ci('額平（正面看無凹凸）',eFlat(),['e4'],null,'額平'),
+      ci('額隆（側面有隆起弧度）',eRise(),['e6'],null,'額隆'),
+    ],'2項全中→圓',2),
+    4:part([
+      ci('左耳圓（圓弧完整）',erRound('L'),['er4'],'L','耳圓'),
+      ci('左有輪有廓',erCircleOk('L'),['er8'],'L','有輪有廓'),
+      ci('左輪包廓',erWrap('L'),['er9'],'L','輪包廓'),
+      ci('右耳圓',erRound('R'),['er4'],'R','耳圓'),
+      ci('右有輪有廓',erCircleOk('R'),['er8'],'R','有輪有廓'),
+      ci('右輪包廓',erWrap('R'),['er9'],'R','輪包廓'),
+    ],'左右各3全中→圓',6),
+    5:part([
+      ci('左眉彎（尾1/3有彎）',brBend('L'),['br3'],'L','眉彎'),
+      ci('左無鷹角',brNoEagle('L'),['br4'],'L','無鷹角'),
+      ci('右眉彎',brBend('R'),['br3'],'R','眉彎'),
+      ci('右無鷹角',brNoEagle('R'),['br4'],'R','無鷹角'),
+    ],'左右各2全中→圓',4),
+    6:part([
+      ci('左眼上弧AND（鉤OR刀裁）',(eyArc('L')&&(eyHook('L')||eyKnife('L'))),['ey8','ey6','ey7'],'L',null),
+      ci('右眼上弧AND（鉤OR刀裁）',(eyArc('R')&&(eyHook('R')||eyKnife('R'))),['ey8','ey6','ey7'],'R',null),
+      ci('雙眼一致',eyConsistent(),['ey12'],null,'雙眼一致'),
+    ],'3條全中→圓',3),
+    7:part([
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('無起節（鼻樑無起節）',nNoNode(),['n11'],null,'無起節'),
+    ],'2項全中→圓',2),
+    8:part([
+      ci('涯岸分明',mEdge(),['m2'],null,'涯岸分明'),
+      ci('閉合線有曲度弓線',mLineCurve(),['m6'],null,'閉合線有曲度'),
+      ci('唇厚一般OR唇明顯厚',mThickOk(),['m8'],null,null),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+    ],'4項全中→圓',4),
+    2:{items:[
+      ci('左眉達圓（2全中）',d03mL>=2,[],'L',null),
+      ci('右眉達圓（2全中）',d03mR>=2,[],'R',null),
+      ci('左眼達圓（1全中）',d03yL>=1,[],'L',null),
+      ci('右眼達圓（1全中）',d03yR>=1,[],'R',null),
+      ci('鼻達圓（2全中）',d03n>=2,[],null,null),
+      ci('左顴高且隆＋有肉',d03qL_c,['q1','q3'],'L',null),
+      ci('右顴高且隆＋有肉',d03qR_c,['q1','q3'],'R',null),
+    ],score:(d03mL>=2?1:0)+(d03mR>=2?1:0)+(d03yL>=1?1:0)+(d03yR>=1?1:0)+(d03n>=2?1:0)+(d03qL?1:0)+(d03qR_c?1:0),max:7,pass:data[2][2]==='B',threshold:'7部位≥4→圓'},
+    3:{items:[
+      ci('口達圓（4全中）',d03k>=4,[],null,null),
+      ci('人中深AND人中長',pDeep()&&pLong(),['p1','p2'],null,null),
+      ci('地閣圓',cRoundShape(),['c2'],null,'地閣圓'),
+      ci('左頤（寬OR平）AND（豐OR有肉）',yWideOrFlat('L')&&yMeatOk('L'),['y1','y2'],'L',null),
+      ci('右頤（寬OR平）AND（豐OR有肉）',yWideOrFlat('R')&&yMeatOk('R'),['y1','y2'],'R',null),
+    ],score:(d03k>=4?1:0)+(pDeep()&&pLong()?1:0)+(cRoundShape()?1:0)+(yWideOrFlat('L')&&yMeatOk('L')?1:0)+(yWideOrFlat('R')&&yMeatOk('R')?1:0),max:5,pass:data[2][3]==='B',threshold:'5部位≥3→圓'},
+  };
+
+  // ===== 04 曲直 =====
+  const d04qL_c=is('q5','相稱'), d04qR_c=is('q5','相稱');
+  condResults[3]={
+    0:partWt([
+      {...ci('頂骨中線直（矢狀縫無偏斜）',is('h4','中線直'),['h4'],null,'中線直'),wt:2},
+      {...ci('枕骨中線直',is('h9','中線直'),['h9'],null,'中線直'),wt:1},
+      {...ci('左華陽平直（不隆不凹）',is('h11','平直','L'),['h11'],'L','平直'),wt:1},
+      {...ci('右華陽平直',is('h11','平直','R'),['h11'],'R','平直'),wt:1},
+    ],'滿分5，≥3→直',3),
+    1:part([
+      ci('額立（側面偏直上）',eUpright(),['e7'],null,'額立'),
+      ci('額高',eHigh(),['e1'],null,'額高'),
+      ci('日月角起',eRiyue(),['e13'],null,'日月角起'),
+    ],'3項全中→直',3),
+    4:part([
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('左耳立',erStand('L'),['er3'],'L','耳立'),
+      ci('左耳長',erLong('L'),['er1'],'L','耳長'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右耳立',erStand('R'),['er3'],'R','耳立'),
+      ci('右耳長',erLong('R'),['er1'],'R','耳長'),
+    ],'左右各3全中→直',6),
+    5:part([
+      ci('左（眉平AND無鷹角）OR短粗眉',d04mL>=1,['br3','br4','br7'],'L',null),
+      ci('右（眉平AND無鷹角）OR短粗眉',d04mR>=1,['br3','br4','br7'],'R',null),
+    ],'左右各≥1→直',2),
+    6:part([
+      ci('左眼細',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
+      ci('左無眼鉤',!eyHook('L'),['ey6'],'L','無眼鉤'),
+      ci('左無刀裁',!eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右眼細',eyThin('R'),['ey3'],'R','眼細'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+      ci('右無眼鉤',!eyHook('R'),['ey6'],'R','無眼鉤'),
+      ci('右無刀裁',!eyKnife('R'),['ey7'],'R','有刀裁'),
+    ],'左右各4全中→直',8),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('鼻直',nStraight(),['n3'],null,'鼻直'),
+    ],'3項全中→直',3),
+    8:part([
+      ci('閉合線平',mLineFlat(),['m6'],null,'閉合線平'),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('嘴角水平',mFlat_corner(),['m4'],null,'嘴角水平'),
+      ci('閉合線密',mLineDense(),['m7'],null,'閉合線密'),
+    ],'4項全中→直',4),
+    2:{items:[
+      ci('左眉達直（≥1）',d04mL>=1,[],'L',null),
+      ci('右眉達直（≥1）',d04mR>=1,[],'R',null),
+      ci('左眼達直（4全中）',d04yL>=4,[],'L',null),
+      ci('右眼達直（4全中）',d04yR>=4,[],'R',null),
+      ci('鼻達直（3全中）',d04n>=3,[],null,null),
+      ci('左顴鼻相稱',d04qL_c,['q5'],'L',null),
+      ci('右顴鼻相稱',d04qR_c,['q5'],'R',null),
+    ],score:(d04mL>=1?1:0)+(d04mR>=1?1:0)+(d04yL>=4?1:0)+(d04yR>=4?1:0)+(d04n>=3?1:0)+(d04qL_c?1:0)+(d04qR_c?1:0),max:7,pass:data[3][2]==='B',threshold:'7部位≥4→直'},
+    3:{items:[
+      ci('口達直（4全中）',d04k>=4,[],null,null),
+      ci('人中直',pStraight(),['p4'],null,'人中直'),
+      ci('地閣平',cFlatShape(),['c2'],null,'地閣平'),
+      ci('左頤平直（角度適中）',yFlat_angle('L'),['y1'],'L','頤平'),
+      ci('右頤平直',yFlat_angle('R'),['y1'],'R','頤平'),
+    ],score:(d04k>=4?1:0)+(pStraight()?1:0)+(cFlatShape()?1:0)+(yFlat_angle('L')?1:0)+(yFlat_angle('R')?1:0),max:5,pass:data[3][3]==='B',threshold:'5部位≥3→直'},
+  };
+
+  // ===== 05 收放 =====
+  condResults[4]={
+    0:part([
+      ci('左頂骨圓（非龜背）',is('h1','圓','L'),['h1'],'L','圓'),
+      ci('右頂骨圓',is('h1','圓','R'),['h1'],'R','圓'),
+      ci('枕骨圓（後腦為圓）',hOcc_round(),['h5'],null,'後腦圓'),
+      ci('左華陽圓隆',hHua_roundL(),['h11'],'L','圓隆'),
+      ci('右華陽圓隆',hHua_roundR(),['h11'],'R','圓隆'),
+    ],'滿分5，≥3→收',3),
+    1:part([
+      ci('小天庭（額頭中間局部隆起）',eSmallTian(),['e11'],null,'小天庭'),
+      ci('日月角合（兩側靠近中線）',eRiyue_close(),['e14'],null,'日月角合'),
+    ],'≥1→收',1),
+    4:part([
+      ci('左耳圓',erRound('L'),['er4'],'L','耳圓'),
+      ci('左輪包廓',erWrap('L'),['er9'],'L','輪包廓'),
+      ci('右耳圓',erRound('R'),['er4'],'R','耳圓'),
+      ci('右輪包廓',erWrap('R'),['er9'],'R','輪包廓'),
+    ],'左右各2全中→收',4),
+    5:part([
+      ci('左眉尾有聚（收攏不散）',brGather('L'),['br6'],'L','有聚'),
+      ci('右眉尾有聚',brGather('R'),['br6'],'R','有聚'),
+    ],'左右各1→收',2),
+    6:part([
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+    ],'左右各2全中→收',4),
+    7:part([
+      ci('鼻聚（準頭聚，跟鼻樑寬度差不多）',nGather(),['n12'],null,'鼻聚'),
+    ],'1項→收',1),
+    8:part([
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('嘴角不朝下（朝上或水平）',mNotDown(),['m4'],null,null),
+      ci('閉合線密',mLineDense(),['m7'],null,'閉合線密'),
+      ci('涯岸分明',mEdge(),['m2'],null,'涯岸分明'),
+    ],'4項全中→收',4),
+    2:{items:[
+      ci('左眉達收（1全中）',d05mL>=1,[],'L',null),
+      ci('右眉達收（1全中）',d05mR>=1,[],'R',null),
+      ci('左眼達收（2全中）',d05yL>=2,[],'L',null),
+      ci('右眼達收（2全中）',d05yR>=2,[],'R',null),
+      ci('鼻達收（1全中）',nGather(),[],null,null),
+      ci('左顴柄插天',qSky('L'),['q4'],'L','顴柄插天'),
+      ci('右顴柄插天',qSky('R'),['q4'],'R','顴柄插天'),
+    ],score:(d05mL>=1?1:0)+(d05mR>=1?1:0)+(d05yL>=2?1:0)+(d05yR>=2?1:0)+(nGather()?1:0)+(qSky('L')?1:0)+(qSky('R')?1:0),max:7,pass:data[4][2]==='A',threshold:'7部位≥4→收'},
+    3:{items:[
+      ci('口達收（4全中）',d05k>=4,[],null,null),
+      ci('人中深AND人中長',pDeep()&&pLong(),['p1','p2'],null,null),
+      ci('地閣平OR地閣圓',cFlatOrRound(),['c2'],null,null),
+      ci('左頤寬AND（豐OR有肉）',yWide('L')&&yMeatOk('L'),['y1','y2'],'L',null),
+      ci('右頤寬AND（豐OR有肉）',yWide('R')&&yMeatOk('R'),['y1','y2'],'R',null),
+    ],score:(d05k>=4?1:0)+(pDeep()&&pLong()?1:0)+(cFlatOrRound()?1:0)+(yWide('L')&&yMeatOk('L')?1:0)+(yWide('R')&&yMeatOk('R')?1:0),max:5,pass:data[4][3]==='A',threshold:'5部位≥3→收'},
+  };
+
+  // ===== 06 緩急 =====
+  const d06qL_c=qHighAny('L')&&qMeat('L'), d06qR_c=qHighAny('R')&&qMeat('R');
+  condResults[5]={
+    0:part([
+      ci('左頂骨（龜背OR圓）AND中央平順',(any('h1',['龜背','圓'],'L'))&&hTop_center_flat(),['h1','h2'],'L',null),
+      ci('右頂骨（龜背OR圓）AND中央平順',(any('h1',['龜背','圓'],'R'))&&hTop_center_flat(),['h1','h2'],'R',null),
+      ci('枕骨圓＋無自剋＋無橫條＋順無凹凸',hOcc_round()&&hOcc_no_self()&&hOcc_no_cross()&&hOcc_flat(),['h5','h6','h7','h8'],null,null),
+      ci('左華陽圓隆OR平直',hHua_okL(),['h11'],'L',null),
+      ci('右華陽圓隆OR平直',hHua_okR(),['h11'],'R',null),
+    ],'滿分5，≥3→緩',3),
+    1:part([
+      ci('額圓（形狀偏橢圓，飽滿感）',eRound(),['e2'],null,'額圓'),
+      ci('額寬',eWide(),['e3'],null,'額寬'),
+      ci('額隆',eRise(),['e6'],null,'額隆'),
+    ],'3項全中→緩',3),
+    4:part([
+      ci('左有輪有廓',erCircleOk('L'),['er8'],'L','有輪有廓'),
+      ci('左耳厚OR耳正常',erThickOk('L'),['er10'],'L',null),
+      ci('左有垂珠',erPearl('L'),['er12'],'L','有垂珠'),
+      ci('右有輪有廓',erCircleOk('R'),['er8'],'R','有輪有廓'),
+      ci('右耳厚OR耳正常',erThickOk('R'),['er10'],'R',null),
+      ci('右有垂珠',erPearl('R'),['er12'],'R','有垂珠'),
+    ],'左右各3全中→緩',6),
+    5:part([
+      ci('左眉形細',brThin('L'),['br2'],'L','眉形細'),
+      ci('左眉長',brLong('L'),['br1'],'L','眉長'),
+      ci('左柔順',brSoft('L'),['br15'],'L','柔順'),
+      ci('左眉順',brOrder('L'),['br14'],'L','眉順'),
+      ci('左不沖印',brNoSeal('L'),['br19'],'L','不沖印'),
+      ci('右眉形細',brThin('R'),['br2'],'R','眉形細'),
+      ci('右眉長',brLong('R'),['br1'],'R','眉長'),
+      ci('右柔順',brSoft('R'),['br15'],'R','柔順'),
+      ci('右眉順',brOrder('R'),['br14'],'R','眉順'),
+      ci('右不沖印',brNoSeal('R'),['br19'],'R','不沖印'),
+    ],'左右各5全中→緩',10),
+    6:part([
+      ci('左眼細',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
+      ci('右眼細',eyThin('R'),['ey3'],'R','眼細'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+    ],'左右各2全中→緩',4),
+    7:part([
+      ci('鼻寬',nWide(),['n4'],null,'鼻寬'),
+      ci('鼻肉（肉多於骨）',nMeat(),['n10'],null,'肉多於骨'),
+    ],'2項全中→緩',2),
+    8:part([
+      ci('涯岸分明',mEdge(),['m2'],null,'涯岸分明'),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('嘴角朝上',mUp(),['m4'],null,'嘴角朝上'),
+      ci('唇厚一般OR唇薄',mThickNorm()||mThin(),['m8'],null,null),
+    ],'4項全中→緩',4),
+    2:{items:[
+      ci('左眉達緩（5全中）',d06mL>=5,[],'L',null),
+      ci('右眉達緩（5全中）',d06mR>=5,[],'R',null),
+      ci('左眼達緩（2全中）',d06yL>=2,[],'L',null),
+      ci('右眼達緩（2全中）',d06yR>=2,[],'R',null),
+      ci('鼻達緩（2全中）',d06n>=2,[],null,null),
+      ci('左顴（高且隆OR有而不明）AND有肉',d06qL_c,['q1','q3'],'L',null),
+      ci('右顴（高且隆OR有而不明）AND有肉',d06qR_c,['q1','q3'],'R',null),
+    ],score:(d06mL>=5?1:0)+(d06mR>=5?1:0)+(d06yL>=2?1:0)+(d06yR>=2?1:0)+(d06n>=2?1:0)+(d06qL_c?1:0)+(d06qR_c?1:0),max:7,pass:data[5][2]==='A',threshold:'7部位≥4→緩'},
+    3:{items:[
+      ci('口達緩（4全中）',d06k>=4,[],null,null),
+      ci('人中長（至少食指寬）',pLong(),['p2'],null,'人中長'),
+      ci('（地閣圓OR平）AND地閣寬',cFlatOrRound()&&cWide(),['c2','c4'],null,null),
+      ci('左頤豐OR頤有肉',yMeatOk('L'),['y2'],'L',null),
+      ci('右頤豐OR頤有肉',yMeatOk('R'),['y2'],'R',null),
+    ],score:(d06k>=4?1:0)+(pLong()?1:0)+(cFlatOrRound()&&cWide()?1:0)+(yMeatOk('L')?1:0)+(yMeatOk('R')?1:0),max:5,pass:data[5][3]==='A',threshold:'5部位≥3→緩'},
+  };
+
+  // ===== 07 順逆 =====
+  const d07qL_c=qMeat('L')&&qOk('L'), d07qR_c=qMeat('R')&&qOk('R');
+  condResults[6]={
+    0:part([
+      ci('左頂骨平寬AND中央平順',hTop_pingkuan_L(),['h1','h2'],'L',null),
+      ci('右頂骨平寬AND中央平順',hTop_pingkuan_R(),['h1','h2'],'R',null),
+      ci('枕骨圓＋無自剋＋無橫條',hOcc_round()&&hOcc_no_self()&&hOcc_no_cross(),['h5','h7','h8'],null,null),
+      ci('左華陽平直',is('h11','平直','L'),['h11'],'L','平直'),
+      ci('右華陽平直',is('h11','平直','R'),['h11'],'R','平直'),
+    ],'滿分5，≥3→順',3),
+    1:part([
+      ci('大天庭（額頭整體隆起）',eBigTian(),['e11'],null,'大天庭'),
+      ci('額順（眉骨銜接無凹槽）',eSmooth(),['e9'],null,'額順'),
+    ],'2項全中→順',2),
+    4:part([
+      ci('左耳圓',erRound('L'),['er4'],'L','耳圓'),
+      ci('左有輪有廓',erCircleOk('L'),['er8'],'L','有輪有廓'),
+      ci('左輪包廓',erWrap('L'),['er9'],'L','輪包廓'),
+      ci('左耳立',erStand('L'),['er3'],'L','耳立'),
+      ci('右耳圓',erRound('R'),['er4'],'R','耳圓'),
+      ci('右有輪有廓',erCircleOk('R'),['er8'],'R','有輪有廓'),
+      ci('右輪包廓',erWrap('R'),['er9'],'R','輪包廓'),
+      ci('右耳立',erStand('R'),['er3'],'R','耳立'),
+    ],'左右各4全中→順',8),
+    5:part([
+      ci('左眉長',brLong('L'),['br1'],'L','眉長'),
+      ci('左眉彎',brBend('L'),['br3'],'L','眉彎'),
+      ci('左無鷹角',brNoEagle('L'),['br4'],'L','無鷹角'),
+      ci('左眉順',brOrder('L'),['br14'],'L','眉順'),
+      ci('左柔順',brSoft('L'),['br15'],'L','柔順'),
+      ci('右眉長',brLong('R'),['br1'],'R','眉長'),
+      ci('右眉彎',brBend('R'),['br3'],'R','眉彎'),
+      ci('右無鷹角',brNoEagle('R'),['br4'],'R','無鷹角'),
+      ci('右眉順',brOrder('R'),['br14'],'R','眉順'),
+      ci('右柔順',brSoft('R'),['br15'],'R','柔順'),
+    ],'左右各5全中→順',10),
+    6:part([
+      ci('左眼細',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
+      ci('左上下不白（黑睛遮上下眼白）',eyWhite_none('L'),['ey11'],'L','上下不白'),
+      ci('右眼細',eyThin('R'),['ey3'],'R','眼細'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+      ci('右上下不白',eyWhite_none('R'),['ey11'],'R','上下不白'),
+    ],'左右各3全中→順',6),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻直',nStraight(),['n3'],null,'鼻直'),
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('無起節',nNoNode(),['n11'],null,'無起節'),
+    ],'4項全中→順',4),
+    8:part([
+      ci('唇厚平均',mThickEqual(),['m9'],null,'唇厚平均'),
+      ci('嘴角水平OR朝上',mUpOrFlat(),['m4'],null,null),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+    ],'3項全中→順',3),
+    2:{items:[
+      ci('左眉達順（5全中）',d07mL>=5,[],'L',null),
+      ci('右眉達順（5全中）',d07mR>=5,[],'R',null),
+      ci('左眼達順（3全中）',d07yL>=3,[],'L',null),
+      ci('右眼達順（3全中）',d07yR>=3,[],'R',null),
+      ci('鼻達順（4全中）',d07n>=4,[],null,null),
+      ci('左顴有肉AND不過大',d07qL_c,['q2','q3'],'L',null),
+      ci('右顴有肉AND不過大',d07qR_c,['q2','q3'],'R',null),
+    ],score:(d07mL>=5?1:0)+(d07mR>=5?1:0)+(d07yL>=3?1:0)+(d07yR>=3?1:0)+(d07n>=4?1:0)+(d07qL_c?1:0)+(d07qR_c?1:0),max:7,pass:data[6][2]==='A',threshold:'7部位≥4→順'},
+    3:{items:[
+      ci('口達順（3全中）',d07k>=3,[],null,null),
+      ci('人中深＋人中長＋人中直（3全中）',pDeep()&&pLong()&&pStraight(),['p1','p2','p4'],null,null),
+      ci('（地閣圓OR平）AND地閣有肉',cFlatOrRound()&&cMeat(),['c2','c6'],null,null),
+      ci('左頤寬OR頤平',yWideOrFlat('L'),['y1'],'L',null),
+      ci('右頤寬OR頤平',yWideOrFlat('R'),['y1'],'R',null),
+    ],score:(d07k>=3?1:0)+(pDeep()&&pLong()&&pStraight()?1:0)+(cFlatOrRound()&&cMeat()?1:0)+(yWideOrFlat('L')?1:0)+(yWideOrFlat('R')?1:0),max:5,pass:data[6][3]==='A',threshold:'5部位≥3→順'},
+  };
+
+  // ===== 08 分合 =====
+  const d08qL_c=qHighBig('L')&&qMeat('L')&&qPillarOk('L');
+  const d08qR_c=qHighBig('R')&&qMeat('R')&&qPillarOk('R');
+  condResults[7]={
+    0:part([
+      ci('左頂骨（龜背OR圓）AND中央平順',(any('h1',['龜背','圓'],'L'))&&hTop_center_flat(),['h1','h2'],'L',null),
+      ci('右頂骨（龜背OR圓）AND中央平順',(any('h1',['龜背','圓'],'R'))&&hTop_center_flat(),['h1','h2'],'R',null),
+      ci('枕骨圓（後腦為圓）',hOcc_round(),['h5'],null,'後腦圓'),
+      ci('左華陽圓隆',hHua_roundL(),['h11'],'L','圓隆'),
+      ci('右華陽圓隆',hHua_roundR(),['h11'],'R','圓隆'),
+    ],'滿分5，≥3→合',3),
+    1:part([
+      ci('大天庭',eBigTian(),['e11'],null,'大天庭'),
+      ci('小天庭AND日月角不清晰',eSmallTian()&&eRiyue_notclear(),['e11','e13'],null,null),
+    ],'≥1→合',1),
+    4:part([
+      ci('左耳高（必要）',erHigh('L'),['er7'],'L','耳高'),
+      ci('左耳圓（必要）',erRound('L'),['er4'],'L','耳圓'),
+      ci('左耳提OR耳提強OR耳垂朝口',erTiltAny('L')||erLobemouth('L'),['er3','er13'],'L',null),
+      ci('右耳高（必要）',erHigh('R'),['er7'],'R','耳高'),
+      ci('右耳圓（必要）',erRound('R'),['er4'],'R','耳圓'),
+      ci('右耳提OR耳提強OR耳垂朝口',erTiltAny('R')||erLobemouth('R'),['er3','er13'],'R',null),
+    ],'左右各3全中→合',6),
+    5:part([
+      ci('左有鷹角',brEagle('L'),['br4'],'L','有鷹角'),
+      ci('左眉彎',brBend('L'),['br3'],'L','眉彎'),
+      ci('左不沖印',brNoSeal('L'),['br19'],'L','不沖印'),
+      ci('左不沖根',brNoRoot('L'),['br9'],'L','不沖根'),
+      ci('右有鷹角',brEagle('R'),['br4'],'R','有鷹角'),
+      ci('右眉彎',brBend('R'),['br3'],'R','眉彎'),
+      ci('右不沖印',brNoSeal('R'),['br19'],'R','不沖印'),
+      ci('右不沖根',brNoRoot('R'),['br9'],'R','不沖根'),
+    ],'左右各4全中→合',8),
+    6:part([
+      ci('左眼上弧（上眼瞼有弧度）',eyArc('L'),['ey8'],'L','眼上弧'),
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右眼上弧',eyArc('R'),['ey8'],'R','眼上弧'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+    ],'左右各3全中→合',6),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻準圓（不尖，形圓有肉）',nTip_round(),['n5'],null,'鼻準圓'),
+      ci('鼻接印（山根接印堂）',nJoin_seal(),['n7'],null,'鼻接印'),
+    ],'3項全中→合',3),
+    8:part([
+      ci('嘴角朝上',mUp(),['m4'],null,'嘴角朝上'),
+      ci('水星明顯（上唇V形明顯）',mV(),['m5'],null,'水星明顯'),
+      ci('唇厚一般OR唇明顯厚',mThickOk(),['m8'],null,null),
+      ci('唇厚平均',mThickEqual(),['m9'],null,'唇厚平均'),
+    ],'4項全中→合',4),
+    2:{items:[
+      ci('左眉達合（4全中）',d08mL>=4,[],'L',null),
+      ci('右眉達合（4全中）',d08mR>=4,[],'R',null),
+      ci('左眼達合（3全中）',d08yL>=3,[],'L',null),
+      ci('右眼達合（3全中）',d08yR>=3,[],'R',null),
+      ci('鼻達合（3全中）',d08n>=3,[],null,null),
+      ci('左顴高且隆＋有肉＋顴柄（插天OR平）',d08qL_c,['q1','q3','q4'],'L',null),
+      ci('右顴高且隆＋有肉＋顴柄',d08qR_c,['q1','q3','q4'],'R',null),
+    ],score:(d08mL>=4?1:0)+(d08mR>=4?1:0)+(d08yL>=3?1:0)+(d08yR>=3?1:0)+(d08n>=3?1:0)+(d08qL_c?1:0)+(d08qR_c?1:0),max:7,pass:data[7][2]==='B',threshold:'7部位≥4→合'},
+    3:{items:[
+      ci('口達合（4全中）',d08k>=4,[],null,null),
+      ci('人中深',pDeep(),['p1'],null,'人中深'),
+      ci('地閣圓',cRoundShape(),['c2'],null,'地閣圓'),
+      ci('左頤寬OR頤平',yWideOrFlat('L'),['y1'],'L',null),
+      ci('右頤寬OR頤平',yWideOrFlat('R'),['y1'],'R',null),
+    ],score:(d08k>=4?1:0)+(pDeep()?1:0)+(cRoundShape()?1:0)+(yWideOrFlat('L')?1:0)+(yWideOrFlat('R')?1:0),max:5,pass:data[7][3]==='B',threshold:'5部位≥3→合'},
+  };
+
+  // ===== 09 真假 =====
+  const hd09_top=hTop_consistent();
+  const d09qL_c=qHighAny('L')&&qMeat('L')&&qPillarHide('L');
+  const d09qR_c=qHighAny('R')&&qMeat('R')&&qPillarHide('R');
+  condResults[8]={
+    0:{items:[
+      ci('頂骨左右一致（必要）',hd09_top,['h3'],null,'左右一致'),
+      ci('左頂骨龜背',hTopL_guitang(),['h1'],'L','龜背'),
+      ci('右頂骨龜背',hTopR_guitang(),['h1'],'R','龜背'),
+      ci('枕骨順無凹凸＋無自剋＋無橫條',hOcc_flat()&&hOcc_no_self()&&hOcc_no_cross(),['h6','h7','h8'],null,null),
+      ci('左華陽順接',hHuayang_join_L(),['h12'],'L','順接'),
+      ci('右華陽順接',hHuayang_join_R(),['h12'],'R','順接'),
+    ],score:hd09_top?((hTopL_guitang()?1:0)+(hTopR_guitang()?1:0)+(hOcc_flat()&&hOcc_no_self()&&hOcc_no_cross()?1:0)+(hHuayang_join_L()?1:0)+(hHuayang_join_R()?1:0)):0,max:5,pass:data[8][0]==='A',threshold:'頂骨一致必要＋5取3→真'},
+    1:part([
+      ci('額平（正面無凹凸）',eFlat(),['e4'],null,'額平'),
+      ci('額順（眉骨銜接無凹槽）',eSmooth(),['e9'],null,'額順'),
+    ],'2項全中→真',2),
+    4:part([
+      ci('左耳圓',erRound('L'),['er4'],'L','耳圓'),
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('左輪包廓',erWrap('L'),['er9'],'L','輪包廓'),
+      ci('左有垂珠',erPearl('L'),['er12'],'L','有垂珠'),
+      ci('雙耳一致',erConsistent(),['er14'],null,'雙耳一致'),
+      ci('右耳圓',erRound('R'),['er4'],'R','耳圓'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右輪包廓',erWrap('R'),['er9'],'R','輪包廓'),
+      ci('右有垂珠',erPearl('R'),['er12'],'R','有垂珠'),
+    ],'左右各5全中（含一致）→真',10),
+    5:part([
+      ci('左眉長',brLong('L'),['br1'],'L','眉長'),
+      ci('左柔順',brSoft('L'),['br15'],'L','柔順'),
+      ci('左眉順',brOrder('L'),['br14'],'L','眉順'),
+      ci('雙眉一致',brConsistent(),['br20'],null,'雙眉一致'),
+      ci('右眉長',brLong('R'),['br1'],'R','眉長'),
+      ci('右柔順',brSoft('R'),['br15'],'R','柔順'),
+      ci('右眉順',brOrder('R'),['br14'],'R','眉順'),
+    ],'左右各4全中（含一致）→真',8),
+    6:part([
+      ci('左眼細',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('左下眼瞼平直',eyLowFlat('L'),['ey9'],'L','下眼瞼平直'),
+      ci('雙眼一致',eyConsistent(),['ey12'],null,'雙眼一致'),
+      ci('右眼細',eyThin('R'),['ey3'],'R','眼細'),
+      ci('右眼長',eyLong('R'),['ey1'],'R','眼長'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+      ci('右下眼瞼平直',eyLowFlat('R'),['ey9'],'R','下眼瞼平直'),
+    ],'左右各6全中（含一致）→真',12),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('鼻準圓',nTip_round(),['n5'],null,'鼻準圓'),
+      ci('無起節',nNoNode(),['n11'],null,'無起節'),
+      ci('鼻順（側面順接）',nSmooth(),['n6'],null,'鼻順'),
+      ci('鼻直',nStraight(),['n3'],null,'鼻直'),
+    ],'6項全中→真',6),
+    8:part([
+      ci('涯岸分明',mEdge(),['m2'],null,'涯岸分明'),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('閉合線密',mLineDense(),['m7'],null,'閉合線密'),
+      ci('口對稱',mSymm(),['m13'],null,'口對稱'),
+      ci('口位置適中',mCenter(),['m12'],null,'口位置適中'),
+    ],'5項全中→真',5),
+    2:{items:[
+      ci('左眉達真（4全中）',d09mL>=4,[],'L',null),
+      ci('右眉達真（4全中）',d09mR>=4,[],'R',null),
+      ci('左眼達真（6全中）',d09yL>=6,[],'L',null),
+      ci('右眼達真（6全中）',d09yR>=6,[],'R',null),
+      ci('鼻達真（6全中）',d09n>=6,[],null,null),
+      ci('左顴（高且隆OR有而不明）＋有肉＋（柄平OR無柄）',d09qL_c,['q1','q3','q4'],'L',null),
+      ci('右顴同上',d09qR_c,['q1','q3','q4'],'R',null),
+    ],score:(d09mL>=4?1:0)+(d09mR>=4?1:0)+(d09yL>=6?1:0)+(d09yR>=6?1:0)+(d09n>=6?1:0)+(d09qL_c?1:0)+(d09qR_c?1:0),max:7,pass:data[8][2]==='A',threshold:'7部位≥4→真'},
+    3:{items:[
+      ci('口達真（5全中）',d09k>=5,[],null,null),
+      ci('人中深＋人中長＋人中直（3全中）',pDeep()&&pLong()&&pStraight(),['p1','p2','p4'],null,null),
+      ci('地閣平AND地閣有肉',cFlatShape()&&cMeat(),['c2','c6'],null,null),
+      ci('左頤平AND雙頤一致',yFlat_angle('L')&&yConsistent(),['y1','y4'],'L',null),
+      ci('右頤平AND雙頤一致',yFlat_angle('R')&&yConsistent(),['y1','y4'],'R',null),
+    ],score:(d09k>=5?1:0)+(pDeep()&&pLong()&&pStraight()?1:0)+(cFlatShape()&&cMeat()?1:0)+(yFlat_angle('L')&&yConsistent()?1:0)+(yFlat_angle('R')&&yConsistent()?1:0),max:5,pass:data[8][3]==='A',threshold:'5部位≥3→真'},
+  };
+
+  // ===== 10 攻守 =====
+  const d10mL_c=cnt(brEagle('L'),brFew('L'),!brSoft('L'),brUp('L'))>=3;
+  const d10mR_c=cnt(brEagle('R'),brFew('R'),!brSoft('R'),brUp('R'))>=3;
+  const d10yL_c=eyHook('L')||(eyBig('L')&&eyRound('L')&&eyTail_up('L'))||eyPop('L');
+  const d10yR_c=eyHook('R')||(eyBig('R')&&eyRound('R')&&eyTail_up('R'))||eyPop('R');
+  condResults[9]={
+    0:part([
+      ci('頭骨偏硬（肉少骨感）',hHard(),['h15'],null,'偏硬'),
+      ci('頂骨中央突起',hTop_center_raise(),['h2'],null,'突起'),
+      ci('枕骨有自剋骨OR橫條骨',hOcc_has_self()||hOcc_has_cross(),['h7','h8'],null,null),
+      ci('左華陽突露',hHua_bumpL(),['h11'],'L','突露'),
+      ci('右華陽突露',hHua_bumpR(),['h11'],'R','突露'),
+    ],'任1符合→攻',1),
+    1:part([
+      ci('有美人尖',ePeak(),['e12'],null,'有美人尖'),
+      ci('額緊（骨感硬，無皺紋）',eTight(),['e10'],null,'額緊'),
+      ci('日月角骨感明顯AND（大天庭OR小天庭）',eRiyue_bone()&&(eBigTian()||eSmallTian()),['e15','e11'],null,null),
+    ],'任1符合→攻',1),
+    4:part([
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('左輪不包廓',!erWrap('L'),['er9'],'L','輪不包廓'),
+      ci('左耳尖（上耳輪形尖）',erSharp('L'),['er4'],'L','耳尖'),
+      ci('左耳硬',erHard('L'),['er11'],'L','耳硬'),
+      ci('左耳勢朝上',erUpward('L'),['er15'],'L','耳勢朝上'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右輪不包廓',!erWrap('R'),['er9'],'R','輪不包廓'),
+      ci('右耳尖',erSharp('R'),['er4'],'R','耳尖'),
+      ci('右耳硬',erHard('R'),['er11'],'R','耳硬'),
+      ci('右耳勢朝上',erUpward('R'),['er15'],'R','耳勢朝上'),
+    ],'任一耳1條以上→攻',1),
+    5:part([
+      ci('左有鷹角',brEagle('L'),['br4'],'L','有鷹角'),
+      ci('左眉毛稀少',brFew('L'),['br16'],'L','眉毛稀少'),
+      ci('左質硬（不柔順）',!brSoft('L'),['br15'],'L','質硬'),
+      ci('左有揚',brUp('L'),['br8'],'L','有揚'),
+      ci('右有鷹角',brEagle('R'),['br4'],'R','有鷹角'),
+      ci('右眉毛稀少',brFew('R'),['br16'],'R','眉毛稀少'),
+      ci('右質硬',!brSoft('R'),['br15'],'R','質硬'),
+      ci('右有揚',brUp('R'),['br8'],'R','有揚'),
+    ],'任一眉≥3→攻',1),
+    6:part([
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左眼大AND圓AND尾朝上',eyBig('L')&&eyRound('L')&&eyTail_up('L'),['ey2','ey3','ey4'],'L',null),
+      ci('左睛凸',eyPop('L'),['ey5'],'L','睛凸'),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右眼大AND圓AND尾朝上',eyBig('R')&&eyRound('R')&&eyTail_up('R'),['ey2','ey3','ey4'],'R',null),
+      ci('右睛凸',eyPop('R'),['ey5'],'R','睛凸'),
+    ],'任一眼1條以上→攻',1),
+    7:part([
+      ci('鼻高',nHigh(),['n2'],null,'鼻高'),
+      ci('有起節突露',nNode(),['n11'],null,'有起節突露'),
+      ci('鼻骨感強（骨多於肉）',nBone(),['n10'],null,'骨多於肉'),
+      ci('山根細窄',nRoot_narrow(),['n9'],null,'山根窄'),
+    ],'任1符合→攻',1),
+    8:part([
+      ci('嘴角朝上',mUp(),['m4'],null,'嘴角朝上'),
+      ci('放鬆見齒',mSeeTeeth(),['m7'],null,'放鬆見齒'),
+      ci('有唇珠',mPearl(),['m11'],null,'有唇珠'),
+      ci('唇凸（嘴唇外突）',mPop(),['m10'],null,'唇凸'),
+      ci('唇薄',mThin(),['m8'],null,'唇薄'),
+    ],'任1符合→攻',1),
+    2:{items:[
+      ci('左眉達攻（4取3）',d10mL_c,[],'L',null),
+      ci('右眉達攻（4取3）',d10mR_c,[],'R',null),
+      ci('左眼達攻（任1）',d10yL_c,[],'L',null),
+      ci('右眼達攻（任1）',d10yR_c,[],'R',null),
+      ci('鼻達攻（任1）',nHigh()||nNode()||nBone()||nRoot_narrow(),[],null,null),
+      ci('左顴達攻（任1）',(qHighBig('L')||qNoMeat('L')||qSmall('L')),['q1','q2','q3'],'L',null),
+      ci('右顴達攻（任1）',(qHighBig('R')||qNoMeat('R')||qSmall('R')),['q1','q2','q3'],'R',null),
+    ],score:(d10mL_c?1:0)+(d10mR_c?1:0)+(d10yL_c?1:0)+(d10yR_c?1:0)+((nHigh()||nNode()||nBone()||nRoot_narrow())?1:0)+((qHighBig('L')||qNoMeat('L')||qSmall('L'))?1:0)+((qHighBig('R')||qNoMeat('R')||qSmall('R'))?1:0),max:7,pass:data[9][2]==='A',threshold:'7部位≥4→攻'},
+    3:{items:[
+      ci('口達攻（任1）',data[9][8]==='A',[],null,null),
+      ci('人中窄',pNarrow(),['p3'],null,'人中窄'),
+      ci('地閣長OR短OR窄OR無肉',cLong()||cShort()||cNarrow()||cNoMeat(),['c3','c4','c6'],null,null),
+      ci('左頤露尖OR頤短',yBare('L')||yShort('L'),['y2','y3'],'L',null),
+      ci('右頤露尖OR頤短',yBare('R')||yShort('R'),['y2','y3'],'R',null),
+    ],score:(data[9][8]==='A'?1:0)+(pNarrow()?1:0)+((cLong()||cShort()||cNarrow()||cNoMeat())?1:0)+((yBare('L')||yShort('L'))?1:0)+((yBare('R')||yShort('R'))?1:0),max:5,pass:data[9][3]==='A',threshold:'5部位≥3→攻'},
+  };
+
+  // ===== 11 奇正 =====
+  const d11yL_c=eyThin('L')&&eyLong('L')&&eyBlack_mid('L');
+  const d11yR_c=eyThin('R')&&eyLong('R')&&eyBlack_mid('R');
+  condResults[10]={
+    0:partWt([
+      {...ci('頂骨左右不一致',hTop_inconsistent(),['h3'],null,'左右不一致'),wt:2},
+      {...ci('枕骨左右不一致',is('h10','兩側不一致'),['h10'],null,'兩側不一致'),wt:1},
+      {...ci('華陽左右不一致',hHuayang_inconsistent(),['h13'],null,'左右不一致'),wt:2},
+    ],'滿分5，≥3→奇',3),
+    1:part([
+      ci('日月角起',eRiyue(),['e13'],null,'日月角起'),
+      ci('有輔角骨（眉尾上方外側有隆起）',eFuBone(),['e16'],null,'有輔角骨'),
+      ci('有佐串骨（髮際角落有隆起）',eZuoBone(),['e17'],null,'有佐串骨'),
+    ],'任1符合→奇',1),
+    4:part([
+      ci('左耳提強（朝前≥30度）',erTiltStrong('L'),['er3'],'L','耳提強'),
+      ci('左招風耳（夾角>40度）',erBeifeng('L'),['er5'],'L','招風耳'),
+      ci('左耳孔大（≥耳面積1/2）',erHoleBig('L'),['er6'],'L','耳孔大'),
+      ci('右耳提強',erTiltStrong('R'),['er3'],'R','耳提強'),
+      ci('右招風耳',erBeifeng('R'),['er5'],'R','招風耳'),
+      ci('右耳孔大',erHoleBig('R'),['er6'],'R','耳孔大'),
+    ],'左右耳各有1→奇',2),
+    5:part([
+      ci('左有鷹角',brEagle('L'),['br4'],'L','有鷹角'),
+      ci('左眉尾有揚',brUp('L'),['br8'],'L','有揚'),
+      ci('右有鷹角',brEagle('R'),['br4'],'R','有鷹角'),
+      ci('右眉尾有揚',brUp('R'),['br8'],'R','有揚'),
+    ],'左右眉各有1→奇',2),
+    6:part([
+      ci('左眼細AND眼長AND黑睛適中',d11yL_c,['ey3','ey1','ey10'],'L',null),
+      ci('右眼細AND眼長AND黑睛適中',d11yR_c,['ey3','ey1','ey10'],'R',null),
+    ],'任一眼3全中→奇',1),
+    7:part([
+      ci('鼻長',nLong(),['n1'],null,'鼻長'),
+      ci('有橫張（年壽寬度接近鼻翼）',nHoriz(),['n8'],null,'有橫張'),
+    ],'2項全中→奇',2),
+    8:part([
+      ci('閉合線密',mLineDense(),['m7'],null,'閉合線密'),
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+    ],'2項全中→奇',2),
+    2:{items:[
+      ci('左眉達奇（任1）',(brEagle('L')||brUp('L')),[],'L',null),
+      ci('右眉達奇（任1）',(brEagle('R')||brUp('R')),[],'R',null),
+      ci('左眼達奇（3全中）',d11yL_c,[],'L',null),
+      ci('右眼達奇（3全中）',d11yR_c,[],'R',null),
+      ci('鼻達奇（2全中）',nLong()&&nHoriz(),[],null,null),
+      ci('左顴柄插天OR柄平',qSky('L')||qFlat_pillar('L'),['q4'],'L',null),
+      ci('右顴柄插天OR柄平',qSky('R')||qFlat_pillar('R'),['q4'],'R',null),
+    ],score:((brEagle('L')||brUp('L'))?1:0)+((brEagle('R')||brUp('R'))?1:0)+(d11yL_c?1:0)+(d11yR_c?1:0)+((nLong()&&nHoriz())?1:0)+((qSky('L')||qFlat_pillar('L'))?1:0)+((qSky('R')||qFlat_pillar('R'))?1:0),max:7,pass:data[10][2]==='A',threshold:'7部位≥4→奇'},
+    3:{items:[
+      ci('口達奇（2全中）',mLineDense()&&mGather(),[],null,null),
+      ci('人中長AND人中窄',pLong()&&pNarrow(),['p2','p3'],null,null),
+      ci('地閣短OR（地閣窄尖AND地閣長）',cShort()||(cNarrow()&&cLong()),['c3','c4'],null,null),
+      ci('左頤削',yThin('L'),['y1'],'L','頤削'),
+      ci('右頤削',yThin('R'),['y1'],'R','頤削'),
+    ],score:((mLineDense()&&mGather())?1:0)+((pLong()&&pNarrow())?1:0)+((cShort()||(cNarrow()&&cLong()))?1:0)+(yThin('L')?1:0)+(yThin('R')?1:0),max:5,pass:data[10][3]==='A',threshold:'5部位≥3→奇'},
+  };
+
+  // ===== 12 虛實 =====
+  const d12qL_c=qHighAny('L'), d12qR_c=qHighAny('R');
+  condResults[11]={
+    0:part([
+      ci('左頂骨龜背',hTopL_guitang(),['h1'],'L','龜背'),
+      ci('右頂骨龜背',hTopR_guitang(),['h1'],'R','龜背'),
+      ci('枕骨圓＋順＋無橫條',hOcc_round()&&hOcc_flat()&&hOcc_no_cross(),['h5','h6','h8'],null,null),
+      ci('左華陽圓隆OR突露',hHua_roundL()||hHua_bumpL(),['h11'],'L',null),
+      ci('右華陽圓隆OR突露',hHua_roundR()||hHua_bumpR(),['h11'],'R',null),
+    ],'滿分5，≥3→實',3),
+    1:part([
+      ci('額高',eHigh(),['e1'],null,'額高'),
+      ci('額隆',eRise(),['e6'],null,'額隆'),
+      ci('額立',eUpright(),['e7'],null,'額立'),
+    ],'3項全中→實',3),
+    4:part([
+      ci('左有輪有廓',erCircleOk('L'),['er8'],'L','有輪有廓'),
+      ci('左輪包廓',erWrap('L'),['er9'],'L','輪包廓'),
+      ci('左耳圓',erRound('L'),['er4'],'L','耳圓'),
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('右有輪有廓',erCircleOk('R'),['er8'],'R','有輪有廓'),
+      ci('右輪包廓',erWrap('R'),['er9'],'R','輪包廓'),
+      ci('右耳圓',erRound('R'),['er4'],'R','耳圓'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+    ],'左右各4全中→實',8),
+    5:part([
+      ci('左眉長',brLong('L'),['br1'],'L','眉長'),
+      ci('左眉無中斷',brNoBreak('L'),['br5'],'L','無中斷'),
+      ci('左眉毛多（量足）',brMany('L'),['br16'],'L','眉毛多'),
+      ci('右眉長',brLong('R'),['br1'],'R','眉長'),
+      ci('右眉無中斷',brNoBreak('R'),['br5'],'R','無中斷'),
+      ci('右眉毛多',brMany('R'),['br16'],'R','眉毛多'),
+    ],'左右各3全中→實',6),
+    6:part([
+      ci('左（眼細AND眼長）OR（眼大AND眼長）',(eyThin('L')&&eyLong('L'))||(eyBig('L')&&eyLong('L')),['ey3','ey1','ey2'],'L',null),
+      ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
+      ci('左有刀裁',eyKnife('L'),['ey7'],'L','有刀裁'),
+      ci('右（眼細AND眼長）OR（眼大AND眼長）',(eyThin('R')&&eyLong('R'))||(eyBig('R')&&eyLong('R')),['ey3','ey1','ey2'],'R',null),
+      ci('右有眼鉤',eyHook('R'),['ey6'],'R','有眼鉤'),
+      ci('右有刀裁',eyKnife('R'),['ey7'],'R','有刀裁'),
+    ],'左右各3全中→實',6),
+    7:{items:[ci('（骨肉勻稱OR骨多於肉）AND無起節',(nBalance()||nBone())&&nNoNode(),['n10','n11'],null,null)],score:((nBalance()||nBone())&&nNoNode()?1:0),max:1,pass:data[11][7]==='B',threshold:'1項且無起節→實'},
+    8:part([
+      ci('嘴角收',mGather(),['m3'],null,'嘴角收'),
+      ci('口適中OR口大',mBigAny(),['m1'],null,null),
+    ],'2項全中→實',2),
+    2:{items:[
+      ci('左眉達實（3全中）',d12mL>=3,[],'L',null),
+      ci('右眉達實（3全中）',d12mR>=3,[],'R',null),
+      ci('左眼達實（3全中）',d12yL>=3,[],'L',null),
+      ci('右眼達實（3全中）',d12yR>=3,[],'R',null),
+      ci('鼻達實（1條且無起節）',(nBalance()||nBone())&&nNoNode(),[],null,null),
+      ci('左顴高且隆OR有而不明',d12qL_c,['q1'],'L',null),
+      ci('右顴高且隆OR有而不明',d12qR_c,['q1'],'R',null),
+    ],score:(d12mL>=3?1:0)+(d12mR>=3?1:0)+(d12yL>=3?1:0)+(d12yR>=3?1:0)+((nBalance()||nBone())&&nNoNode()?1:0)+(d12qL_c?1:0)+(d12qR_c?1:0),max:7,pass:data[11][2]==='B',threshold:'7部位≥4→實'},
+    3:{items:[
+      ci('口達實（2全中）',d12k>=2,[],null,null),
+      ci('人中深',pDeep(),['p1'],null,'人中深'),
+      ci('地閣平OR地閣圓',cFlatOrRound(),['c2'],null,null),
+      ci('左頤不削（平或凸）',!yThin('L'),['y1'],'L',null),
+      ci('右頤不削',!yThin('R'),['y1'],'R',null),
+    ],score:(d12k>=2?1:0)+(pDeep()?1:0)+(cFlatOrRound()?1:0)+(!yThin('L')?1:0)+(!yThin('R')?1:0),max:5,pass:data[11][3]==='B',threshold:'5部位≥3→實'},
+  };
+
+  // ===== 13 進退 =====
+  const d13mL_c=(!brSoft('L')||is('br1','眉短','L')||brShortHair('L'));
+  const d13mR_c=(!brSoft('R')||is('br1','眉短','R')||brShortHair('R'));
+  const d13qL_c=qNoMeat('L'), d13qR_c=qNoMeat('R');
+  condResults[12]={
+    0:partWt([
+      {...ci('頭窄（前後距離≥左右距離）',is('h14','頭窄'),['h14'],null,'頭窄'),wt:2},
+      {...ci('枕骨不一致OR有自剋OR有橫條',is('h10','兩側不一致')||hOcc_has_self()||hOcc_has_cross(),['h10','h7','h8'],null,null),wt:1},
+      {...ci('左華陽突露OR凹陷',hHua_bumpL()||hHua_hollowL(),['h11'],'L',null),wt:1},
+      {...ci('右華陽突露OR凹陷',hHua_bumpR()||hHua_hollowR(),['h11'],'R',null),wt:1},
+    ],'滿分5，≥3→進',3),
+    1:part([
+      ci('額方（兩眼角距離≈眉到髮際距離）',is('e8','額方'),['e8'],null,'額方'),
+    ],'1項→進',1),
+    4:part([
+      ci('左耳短（不及眼到鼻準底2/3）',is('er1','耳短','L'),['er1'],'L','耳短'),
+      ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
+      ci('左招風耳（夾角>40度）',erBeifeng('L'),['er5'],'L','招風耳'),
+      ci('右耳短',is('er1','耳短','R'),['er1'],'R','耳短'),
+      ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
+      ci('右招風耳',erBeifeng('R'),['er5'],'R','招風耳'),
+    ],'任一耳1條以上→進',1),
+    5:part([
+      ci('左質硬（眉毛粗硬）',!brSoft('L'),['br15'],'L','質硬'),
+      ci('左眉短（短不及目）',is('br1','眉短','L'),['br1'],'L','眉短'),
+      ci('左眉毛短（單根長度較短）',brShortHair('L'),['br18'],'L','眉毛短'),
+      ci('右質硬',!brSoft('R'),['br15'],'R','質硬'),
+      ci('右眉短',is('br1','眉短','R'),['br1'],'R','眉短'),
+      ci('右眉毛短',brShortHair('R'),['br18'],'R','眉毛短'),
+    ],'任一眉1條以上→進',1),
+    6:part([
+      ci('左眼短（眼長度短於眼距）',eyShort('L'),['ey1'],'L','眼短'),
+      ci('右眼短',eyShort('R'),['ey1'],'R','眼短'),
+    ],'任一眼符合→進',1),
+    7:part([
+      ci('鼻肉（肉多於骨）',nMeat(),['n10'],null,'肉多於骨'),
+      ci('鼻短',is('n1','鼻短'),['n1'],null,'鼻短'),
+      ci('鼻窄小（鼻翼<眼距）',is('n4','鼻窄小'),['n4'],null,'鼻窄小'),
+      ci('無起節',nNoNode(),['n11'],null,'無起節'),
+    ],'任1符合→進',1),
+    8:part([
+      ci('口大（開大合小）',mBig(),['m1'],null,'口開大合小'),
+      ci('口適中',mMid(),['m1'],null,'口適中'),
+    ],'任1符合→進',1),
+    2:{items:[
+      ci('左眉達進（任1）',d13mL_c,[],'L',null),
+      ci('右眉達進（任1）',d13mR_c,[],'R',null),
+      ci('左眼達進（眼短）',eyShort('L'),['ey1'],'L','眼短'),
+      ci('右眼達進（眼短）',eyShort('R'),['ey1'],'R','眼短'),
+      ci('鼻達進（任1）',nMeat()||is('n1','鼻短')||is('n4','鼻窄小')||nNoNode(),[],null,null),
+      ci('左顴無肉',d13qL_c,['q3'],'L','顴無肉少肉'),
+      ci('右顴無肉',d13qR_c,['q3'],'R','顴無肉少肉'),
+    ],score:(d13mL_c?1:0)+(d13mR_c?1:0)+(eyShort('L')?1:0)+(eyShort('R')?1:0)+((nMeat()||is('n1','鼻短')||is('n4','鼻窄小')||nNoNode())?1:0)+(d13qL_c?1:0)+(d13qR_c?1:0),max:7,pass:data[12][2]==='A',threshold:'7部位≥4→進'},
+    3:{items:[
+      ci('口達進（任1）',mBigAny(),[],null,null),
+      ci('人中短（短於食指寬）',is('p2','人中短'),['p2'],null,'人中短'),
+      ci('地閣窄尖',cNarrow(),['c4'],null,'地閣窄尖'),
+      ci('左頤削AND頤露尖',yThin('L')&&yBare('L'),['y1','y2'],'L',null),
+      ci('右頤削AND頤露尖',yThin('R')&&yBare('R'),['y1','y2'],'R',null),
+    ],score:(mBigAny()?1:0)+(is('p2','人中短')?1:0)+(cNarrow()?1:0)+(yThin('L')&&yBare('L')?1:0)+(yThin('R')&&yBare('R')?1:0),max:5,pass:data[12][3]==='A',threshold:'5部位≥3→進'},
+  };
 }
 
 /* ===== Face Map + Obs Center ===== */
@@ -490,7 +2399,7 @@ function getPartCounts(obsIdx){
 function updateObsProgress(){
   let answered=0;
   OBS_PART_NAMES.forEach(pn=>{const pd=OBS_PARTS_DATA[pn];if(!pd)return;pd.sections.forEach(sec=>{sec.qs.forEach(q=>{if(obsData[q.id]!==undefined)answered++;});});});
-  const total=122;
+  const total=124;
   const pct=Math.min(100,Math.round(answered/total*100));
   const bar=document.getElementById('obs-prog-bar');
   const pctEl=document.getElementById('obs-prog-pct');
@@ -520,7 +2429,7 @@ function renderFaceMap(){
   html+='<div style="padding:12px 14px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0;">';
   html+='<div style="font-size:11px;color:var(--text-3);letter-spacing:2px;margin-bottom:8px;">填寫進度</div>';
   html+='<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:2px;width:0%;transition:width 0.3s;"></div></div>';
-  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:30px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:var(--text-3);letter-spacing:1px;">0 / 122 題</div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:30px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:var(--text-3);letter-spacing:1px;">0 / 124 題</div></div>';
   html+='</div>';
   el.innerHTML=html;
   updateObsProgress();
@@ -568,6 +2477,10 @@ function renderObsCenter(){
   });
   el.innerHTML=html;
   el.scrollTop=0;
+  // 對已有 L/R 資料的題目，同步上層 radio 狀態
+  if(partData)partData.sections.forEach(s=>s.qs.forEach(q=>{
+    if(q.paired&&(obsData[q.id+'_L']!==undefined||obsData[q.id+'_R']!==undefined))syncUpperRadio(q.id);
+  }));
 }
 
 function selectOpt(id,isPaired,val,el){
@@ -597,6 +2510,7 @@ function selectLROpt(id,side,val,el){
   const spans=[...row.querySelectorAll('.obs-pill-lr')];
   const target=side==='L'?spans.slice(0,optCount):spans.slice(optCount);
   target.forEach(s=>{if(s.textContent.trim()===val)s.classList.add('selected');else s.classList.remove('selected');});
+  syncUpperRadio(id);
   recalcFromObs();save();updateObsProgress();renderDimIndex();
   requestAnimationFrame(()=>{
     if(pd){pd.sections.forEach(sec=>{sec.qs.forEach(q=>{
@@ -621,12 +2535,42 @@ function selectLROpt(id,side,val,el){
   });
 }
 
+function syncUpperRadio(id){
+  // 根據 _L/_R 狀態，更新上層 radio 的顯示
+  const vL=obsData[id+'_L'], vR=obsData[id+'_R'];
+  const v=obsData[id];
+  const qCard=document.getElementById('lr-'+id)?.closest('.obs-q-card');
+  if(!qCard)return;
+  qCard.querySelectorAll('.obs-opt-col').forEach(col=>{
+    const label=col.querySelector('.obs-opt-label');
+    const radio=col.querySelector('.obs-radio');
+    if(!label||!radio)return;
+    const ov=label.textContent.trim();
+    radio.classList.remove('sel','half');
+    label.classList.remove('sel');
+    if(vL!==undefined&&vR!==undefined){
+      if(vL===ov&&vR===ov){radio.classList.add('sel');label.classList.add('sel');}
+      else if(vL===ov||vR===ov){radio.classList.add('half');}
+    } else if(v===ov){radio.classList.add('sel');label.classList.add('sel');}
+  });
+}
+
 function toggleLRRow(id,btn){
   const row=document.getElementById('lr-'+id);if(!row)return;
   const isOpen=row.style.display!=='none';
   if(isOpen){
     row.style.display='none';btn.innerHTML='可分左右 ▼';btn.classList.remove('active');
+    // 收合時清除 L/R，恢復上層顯示
+    // 不清除資料，讓左右不同狀態保留，只是收起 UI
+    syncUpperRadio(id);
   }else{
+    // 展開時，若 L/R 尚未設定，從上層預填
+    const parent=obsData[id];
+    if(obsData[id+'_L']===undefined&&obsData[id+'_R']===undefined&&parent!==undefined){
+      obsData[id+'_L']=parent;
+      obsData[id+'_R']=parent;
+      localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+    }
     row.style.display='flex';row.style.flexWrap='wrap';row.style.alignItems='center';row.style.gap='6px';row.style.marginTop='8px';
     btn.innerHTML='可分左右 ▲';btn.classList.add('active');
     const vL=obsData[id+'_L'],vR=obsData[id+'_R'];
@@ -637,6 +2581,7 @@ function toggleLRRow(id,btn){
     const leftPills=allPills.slice(0,oCount),rightPills=allPills.slice(oCount);
     leftPills.forEach(p=>{if(vL!==undefined&&p.textContent.trim()===vL)p.classList.add('selected');else p.classList.remove('selected');});
     rightPills.forEach(p=>{if(vR!==undefined&&p.textContent.trim()===vR)p.classList.add('selected');else p.classList.remove('selected');});
+    syncUpperRadio(id);
   }
 }
 
@@ -774,6 +2719,7 @@ function showObsPage(){
   document.getElementById('dim-page').style.display='none';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('cond-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
@@ -788,9 +2734,10 @@ function showDimPage(){
   document.getElementById('dim-page').style.display='grid';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('cond-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-dim');
-  renderSidebar();renderMain();renderFooter();
+  renderDimCondPage();
 }
 
 function showKnowledgePage(){
@@ -800,14 +2747,147 @@ function showKnowledgePage(){
   document.getElementById('app-body').style.display='none';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='flex';
+  document.getElementById('cond-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-know');
 }
 
-/* ===== 13 Dim Scoring Page ===== */
+/* ===== 維度條件評分頁 ===== */
+let cpCur=0;
+
+function showCondPage(){
+  ['entry-page','mode-page','report-overlay','knowledge-overlay'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('cond-page').style.display='block';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-cond');
+  // 測試：先寫入可見內容確認頁面正常
+  var main=document.getElementById('cp-main');
+  if(main) main.innerHTML='<div style="padding:20px;font-size:14px;color:var(--text)">載入中...</div>';
+  var sidebar=document.getElementById('cp-sidebar');
+  if(sidebar) sidebar.innerHTML='<div style="padding:14px;font-size:13px;color:var(--text-3)">載入中...</div>';
+  recalcFromObs();
+  cpRender();
+}
+
+function cpHide(){
+  document.getElementById('cond-page').style.display='none';
+}
+
+function cpGoto(i){cpCur=i;cpRender();}
+
+function cpRender(){
+  try{cpRenderSidebar();}catch(e){console.error('cpRenderSidebar:',e);}
+  try{cpRenderMain();}catch(e){console.error('cpRenderMain:',e);document.getElementById('cp-main').innerHTML='<div style="color:red;padding:20px">'+e.message+'</div>';}
+  try{cpRenderRight();}catch(e){console.error('cpRenderRight:',e);}
+}
+
+function cpRenderSidebar(){
+  const el=document.getElementById('cp-sidebar');if(!el)return;
+  let html='',lastCat='';
+  DIMS.forEach(function(d,i){
+    if(d.cat!==lastCat){
+      html+='<div style="font-size:10px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px">'+d.cat+'</div>';
+      lastCat=d.cat;
+    }
+    var res=calcDim(i);
+    var chipBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+    var isActive=i===cpCur;
+    html+='<div onclick="cpGoto('+i+')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;border-left:4px solid '+(isActive?'var(--accent)':'transparent')+';background:'+(isActive?'white':'transparent')+';font-weight:'+(isActive?'700':'400')+';font-size:13px;color:var(--text-2)">'+
+      '<span>'+d.a+d.b+'</span>'+
+      '<span style="font-size:11px;padding:2px 7px;border-radius:8px;background:'+chipBg+';color:white;font-weight:700">'+(res?res.type:'—')+'</span>'+
+    '</div>';
+  });
+  el.innerHTML=html;
+}
+
+function cpRenderRight(){
+  const el=document.getElementById('cp-right');if(!el)return;
+  var d=DIMS[cpCur];
+  var res=calcDim(cpCur);
+  var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+  var partOrder=[0,1,4,5,6,7,8,2,3];
+  var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+  var html='<div style="font-size:11px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:2px 2px 10px">'+d.a+d.b+'　各部位</div>';
+  partOrder.forEach(function(pi,i){
+    var v=data[cpCur][pi];
+    var label=partLabels[i];
+    var bg='#ccc',txt='—';
+    if(v){var t=v==='A'?d.aT:d.bT;bg=t==='靜'?'var(--static)':'var(--active)';txt=v==='A'?d.a:d.b;}
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 2px;border-bottom:1px solid var(--border)">'+
+      '<span style="font-size:13px;color:var(--text-2)">'+label+'</span>'+
+      '<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
+    '</div>';
+  });
+  html+='<div style="margin-top:14px;padding:12px;background:white;border-radius:8px;text-align:center;border:1px solid var(--border)">'+
+    '<div style="font-size:11px;color:var(--text-3);margin-bottom:6px">整體</div>'+
+    '<div style="font-size:20px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
+  '</div>';
+  el.innerHTML=html;
+}
+
+function cpRenderMain(){
+  var el=document.getElementById('cp-main');if(!el)return;
+  var d=DIMS[cpCur];
+  var res=calcDim(cpCur);
+  var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+
+  var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
+    '<div style="font-size:20px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:14px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
+    '<div style="font-size:12px;color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
+    '<span style="display:inline-block;margin-top:8px;padding:4px 16px;border-radius:16px;background:'+resBg+';color:white;font-size:13px;font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
+  '</div>';
+
+  var cr=condResults[cpCur];
+  if(!cr){
+    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;text-align:center">請先至「各部位觀察」填寫觀察題</div>';
+    return;
+  }
+
+  var partOrder=[0,1,4,5,6,7,8,2,3];
+  var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+
+  partOrder.forEach(function(pi,idx){
+    var p=cr[pi];if(!p)return;
+    var label=partLabels[idx];
+    var passBg=p.pass?'var(--static)':'var(--active)';
+    var passLabel=p.pass?(data[cpCur][pi]==='B'?d.b:d.a):'未達';
+
+    html+='<div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)">'+
+        '<span style="font-weight:700;font-size:14px;color:var(--text-2)">'+label+'</span>'+
+        '<span style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:11px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+          '<span style="font-size:12px;padding:3px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
+        '</span>'+
+      '</div>'+
+      '<div style="padding:8px 14px;display:flex;flex-direction:column;gap:4px">';
+
+    p.items.forEach(function(item){
+      var side=item.side?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--sidebar);color:var(--text-3);margin-left:4px;flex-shrink:0">'+(item.side==='L'?'左':'右')+'</span>':'';
+      var ok=item.ok;
+      var markBg=ok?'var(--static)':'#e8e8e8';
+      var markColor=ok?'white':'#aaa';
+      var mark=ok?'✓':'✗';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:4px">'+
+        '<div style="width:20px;height:20px;border-radius:50%;background:'+markBg+';color:'+markColor+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">'+mark+'</div>'+
+        '<div style="font-size:12px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1;line-height:1.5">'+item.label+'</div>'+
+        side+
+      '</div>';
+    });
+
+    html+='</div></div>';
+  });
+
+  el.innerHTML=html;
+}
+
+
 const CAT_STYLE={"先天指數":"background:#3a3530;color:#f7f4ef","運氣指數":"background:#3a4a50;color:#f7f4ef","後天指數":"background:#3a4a3a;color:#f7f4ef"};
 const emptyData=()=>Array(13).fill(null).map(()=>Array(9).fill(null));
-let cur=0,data=emptyData(),_basisVars={};
+let cur=0,data=emptyData(),_basisVars={},condResults={};
 
 function save(){
   if(!userName)return;
@@ -818,117 +2898,168 @@ function save(){
 function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
 function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=null);return vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(1):"0.0";}
 
-function renderSidebar(){
-  const el=document.getElementById('sidebar');let html='',lastCat='';
-  DIMS.forEach((d,i)=>{if(d.cat!==lastCat){html+='<div class="cat-header" style="'+CAT_STYLE[d.cat]+'">'+d.cat+'</div>';lastCat=d.cat;}
-    const c=PALETTE[i],res=calcDim(i),label=res?d.a+d.b+' · '+res.type+'['+res.coeff.toFixed(1)+']':d.a+d.b;
-    const ast=i===cur?'background:white;border-left:8px solid '+c.tx:'background:'+c.bg+';color:'+c.tx;
-    html+='<div class="dim-item'+(i===cur?' active':'')+'" style="'+ast+'" onclick="goto('+i+')"><span>'+label+'</span><div class="status-dot'+(res?' done':'')+'"></div></div>';});
+// ===== 新版維度條件評分頁 =====
+const PART_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+const PART_ORDER=[0,1,4,5,6,7,8,2,3];
+
+function dimGoto(i){cur=i;renderDimCondPage();}
+
+function renderDimSidebar(){
+  const el=document.getElementById('dim-sidebar-new');if(!el)return;
+  let html='',lastCat='';
+  DIMS.forEach((d,i)=>{
+    if(d.cat!==lastCat){html+='<div class="dim-sidebar-cat">'+d.cat+'</div>';lastCat=d.cat;}
+    const res=calcDim(i);
+    const chipColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+    html+='<div class="dim-sidebar-new-item'+(i===cur?' active':'')+'" onclick="dimGoto('+i+')">'+
+      '<span>'+d.a+d.b+'</span>'+
+      '<span class="dim-sidebar-chip" style="background:'+chipColor+'">'+(res?res.type:'未填')+'</span>'+
+    '</div>';
+  });
   el.innerHTML=html;
 }
 
-/* ===== DIM_BASIS_MAP ===== */
-const DIM_BASIS_MAP={
-0:{0:[{label:'左頂骨龜背隆起',ids:['h01'],pass:true},{label:'右頂骨龜背隆起',ids:['h02'],pass:true},{label:'枕骨圓且無凹凸自剋骨',ids:['h07','h09'],pass:"ck('h07')&&!ck('h09')"},{label:'左華陽圓隆起',ids:['h10'],pass:true},{label:'右華陽圓隆起',ids:['h11'],pass:true}],
-  1:[{label:'額平寬',ids:['f02'],pass:true},{label:'額隆',ids:['f04'],pass:true},{label:'額無疵',ids:['f01'],pass:false}],
-  2:[{label:'左眉為形（4項全中）',ids:['brow_01','brow_05','brow_04','brow_06'],pass:'_v.d0mL>=4',side:'L'},{label:'右眉為形（4項全中）',ids:['brow_01','brow_05','brow_04','brow_06'],pass:'_v.d0mR>=4',side:'R'},{label:'左眼為形（3項全中）',ids:['eye_01a','eye_01b','eye_04','eye_05'],pass:'_v.d0yL>=3',side:'L'},{label:'右眼為形（3項全中）',ids:['eye_01a','eye_01b','eye_04','eye_05'],pass:'_v.d0yR>=3',side:'R'},{label:'鼻為形（4項全中）',ids:['n01','n02','n04','n05'],pass:'_v.d0n>=4'},{label:'左顴肉多於骨',ids:['zy_03'],pass:true,side:'L'},{label:'右顴肉多於骨',ids:['zy_03'],pass:true,side:'R'}],
-  3:[{label:'口為形（4項全中）',ids:['k01','k02','k03','k04'],pass:'_v.d0k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣起',ids:['g01'],pass:true},{label:'左頤豐',ids:['jaw_01'],pass:true,side:'L'},{label:'右頤豐',ids:['jaw_01'],pass:true,side:'R'}],
-  4:[{label:'左耳長',ids:['ear_01'],pass:true,side:'L'},{label:'左耳圓輪包廓',ids:['ear_04','ear_08','ear_09'],pass:"gv('ear_04','L')&&gv('ear_08','L')&&gv('ear_09','L')",side:'L'},{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳有垂珠',ids:['ear_10'],pass:true,side:'L'},{label:'右耳長',ids:['ear_01'],pass:true,side:'R'},{label:'右耳圓輪包廓',ids:['ear_04','ear_08','ear_09'],pass:"gv('ear_04','R')&&gv('ear_08','R')&&gv('ear_09','R')",side:'R'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳有垂珠',ids:['ear_10'],pass:true,side:'R'}],
-  5:[{label:'左眉長過目',ids:['brow_01'],pass:true,side:'L'},{label:'左眉質勻',ids:['brow_05'],pass:true,side:'L'},{label:'左眉無鷹角',ids:['brow_04'],pass:false,side:'L'},{label:'左眉無中斷',ids:['brow_06'],pass:false,side:'L'},{label:'右眉長過目',ids:['brow_01'],pass:true,side:'R'},{label:'右眉質勻',ids:['brow_05'],pass:true,side:'R'},{label:'右眉無鷹角',ids:['brow_04'],pass:false,side:'R'},{label:'右眉無中斷',ids:['brow_06'],pass:false,side:'R'}],
-  6:[{label:'左眼長（細或大）',ids:['eye_01a','eye_01b'],pass:"gv('eye_01a','L')||gv('eye_01b','L')",side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼長（細或大）',ids:['eye_01a','eye_01b'],pass:"gv('eye_01a','R')||gv('eye_01b','R')",side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'}],
-  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻高',ids:['n02'],pass:true},{label:'鼻肉多於骨',ids:['n04'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
-  8:[{label:'口大',ids:['k01'],pass:true},{label:'涯岸分明',ids:['k02'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角不朝下',ids:['k04'],pass:false}]},
-1:{0:[{label:'左右頂骨一致',ids:['h03'],pass:true},{label:'枕骨兩側一致',ids:['h08'],pass:true},{label:'左右華陽一致',ids:['h12'],pass:true}],
-  1:[{label:'額無疵且無凹凸',ids:['f01','f03'],pass:"!ck('f01')&&ck('f03')"},{label:'日月角開',ids:['f07'],pass:true},{label:'日月角隆',ids:['f06'],pass:true}],
-  2:[{label:'左眉為經（7/12以上）',ids:['brow_07','brow_08','brow_09','brow_01','brow_10','brow_11','brow_16','brow_12','brow_13','brow_14','brow_04','m00'],pass:'_v.d1mL>=7',side:'L'},{label:'右眉為經（7/12以上）',ids:['brow_07','brow_08','brow_09','brow_01','brow_10','brow_11','brow_16','brow_12','brow_13','brow_14','brow_04','m00'],pass:'_v.d1mR>=7',side:'R'},{label:'左眼為經（4項全中）',ids:['eye_01a','eye_02','eye_04','eye_05'],pass:'_v.d1yL>=4',side:'L'},{label:'右眼為經（4項全中）',ids:['eye_01a','eye_02','eye_04','eye_05'],pass:'_v.d1yR>=4',side:'R'},{label:'鼻為經（4項全中）',ids:['n02','n03','n01','n05'],pass:'_v.d1n>=4'},{label:'左顴高隆有肉',ids:['zy_01','zy_02','zy_03'],pass:'_v.d1qL',side:'L'},{label:'右顴高隆有肉',ids:['zy_01','zy_02','zy_03'],pass:'_v.d1qR',side:'R'}],
-  3:[{label:'口為經（4項全中）',ids:['k01','k07','k05','k10'],pass:'_v.d1k>=4'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'頤不削',ids:['jaw_02'],pass:false,side:'L'},{label:'左右頤一致',ids:['i00'],pass:true}],
-  4:[{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳立',ids:['ear_03'],pass:true,side:'L'},{label:'左耳大',ids:['ear_05'],pass:true,side:'L'},{label:'左耳厚',ids:['ear_06'],pass:true,side:'L'},{label:'左耳堅',ids:['ear_07'],pass:true,side:'L'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳立',ids:['ear_03'],pass:true,side:'R'},{label:'右耳大',ids:['ear_05'],pass:true,side:'R'},{label:'右耳厚',ids:['ear_06'],pass:true,side:'R'},{label:'右耳堅',ids:['ear_07'],pass:true,side:'R'},{label:'左右耳一致',ids:['e00'],pass:true}],
-  5:[{label:'左眉頭退印',ids:['brow_07'],pass:true,side:'L'},{label:'左眉尾有聚',ids:['brow_08'],pass:true,side:'L'},{label:'左眉身鋪陳有致',ids:['brow_09'],pass:true,side:'L'},{label:'左眉長過目',ids:['brow_01'],pass:true,side:'L'},{label:'左眉附骨位',ids:['brow_10'],pass:true,side:'L'},{label:'左眉長有揚',ids:['brow_11'],pass:true,side:'L'},{label:'左根根見肉',ids:['brow_16'],pass:true,side:'L'},{label:'左眉高居額',ids:['brow_12'],pass:true,side:'L'},{label:'左眉不壓眼',ids:['brow_13'],pass:true,side:'L'},{label:'左眉不沖根',ids:['brow_14'],pass:true,side:'L'},{label:'左眉彎長有鷹角',ids:['brow_01','brow_04'],pass:"gv('brow_01','L')&&gv('brow_04','L')",side:'L'},{label:'雙眉一致',ids:['m00'],pass:true},{label:'右眉頭退印',ids:['brow_07'],pass:true,side:'R'},{label:'右眉尾有聚',ids:['brow_08'],pass:true,side:'R'},{label:'右眉身鋪陳有致',ids:['brow_09'],pass:true,side:'R'},{label:'右眉長過目',ids:['brow_01'],pass:true,side:'R'},{label:'右眉附骨位',ids:['brow_10'],pass:true,side:'R'},{label:'右眉長有揚',ids:['brow_11'],pass:true,side:'R'},{label:'右根根見肉',ids:['brow_16'],pass:true,side:'R'},{label:'右眉高居額',ids:['brow_12'],pass:true,side:'R'},{label:'右眉不壓眼',ids:['brow_13'],pass:true,side:'R'},{label:'右眉不沖根',ids:['brow_14'],pass:true,side:'R'},{label:'右眉彎長有鷹角',ids:['brow_01','brow_04'],pass:"gv('brow_01','R')&&gv('brow_04','R')",side:'R'}],
-  6:[{label:'左眼細長',ids:['eye_01a'],pass:true,side:'L'},{label:'左眼平',ids:['eye_02'],pass:true,side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼細長',ids:['eye_01a'],pass:true,side:'R'},{label:'右眼平',ids:['eye_02'],pass:true,side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'},{label:'左右眼一致',ids:['y00'],pass:true}],
-  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻直',ids:['n03'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
-  8:[{label:'口大',ids:['k01'],pass:true},{label:'唇厚均',ids:['k07'],pass:true},{label:'嘴角平',ids:['k05'],pass:true},{label:'口中線正',ids:['k10'],pass:true}]},
-2:{0:[{label:'左頂骨圓',ids:['h04L'],pass:true},{label:'右頂骨圓',ids:['h04R'],pass:true},{label:'枕骨無凹凸自剋骨',ids:['h09'],pass:false},{label:'左華陽圓',ids:['h10'],pass:true},{label:'右華陽圓',ids:['h11'],pass:true}],
-  1:[{label:'額無凹凸',ids:['f03'],pass:true},{label:'額隆',ids:['f04'],pass:true}],
-  2:[{label:'左眉為圓（2項全中）',ids:['brow_02','brow_04'],pass:'_v.d2mL>=2',side:'L'},{label:'右眉為圓（2項全中）',ids:['brow_02','brow_04'],pass:'_v.d2mR>=2',side:'R'},{label:'左眼為圓（3項全中）',ids:['eye_03','eye_04','eye_05'],pass:'_v.d2yL>=3',side:'L'},{label:'右眼為圓（3項全中）',ids:['eye_03','eye_04','eye_05'],pass:'_v.d2yR>=3',side:'R'},{label:'鼻為圓（2項全中）',ids:['n01','n05'],pass:'_v.d2n>=2'},{label:'左顴肉多且位置高',ids:['zy_03','zy_01'],pass:"gv('zy_03','L')&&gv('zy_01','L')",side:'L'},{label:'右顴肉多且位置高',ids:['zy_03','zy_01'],pass:"gv('zy_03','R')&&gv('zy_01','R')",side:'R'}],
-  3:[{label:'口為圓（3項全中）',ids:['k02','k08','k03'],pass:'_v.d2k>=3'},{label:'人中深',ids:['r01'],pass:true},{label:'人中長',ids:['r02'],pass:true},{label:'地閣圓',ids:['g03'],pass:true},{label:'左頤圓',ids:['jaw_03'],pass:true,side:'L'},{label:'右頤圓',ids:['jaw_03'],pass:true,side:'R'}],
-  4:[{label:'左耳圓',ids:['ear_04'],pass:true,side:'L'},{label:'左耳輪廓分明',ids:['ear_08'],pass:true,side:'L'},{label:'左耳輪包廓',ids:['ear_09'],pass:true,side:'L'},{label:'右耳圓',ids:['ear_04'],pass:true,side:'R'},{label:'右耳輪廓分明',ids:['ear_08'],pass:true,side:'R'},{label:'右耳輪包廓',ids:['ear_09'],pass:true,side:'R'}],
-  5:[{label:'左眉彎',ids:['brow_02'],pass:true,side:'L'},{label:'左眉無鷹角',ids:['brow_04'],pass:false,side:'L'},{label:'右眉彎',ids:['brow_02'],pass:true,side:'R'},{label:'右眉無鷹角',ids:['brow_04'],pass:false,side:'R'}],
-  6:[{label:'左眼有弧度',ids:['eye_03'],pass:true,side:'L'},{label:'左眼頭有鉤',ids:['eye_04'],pass:true,side:'L'},{label:'左眼尾有刀裁',ids:['eye_05'],pass:true,side:'L'},{label:'右眼有弧度',ids:['eye_03'],pass:true,side:'R'},{label:'右眼頭有鉤',ids:['eye_04'],pass:true,side:'R'},{label:'右眼尾有刀裁',ids:['eye_05'],pass:true,side:'R'}],
-  7:[{label:'鼻長',ids:['n01'],pass:true},{label:'鼻樑無起節',ids:['n05'],pass:false}],
-  8:[{label:'涯岸分明',ids:['k02'],pass:true},{label:'閉合線有弧度',ids:['k08'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true}]},
-3:{0:[{label:'中線直前',ids:['h05'],pass:true},{label:'中線直後',ids:['h06'],pass:true},{label:'左華陽平直',ids:['h13'],pass:true},{label:'右華陽平直',ids:['h14'],pass:true}],
-  1:[{label:'額立',ids:['f05'],pass:true},{label:'日月角開',ids:['f07'],pass:true}],
-  2:[{label:'左眉為直（1項以上）',ids:['brow_03','brow_15'],pass:'_v.d3mL>=1',side:'L'},{label:'右眉為直（1項以上）',ids:['brow_03','brow_15'],pass:'_v.d3mR>=1',side:'R'},{label:'左眼為直（3項全中）',ids:['eye_01a','eye_04','eye_05'],pass:'_v.d3yL>=3',side:'L'},{label:'右眼為直（3項全中）',ids:['eye_01a','eye_04','eye_05'],pass:'_v.d3yR>=3',side:'R'},{label:'鼻為直（3項全中）',ids:['n02','n01','n03'],pass:'_v.d3n>=3'},{label:'左顴鼻相稱',ids:['zy_04'],pass:true,side:'L'},{label:'右顴鼻相稱',ids:['zy_04'],pass:true,side:'R'}],
-  3:[{label:'口為直（3項全中）',ids:['k09','k03','k05'],pass:'_v.d3k>=3'},{label:'人中直',ids:['r03'],pass:true},{label:'地閣平',ids:['g02'],pass:true},{label:'地閣寬',ids:['g04'],pass:true},{label:'左頤平直',ids:['jaw_04'],pass:true,side:'L'},{label:'右頤平直',ids:['jaw_04'],pass:true,side:'R'}],
-  4:[{label:'左耳高',ids:['ear_02'],pass:true,side:'L'},{label:'左耳立',ids:['ear_03'],pass:true,side:'L'},{label:'左耳長',ids:['ear_01'],pass:true,side:'L'},{label:'右耳高',ids:['ear_02'],pass:true,side:'R'},{label:'右耳立',ids:['ear_03'],pass:true,side:'R'},{label:'右耳長',ids:['ear_01'],pass:true,side:'R'}],
-  5:[{label:'左眉平（無彎無鷹角）',ids:['brow_03','brow_04'],pass:"gv('brow_03','L')&&!gv('brow_04','L')",side:'L'},{label:'左眉短且濃',ids:['brow_15'],pass:true,side:'L'},{label:'右眉平（無彎無鷹角）',ids:['brow_03','brow_04'],pass:"gv('brow_03','R')&&!gv('brow_04','R')",side:'R'},{label:'右眉短且濃',ids:['brow_15'],pass:true,side:'R'}],
-  6:[{label:'左眼細長',ids:['eye_01a'],pass:true,side:'L'},{label:'左眼無鉤',ids:['eye_04'],pass:false,side:'L'},{label:'左眼無刀裁',ids:['eye_05'],pass:false,side:'L'},{label:'右眼細長',ids:['eye_01a'],pass:true,side:'R'},{label:'右眼無鉤',ids:['eye_04'],pass:false,side:'R'},{label:'右眼無刀裁',ids:['eye_05'],pass:false,side:'R'}],
-  7:[{label:'鼻高',ids:['n02'],pass:true},{label:'鼻長',ids:['n01'],pass:true},{label:'鼻直',ids:['n03'],pass:true}],
-  8:[{label:'閉合線水平一字',ids:['k09'],pass:true},{label:'嘴角有收',ids:['k03'],pass:true},{label:'嘴角平',ids:['k05'],pass:true}]}
-};
+function renderDimCondMain(){
+  const el=document.getElementById('dim-cond-main');if(!el){console.error('dim-cond-main not found');return;}
+  try{
+  const d=DIMS[cur];
+  const res=calcDim(cur);
+  const resColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+  const kdEntry=null; // KD 在知識頁 scope，此處不可用，essence 暫略
 
-function evalBasisPass(item){
-  const ck=id=>!!obsData[id],s=item.side;
-  if(item.pass===true) return item.ids.every(id=>s?gv(id,s):ck(id));
-  if(item.pass===false) return item.ids.every(id=>s?!gv(id,s):!ck(id));
-  try{return !!(new Function('ck','gv','_v','return '+item.pass)(ck,gv,_basisVars));}catch(e){return false;}
-}
+  let html='<div class="dim-cond-header">'+
+    '<div class="dim-cond-title">'+d.a+d.b+' · '+d.view+'</div>'+
+    '<div class="dim-cond-essence"><b>'+d.a+'（'+d.aT+'）</b> vs <b>'+d.b+'（'+d.bT+'）</b></div>'+
+    '<span class="dim-cond-result" style="background:'+resColor+'">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
+  '</div>';
 
-function _partNameFromIds(ids){const id=ids[0]||'';if(id.startsWith('ear_'))return'耳';if(id.startsWith('brow_'))return'眉';if(id.startsWith('eye_'))return'眼';if(id.startsWith('zy_'))return'顴';if(id.startsWith('jaw_'))return'頤';return'';}
+  const cr=condResults[cur];
+  console.log('renderDimCondMain cur='+cur+' cr keys='+(cr?Object.keys(cr).join(','):'NONE'));
+  if(!cr||Object.keys(cr).length===0){
+    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;">請先至「各部位觀察」填寫觀察題，系統會自動計算各條件結果。</div>';
+    return;
+  }
 
-function toggleBasis(btn){
-  const panel=btn.parentElement.querySelector('.obs-basis-panel');
-  if(panel){panel.remove();btn.innerText='\u2304 依據';return;}
-  const dim=parseInt(btn.dataset.dim),pi=parseInt(btn.dataset.part);
-  const items=DIM_BASIS_MAP[dim]?.[pi]||[];
-  const skip=new Set();
-  let html='<div class="obs-basis-panel">';
-  items.forEach((item,idx)=>{
-    if(skip.has(idx))return;
-    if(!item.side){
-      const p=evalBasisPass(item);
-      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark">'+(p?'<span style="color:var(--static);font-weight:900">\u2713</span>':'<span style="color:var(--active);font-weight:900">\u2717</span>')+'</span>'+item.label+'</div>';
-      return;
-    }
-    if(item.side==='R')return;
-    const idsKey=JSON.stringify(item.ids);
-    let rItem=null;
-    for(let j=idx+1;j<items.length;j++){if(!skip.has(j)&&items[j].side==='R'&&JSON.stringify(items[j].ids)===idsKey){rItem=items[j];skip.add(j);break;}}
-    const lP=evalBasisPass(item);
-    const rP=rItem?evalBasisPass(rItem):evalBasisPass({...item,side:'R'});
-    const pn=_partNameFromIds(item.ids);
-    const sl=item.label.replace(/^[左右]/,'').split('（')[0];
-    if(lP&&rP){
-      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--static);font-weight:900">\u2713</span></span>'+sl+'</div>';
-    }else if(!lP&&!rP){
-      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--active);font-weight:900">\u2717</span></span>'+sl+'</div>';
-    }else{
-      const fs=lP?'右':'左';
-      html+='<div class="basis-item" style="color:var(--text)"><span class="basis-mark"><span style="color:var(--gold);font-weight:900">\u25D1</span></span>'+sl+'（<span style="color:var(--active);font-weight:900">\u2717</span> '+fs+pn+' '+sl+'）</div>';
-    }
+  PART_ORDER.forEach(pi=>{
+    const p=cr[pi];
+    if(!p){console.log('skip pi='+pi+' (no data)');return;}
+    const pLabel=PART_LABELS[pi];
+    const passColor=p.pass?'var(--static)':'var(--active)';
+    const passLabel=p.pass?(data[cur][pi]==='B'?d.b:d.a):'未達';
+
+    html+='<div class="dim-part-block">'+
+      '<div class="dim-part-header">'+
+        '<span class="dim-part-name">'+pLabel+'</span>'+
+        '<span style="display:flex;align-items:center;gap:8px">'+
+          '<span class="dim-part-score">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+          '<span class="dim-part-badge" style="background:'+passColor+'">'+passLabel+'</span>'+
+        '</span>'+
+      '</div>'+
+      '<div class="dim-part-body" style="display:flex;flex-direction:column;gap:6px;padding:10px 14px">';
+
+    p.items.forEach(function(item,ii){
+      var sideLabel=item.side?'<span class="dim-cond-side">'+(item.side==='L'?'左':'右')+'</span>':'';
+      var okClass=item.ok?'ok':'ng';
+      var mark=item.ok?'\u2713':'\u2717';
+      var lbl=item.label||'(空)';
+      html+='<div class="dim-cond-item">'+
+        '<div class="dim-cond-mark '+okClass+'">'+mark+'</div>'+
+        '<div class="dim-cond-label '+okClass+'">'+lbl+'</div>'+
+        sideLabel+
+      '</div>';
+    });
+
+    html+='</div></div>';
   });
-  html+='</div>';btn.insertAdjacentHTML('afterend',html);btn.innerText='\u2303 收起';
+
+  el.innerHTML=html;
+  }catch(err){console.error('renderDimCondMain error:',err);el.innerHTML='<div style="padding:20px;color:red;font-size:12px;">渲染錯誤: '+err.message+'</div>';}
 }
 
-function renderMain(){
-  const d=DIMS[cur],r=data[cur];document.getElementById('dim-title').innerText=d.a+d.b+' - '+d.view;
-  const aC=d.aT==='動'?'dynamic-type':'static-type',bC=d.bT==='動'?'dynamic-type':'static-type';
-  const hasBasis=cur<=3;
-  document.getElementById('scoring-area').innerHTML=PARTS.map((p,i)=>{
-    const basisBtn=hasBasis?'<div style="text-align:center;margin-top:2px;margin-bottom:4px"><button class="obs-basis-btn" style="display:block;text-align:center;width:100%" data-dim="'+cur+'" data-part="'+i+'" onclick="toggleBasis(this)">\u2304 依據</button></div>':'';
-    return '<div class="score-row"><div class="option-box '+aC+'"><input type="radio" name="p'+i+'" value="A" '+(r[i]==='A'?'checked':'')+' onclick="toggle('+i+',\'A\',this)"><span class="option-label">'+d.a+' ('+d.aT+')</span></div><div class="part-label">'+p+'</div><div class="option-box '+bC+'"><input type="radio" name="p'+i+'" value="B" '+(r[i]==='B'?'checked':'')+' onclick="toggle('+i+',\'B\',this)"><span class="option-label">'+d.b+' ('+d.bT+')</span></div></div>'+basisBtn;
-  }).join('');
+function renderDimCondPage(){
+  renderDimSidebar();
+  renderDimCondMain();
+  // 右欄：當前維度各部位結果
+  const rc=document.getElementById('dim-right-col');
+  if(rc){
+    const d=DIMS[cur];
+    const partOrder2=[0,1,4,5,6,7,8,2,3];
+    const partLabels2=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+    let rhtml='<div style="padding:12px 10px;overflow-y:auto;height:100%;box-sizing:border-box">';
+    rhtml+='<div style="font-size:11px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:0 4px 10px">'+d.a+d.b+'\u3000各部位</div>';
+    partOrder2.forEach(function(pi,i){
+      var v=data[cur][pi];
+      var label=partLabels2[i];
+      var bg='#ccc',txt='—';
+      if(v){var t=v==='A'?d.aT:d.bT;bg=t==='靜'?'var(--static)':'var(--active)';txt=v==='A'?d.a:d.b;}
+      rhtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--border)">'+
+        '<span style="font-size:13px;color:var(--text-2)">'+label+'</span>'+
+        '<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
+      '</div>';
+    });
+    var res=calcDim(cur);
+    var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
+    rhtml+='<div style="margin-top:12px;padding:10px;background:var(--sidebar);border-radius:8px;text-align:center">'+
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:6px">整體</div>'+
+      '<div style="font-size:18px;font-weight:900;padding:4px 20px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+      '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
+    '</div>';
+    rhtml+='</div>';
+    rc.innerHTML=rhtml;
+  }
 }
 
-function renderFooter(){
-  const d=DIMS[cur],res=calcDim(cur),mid=res?'['+res.coeff.toFixed(1)+'] | '+res.type:'評估中';
-  const bg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'white',color=res?'white':'var(--text)',border=res?'transparent':'var(--border)';
-  document.getElementById('footer').innerHTML='<div class="result-row"><div class="result-box">'+d.a+' '+(res?.a??0)+'</div><div class="result-mid" style="background:'+bg+';color:'+color+';border-color:'+border+'">'+mid+'</div><div class="result-box">'+d.b+' '+(res?.b??0)+'</div></div>';
+let _popup=null;
+function showCondPopup(e,dimIdx,partIdx,itemIdx){
+  closeCondPopup();
+  e.stopPropagation();
+  const item=condResults[dimIdx]?.[partIdx]?.items?.[itemIdx];
+  if(!item||!item.ids||item.ids.length===0)return;
+  const qid=item.ids[0];
+  const side=item.side;
+  const partName=OBS_PART_NAMES.find(n=>{
+    const pd=OBS_PARTS_DATA[n];
+    if(!pd)return false;
+    return pd.sections.some(s=>s.qs.some(q=>q.id===qid));
+  });
+  if(!partName)return;
+  const pd=OBS_PARTS_DATA[partName];
+  let q=null;
+  pd.sections.forEach(s=>s.qs.forEach(qq=>{if(qq.id===qid)q=qq;}));
+  if(!q)return;
+  const curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
+  let html='<div class="cond-popup-title"><b>'+q.text+'</b>'+(side?'（'+(side==='L'?'左':'右')+'）':'')+'<br><span style="font-size:10px;color:var(--text-3)">修改此題將同步影響所有相關維度</span></div><div class="cond-popup-opts">';
+  q.opts.forEach(opt=>{
+    const v=typeof opt==='string'?opt:opt.v;
+    html+='<button class="cond-popup-opt'+(v===curVal?' cur':'')+'" onclick="applyCondChange(\''+qid+'\',\''+(side||'')+'\',\''+v.replace(/'/g,"\\'")+'\')">'+''+v+'</button>';
+  });
+  html+='</div><button class="cond-popup-cancel" onclick="closeCondPopup()">取消</button>';
+  const popup=document.createElement('div');
+  popup.className='cond-popup';
+  popup.innerHTML=html;
+  const rect=e.currentTarget.getBoundingClientRect();
+  popup.style.left=Math.min(rect.left,window.innerWidth-300)+'px';
+  popup.style.top=(rect.bottom+6)+'px';
+  document.body.appendChild(popup);
+  _popup=popup;
+  setTimeout(()=>document.addEventListener('click',closeCondPopup,{once:true}),0);
 }
 
-function toggle(i,v,el){if(data[cur][i]===v){data[cur][i]=null;el.checked=false;}else{data[cur][i]=v;}save();renderMain();renderFooter();renderSidebar();}
-function pick(i,v){data[cur][i]=v;save();renderMain();renderFooter();renderSidebar();}
-function goto(i){cur=i;renderSidebar();renderMain();renderFooter();}
+function closeCondPopup(){if(_popup){_popup.remove();_popup=null;}}
+
+function applyCondChange(qid,side,val){
+  closeCondPopup();
+  if(side){
+    obsData[qid+'_'+side]=val;
+  }else{
+    obsData[qid]=val;
+    if(obsData[qid+'_L']!==undefined)obsData[qid+'_L']=val;
+    if(obsData[qid+'_R']!==undefined)obsData[qid+'_R']=val;
+  }
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  recalcFromObs();save();
+  renderDimCondPage();
+}
 
 /* ===== Report ===== */
 function reportSave(){
@@ -941,7 +3072,14 @@ function reportSave(){
 }
 
 function showReport(){
+  document.getElementById('entry-page').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('mode-page').style.display='none';
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('cond-page').style.display='none';
   document.getElementById('report-overlay').style.display='block';
+  document.getElementById('nav-name').innerText=userName||'';
   document.getElementById('report-name-display').innerText=userName||'未命名';
   [['v-total',[0,1,2,3,4,5,6,7,8,9,10,11,12]],['v-pre',[0,1,2,3,4,5]],['v-luck',[6,7,8]],['v-post',[9,10,11,12]],['v-lead',[0,1,2]],['v-sub',[3,4,5]]].forEach(([id,ids])=>{document.getElementById(id).innerText=avgCoeff(ids);});
   let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
