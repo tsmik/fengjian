@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260323-123715 -->
+<!-- BUILD 20260323-140118 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -399,7 +399,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000;flex-direction:column">
   <div style="display:grid;grid-template-columns:200px 1fr 280px;flex:1;height:100%;overflow:hidden">
     <div id="cp-sidebar" style="background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column"></div>
-    <div id="cp-main" style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px"></div>
+    <div id="cp-main" style="overflow-y:auto;padding:20px;display:block"></div>
     <div id="cp-right" style="background:var(--sidebar);border-left:1px solid var(--border);overflow-y:auto;padding:12px"></div>
   </div>
 </div>
@@ -1605,7 +1605,7 @@ function recalcFromObs(){
       ci('右眉彎',brBend('R'),['br3'],'R','眉彎'),
     ],'左右各≥7→經',14),
     6:part([
-      ci('左眼細（眼長>2倍眼寬）',eyThin('L'),['ey3'],'L','眼細'),
+      ci('左眼細（眼長&gt;2倍眼寬）',eyThin('L'),['ey3'],'L','眼細'),
       ci('左眼長',eyLong('L'),['ey1'],'L','眼長'),
       ci('左眼尾平',eyTail_flat('L'),['ey4'],'L','眼尾平'),
       ci('左有眼鉤',eyHook('L'),['ey6'],'L','有眼鉤'),
@@ -2220,7 +2220,7 @@ function recalcFromObs(){
     ],'任1符合→奇',1),
     4:part([
       ci('左耳提強（朝前≥30度）',erTiltStrong('L'),['er3'],'L','耳提強'),
-      ci('左招風耳（夾角>40度）',erBeifeng('L'),['er5'],'L','招風耳'),
+      ci('左招風耳（夾角&gt;40度）',erBeifeng('L'),['er5'],'L','招風耳'),
       ci('左耳孔大（≥耳面積1/2）',erHoleBig('L'),['er6'],'L','耳孔大'),
       ci('右耳提強',erTiltStrong('R'),['er3'],'R','耳提強'),
       ci('右招風耳',erBeifeng('R'),['er5'],'R','招風耳'),
@@ -2343,7 +2343,7 @@ function recalcFromObs(){
     4:part([
       ci('左耳短（不及眼到鼻準底2/3）',is('er1','耳短','L'),['er1'],'L','耳短'),
       ci('左耳高',erHigh('L'),['er7'],'L','耳高'),
-      ci('左招風耳（夾角>40度）',erBeifeng('L'),['er5'],'L','招風耳'),
+      ci('左招風耳（夾角&gt;40度）',erBeifeng('L'),['er5'],'L','招風耳'),
       ci('右耳短',is('er1','耳短','R'),['er1'],'R','耳短'),
       ci('右耳高',erHigh('R'),['er7'],'R','耳高'),
       ci('右招風耳',erBeifeng('R'),['er5'],'R','招風耳'),
@@ -2363,7 +2363,7 @@ function recalcFromObs(){
     7:part([
       ci('鼻肉（肉多於骨）',nMeat(),['n10'],null,'肉多於骨'),
       ci('鼻短',is('n1','鼻短'),['n1'],null,'鼻短'),
-      ci('鼻窄小（鼻翼<眼距）',is('n4','鼻窄小'),['n4'],null,'鼻窄小'),
+      ci('鼻窄小（鼻翼&lt;眼距）',is('n4','鼻窄小'),['n4'],null,'鼻窄小'),
       ci('無起節',nNoNode(),['n11'],null,'無起節'),
     ],'任1符合→進',1),
     8:part([
@@ -2857,7 +2857,7 @@ function cpRenderMain(){
     var passBg=p.pass?'var(--static)':'var(--active)';
     var passLabel=p.pass?(data[cpCur][pi]==='B'?d.b:d.a):'未達';
 
-    html+='<div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+    html+='<div style="background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)">'+
         '<span style="font-weight:700;font-size:14px;color:var(--text-2)">'+label+'</span>'+
         '<span style="display:flex;align-items:center;gap:8px">'+
