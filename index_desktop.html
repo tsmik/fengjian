@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260323-141950 -->
+<!-- BUILD 20260323-142922 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -2868,18 +2868,53 @@ function cpRenderMain(){
       '<div style="padding:8px 14px;display:flex;flex-direction:column;gap:4px">';
 
     p.items.forEach(function(item,ii){
-      var side=item.side?'<span style="font-size:24px;padding:2px 8px;border-radius:8px;background:var(--sidebar);color:var(--text-3);margin-left:4px;flex-shrink:0">'+(item.side==='L'?'左':'右')+'</span>':'';
-      var ok=item.ok;
-      var markBg=ok?'var(--static)':'#e8e8e8';
-      var markColor=ok?'white':'#aaa';
-      var mark=ok?'\u2713':'\u2717';
-      var clickable=item.ids&&item.ids.length>0;
-      var onclick=clickable?' onclick="cpShowPopup(event,'+cpCur+','+pi+','+ii+')" style="cursor:pointer"':' style="cursor:default"';
-      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;transition:background 0.1s"'+onclick+'>'+
-        '<div style="width:22px;height:22px;border-radius:50%;background:'+markBg+';color:'+markColor+';display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;flex-shrink:0">'+mark+'</div>'+
-        '<div style="font-size:28px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1;line-height:1.6">'+item.label+'</div>'+
-        side+
-      '</div>';
+      if(!item.ids||item.ids.length===0){
+        // 無對應題目（如中停/下停的達標判斷），只顯示結果
+        var ok=item.ok;
+        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+          '<div style="font-size:16px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
+        '</div>';
+        return;
+      }
+      // 找到對應的題目和選項
+      var qid=item.ids[0];
+      var side=item.side||'';
+      var q=null;
+      OBS_PART_NAMES.forEach(function(n){
+        var pd=OBS_PARTS_DATA[n];if(!pd)return;
+        pd.sections.forEach(function(s){s.qs.forEach(function(qq){if(qq.id===qid)q=qq;});});
+      });
+      if(!q){
+        // 找不到題目，只顯示結果
+        var ok=item.ok;
+        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+          '<div style="font-size:16px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+item.label+'</div>'+
+        '</div>';
+        return;
+      }
+      var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
+      // 顯示題目名稱＋所有選項橫排
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
+        '<div style="font-size:15px;color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;flex:1">';
+      q.opts.forEach(function(opt){
+        var v=typeof opt==='string'?opt:opt.v;
+        var hint=typeof opt==='object'?opt.hint:'';
+        var isSel=v===curVal;
+        var btnBg=isSel?'var(--static)':'white';
+        var btnColor=isSel?'white':'var(--text-2)';
+        var btnBorder=isSel?'var(--static)':'var(--border)';
+        var qidSafe=qid.replace(/'/g,"\'");
+        var vSafe=v.replace(/"/g,'&quot;');
+        var sideSafe=side.replace(/'/g,"\'");
+        html+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
+          ' style="padding:6px 14px;border-radius:20px;border:1.5px solid '+btnBorder+';background:'+btnBg+';color:'+btnColor+';font-size:15px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:nowrap">'+
+          (isSel?'&#x2713; ':'')+v+
+        '</button>';
+      });
+      html+='</div></div>';
     });
 
     html+='</div></div>';
@@ -2888,58 +2923,10 @@ function cpRenderMain(){
   el.innerHTML=html;
 }
 
-function cpShowPopup(e,dimIdx,partIdx,itemIdx){
-  var old=document.getElementById('cp-popup');if(old)old.remove();
-  e.stopPropagation();
-  var cr=condResults[dimIdx];
-  if(!cr)return;
-  var p=cr[partIdx];
-  if(!p||!p.items[itemIdx])return;
-  var item=p.items[itemIdx];
-  if(!item.ids||item.ids.length===0)return;
-  var qid=item.ids[0];
-  var side=item.side||'';
-  var q=null;
-  OBS_PART_NAMES.forEach(function(n){
-    var pd=OBS_PARTS_DATA[n];if(!pd)return;
-    pd.sections.forEach(function(s){s.qs.forEach(function(qq){if(qq.id===qid)q=qq;});});
-  });
-  if(!q)return;
-  var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
-  var popup=document.createElement('div');
-  popup.id='cp-popup';
-  popup.style.cssText='position:fixed;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:20px;z-index:9000;min-width:240px;max-width:320px';
-  var html='<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">'+q.text+(side?'（'+(side==='L'?'左':'右')+'）':'')+'</div>';
-  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:14px">修改後自動重算所有維度</div>';
-  html+='<div id="cp-popup-opts" style="display:flex;flex-direction:column;gap:8px">';
-  q.opts.forEach(function(opt){
-    var v=typeof opt==='string'?opt:opt.v;
-    var isCur=v===curVal;
-    html+='<button data-qid="'+qid+'" data-side="'+side+'" data-val="'+v.replace(/"/g,'&quot;')+'" class="cp-popup-btn" style="padding:12px 16px;border-radius:8px;border:2px solid '+(isCur?'var(--static)':'var(--border)')+';background:'+(isCur?'var(--static)':'white')+';color:'+(isCur?'white':'var(--text-2)')+';font-size:17px;cursor:pointer;text-align:left;font-family:\'Noto Serif TC\',serif;font-weight:'+(isCur?'700':'400')+'">'+v+'</button>';
-  });
-  html+='</div><button id="cp-popup-cancel" style="margin-top:12px;width:100%;padding:10px;border:none;background:none;color:var(--text-3);font-size:15px;cursor:pointer;font-family:\'Noto Serif TC\',serif">取消</button>';
-  popup.innerHTML=html;
-  var rect=e.currentTarget.getBoundingClientRect();
-  popup.style.left=Math.min(rect.left,window.innerWidth-340)+'px';
-  popup.style.top=Math.min(rect.bottom+8,window.innerHeight-320)+'px';
-  document.body.appendChild(popup);
-  popup.querySelectorAll('.cp-popup-btn').forEach(function(btn){
-    btn.addEventListener('click',function(ev){
-      ev.stopPropagation();
-      cpApplyChange(btn.dataset.qid,btn.dataset.side,btn.dataset.val);
-    });
-  });
-  document.getElementById('cp-popup-cancel').addEventListener('click',function(){popup.remove();});
-  setTimeout(function(){
-    document.addEventListener('click',function h(){
-      var p=document.getElementById('cp-popup');if(p)p.remove();
-      document.removeEventListener('click',h);
-    },{once:true});
-  },0);
-}
-
-function cpApplyChange(qid,side,val){
-  var p=document.getElementById('cp-popup');if(p)p.remove();
+function cpQuickChange(btn){
+  var qid=btn.dataset.qid;
+  var side=btn.dataset.side||'';
+  var val=btn.dataset.val;
   if(side){
     obsData[qid+'_'+side]=val;
   }else{
@@ -2950,6 +2937,10 @@ function cpApplyChange(qid,side,val){
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   recalcFromObs();save();
   cpRender();
+}
+
+function cpApplyChange(qid,side,val){
+  cpQuickChange({dataset:{qid:qid,side:side||'',val:val}});
 }
 
 
