@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260323-141250 -->
+<!-- BUILD 20260323-141950 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -2889,7 +2889,6 @@ function cpRenderMain(){
 }
 
 function cpShowPopup(e,dimIdx,partIdx,itemIdx){
-  // 關閉現有彈窗
   var old=document.getElementById('cp-popup');if(old)old.remove();
   e.stopPropagation();
   var cr=condResults[dimIdx];
@@ -2899,35 +2898,44 @@ function cpShowPopup(e,dimIdx,partIdx,itemIdx){
   var item=p.items[itemIdx];
   if(!item.ids||item.ids.length===0)return;
   var qid=item.ids[0];
-  var side=item.side;
-  // 找題目
-  var q=null,partName=null;
+  var side=item.side||'';
+  var q=null;
   OBS_PART_NAMES.forEach(function(n){
     var pd=OBS_PARTS_DATA[n];if(!pd)return;
-    pd.sections.forEach(function(s){s.qs.forEach(function(qq){if(qq.id===qid){q=qq;partName=n;}});});
+    pd.sections.forEach(function(s){s.qs.forEach(function(qq){if(qq.id===qid)q=qq;});});
   });
   if(!q)return;
   var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
-  // 建彈窗
   var popup=document.createElement('div');
   popup.id='cp-popup';
-  popup.style.cssText='position:fixed;background:white;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.18);padding:16px;z-index:9000;min-width:220px;max-width:300px';
-  var html='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">'+q.text+(side?'（'+(side==='L'?'左':'右')+'）':'')+'</div>';
-  html+='<div style="font-size:11px;color:var(--text-3);margin-bottom:12px">修改後自動重算所有維度</div>';
-  html+='<div style="display:flex;flex-direction:column;gap:6px">';
+  popup.style.cssText='position:fixed;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:20px;z-index:9000;min-width:240px;max-width:320px';
+  var html='<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">'+q.text+(side?'（'+(side==='L'?'左':'右')+'）':'')+'</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:14px">修改後自動重算所有維度</div>';
+  html+='<div id="cp-popup-opts" style="display:flex;flex-direction:column;gap:8px">';
   q.opts.forEach(function(opt){
     var v=typeof opt==='string'?opt:opt.v;
     var isCur=v===curVal;
-    html+='<button onclick="cpApplyChange(''+qid+'',''+(side||'')+'',''+v.replace(/'/g,"\'")+'')" style="padding:10px 14px;border-radius:8px;border:1px solid '+(isCur?'var(--static)':'var(--border)')+';background:'+(isCur?'var(--static)':'white')+';color:'+(isCur?'white':'var(--text-2)')+';font-size:14px;cursor:pointer;text-align:left;font-family:'Noto Serif TC',serif;font-weight:'+(isCur?'700':'400')+'">'+v+'</button>';
+    html+='<button data-qid="'+qid+'" data-side="'+side+'" data-val="'+v.replace(/"/g,'&quot;')+'" class="cp-popup-btn" style="padding:12px 16px;border-radius:8px;border:2px solid '+(isCur?'var(--static)':'var(--border)')+';background:'+(isCur?'var(--static)':'white')+';color:'+(isCur?'white':'var(--text-2)')+';font-size:17px;cursor:pointer;text-align:left;font-family:\'Noto Serif TC\',serif;font-weight:'+(isCur?'700':'400')+'">'+v+'</button>';
   });
-  html+='</div><button onclick="document.getElementById('cp-popup').remove()" style="margin-top:10px;width:100%;padding:8px;border:none;background:none;color:var(--text-3);font-size:13px;cursor:pointer;font-family:'Noto Serif TC',serif">取消</button>';
+  html+='</div><button id="cp-popup-cancel" style="margin-top:12px;width:100%;padding:10px;border:none;background:none;color:var(--text-3);font-size:15px;cursor:pointer;font-family:\'Noto Serif TC\',serif">取消</button>';
   popup.innerHTML=html;
-  // 定位
   var rect=e.currentTarget.getBoundingClientRect();
-  popup.style.left=Math.min(rect.left,window.innerWidth-320)+'px';
-  popup.style.top=Math.min(rect.bottom+6,window.innerHeight-300)+'px';
+  popup.style.left=Math.min(rect.left,window.innerWidth-340)+'px';
+  popup.style.top=Math.min(rect.bottom+8,window.innerHeight-320)+'px';
   document.body.appendChild(popup);
-  setTimeout(function(){document.addEventListener('click',function h(){var p=document.getElementById('cp-popup');if(p)p.remove();document.removeEventListener('click',h);},{once:true});},0);
+  popup.querySelectorAll('.cp-popup-btn').forEach(function(btn){
+    btn.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      cpApplyChange(btn.dataset.qid,btn.dataset.side,btn.dataset.val);
+    });
+  });
+  document.getElementById('cp-popup-cancel').addEventListener('click',function(){popup.remove();});
+  setTimeout(function(){
+    document.addEventListener('click',function h(){
+      var p=document.getElementById('cp-popup');if(p)p.remove();
+      document.removeEventListener('click',h);
+    },{once:true});
+  },0);
 }
 
 function cpApplyChange(qid,side,val){
