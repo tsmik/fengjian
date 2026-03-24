@@ -3443,33 +3443,46 @@ function renderSensPage(){
   for(var di=0;di<13;di++){var r=calcDim(di);baseCoeffs.push(r?r.coeff:0);}
   var baseTotalCoeff=baseCoeffs.reduce(function(a,b){return a+b;},0)/13;
 
+  // 基準維度類型（靜/動）
+  var baseTypes=[];
+  for(var di=0;di<13;di++){var r=calcDim(di);baseTypes.push(r?r.type:null);}
+
   // 對每個題目模擬改變，每題模擬後立即還原
-  var results=[];
+  // 收集：係數提升結果 + 動轉靜結果
+  var results=[];    // 係數有提升的
+  var flipResults=[]; // 係數不變但動→靜的
   allQs.forEach(function(q){
     var curVal=origObs[q.id]||'';
-    var bestDelta=0,bestDimDeltas=[],bestNewCoeffs=[];
+    var bestDelta=0,bestDimDeltas=[],bestNewCoeffs=[],bestNewTypes=[];
+    // 也追蹤動轉靜（係數不變時）
+    var canFlip=false,flipDimDeltas=[],flipNewCoeffs=[],flipNewTypes=[];
 
     q.opts.forEach(function(opt){
       var v=typeof opt==='string'?opt:opt.v;
-      // 設定模擬值
       obsData=JSON.parse(JSON.stringify(origObs));
       obsData[q.id]=v;
       if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
       recalcFromObs();
-      // 計算新係數
-      var newCoeffs=[],dimDeltas=[];
+      var newCoeffs=[],dimDeltas=[],newTypes=[];
       for(var di=0;di<13;di++){
         var r=calcDim(di);var nc=r?r.coeff:0;
-        newCoeffs.push(nc);dimDeltas.push(nc-baseCoeffs[di]);
+        newCoeffs.push(nc);dimDeltas.push(nc-baseCoeffs[di]);newTypes.push(r?r.type:null);
       }
       var newTotal=newCoeffs.reduce(function(a,b){return a+b;},0)/13;
       var totalDelta=newTotal-baseTotalCoeff;
       if(totalDelta>bestDelta){
-        bestDelta=totalDelta;bestDimDeltas=dimDeltas.slice();bestNewCoeffs=newCoeffs.slice();
+        bestDelta=totalDelta;bestDimDeltas=dimDeltas.slice();bestNewCoeffs=newCoeffs.slice();bestNewTypes=newTypes.slice();
+      }
+      // 檢查是否有任何維度從動轉靜（即使係數沒變）
+      var hasFlip=false;
+      for(var di=0;di<13;di++){
+        if(baseTypes[di]==='動'&&newTypes[di]==='靜')hasFlip=true;
+      }
+      if(hasFlip&&totalDelta<=0.001&&!canFlip){
+        canFlip=true;flipDimDeltas=dimDeltas.slice();flipNewCoeffs=newCoeffs.slice();flipNewTypes=newTypes.slice();
       }
     });
 
-    // 立即還原
     obsData=JSON.parse(JSON.stringify(origObs));
     data=JSON.parse(JSON.stringify(origData));
 
@@ -3477,7 +3490,12 @@ function renderSensPage(){
       var affected=[];
       for(var di=0;di<13;di++){if(Math.abs(bestDimDeltas[di])>0.001)affected.push(di);}
       results.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
-        totalDelta:bestDelta,dimDeltas:bestDimDeltas,newCoeffs:bestNewCoeffs,affected:affected});
+        totalDelta:bestDelta,dimDeltas:bestDimDeltas,newCoeffs:bestNewCoeffs,newTypes:bestNewTypes,affected:affected});
+    }
+    if(canFlip){
+      var flipDims=[];
+      for(var di=0;di<13;di++){if(baseTypes[di]==='動'&&flipNewTypes[di]==='靜')flipDims.push(di);}
+      flipResults.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',flipDims:flipDims,newTypes:flipNewTypes,newCoeffs:flipNewCoeffs});
     }
   });
 
@@ -3490,21 +3508,58 @@ function renderSensPage(){
   // 四捨五入 key（用於分組相同提升幅度）
   function rk(n){return Math.round(n*1000);}
 
-  // === 區塊一：各維度關鍵條件（按提升幅度分組，並列顯示）===
+  // === 區塊一：各維度關鍵條件（三層邏輯）===
   var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px">敏感度分析</div>';
   html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度關鍵條件</div>';
+  var nums='①②③④⑤⑥⑦⑧⑨⑩';
 
   for(var di=0;di<13;di++){
     var d=DIMS[di];
     var dimRes=calcDim(di);
     var dimBg=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
     var dimTxt=dimRes?(dimRes.type==='靜'?sLabels[di]:dLabels[di]):'—';
-    var dimCoeff=dimRes?dimRes.coeff.toFixed(2):'—';
+    var dimCoeff=dimRes?dimRes.coeff:0;
+    var isMax=dimCoeff>=0.8-0.001;
+    var isStatic=dimRes&&dimRes.type==='靜';
 
-    // 找此維度有提升的所有題目，按提升幅度分組
+    html+='<div style="margin-bottom:12px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
+      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.a+d.b+'</span>'+
+      '<span style="font-size:13px;padding:2px 10px;border-radius:8px;background:'+dimBg+';color:white;font-weight:700">'+dimTxt+' '+dimCoeff.toFixed(2)+'</span>';
+
+    if(isMax&&isStatic){
+      // 情況三：靜 0.8 → 已達最佳
+      html+='<span style="font-size:13px;color:var(--text-3);font-weight:400">已達最佳狀態</span>';
+      html+='</div></div>';
+      continue;
+    }
+
+    if(isMax&&!isStatic){
+      // 情況二：動 0.8 → 找動轉靜
+      html+='<span style="font-size:13px;color:var(--text-3);font-weight:400">係數已最高，可嘗試轉為靜</span>';
+      html+='</div>';
+      var flipItems=flipResults.filter(function(r){return r.flipDims.indexOf(di)>=0;});
+      if(flipItems.length===0){
+        html+='<div style="padding:4px 16px;font-size:13px;color:var(--text-3)">無可轉換的條件</div>';
+      }else{
+        html+='<div style="padding:4px 16px;margin-bottom:4px">'+
+          '<div style="font-size:13px;color:var(--text-3)">'+nums[0]+' 調整後可轉為 靜 '+dimCoeff.toFixed(2)+'</div>';
+        flipItems.forEach(function(r){
+          html+='<div style="font-size:14px;color:var(--text-2);padding:2px 0 2px 18px">'+
+            '<b>'+r.text+'</b>'+
+            '<span style="color:var(--text-3);margin-left:6px">（目前：'+r.curVal+'）</span>'+
+          '</div>';
+        });
+        html+='</div>';
+      }
+      html+='</div>';
+      continue;
+    }
+
+    // 情況一：係數 < 0.8 → 正常提升建議
+    html+='</div>';
     var dimItems=results.filter(function(r){return r.dimDeltas[di]>0.001;})
       .sort(function(a,b){return b.dimDeltas[di]-a.dimDeltas[di];});
-    // 分組：相同提升幅度歸為一組
     var groups=[],lastKey=-1;
     dimItems.forEach(function(r){
       var k=rk(r.dimDeltas[di]);
@@ -3512,16 +3567,9 @@ function renderSensPage(){
       groups[groups.length-1].items.push(r);
     });
 
-    html+='<div style="margin-bottom:12px">';
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
-      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.a+d.b+'</span>'+
-      '<span style="font-size:13px;padding:2px 10px;border-radius:8px;background:'+dimBg+';color:white;font-weight:700">'+dimTxt+' '+dimCoeff+'</span>'+
-    '</div>';
-
     if(groups.length===0){
       html+='<div style="padding:4px 16px;font-size:13px;color:var(--text-3)">無可提升的條件</div>';
     }else{
-      var nums='①②③④⑤⑥⑦⑧⑨⑩';
       groups.forEach(function(g,gi){
         html+='<div style="padding:4px 16px;margin-bottom:4px">'+
           '<div style="font-size:13px;color:var(--text-3)">'+nums[gi]+' 調整後係數 '+baseCoeffs[di].toFixed(2)+' → '+g.newCoeff.toFixed(2)+'</div>';
