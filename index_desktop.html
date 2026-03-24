@@ -3595,60 +3595,76 @@ function renderSensPage(){
     html+='</div>';
   }
 
-  // === 區塊二：跨維度最大影響 ===
+  // === 區塊二：跨維度最大影響（按提升幅度分組並列）===
   html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">跨維度最大影響</div>';
 
-  // 合併 results + flipResults，排序：totalDelta 大→小，同 delta 時 flipCount 多→少
+  // 合併 results + flipResults
   var allCross=results.slice();
   flipResults.forEach(function(fr){
-    // 只加入不在 results 裡的（避免重複）
     if(!allCross.some(function(r){return r.id===fr.id;})){
       allCross.push({id:fr.id,text:fr.text,part:fr.part,curVal:fr.curVal,
         totalDelta:0,affected:[],flipped:fr.flipDims,newTypes:fr.newTypes,newCoeffs:fr.newCoeffs,dimDeltas:[]});
     }
   });
+  // 排序：totalDelta 大→小，同 delta 時 flipCount 多→少
   allCross.sort(function(a,b){
     if(Math.abs(b.totalDelta-a.totalDelta)>0.001)return b.totalDelta-a.totalDelta;
     return (b.flipped?b.flipped.length:0)-(a.flipped?a.flipped.length:0);
   });
+  var filtered=allCross.filter(function(r){return r.totalDelta>0.001||(r.flipped&&r.flipped.length>0);});
 
-  var topItems=allCross.filter(function(r){return r.totalDelta>0.001||(r.flipped&&r.flipped.length>0);}).slice(0,5);
+  // 按 totalDelta 分組（相同提升幅度歸為一組）
+  var crossGroups=[],lastCk=-1;
+  filtered.forEach(function(r){
+    var k=rk(r.totalDelta);
+    if(k!==lastCk){crossGroups.push({delta:r.totalDelta,items:[]});lastCk=k;}
+    crossGroups[crossGroups.length-1].items.push(r);
+  });
 
-  if(topItems.length===0){
+  // 取前 5 組
+  crossGroups=crossGroups.slice(0,5);
+
+  // 建構影響明細 helper
+  function dimDetailStr(r){
+    var details=[];
+    var all=(r.affected||[]).slice();
+    (r.flipped||[]).forEach(function(di){if(all.indexOf(di)<0)all.push(di);});
+    all.sort(function(a,b){return a-b;});
+    all.forEach(function(di){
+      var dn=DIMS[di].a+DIMS[di].b;
+      var isFlip=r.flipped&&r.flipped.indexOf(di)>=0;
+      var isUp=r.affected&&r.affected.indexOf(di)>=0&&r.dimDeltas&&r.dimDeltas[di]>0.001;
+      if(isFlip&&isUp)details.push(dn+'↑動→靜');
+      else if(isFlip)details.push(dn+' 動→靜');
+      else if(isUp)details.push(dn+'↑');
+    });
+    return details.join('、');
+  }
+
+  if(crossGroups.length===0){
     html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">無可提升的條件</div>';
   }else{
-    topItems.forEach(function(r,ri){
+    crossGroups.forEach(function(g,gi){
       html+='<div style="margin-bottom:14px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-      html+='<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">'+
-        '<span style="color:var(--text-3);margin-right:4px">'+nums[ri]+'</span>'+
-        r.text+'<span style="color:var(--text-3);font-weight:400;margin-left:6px">（目前：'+r.curVal+'）</span></div>';
-
-      // 影響維度明細：↑ 或 動→靜
-      var dimDetails=[];
-      var affectedAll=(r.affected||[]).slice();
-      (r.flipped||[]).forEach(function(di){if(affectedAll.indexOf(di)<0)affectedAll.push(di);});
-      affectedAll.sort(function(a,b){return a-b;});
-      affectedAll.forEach(function(di){
-        var dn=DIMS[di].a+DIMS[di].b;
-        var isFlip=r.flipped&&r.flipped.indexOf(di)>=0;
-        var isUp=r.affected&&r.affected.indexOf(di)>=0&&r.dimDeltas&&r.dimDeltas[di]>0.001;
-        if(isFlip&&isUp)dimDetails.push(dn+'↑動→靜');
-        else if(isFlip)dimDetails.push(dn+' 動→靜');
-        else if(isUp)dimDetails.push(dn+'↑');
-      });
-      html+='<div style="font-size:13px;color:var(--text-2)">影響 '+affectedAll.length+' 個維度：'+dimDetails.join('、')+'</div>';
-
-      // 總合係數
-      if(r.totalDelta>0.001){
-        var baseType2=baseTotalCoeff>=0?'動':'靜'; // simplified
-        var sCount=0,dCount=0;
-        baseCoeffs.forEach(function(c,i){var t=baseTypes[i];if(t==='靜')sCount++;else dCount++;});
-        var newTotalVal=baseTotalCoeff+r.totalDelta;
-        html+='<div style="font-size:13px;color:var(--text-2);margin-top:2px">總合係數：'+baseTotalCoeff.toFixed(2)+' → '+newTotalVal.toFixed(2)+'</div>';
+      // 組標題
+      if(g.delta>0.001){
+        var newTotalVal=baseTotalCoeff+g.delta;
+        html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數 '+baseTotalCoeff.toFixed(2)+' → '+newTotalVal.toFixed(2)+'</div>';
       }else{
-        var flipCount=r.flipped?r.flipped.length:0;
-        html+='<div style="font-size:13px;color:var(--text-2);margin-top:2px">總合係數不變（'+flipCount+'個維度由動轉靜）</div>';
+        var fc=g.items[0].flipped?g.items[0].flipped.length:0;
+        html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數不變（'+fc+'個維度由動轉靜）</div>';
       }
+      if(g.items.length>1){
+        html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:4px">以下條件任一調整均可達到：</div>';
+      }
+      // 每個條件
+      g.items.forEach(function(r){
+        html+='<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">';
+        html+='<div style="font-size:14px;font-weight:700;color:var(--text)">'+
+          r.text+'<span style="color:var(--text-3);font-weight:400;margin-left:6px">（目前：'+r.curVal+'）</span></div>';
+        html+='<div style="font-size:13px;color:var(--text-2)">影響：'+dimDetailStr(r)+'</div>';
+        html+='</div>';
+      });
       html+='</div>';
     });
   }
