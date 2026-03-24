@@ -3311,36 +3311,53 @@ function showReport(){
   if(pdtEl){
     const partOrder=[0,1,2,3,4,5,6,7,8];
     const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-    let t='<table style="border-collapse:collapse;font-size:13px;font-family:\'Noto Serif TC\',serif;white-space:nowrap">';
-    // 第一層表頭：部位 + 每個維度 colspan=2
-    t+='<thead><tr><th rowspan="2" style="padding:6px 10px;border:1px solid var(--border);background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:1">部位</th>';
+    const dimColors=['#3F5F6F','#5F7F8F','#8FA7B2','#4F6F66','#6F8F86','#9FB5AE','#565A78','#747AA0','#A0A6C8','#6A6052','#8A7F70','#B0A596','#C8BDAE'];
+    const STATIC_BG='#2F4858',DYNAMIC_BG='#C1493A';
+    // 靜欄字（左）和動欄字（右），順序對應 DIMS
+    const staticLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
+    const dynamicLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+
+    let t='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap">';
+    // 第一層：維度名稱
+    t+='<thead><tr><th rowspan="3" style="padding:6px 10px;border:1px solid rgba(0,0,0,0.15);background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
     DIMS.forEach(function(d,i){
-      t+='<th colspan="2" style="padding:4px 6px;border:1px solid var(--border);background:var(--sidebar);font-weight:700;text-align:center;letter-spacing:1px">'+d.a+d.b+'</th>';
+      t+='<th colspan="2" style="padding:5px 8px;border:1px solid rgba(0,0,0,0.15);background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px">'+d.a+d.b+'</th>';
     });
     t+='</tr>';
-    // 第二層表頭：每個維度的 a/b 小欄
+    // 第二層：靜｜動子欄
     t+='<tr>';
-    DIMS.forEach(function(d){
-      t+='<th style="padding:3px 6px;border:1px solid var(--border);background:var(--hover);font-weight:400;text-align:center;font-size:12px;color:var(--text-3)">'+d.a+'</th>';
-      t+='<th style="padding:3px 6px;border:1px solid var(--border);background:var(--hover);font-weight:400;text-align:center;font-size:12px;color:var(--text-3)">'+d.b+'</th>';
+    DIMS.forEach(function(d,i){
+      t+='<th style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);background:'+STATIC_BG+';color:white;font-weight:700;text-align:center;font-size:13px">'+staticLabels[i]+'</th>';
+      t+='<th style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);background:'+DYNAMIC_BG+';color:white;font-weight:700;text-align:center;font-size:13px">'+dynamicLabels[i]+'</th>';
+    });
+    t+='</tr>';
+    // 第三層：係數行
+    t+='<tr>';
+    DIMS.forEach(function(d,i){
+      var res=calcDim(i);
+      t+='<td colspan="2" style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);text-align:center;font-size:13px;color:var(--text-3);background:var(--bg)">'+(res?res.coeff.toFixed(2):'—')+'</td>';
     });
     t+='</tr></thead><tbody>';
-    // 每個部位一列
+    // 資料行
     partOrder.forEach(function(pi,idx){
       t+='<tr>';
-      t+='<td style="padding:5px 10px;border:1px solid var(--border);font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
+      t+='<td style="padding:5px 10px;border:1px solid rgba(0,0,0,0.15);font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
       DIMS.forEach(function(d,di){
         var v=data[di][pi];
-        var isA=v==='A',isB=v==='B';
-        var badge='';
-        if(v){
-          var tp=v==='A'?d.aT:d.bT;
-          var bg=tp==='靜'?'var(--static)':'var(--active)';
-          var txt=v==='A'?d.a:d.b;
-          badge='<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>';
+        var isStatic=false,isDynamic=false;
+        if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
+        var dc=dimColors[di];
+        var dcAlpha=dc+'66'; // 40% opacity via hex alpha
+        if(isStatic){
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+STATIC_BG+';color:white;font-weight:700;font-size:13px">'+staticLabels[di]+'</td>';
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+dcAlpha+'"></td>';
+        }else if(isDynamic){
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+dcAlpha+'"></td>';
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+DYNAMIC_BG+';color:white;font-weight:700;font-size:13px">'+dynamicLabels[di]+'</td>';
+        }else{
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center"></td>';
+          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center"></td>';
         }
-        t+='<td style="padding:4px 6px;border:1px solid var(--border);text-align:center">'+(isA?badge:'')+'</td>';
-        t+='<td style="padding:4px 6px;border:1px solid var(--border);text-align:center">'+(isB?badge:'')+'</td>';
       });
       t+='</tr>';
     });
