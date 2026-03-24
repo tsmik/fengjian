@@ -659,6 +659,7 @@ setTimeout(kRender,100);
   <div class="ds-bar-wrap"><div></div><div class="ds-bar" id="ds-bar"><div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div><span class="ds-bar-label" id="ds-label-s">靜 0</span><span class="ds-bar-label-r" id="ds-label-d">動 0</span></div></div>
   <div class="matrix-wrap"><div class="matrix-layout" id="matrix-layout"><div class="matrix-labels" id="matrix-labels"></div></div></div>
   <div class="legend"><span><span style="color:var(--static)">&#9632;</span> 靜</span><span><span style="color:var(--active)">&#9632;</span> 動</span><span><span style="color:var(--gold)">&#9632;</span> 係數</span></div>
+  <div id="report-part-dim-table" style="margin:16px 0;overflow-x:auto"></div>
   <div id="ai-analysis-area"></div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
@@ -3305,6 +3306,47 @@ function showReport(){
     data[i].forEach((v,pi)=>{const cell=document.createElement('div');cell.className='im-cell';if(pi===4)cell.style.marginTop='6px';const box=document.createElement('div');box.className='im-box';if(v){const t=v==='A'?d.aT:d.bT;box.classList.add(t==='動'?'red':'green');box.innerText=v==='A'?d.a:d.b;}cell.appendChild(box);col.appendChild(cell);});
     layoutEl.appendChild(col);});
   requestAnimationFrame(()=>{const fc=layoutEl.querySelector('.matrix-col');if(!fc)return;let off=0;for(const el of[...fc.children]){if(el.classList.contains('im-cell'))break;off+=el.offsetHeight+2;}const sp=document.getElementById('label-spacer');if(sp)sp.style.height=off+'px';});
+  // 部位×維度總覽表
+  const pdtEl=document.getElementById('report-part-dim-table');
+  if(pdtEl){
+    const partOrder=[0,1,2,3,4,5,6,7,8];
+    const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+    let t='<table style="border-collapse:collapse;font-size:13px;font-family:\'Noto Serif TC\',serif;white-space:nowrap">';
+    // 第一層表頭：部位 + 每個維度 colspan=2
+    t+='<thead><tr><th rowspan="2" style="padding:6px 10px;border:1px solid var(--border);background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:1">部位</th>';
+    DIMS.forEach(function(d,i){
+      t+='<th colspan="2" style="padding:4px 6px;border:1px solid var(--border);background:var(--sidebar);font-weight:700;text-align:center;letter-spacing:1px">'+d.a+d.b+'</th>';
+    });
+    t+='</tr>';
+    // 第二層表頭：每個維度的 a/b 小欄
+    t+='<tr>';
+    DIMS.forEach(function(d){
+      t+='<th style="padding:3px 6px;border:1px solid var(--border);background:var(--hover);font-weight:400;text-align:center;font-size:12px;color:var(--text-3)">'+d.a+'</th>';
+      t+='<th style="padding:3px 6px;border:1px solid var(--border);background:var(--hover);font-weight:400;text-align:center;font-size:12px;color:var(--text-3)">'+d.b+'</th>';
+    });
+    t+='</tr></thead><tbody>';
+    // 每個部位一列
+    partOrder.forEach(function(pi,idx){
+      t+='<tr>';
+      t+='<td style="padding:5px 10px;border:1px solid var(--border);font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
+      DIMS.forEach(function(d,di){
+        var v=data[di][pi];
+        var isA=v==='A',isB=v==='B';
+        var badge='';
+        if(v){
+          var tp=v==='A'?d.aT:d.bT;
+          var bg=tp==='靜'?'var(--static)':'var(--active)';
+          var txt=v==='A'?d.a:d.b;
+          badge='<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>';
+        }
+        t+='<td style="padding:4px 6px;border:1px solid var(--border);text-align:center">'+(isA?badge:'')+'</td>';
+        t+='<td style="padding:4px 6px;border:1px solid var(--border);text-align:center">'+(isB?badge:'')+'</td>';
+      });
+      t+='</tr>';
+    });
+    t+='</tbody></table>';
+    pdtEl.innerHTML=t;
+  }
 }
 
 function closeReport(){document.getElementById('report-overlay').style.display='none';}
