@@ -297,6 +297,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-obs" onclick="showObsPage()">頭面部位觀察評分</div>
   <div class="nav-tab" id="nav-cond" onclick="showCondPage()">13維度觀察評分</div>
   <div class="nav-tab" id="nav-report" onclick="showReport()">兵法報告</div>
+  <div class="nav-tab" id="nav-sens" onclick="showSensPage()">敏感度分析</div>
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
@@ -390,6 +391,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 </div>
 </div>
 
+<!-- 敏感度分析頁 -->
+<div id="sens-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5500;overflow-y:auto;padding:20px">
+  <div id="sens-content" style="max-width:900px;margin:0 auto"></div>
+</div>
 <!-- 維度條件評分頁 -->
 <div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000;flex-direction:column">
   <div style="display:grid;grid-template-columns:260px 1fr;flex:1;height:100%;overflow:hidden">
@@ -2667,6 +2672,7 @@ function showModePage(){
   document.getElementById('mode-page').style.display='flex';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
+  document.getElementById('sens-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive(null);
 }
@@ -2681,6 +2687,7 @@ function showObsPage(){
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
@@ -2694,6 +2701,7 @@ function showKnowledgePage(){
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='flex';
   document.getElementById('cond-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-know');
 }
@@ -2704,7 +2712,7 @@ var CP_PART_ORDER=[0,1,4,5,6,7,8,2,3];
 var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
 
 function showCondPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay'].forEach(id=>document.getElementById(id).style.display='none');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('cond-page').style.display='flex';
@@ -3282,6 +3290,7 @@ function showReport(){
   document.getElementById('app-body').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';
   document.getElementById('report-overlay').style.display='block';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-report');
@@ -3396,6 +3405,149 @@ function showReport(){
 }
 
 function closeReport(){document.getElementById('report-overlay').style.display='none';}
+
+/* ===== 敏感度分析頁 ===== */
+function showSensPage(){
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('sens-page').style.display='block';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-sens');
+  recalcFromObs();
+  renderSensPage();
+}
+
+function renderSensPage(){
+  var el=document.getElementById('sens-content');if(!el)return;
+  var SBG='#5C7A8A',DBG='#A05A50';
+  var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
+  var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+
+  // 備份原始狀態
+  var origObs=JSON.parse(JSON.stringify(obsData));
+  var origData=JSON.parse(JSON.stringify(data));
+
+  // 收集所有題目
+  var allQs=[];
+  OBS_PART_NAMES.forEach(function(pn){
+    var pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    pd.sections.forEach(function(sec){sec.qs.forEach(function(q){
+      allQs.push({id:q.id,text:q.text,paired:!!q.paired,opts:q.opts,part:pn});
+    });});
+  });
+
+  // 計算基準係數
+  var baseCoeffs=[];
+  for(var di=0;di<13;di++){var r=calcDim(di);baseCoeffs.push(r?r.coeff:0);}
+  var baseTotalCoeff=baseCoeffs.reduce(function(a,b){return a+b;},0)/13;
+
+  // 對每個題目模擬改變
+  var results=[];
+  allQs.forEach(function(q){
+    var origVal=origObs[q.id]||'';
+    var origValL=origObs[q.id+'_L'];
+    var origValR=origObs[q.id+'_R'];
+    var bestDelta=0,bestOpt='',bestDimDeltas=[];
+    var bestNewCoeffs=[];
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      // 設定新值
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+      // 計算新係數
+      var newCoeffs=[],dimDeltas=[];
+      for(var di=0;di<13;di++){
+        var r=calcDim(di);
+        var nc=r?r.coeff:0;
+        newCoeffs.push(nc);
+        dimDeltas.push(nc-baseCoeffs[di]);
+      }
+      var newTotal=newCoeffs.reduce(function(a,b){return a+b;},0)/13;
+      var totalDelta=newTotal-baseTotalCoeff;
+      if(totalDelta>bestDelta){
+        bestDelta=totalDelta;bestOpt=v;bestDimDeltas=dimDeltas.slice();bestNewCoeffs=newCoeffs.slice();
+      }
+    });
+
+    // 還原
+    obsData=JSON.parse(JSON.stringify(origObs));
+    recalcFromObs();
+
+    if(bestDelta>0.001){
+      var affected=[];
+      for(var di=0;di<13;di++){if(Math.abs(bestDimDeltas[di])>0.001)affected.push(di);}
+      results.push({id:q.id,text:q.text,part:q.part,curVal:origVal||'未填',bestOpt:bestOpt,
+        totalDelta:bestDelta,dimDeltas:bestDimDeltas,newCoeffs:bestNewCoeffs,affected:affected});
+    }
+  });
+
+  // 還原確保乾淨
+  obsData=JSON.parse(JSON.stringify(origObs));
+  data=JSON.parse(JSON.stringify(origData));
+
+  // === 區塊一：各維度關鍵條件 ===
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px">敏感度分析</div>';
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度關鍵條件</div>';
+
+  for(var di=0;di<13;di++){
+    var d=DIMS[di];
+    var dimRes=calcDim(di);
+    var dimBg=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
+    var dimTxt=dimRes?(dimRes.type==='靜'?sLabels[di]:dLabels[di]):'—';
+    var dimCoeff=dimRes?dimRes.coeff.toFixed(2):'—';
+
+    // 找此維度提升最大的前2個題目
+    var dimResults=results.filter(function(r){return r.dimDeltas[di]>0.001;})
+      .sort(function(a,b){return b.dimDeltas[di]-a.dimDeltas[di];}).slice(0,2);
+
+    html+='<div style="margin-bottom:12px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
+      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.a+d.b+'</span>'+
+      '<span style="font-size:13px;padding:2px 10px;border-radius:8px;background:'+dimBg+';color:white;font-weight:700">'+dimTxt+' '+dimCoeff+'</span>'+
+    '</div>';
+
+    if(dimResults.length===0){
+      html+='<div style="padding:4px 16px;font-size:13px;color:var(--text-3)">無可提升的條件</div>';
+    }else{
+      dimResults.forEach(function(r,ri){
+        var newCoeff=r.newCoeffs[di].toFixed(2);
+        html+='<div style="padding:4px 16px;font-size:14px;color:var(--text-2)">'+
+          '<span style="color:var(--text-3);margin-right:4px">'+('①②③'[ri])+'</span>'+
+          '<b>'+r.text+'</b>'+
+          '<span style="color:var(--text-3);margin:0 6px">（目前：'+r.curVal+'）</span>'+
+          '<span style="font-size:13px;color:var(--text-3)">調整後係數 '+baseCoeffs[di].toFixed(2)+' → '+newCoeff+'</span>'+
+        '</div>';
+      });
+    }
+    html+='</div>';
+  }
+
+  // === 區塊二：跨維度最大影響 ===
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">跨維度最大影響</div>';
+
+  var topResults=results.sort(function(a,b){return b.totalDelta-a.totalDelta;}).slice(0,3);
+
+  if(topResults.length===0){
+    html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">無可提升的條件</div>';
+  }else{
+    topResults.forEach(function(r,ri){
+      var affectedNames=r.affected.map(function(di){return DIMS[di].a+DIMS[di].b;}).join('、');
+      var newTotal=(baseTotalCoeff+r.totalDelta).toFixed(2);
+      html+='<div style="margin-bottom:14px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+      html+='<div style="font-size:15px;font-weight:700;color:var(--text)">'+
+        '<span style="color:var(--text-3);margin-right:4px">'+('①②③'[ri])+'</span>'+
+        r.text+'<span style="color:var(--text-3);font-weight:400;margin-left:6px">（目前：'+r.curVal+'）</span></div>';
+      html+='<div style="font-size:13px;color:var(--text-2);margin-top:4px">影響 '+r.affected.length+' 個維度：'+affectedNames+'</div>';
+      html+='<div style="font-size:13px;color:var(--text-2);margin-top:2px">總合係數：'+baseTotalCoeff.toFixed(2)+' → '+newTotal+'</div>';
+      html+='</div>';
+    });
+  }
+
+  el.innerHTML=html;
+}
 
 /* ===== App ===== */
 let userName='';
