@@ -653,13 +653,16 @@ setTimeout(kRender,100);
     <div class="report-name" id="report-name-display"></div>
     <div class="report-title">人相兵法</div>
   </div>
-  <div class="stat-grid"><div></div><div class="stat-item s-overall"><span>總合係數 <strong class="stat-val" id="v-total">0.0</strong></span></div></div>
-  <div class="stat-grid"><div></div><div class="stat-item s-pre"><span>先天</span><strong class="stat-val" id="v-pre">0.0</strong></div><div class="stat-item s-luck"><span>運氣</span><strong class="stat-val" id="v-luck">0.0</strong></div><div class="stat-item s-post"><span>後天</span><strong class="stat-val" id="v-post">0.0</strong></div></div>
-  <div class="stat-grid"><div></div><div class="stat-item s-lead"><span>老闆</span><strong class="stat-val" id="v-lead">0.0</strong></div><div class="stat-item s-sub"><span>主管</span><strong class="stat-val" id="v-sub">0.0</strong></div></div>
-  <div class="ds-bar-wrap"><div></div><div class="ds-bar" id="ds-bar"><div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div><span class="ds-bar-label" id="ds-label-s">靜 0</span><span class="ds-bar-label-r" id="ds-label-d">動 0</span></div></div>
-  <div class="matrix-wrap"><div class="matrix-layout" id="matrix-layout"><div class="matrix-labels" id="matrix-labels"></div></div></div>
-  <div class="legend"><span><span style="color:var(--static)">&#9632;</span> 靜</span><span><span style="color:var(--active)">&#9632;</span> 動</span><span><span style="color:var(--gold)">&#9632;</span> 係數</span></div>
-  <div id="report-part-dim-table" style="margin:16px 0;overflow-x:auto"></div>
+  <div class="report-stats-row" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px;font-size:18px;font-weight:900;font-family:'Noto Serif TC',serif">
+    <span style="background:var(--dark);color:white;padding:4px 14px;border-radius:4px">總合 <span class="stat-val" id="v-total" style="font-family:monospace">0.0</span></span>
+    <span style="background:#f0ebe5;padding:4px 14px;border-radius:4px">先天 <span class="stat-val" id="v-pre" style="font-family:monospace">0.0</span></span>
+    <span style="background:#e5edf0;padding:4px 14px;border-radius:4px">運氣 <span class="stat-val" id="v-luck" style="font-family:monospace">0.0</span></span>
+    <span style="background:#e8f0e5;padding:4px 14px;border-radius:4px">後天 <span class="stat-val" id="v-post" style="font-family:monospace">0.0</span></span>
+    <span style="background:#ebe6e0;padding:4px 14px;border-radius:4px">老闆 <span class="stat-val" id="v-lead" style="font-family:monospace">0.0</span></span>
+    <span style="background:#f5f2ed;padding:4px 14px;border-radius:4px">主管 <span class="stat-val" id="v-sub" style="font-family:monospace">0.0</span></span>
+    <div class="ds-bar" id="ds-bar" style="flex:1;min-width:200px;height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee;display:flex;align-items:center"><div class="ds-bar-static" id="ds-bar-s" style="height:100%;background:var(--static);width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="height:100%;background:var(--active);width:50%"></div><span id="ds-label-s" style="position:absolute;left:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">靜 0</span><span id="ds-label-d" style="position:absolute;right:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">動 0</span></div>
+  </div>
+  <div id="report-matrix-table" style="margin:8px 0;overflow-x:auto"></div>
   <div id="ai-analysis-area"></div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
@@ -3295,74 +3298,63 @@ function showReport(){
   const total=sT+dT||1;
   document.getElementById('ds-bar-s').style.width=(sT/total*100).toFixed(1)+'%';document.getElementById('ds-bar-d').style.width=(dT/total*100).toFixed(1)+'%';
   document.getElementById('ds-label-s').innerText='靜 '+sT;document.getElementById('ds-label-d').innerText='動 '+dT;
-  const labelsEl=document.getElementById('matrix-labels'),layoutEl=document.getElementById('matrix-layout');
-  layoutEl.querySelectorAll('.matrix-col').forEach(c=>c.remove());
-  labelsEl.innerHTML='<div id="label-spacer"></div>'+PARTS_SHORT.map((p,pi)=>'<div class="row-label" style="position:relative;'+(pi===4?'margin-top:6px;':'')+'">'+p+'</div>').join('');
-  DIMS.forEach((d,i)=>{const c=PALETTE[i],res=calcDim(i),coeff=res?.coeff??0,col=document.createElement('div');col.className='matrix-col';
-    const hdr=document.createElement('div');hdr.className='dim-header-v';hdr.style.cssText='background:'+c.bg+';color:'+c.tx;hdr.innerHTML='<span>'+d.a+'</span><span>'+d.b+'</span>';col.appendChild(hdr);
-    const bar=document.createElement('div');bar.className='prop-bar';if(res)bar.classList.add(res.type==='動'?'red':'green');col.appendChild(bar);
-    const lbl=document.createElement('div');lbl.className='coeff-lbl';lbl.innerText=res?coeff.toFixed(1):'-';col.appendChild(lbl);
-    const stack=document.createElement('div');stack.className='stack-area';if(res)for(let j=0;j<Math.round(coeff*10);j++){const u=document.createElement('div');u.className='stack-unit';stack.appendChild(u);}col.appendChild(stack);
-    data[i].forEach((v,pi)=>{const cell=document.createElement('div');cell.className='im-cell';if(pi===4)cell.style.marginTop='6px';const box=document.createElement('div');box.className='im-box';if(v){const t=v==='A'?d.aT:d.bT;box.classList.add(t==='動'?'red':'green');box.innerText=v==='A'?d.a:d.b;}cell.appendChild(box);col.appendChild(cell);});
-    layoutEl.appendChild(col);});
-  requestAnimationFrame(()=>{const fc=layoutEl.querySelector('.matrix-col');if(!fc)return;let off=0;for(const el of[...fc.children]){if(el.classList.contains('im-cell'))break;off+=el.offsetHeight+2;}const sp=document.getElementById('label-spacer');if(sp)sp.style.height=off+'px';});
-  // 部位×維度總覽表
-  const pdtEl=document.getElementById('report-part-dim-table');
-  if(pdtEl){
+  // 部位×維度雙欄表格
+  const mtEl=document.getElementById('report-matrix-table');
+  if(mtEl){
     const partOrder=[0,1,2,3,4,5,6,7,8];
     const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
     const dimColors=['#3F5F6F','#5F7F8F','#8FA7B2','#4F6F66','#6F8F86','#9FB5AE','#565A78','#747AA0','#A0A6C8','#6A6052','#8A7F70','#B0A596','#C8BDAE'];
-    const STATIC_BG='#2F4858',DYNAMIC_BG='#C1493A';
-    // 靜欄字（左）和動欄字（右），順序對應 DIMS
-    const staticLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
-    const dynamicLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+    const dimAlpha=['rgba(63,95,111,0.4)','rgba(95,127,143,0.4)','rgba(143,167,178,0.4)','rgba(79,111,102,0.4)','rgba(111,143,134,0.4)','rgba(159,181,174,0.4)','rgba(86,90,120,0.4)','rgba(116,122,160,0.4)','rgba(160,166,200,0.4)','rgba(106,96,82,0.4)','rgba(138,127,112,0.4)','rgba(176,165,150,0.4)','rgba(200,189,174,0.4)'];
+    const SBG='#2F4858',DBG='#C1493A';
+    const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
+    const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+    const bd='border:1px solid rgba(0,0,0,0.15)';
 
     let t='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap">';
     // 第一層：維度名稱
-    t+='<thead><tr><th rowspan="3" style="padding:6px 10px;border:1px solid rgba(0,0,0,0.15);background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
+    t+='<thead><tr><th rowspan="3" style="padding:6px 10px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
     DIMS.forEach(function(d,i){
-      t+='<th colspan="2" style="padding:5px 8px;border:1px solid rgba(0,0,0,0.15);background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px">'+d.a+d.b+'</th>';
+      t+='<th colspan="2" style="padding:5px 8px;'+bd+';background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px">'+d.a+d.b+'</th>';
     });
     t+='</tr>';
-    // 第二層：靜｜動子欄
+    // 第二層：靜｜動
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      t+='<th style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);background:'+STATIC_BG+';color:white;font-weight:700;text-align:center;font-size:13px">'+staticLabels[i]+'</th>';
-      t+='<th style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);background:'+DYNAMIC_BG+';color:white;font-weight:700;text-align:center;font-size:13px">'+dynamicLabels[i]+'</th>';
+      t+='<th style="padding:3px 8px;'+bd+';background:'+SBG+';color:white;font-weight:700;text-align:center">'+sL[i]+'</th>';
+      t+='<th style="padding:3px 8px;'+bd+';background:'+DBG+';color:white;font-weight:700;text-align:center">'+dL[i]+'</th>';
     });
     t+='</tr>';
-    // 第三層：係數行
+    // 第三層：係數
     t+='<tr>';
     DIMS.forEach(function(d,i){
       var res=calcDim(i);
-      t+='<td colspan="2" style="padding:3px 8px;border:1px solid rgba(0,0,0,0.15);text-align:center;font-size:13px;color:var(--text-3);background:var(--bg)">'+(res?res.coeff.toFixed(2):'—')+'</td>';
+      t+='<td colspan="2" style="padding:3px 8px;'+bd+';text-align:center;font-size:18px;font-weight:700;color:var(--text-3);background:var(--bg);font-family:monospace">'+(res?res.coeff.toFixed(2):'—')+'</td>';
     });
     t+='</tr></thead><tbody>';
     // 資料行
+    const bdd='border:1px solid rgba(0,0,0,0.1)';
     partOrder.forEach(function(pi,idx){
       t+='<tr>';
-      t+='<td style="padding:5px 10px;border:1px solid rgba(0,0,0,0.15);font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
+      t+='<td style="padding:5px 10px;'+bd+';font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
       DIMS.forEach(function(d,di){
         var v=data[di][pi];
         var isStatic=false,isDynamic=false;
         if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
-        var dc=dimColors[di];
-        var dcAlpha=dc+'66'; // 40% opacity via hex alpha
         if(isStatic){
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+STATIC_BG+';color:white;font-weight:700;font-size:13px">'+staticLabels[di]+'</td>';
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+dcAlpha+'"></td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+SBG+';color:white;font-weight:700">'+sL[di]+'</td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+dimAlpha[di]+'"></td>';
         }else if(isDynamic){
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+dcAlpha+'"></td>';
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center;background:'+DYNAMIC_BG+';color:white;font-weight:700;font-size:13px">'+dynamicLabels[di]+'</td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+dimAlpha[di]+'"></td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+DBG+';color:white;font-weight:700">'+dL[di]+'</td>';
         }else{
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center"></td>';
-          t+='<td style="padding:4px 8px;border:1px solid rgba(0,0,0,0.1);text-align:center"></td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center"></td>';
+          t+='<td style="padding:4px 8px;'+bdd+';text-align:center"></td>';
         }
       });
       t+='</tr>';
     });
     t+='</tbody></table>';
-    pdtEl.innerHTML=t;
+    mtEl.innerHTML=t;
   }
 }
 
