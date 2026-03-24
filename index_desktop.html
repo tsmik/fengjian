@@ -2972,79 +2972,124 @@ function cpRenderMain(){
       merged.push({type:'single',item:item,qid:qid,q:q});
     }
 
+    // 渲染單題一列（含 side tag）
+    function renderQRow(qid,q,side){
+      var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
+      var sideTag=side?'<span style="font-size:var(--cp-option-desc);padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(side==='L'?'左':'右')+'</span>':'';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;flex-wrap:wrap">'+
+        '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+q.text+sideTag+'</div>'+
+        renderOpts(q,qid,side||'',curVal)+
+      '</div>';
+    }
+
+    // 渲染合併列選項（配對題不展開時）
+    function renderMergedOpts(qid,q,mergedVal,diffMark,vL,vR){
+      var out='<div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 8px">';
+      var qidSafe=qid.replace(/'/g,"\\'");
+      q.opts.forEach(function(opt){
+        var v=typeof opt==='string'?opt:opt.v;
+        var hint=typeof opt==='string'?'':opt.hint||'';
+        var isSel=v===mergedVal;
+        var isHalf=!isSel&&diffMark&&(v===vL||v===vR);
+        var color=isSel?'var(--static)':(isHalf?'var(--static)':'var(--text-2)');
+        var borderColor=isSel?'var(--static)':(isHalf?'var(--static)':'var(--text-3)');
+        var fontWeight=isSel?'700':(isHalf?'500':'400');
+        var vSafe=v.replace(/"/g,'&quot;');
+        var hintHtml=hint?'<span style="font-size:var(--cp-option-desc);color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
+        var halfTag=isHalf?'<span style="font-size:14px;color:var(--active);margin-left:3px">'+(v===vL?'左':'右')+'</span>':'';
+        var boxFill=isSel?'✓':(isHalf?'−':'');
+        var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:14px;color:var(--static);vertical-align:middle">'+boxFill+'</span>';
+        out+='<button data-qid="'+qidSafe+'" data-side="" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
+          ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
+          box+v+halfTag+hintHtml+
+        '</button>';
+      });
+      out+='</div>';
+      return out;
+    }
+
+    // 連接符號
+    var connAnd='<div style="font-size:var(--cp-option-desc);color:var(--text-3);padding:0 8px;font-weight:700">＋</div>';
+
     html+='<div style="display:flex;flex-direction:column">';
     merged.forEach(function(m){
       if(m.type==='single'){
         var item=m.item;
-        if(!m.qid||!m.q){
+        var allIds=item.ids||[];
+        if(allIds.length===0||!qMap[allIds[0]]){
           html+=statusRow(item.ok,item.label);
           return;
         }
-        var curVal=item.side?(obsData[m.qid+'_'+item.side]||obsData[m.qid]||''):obsData[m.qid]||'';
-        var sideTag=item.side?'<span style="font-size:var(--cp-option-desc);padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(item.side==='L'?'左':'右')+'</span>':'';
-        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
-          '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+m.q.text+sideTag+'</div>'+
-          renderOpts(m.q,m.qid,item.side||'',curVal)+
-        '</div>';
+        html+='<div style="border-bottom:1px solid var(--border)">';
+        allIds.forEach(function(qid,qi){
+          var q=qMap[qid];
+          if(!q)return;
+          if(qi>0)html+=connAnd;
+          html+=renderQRow(qid,q,item.side||'');
+        });
+        html+='</div>';
         return;
       }
 
-      // --- 配對題：合併顯示 ---
-      var qid=m.qid,q=m.q;
-      var vL=obsData[qid+'_L']||obsData[qid]||'';
-      var vR=obsData[qid+'_R']||obsData[qid]||'';
-      var bothSame=vL===vR;
-      var lrKey=cpCur+'_'+qid;
-      var isExpanded=!!_cpLrExpanded[lrKey]||(!bothSame&&(vL||vR));
+      // --- 配對題：合併顯示（支援多 id）---
+      var allIds=m.lItem.ids||[m.qid];
+      var firstQ=m.q;
+      // 判斷是否有任何 id 的 L≠R
+      var anyDiff=false,anyExpanded=false;
+      allIds.forEach(function(qid){
+        var q=qMap[qid];
+        if(!q)return;
+        var vL=obsData[qid+'_L']||obsData[qid]||'';
+        var vR=obsData[qid+'_R']||obsData[qid]||'';
+        if(vL!==vR&&(vL||vR))anyDiff=true;
+        var lrKey=cpCur+'_'+qid;
+        if(_cpLrExpanded[lrKey])anyExpanded=true;
+      });
+      // 用第一個 paired id 控制整組展開
+      var groupKey=cpCur+'_'+allIds[0];
+      var isExpanded=!!_cpLrExpanded[groupKey]||(anyDiff&&!anyExpanded);
 
-      // 合併列
-      var mergedVal=bothSame?vL:'';
-      var diffMark=(!bothSame&&(vL||vR));
+      html+='<div style="border-bottom:1px solid var(--border);padding:8px 0">';
 
-      html+='<div style="border-bottom:1px solid var(--border);padding:8px 8px">';
-      // 題目名稱 + 展開按鈕
-      html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
-        '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
-        '<button onclick="cpToggleLR(\''+lrKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>'+
-        (diffMark&&!isExpanded?'<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>':'') +
-      '</div>';
+      allIds.forEach(function(qid,qi){
+        var q=qMap[qid];
+        if(!q)return;
+        var isPaired=!!q.paired;
+        if(qi>0)html+=connAnd;
 
-      // 合併選項列（不展開時顯示）
-      if(!isExpanded){
-        html+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
-        var qidSafe=qid.replace(/'/g,"\\'");
-        q.opts.forEach(function(opt){
-          var v=typeof opt==='string'?opt:opt.v;
-          var hint=typeof opt==='string'?'':opt.hint||'';
-          var isSel=v===mergedVal;
-          var isHalf=!isSel&&diffMark&&(v===vL||v===vR);
-          var color=isSel?'var(--static)':(isHalf?'var(--static)':'var(--text-2)');
-          var borderColor=isSel?'var(--static)':(isHalf?'var(--static)':'var(--text-3)');
-          var fontWeight=isSel?'700':(isHalf?'500':'400');
-          var vSafe=v.replace(/"/g,'&quot;');
-          var hintHtml=hint?'<span style="font-size:var(--cp-option-desc);color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
-          var halfTag=isHalf?'<span style="font-size:14px;color:var(--active);margin-left:3px">'+(v===vL?'左':'右')+'</span>':'';
-          var boxFill=isSel?'✓':(isHalf?'−':'');
-          var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:14px;color:var(--static);vertical-align:middle">'+boxFill+'</span>';
-          html+='<button data-qid="'+qidSafe+'" data-side="" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-            ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
-            box+v+halfTag+hintHtml+
-          '</button>';
-        });
-        html+='</div>';
-      }
+        if(isPaired){
+          var vL=obsData[qid+'_L']||obsData[qid]||'';
+          var vR=obsData[qid+'_R']||obsData[qid]||'';
+          var bothSame=vL===vR;
+          var mergedVal=bothSame?vL:'';
+          var diffMark=(!bothSame&&(vL||vR));
 
-      // 展開時：左右各一列
-      if(isExpanded){
-        ['L','R'].forEach(function(side){
-          var sideLabel=side==='L'?'左':'右';
-          var cv=obsData[qid+'_'+side]||obsData[qid]||'';
-          html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:8px">'+
-            '<span style="font-size:var(--cp-part-meta);padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
-            renderOpts(q,qid,side,cv)+
-          '</div>';
-        });
-      }
+          // 題目名稱 + 展開按鈕（只在第一個 paired 題顯示按鈕）
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:2px">'+
+            '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>';
+          if(qi===0||allIds.length===1){
+            html+='<button onclick="cpToggleLR(\''+groupKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>';
+            if(anyDiff&&!isExpanded)html+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>';
+          }
+          html+='</div>';
+
+          if(!isExpanded){
+            html+=renderMergedOpts(qid,q,mergedVal,diffMark,vL,vR);
+          }else{
+            ['L','R'].forEach(function(side){
+              var sideLabel=side==='L'?'左':'右';
+              var cv=obsData[qid+'_'+side]||obsData[qid]||'';
+              html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:16px">'+
+                '<span style="font-size:var(--cp-part-meta);padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
+                renderOpts(q,qid,side,cv)+
+              '</div>';
+            });
+          }
+        }else{
+          // 非配對題：直接顯示
+          html+=renderQRow(qid,q,'');
+        }
+      });
 
       html+='</div>';
     });
