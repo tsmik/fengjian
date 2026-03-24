@@ -2740,7 +2740,7 @@ function renderDimPanel(el){
     {label:'運氣係數',rows:[[6,7,8]]},
     {label:'後天係數',rows:[[9,10,11,12]]}
   ];
-  var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 0;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
+  var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 8px;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
   var activeStyle='background:#e8eff2;border-color:#5C7A8A;border-width:2px;color:#5C7A8A';
   groups.forEach(function(g){
     html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px">'+g.label+'</div>';
@@ -2772,8 +2772,8 @@ function renderDimPanel(el){
   html+='<table style="width:100%;border-collapse:collapse;font-size:14px">';
   html+='<thead><tr>'+
     '<th style="text-align:left;padding:5px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-weight:700">部位</th>'+
-    '<th style="text-align:center;padding:5px 4px;border-bottom:2px solid var(--border);background:'+SBG+';color:white;font-weight:700;border-radius:3px 0 0 0">'+colS+'</th>'+
-    '<th style="text-align:center;padding:5px 4px;border-bottom:2px solid var(--border);background:'+DBG+';color:white;font-weight:700;border-radius:0 3px 0 0">'+colD+'</th>'+
+    '<th style="text-align:center;padding:5px 4px;border-bottom:2px solid var(--border);color:'+SBG+';font-weight:700">'+colS+'</th>'+
+    '<th style="text-align:center;padding:5px 4px;border-bottom:2px solid var(--border);color:'+DBG+';font-weight:700">'+colD+'</th>'+
   '</tr></thead><tbody>';
   partOrder.forEach(function(pi,i){
     var v=data[cpCur][pi];
