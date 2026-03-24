@@ -653,16 +653,7 @@ setTimeout(kRender,100);
     <div class="report-name" id="report-name-display"></div>
     <div class="report-title">人相兵法</div>
   </div>
-  <div class="report-stats-row" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px;font-size:18px;font-weight:900;font-family:'Noto Serif TC',serif">
-    <span style="background:var(--dark);color:white;padding:4px 14px;border-radius:4px">總合 <span class="stat-val" id="v-total" style="font-family:monospace">0.0</span></span>
-    <span style="background:#f0ebe5;padding:4px 14px;border-radius:4px">先天 <span class="stat-val" id="v-pre" style="font-family:monospace">0.0</span></span>
-    <span style="background:#e5edf0;padding:4px 14px;border-radius:4px">運氣 <span class="stat-val" id="v-luck" style="font-family:monospace">0.0</span></span>
-    <span style="background:#e8f0e5;padding:4px 14px;border-radius:4px">後天 <span class="stat-val" id="v-post" style="font-family:monospace">0.0</span></span>
-    <span style="background:#ebe6e0;padding:4px 14px;border-radius:4px">老闆 <span class="stat-val" id="v-lead" style="font-family:monospace">0.0</span></span>
-    <span style="background:#f5f2ed;padding:4px 14px;border-radius:4px">主管 <span class="stat-val" id="v-sub" style="font-family:monospace">0.0</span></span>
-    <div class="ds-bar" id="ds-bar" style="flex:1;min-width:200px;height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee;display:flex;align-items:center"><div class="ds-bar-static" id="ds-bar-s" style="height:100%;background:var(--static);width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="height:100%;background:var(--active);width:50%"></div><span id="ds-label-s" style="position:absolute;left:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">靜 0</span><span id="ds-label-d" style="position:absolute;right:8px;color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">動 0</span></div>
-  </div>
-  <div id="report-matrix-table" style="margin:8px 0;overflow-x:auto"></div>
+  <div id="report-full-table" style="margin:8px 0;overflow-x:auto"></div>
   <div id="ai-analysis-area"></div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
@@ -3338,14 +3329,17 @@ function showReport(){
   document.getElementById('report-overlay').style.display='block';
   document.getElementById('nav-name').innerText=userName||'';
   document.getElementById('report-name-display').innerText=userName||'未命名';
-  [['v-total',[0,1,2,3,4,5,6,7,8,9,10,11,12]],['v-pre',[0,1,2,3,4,5]],['v-luck',[6,7,8]],['v-post',[9,10,11,12]],['v-lead',[0,1,2]],['v-sub',[3,4,5]]].forEach(([id,ids])=>{document.getElementById(id).innerText=avgCoeff(ids);});
-  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
+  // 統計數據
+  const vTotal=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+  const vPre=avgCoeff([0,1,2,3,4,5]),vLuck=avgCoeff([6,7,8]),vPost=avgCoeff([9,10,11,12]);
+  const vLead=avgCoeff([0,1,2]),vSub=avgCoeff([3,4,5]);
+  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const tp=v==='A'?d.aT:d.bT;tp==='靜'?sT++:dT++;});});
   const total=sT+dT||1;
-  document.getElementById('ds-bar-s').style.width=(sT/total*100).toFixed(1)+'%';document.getElementById('ds-bar-d').style.width=(dT/total*100).toFixed(1)+'%';
-  document.getElementById('ds-label-s').innerText='靜 '+sT;document.getElementById('ds-label-d').innerText='動 '+dT;
-  // 部位×維度雙欄表格
-  const mtEl=document.getElementById('report-matrix-table');
-  if(mtEl){
+  const sPct=(sT/total*100).toFixed(1),dPct=(dT/total*100).toFixed(1);
+
+  // 完整表格（頂部統計 + 維度矩陣）
+  const ftEl=document.getElementById('report-full-table');
+  if(ftEl){
     const partOrder=[0,1,2,3,4,5,6,7,8];
     const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
     const dimColors=['#3F5F6F','#5F7F8F','#8FA7B2','#4F6F66','#6F8F86','#9FB5AE','#565A78','#747AA0','#A0A6C8','#6A6052','#8A7F70','#B0A596','#C8BDAE'];
@@ -3354,10 +3348,35 @@ function showReport(){
     const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
+    const hs='font-size:18px;font-weight:900;font-family:monospace;padding:6px 8px;text-align:center';
 
     let t='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap">';
+
+    // === 頂部統計列 ===
+    // 總合（colspan=27: 1部位欄 + 13維度×2欄）
+    t+='<tr><td colspan="27" style="'+hs+';background:var(--dark);color:white;letter-spacing:2px">總合　'+vTotal+'</td></tr>';
+    // 先天12 + 運氣6 + 後天8 = 26 + 1部位欄 = 27
+    t+='<tr><td rowspan="2" style="padding:6px 8px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2"></td>'+
+      '<td colspan="12" style="'+hs+';background:#f0ebe5;'+bd+'">先天　'+vPre+'</td>'+
+      '<td colspan="6" style="'+hs+';background:#e5edf0;'+bd+'">運氣　'+vLuck+'</td>'+
+      '<td colspan="8" style="'+hs+';background:#e8f0e5;'+bd+'">後天　'+vPost+'</td></tr>';
+    // 老闆6 + 主管6（在先天12欄內）+ 運氣6空 + 後天8空
+    t+='<tr>'+
+      '<td colspan="6" style="'+hs+';background:#ebe6e0;'+bd+'">老闆　'+vLead+'</td>'+
+      '<td colspan="6" style="'+hs+';background:#f5f2ed;'+bd+'">主管　'+vSub+'</td>'+
+      '<td colspan="6" style="padding:4px;'+bd+';background:var(--bg)"></td>'+
+      '<td colspan="8" style="padding:4px;'+bd+';background:var(--bg)"></td></tr>';
+    // 靜/動進度條
+    t+='<tr><td colspan="27" style="padding:0;height:28px;position:relative;background:#eee">'+
+      '<div style="position:absolute;top:0;left:0;height:100%;width:'+sPct+'%;background:var(--static)"></div>'+
+      '<div style="position:absolute;top:0;left:'+sPct+'%;height:100%;width:'+dPct+'%;background:var(--active)"></div>'+
+      '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">靜 '+sT+'</span>'+
+      '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">動 '+dT+'</span>'+
+    '</td></tr>';
+
+    // === 維度 header ===
     // 第一層：維度名稱
-    t+='<thead><tr><th rowspan="3" style="padding:6px 10px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
+    t+='<tr><th rowspan="3" style="padding:6px 10px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
     DIMS.forEach(function(d,i){
       t+='<th colspan="2" style="padding:5px 8px;'+bd+';background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px">'+d.a+d.b+'</th>';
     });
@@ -3375,8 +3394,9 @@ function showReport(){
       var res=calcDim(i);
       t+='<td colspan="2" style="padding:3px 8px;'+bd+';text-align:center;font-size:18px;font-weight:700;color:var(--text-3);background:var(--bg);font-family:monospace">'+(res?res.coeff.toFixed(2):'—')+'</td>';
     });
-    t+='</tr></thead><tbody>';
-    // 資料行
+    t+='</tr>';
+
+    // === 資料行 ===
     const bdd='border:1px solid rgba(0,0,0,0.1)';
     partOrder.forEach(function(pi,idx){
       t+='<tr>';
@@ -3398,8 +3418,8 @@ function showReport(){
       });
       t+='</tr>';
     });
-    t+='</tbody></table>';
-    mtEl.innerHTML=t;
+    t+='</table>';
+    ftEl.innerHTML=t;
   }
 }
 
