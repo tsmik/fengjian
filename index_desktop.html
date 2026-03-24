@@ -3518,113 +3518,32 @@ function renderSensPage(){
     var bg=type==='靜'?SBG:DBG;
     return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;background:'+bg+';color:white;font-weight:700;font-size:13px">'+type+' '+coeff.toFixed(2)+'</span>';
   }
-
-  // === 區塊一：各維度關鍵條件（三層邏輯）===
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px">敏感度分析</div>';
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度關鍵條件</div>';
   var nums='①②③④⑤⑥⑦⑧⑨⑩';
 
-  for(var di=0;di<13;di++){
-    var d=DIMS[di];
-    var dimRes=calcDim(di);
-    var dimType=dimRes?dimRes.type:'—';
-    var dimCoeff=dimRes?dimRes.coeff:0;
-    var isMax=dimCoeff>=0.8-0.001;
-    var isStatic=dimType==='靜';
-
-    html+='<div style="margin-bottom:12px">';
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
-      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.a+d.b+'</span>'+
-      (dimRes?badge(dimType,dimCoeff):'<span style="color:var(--text-3)">—</span>');
-
-    if(isMax&&isStatic){
-      html+='<span style="font-size:13px;color:var(--text-3);font-weight:400">已達最佳狀態</span>';
-      html+='</div></div>';
-      continue;
-    }
-
-    if(isMax&&!isStatic){
-      html+='<span style="font-size:13px;color:var(--text-3);font-weight:400">係數已最高，可嘗試轉為靜</span>';
-      html+='</div>';
-      var flipItems=flipResults.filter(function(r){return r.flipDims.indexOf(di)>=0;});
-      if(flipItems.length===0){
-        html+='<div style="padding:4px 16px;font-size:13px;color:var(--text-3)">無可轉換的條件</div>';
-      }else{
-        html+='<div style="padding:4px 16px;margin-bottom:4px">'+
-          '<div style="font-size:13px;color:var(--text-2)">'+nums[0]+' 調整後可轉為 '+badgeSmall('靜',dimCoeff)+'</div>';
-        flipItems.forEach(function(r){
-          html+='<div style="font-size:14px;color:var(--text-2);padding:2px 0 2px 18px">'+
-            '<b>'+r.text+'</b>'+
-            '<span style="color:var(--text-3);margin-left:6px">（目前：'+r.curVal+'）</span>'+
-          '</div>';
-        });
-        html+='</div>';
-      }
-      html+='</div>';
-      continue;
-    }
-
-    // 情況一：係數 < 0.8
-    html+='</div>';
-    var dimItems=results.filter(function(r){return r.dimDeltas[di]>0.001;})
-      .sort(function(a,b){return b.dimDeltas[di]-a.dimDeltas[di];});
-    var groups=[],lastKey=-1;
-    dimItems.forEach(function(r){
-      var k=rk(r.dimDeltas[di]);
-      if(k!==lastKey){groups.push({delta:r.dimDeltas[di],newCoeff:r.newCoeffs[di],newType:r.newTypes[di],items:[]});lastKey=k;}
-      groups[groups.length-1].items.push(r);
+  // 按部位彙整條件列表
+  function renderItemsByPart(items){
+    var byPart={};
+    items.forEach(function(r){
+      var p=r.part||'其他';
+      if(!byPart[p])byPart[p]=[];
+      byPart[p].push(r);
     });
-
-    if(groups.length===0){
-      html+='<div style="padding:4px 16px;font-size:13px;color:var(--text-3)">無可提升的條件</div>';
-    }else{
-      groups.forEach(function(g,gi){
-        var baseType=baseTypes[di]||'動';
-        var newType=g.newType||baseType;
-        html+='<div style="padding:4px 16px;margin-bottom:4px">'+
-          '<div style="font-size:13px;color:var(--text-2)">'+nums[gi]+' 調整後係數 '+badgeSmall(baseType,baseCoeffs[di])+' → '+badgeSmall(newType,g.newCoeff)+'</div>';
-        g.items.forEach(function(r){
-          html+='<div style="font-size:14px;color:var(--text-2);padding:2px 0 2px 18px">'+
-            '<b>'+r.text+'</b>'+
-            '<span style="color:var(--text-3);margin-left:6px">（目前：'+r.curVal+'）</span>'+
-          '</div>';
-        });
-        html+='</div>';
+    var out='';
+    var partOrder=OBS_PART_NAMES;
+    partOrder.forEach(function(p){
+      if(!byPart[p])return;
+      out+='<div style="padding:2px 0 2px 18px;font-size:14px;color:var(--text-2)">'+
+        '<b style="color:var(--text)">'+p+'：</b>';
+      byPart[p].forEach(function(r,ri){
+        if(ri>0)out+='<span style="margin-left:30px"></span>';
+        out+='<span>'+r.text+'</span>'+
+          '<span style="color:var(--text-3);margin-left:4px">（目前：'+r.curVal+'）</span><br>';
       });
-    }
-    html+='</div>';
+      out+='</div>';
+    });
+    return out;
   }
-
-  // === 區塊二：跨維度最大影響（按提升幅度分組並列）===
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">跨維度最大影響</div>';
-
-  // 合併 results + flipResults
-  var allCross=results.slice();
-  flipResults.forEach(function(fr){
-    if(!allCross.some(function(r){return r.id===fr.id;})){
-      allCross.push({id:fr.id,text:fr.text,part:fr.part,curVal:fr.curVal,
-        totalDelta:0,affected:[],flipped:fr.flipDims,newTypes:fr.newTypes,newCoeffs:fr.newCoeffs,dimDeltas:[]});
-    }
-  });
-  // 排序：totalDelta 大→小，同 delta 時 flipCount 多→少
-  allCross.sort(function(a,b){
-    if(Math.abs(b.totalDelta-a.totalDelta)>0.001)return b.totalDelta-a.totalDelta;
-    return (b.flipped?b.flipped.length:0)-(a.flipped?a.flipped.length:0);
-  });
-  var filtered=allCross.filter(function(r){return r.totalDelta>0.001||(r.flipped&&r.flipped.length>0);});
-
-  // 按 totalDelta 分組（相同提升幅度歸為一組）
-  var crossGroups=[],lastCk=-1;
-  filtered.forEach(function(r){
-    var k=rk(r.totalDelta);
-    if(k!==lastCk){crossGroups.push({delta:r.totalDelta,items:[]});lastCk=k;}
-    crossGroups[crossGroups.length-1].items.push(r);
-  });
-
-  // 取前 5 組
-  crossGroups=crossGroups.slice(0,5);
-
-  // 建構影響明細 helper
+  // 影響明細
   function dimDetailStr(r){
     var details=[];
     var all=(r.affected||[]).slice();
@@ -3641,12 +3560,36 @@ function renderSensPage(){
     return details.join('、');
   }
 
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px">敏感度分析</div>';
+
+  // ===== 區塊一（置頂）：跨維度最大影響 =====
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">跨維度最大影響</div>';
+
+  var allCross=results.slice();
+  flipResults.forEach(function(fr){
+    if(!allCross.some(function(r){return r.id===fr.id;})){
+      allCross.push({id:fr.id,text:fr.text,part:fr.part,curVal:fr.curVal,
+        totalDelta:0,affected:[],flipped:fr.flipDims,newTypes:fr.newTypes,newCoeffs:fr.newCoeffs,dimDeltas:[]});
+    }
+  });
+  allCross.sort(function(a,b){
+    if(Math.abs(b.totalDelta-a.totalDelta)>0.001)return b.totalDelta-a.totalDelta;
+    return (b.flipped?b.flipped.length:0)-(a.flipped?a.flipped.length:0);
+  });
+  var filtered=allCross.filter(function(r){return r.totalDelta>0.001||(r.flipped&&r.flipped.length>0);});
+  var crossGroups=[],lastCk=-1;
+  filtered.forEach(function(r){
+    var k=rk(r.totalDelta);
+    if(k!==lastCk){crossGroups.push({delta:r.totalDelta,items:[]});lastCk=k;}
+    crossGroups[crossGroups.length-1].items.push(r);
+  });
+  crossGroups=crossGroups.slice(0,5);
+
   if(crossGroups.length===0){
     html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">無可提升的條件</div>';
   }else{
     crossGroups.forEach(function(g,gi){
       html+='<div style="margin-bottom:14px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-      // 組標題
       if(g.delta>0.001){
         var newTotalVal=baseTotalCoeff+g.delta;
         html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數 '+baseTotalCoeff.toFixed(2)+' → '+newTotalVal.toFixed(2)+'</div>';
@@ -3654,20 +3597,91 @@ function renderSensPage(){
         var fc=g.items[0].flipped?g.items[0].flipped.length:0;
         html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數不變（'+fc+'個維度由動轉靜）</div>';
       }
-      if(g.items.length>1){
-        html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:4px">以下條件任一調整均可達到：</div>';
-      }
-      // 每個條件
+      if(g.items.length>1)html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:4px">以下條件任一調整均可達到：</div>';
       g.items.forEach(function(r){
-        html+='<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">';
-        html+='<div style="font-size:14px;font-weight:700;color:var(--text)">'+
-          r.text+'<span style="color:var(--text-3);font-weight:400;margin-left:6px">（目前：'+r.curVal+'）</span></div>';
-        html+='<div style="font-size:13px;color:var(--text-2)">影響：'+dimDetailStr(r)+'</div>';
-        html+='</div>';
+        html+='<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">'+
+          '<div style="font-size:14px;color:var(--text-2)"><b style="color:var(--text)">'+r.part+'：</b>'+r.text+
+          '<span style="color:var(--text-3);margin-left:4px">（目前：'+r.curVal+'）</span></div>'+
+          '<div style="font-size:13px;color:var(--text-2);padding-left:18px">影響：'+dimDetailStr(r)+'</div></div>';
       });
       html+='</div>';
     });
   }
+
+  // ===== 區塊二（下方）：各維度關鍵條件（兩欄）=====
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度關鍵條件</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+
+  // 左欄：先天 0-5，右欄：運氣 6-8 + 後天 9-12
+  var leftDims=[0,1,2,3,4,5],rightDims=[6,7,8,9,10,11,12];
+
+  function renderDimBlock(di){
+    var d=DIMS[di];
+    var dimRes=calcDim(di);
+    var dimType=dimRes?dimRes.type:'—';
+    var dimCoeff=dimRes?dimRes.coeff:0;
+    var isMax=dimCoeff>=0.8-0.001;
+    var isStatic=dimType==='靜';
+    var out='<div style="margin-bottom:12px">';
+    out+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap">'+
+      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.a+d.b+'</span>'+
+      (dimRes?badge(dimType,dimCoeff):'<span style="color:var(--text-3)">—</span>');
+
+    if(isMax&&isStatic){
+      out+='<span style="font-size:13px;color:var(--text-3)">已達最佳狀態</span></div></div>';
+      return out;
+    }
+    if(isMax&&!isStatic){
+      out+='<span style="font-size:13px;color:var(--text-3)">係數已最高，可嘗試轉為靜</span></div>';
+      var flipItems=flipResults.filter(function(r){return r.flipDims.indexOf(di)>=0;});
+      if(flipItems.length===0){
+        out+='<div style="padding:4px 8px;font-size:13px;color:var(--text-3)">無可轉換的條件</div>';
+      }else{
+        out+='<div style="padding:4px 8px;margin-bottom:4px">'+
+          '<div style="font-size:13px;color:var(--text-2)">'+nums[0]+' 調整後可轉為 '+badgeSmall('靜',dimCoeff)+'</div>'+
+          renderItemsByPart(flipItems)+'</div>';
+      }
+      out+='</div>';return out;
+    }
+
+    // 情況一
+    out+='</div>';
+    var dimItems=results.filter(function(r){return r.dimDeltas[di]>0.001;})
+      .sort(function(a,b){return b.dimDeltas[di]-a.dimDeltas[di];});
+    var groups=[],lastKey=-1;
+    dimItems.forEach(function(r){
+      var k=rk(r.dimDeltas[di]);
+      if(k!==lastKey){groups.push({delta:r.dimDeltas[di],newCoeff:r.newCoeffs[di],newType:r.newTypes[di],items:[]});lastKey=k;}
+      groups[groups.length-1].items.push(r);
+    });
+    if(groups.length===0){
+      out+='<div style="padding:4px 8px;font-size:13px;color:var(--text-3)">無可提升的條件</div>';
+    }else{
+      groups.forEach(function(g,gi){
+        var baseType=baseTypes[di]||'動';
+        var newType=g.newType||baseType;
+        out+='<div style="padding:4px 8px;margin-bottom:4px">'+
+          '<div style="font-size:13px;color:var(--text-2)">'+nums[gi]+' 調整後 '+badgeSmall(baseType,baseCoeffs[di])+' → '+badgeSmall(newType,g.newCoeff)+'</div>'+
+          renderItemsByPart(g.items)+'</div>';
+      });
+    }
+    out+='</div>';return out;
+  }
+
+  // 左欄
+  html+='<div>';
+  html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:4px 0 8px">先天係數</div>';
+  leftDims.forEach(function(di){html+=renderDimBlock(di);});
+  html+='</div>';
+  // 右欄
+  html+='<div>';
+  html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:4px 0 8px">運氣＋後天係數</div>';
+  rightDims.forEach(function(di){
+    if(di===9)html+='<div style="font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:12px 0 4px;border-top:1px solid var(--border);margin-top:8px">後天係數</div>';
+    html+=renderDimBlock(di);
+  });
+  html+='</div>';
+  html+='</div>'; // close grid
 
   el.innerHTML=html;
 }
