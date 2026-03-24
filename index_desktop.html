@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260324-010000 -->
+<!-- BUILD 20260324-020000 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -14,7 +14,7 @@
 <meta http-equiv="Expires" content="0">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#c03830;--static:#4c6472;--accent:#c03830;--dark:#1e2127;--gold:#9a7c4a}
+:root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#c03830;--static:#4c6472;--accent:#c03830;--dark:#1e2127;--gold:#9a7c4a;--cp-dim-title:18px;--cp-dim-sub:13px;--cp-part-title:15px;--cp-part-meta:12px;--cp-question:14px;--cp-option:13px;--cp-option-desc:11px;--cp-right-header:13px;--cp-right-label:12px;--cp-right-part:13px;--cp-right-badge:11px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
 
@@ -2816,13 +2816,13 @@ function cpRenderRight(){
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   var colA=d.a, colB=d.b;
 
-  var html='<div style="font-size:12px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:2px 2px 10px">'+d.a+d.b+'　各部位</div>';
+  var html='<div style="font-size:var(--cp-right-header);font-weight:900;letter-spacing:2px;color:var(--text-3);padding:2px 2px 10px">'+d.a+d.b+'　各部位</div>';
   // 三欄表格
-  html+='<table style="width:100%;border-collapse:collapse;font-size:14px">';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:var(--cp-right-part)">';
   html+='<thead><tr>'+
-    '<th style="text-align:left;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:12px;font-weight:700">部位</th>'+
-    '<th style="text-align:center;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:12px;font-weight:700">'+colA+'</th>'+
-    '<th style="text-align:center;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:12px;font-weight:700">'+colB+'</th>'+
+    '<th style="text-align:left;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:var(--cp-right-label);font-weight:700">部位</th>'+
+    '<th style="text-align:center;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:var(--cp-right-label);font-weight:700">'+colA+'</th>'+
+    '<th style="text-align:center;padding:6px 4px;border-bottom:2px solid var(--border);color:var(--text-3);font-size:var(--cp-right-label);font-weight:700">'+colB+'</th>'+
   '</tr></thead><tbody>';
   partOrder.forEach(function(pi,i){
     var v=data[cpCur][pi];
@@ -2833,10 +2833,10 @@ function cpRenderRight(){
       var t=v==='A'?d.aT:d.bT;
       var bg=t==='靜'?'var(--static)':'var(--active)';
       var txt=v==='A'?d.a:d.b;
-      badge='<span style="font-size:12px;padding:2px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>';
+      badge='<span style="font-size:var(--cp-right-badge);padding:2px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>';
     }
     html+='<tr style="border-bottom:1px solid var(--border)">'+
-      '<td style="padding:6px 4px;color:var(--text-2)">'+label+'</td>'+
+      '<td style="padding:6px 4px;color:var(--text-2);font-size:var(--cp-right-part)">'+label+'</td>'+
       '<td style="text-align:center;padding:6px 4px">'+(isA?badge:'')+'</td>'+
       '<td style="text-align:center;padding:6px 4px">'+(isB?badge:'')+'</td>'+
     '</tr>';
@@ -2844,9 +2844,9 @@ function cpRenderRight(){
   html+='</tbody></table>';
   // 整體結果
   html+='<div style="margin-top:14px;padding:12px;background:white;border-radius:8px;text-align:center;border:1px solid var(--border)">'+
-    '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">整體</div>'+
+    '<div style="font-size:var(--cp-right-label);color:var(--text-3);margin-bottom:6px">整體</div>'+
     '<div style="font-size:16px;font-weight:900;padding:4px 24px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
-    '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
+    '<div style="font-size:var(--cp-right-label);color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
   '</div>';
   el.innerHTML=html;
 }
@@ -2858,14 +2858,14 @@ function cpRenderMain(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
 
   var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-    '<div style="font-size:16px;font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:13px;font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
-    '<div style="font-size:14px;color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
-    '<span style="display:inline-block;margin-top:8px;padding:5px 18px;border-radius:16px;background:'+resBg+';color:white;font-size:15px;font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
+    '<div style="font-size:var(--cp-dim-title);font-weight:900;color:var(--text)">'+d.a+d.b+'　<span style="font-size:var(--cp-dim-sub);font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
+    '<div style="font-size:var(--cp-dim-sub);color:var(--text-3);margin-top:4px">'+d.a+'（'+d.aT+'）vs '+d.b+'（'+d.bT+'）</div>'+
+    '<span style="display:inline-block;margin-top:8px;padding:5px 18px;border-radius:16px;background:'+resBg+';color:white;font-size:var(--cp-dim-title);font-weight:700">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
   '</div>';
 
   var cr=condResults[cpCur];
   if(!cr){
-    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;text-align:center">請先至「各部位觀察」填寫觀察題</div>';
+    el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:var(--cp-dim-sub);text-align:center">請先至「各部位觀察」填寫觀察題</div>';
     return;
   }
 
@@ -2900,10 +2900,10 @@ function cpRenderMain(){
       var color=isSel?'var(--static)':'var(--text-2)';
       var borderColor=isSel?'var(--static)':'var(--text-3)';
       var vSafe=v.replace(/"/g,'&quot;');
-      var hintHtml=hint?'<span style="font-size:11px;color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
+      var hintHtml=hint?'<span style="font-size:var(--cp-option-desc);color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
       var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:10px;color:var(--static);vertical-align:middle">'+(isSel?'✓':'')+'</span>';
       out+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-        ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:14px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:normal;text-align:left;line-height:1.5">'+
+        ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:normal;text-align:left;line-height:1.5">'+
         box+v+hintHtml+
       '</button>';
     });
@@ -2913,8 +2913,8 @@ function cpRenderMain(){
 
   function statusRow(ok,label){
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border)">'+
-      '<div style="width:24px;height:24px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
-      '<div style="font-size:14px;color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+label+'</div>'+
+      '<div style="width:24px;height:24px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:var(--cp-option-desc);font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+      '<div style="font-size:var(--cp-question);color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+label+'</div>'+
     '</div>';
   }
 
@@ -2928,11 +2928,11 @@ function cpRenderMain(){
     var passLabel=p.pass?(data[cpCur][pi]==='B'?d.b:d.a):'未達';
 
     // --- section label（比照觀察頁樣式）---
-    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">'+
+    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:var(--cp-part-title)">'+
       '<span>'+label+'</span>'+
       '<span style="display:flex;align-items:center;gap:8px">'+
-        '<span style="font-size:12px;color:var(--text-3);font-weight:400">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-        '<span style="font-size:12px;padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
+        '<span style="font-size:var(--cp-part-meta);color:var(--text-3);font-weight:400">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+        '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700">'+passLabel+'</span>'+
       '</span>'+
     '</div>';
 
@@ -2977,9 +2977,9 @@ function cpRenderMain(){
           return;
         }
         var curVal=item.side?(obsData[m.qid+'_'+item.side]||obsData[m.qid]||''):obsData[m.qid]||'';
-        var sideTag=item.side?'<span style="font-size:11px;padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(item.side==='L'?'左':'右')+'</span>':'';
+        var sideTag=item.side?'<span style="font-size:var(--cp-option-desc);padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(item.side==='L'?'左':'右')+'</span>':'';
         html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
-          '<div style="font-size:14px;color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+m.q.text+sideTag+'</div>'+
+          '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+m.q.text+sideTag+'</div>'+
           renderOpts(m.q,m.qid,item.side||'',curVal)+
         '</div>';
         return;
@@ -3000,9 +3000,9 @@ function cpRenderMain(){
       html+='<div style="border-bottom:1px solid var(--border);padding:8px 8px">';
       // 題目名稱 + 展開按鈕
       html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
-        '<div style="font-size:14px;color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
-        '<button onclick="cpToggleLR(\''+lrKey+'\')" style="font-size:11px;color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>'+
-        (diffMark&&!isExpanded?'<span style="font-size:11px;color:var(--active);font-weight:700">L≠R</span>':'') +
+        '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>'+
+        '<button onclick="cpToggleLR(\''+lrKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>'+
+        (diffMark&&!isExpanded?'<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>':'') +
       '</div>';
 
       // 合併選項列（不展開時顯示）
@@ -3018,12 +3018,12 @@ function cpRenderMain(){
           var borderColor=isSel?'var(--static)':(isHalf?'var(--static)':'var(--text-3)');
           var fontWeight=isSel?'700':(isHalf?'500':'400');
           var vSafe=v.replace(/"/g,'&quot;');
-          var hintHtml=hint?'<span style="font-size:11px;color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
+          var hintHtml=hint?'<span style="font-size:var(--cp-option-desc);color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
           var halfTag=isHalf?'<span style="font-size:10px;color:var(--active);margin-left:3px">'+(v===vL?'左':'右')+'</span>':'';
           var boxFill=isSel?'✓':(isHalf?'−':'');
           var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:10px;color:var(--static);vertical-align:middle">'+boxFill+'</span>';
           html+='<button data-qid="'+qidSafe+'" data-side="" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-            ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:14px;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
+            ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
             box+v+halfTag+hintHtml+
           '</button>';
         });
@@ -3036,7 +3036,7 @@ function cpRenderMain(){
           var sideLabel=side==='L'?'左':'右';
           var cv=obsData[qid+'_'+side]||obsData[qid]||'';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:8px">'+
-            '<span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
+            '<span style="font-size:var(--cp-part-meta);padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
             renderOpts(q,qid,side,cv)+
           '</div>';
         });
