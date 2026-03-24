@@ -392,10 +392,9 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 <!-- 維度條件評分頁 -->
 <div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000;flex-direction:column">
-  <div style="display:grid;grid-template-columns:200px 1fr 280px;flex:1;height:100%;overflow:hidden">
-    <div id="cp-sidebar" style="background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column"></div>
+  <div style="display:grid;grid-template-columns:260px 1fr;flex:1;height:100%;overflow:hidden">
+    <div id="cp-left" style="background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:10px"></div>
     <div id="cp-main" style="overflow-y:auto;padding:20px;display:block"></div>
-    <div id="cp-right" style="background:var(--sidebar);border-left:1px solid var(--border);overflow-y:auto;padding:12px"></div>
   </div>
 </div>
 <script>
@@ -2612,39 +2611,10 @@ function _refreshObsUI(){
   renderDimIndex();
 }
 
-/* ===== Right Column - Dim Index ===== */
-let curDimIdx=0;
-
+/* ===== Right Column - Dim Panel (shared) ===== */
 function renderDimIndex(){
-  const el=document.getElementById('dim-index-col');if(!el)return;
-  const catClass={'先天指數':'pre','運氣指數':'luck','後天指數':'post'};
-  let html='<div class="dim-right-wrap"><div class="dim-list-panel">';
-  DIMS.forEach((d,i)=>{
-    const active=i===curDimIdx;
-    const cc=catClass[d.cat]||'pre';
-    html+='<div class="dim-list-item'+(active?' active':'')+'" onclick="selectDimIdx('+i+')">';
-    html+='<span class="dim-list-num">'+(i+1)+'</span>';
-    html+='<span class="dim-list-name">'+d.a+d.b+'</span>';
-    html+='<span class="dim-list-cat '+cc+'">'+d.cat.replace('指數','')+'</span>';
-    html+='</div>';
-  });
-  html+='</div><div class="dim-detail-panel">';
-  const d=DIMS[curDimIdx];
-  html+='<div class="dim-detail-title">'+d.a+d.b+' · '+d.view+'</div>';
-  PARTS_SHORT.forEach((p,pi)=>{
-    const v=data[curDimIdx][pi];
-    html+='<div class="dim-part-row"><span class="dim-part-label">'+p+'</span>';
-    if(v){const t=v==='A'?d.aT:d.bT;const label=v==='A'?d.a:d.b;const cls=t==='靜'?'static-fill':'dynamic-fill';html+='<div class="dim-ab-block '+cls+'">'+label+'</div>';}
-    else{html+='<div class="dim-ab-block unfilled">—</div>';}
-    html+='</div>';
-  });
-  const res=calcDim(curDimIdx);
-  if(res){html+='<div style="text-align:center;margin-top:14px;padding:10px;background:white;border-radius:6px;font-size:14px;font-weight:700;color:'+(res.type==='靜'?'var(--static)':'var(--active)')+'">'+res.type+' · '+res.coeff.toFixed(2)+'</div>';}
-  html+='</div></div>';
-  el.innerHTML=html;
+  renderDimPanel(document.getElementById('dim-index-col'));
 }
-
-function selectDimIdx(i){curDimIdx=i;renderDimIndex();}
 
 /* ===== Obs page legacy functions ===== */
 function gotoObsPart(i){curObsPart=i;renderFaceMap();renderObsCenter();renderDimIndex();}
@@ -2740,11 +2710,6 @@ function showCondPage(){
   document.getElementById('cond-page').style.display='flex';
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-cond');
-  // 測試：先寫入可見內容確認頁面正常
-  var main=document.getElementById('cp-main');
-  if(main) main.innerHTML='<div style="padding:20px;font-size:14px;color:var(--text)">載入中...</div>';
-  var sidebar=document.getElementById('cp-sidebar');
-  if(sidebar) sidebar.innerHTML='<div style="padding:14px;font-size:13px;color:var(--text-3)">載入中...</div>';
   recalcFromObs();
   cpRender();
 }
@@ -2753,35 +2718,15 @@ function cpHide(){
   document.getElementById('cond-page').style.display='none';
 }
 
-function cpGoto(i){cpCur=i;cpRender();}
+function cpGoto(i){cpCur=i;cpRender();renderDimIndex();}
 
 function cpRender(){
-  try{cpRenderSidebar();}catch(e){console.error('cpRenderSidebar:',e);}
-  try{cpRenderMain();}catch(e){console.error('cpRenderMain:',e);document.getElementById('cp-main').innerHTML='<div style="color:red;padding:20px">'+e.message+'</div>';}
   try{cpRenderRight();}catch(e){console.error('cpRenderRight:',e);}
+  try{cpRenderMain();}catch(e){console.error('cpRenderMain:',e);document.getElementById('cp-main').innerHTML='<div style="color:red;padding:20px">'+e.message+'</div>';}
 }
 
-function cpRenderSidebar(){
-  const el=document.getElementById('cp-sidebar');if(!el)return;
-  let html='',lastCat='';
-  DIMS.forEach(function(d,i){
-    if(d.cat!==lastCat){
-      html+='<div style="font-size:12px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px">'+d.cat+'</div>';
-      lastCat=d.cat;
-    }
-    var res=calcDim(i);
-    var chipBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
-    var isActive=i===cpCur;
-    html+='<div onclick="cpGoto('+i+')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;border-left:4px solid '+(isActive?'var(--accent)':'transparent')+';background:'+(isActive?'white':'transparent')+';font-weight:'+(isActive?'700':'400')+';font-size:15px;color:var(--text-2)">'+
-      '<span>'+d.a+d.b+'</span>'+
-      '<span style="font-size:12px;padding:2px 7px;border-radius:8px;background:'+chipBg+';color:white;font-weight:700">'+(res?res.type:'—')+'</span>'+
-    '</div>';
-  });
-  el.innerHTML=html;
-}
-
-function cpRenderRight(){
-  const el=document.getElementById('cp-right');if(!el)return;
+function renderDimPanel(el){
+  if(!el)return;
   var d=DIMS[cpCur];
   var res=calcDim(cpCur);
   var resBg=res?(res.type==='靜'?'#5C7A8A':'#A05A50'):'#ccc';
@@ -2798,7 +2743,7 @@ function cpRenderRight(){
   var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 0;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
   var activeStyle='background:#e8eff2;border-color:#5C7A8A;border-width:2px;color:#5C7A8A';
   groups.forEach(function(g){
-    html+='<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px">'+g.label+'</div>';
+    html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px">'+g.label+'</div>';
     g.rows.forEach(function(row){
       var cols=row.length;
       html+='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:4px;margin-bottom:4px">';
@@ -2819,7 +2764,6 @@ function cpRenderRight(){
   // === 下半部：各部位三欄結果表 ===
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-  // 靜/動對應字
   var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
   var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
   var colS=sLabels[cpCur], colD=dLabels[cpCur];
@@ -2854,6 +2798,10 @@ function cpRenderRight(){
   html+='</div>';
 
   el.innerHTML=html;
+}
+
+function cpRenderRight(){
+  renderDimPanel(document.getElementById('cp-left'));
 }
 
 function cpRenderMain(){
