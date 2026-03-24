@@ -294,33 +294,32 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- Top Nav Bar -->
 <nav id="top-nav">
   <div class="nav-brand" onclick="showModePage()">風鑑學堂 人相兵法</div>
-  <div class="nav-tab" id="nav-obs" onclick="showObsPage()">各部位觀察</div>
-  <div class="nav-tab" id="nav-dim" onclick="showDimPage()">13係數評分</div>
-  <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">13項目標準</div>
-  <div class="nav-tab" id="nav-cond" onclick="showCondPage()">維度條件評分</div>
+  <div class="nav-tab" id="nav-obs" onclick="showObsPage()">頭面部位觀察評分</div>
+  <div class="nav-tab" id="nav-cond" onclick="showCondPage()">13維度觀察評分</div>
+  <div class="nav-tab" id="nav-report" onclick="showReport()">兵法報告</div>
+  <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
-  <button class="nav-report" onclick="showReport()">兵法報告 &#x2197;</button>
 </nav>
 
 <!-- Mode Page -->
 <div id="mode-page">
   <div class="mode-grid">
     <div class="mode-card" style="border-top-color:var(--active)" onclick="showObsPage()">
-      <h3>各部位觀察</h3>
+      <h3>頭面部位觀察評分</h3>
       <p>逐一觀察頭、額、耳、眉、眼、鼻、口等各部位特徵條件</p>
     </div>
-    <div class="mode-card" style="border-top-color:var(--static)" onclick="showDimPage()">
-      <h3>13係數評分</h3>
-      <p>根據觀察結果，對形勢、經緯、方圓等13個維度進行靜動評分</p>
-    </div>
-    <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
-      <h3>13項目標準</h3>
-      <p>查看每個維度的判斷標準與依據說明</p>
+    <div class="mode-card" style="border-top-color:var(--static)" onclick="showCondPage()">
+      <h3>13維度觀察評分</h3>
+      <p>根據觀察結果，查看形勢、經緯、方圓等13個維度的條件與評分</p>
     </div>
     <div class="mode-card" style="border-top-color:#8a9aaa" onclick="showReport()">
       <h3>兵法報告</h3>
-      <p>查看綜合係數矩陣、動靜比例與AI評析報告</p>
+      <p>查看綜合係數矩陣與動靜比例報告</p>
+    </div>
+    <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
+      <h3>參考資料：各維度評分標準</h3>
+      <p>查看每個維度的判斷標準與依據說明</p>
     </div>
   </div>
 </div>
@@ -333,12 +332,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     <div class="col-center" id="obs-center"></div>
     <div class="col-right" id="dim-index-col"></div>
   </div>
-  <!-- Dim scoring page (新版：維度條件評分) -->
-  <div id="dim-page" class="three-col">
-    <div class="dim-sidebar" id="dim-sidebar-new"></div>
-    <div class="dim-cond-main" id="dim-cond-main"></div>
-    <div class="obs-right-col" id="dim-right-col"></div>
-  </div>
+  <!-- dim-page 已移除，由 cond-page 取代 -->
+  <div id="dim-page" style="display:none!important"></div>
 </div>
 
 <!-- Name Edit Overlay -->
@@ -654,13 +649,12 @@ setTimeout(kRender,100);
     <div class="report-title">人相兵法</div>
   </div>
   <div id="report-full-table" style="margin:8px 0;overflow-x:auto;width:100%"></div>
-  <div id="ai-analysis-area"></div>
+  <div id="ai-analysis-area" style="display:none"></div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
-    <button class="btn-back" onclick="closeReport()" style="flex:1;margin:0;">&#8592; 修改評分</button>
+    <button class="btn-back" onclick="showCondPage()" style="flex:1;margin:0;">&#8592; 修改評分</button>
     <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
     <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
-    <button class="btn-ai" onclick="generateAI()" id="btn-ai">生成 AI 評析</button>
   </div>
 </div>
 
@@ -2722,21 +2716,6 @@ function showObsPage(){
   renderFaceMap();renderObsCenter();renderDimIndex();
 }
 
-function showDimPage(){
-  document.getElementById('entry-page').style.display='none';
-  document.getElementById('top-nav').style.display='flex';
-  document.getElementById('mode-page').style.display='none';
-  document.getElementById('app-body').style.display='grid';
-  document.getElementById('obs-page').style.display='none';
-  document.getElementById('dim-page').style.display='grid';
-  document.getElementById('report-overlay').style.display='none';
-  document.getElementById('knowledge-overlay').style.display='none';
-  document.getElementById('cond-page').style.display='none';
-  document.getElementById('nav-name').innerText=userName||'';
-  setNavActive('nav-dim');
-  renderDimCondPage();
-}
-
 function showKnowledgePage(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
@@ -3328,6 +3307,8 @@ function showReport(){
   document.getElementById('cond-page').style.display='none';
   document.getElementById('report-overlay').style.display='block';
   document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-report');
+  recalcFromObs();
   document.getElementById('report-name-display').innerText=userName||'未命名';
   // 統計數據
   const vTotal=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
