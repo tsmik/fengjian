@@ -3315,38 +3315,38 @@ function showReport(){
     const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
-    const cs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;font-family:\'Noto Serif TC\',serif;text-align:center';
+    var rc='border-radius:4px';
+    var cs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;text-align:center';
+    var nb='background:transparent;border:none;padding:4px';
 
-    // === 頂部摘要（表格對齊維度欄位）===
-    let t='<table style="border-collapse:separate;border-spacing:2px;width:100%;font-family:\'Noto Serif TC\',serif;margin-bottom:4px">';
-    // 總係數（全寬 + 迷你 Bar）
-    t+='<tr><td colspan="27" style="'+cs+';background:#c8bfb0;color:#3a3228">'+
+    // === 單一表格（頂部摘要 + 維度矩陣）===
+    let t='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
+
+    // --- 頂部摘要 ---
+    // 第一列：總係數 colspan=1(部位欄) + colspan=26
+    t+='<tr><td style="'+nb+'"></td>'+
+      '<td colspan="26" style="'+cs+';background:#c8bfb0;color:#3a3228">'+
       '總係數　'+vTotal+
       '<span style="display:inline-block;width:14%;height:0.6em;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:2em;position:relative">'+
         '<span style="position:absolute;left:0;top:0;height:100%;width:'+sPct+'%;background:'+SBG+'"></span>'+
         '<span style="position:absolute;left:'+sPct+'%;top:0;height:100%;width:'+dPct+'%;background:'+DBG+'"></span>'+
       '</span>'+
     '</td></tr>';
-    // 先天12 + 運氣6 + 後天8 + 部位1 = 27
-    t+='<tr><td rowspan="2" style="'+cs+';background:transparent"></td>'+
+    // 第二列：先天12 + 運氣6 + 後天8
+    t+='<tr><td rowspan="2" style="'+nb+'"></td>'+
       '<td colspan="12" style="'+cs+';background:#bdd4d4;color:#2e4a4a">先天係數　'+vPre+'</td>'+
       '<td colspan="6" style="'+cs+';background:#e8dcc8;color:#5a4a2a">運氣係數　'+vLuck+'</td>'+
       '<td colspan="8" style="'+cs+';background:#e0cdc6;color:#5a3a30">後天係數　'+vPost+'</td></tr>';
-    // 老闆6 + 主管6 + 運氣空6 + 後天空8
+    // 第三列：老闆6 + 主管6 + 空6 + 空8
     t+='<tr>'+
       '<td colspan="6" style="'+cs+';background:#cce0e0;color:#2e4a4a">老闆係數　'+vLead+'</td>'+
       '<td colspan="6" style="'+cs+';background:#d8eaea;color:#2e4a4a">主管係數　'+vSub+'</td>'+
-      '<td colspan="6" style="padding:4px;background:transparent"></td>'+
-      '<td colspan="8" style="padding:4px;background:transparent"></td></tr>';
-    t+='</table>';
+      '<td colspan="6" style="'+nb+'"></td>'+
+      '<td colspan="8" style="'+nb+'"></td></tr>';
 
-    // === 維度矩陣表格 ===
-    var rc='border-radius:4px';
-    t+='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
-
-    // === 維度 header ===
-    // 第一層：維度名稱
-    t+='<tr><th rowspan="4" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'">部位</th>';
+    // --- 維度 header ---
+    // 第四列：維度名稱（部位欄不顯示文字）
+    t+='<tr><td rowspan="4" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'"></td>';
     DIMS.forEach(function(d,i){
       t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.a+d.b+'</th>';
     });
