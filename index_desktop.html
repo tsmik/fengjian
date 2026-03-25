@@ -1467,9 +1467,14 @@ function recalcFromObs(){
   const d12qL=qHighAny('L'), d12qR=qHighAny('R');
   s=cnt(d12mL>=3,d12mR>=3,d12yL>=3,d12yR>=3,((nBalance()||nBone())&&nNoNode()),d12qL,d12qR);
   data[11][2]=s>=TH[11][2]?'B':'A';
-  // 下停：口實+人中深+地閣(平OR圓)+左頤不削+右頤同 ≥3→實(B)
-  s=cnt(d12k>=2, pDeep(), cFlatOrRound(), !yThin('L'), !yThin('R'));
-  data[11][3]=s>=TH[11][3]?'B':'A';
+  // 下停：否決條件：地閣凹 或 任一頤削 → 強制判虛
+  const d12_veto=cConcave()||yThin('L')||yThin('R');
+  if(d12_veto){
+    data[11][3]='A';
+  }else{
+    s=cnt(d12k>=2, pDeep(), cFlatOrRound(), !yThin('L'), !yThin('R'));
+    data[11][3]=s>=TH[11][3]?'B':'A';
+  }
 
   // ========== 13 進退 — data[12] ==========
   // DIMS[12]={a:'進',b:'退',aT:'動',bT:'靜'} 進=A 退=B
