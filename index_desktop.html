@@ -3370,25 +3370,24 @@ function showReport(){
       t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+DBG+'">'+dL[i]+dimDCounts[i]+'</th>';
     });
     t+='</tr>';
-    // 係數格（數字 + 堆疊橫條）
+    // 係數格（獨立圓角方塊 + 堆疊橫條）
     t+='<tr>';
     DIMS.forEach(function(d,i){
       var res=calcDim(i);
       var coeff=res?res.coeff.toFixed(2):'—';
       var sc=dimSCounts[i],dc=dimDCounts[i];
-      // 堆疊橫條（靠下）
-      var bars='<div style="display:flex;gap:2px;justify-content:center;flex:1;align-items:flex-end">';
-      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">';
+      // 上方：係數方塊
+      var coeffBg=res?(res.type==='靜'?'rgba(122,158,126,0.55)':'rgba(193,122,90,0.55)'):'var(--bg)';
+      var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:5px">'+coeff+'</div>';
+      // 下方：堆疊橫條（透明底，靠下）
+      var bars='<div style="display:flex;gap:2px;justify-content:center;height:36px;align-items:flex-end;padding-bottom:2px">';
+      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;justify-content:flex-end">';
       for(var b=0;b<sc;b++)bars+='<div style="width:12px;height:3px;background:'+SBG+';border-radius:1px"></div>';
       bars+='</div>';
-      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">';
+      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;justify-content:flex-end">';
       for(var b=0;b<dc;b++)bars+='<div style="width:12px;height:3px;background:'+DBG+';border-radius:1px"></div>';
       bars+='</div></div>';
-      // 動靜背景色
-      var cellBg=res?(res.type==='靜'?'rgba(122,158,126,0.35)':'rgba(193,122,90,0.35)'):'var(--bg)';
-      t+='<td colspan="2" style="padding:4px 6px;text-align:center;background:'+cellBg+';'+rc+'">'+
-        '<div style="display:flex;flex-direction:column;height:100%">'+
-        '<div style="font-weight:700;color:var(--text-3)">'+coeff+'</div>'+bars+'</div></td>';
+      t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
     });
     t+='</tr>';
 
