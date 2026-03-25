@@ -3334,23 +3334,24 @@ function showReport(){
     t+='</div>';
 
     // === 維度矩陣表格 ===
-    t+='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
+    var rc='border-radius:4px';
+    t+='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
 
     // === 維度 header ===
     // 第一層：維度名稱
-    t+='<tr><th rowspan="4" style="padding:6px 10px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2">部位</th>';
+    t+='<tr><th rowspan="4" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'">部位</th>';
     DIMS.forEach(function(d,i){
-      t+='<th colspan="2" style="padding:10px 8px;'+bd+';background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px">'+d.a+d.b+'</th>';
+      t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.a+d.b+'</th>';
     });
     t+='</tr>';
     // 第二層：靜｜動
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      t+='<th style="padding:3px 8px;'+bd+';background:'+SBG+';color:white;font-weight:700;text-align:center">'+sL[i]+'</th>';
-      t+='<th style="padding:3px 8px;'+bd+';background:'+DBG+';color:white;font-weight:700;text-align:center">'+dL[i]+'</th>';
+      t+='<th style="padding:3px 8px;background:'+SBG+';color:white;font-weight:700;text-align:center;'+rc+'">'+sL[i]+'</th>';
+      t+='<th style="padding:3px 8px;background:'+DBG+';color:white;font-weight:700;text-align:center;'+rc+'">'+dL[i]+'</th>';
     });
     t+='</tr>';
-    // 第三層：維度動靜結果（compact）
+    // 第三層：維度動靜結果
     t+='<tr>';
     DIMS.forEach(function(d,i){
       var res=calcDim(i);
@@ -3358,38 +3359,37 @@ function showReport(){
         var isS=res.type==='靜';
         var bg=isS?SBG:DBG;
         var txt=isS?sL[i]:dL[i];
-        t+='<td colspan="2" style="padding:3px 8px;'+bd+';text-align:center;background:'+bg+';color:white;font-weight:700">'+txt+'</td>';
+        t+='<td colspan="2" style="padding:3px 8px;text-align:center;background:'+bg+';color:white;font-weight:700;'+rc+'">'+txt+'</td>';
       }else{
-        t+='<td colspan="2" style="padding:3px 8px;'+bd+';text-align:center;background:var(--bg);color:var(--text-3)">—</td>';
+        t+='<td colspan="2" style="padding:3px 8px;text-align:center;background:var(--bg);color:var(--text-3);'+rc+'">—</td>';
       }
     });
     t+='</tr>';
-    // 第四層：係數（compact）
+    // 第四層：係數
     t+='<tr>';
     DIMS.forEach(function(d,i){
       var res=calcDim(i);
-      t+='<td colspan="2" style="padding:3px 8px;'+bd+';text-align:center;font-weight:700;color:var(--text-3);background:var(--bg)">'+(res?res.coeff.toFixed(2):'—')+'</td>';
+      t+='<td colspan="2" style="padding:3px 8px;text-align:center;font-weight:700;color:var(--text-3);background:var(--bg);'+rc+'">'+(res?res.coeff.toFixed(2):'—')+'</td>';
     });
     t+='</tr>';
 
     // === 資料行 ===
-    const bdd='border:1px solid rgba(0,0,0,0.1)';
     partOrder.forEach(function(pi,idx){
       t+='<tr>';
-      t+='<td style="padding:5px 10px;'+bd+';font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1">'+partLabels[idx]+'</td>';
+      t+='<td style="padding:5px 10px;font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1;'+rc+'">'+partLabels[idx]+'</td>';
       DIMS.forEach(function(d,di){
         var v=data[di][pi];
         var isStatic=false,isDynamic=false;
         if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
         if(isStatic){
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+SBG+';color:white;font-weight:700">'+sL[di]+'</td>';
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+dimAlpha[di]+'"></td>';
+          t+='<td style="padding:4px 8px;text-align:center;background:'+SBG+';color:white;font-weight:700;'+rc+'">'+sL[di]+'</td>';
+          t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
         }else if(isDynamic){
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+dimAlpha[di]+'"></td>';
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center;background:'+DBG+';color:white;font-weight:700">'+dL[di]+'</td>';
+          t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
+          t+='<td style="padding:4px 8px;text-align:center;background:'+DBG+';color:white;font-weight:700;'+rc+'">'+dL[di]+'</td>';
         }else{
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center"></td>';
-          t+='<td style="padding:4px 8px;'+bdd+';text-align:center"></td>';
+          t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
+          t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
         }
       });
       t+='</tr>';
