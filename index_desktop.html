@@ -649,8 +649,8 @@ setTimeout(kRender,100);
 <!-- Report Overlay -->
 <div id="report-overlay">
   <div class="report-top">
-    <div class="report-name" id="report-name-display"></div>
-    <div class="report-title">人相兵法</div>
+    <div id="report-name-display" style="font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif;display:inline"></div>
+    <span style="font-size:15px;color:#888;font-family:'Noto Serif TC',serif;margin-left:12px">人相兵法係數報告</span>
   </div>
   <div id="report-full-table" style="margin:8px 0;overflow-x:auto;width:100%"></div>
   <div id="ai-analysis-area" style="display:none"></div>
@@ -3345,38 +3345,47 @@ function showReport(){
       '<td colspan="8" style="'+nb+'"></td></tr>';
 
     // --- 維度 header ---
-    // 第四列：維度名稱（部位欄不顯示文字）
-    t+='<tr><td rowspan="4" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'"></td>';
+    // 計算每個維度的靜/動部位數
+    var dimSCounts=[],dimDCounts=[];
+    for(var di2=0;di2<13;di2++){
+      var sc=0,dc=0;
+      data[di2].forEach(function(v){
+        if(!v)return;
+        var tp=v==='A'?DIMS[di2].aT:DIMS[di2].bT;
+        if(tp==='靜')sc++;else dc++;
+      });
+      dimSCounts.push(sc);dimDCounts.push(dc);
+    }
+
+    // 維度名稱行
+    t+='<tr><td rowspan="3" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'"></td>';
     DIMS.forEach(function(d,i){
       t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.a+d.b+'</th>';
     });
     t+='</tr>';
-    // 第二層：靜｜動
+    // 子欄行：靜X｜動X（透明底、棕色字、底線）
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      t+='<th style="padding:3px 8px;background:'+SBG+';color:white;font-weight:700;text-align:center;'+rc+'">'+sL[i]+'</th>';
-      t+='<th style="padding:3px 8px;background:'+DBG+';color:white;font-weight:700;text-align:center;'+rc+'">'+dL[i]+'</th>';
+      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+SBG+'">'+sL[i]+dimSCounts[i]+'</th>';
+      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+DBG+'">'+dL[i]+dimDCounts[i]+'</th>';
     });
     t+='</tr>';
-    // 第三層：維度動靜結果
+    // 係數格（數字 + 堆疊橫條）
     t+='<tr>';
     DIMS.forEach(function(d,i){
       var res=calcDim(i);
-      if(res){
-        var isS=res.type==='靜';
-        var bg=isS?SBG:DBG;
-        var txt=isS?sL[i]:dL[i];
-        t+='<td colspan="2" style="padding:3px 8px;text-align:center;background:'+bg+';color:white;font-weight:700;'+rc+'">'+txt+'</td>';
-      }else{
-        t+='<td colspan="2" style="padding:3px 8px;text-align:center;background:var(--bg);color:var(--text-3);'+rc+'">—</td>';
-      }
-    });
-    t+='</tr>';
-    // 第四層：係數
-    t+='<tr>';
-    DIMS.forEach(function(d,i){
-      var res=calcDim(i);
-      t+='<td colspan="2" style="padding:3px 8px;text-align:center;font-weight:700;color:var(--text-3);background:var(--bg);'+rc+'">'+(res?res.coeff.toFixed(2):'—')+'</td>';
+      var coeff=res?res.coeff.toFixed(2):'—';
+      var sc=dimSCounts[i],dc=dimDCounts[i];
+      // 堆疊橫條
+      var bars='<div style="display:flex;gap:2px;justify-content:center;margin-top:4px">';
+      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">';
+      for(var b=0;b<sc;b++)bars+='<div style="width:12px;height:3px;background:'+SBG+';border-radius:1px"></div>';
+      bars+='</div>';
+      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">';
+      for(var b=0;b<dc;b++)bars+='<div style="width:12px;height:3px;background:'+DBG+';border-radius:1px"></div>';
+      bars+='</div></div>';
+      t+='<td colspan="2" style="padding:4px 6px;text-align:center;background:var(--bg);'+rc+'">'+
+        '<div style="font-weight:700;color:var(--text-3)">'+coeff+'</div>'+bars+'</td>';
     });
     t+='</tr>';
 
