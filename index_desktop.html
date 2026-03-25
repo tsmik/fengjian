@@ -723,6 +723,9 @@ window.updateTH=function(dimIdx,partIdx,val){
   TH[dimIdx][partIdx]=n;
   saveThresholds();
   recalcFromObs();
+  try{renderFaceMap();}catch(e){}
+  try{renderDimIndex();}catch(e){}
+  try{cpRender();}catch(e){}
   console.log('updateTH done, TH['+dimIdx+']=',JSON.stringify(TH[dimIdx]));
 };
 
