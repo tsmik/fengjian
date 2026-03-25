@@ -3316,31 +3316,55 @@ function showReport(){
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
     var rc='border-radius:4px';
-    var cs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;text-align:center';
+    var csTop='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;text-align:center';
+    var csBlock='border-radius:4px;padding:6px 10px;font-weight:700;text-align:center';
     var nb='background:transparent;border:none;padding:4px';
+
+    // 計算各範圍動靜總數
+    function countSD(dimIds){
+      var s=0,d=0;
+      dimIds.forEach(function(di){
+        data[di].forEach(function(v){
+          if(!v)return;
+          var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
+          if(tp==='靜')s++;else d++;
+        });
+      });
+      return {s:s,d:d};
+    }
+    var sdAll=countSD([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+    var sdPre=countSD([0,1,2,3,4,5]);
+    var sdLuck=countSD([6,7,8]);
+    var sdPost=countSD([9,10,11,12]);
+    var sdLead=countSD([0,1,2]);
+    var sdSub=countSD([3,4,5]);
+    function sdTag(sd){
+      return '<span style="margin-left:8px;font-weight:400"><span style="color:'+DBG+'">動'+sd.d+'</span>'+
+        '<span style="color:#999"> / </span><span style="color:'+SBG+'">靜'+sd.s+'</span></span>';
+    }
 
     // === 單一表格（頂部摘要 + 維度矩陣）===
     let t='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
 
     // --- 頂部摘要 ---
-    // 第一列：總係數 colspan=1(部位欄) + colspan=26
+    // 第一列：總係數（大字）
     t+='<tr><td style="'+nb+'"></td>'+
-      '<td colspan="26" style="'+cs+';background:#c8bfb0;color:#3a3228">'+
+      '<td colspan="26" style="'+csTop+';background:#c8bfb0;color:#3a3228">'+
       '總係數　'+vTotal+
       '<span style="display:inline-block;width:14%;height:0.6em;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:2em;position:relative">'+
         '<span style="position:absolute;left:0;top:0;height:100%;width:'+sPct+'%;background:'+SBG+'"></span>'+
         '<span style="position:absolute;left:'+sPct+'%;top:0;height:100%;width:'+dPct+'%;background:'+DBG+'"></span>'+
-      '</span>'+
+      '</span>'+sdTag(sdAll)+
     '</td></tr>';
     // 第二列：先天12 + 運氣6 + 後天8
     t+='<tr><td rowspan="2" style="'+nb+'"></td>'+
-      '<td colspan="12" style="'+cs+';background:#bdd4d4;color:#2e4a4a">先天係數　'+vPre+'</td>'+
-      '<td colspan="6" style="'+cs+';background:#e8dcc8;color:#5a4a2a">運氣係數　'+vLuck+'</td>'+
-      '<td colspan="8" style="'+cs+';background:#e0cdc6;color:#5a3a30">後天係數　'+vPost+'</td></tr>';
+      '<td colspan="12" style="'+csBlock+';background:#bdd4d4;color:#2e4a4a">先天係數　'+vPre+sdTag(sdPre)+'</td>'+
+      '<td colspan="6" style="'+csBlock+';background:#e8dcc8;color:#5a4a2a">運氣係數　'+vLuck+sdTag(sdLuck)+'</td>'+
+      '<td colspan="8" style="'+csBlock+';background:#e0cdc6;color:#5a3a30">後天係數　'+vPost+sdTag(sdPost)+'</td></tr>';
     // 第三列：老闆6 + 主管6 + 空6 + 空8
     t+='<tr>'+
-      '<td colspan="6" style="'+cs+';background:#cce0e0;color:#2e4a4a">老闆係數　'+vLead+'</td>'+
-      '<td colspan="6" style="'+cs+';background:#d8eaea;color:#2e4a4a">主管係數　'+vSub+'</td>'+
+      '<td colspan="6" style="'+csBlock+';background:#cce0e0;color:#2e4a4a">老闆係數　'+vLead+sdTag(sdLead)+'</td>'+
+      '<td colspan="6" style="'+csBlock+';background:#d8eaea;color:#2e4a4a">主管係數　'+vSub+sdTag(sdSub)+'</td>'+
       '<td colspan="6" style="'+nb+'"></td>'+
       '<td colspan="8" style="'+nb+'"></td></tr>';
 
