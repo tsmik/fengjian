@@ -3108,7 +3108,7 @@ function save(){
   },1500);
 }
 function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
-function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=null);return vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(1):"0.0";}
+function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=null);return vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(2):"0.00";}
 
 // ===== 新版維度條件評分頁 =====
 const PART_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
@@ -3315,31 +3315,26 @@ function showReport(){
     const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
-    const hs='font-size:18px;font-weight:900;font-family:monospace;padding:6px 8px;text-align:center';
+    const bs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;font-family:\'Noto Serif TC\',serif;text-align:center';
 
-    let t='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
-
-    // === 頂部統計列 ===
-    // 總合（colspan=27: 1部位欄 + 13維度×2欄）
-    t+='<tr><td colspan="27" style="'+hs+';background:var(--dark);color:white;letter-spacing:2px">總合　'+vTotal+'</td></tr>';
-    // 先天12 + 運氣6 + 後天8 = 26 + 1部位欄 = 27
-    t+='<tr><td rowspan="2" style="padding:6px 8px;'+bd+';background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2"></td>'+
-      '<td colspan="12" style="'+hs+';background:#f0ebe5;'+bd+'">先天　'+vPre+'</td>'+
-      '<td colspan="6" style="'+hs+';background:#e5edf0;'+bd+'">運氣　'+vLuck+'</td>'+
-      '<td colspan="8" style="'+hs+';background:#e8f0e5;'+bd+'">後天　'+vPost+'</td></tr>';
-    // 老闆6 + 主管6（在先天12欄內）+ 運氣6空 + 後天8空
-    t+='<tr>'+
-      '<td colspan="6" style="'+hs+';background:#ebe6e0;'+bd+'">老闆　'+vLead+'</td>'+
-      '<td colspan="6" style="'+hs+';background:#f5f2ed;'+bd+'">主管　'+vSub+'</td>'+
-      '<td colspan="6" style="padding:4px;'+bd+';background:var(--bg)"></td>'+
-      '<td colspan="8" style="padding:4px;'+bd+';background:var(--bg)"></td></tr>';
-    // 靜/動進度條
-    t+='<tr><td colspan="27" style="padding:0;height:28px;position:relative;background:#eee">'+
+    // === 頂部摘要方塊 ===
+    let t='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;font-family:\'Noto Serif TC\',serif">';
+    t+='<div style="'+bs+';background:#8A7F70;color:white;flex:1 1 100%">總係數　'+vTotal+'</div>';
+    t+='<div style="'+bs+';background:#f0ebe5;flex:3 1 0">先天係數　'+vPre+'</div>';
+    t+='<div style="'+bs+';background:#e5edf0;flex:2 1 0">運氣係數　'+vLuck+'</div>';
+    t+='<div style="'+bs+';background:#e8f0e5;flex:2 1 0">後天係數　'+vPost+'</div>';
+    t+='<div style="'+bs+';background:#ebe6e0;flex:1 1 0">老闆係數　'+vLead+'</div>';
+    t+='<div style="'+bs+';background:#f5f2ed;flex:1 1 0">主管係數　'+vSub+'</div>';
+    t+='<div style="flex:2 1 0;height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee">'+
       '<div style="position:absolute;top:0;left:0;height:100%;width:'+sPct+'%;background:'+SBG+'"></div>'+
       '<div style="position:absolute;top:0;left:'+sPct+'%;height:100%;width:'+dPct+'%;background:'+DBG+'"></div>'+
       '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">靜 '+sT+'</span>'+
       '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">動 '+dT+'</span>'+
-    '</td></tr>';
+    '</div>';
+    t+='</div>';
+
+    // === 維度矩陣表格 ===
+    t+='<table style="border-collapse:collapse;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
 
     // === 維度 header ===
     // 第一層：維度名稱
