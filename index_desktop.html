@@ -2737,8 +2737,8 @@ function renderDimPanel(el){
   if(!el)return;
   var d=DIMS[cpCur];
   var res=calcDim(cpCur);
-  var resBg=res?(res.type==='靜'?'#5C7A8A':'#A05A50'):'#ccc';
-  var SBG='#5C7A8A',DBG='#A05A50';
+  var resBg=res?(res.type==='靜'?'#7A9E7E':'#C17A5A'):'#ccc';
+  var SBG='#7A9E7E',DBG='#C17A5A';
 
   var html='';
 
@@ -2749,7 +2749,7 @@ function renderDimPanel(el){
     {label:'後天係數',rows:[[9,10,11,12]]}
   ];
   var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 8px;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
-  var activeStyle='background:#e8eff2;border-color:#5C7A8A;border-width:2px;color:#5C7A8A';
+  var activeStyle='background:#e8eff2;border-color:#7A9E7E;border-width:2px;color:#7A9E7E';
   groups.forEach(function(g){
     html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px 10px">'+g.label+'</div>';
     g.rows.forEach(function(row){
@@ -3309,9 +3309,9 @@ function showReport(){
   if(ftEl){
     const partOrder=[0,1,2,3,4,5,6,7,8];
     const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-    const dimColors=['#3F5F6F','#5F7F8F','#8FA7B2','#4F6F66','#6F8F86','#9FB5AE','#565A78','#747AA0','#A0A6C8','#6A6052','#8A7F70','#B0A596','#C8BDAE'];
-    const dimAlpha=['rgba(63,95,111,0.4)','rgba(95,127,143,0.4)','rgba(143,167,178,0.4)','rgba(79,111,102,0.4)','rgba(111,143,134,0.4)','rgba(159,181,174,0.4)','rgba(86,90,120,0.4)','rgba(116,122,160,0.4)','rgba(160,166,200,0.4)','rgba(106,96,82,0.4)','rgba(138,127,112,0.4)','rgba(176,165,150,0.4)','rgba(200,189,174,0.4)'];
-    const SBG='#5C7A8A',DBG='#A05A50';
+    const dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+    const dimAlpha=['rgba(94,128,128,0.4)','rgba(110,146,146,0.4)','rgba(126,164,164,0.4)','rgba(82,112,112,0.4)','rgba(96,130,130,0.4)','rgba(110,148,148,0.4)','rgba(158,138,90,0.4)','rgba(178,158,110,0.4)','rgba(198,178,130,0.4)','rgba(122,90,80,0.4)','rgba(142,108,98,0.4)','rgba(162,126,116,0.4)','rgba(182,144,136,0.4)'];
+    const SBG='#7A9E7E',DBG='#C17A5A';
     const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
@@ -3319,7 +3319,7 @@ function showReport(){
 
     // === 頂部摘要方塊 ===
     let t='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;font-family:\'Noto Serif TC\',serif">';
-    t+='<div style="'+bs+';background:#8A7F70;color:white;flex:1 1 100%">總係數　'+vTotal+'</div>';
+    t+='<div style="'+bs+';background:#8E6C62;color:white;flex:1 1 100%">總係數　'+vTotal+'</div>';
     t+='<div style="'+bs+';background:#f0ebe5;flex:3 1 0">先天係數　'+vPre+'</div>';
     t+='<div style="'+bs+';background:#e5edf0;flex:2 1 0">運氣係數　'+vLuck+'</div>';
     t+='<div style="'+bs+';background:#e8f0e5;flex:2 1 0">後天係數　'+vPost+'</div>';
@@ -3415,7 +3415,7 @@ function showSensPage(){
 
 function renderSensPage(){
   var el=document.getElementById('sens-content');if(!el)return;
-  var SBG='#5C7A8A',DBG='#A05A50';
+  var SBG='#7A9E7E',DBG='#C17A5A';
   var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
   var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
 
