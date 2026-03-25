@@ -195,7 +195,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 /* ===== Report Overlay ===== */
 #report-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:#fff;z-index:2000;padding:15px;overflow-y:auto;overflow-x:hidden}
-.report-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.report-top{display:flex;justify-content:flex-start;align-items:baseline;margin-bottom:8px;gap:8px}
 .report-name{width:50%;border-bottom:2px solid var(--text);padding:8px 0;font-size:28px;font-weight:900;font-family:'Noto Serif TC',serif}
 .report-title{font-size:28px;font-weight:900;letter-spacing:1px}
 .stat-grid{display:grid;grid-template-columns:35px repeat(13,1fr);gap:1px;margin-bottom:4px}
@@ -3376,16 +3376,19 @@ function showReport(){
       var res=calcDim(i);
       var coeff=res?res.coeff.toFixed(2):'—';
       var sc=dimSCounts[i],dc=dimDCounts[i];
-      // 堆疊橫條
-      var bars='<div style="display:flex;gap:2px;justify-content:center;margin-top:4px">';
+      // 堆疊橫條（靠下）
+      var bars='<div style="display:flex;gap:2px;justify-content:center;flex:1;align-items:flex-end">';
       bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">';
       for(var b=0;b<sc;b++)bars+='<div style="width:12px;height:3px;background:'+SBG+';border-radius:1px"></div>';
       bars+='</div>';
       bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">';
       for(var b=0;b<dc;b++)bars+='<div style="width:12px;height:3px;background:'+DBG+';border-radius:1px"></div>';
       bars+='</div></div>';
-      t+='<td colspan="2" style="padding:4px 6px;text-align:center;background:var(--bg);'+rc+'">'+
-        '<div style="font-weight:700;color:var(--text-3)">'+coeff+'</div>'+bars+'</td>';
+      // 動靜背景色
+      var cellBg=res?(res.type==='靜'?'rgba(122,158,126,0.35)':'rgba(193,122,90,0.35)'):'var(--bg)';
+      t+='<td colspan="2" style="padding:4px 6px;text-align:center;background:'+cellBg+';'+rc+'">'+
+        '<div style="display:flex;flex-direction:column;height:100%">'+
+        '<div style="font-weight:700;color:var(--text-3)">'+coeff+'</div>'+bars+'</div></td>';
     });
     t+='</tr>';
 
