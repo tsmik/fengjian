@@ -706,10 +706,9 @@ var TH=JSON.parse(JSON.stringify(TH_DEFAULT));
 function loadThresholds(){
   db.collection('settings').doc('scoring_thresholds').get().then(function(doc){
     if(doc.exists&&doc.data().th){
-      try{TH=JSON.parse(doc.data().th);console.log('loadThresholds: loaded from Firebase',TH);}
-      catch(e){TH=JSON.parse(JSON.stringify(TH_DEFAULT));console.log('loadThresholds: parse error, using default');}
-    }else{console.log('loadThresholds: no Firebase data, using default');}
-  }).catch(function(e){console.log('loadThresholds: error',e);});
+      try{TH=JSON.parse(doc.data().th);}catch(e){TH=JSON.parse(JSON.stringify(TH_DEFAULT));}
+    }
+  }).catch(function(){});
 }
 function saveThresholds(){
   db.collection('settings').doc('scoring_thresholds').set({th:JSON.stringify(TH),updatedAt:new Date().toISOString()}).catch(function(e){console.log('門檻儲存失敗',e);});
@@ -719,14 +718,17 @@ loadThresholds();
 window.updateTH=function(dimIdx,partIdx,val){
   var n=parseInt(val)||0;
   if(!TH[dimIdx])return;
-  console.log('updateTH: dim='+dimIdx+' part='+partIdx+' old='+TH[dimIdx][partIdx]+' new='+n);
   TH[dimIdx][partIdx]=n;
   saveThresholds();
   recalcFromObs();
-  try{renderFaceMap();}catch(e){}
-  try{renderDimIndex();}catch(e){}
-  try{cpRender();}catch(e){}
-  console.log('updateTH done, TH['+dimIdx+']=',JSON.stringify(TH[dimIdx]));
+  // 重新渲染當前顯示的頁面
+  var active=document.querySelector('.nav-tab.active');
+  var tab=active?active.id:'';
+  if(tab==='nav-obs'){try{renderFaceMap();renderObsCenter();renderDimIndex();}catch(e){}}
+  else if(tab==='nav-cond'){try{cpRender();}catch(e){}}
+  else if(tab==='nav-report'){try{showReport();}catch(e){}}
+  else if(tab==='nav-sens'){try{renderSensPage();}catch(e){}}
+  else if(tab==='nav-know'){try{renderDimIndex();}catch(e){}}
 };
 
 const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
@@ -1460,10 +1462,6 @@ function recalcFromObs(){
   data[11][7]=((nBalance()||nBone())&&nNoNode())?'B':'A';
   // 口：嘴角收+(口適中OR口大) 2項全中→實(B)
   const d12k=cnt(mGather(),mBigAny());
-  console.log('TH[11][8]=',TH[11][8]);
-  console.log('mGather=',mGather(),'obsData.m3=',obsData['m3']);
-  console.log('mBigAny=',mBigAny(),'obsData.m1=',obsData['m1']);
-  console.log('d12k=',d12k,'result=',(d12k>=TH[11][8]?'B(實)':'A(虛)'));
   data[11][8]=d12k>=TH[11][8]?'B':'A';
   // 中停：左眉實+右眉實+左眼實+右眼實+鼻實+左顴(高且隆OR有而不明)+右顴同 ≥4→實(B)
   const d12qL=qHighAny('L'), d12qR=qHighAny('R');
