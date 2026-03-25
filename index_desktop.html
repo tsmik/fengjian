@@ -395,6 +395,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- 手動輸入兵法報告頁 -->
 <div id="manual-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5800;overflow-y:auto;padding:15px;overflow-x:hidden">
   <div id="manual-table" style="overflow-x:auto;width:100%"></div>
+  <div class="report-actions">
+    <button class="btn-back" onclick="manualClear()" style="flex:1;margin:0;">&#8592; 清除全部</button>
+    <button class="btn-back" onclick="manualSave()" id="manual-save-btn" style="flex:1;margin:0;">儲存評分</button>
+  </div>
 </div>
 <!-- 敏感度分析頁 -->
 <div id="sens-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5500;overflow-y:auto;padding:20px">
@@ -3811,6 +3815,38 @@ function manualCellClick(di,pi){
   else if(cur==='A')manualData[di][pi]='B';
   else manualData[di][pi]=null;
   renderManualPage();
+}
+
+function manualClear(){
+  manualData=null;initManualData();
+  renderManualPage();
+}
+
+function manualSave(){
+  if(!userName)return;
+  initManualData();
+  var coeffs={};
+  for(var i=0;i<13;i++){
+    var res=manualCalcDim(i);
+    coeffs[DIMS[i].a+DIMS[i].b]=res?{type:res.type,coeff:res.coeff,a:res.a,b:res.b}:null;
+  }
+  var btn=document.getElementById('manual-save-btn');
+  btn.innerText='儲存中...';btn.disabled=true;
+  db.collection('analyses').add({
+    userName:userName,
+    inputType:'manual',
+    manualData:JSON.stringify(manualData),
+    coefficients:JSON.stringify(coeffs),
+    totalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
+    createdAt:new Date().toISOString()
+  }).then(function(){
+    btn.innerText='已儲存 \u2713';btn.style.color='#7A9E7E';btn.style.borderColor='#7A9E7E';
+    setTimeout(function(){btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';btn.disabled=false;},2000);
+  }).catch(function(e){
+    btn.innerText='儲存失敗';btn.disabled=false;
+    setTimeout(function(){btn.innerText='儲存評分';},2000);
+    console.log('手動評分儲存失敗',e);
+  });
 }
 
 function manualCalcDim(i){
