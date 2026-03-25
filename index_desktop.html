@@ -640,18 +640,17 @@ window.kSelect=function(i){
   document.getElementById('k-main-title').textContent=d.title;
   document.getElementById('k-main-sub').textContent=d.cat+' ・ '+d.view;
   const isAdmin=window._isAdmin||false;
+  // KD row index → TH partIdx mapping
+  const kdRowToPartIdx=[0,1,4,5,6,7,-1,8,2,3]; // -1=顴(無獨立門檻)
   const rows=d.rows.map(function(r,ri){
     var thCell=r[2];
-    if(isAdmin&&typeof TH!=='undefined'){
-      // 從門檻文字中提取數字，加上可編輯的 input
-      var numMatch=r[2].match(/(\d+)/);
-      if(numMatch){
-        var curVal=TH[i]?TH[i][ri]||0:0;
-        thCell=`<span>${r[2].replace(numMatch[1],'')}</span>`+
-          `<input type="number" value="${curVal}" min="0" max="9" `+
-          `style="width:36px;font-size:13px;font-weight:700;text-align:center;border:1.5px solid var(--border);border-radius:4px;padding:2px;font-family:'Noto Serif TC',serif" `+
-          `onchange="window.updateTH(${i},${ri},this.value)">`;
-      }
+    var pi=ri<kdRowToPartIdx.length?kdRowToPartIdx[ri]:-1;
+    if(isAdmin&&typeof TH!=='undefined'&&pi>=0){
+      var curVal=(TH[i]&&TH[i][pi]!=null)?TH[i][pi]:0;
+      thCell=`<span>${r[2]}</span> `+
+        `<input type="number" value="${curVal}" min="0" max="9" `+
+        `style="width:36px;font-size:13px;font-weight:700;text-align:center;border:1.5px solid var(--border);border-radius:4px;padding:2px;font-family:'Noto Serif TC',serif" `+
+        `onchange="window.updateTH(${i},${pi},this.value)">`;
     }
     return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${thCell}</td></tr>`;
   }).join('');
@@ -706,8 +705,11 @@ const TH_DEFAULT=[
 var TH=JSON.parse(JSON.stringify(TH_DEFAULT));
 function loadThresholds(){
   db.collection('settings').doc('scoring_thresholds').get().then(function(doc){
-    if(doc.exists&&doc.data().th){try{TH=JSON.parse(doc.data().th);}catch(e){TH=JSON.parse(JSON.stringify(TH_DEFAULT));}}
-  }).catch(function(){});
+    if(doc.exists&&doc.data().th){
+      try{TH=JSON.parse(doc.data().th);console.log('loadThresholds: loaded from Firebase',TH);}
+      catch(e){TH=JSON.parse(JSON.stringify(TH_DEFAULT));console.log('loadThresholds: parse error, using default');}
+    }else{console.log('loadThresholds: no Firebase data, using default');}
+  }).catch(function(e){console.log('loadThresholds: error',e);});
 }
 function saveThresholds(){
   db.collection('settings').doc('scoring_thresholds').set({th:JSON.stringify(TH),updatedAt:new Date().toISOString()}).catch(function(e){console.log('門檻儲存失敗',e);});
@@ -717,9 +719,11 @@ loadThresholds();
 window.updateTH=function(dimIdx,partIdx,val){
   var n=parseInt(val)||0;
   if(!TH[dimIdx])return;
+  console.log('updateTH: dim='+dimIdx+' part='+partIdx+' old='+TH[dimIdx][partIdx]+' new='+n);
   TH[dimIdx][partIdx]=n;
   saveThresholds();
   recalcFromObs();
+  console.log('updateTH done, TH['+dimIdx+']=',JSON.stringify(TH[dimIdx]));
 };
 
 const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
