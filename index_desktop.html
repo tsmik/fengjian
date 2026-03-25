@@ -1453,6 +1453,10 @@ function recalcFromObs(){
   data[11][7]=((nBalance()||nBone())&&nNoNode())?'B':'A';
   // 口：嘴角收+(口適中OR口大) 2項全中→實(B)
   const d12k=cnt(mGather(),mBigAny());
+  console.log('TH[11][8]=',TH[11][8]);
+  console.log('mGather=',mGather(),'obsData.m3=',obsData['m3']);
+  console.log('mBigAny=',mBigAny(),'obsData.m1=',obsData['m1']);
+  console.log('d12k=',d12k,'result=',(d12k>=TH[11][8]?'B(實)':'A(虛)'));
   data[11][8]=d12k>=TH[11][8]?'B':'A';
   // 中停：左眉實+右眉實+左眼實+右眼實+鼻實+左顴(高且隆OR有而不明)+右顴同 ≥4→實(B)
   const d12qL=qHighAny('L'), d12qR=qHighAny('R');
