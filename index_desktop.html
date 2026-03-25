@@ -3351,18 +3351,21 @@ function showReport(){
     // === 單一表格（頂部摘要 + 維度矩陣）===
     let t='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
 
+    var pw='width:38px;min-width:38px';
+
     // --- 頂部摘要 ---
     // 第一列：總係數
-    t+='<tr><td style="'+nb+'"></td>'+
+    t+='<tr><td style="'+nb+';'+pw+'"></td>'+
       '<td colspan="26" style="'+rc+';background:#c8bfb0;color:#3a3228;padding:8px 14px;font-size:18px">'+
       '<div style="display:flex;align-items:center;justify-content:space-between">'+
-      '<span style="font-weight:700">總係數　'+vTotal+'</span>'+sdTag(sdAll)+'</div></td></tr>';
+      '<span style="font-weight:700">總係數　'+vTotal+'</span>'+sdTag(sdAll)+'</div></td>'+
+      '<td style="'+nb+';'+pw+'"></td></tr>';
     // 第二列：先天12 + 運氣6 + 後天8
-    t+='<tr><td rowspan="2" style="'+nb+'"></td>';
+    t+='<tr><td rowspan="2" style="'+nb+';'+pw+'"></td>';
     t+=cellFlex('先天係數',vPre,sdPre,'#bdd4d4','#2e4a4a').replace('<td','<td colspan="12"');
     t+=cellFlex('運氣係數',vLuck,sdLuck,'#e8dcc8','#5a4a2a').replace('<td','<td colspan="6"');
     t+=cellFlex('後天係數',vPost,sdPost,'#e0cdc6','#5a3a30').replace('<td','<td colspan="8"');
-    t+='</tr>';
+    t+='<td rowspan="2" style="'+nb+';'+pw+'"></td></tr>';
     // 第三列：老闆6 + 主管6 + 空6 + 空8
     t+='<tr>';
     t+=cellFlex('老闆係數',vLead,sdLead,'#cce0e0','#2e4a4a').replace('<td','<td colspan="6"');
@@ -3383,11 +3386,11 @@ function showReport(){
     }
 
     // 維度名稱行
-    t+='<tr><td rowspan="3" style="padding:6px 10px;background:var(--sidebar);font-weight:700;position:sticky;left:0;z-index:2;'+rc+'"></td>';
+    t+='<tr><td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;position:sticky;left:0;z-index:2;'+rc+';'+pw+';text-align:center"></td>';
     DIMS.forEach(function(d,i){
       t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.a+d.b+'</th>';
     });
-    t+='</tr>';
+    t+='<td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;'+rc+';'+pw+';text-align:center"></td></tr>';
     // 子欄行：靜X｜動X（透明底、棕色字、底線）
     t+='<tr>';
     DIMS.forEach(function(d,i){
@@ -3417,9 +3420,15 @@ function showReport(){
     t+='</tr>';
 
     // === 資料行 ===
+    var partCellL='padding:4px 6px;font-weight:700;background:#e8e3da;position:sticky;left:0;z-index:1;'+rc+';'+pw+';text-align:center';
+    var partCellR='padding:4px 6px;font-weight:700;background:#e8e3da;'+rc+';'+pw+';text-align:center';
     partOrder.forEach(function(pi,idx){
+      // 下停和耳之間加分隔線（idx=3→下停，idx=4→耳）
+      if(idx===4){
+        t+='<tr><td colspan="28" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
+      }
       t+='<tr>';
-      t+='<td style="padding:5px 10px;font-weight:700;background:var(--sidebar);position:sticky;left:0;z-index:1;'+rc+'">'+partLabels[idx]+'</td>';
+      t+='<td style="'+partCellL+'">'+partLabels[idx]+'</td>';
       DIMS.forEach(function(d,di){
         var v=data[di][pi];
         var isStatic=false,isDynamic=false;
@@ -3435,6 +3444,7 @@ function showReport(){
           t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
         }
       });
+      t+='<td style="'+partCellR+'">'+partLabels[idx]+'</td>';
       t+='</tr>';
     });
     t+='</table>';
