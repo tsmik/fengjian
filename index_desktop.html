@@ -3804,6 +3804,23 @@ function initManualData(){
   if(manualData)return;
   manualData=Array(13).fill(null).map(function(){return Array(9).fill(null);});
 }
+function manualSaveLocal(){
+  if(manualData)localStorage.setItem('manual_data_v1',JSON.stringify(manualData));
+}
+function manualLoadData(){
+  // 優先 Firebase，備用 localStorage
+  if(!userName){manualLoadLocal();return;}
+  db.collection('users').doc(userName).get().then(function(doc){
+    if(doc.exists&&doc.data().manualDataJson){
+      try{manualData=JSON.parse(doc.data().manualDataJson);}catch(e){manualLoadLocal();}
+    }else{manualLoadLocal();}
+    renderManualPage();
+  }).catch(function(){manualLoadLocal();renderManualPage();});
+}
+function manualLoadLocal(){
+  try{var s=localStorage.getItem('manual_data_v1');if(s)manualData=JSON.parse(s);}catch(e){}
+  if(!manualData)initManualData();
+}
 
 function showManualPage(){
   ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','cond-page'].forEach(function(id){document.getElementById(id).style.display='none';});
@@ -3813,7 +3830,7 @@ function showManualPage(){
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-manual');
   initManualData();
-  renderManualPage();
+  manualLoadData();
 }
 
 function manualCellClick(di,pi){
@@ -3822,11 +3839,13 @@ function manualCellClick(di,pi){
   if(cur===null)manualData[di][pi]='A';
   else if(cur==='A')manualData[di][pi]='B';
   else manualData[di][pi]=null;
+  manualSaveLocal();
   renderManualPage();
 }
 
 function manualClear(){
   manualData=null;initManualData();
+  manualSaveLocal();
   renderManualPage();
 }
 
@@ -3840,14 +3859,22 @@ function manualSave(){
   }
   var btn=document.getElementById('manual-save-btn');
   btn.innerText='儲存中...';btn.disabled=true;
-  db.collection('analyses').add({
-    userName:userName,
-    inputType:'manual',
-    manualData:JSON.stringify(manualData),
-    coefficients:JSON.stringify(coeffs),
+  // 存到 users/{userName} 的 manualDataJson 欄位（持久化）
+  var savePromise=db.collection('users').doc(userName).set({
+    manualDataJson:JSON.stringify(manualData),
+    manualCoeffs:JSON.stringify(coeffs),
+    manualTotalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
+    manualUpdatedAt:new Date().toISOString()
+  },{merge:true});
+  // 同時存到 analyses（歷史記錄）
+  var logPromise=db.collection('analyses').add({
+    userName:userName,inputType:'manual',
+    manualData:JSON.stringify(manualData),coefficients:JSON.stringify(coeffs),
     totalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
     createdAt:new Date().toISOString()
-  }).then(function(){
+  });
+  manualSaveLocal();
+  Promise.all([savePromise,logPromise]).then(function(){
     btn.innerText='已儲存 \u2713';btn.style.color='#7A9E7E';btn.style.borderColor='#7A9E7E';
     setTimeout(function(){btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';btn.disabled=false;},2000);
   }).catch(function(e){
