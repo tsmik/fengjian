@@ -3376,16 +3376,16 @@ function showReport(){
       var res=calcDim(i);
       var coeff=res?res.coeff.toFixed(2):'—';
       var sc=dimSCounts[i],dc=dimDCounts[i];
-      // 上方：係數方塊
-      var coeffBg=res?(res.type==='靜'?'rgba(122,158,126,0.55)':'rgba(193,122,90,0.55)'):'var(--bg)';
-      var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:5px">'+coeff+'</div>';
-      // 下方：堆疊橫條（透明底，靠下）
-      var bars='<div style="display:flex;gap:2px;justify-content:center;height:36px;align-items:flex-end;padding-bottom:2px">';
-      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;justify-content:flex-end">';
-      for(var b=0;b<sc;b++)bars+='<div style="width:12px;height:3px;background:'+SBG+';border-radius:1px"></div>';
+      // 上方：係數方塊（實色，撐滿）
+      var coeffBg=res?(res.type==='靜'?SBG:DBG):'var(--bg)';
+      var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">'+coeff+'</div>';
+      // 下方：堆疊橫條（撐滿，靠下）
+      var bars='<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">';
+      bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
+      for(var b=0;b<sc;b++)bars+='<div style="height:3px;background:'+SBG+';border-radius:1px"></div>';
       bars+='</div>';
-      bars+='<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;justify-content:flex-end">';
-      for(var b=0;b<dc;b++)bars+='<div style="width:12px;height:3px;background:'+DBG+';border-radius:1px"></div>';
+      bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
+      for(var b=0;b<dc;b++)bars+='<div style="height:3px;background:'+DBG+';border-radius:1px"></div>';
       bars+='</div></div>';
       t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
     });
