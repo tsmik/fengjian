@@ -3315,23 +3315,30 @@ function showReport(){
     const sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
     const dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
     const bd='border:1px solid rgba(0,0,0,0.15)';
-    const bs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;font-family:\'Noto Serif TC\',serif;text-align:center';
+    const cs='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;font-family:\'Noto Serif TC\',serif;text-align:center';
 
-    // === 頂部摘要方塊 ===
-    let t='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;font-family:\'Noto Serif TC\',serif">';
-    t+='<div style="'+bs+';background:#8E6C62;color:white;flex:1 1 100%">總係數　'+vTotal+'</div>';
-    t+='<div style="'+bs+';background:#f0ebe5;flex:3 1 0">先天係數　'+vPre+'</div>';
-    t+='<div style="'+bs+';background:#e5edf0;flex:2 1 0">運氣係數　'+vLuck+'</div>';
-    t+='<div style="'+bs+';background:#e8f0e5;flex:2 1 0">後天係數　'+vPost+'</div>';
-    t+='<div style="'+bs+';background:#ebe6e0;flex:1 1 0">老闆係數　'+vLead+'</div>';
-    t+='<div style="'+bs+';background:#f5f2ed;flex:1 1 0">主管係數　'+vSub+'</div>';
-    t+='<div style="flex:2 1 0;height:28px;border-radius:4px;overflow:hidden;position:relative;background:#eee">'+
-      '<div style="position:absolute;top:0;left:0;height:100%;width:'+sPct+'%;background:'+SBG+'"></div>'+
-      '<div style="position:absolute;top:0;left:'+sPct+'%;height:100%;width:'+dPct+'%;background:'+DBG+'"></div>'+
-      '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">靜 '+sT+'</span>'+
-      '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:white;font-size:16px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,0.3)">動 '+dT+'</span>'+
-    '</div>';
-    t+='</div>';
+    // === 頂部摘要（表格對齊維度欄位）===
+    let t='<table style="border-collapse:separate;border-spacing:2px;width:100%;font-family:\'Noto Serif TC\',serif;margin-bottom:4px">';
+    // 總係數（全寬 + 迷你 Bar）
+    t+='<tr><td colspan="27" style="'+cs+';background:#c8bfb0;color:#3a3228">'+
+      '總係數　'+vTotal+
+      '<span style="display:inline-block;width:14%;height:0.6em;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:2em;position:relative">'+
+        '<span style="position:absolute;left:0;top:0;height:100%;width:'+sPct+'%;background:'+SBG+'"></span>'+
+        '<span style="position:absolute;left:'+sPct+'%;top:0;height:100%;width:'+dPct+'%;background:'+DBG+'"></span>'+
+      '</span>'+
+    '</td></tr>';
+    // 先天12 + 運氣6 + 後天8 + 部位1 = 27
+    t+='<tr><td rowspan="2" style="'+cs+';background:transparent"></td>'+
+      '<td colspan="12" style="'+cs+';background:#bdd4d4;color:#2e4a4a">先天係數　'+vPre+'</td>'+
+      '<td colspan="6" style="'+cs+';background:#e8dcc8;color:#5a4a2a">運氣係數　'+vLuck+'</td>'+
+      '<td colspan="8" style="'+cs+';background:#e0cdc6;color:#5a3a30">後天係數　'+vPost+'</td></tr>';
+    // 老闆6 + 主管6 + 運氣空6 + 後天空8
+    t+='<tr>'+
+      '<td colspan="6" style="'+cs+';background:#cce0e0;color:#2e4a4a">老闆係數　'+vLead+'</td>'+
+      '<td colspan="6" style="'+cs+';background:#d8eaea;color:#2e4a4a">主管係數　'+vSub+'</td>'+
+      '<td colspan="6" style="padding:4px;background:transparent"></td>'+
+      '<td colspan="8" style="padding:4px;background:transparent"></td></tr>';
+    t+='</table>';
 
     // === 維度矩陣表格 ===
     var rc='border-radius:4px';
