@@ -698,8 +698,8 @@ const db=firebase.firestore();
 const TH_DEFAULT=[
   [3,4,4,3,4,6,3,4,4],[3,1,4,3,5,7,5,3,6],[3,2,4,3,3,2,1,2,4],
   [3,3,4,3,3,1,4,3,4],[3,1,4,3,2,1,2,1,4],[3,3,4,3,3,5,2,2,4],
-  [3,1,4,3,4,5,3,4,3],[3,1,4,3,3,4,3,3,4],[1,2,4,3,5,4,6,6,5],
-  [1,1,4,3,1,1,1,1,1],[3,0,4,3,0,0,0,0,0],[3,3,4,3,0,0,0,0,2],
+  [3,1,4,3,4,5,3,4,3],[3,1,4,3,3,4,3,3,4],[3,2,4,3,5,4,6,6,5],
+  [1,1,4,3,1,1,1,1,1],[3,0,4,3,0,0,0,0,0],[3,3,4,3,8,6,6,0,2],
   [3,0,4,3,0,0,0,0,0]
 ];
 var TH=JSON.parse(JSON.stringify(TH_DEFAULT));
@@ -1167,7 +1167,7 @@ function recalcFromObs(){
   const d04k=cnt(mLineFlat(),mGather(),mFlat_corner(),mLineDense());
   data[3][8]=d04k>=TH[3][8]?'B':'A';
   // 中停：左眉直+右眉直+左眼直+右眼直+鼻直+左顴(相稱)+右顴同 ≥4→直(B)
-  const d04qL=is('q5','相稱'), d04qR=is('q5','相稱');
+  const d04qL=false, d04qR=false;
   s=cnt(d04mL>=1,d04mR>=1,d04yL>=4,d04yR>=4,d04n>=3,d04qL,d04qR);
   data[3][2]=s>=TH[3][2]?'B':'A';
   // 下停：口直+人中直+地閣平+左頤平直+右頤平直 ≥3→直(B)
@@ -1765,7 +1765,7 @@ function recalcFromObs(){
   };
 
   // ===== 04 曲直 =====
-  const d04qL_c=is('q5','相稱'), d04qR_c=is('q5','相稱');
+  const d04qL_c=false, d04qR_c=false;
   condResults[3]={
     0:partWt([
       {...ci('頂骨中線直（矢狀縫無偏斜）',is('h4','中線直'),['h4'],null,'中線直'),wt:2},
@@ -3208,7 +3208,6 @@ function renderDimCondMain(){
   '</div>';
 
   const cr=condResults[cur];
-  console.log('renderDimCondMain cur='+cur+' cr keys='+(cr?Object.keys(cr).join(','):'NONE'));
   if(!cr||Object.keys(cr).length===0){
     el.innerHTML=html+'<div style="padding:20px;color:var(--text-3);font-size:13px;">請先至「各部位觀察」填寫觀察題，系統會自動計算各條件結果。</div>';
     return;
@@ -3216,7 +3215,7 @@ function renderDimCondMain(){
 
   PART_ORDER.forEach(pi=>{
     const p=cr[pi];
-    if(!p){console.log('skip pi='+pi+' (no data)');return;}
+    if(!p)return;
     const pLabel=PART_LABELS[pi];
     const passColor=p.pass?'var(--static)':'var(--active)';
     const passLabel=p.pass?(data[cur][pi]==='B'?d.b:d.a):'未達';
