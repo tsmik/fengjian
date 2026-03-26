@@ -20,32 +20,32 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .tab-btn.active{color:var(--text);font-weight:700;border-bottom-color:var(--active);background:var(--bg)}
 #main{flex:1;display:grid;grid-template-columns:200px 1fr;overflow:hidden}
 #sidebar{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0}
-.sb-item{padding:10px 14px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
+.sb-item{padding:10px 14px;cursor:pointer;font-size:15px;font-weight:500;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
 .sb-item:hover{background:var(--hover)}
 .sb-item.active{background:white;border-left-color:var(--active);font-weight:700;color:var(--text)}
 .sb-cat{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px}
 .sb-count{font-size:11px;color:var(--text-3);margin-left:4px}
 #editor{overflow-y:auto;padding:20px}
 .section-block{margin-bottom:16px;background:white;border-radius:8px;border:1px solid var(--border);overflow:hidden}
-.section-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:700;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.section-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .section-hdr:hover{background:var(--hover)}
 .section-body{padding:12px 14px;display:none}
 .section-body.open{display:block}
-.q-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:13px}
+.q-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:14px}
 .q-row:hover{background:var(--hover)}
-.q-id{font-weight:700;color:var(--static);min-width:36px}
+.q-id{font-weight:700;color:var(--static);min-width:42px}
 .q-text{flex:1;color:var(--text-2)}
 .q-paired{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--dynamic);color:white;font-weight:700}
 .q-opts{font-size:11px;color:var(--text-3)}
-.q-actions{display:flex;gap:3px;opacity:0.6}
+.q-actions{display:flex;gap:8px;opacity:0.6}
 .q-row:hover .q-actions{opacity:1}
-.q-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.q-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
 .q-actions button:hover{background:var(--hover)}
-.q-actions .del{color:var(--active);border-color:var(--active)}
+.q-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
 .edit-form{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:6px 0}
 .edit-form .row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
 .edit-form label{font-size:12px;color:var(--text-3);min-width:50px}
-.edit-form input,.edit-form select{font-size:13px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
+.edit-form input,.edit-form select{font-size:14px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
 .edit-form input[type=text]{flex:1;min-width:150px}
 .opt-row{display:flex;gap:4px;align-items:center;margin:2px 0 2px 56px}
 .opt-row input{font-size:12px;padding:2px 4px}
@@ -53,14 +53,15 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0;font-family:'Noto Serif TC',serif}
 .add-btn:hover{background:var(--hover);border-color:var(--text-3)}
 /* Rule editor nodes */
-.node{margin:4px 0 4px 16px;padding:6px 10px;border-left:2px solid var(--border);font-size:13px;border-radius:4px;margin-bottom:2px}
-.node-op{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;color:white;background:var(--active);margin-right:6px;letter-spacing:1px}
+.node{margin:4px 0 4px 16px;padding:8px 12px;border-left:2px solid var(--border);font-size:14px;border-radius:4px;margin-bottom:2px}
+.node-op{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:700;color:white;background:var(--active);margin-right:6px;letter-spacing:1px}
 .node-ref{font-weight:700;color:var(--text)}
 .node-match{color:var(--static);font-weight:500}
-.node-meta{color:var(--text-3);font-size:12px;margin-left:8px}
-.node-actions{display:inline-flex;gap:4px;margin-left:8px;opacity:0.6}
+.node-meta{color:var(--text-3);font-size:13px;margin-left:8px}
+.node-actions{display:inline-flex;gap:8px;margin-left:8px;opacity:0.6}
 .node:hover .node-actions{opacity:1}
-.node-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.node-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.node-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
 .btn-save.dirty{background:#c03830;animation:pulse-save 1.5s ease-in-out infinite}
@@ -198,7 +199,7 @@ function renderRules(){
     var pd=dim.parts[pn];
     var secKey='r-'+curDim+'-'+pn;
     var isOpen=openSections.has(secKey);
-    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3)">▼</span></div><div class="section-body${isOpen?' open':''}">`;
+    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3)">${isOpen?'▲':'▼'}</span></div><div class="section-body${isOpen?' open':''}">`;
     if(pd)eh+=renderNode(pd,'parts.'+pn,0,qmap);
     else eh+='<div style="color:var(--text-3);font-size:13px">此部位無規則</div>';
     eh+=`<button class="add-btn" id="add-btn-root-${pn}" onclick="addRootItem('${pn}')">+ 新增條件（根層級）</button>`;
@@ -233,11 +234,17 @@ function renderRules(){
   }
 }
 
-function depthBg(d){return d<=0?'':'background:rgba(0,0,0,'+(Math.min(d,3)*0.02).toFixed(2)+')';}
+function depthStyle(d){
+  var bgs=['','rgba(0,0,0,0.03)','rgba(0,0,0,0.06)','rgba(0,0,0,0.09)'];
+  var borders=['','#c4b99a','#a89878','#8c7d5e'];
+  var l=Math.min(d,3);var s='';
+  if(l>0)s+='background:'+bgs[l]+';border-left-color:'+borders[l]+';';
+  return s;
+}
 
 function renderNode(node,path,depth,qmap){
   if(!node)return '';
-  var h='',ind=depth*8,bg=depthBg(depth);
+  var h='',ind=depth*8,bg=depthStyle(depth);
   if(node.partResult!==undefined){
     return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
   }
@@ -245,11 +252,12 @@ function renderNode(node,path,depth,qmap){
     var q=(qmap||{})[node.ref]||{text:'?',fullOpts:[]};
     var sidePrefix=node.side==='L'?'左':node.side==='R'?'右':'';
     var matchArr=Array.isArray(node.match)?node.match:[node.match];
-    var msWithHint=matchArr.map(function(mv){
+    var msHtml=matchArr.map(function(mv){
       var hint=getHintForMatch(qmap,node.ref,mv);
-      return hint?mv+'（'+hint+'）':mv;
+      if(hint)return '<span title="'+hint.replace(/"/g,'&quot;')+'" style="cursor:help;border-bottom:1px dotted var(--static)">'+mv+'</span><span style="font-size:11px;color:var(--text-3);cursor:help" title="'+hint.replace(/"/g,'&quot;')+'"> ⓘ</span>';
+      return mv;
     }).join('｜');
-    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msWithHint}</span>`;
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msHtml}</span>`;
     if(node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
     h+=nodeActs(path)+'</div>';return h;
   }
@@ -397,7 +405,13 @@ function saveRuleEdit(path){
   if(_pendingNewNodePath===path)_pendingNewNodePath=null;
   renderAll();markDirty();
 }
-function deleteRuleNode(p){if(!confirm('確定刪除？'))return;pushUndo();delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();}
+function deleteRuleNode(p){
+  var node=getPath(rules[curDim],p);if(!node)return;
+  var lc=countLeafNodes(node);
+  var msg=lc>1?'此節點包含 '+lc+' 個條件，刪除後將全部移除。\n確定刪除？':'確定刪除？';
+  if(!confirm(msg))return;
+  pushUndo();delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();
+}
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
@@ -555,8 +569,7 @@ function cancelNewNode(){
 
 function toggleSec(key,el){
   if(openSections.has(key))openSections.delete(key);else openSections.add(key);
-  el.nextElementSibling.classList.toggle('open');
-  updateBreadcrumb();
+  renderAll();
 }
 
 // ==================== QUESTIONS EDITOR ====================
@@ -583,7 +596,7 @@ function renderQuestions(){
     var qSecOpen=openSections.has(qSecKey);
     eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${qSecKey}',this)">`;
     eh+=`<span ondblclick="editSectionName(${si},this)" style="cursor:text">${sec.label}</span>`;
-    eh+=`<span style="font-size:12px;color:var(--text-3)">${sec.qs.length}題 ▼</span></div>`;
+    eh+=`<span style="font-size:12px;color:var(--text-3)">${sec.qs.length}題 ${qSecOpen?'▲':'▼'}</span></div>`;
     eh+=`<div class="section-body${qSecOpen?' open':''}">`;
 
     sec.qs.forEach((q,qi)=>{
