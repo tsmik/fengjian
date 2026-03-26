@@ -201,6 +201,7 @@ function renderRules(){
     eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3)">▼</span></div><div class="section-body${isOpen?' open':''}">`;
     if(pd)eh+=renderNode(pd,'parts.'+pn,0,qmap);
     else eh+='<div style="color:var(--text-3);font-size:13px">此部位無規則</div>';
+    eh+=`<button class="add-btn" id="add-btn-root-${pn}" onclick="addRootItem('${pn}')">+ 新增條件（根層級）</button>`;
     eh+='</div></div>';
   });
   document.getElementById('editor').innerHTML=eh;
@@ -447,6 +448,73 @@ function addNodeOfType(type){
   else if(type==='OR'){n.items.push({op:'OR',items:[]});}
   else if(type==='COUNT'){n.items.push({op:'COUNT',min:1,items:[]});}
   else if(type==='NOT'){n.items.push({op:'NOT',item:{ref:'h1',match:'龜背'}});}
+  markDirty();renderAll();
+}
+
+// ==================== ROOT LEVEL ADD ====================
+function addRootItem(partName){
+  clearDynamicForms();
+  var currentRoot=rules[curDim].parts[partName];
+  openSections.add('r-'+curDim+'-'+partName);
+  if(!currentRoot){
+    // No rule yet — show type select to create first node
+    _pendingRootPart=partName;
+    var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
+    var h='<div class="edit-form dynamic-edit-form" id="root-type-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+    h+='<button onclick="createRootNode(\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
+    h+='<button onclick="createRootNode(\'AND\')" style="'+bs+'">都符合 AND</button>';
+    h+='<button onclick="createRootNode(\'OR\')" style="'+bs+'">或 OR</button>';
+    h+='<button onclick="createRootNode(\'ref\')" style="'+bs+'">比對條件</button>';
+    h+='<button onclick="createRootNode(\'NOT\')" style="'+bs+'">不可有 NOT</button>';
+    h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+    var btn=document.getElementById('add-btn-root-'+partName);
+    if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
+    return;
+  }
+  // Already has root — show wrap select
+  showRootWrapSelect(partName);
+}
+
+var _pendingRootPart=null;
+
+function createRootNode(type){
+  clearDynamicForms();
+  var partName=_pendingRootPart;if(!partName)return;_pendingRootPart=null;
+  pushUndo();
+  if(type==='COUNT')rules[curDim].parts[partName]={op:'COUNT',min:1,items:[]};
+  else if(type==='AND')rules[curDim].parts[partName]={op:'AND',items:[]};
+  else if(type==='OR')rules[curDim].parts[partName]={op:'OR',items:[]};
+  else if(type==='NOT')rules[curDim].parts[partName]={op:'NOT',item:{ref:'h1',match:'龜背'}};
+  else if(type==='ref'){
+    var defRef=getFirstRef(RULE_TO_QPARTS[partName]?RULE_TO_QPARTS[partName][0]:'頭');
+    var qmap=buildQmap();var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
+    rules[curDim].parts[partName]={ref:defRef,match:defMatch};
+  }
+  openSections.add('r-'+curDim+'-'+partName);
+  markDirty();renderAll();
+}
+
+function showRootWrapSelect(partName){
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
+  var h='<div class="edit-form dynamic-edit-form" id="root-wrap-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇容器類型（原有規則和新節點將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
+  h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'AND\')" style="'+bs+'">都符合 AND</button>';
+  h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'OR\')" style="'+bs+'">或 OR</button>';
+  h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+  var btn=document.getElementById('add-btn-root-'+partName);
+  if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
+}
+
+function wrapRootWithContainer(partName,containerType){
+  clearDynamicForms();
+  pushUndo();
+  var currentRoot=rules[curDim].parts[partName];
+  var newContainer;
+  if(containerType==='COUNT')newContainer={op:'COUNT',min:1,items:[currentRoot]};
+  else if(containerType==='AND')newContainer={op:'AND',items:[currentRoot]};
+  else newContainer={op:'OR',items:[currentRoot]};
+  rules[curDim].parts[partName]=newContainer;
+  openSections.add('r-'+curDim+'-'+partName);
   markDirty();renderAll();
 }
 
