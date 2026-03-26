@@ -225,7 +225,7 @@ function renderRules(){
         h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
         h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
         h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="cancelNewNode()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
-        var d=document.createElement('div');d.innerHTML=h;targetEl.after(d);
+        var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;targetEl.after(d);
         targetEl.scrollIntoView({behavior:'smooth',block:'center'});
       }
     },50);
@@ -327,10 +327,13 @@ function getFirstRef(qPartName){
   return 'h1';
 }
 
+function clearDynamicForms(){document.querySelectorAll('.dynamic-edit-form').forEach(function(el){el.remove();});}
+
 function getPath(obj,p){var c=obj;p.split('.').forEach(k=>{if(c==null)return;c=/^\d+$/.test(k)?c[+k]:c[k];});return c;}
 function delPath(obj,p){var ps=p.split('.'),c=obj;for(var i=0;i<ps.length-1;i++)c=/^\d+$/.test(ps[i])?c[+ps[i]]:c[ps[i]];var l=ps[ps.length-1];Array.isArray(c)&&/^\d+$/.test(l)?c.splice(+l,1):delete c[l];}
 
 function editRuleNode(path){
+  clearDynamicForms();
   var node=getPath(rules[curDim],path);if(!node)return;
   var qmap=buildQmap();
   var rulePart=getRulePartFromPath(path);
@@ -361,7 +364,7 @@ function editRuleNode(path){
   // For operator nodes, insert into placeholder; for leaf nodes, insert after
   var ph=document.querySelector('.edit-placeholder[data-path="'+path+'"]');
   if(ph){ph.innerHTML=html;}
-  else{var el=event.target.closest('.node');if(el){var d=document.createElement('div');d.innerHTML=html;el.after(d);}}
+  else{var el=event.target.closest('.node');if(el){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=html;el.after(d);}}
 }
 function erUpdateMatch(){
   var qmap=buildQmap();var ref=document.getElementById('er-ref').value;var sel=document.getElementById('er-match');
@@ -403,9 +406,7 @@ function addRuleItem(p,btnId){
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _pendingAddPath=p;
   _lastAddBtnId=btnId;
-  // Remove any existing popups
-  var ex1=document.getElementById('type-select-form');if(ex1)ex1.remove();
-  var ex2=document.getElementById('part-select-form');if(ex2)ex2.remove();
+  clearDynamicForms();
   // Build and insert type selection directly after the clicked button
   var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
   var h='<div class="edit-form" id="type-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
@@ -416,7 +417,7 @@ function addRuleItem(p,btnId){
   h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
   h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
   var btn=document.getElementById(btnId);
-  if(btn){var d=document.createElement('div');d.innerHTML=h;btn.after(d);}
+  if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
 }
 
 function addNodeOfType(type){
@@ -432,7 +433,7 @@ function addNodeOfType(type){
       var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
       var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
       var btn=document.getElementById(_lastAddBtnId);
-      if(btn){var d=document.createElement('div');d.innerHTML=container;btn.after(d);}
+      if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=container;btn.after(d);}
     }else{
       doAddItem(p,allowedQParts[0]);
     }
