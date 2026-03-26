@@ -261,7 +261,7 @@ function renderNode(node,path,depth,qmap){
     var matchArr=Array.isArray(node.match)?node.match:[node.match];
     var msHtml=matchArr.map(function(mv){
       var hint=getHintForMatch(qmap,node.ref,mv);
-      if(hint){var hp=hint.length>10?hint.substring(0,10)+'...':hint;return '<span title="'+hint.replace(/"/g,'&quot;')+'" style="cursor:help;border-bottom:1px dotted var(--static)">'+mv+'</span><span style="font-size:11px;color:var(--text-3);cursor:help" title="'+hint.replace(/"/g,'&quot;')+'"> ⓘ '+hp+'</span>';}
+      if(hint){return '<span title="'+hint.replace(/"/g,'&quot;')+'" style="cursor:help;border-bottom:1px dotted var(--static)">'+mv+'</span><span style="font-size:13px;color:var(--text-3);cursor:help" title="'+hint.replace(/"/g,'&quot;')+'"> ⓘ '+hint+'</span>';}
       return mv;
     }).join('｜');
     h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msHtml}</span>`;
