@@ -176,7 +176,9 @@ function getHintForMatch(qmap,ref,matchVal){
 var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'partResult'};
 
 // ==================== RULES EDITOR ====================
+var _addBtnCounter=0;
 function renderRules(){
+  _addBtnCounter=0;
   var qmap=buildQmap();
   // Sidebar
   var sh='';var lastCat='';
@@ -264,7 +266,8 @@ function renderNode(node,path,depth,qmap){
     h+=nodeActs(path);
     h+=`<div class="edit-placeholder" data-path="${path}"></div>`;
     if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
-    h+=`<button class="add-btn" data-path="${path}" onclick="addRuleItem('${path}')">+ 新增條件</button></div>`;return h;
+    _addBtnCounter++;
+    h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addRuleItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button></div>`;return h;
   }
   if(op==='LR'){
     var mergeLabel=node.merge==='all'?'都符合':'一邊符合即可';
@@ -394,11 +397,16 @@ function deleteRuleNode(p){if(!confirm('確定刪除？'))return;pushUndo();delP
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
-function addRuleItem(p){
+var _lastAddBtnId=null;
+function addRuleItem(p,btnId){
   var n=getPath(rules[curDim],p);if(!n||!n.items)return;
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _pendingAddPath=p;
-  // Show type selection first
+  _lastAddBtnId=btnId;
+  // Remove any existing popups
+  var ex1=document.getElementById('type-select-form');if(ex1)ex1.remove();
+  var ex2=document.getElementById('part-select-form');if(ex2)ex2.remove();
+  // Build and insert type selection directly after the clicked button
   var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
   var h='<div class="edit-form" id="type-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
   h+='<button onclick="addNodeOfType(\'ref\')" style="'+bs+'">比對條件</button>';
@@ -407,12 +415,8 @@ function addRuleItem(p){
   h+='<button onclick="addNodeOfType(\'COUNT\')" style="'+bs+'">COUNT</button>';
   h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
   h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
-  var existing=document.getElementById('type-select-form');if(existing)existing.remove();
-  renderAll();
-  setTimeout(function(){
-    var targetBtn=document.querySelector('.add-btn[data-path="'+p+'"]');
-    if(targetBtn){var d=document.createElement('div');d.innerHTML=h;targetBtn.after(d);}
-  },50);
+  var btn=document.getElementById(btnId);
+  if(btn){var d=document.createElement('div');d.innerHTML=h;btn.after(d);}
 }
 
 function addNodeOfType(type){
@@ -421,17 +425,14 @@ function addNodeOfType(type){
   var n=getPath(rules[curDim],p);if(!n||!n.items)return;
 
   if(type==='ref'){
-    // Go to part selection (original flow)
     var rulePart=getRulePartFromPath(p);
     var allowedQParts=RULE_TO_QPARTS[rulePart]||['頭'];
     _pendingAddPath=p;
     if(allowedQParts.length>1){
       var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
       var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
-      setTimeout(function(){
-        var targetBtn=document.querySelector('.add-btn[data-path="'+p+'"]');
-        if(targetBtn){var d=document.createElement('div');d.innerHTML=container;targetBtn.after(d);}
-      },50);
+      var btn=document.getElementById(_lastAddBtnId);
+      if(btn){var d=document.createElement('div');d.innerHTML=container;btn.after(d);}
     }else{
       doAddItem(p,allowedQParts[0]);
     }
