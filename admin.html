@@ -37,7 +37,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .q-text{flex:1;color:var(--text-2)}
 .q-paired{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--dynamic);color:white;font-weight:700}
 .q-opts{font-size:11px;color:var(--text-3)}
-.q-actions{display:flex;gap:3px;opacity:0.3}
+.q-actions{display:flex;gap:3px;opacity:0.6}
 .q-row:hover .q-actions{opacity:1}
 .q-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
 .q-actions button:hover{background:var(--hover)}
@@ -58,13 +58,14 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .node-ref{font-weight:700;color:var(--text)}
 .node-match{color:var(--static);font-weight:500}
 .node-meta{color:var(--text-3);font-size:12px;margin-left:8px}
-.node-actions{display:inline-flex;gap:4px;margin-left:8px;opacity:0.3}
+.node-actions{display:inline-flex;gap:4px;margin-left:8px;opacity:0.6}
 .node:hover .node-actions{opacity:1}
 .node-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
 .btn-save.dirty{background:#c03830;animation:pulse-save 1.5s ease-in-out infinite}
 @keyframes pulse-save{0%,100%{opacity:1}50%{opacity:0.85}}
+#breadcrumb{height:28px;padding:0 20px;background:white;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3);display:flex;align-items:center;line-height:28px}
 .toast{position:fixed;top:60px;right:20px;padding:10px 20px;border-radius:6px;color:white;font-size:13px;font-weight:700;font-family:'Noto Serif TC',serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100}
 .toast.show{opacity:1}
 .toast-ok{background:#4a8a5a}
@@ -82,6 +83,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
   <div class="tab-btn active" onclick="switchTab('rules')">評分規則</div>
   <div class="tab-btn" onclick="switchTab('questions')">觀察問題</div>
 </div>
+<div id="breadcrumb"></div>
 <div id="main">
   <div id="sidebar"></div>
   <div id="editor"></div>
@@ -121,6 +123,32 @@ function switchTab(t){
 function renderAll(){
   if(activeTab==='rules')renderRules();
   else renderQuestions();
+  updateBreadcrumb();
+}
+
+function updateBreadcrumb(){
+  var el=document.getElementById('breadcrumb');if(!el)return;
+  var sep=' <span style="color:var(--border);margin:0 4px">→</span> ';
+  var parts=[];
+  if(activeTab==='rules'){
+    parts.push('評分規則');
+    if(rules[curDim])parts.push(rules[curDim].positive+rules[curDim].negative);
+    // Find last open section for this dim
+    var lastPart='';
+    openSections.forEach(function(k){
+      if(k.startsWith('r-'+curDim+'-'))lastPart=k.replace('r-'+curDim+'-','');
+    });
+    if(lastPart)parts.push(lastPart);
+  }else{
+    parts.push('觀察問題');
+    var pn=Object.keys(questions)[curPart];
+    if(pn)parts.push(pn);
+  }
+  var html=parts.map(function(p,i){
+    if(i===parts.length-1)return '<span style="font-weight:700;color:var(--text)">'+p+'</span>';
+    return '<span>'+p+'</span>';
+  }).join(sep);
+  el.innerHTML=html;
 }
 
 // Build QMAP from questions for rule editor dropdowns
