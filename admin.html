@@ -154,6 +154,28 @@ function renderRules(){
     eh+='</div></div>';
   });
   document.getElementById('editor').innerHTML=eh;
+  // Auto-open edit form for newly added node
+  if(_autoEditPath){
+    var ap=_autoEditPath;_autoEditPath=null;
+    setTimeout(function(){
+      var node=getPath(rules[curDim],ap);if(!node)return;
+      var nodes=document.querySelectorAll('.node');
+      var targetEl=null;
+      nodes.forEach(function(el){var r=el.querySelector('.node-ref');if(r&&r.textContent===node.ref)targetEl=el;});
+      if(targetEl){
+        var qmap=buildQmap();
+        var mv=Array.isArray(node.match)?node.match:[node.match];
+        var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>';
+        h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelect(node.ref)+'</select></div>';
+        h+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(function(o){return '<option value="'+o+'"'+(mv.includes(o)?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
+        h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
+        h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
+        h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
+        var d=document.createElement('div');d.innerHTML=h;targetEl.after(d);
+        targetEl.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+    },50);
+  }
 }
 
 function renderNode(node,path,depth,qmap){
@@ -195,6 +217,32 @@ function renderNode(node,path,depth,qmap){
 
 function nodeActs(p){return `<span class="node-actions"><button onclick="editRuleNode('${p}')">編輯</button><button class="del" onclick="deleteRuleNode('${p}')">刪除</button></span>`;}
 
+// Build ref <select> options grouped by part
+function buildRefSelect(selected){
+  var src=Object.keys(questions).length>0?questions:(typeof ALL_QUESTIONS_DEFAULT!=='undefined'?ALL_QUESTIONS_DEFAULT:{});
+  var h='<option value="">選擇題目</option>';
+  Q_PART_NAMES.forEach(pn=>{
+    var pd=src[pn];if(!pd||!pd.sections)return;
+    h+=`<optgroup label="${pn}">`;
+    pd.sections.forEach(s=>s.qs.forEach(q=>{
+      var v=typeof q.opts[0]==='string'?q.opts[0]:q.opts[0].v;
+      h+=`<option value="${q.id}"${q.id===selected?' selected':''}>${q.id} ${q.text}</option>`;
+    }));
+    h+='</optgroup>';
+  });
+  return h;
+}
+
+// Guess default ref prefix from rule path (e.g. parts.眉.items.0 → br)
+function guessDefaultRef(path){
+  var partName=path.split('.')[1]||'';
+  // Map rule part names to question part names
+  var map={'頭':'頭','上停':'額','耳':'耳','眉':'眉','眼':'眼','鼻':'鼻','口':'口','中停':'眉','下停':'口'};
+  var qPartName=map[partName]||'頭';
+  var prefix=Q_PREFIXES[qPartName]||'h';
+  return prefix+'1';
+}
+
 function getPath(obj,p){var c=obj;p.split('.').forEach(k=>{if(c==null)return;c=/^\d+$/.test(k)?c[+k]:c[k];});return c;}
 function delPath(obj,p){var ps=p.split('.'),c=obj;for(var i=0;i<ps.length-1;i++)c=/^\d+$/.test(ps[i])?c[+ps[i]]:c[ps[i]];var l=ps[ps.length-1];Array.isArray(c)&&/^\d+$/.test(l)?c.splice(+l,1):delete c[l];}
 
@@ -203,8 +251,7 @@ function editRuleNode(path){
   var qmap=buildQmap();
   var html='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
   if(node.ref!==undefined){
-    var allRefs=Object.keys(qmap).sort();
-    html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+allRefs.map(r=>`<option value="${r}"${r===node.ref?' selected':''}>${r} ${qmap[r].text}</option>`).join('')+'</select></div>';
+    html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelect(node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
     html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${mv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
     html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
@@ -233,11 +280,16 @@ function saveRuleEdit(path){
   renderAll();setStatus('已修改（未儲存）');
 }
 function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();setStatus('已刪除（未儲存）');}
+var _autoEditPath=null; // path of newly added node to auto-edit
 function addRuleItem(p){
   var n=getPath(rules[curDim],p);if(!n||!n.items)return;
-  n.items.push({ref:'h1',match:'龜背'});
-  // Keep the section open
+  var defRef=guessDefaultRef(p);
+  var qmap=buildQmap();
+  var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
+  var newIdx=n.items.length;
+  n.items.push({ref:defRef,match:defMatch});
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+  _autoEditPath=p+'.items.'+newIdx;
   renderAll();setStatus('已新增（未儲存）');
 }
 function toggleSec(key,el){
