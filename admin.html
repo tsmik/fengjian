@@ -64,6 +64,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
 .btn-save.dirty{background:#c03830;animation:pulse-save 1.5s ease-in-out infinite}
+.btn-undo{background:var(--sidebar);color:var(--text-2);border:1px solid var(--border)}
+.btn-undo:disabled{opacity:0.3;cursor:default}
 @keyframes pulse-save{0%,100%{opacity:1}50%{opacity:0.85}}
 #breadcrumb{height:28px;padding:0 20px;background:white;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3);display:flex;align-items:center;line-height:28px}
 .toast{position:fixed;top:60px;right:20px;padding:10px 20px;border-radius:6px;color:white;font-size:13px;font-weight:700;font-family:'Noto Serif TC',serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100}
@@ -76,6 +78,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 <div id="top-bar">
   <span>風鑑學堂 管理介面</span>
   <button class="btn-save" id="btn-save" onclick="saveAll()">儲存到 Firebase</button>
+  <button class="btn-undo" id="btn-undo" onclick="undo()" disabled>復原</button>
   <span class="status" id="status">載入中...</span>
 </div>
 <div id="toast" class="toast"></div>
@@ -337,9 +340,9 @@ function saveRuleEdit(path){
   else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
-function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();}
+function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();pushUndo();markDirty();}
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
@@ -390,7 +393,7 @@ function doAddItem(p,qPartName){
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
   _autoEditQPart=qPartName;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 function toggleSec(key,el){
   if(openSections.has(key))openSections.delete(key);else openSections.add(key);
@@ -492,7 +495,7 @@ function saveQEdit(si,qi){
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
   editingQ=null;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 
 function deleteQ(si,qi){
@@ -515,7 +518,7 @@ function deleteQ(si,qi){
   questions[pn].sections[si].qs.splice(qi,1);
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 
 function addQ(si){
@@ -532,7 +535,7 @@ function addQ(si){
   questions[pn].sections[si].qs.push(newQ);
   questions[pn].total=(questions[pn].total||0)+1;
   editingQ=newId;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 
 function moveQ(si,qi,dir){
@@ -541,7 +544,7 @@ function moveQ(si,qi,dir){
   var ni=qi+dir;
   if(ni<0||ni>=qs.length)return;
   var tmp=qs[qi];qs[qi]=qs[ni];qs[ni]=tmp;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 
 // Sync current edit form inputs back to data
@@ -580,12 +583,42 @@ function editSectionName(si,el){
   if(name===null)return;
   var pn=Object.keys(questions)[curPart];
   questions[pn].sections[si].label=name;
-  renderAll();markDirty();
+  renderAll();pushUndo();markDirty();
 }
 
 // ==================== FIREBASE ====================
-// ==================== DIRTY TRACKING + SAVE ====================
+// ==================== DIRTY TRACKING + UNDO + SAVE ====================
 var _dirtyCount=0;
+var _undoStack=[];
+var _maxUndo=30;
+var _cleanRulesJson='';
+var _cleanQuestionsJson='';
+
+function pushUndo(){
+  _undoStack.push({rules:JSON.parse(JSON.stringify(rules)),questions:JSON.parse(JSON.stringify(questions))});
+  if(_undoStack.length>_maxUndo)_undoStack.shift();
+  updateUndoBtn();
+}
+function undo(){
+  if(_undoStack.length===0){showToast('沒有可復原的操作',false);return;}
+  var snap=_undoStack.pop();
+  rules=snap.rules;
+  questions=snap.questions;
+  // Check if undo'd back to clean state
+  if(_undoStack.length===0&&JSON.stringify(rules)===_cleanRulesJson&&JSON.stringify(questions)===_cleanQuestionsJson){
+    takeSnapshot();
+  }else{
+    _dirtyCount=Math.max(1,_dirtyCount-1);
+    updateSaveBtn();
+  }
+  renderAll();
+  showToast('已復原',true);
+  updateUndoBtn();
+}
+function updateUndoBtn(){
+  var btn=document.getElementById('btn-undo');if(!btn)return;
+  btn.disabled=(_undoStack.length===0);
+}
 function markDirty(){
   _dirtyCount++;
   updateSaveBtn();
@@ -593,7 +626,11 @@ function markDirty(){
 }
 function takeSnapshot(){
   _dirtyCount=0;
+  _undoStack=[];
+  _cleanRulesJson=JSON.stringify(rules);
+  _cleanQuestionsJson=JSON.stringify(questions);
   updateSaveBtn();
+  updateUndoBtn();
 }
 function updateSaveBtn(){
   var btn=document.getElementById('btn-save');if(!btn)return;
@@ -631,6 +668,11 @@ function saveAll(){
     btn.disabled=false;btn.style.opacity='1';
   });
 }
+// Keyboard shortcuts
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
+});
 window.addEventListener('beforeunload',function(e){
   if(_dirtyCount>0){e.preventDefault();e.returnValue='';}
 });
