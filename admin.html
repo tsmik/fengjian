@@ -334,6 +334,7 @@ function erUpdateMatch(){
   sel.innerHTML=(qmap[ref]||{opts:[]}).opts.map(o=>`<option value="${o}">${o}</option>`).join('');
 }
 function saveRuleEdit(path){
+  pushUndo();
   var n=getPath(rules[curDim],path);if(!n)return;
   if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='null')n.side=null;else if(sd)n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
   else if(n.op==='COUNT')n.min=+document.getElementById('er-min').value||0;
@@ -341,9 +342,9 @@ function saveRuleEdit(path){
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
   if(_pendingNewNodePath===path)_pendingNewNodePath=null;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
-function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();pushUndo();markDirty();}
+function deleteRuleNode(p){if(!confirm('確定刪除？'))return;pushUndo();delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();}
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
@@ -493,6 +494,7 @@ function editQ(si,qi){
 }
 
 function saveQEdit(si,qi){
+  pushUndo();
   var pn=Object.keys(questions)[curPart];
   var q=questions[pn].sections[si].qs[qi];
   q.text=document.getElementById('qe-text').value;
@@ -509,7 +511,7 @@ function saveQEdit(si,qi){
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
   editingQ=null;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
 
 function deleteQ(si,qi){
@@ -529,10 +531,11 @@ function deleteQ(si,qi){
     return;
   }
   if(!confirm('確定刪除 '+q.id+' '+q.text+'？'))return;
+  pushUndo();
   questions[pn].sections[si].qs.splice(qi,1);
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
 
 function addQ(si){
@@ -546,10 +549,11 @@ function addQ(si){
   }));
   var newId=prefix+(maxN+1);
   var newQ={id:newId,text:'新題目',opts:[{v:'選項A',hint:''},{v:'選項B',hint:''}]};
+  pushUndo();
   questions[pn].sections[si].qs.push(newQ);
   questions[pn].total=(questions[pn].total||0)+1;
   editingQ=newId;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
 
 function moveQ(si,qi,dir){
@@ -557,8 +561,9 @@ function moveQ(si,qi,dir){
   var qs=questions[pn].sections[si].qs;
   var ni=qi+dir;
   if(ni<0||ni>=qs.length)return;
+  pushUndo();
   var tmp=qs[qi];qs[qi]=qs[ni];qs[ni]=tmp;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
 
 // Sync current edit form inputs back to data
@@ -595,9 +600,10 @@ function removeOpt(si,qi,oi){
 function editSectionName(si,el){
   var name=prompt('修改 Section 名稱：',el.textContent);
   if(name===null)return;
+  pushUndo();
   var pn=Object.keys(questions)[curPart];
   questions[pn].sections[si].label=name;
-  renderAll();pushUndo();markDirty();
+  renderAll();markDirty();
 }
 
 // ==================== FIREBASE ====================
