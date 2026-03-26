@@ -202,10 +202,10 @@ function renderRules(){
   _addBtnCounter=0;
   var qmap=buildQmap();
   // Sidebar
-  var sh='';var lastCat='';
+  var sh='';var catIdx=0;
+  var DIM_CATS=[{name:'先天指數',start:0},{name:'運氣指數',start:6},{name:'後天指數',start:9}];
   rules.forEach((d,i)=>{
-    var cat=d.category||'';
-    if(cat&&cat!==lastCat){sh+=`<div class="sb-cat">${cat}</div>`;lastCat=cat;}
+    if(catIdx<DIM_CATS.length&&i===DIM_CATS[catIdx].start){sh+=`<div class="sb-cat">${DIM_CATS[catIdx].name}</div>`;catIdx++;}
     sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${DIM_COLORS[i]};margin-right:6px;vertical-align:middle"></span>${d.positive}${d.negative}</div>`;
   });
   document.getElementById('sidebar').innerHTML=sh;
