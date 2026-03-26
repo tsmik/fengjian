@@ -1,0 +1,4005 @@
+[
+  {
+    "version": 1,
+    "dimIndex": 0,
+    "positive": "形",
+    "negative": "勢",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h1",
+            "match": "龜背",
+            "side": "L"
+          },
+          {
+            "ref": "h1",
+            "match": "龜背",
+            "side": "R"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h5",
+                "match": "後腦圓"
+              },
+              {
+                "ref": "h6",
+                "match": "順無凹凸"
+              },
+              {
+                "ref": "h7",
+                "match": "無自剋骨"
+              },
+              {
+                "ref": "h8",
+                "match": "無橫條骨"
+              }
+            ]
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "e1",
+            "match": "額高"
+          },
+          {
+            "ref": "e3",
+            "match": "額寬"
+          },
+          {
+            "ref": "e4",
+            "match": "額平"
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "e6",
+                "match": "額隆"
+              },
+              {
+                "ref": "e11",
+                "match": "大天庭"
+              }
+            ]
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "ref": "er1",
+              "match": "耳長"
+            },
+            {
+              "op": "AND",
+              "items": [
+                {
+                  "ref": "er4",
+                  "match": "耳圓"
+                },
+                {
+                  "ref": "er8",
+                  "match": "有輪有廓"
+                },
+                {
+                  "ref": "er9",
+                  "match": "輪包廓"
+                }
+              ]
+            },
+            {
+              "ref": "er7",
+              "match": "耳高"
+            },
+            {
+              "ref": "er12",
+              "match": "有垂珠"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 6,
+          "items": [
+            {
+              "ref": "br1",
+              "match": "眉長"
+            },
+            {
+              "ref": "br14",
+              "match": "眉順"
+            },
+            {
+              "ref": "br15",
+              "match": "柔順"
+            },
+            {
+              "ref": "br17",
+              "match": "鋪陳有致"
+            },
+            {
+              "ref": "br4",
+              "match": "無鷹角"
+            },
+            {
+              "ref": "br5",
+              "match": "無中斷"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            },
+            {
+              "ref": "ey6",
+              "match": "有眼鉤"
+            },
+            {
+              "ref": "ey7",
+              "match": "有刀裁"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n10",
+            "match": "肉多於骨"
+          },
+          {
+            "ref": "n11",
+            "match": "無起節"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m1",
+            "match": "口開大合小"
+          },
+          {
+            "ref": "m2",
+            "match": "涯岸分明"
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m4",
+            "match": "嘴角朝上"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": "人中長"
+              }
+            ]
+          },
+          {
+            "ref": "c1",
+            "match": "地閣起"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "y2",
+                "match": "頤豐",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "y2",
+                "match": "頤豐",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 1,
+    "positive": "經",
+    "negative": "緯",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h3",
+            "match": "左右一致",
+            "weight": 2
+          },
+          {
+            "ref": "h10",
+            "match": "兩側一致"
+          },
+          {
+            "ref": "h13",
+            "match": "左右一致",
+            "weight": 2
+          }
+        ]
+      },
+      "上停": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "e6",
+            "match": "額隆"
+          },
+          {
+            "ref": "e13",
+            "match": "日月角起"
+          }
+        ]
+      },
+      "耳": {
+        "op": "AND",
+        "items": [
+          {
+            "op": "LR",
+            "merge": "all",
+            "each": {
+              "op": "COUNT",
+              "min": 5,
+              "items": [
+                {
+                  "ref": "er7",
+                  "match": "耳高"
+                },
+                {
+                  "ref": "er3",
+                  "match": "耳立"
+                },
+                {
+                  "ref": "er2",
+                  "match": "耳大"
+                },
+                {
+                  "ref": "er10",
+                  "match": "耳厚"
+                },
+                {
+                  "ref": "er11",
+                  "match": "耳堅"
+                }
+              ]
+            }
+          },
+          {
+            "ref": "er14",
+            "match": "雙耳一致"
+          }
+        ]
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 7,
+          "items": [
+            {
+              "ref": "br12",
+              "match": "退印"
+            },
+            {
+              "ref": "br6",
+              "match": "有聚"
+            },
+            {
+              "ref": "br17",
+              "match": "鋪陳有致"
+            },
+            {
+              "ref": "br1",
+              "match": "眉長"
+            },
+            {
+              "ref": "br13",
+              "match": "貼附眉骨"
+            },
+            {
+              "ref": "br8",
+              "match": "有揚"
+            },
+            {
+              "ref": "br10",
+              "match": "眉高居額"
+            },
+            {
+              "ref": "br11",
+              "match": "不壓眼"
+            },
+            {
+              "ref": "br9",
+              "match": "不沖根"
+            },
+            {
+              "ref": "br3",
+              "match": "眉彎"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "AND",
+        "items": [
+          {
+            "op": "LR",
+            "merge": "all",
+            "each": {
+              "op": "COUNT",
+              "min": 5,
+              "items": [
+                {
+                  "ref": "ey3",
+                  "match": "眼細"
+                },
+                {
+                  "ref": "ey1",
+                  "match": "眼長"
+                },
+                {
+                  "ref": "ey4",
+                  "match": "眼尾平"
+                },
+                {
+                  "ref": "ey6",
+                  "match": "有眼鉤"
+                },
+                {
+                  "ref": "ey7",
+                  "match": "有刀裁"
+                }
+              ]
+            }
+          },
+          {
+            "ref": "ey12",
+            "match": "雙眼一致"
+          }
+        ]
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n3",
+            "match": "鼻直"
+          },
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 6,
+        "items": [
+          {
+            "ref": "m1",
+            "match": "口開大合小"
+          },
+          {
+            "ref": "m4",
+            "match": [
+              "嘴角朝上",
+              "嘴角水平"
+            ]
+          },
+          {
+            "ref": "m13",
+            "match": "口對稱"
+          },
+          {
+            "ref": "m12",
+            "match": "口位置適中"
+          },
+          {
+            "ref": "m9",
+            "match": "唇厚平均"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "m6",
+                "match": "閉合線平"
+              },
+              {
+                "ref": "m7",
+                "match": "閉合線密"
+              }
+            ]
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p4",
+                "match": "人中直"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "c2",
+                "match": "地閣平"
+              },
+              {
+                "ref": "c4",
+                "match": "地閣寬"
+              },
+              {
+                "ref": "c5",
+                "match": "地閣置中"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤寬",
+                "side": "L"
+              },
+              {
+                "ref": "y4",
+                "match": "雙頤一致",
+                "side": null
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤寬",
+                "side": "R"
+              },
+              {
+                "ref": "y4",
+                "match": "雙頤一致",
+                "side": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 2,
+    "positive": "圓",
+    "negative": "方",
+    "positiveType": "動",
+    "negativeType": "靜",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h1",
+            "match": "圓",
+            "side": "L"
+          },
+          {
+            "ref": "h1",
+            "match": "圓",
+            "side": "R"
+          },
+          {
+            "ref": "h7",
+            "match": "無自剋骨"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 2,
+        "items": [
+          {
+            "ref": "e4",
+            "match": "額平"
+          },
+          {
+            "ref": "e6",
+            "match": "額隆"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "er4",
+              "match": "耳圓"
+            },
+            {
+              "ref": "er8",
+              "match": "有輪有廓"
+            },
+            {
+              "ref": "er9",
+              "match": "輪包廓"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 2,
+          "items": [
+            {
+              "ref": "br3",
+              "match": "眉彎"
+            },
+            {
+              "ref": "br4",
+              "match": "無鷹角"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "AND",
+        "items": [
+          {
+            "op": "LR",
+            "merge": "all",
+            "each": {
+              "op": "AND",
+              "items": [
+                {
+                  "ref": "ey8",
+                  "match": "眼上弧"
+                },
+                {
+                  "op": "OR",
+                  "items": [
+                    {
+                      "ref": "ey6",
+                      "match": "有眼鉤"
+                    },
+                    {
+                      "ref": "ey7",
+                      "match": "有刀裁"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "ref": "ey12",
+            "match": "雙眼一致"
+          }
+        ]
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 2,
+        "items": [
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n11",
+            "match": "無起節"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m2",
+            "match": "涯岸分明"
+          },
+          {
+            "ref": "m6",
+            "match": "閉合線有曲度"
+          },
+          {
+            "ref": "m8",
+            "match": [
+              "唇一般",
+              "唇明顯厚"
+            ]
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": "人中長"
+              }
+            ]
+          },
+          {
+            "ref": "c2",
+            "match": "地閣圓"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "y2",
+                "match": [
+                  "頤豐",
+                  "頤有肉"
+                ],
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "y2",
+                "match": [
+                  "頤豐",
+                  "頤有肉"
+                ],
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 3,
+    "positive": "直",
+    "negative": "曲",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h4",
+            "match": "中線直",
+            "weight": 2
+          },
+          {
+            "ref": "h9",
+            "match": "中線直"
+          },
+          {
+            "ref": "h11",
+            "match": "平直",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "平直",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "e7",
+            "match": "額立"
+          },
+          {
+            "ref": "e1",
+            "match": "額高"
+          },
+          {
+            "ref": "e13",
+            "match": "日月角起"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "er7",
+              "match": "耳高"
+            },
+            {
+              "ref": "er3",
+              "match": "耳立"
+            },
+            {
+              "ref": "er1",
+              "match": "耳長"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "OR",
+          "items": [
+            {
+              "op": "AND",
+              "items": [
+                {
+                  "ref": "br3",
+                  "match": "眉平"
+                },
+                {
+                  "ref": "br4",
+                  "match": "無鷹角"
+                }
+              ]
+            },
+            {
+              "ref": "br7",
+              "match": "短粗眉"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "ref": "ey3",
+              "match": "眼細"
+            },
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            },
+            {
+              "ref": "ey6",
+              "match": "無眼鉤"
+            },
+            {
+              "ref": "ey7",
+              "match": "無刀裁"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n3",
+            "match": "鼻直"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m6",
+            "match": "閉合線平"
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m4",
+            "match": "嘴角水平"
+          },
+          {
+            "ref": "m7",
+            "match": "閉合線密"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "ref": "p4",
+            "match": "人中直"
+          },
+          {
+            "ref": "c2",
+            "match": "地閣平"
+          },
+          {
+            "ref": "y1",
+            "match": "頤平",
+            "side": "L"
+          },
+          {
+            "ref": "y1",
+            "match": "頤平",
+            "side": "R"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 4,
+    "positive": "收",
+    "negative": "放",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h1",
+            "match": "圓",
+            "side": "L"
+          },
+          {
+            "ref": "h1",
+            "match": "圓",
+            "side": "R"
+          },
+          {
+            "ref": "h5",
+            "match": "後腦圓"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "e11",
+            "match": "小天庭"
+          },
+          {
+            "ref": "e14",
+            "match": "日月角合"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 2,
+          "items": [
+            {
+              "ref": "er4",
+              "match": "耳圓"
+            },
+            {
+              "ref": "er9",
+              "match": "輪包廓"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "ref": "br6",
+          "match": "有聚"
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 2,
+          "items": [
+            {
+              "ref": "ey6",
+              "match": "有眼鉤"
+            },
+            {
+              "ref": "ey7",
+              "match": "有刀裁"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "ref": "n12",
+        "match": "鼻聚"
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m4",
+            "match": [
+              "嘴角朝上",
+              "嘴角水平"
+            ]
+          },
+          {
+            "ref": "m7",
+            "match": "閉合線密"
+          },
+          {
+            "ref": "m2",
+            "match": "涯岸分明"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "ref": "q4",
+            "match": "顴柄插天",
+            "side": "L"
+          },
+          {
+            "ref": "q4",
+            "match": "顴柄插天",
+            "side": "R"
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": "人中長"
+              }
+            ]
+          },
+          {
+            "ref": "c2",
+            "match": [
+              "地閣平",
+              "地閣圓"
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤寬",
+                "side": "L"
+              },
+              {
+                "ref": "y2",
+                "match": [
+                  "頤豐",
+                  "頤有肉"
+                ],
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤寬",
+                "side": "R"
+              },
+              {
+                "ref": "y2",
+                "match": [
+                  "頤豐",
+                  "頤有肉"
+                ],
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 5,
+    "positive": "緩",
+    "negative": "急",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": [
+                  "龜背",
+                  "圓"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": [
+                  "龜背",
+                  "圓"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h5",
+                "match": "後腦圓"
+              },
+              {
+                "ref": "h7",
+                "match": "無自剋骨"
+              },
+              {
+                "ref": "h8",
+                "match": "無橫條骨"
+              },
+              {
+                "ref": "h6",
+                "match": "順無凹凸"
+              }
+            ]
+          },
+          {
+            "ref": "h11",
+            "match": [
+              "圓隆",
+              "平直"
+            ],
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": [
+              "圓隆",
+              "平直"
+            ],
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "e2",
+            "match": "額圓"
+          },
+          {
+            "ref": "e3",
+            "match": "額寬"
+          },
+          {
+            "ref": "e6",
+            "match": "額隆"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "er8",
+              "match": "有輪有廓"
+            },
+            {
+              "ref": "er10",
+              "match": [
+                "耳厚",
+                "耳正常"
+              ]
+            },
+            {
+              "ref": "er12",
+              "match": "有垂珠"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 5,
+          "items": [
+            {
+              "ref": "br2",
+              "match": "眉形細"
+            },
+            {
+              "ref": "br1",
+              "match": "眉長"
+            },
+            {
+              "ref": "br15",
+              "match": "柔順"
+            },
+            {
+              "ref": "br14",
+              "match": "眉順"
+            },
+            {
+              "ref": "br19",
+              "match": "不沖印"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 2,
+          "items": [
+            {
+              "ref": "ey3",
+              "match": "眼細"
+            },
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 2,
+        "items": [
+          {
+            "ref": "n4",
+            "match": "鼻寬"
+          },
+          {
+            "ref": "n10",
+            "match": "肉多於骨"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m2",
+            "match": "涯岸分明"
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m4",
+            "match": "嘴角朝上"
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "m8",
+                "match": "唇一般"
+              },
+              {
+                "ref": "m8",
+                "match": "唇薄"
+              }
+            ]
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": [
+                  "顴高且隆",
+                  "顴有而不明"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": [
+                  "顴高且隆",
+                  "顴有而不明"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "ref": "p2",
+            "match": "人中長"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "c2",
+                "match": [
+                  "地閣平",
+                  "地閣圓"
+                ]
+              },
+              {
+                "ref": "c4",
+                "match": "地閣寬"
+              }
+            ]
+          },
+          {
+            "ref": "y2",
+            "match": [
+              "頤豐",
+              "頤有肉"
+            ],
+            "side": "L"
+          },
+          {
+            "ref": "y2",
+            "match": [
+              "頤豐",
+              "頤有肉"
+            ],
+            "side": "R"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 6,
+    "positive": "順",
+    "negative": "逆",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": "平寬",
+                "side": "L"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": "平寬",
+                "side": "R"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h5",
+                "match": "後腦圓"
+              },
+              {
+                "ref": "h7",
+                "match": "無自剋骨"
+              },
+              {
+                "ref": "h8",
+                "match": "無橫條骨"
+              }
+            ]
+          },
+          {
+            "ref": "h11",
+            "match": "平直",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "平直",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "AND",
+        "items": [
+          {
+            "ref": "e11",
+            "match": "大天庭"
+          },
+          {
+            "ref": "e9",
+            "match": "額順"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "ref": "er4",
+              "match": "耳圓"
+            },
+            {
+              "ref": "er8",
+              "match": "有輪有廓"
+            },
+            {
+              "ref": "er9",
+              "match": "輪包廓"
+            },
+            {
+              "ref": "er3",
+              "match": "耳立"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 5,
+          "items": [
+            {
+              "ref": "br1",
+              "match": "眉長"
+            },
+            {
+              "ref": "br3",
+              "match": "眉彎"
+            },
+            {
+              "ref": "br4",
+              "match": "無鷹角"
+            },
+            {
+              "ref": "br14",
+              "match": "眉順"
+            },
+            {
+              "ref": "br15",
+              "match": "柔順"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "ey3",
+              "match": "眼細"
+            },
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            },
+            {
+              "ref": "ey11",
+              "match": "上下不白"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n3",
+            "match": "鼻直"
+          },
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n11",
+            "match": "無起節"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "m9",
+            "match": "唇厚平均"
+          },
+          {
+            "ref": "m4",
+            "match": [
+              "嘴角朝上",
+              "嘴角水平"
+            ]
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              },
+              {
+                "ref": "q2",
+                "match": "顴不過大",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              },
+              {
+                "ref": "q2",
+                "match": "顴不過大",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": "人中長"
+              },
+              {
+                "ref": "p4",
+                "match": "人中直"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "c2",
+                "match": [
+                  "地閣平",
+                  "地閣圓"
+                ]
+              },
+              {
+                "ref": "c6",
+                "match": "地閣有肉"
+              }
+            ]
+          },
+          {
+            "ref": "y1",
+            "match": [
+              "頤寬",
+              "頤平"
+            ],
+            "side": "L"
+          },
+          {
+            "ref": "y1",
+            "match": [
+              "頤寬",
+              "頤平"
+            ],
+            "side": "R"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 7,
+    "positive": "合",
+    "negative": "分",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": [
+                  "龜背",
+                  "圓"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h1",
+                "match": [
+                  "龜背",
+                  "圓"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "h2",
+                "match": "平順"
+              }
+            ]
+          },
+          {
+            "ref": "h5",
+            "match": "後腦圓"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "L"
+          },
+          {
+            "ref": "h11",
+            "match": "圓隆",
+            "side": "R"
+          }
+        ]
+      },
+      "上停": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "e11",
+            "match": "大天庭"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "e11",
+                "match": "小天庭"
+              },
+              {
+                "ref": "e13",
+                "match": "不清晰"
+              }
+            ]
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "er7",
+              "match": "耳高"
+            },
+            {
+              "ref": "er4",
+              "match": "耳圓"
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "er3",
+                  "match": [
+                    "耳提",
+                    "耳提強"
+                  ]
+                },
+                {
+                  "ref": "er13",
+                  "match": "耳垂朝口"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "ref": "br4",
+              "match": "有鷹角"
+            },
+            {
+              "ref": "br3",
+              "match": "眉彎"
+            },
+            {
+              "ref": "br19",
+              "match": "不沖印"
+            },
+            {
+              "ref": "br9",
+              "match": "不沖根"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "ref": "ey8",
+              "match": "眼上弧"
+            },
+            {
+              "ref": "ey6",
+              "match": "有眼鉤"
+            },
+            {
+              "ref": "ey7",
+              "match": "有刀裁"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n5",
+            "match": "鼻準圓"
+          },
+          {
+            "ref": "n7",
+            "match": "鼻接印"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "ref": "m4",
+            "match": "嘴角朝上"
+          },
+          {
+            "ref": "m5",
+            "match": "水星明顯"
+          },
+          {
+            "ref": "m8",
+            "match": [
+              "唇一般",
+              "唇明顯厚"
+            ]
+          },
+          {
+            "ref": "m9",
+            "match": "唇厚平均"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              },
+              {
+                "ref": "q4",
+                "match": [
+                  "顴柄插天",
+                  "顴柄平"
+                ],
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": "顴高且隆",
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              },
+              {
+                "ref": "q4",
+                "match": [
+                  "顴柄插天",
+                  "顴柄平"
+                ],
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "ref": "p1",
+            "match": "人中深"
+          },
+          {
+            "ref": "c2",
+            "match": "地閣圓"
+          },
+          {
+            "ref": "y1",
+            "match": [
+              "頤寬",
+              "頤平"
+            ],
+            "side": "L"
+          },
+          {
+            "ref": "y1",
+            "match": [
+              "頤寬",
+              "頤平"
+            ],
+            "side": "R"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 8,
+    "positive": "真",
+    "negative": "假",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "AND",
+        "items": [
+          {
+            "ref": "h3",
+            "match": "左右一致"
+          },
+          {
+            "op": "COUNT",
+            "min": 3,
+            "items": [
+              {
+                "ref": "h1",
+                "match": "龜背",
+                "side": "L"
+              },
+              {
+                "ref": "h1",
+                "match": "龜背",
+                "side": "R"
+              },
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "h6",
+                    "match": "順無凹凸"
+                  },
+                  {
+                    "ref": "h7",
+                    "match": "無自剋骨"
+                  },
+                  {
+                    "ref": "h8",
+                    "match": "無橫條骨"
+                  }
+                ]
+              },
+              {
+                "ref": "h12",
+                "match": "順接",
+                "side": "L"
+              },
+              {
+                "ref": "h12",
+                "match": "順接",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 2,
+        "items": [
+          {
+            "ref": "e4",
+            "match": "額平"
+          },
+          {
+            "ref": "e9",
+            "match": "額順"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 5,
+          "items": [
+            {
+              "ref": "er4",
+              "match": "耳圓"
+            },
+            {
+              "ref": "er7",
+              "match": "耳高"
+            },
+            {
+              "ref": "er9",
+              "match": "輪包廓"
+            },
+            {
+              "ref": "er12",
+              "match": "有垂珠"
+            },
+            {
+              "ref": "er14",
+              "match": "雙耳一致",
+              "side": null
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "ref": "br1",
+              "match": "眉長"
+            },
+            {
+              "ref": "br15",
+              "match": "柔順"
+            },
+            {
+              "ref": "br14",
+              "match": "眉順"
+            },
+            {
+              "ref": "br20",
+              "match": "雙眉一致",
+              "side": null
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "COUNT",
+          "min": 6,
+          "items": [
+            {
+              "ref": "ey3",
+              "match": "眼細"
+            },
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            },
+            {
+              "ref": "ey6",
+              "match": "有眼鉤"
+            },
+            {
+              "ref": "ey7",
+              "match": "有刀裁"
+            },
+            {
+              "ref": "ey9",
+              "match": "下眼瞼平直"
+            },
+            {
+              "ref": "ey12",
+              "match": "雙眼一致",
+              "side": null
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "COUNT",
+        "min": 6,
+        "items": [
+          {
+            "ref": "n2",
+            "match": "鼻高"
+          },
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n5",
+            "match": "鼻準圓"
+          },
+          {
+            "ref": "n11",
+            "match": "無起節"
+          },
+          {
+            "ref": "n6",
+            "match": "鼻順"
+          },
+          {
+            "ref": "n3",
+            "match": "鼻直"
+          }
+        ]
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 5,
+        "items": [
+          {
+            "ref": "m2",
+            "match": "涯岸分明"
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m7",
+            "match": "閉合線密"
+          },
+          {
+            "ref": "m13",
+            "match": "口對稱"
+          },
+          {
+            "ref": "m12",
+            "match": "口位置適中"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": [
+                  "顴高且隆",
+                  "顴有而不明"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "L"
+              },
+              {
+                "ref": "q4",
+                "match": [
+                  "顴柄平",
+                  "無明顯顴柄"
+                ],
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "q1",
+                "match": [
+                  "顴高且隆",
+                  "顴有而不明"
+                ],
+                "side": "R"
+              },
+              {
+                "ref": "q3",
+                "match": "顴有肉",
+                "side": "R"
+              },
+              {
+                "ref": "q4",
+                "match": [
+                  "顴柄平",
+                  "無明顯顴柄"
+                ],
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": "人中長"
+              },
+              {
+                "ref": "p4",
+                "match": "人中直"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "c2",
+                "match": "地閣平"
+              },
+              {
+                "ref": "c6",
+                "match": "地閣有肉"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤平",
+                "side": "L"
+              },
+              {
+                "ref": "y4",
+                "match": "雙頤一致",
+                "side": null
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤平",
+                "side": "R"
+              },
+              {
+                "ref": "y4",
+                "match": "雙頤一致",
+                "side": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": "v1.0",
+    "dimId": "攻守",
+    "dimIndex": 9,
+    "category": "後天指數",
+    "positive": "攻",
+    "negative": "守",
+    "positiveType": "動",
+    "negativeType": "靜",
+    "view": "戰略",
+    "parts": {
+      "頭": {
+        "rule": {
+          "op": "COUNT",
+          "min": 1,
+          "items": [
+            {
+              "ref": "h15",
+              "match": "偏硬"
+            },
+            {
+              "ref": "h2",
+              "match": "突起"
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "h7",
+                  "match": "有自剋骨"
+                },
+                {
+                  "ref": "h8",
+                  "match": "有橫條骨"
+                }
+              ]
+            },
+            {
+              "ref": "h11",
+              "match": "突露",
+              "side": "L"
+            },
+            {
+              "ref": "h11",
+              "match": "突露",
+              "side": "R"
+            }
+          ]
+        }
+      },
+      "上停": {
+        "rule": {
+          "op": "COUNT",
+          "min": 1,
+          "items": [
+            {
+              "ref": "e12",
+              "match": "有美人尖"
+            },
+            {
+              "ref": "e10",
+              "match": "額緊"
+            },
+            {
+              "op": "AND",
+              "items": [
+                {
+                  "ref": "e15",
+                  "match": "骨感明顯"
+                },
+                {
+                  "op": "OR",
+                  "items": [
+                    {
+                      "ref": "e11",
+                      "match": "大天庭"
+                    },
+                    {
+                      "ref": "e11",
+                      "match": "小天庭"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "耳": {
+        "rule": {
+          "op": "LR",
+          "merge": "any",
+          "each": {
+            "op": "COUNT",
+            "min": 1,
+            "items": [
+              {
+                "ref": "er7",
+                "match": "耳高"
+              },
+              {
+                "ref": "er9",
+                "match": "輪不包廓"
+              },
+              {
+                "ref": "er4",
+                "match": "耳尖"
+              },
+              {
+                "ref": "er11",
+                "match": "耳硬"
+              },
+              {
+                "ref": "er15",
+                "match": "耳勢朝上"
+              }
+            ]
+          }
+        }
+      },
+      "眉": {
+        "rule": {
+          "op": "LR",
+          "merge": "any",
+          "each": {
+            "op": "COUNT",
+            "min": 3,
+            "items": [
+              {
+                "ref": "br4",
+                "match": "有鷹角"
+              },
+              {
+                "ref": "br16",
+                "match": "眉毛稀少"
+              },
+              {
+                "ref": "br15",
+                "match": "質硬"
+              },
+              {
+                "ref": "br8",
+                "match": "有揚"
+              }
+            ]
+          }
+        }
+      },
+      "眼": {
+        "rule": {
+          "op": "LR",
+          "merge": "any",
+          "each": {
+            "op": "COUNT",
+            "min": 1,
+            "items": [
+              {
+                "ref": "ey6",
+                "match": "有眼鉤"
+              },
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "ey2",
+                    "match": "眼大"
+                  },
+                  {
+                    "ref": "ey3",
+                    "match": "眼圓"
+                  },
+                  {
+                    "ref": "ey4",
+                    "match": "眼尾朝上"
+                  }
+                ]
+              },
+              {
+                "ref": "ey5",
+                "match": "睛凸"
+              }
+            ]
+          }
+        }
+      },
+      "鼻": {
+        "rule": {
+          "op": "COUNT",
+          "min": 1,
+          "items": [
+            {
+              "ref": "n2",
+              "match": "鼻高"
+            },
+            {
+              "ref": "n11",
+              "match": "有起節突露"
+            },
+            {
+              "ref": "n10",
+              "match": "骨多於肉"
+            },
+            {
+              "ref": "n9",
+              "match": "山根窄"
+            }
+          ]
+        }
+      },
+      "口": {
+        "rule": {
+          "op": "COUNT",
+          "min": 1,
+          "items": [
+            {
+              "ref": "m4",
+              "match": "嘴角朝上"
+            },
+            {
+              "ref": "m7",
+              "match": "放鬆見齒"
+            },
+            {
+              "ref": "m11",
+              "match": "有唇珠"
+            },
+            {
+              "ref": "m10",
+              "match": "唇凸"
+            },
+            {
+              "ref": "m8",
+              "match": "唇薄"
+            }
+          ]
+        }
+      },
+      "中停": {
+        "rule": {
+          "op": "COUNT",
+          "min": 4,
+          "items": [
+            {
+              "partResult": "眉.L"
+            },
+            {
+              "partResult": "眉.R"
+            },
+            {
+              "partResult": "眼.L"
+            },
+            {
+              "partResult": "眼.R"
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "n2",
+                  "match": "鼻高"
+                },
+                {
+                  "ref": "n11",
+                  "match": "有起節突露"
+                },
+                {
+                  "ref": "n10",
+                  "match": "骨多於肉"
+                },
+                {
+                  "ref": "n9",
+                  "match": "山根窄"
+                }
+              ]
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "q1",
+                  "match": "顴高且隆",
+                  "side": "L"
+                },
+                {
+                  "ref": "q3",
+                  "match": "顴無肉少肉",
+                  "side": "L"
+                },
+                {
+                  "ref": "q2",
+                  "match": "顴小尖",
+                  "side": "L"
+                }
+              ]
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "q1",
+                  "match": "顴高且隆",
+                  "side": "R"
+                },
+                {
+                  "ref": "q3",
+                  "match": "顴無肉少肉",
+                  "side": "R"
+                },
+                {
+                  "ref": "q2",
+                  "match": "顴小尖",
+                  "side": "R"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "下停": {
+        "rule": {
+          "op": "COUNT",
+          "min": 3,
+          "items": [
+            {
+              "partResult": "口"
+            },
+            {
+              "ref": "p3",
+              "match": "人中窄"
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "c3",
+                  "match": "地閣長"
+                },
+                {
+                  "ref": "c3",
+                  "match": "地閣短"
+                },
+                {
+                  "ref": "c4",
+                  "match": "地閣窄尖"
+                },
+                {
+                  "ref": "c6",
+                  "match": "地閣無肉"
+                }
+              ]
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "y2",
+                  "match": "頤露尖",
+                  "side": "L"
+                },
+                {
+                  "ref": "y3",
+                  "match": "頤短",
+                  "side": "L"
+                }
+              ]
+            },
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "y2",
+                  "match": "頤露尖",
+                  "side": "R"
+                },
+                {
+                  "ref": "y3",
+                  "match": "頤短",
+                  "side": "R"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 10,
+    "positive": "奇",
+    "negative": "正",
+    "positiveType": "動",
+    "negativeType": "靜",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h3",
+            "match": "左右不一致",
+            "weight": 2
+          },
+          {
+            "ref": "h10",
+            "match": "兩側不一致"
+          },
+          {
+            "ref": "h13",
+            "match": "左右不一致",
+            "weight": 2
+          }
+        ]
+      },
+      "上停": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "e13",
+            "match": "日月角起"
+          },
+          {
+            "ref": "e16",
+            "match": "有輔角骨"
+          },
+          {
+            "ref": "e17",
+            "match": "有佐串骨"
+          }
+        ]
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "er3",
+              "match": "耳提強"
+            },
+            {
+              "ref": "er5",
+              "match": "招風耳"
+            },
+            {
+              "ref": "er6",
+              "match": "耳孔大"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "all",
+        "each": {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "br4",
+              "match": "有鷹角"
+            },
+            {
+              "ref": "br8",
+              "match": "有揚"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "any",
+        "each": {
+          "op": "AND",
+          "items": [
+            {
+              "ref": "ey3",
+              "match": "眼細"
+            },
+            {
+              "ref": "ey1",
+              "match": "眼長"
+            },
+            {
+              "ref": "ey10",
+              "match": "適中"
+            }
+          ]
+        }
+      },
+      "鼻": {
+        "op": "AND",
+        "items": [
+          {
+            "ref": "n1",
+            "match": "鼻長"
+          },
+          {
+            "ref": "n8",
+            "match": "有橫張"
+          }
+        ]
+      },
+      "口": {
+        "op": "AND",
+        "items": [
+          {
+            "ref": "m7",
+            "match": "閉合線密"
+          },
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "q4",
+                "match": "顴柄插天",
+                "side": "L"
+              },
+              {
+                "ref": "q4",
+                "match": "顴柄平",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "q4",
+                "match": "顴柄插天",
+                "side": "R"
+              },
+              {
+                "ref": "q4",
+                "match": "顴柄平",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "p2",
+                "match": "人中長"
+              },
+              {
+                "ref": "p3",
+                "match": "人中窄"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "c3",
+                "match": "地閣短"
+              },
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "c4",
+                    "match": "地閣窄尖"
+                  },
+                  {
+                    "ref": "c3",
+                    "match": "地閣長"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "y1",
+            "match": "頤削",
+            "side": "L"
+          },
+          {
+            "ref": "y1",
+            "match": "頤削",
+            "side": "R"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 11,
+    "positive": "實",
+    "negative": "虛",
+    "positiveType": "靜",
+    "negativeType": "動",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h1",
+            "match": "龜背",
+            "side": "L"
+          },
+          {
+            "ref": "h1",
+            "match": "龜背",
+            "side": "R"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "h5",
+                "match": "後腦圓"
+              },
+              {
+                "ref": "h6",
+                "match": "順無凹凸"
+              },
+              {
+                "ref": "h8",
+                "match": "無橫條骨"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "h11",
+                "match": "圓隆",
+                "side": "L"
+              },
+              {
+                "ref": "h11",
+                "match": "突露",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "h11",
+                "match": "圓隆",
+                "side": "R"
+              },
+              {
+                "ref": "h11",
+                "match": "突露",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "上停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "e1",
+            "match": "額高"
+          },
+          {
+            "ref": "e6",
+            "match": "額隆"
+          },
+          {
+            "ref": "e7",
+            "match": "額立"
+          }
+        ]
+      },
+      "耳": {
+        "op": "COUNT",
+        "min": 8,
+        "items": [
+          {
+            "ref": "er8",
+            "match": "有輪有廓",
+            "side": "L"
+          },
+          {
+            "ref": "er9",
+            "match": "輪包廓",
+            "side": "L"
+          },
+          {
+            "ref": "er4",
+            "match": "耳圓",
+            "side": "L"
+          },
+          {
+            "ref": "er7",
+            "match": "耳高",
+            "side": "L"
+          },
+          {
+            "ref": "er8",
+            "match": "有輪有廓",
+            "side": "R"
+          },
+          {
+            "ref": "er9",
+            "match": "輪包廓",
+            "side": "R"
+          },
+          {
+            "ref": "er4",
+            "match": "耳圓",
+            "side": "R"
+          },
+          {
+            "ref": "er7",
+            "match": "耳高",
+            "side": "R"
+          }
+        ]
+      },
+      "眉": {
+        "op": "COUNT",
+        "min": 6,
+        "items": [
+          {
+            "ref": "br1",
+            "match": "眉長",
+            "side": "L"
+          },
+          {
+            "ref": "br5",
+            "match": "無中斷",
+            "side": "L"
+          },
+          {
+            "ref": "br16",
+            "match": "眉毛多",
+            "side": "L"
+          },
+          {
+            "ref": "br1",
+            "match": "眉長",
+            "side": "R"
+          },
+          {
+            "ref": "br5",
+            "match": "無中斷",
+            "side": "R"
+          },
+          {
+            "ref": "br16",
+            "match": "眉毛多",
+            "side": "R"
+          }
+        ]
+      },
+      "眼": {
+        "op": "COUNT",
+        "min": 6,
+        "items": [
+          {
+            "op": "OR",
+            "items": [
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "ey3",
+                    "match": "眼細",
+                    "side": "L"
+                  },
+                  {
+                    "ref": "ey1",
+                    "match": "眼長",
+                    "side": "L"
+                  }
+                ]
+              },
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "ey2",
+                    "match": "眼大",
+                    "side": "L"
+                  },
+                  {
+                    "ref": "ey1",
+                    "match": "眼長",
+                    "side": "L"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "ey6",
+            "match": "有眼鉤",
+            "side": "L"
+          },
+          {
+            "ref": "ey7",
+            "match": "有刀裁",
+            "side": "L"
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "ey3",
+                    "match": "眼細",
+                    "side": "R"
+                  },
+                  {
+                    "ref": "ey1",
+                    "match": "眼長",
+                    "side": "R"
+                  }
+                ]
+              },
+              {
+                "op": "AND",
+                "items": [
+                  {
+                    "ref": "ey2",
+                    "match": "眼大",
+                    "side": "R"
+                  },
+                  {
+                    "ref": "ey1",
+                    "match": "眼長",
+                    "side": "R"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "ey6",
+            "match": "有眼鉤",
+            "side": "R"
+          },
+          {
+            "ref": "ey7",
+            "match": "有刀裁",
+            "side": "R"
+          }
+        ]
+      },
+      "鼻": {
+        "veto": [
+          {
+            "condition": {
+              "ref": "n11",
+              "match": "有起節突露"
+            },
+            "result": "negative"
+          }
+        ],
+        "rule": {
+          "op": "AND",
+          "items": [
+            {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "n10",
+                  "match": "骨肉勻稱"
+                },
+                {
+                  "ref": "n10",
+                  "match": "骨多於肉"
+                }
+              ]
+            },
+            {
+              "ref": "n11",
+              "match": "無起節"
+            }
+          ]
+        }
+      },
+      "口": {
+        "op": "COUNT",
+        "min": 2,
+        "items": [
+          {
+            "ref": "m3",
+            "match": "嘴角收"
+          },
+          {
+            "ref": "m1",
+            "match": [
+              "口開大合小",
+              "口適中"
+            ]
+          }
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "ref": "q1",
+            "match": [
+              "顴高且隆",
+              "顴有而不明"
+            ],
+            "side": "L"
+          },
+          {
+            "ref": "q1",
+            "match": [
+              "顴高且隆",
+              "顴有而不明"
+            ],
+            "side": "R"
+          }
+        ]
+      },
+      "下停": {
+        "op": "AND",
+        "items": [
+          {
+            "op": "VETO",
+            "condition": {
+              "op": "OR",
+              "items": [
+                {
+                  "ref": "c2",
+                  "match": "地閣凹"
+                },
+                {
+                  "ref": "y1",
+                  "match": "頤削",
+                  "side": "L"
+                },
+                {
+                  "ref": "y1",
+                  "match": "頤削",
+                  "side": "R"
+                }
+              ]
+            },
+            "result": "negative"
+          },
+          {
+            "op": "COUNT",
+            "min": 3,
+            "items": [
+              {
+                "partResult": "口"
+              },
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "c2",
+                "match": [
+                  "地閣平",
+                  "地閣圓"
+                ]
+              },
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "L"
+              },
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬",
+                  "頤平"
+                ],
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "version": 1,
+    "dimIndex": 12,
+    "positive": "進",
+    "negative": "退",
+    "positiveType": "動",
+    "negativeType": "靜",
+    "parts": {
+      "頭": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "ref": "h14",
+            "match": "頭窄",
+            "weight": 2
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "h10",
+                "match": "兩側不一致"
+              },
+              {
+                "ref": "h7",
+                "match": "有自剋骨"
+              },
+              {
+                "ref": "h8",
+                "match": "有橫條骨"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "h11",
+                "match": "突露",
+                "side": "L"
+              },
+              {
+                "ref": "h11",
+                "match": "凹陷",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "OR",
+            "items": [
+              {
+                "ref": "h11",
+                "match": "突露",
+                "side": "R"
+              },
+              {
+                "ref": "h11",
+                "match": "凹陷",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      },
+      "上停": {
+        "ref": "e8",
+        "match": "額方"
+      },
+      "耳": {
+        "op": "LR",
+        "merge": "any",
+        "each": {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "er1",
+              "match": "耳短"
+            },
+            {
+              "ref": "er7",
+              "match": "耳高"
+            },
+            {
+              "ref": "er5",
+              "match": "招風耳"
+            }
+          ]
+        }
+      },
+      "眉": {
+        "op": "LR",
+        "merge": "any",
+        "each": {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "br15",
+              "match": "質硬"
+            },
+            {
+              "ref": "br1",
+              "match": "眉短"
+            },
+            {
+              "ref": "br18",
+              "match": "眉毛短"
+            }
+          ]
+        }
+      },
+      "眼": {
+        "op": "LR",
+        "merge": "any",
+        "each": {
+          "ref": "ey1",
+          "match": "眼短"
+        }
+      },
+      "鼻": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "n10",
+            "match": "肉多於骨"
+          },
+          {
+            "ref": "n1",
+            "match": "鼻短"
+          },
+          {
+            "ref": "n4",
+            "match": "鼻窄小"
+          },
+          {
+            "ref": "n11",
+            "match": "無起節"
+          }
+        ]
+      },
+      "口": {
+        "ref": "m1",
+        "match": [
+          "口開大合小",
+          "口適中"
+        ]
+      },
+      "中停": {
+        "op": "COUNT",
+        "min": 4,
+        "items": [
+          {
+            "partResult": "眉.L"
+          },
+          {
+            "partResult": "眉.R"
+          },
+          {
+            "partResult": "眼.L"
+          },
+          {
+            "partResult": "眼.R"
+          },
+          {
+            "partResult": "鼻"
+          },
+          {
+            "ref": "q3",
+            "match": "顴無肉少肉",
+            "side": "L"
+          },
+          {
+            "ref": "q3",
+            "match": "顴無肉少肉",
+            "side": "R"
+          }
+        ]
+      },
+      "下停": {
+        "op": "COUNT",
+        "min": 3,
+        "items": [
+          {
+            "partResult": "口"
+          },
+          {
+            "ref": "p2",
+            "match": "人中短"
+          },
+          {
+            "ref": "c4",
+            "match": "地閣窄尖"
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤削",
+                "side": "L"
+              },
+              {
+                "ref": "y2",
+                "match": "頤露尖",
+                "side": "L"
+              }
+            ]
+          },
+          {
+            "op": "AND",
+            "items": [
+              {
+                "ref": "y1",
+                "match": "頤削",
+                "side": "R"
+              },
+              {
+                "ref": "y2",
+                "match": "頤露尖",
+                "side": "R"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
