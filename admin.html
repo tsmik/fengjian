@@ -267,8 +267,9 @@ function renderNode(node,path,depth,qmap){
     h+=`<button class="add-btn" onclick="addRuleItem('${path}')">+ 新增條件</button></div>`;return h;
   }
   if(op==='LR'){
-    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
-    h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>'+renderNode(node.each,path+'.each',depth+1,qmap);
+    var mergeLabel=node.merge==='all'?'都符合':'一邊符合即可';
+    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">左右部位 LR</span><span class="node-op" style="background:#b5a078">${mergeLabel}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
+    h+=renderNode(node.each,path+'.each',depth+1,qmap);
     return h+'</div>';
   }
   if(op==='NOT'){
@@ -342,7 +343,7 @@ function editRuleNode(path){
     html+='<div class="row"><label>類型</label><select id="er-optype"><option value="AND"'+(node.op==='AND'?' selected':'')+'>AND</option><option value="OR"'+(node.op==='OR'?' selected':'')+'>OR</option><option value="COUNT"'+(node.op==='COUNT'?' selected':'')+'>COUNT</option></select></div>';
     if(node.op==='COUNT')html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
   }else if(node.op==='LR'){
-    html+='<div class="row"><label>merge</label><select id="er-merge"><option value="any"'+(node.merge==='any'?' selected':'')+'>any</option><option value="all"'+(node.merge==='all'?' selected':'')+'>all</option></select></div>';
+    html+='<div class="row"><label>merge</label><select id="er-merge"><option value="any"'+(node.merge==='any'?' selected':'')+'>一邊符合即可</option><option value="all"'+(node.merge==='all'?' selected':'')+'>都符合</option></select></div>';
   }else if(node.op==='NOT'){
     if(node.item&&node.item.ref!==undefined){
       html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.item.ref,allowedQParts,node.item.ref)+'</select></div>';
