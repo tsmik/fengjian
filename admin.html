@@ -681,8 +681,46 @@ function showToast(msg,isOk){
   t.className='toast show '+(isOk?'toast-ok':'toast-err');
   setTimeout(function(){t.className='toast';},2000);
 }
+function buildDiffSummary(){
+  var lines=[];
+  // Rules diff
+  try{
+    var oldRules=JSON.parse(_cleanRulesJson);
+    for(var i=0;i<13;i++){
+      if(JSON.stringify(rules[i])!==JSON.stringify(oldRules[i])){
+        var dimName=(rules[i]||oldRules[i]).positive+(rules[i]||oldRules[i]).negative;
+        // Per-part diff
+        var partChanges=[];
+        PART_ORDER.forEach(function(pn){
+          var newP=JSON.stringify((rules[i]||{parts:{}}).parts[pn]||null);
+          var oldP=JSON.stringify((oldRules[i]||{parts:{}}).parts[pn]||null);
+          if(newP!==oldP)partChanges.push(pn);
+        });
+        if(partChanges.length>0)lines.push('規則 '+dimName+'：'+partChanges.join('、')+' 已修改');
+        else lines.push('規則 '+dimName+' 已修改');
+      }
+    }
+  }catch(e){lines.push('規則：有修改（無法比較細節）');}
+  // Questions diff
+  try{
+    var oldQ=JSON.parse(_cleanQuestionsJson);
+    var allParts=Object.keys(questions);
+    allParts.forEach(function(pn){
+      if(JSON.stringify(questions[pn])!==JSON.stringify(oldQ[pn])){
+        lines.push('觀察問題 → '+pn+' 已修改');
+      }
+    });
+    // Check for removed parts
+    Object.keys(oldQ).forEach(function(pn){
+      if(!questions[pn])lines.push('觀察問題 → '+pn+' 已刪除');
+    });
+  }catch(e){lines.push('觀察問題：有修改（無法比較細節）');}
+  return lines.join('\n');
+}
 function saveAll(){
   if(_dirtyCount===0){showToast('沒有需要儲存的修改',true);return;}
+  var diff=buildDiffSummary();
+  if(diff&&!confirm('即將儲存以下修改：\n\n'+diff+'\n\n確定儲存？'))return;
   var btn=document.getElementById('btn-save');
   btn.disabled=true;btn.style.opacity='0.6';
   setStatus('儲存中...');
