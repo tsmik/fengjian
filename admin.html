@@ -213,7 +213,7 @@ function renderRules(){
         h+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(function(o){return '<option value="'+o+'"'+(mv.includes(o)?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
         h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
         h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
-        h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
+        h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="cancelNewNode()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
         var d=document.createElement('div');d.innerHTML=h;targetEl.after(d);
         targetEl.scrollIntoView({behavior:'smooth',block:'center'});
       }
@@ -340,6 +340,7 @@ function saveRuleEdit(path){
   else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
+  if(_pendingNewNodePath===path)_pendingNewNodePath=null;
   renderAll();pushUndo();markDirty();
 }
 function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();pushUndo();markDirty();}
@@ -393,8 +394,21 @@ function doAddItem(p,qPartName){
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
   _autoEditQPart=qPartName;
-  renderAll();pushUndo();markDirty();
+  _pendingNewNodePath=p+'.items.'+newIdx;
+  renderAll();
 }
+var _pendingNewNodePath=null;
+
+function cancelNewNode(){
+  if(_pendingNewNodePath){
+    delPath(rules[curDim],_pendingNewNodePath);
+    _pendingNewNodePath=null;
+  }
+  _autoEditPath=null;
+  _autoEditQPart=null;
+  renderAll();
+}
+
 function toggleSec(key,el){
   if(openSections.has(key))openSections.delete(key);else openSections.add(key);
   el.nextElementSibling.classList.toggle('open');
@@ -604,6 +618,11 @@ function undo(){
   var snap=_undoStack.pop();
   rules=snap.rules;
   questions=snap.questions;
+  // Clear all editing state
+  editingQ=null;
+  _autoEditPath=null;
+  _autoEditQPart=null;
+  _pendingNewNodePath=null;
   // Check if undo'd back to clean state
   if(_undoStack.length===0&&JSON.stringify(rules)===_cleanRulesJson&&JSON.stringify(questions)===_cleanQuestionsJson){
     takeSnapshot();
@@ -611,6 +630,9 @@ function undo(){
     _dirtyCount=Math.max(1,_dirtyCount-1);
     updateSaveBtn();
   }
+  // Force full re-render
+  document.getElementById('editor').innerHTML='';
+  document.getElementById('sidebar').innerHTML='';
   renderAll();
   showToast('已復原',true);
   updateUndoBtn();
