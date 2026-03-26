@@ -707,7 +707,7 @@ const OBS_GROUPS=[
 ];
 const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
 
-const OBS_PARTS_DATA = {
+const OBS_PARTS_DATA_DEFAULT = {
 '頭':{total:15,sections:[{label:'頂骨',qs:[{id:'h1',text:'頂骨型相',paired:true,opts:[{v:'龜背',hint:'無凹凸，緩緩向中間隆起'},{v:'圓',hint:'往下側偏圓弧'},{v:'平寬',hint:'往外側平展才向下'}]},{id:'h2',text:'頂骨中央接合',opts:[{v:'突起',hint:''},{v:'平順',hint:''},{v:'凹陷',hint:''}]},{id:'h3',text:'頂骨左右一致性',opts:[{v:'左右一致',hint:'大小、高低、凹凸、坡度一致'},{v:'左右不一致',hint:''}]},{id:'h4',text:'頂骨中線',opts:[{v:'中線直',hint:'百會穴為起點，矢狀縫中線向前為直線到髮際中央'},{v:'中線斜歪',hint:''}]}]},{label:'枕骨',qs:[{id:'h5',text:'枕骨型相',opts:[{v:'後腦圓',hint:''},{v:'後腦平',hint:''}]},{id:'h6',text:'枕骨凹凸',opts:[{v:'順無凹凸',hint:''},{v:'有凹凸',hint:''}]},{id:'h7',text:'枕骨自剋骨',opts:[{v:'有自剋骨',hint:'後端有圓或尖突起'},{v:'無自剋骨',hint:''}]},{id:'h8',text:'枕骨橫條骨',opts:[{v:'有橫條骨',hint:'有明顯橫向骨突起'},{v:'無橫條骨',hint:''}]},{id:'h9',text:'枕骨中線',opts:[{v:'中線直',hint:'百會穴為起點到枕骨下緣中點為直線'},{v:'中線歪',hint:''}]},{id:'h10',text:'枕骨左右一致性',opts:[{v:'兩側一致',hint:''},{v:'兩側不一致',hint:''}]}]},{label:'華陽骨',qs:[{id:'h11',text:'華陽骨型相',paired:true,opts:[{v:'圓隆',hint:'圓隆起'},{v:'平直',hint:'不隆不凹'},{v:'突露',hint:'有明顯突起骨'},{v:'凹陷',hint:''}]},{id:'h12',text:'華陽骨銜接',paired:true,opts:[{v:'順接',hint:'與頂骨間無太大轉折起伏，順著銜接'},{v:'有轉折起伏',hint:''}]},{id:'h13',text:'華陽骨左右一致性',opts:[{v:'左右一致',hint:'大小、高低等一致'},{v:'左右不一致',hint:''}]}]},{label:'頭骨整體',qs:[{id:'h14',text:'頭骨寬窄',opts:[{v:'頭窄',hint:'百會穴到枕骨下端長度 ≥ 兩側華陽骨上緣間距'},{v:'頭寬',hint:'百會穴到枕骨下端長度 < 兩側華陽骨上緣間距'}]},{id:'h15',text:'頭骨硬度',opts:[{v:'偏硬',hint:'按壓骨感明顯，肉偏少'},{v:'一般',hint:''}]}]}]},
 '額':{total:17,sections:[{label:'額型',qs:[{id:'e1',text:'額高低',opts:[{v:'額高',hint:'眉到髮際長度佔臉 1/3 或以上'},{v:'額低',hint:''}]},{id:'e2',text:'額圓方',opts:[{v:'額圓',hint:'形狀偏橢圓'},{v:'額方',hint:'類似橫躺長方形'}]},{id:'e3',text:'額寬窄',opts:[{v:'額寬',hint:'兩側寬闊'},{v:'額窄',hint:''}]},{id:'e4',text:'額平整',opts:[{v:'額平',hint:'正面看無凹凸、高低不平'},{v:'額不平',hint:''}]},{id:'e5',text:'額乾淨',opts:[{v:'額淨',hint:'無痕紋痣疤疵陷'},{v:'額有缺陷',hint:''}]},{id:'e6',text:'額隆起',opts:[{v:'額隆',hint:'側面看有隆起弧度'},{v:'額均',hint:'側面較平'},{v:'額陷',hint:''}]},{id:'e7',text:'額立斜',opts:[{v:'額立',hint:'側面偏直上'},{v:'額斜',hint:'側面斜上'}]},{id:'e8',text:'額長方',opts:[{v:'額長',hint:'兩眼角距離小於眉到髮際距離'},{v:'額方',hint:'兩眼角距離約等於眉到髮際距離'}]},{id:'e9',text:'額順折',opts:[{v:'額順',hint:'眉骨與額頭銜接處無明顯凹槽'},{v:'額折',hint:'銜接處有明顯凹槽'}]},{id:'e10',text:'額鬆緊',opts:[{v:'額緊',hint:'額骨感明顯、硬度高、無皺紋'},{v:'額鬆',hint:''}]},{id:'e11',text:'大小天庭',opts:[{v:'大天庭',hint:'額頭整體隆起'},{v:'小天庭',hint:'額頭中間區域較隆起，兩側不特別寬'},{v:'無',hint:'整體偏平'}]}]},{label:'髮際線',qs:[{id:'e12',text:'美人尖',opts:[{v:'有美人尖',hint:'髮際中央有向下突出'},{v:'無美人尖',hint:''}]}]},{label:'額內部位',qs:[{id:'e13',text:'日月角隆',opts:[{v:'日月角起',hint:'上方髮際兩側下方有明顯隆起'},{v:'不清晰',hint:''}]},{id:'e14',text:'日月角開合',opts:[{v:'日月角開',hint:'兩側偏外，靠近邊城方向'},{v:'日月角合',hint:'較靠近中線'}]},{id:'e15',text:'日月角骨肉',opts:[{v:'有肉包',hint:'肉感為主，骨不凸'},{v:'骨感明顯',hint:'骨較突出'}]},{id:'e16',text:'輔角骨',opts:[{v:'有輔角骨',hint:'眉尾上方外側到髮際線有隆起'},{v:'不明顯',hint:''}]},{id:'e17',text:'佐串骨',opts:[{v:'有佐串骨',hint:'接近髮際角落轉折處有隆起'},{v:'不明顯',hint:''}]}]}]},
 '耳':{total:15,sections:[{label:'耳形',qs:[{id:'er1',text:'耳長短',paired:true,opts:[{v:'耳長',hint:'長度超過眼到鼻準底的 2/3'},{v:'耳短',hint:'長度不及眼到鼻準底的 2/3'}]},{id:'er2',text:'耳大小',paired:true,opts:[{v:'耳大',hint:''},{v:'耳適中',hint:''},{v:'耳小',hint:''}]},{id:'er3',text:'耳立提',paired:true,opts:[{v:'耳立',hint:'耳上端與耳垂中央一直線，接近垂直'},{v:'耳提',hint:'朝前傾，不垂直'},{v:'耳提強',hint:'朝前約 30 度以上'}]},{id:'er4',text:'耳圓缺',paired:true,opts:[{v:'耳圓',hint:'圓弧完整，耳輪無凹陷波浪，上耳輪不往內翻'},{v:'耳尖',hint:'上耳輪形尖起'},{v:'耳缺',hint:'開花／內翻／方形有角等'}]},{id:'er5',text:'耳貼程度',paired:true,opts:[{v:'貼耳',hint:'夾角偏小，幾乎貼頭顱'},{v:'一般',hint:''},{v:'招風耳',hint:'夾角 > 40 度，正面超出臉廓'}]},{id:'er6',text:'耳孔',paired:true,opts:[{v:'耳孔大',hint:'盆地範圍 ≥ 耳面積 1/2'},{v:'耳孔小',hint:''}]}]},{label:'耳位置',qs:[{id:'er7',text:'耳高低',paired:true,opts:[{v:'耳高',hint:'上緣在眉眼之間或齊眉以上'},{v:'耳低',hint:'上緣低於眼'}]}]},{label:'輪廓',qs:[{id:'er8',text:'輪廓有無',paired:true,opts:[{v:'有輪有廓',hint:'輪廓分明'},{v:'有輪無廓',hint:''},{v:'無輪有廓',hint:''}]},{id:'er9',text:'輪包廓',paired:true,opts:[{v:'輪包廓',hint:'耳廓不擋耳輪'},{v:'輪不包廓',hint:'耳廓外露擋輪'}]}]},{label:'耳質',qs:[{id:'er10',text:'耳厚薄',paired:true,opts:[{v:'耳厚',hint:'耳肉多'},{v:'耳正常',hint:''},{v:'耳薄',hint:'薄如紙'}]},{id:'er11',text:'耳質硬軟',paired:true,opts:[{v:'耳堅',hint:'有硬度不軟'},{v:'耳硬',hint:'中段偏硬'},{v:'耳軟',hint:''}]}]},{label:'垂珠',qs:[{id:'er12',text:'垂珠',paired:true,opts:[{v:'有垂珠',hint:'耳垂大小明顯，且耳垂上有凸起耳珠'},{v:'無垂珠',hint:''}]},{id:'er13',text:'耳垂方向',paired:true,opts:[{v:'耳垂朝口',hint:''},{v:'耳垂朝下',hint:''},{v:'其他',hint:''}]}]},{label:'一致性',qs:[{id:'er14',text:'雙耳一致性',opts:[{v:'雙耳一致',hint:'大小、形狀、高低一致'},{v:'雙耳不一致',hint:''}]}]},{label:'耳勢',qs:[{id:'er15',text:'耳勢',paired:true,opts:[{v:'耳勢朝上',hint:'整體耳型朝上長'},{v:'一般',hint:''}]}]}]},
@@ -720,7 +720,10 @@ const OBS_PARTS_DATA = {
 '地閣':{total:6,sections:[{label:'地閣型',qs:[{id:'c1',text:'地閣朝',opts:[{v:'地閣起',hint:'承漿凹，朝拱，凸起適中'},{v:'地閣凸',hint:'下巴尖端超過嘴唇垂直線'},{v:'地閣縮',hint:'側面下巴尖端短於嘴唇垂直線'}]},{id:'c2',text:'地閣平',opts:[{v:'地閣平',hint:'無凹凸'},{v:'地閣圓',hint:'下巴骨圓'},{v:'地閣凹',hint:'中間有凹如 W 型'}]}]},{label:'地閣大小',qs:[{id:'c3',text:'地閣長短',opts:[{v:'地閣長',hint:'長過鼻準到下巴的 1/3'},{v:'地閣適中',hint:''},{v:'地閣短',hint:'短於鼻準到下巴的 1/3'}]},{id:'c4',text:'地閣寬窄',opts:[{v:'地閣寬',hint:'約等口寬或更寬'},{v:'地閣窄尖',hint:'寬度等於或小於鼻翼'}]}]},{label:'地閣位置',qs:[{id:'c5',text:'地閣位置',opts:[{v:'地閣置中',hint:'地閣中線與臉部中線重合'},{v:'地閣歪',hint:''}]}]},{label:'地閣骨肉',qs:[{id:'c6',text:'地閣骨肉',opts:[{v:'地閣有肉',hint:'肉包起不露骨'},{v:'地閣無肉',hint:'骨感明顯'}]}]}]},
 '頤':{total:4,sections:[{label:'頤',qs:[{id:'y1',text:'頤角度',paired:true,opts:[{v:'頤寬',hint:'耳下到下巴連線角度大，腮角明顯'},{v:'頤平',hint:'角度適中'},{v:'頤削',hint:'角度小，趨近垂直線'}]},{id:'y2',text:'頤肉量',paired:true,opts:[{v:'頤豐',hint:'頤骨豐隆有肉，弧度飽滿'},{v:'頤有肉',hint:'有肉但不過豐'},{v:'頤露尖',hint:'肉少或尖，視覺上薄'}]},{id:'y3',text:'頤長短',paired:true,opts:[{v:'頤長度正常',hint:''},{v:'頤短',hint:''}]},{id:'y4',text:'雙頤一致性',opts:[{v:'雙頤一致',hint:''},{v:'雙頤不一致',hint:''}]}]}]}
 };
-const OBS_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+var OBS_PARTS_DATA = JSON.parse(JSON.stringify(OBS_PARTS_DATA_DEFAULT));
+var _questionsSource = '內建';
+const OBS_PART_NAMES_DEFAULT=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+var OBS_PART_NAMES = [...OBS_PART_NAMES_DEFAULT];
 const OBS_PART_PREFIX={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
 
 const FACE_MAP_PARTS=[
@@ -3855,6 +3858,22 @@ async function startApp(){
       }catch(e){console.log('[規則引擎] Firebase 規則解析失敗，使用內建規則',e);}
     }else{console.log('[規則引擎] Firebase 無規則資料，使用內建規則');}
   }catch(e){console.log('[規則引擎] Firebase 規則讀取失敗，使用內建規則',e);}
+
+  /* ===== Step 1.5: 從 Firebase 載入觀察問題 ===== */
+  try{
+    const qDoc=await db.collection('settings').doc('questions').get();
+    if(qDoc.exists&&qDoc.data().questionsJson){
+      try{
+        const parsed=JSON.parse(qDoc.data().questionsJson);
+        if(parsed&&typeof parsed==='object'&&Object.keys(parsed).length>=11){
+          OBS_PARTS_DATA=parsed;
+          OBS_PART_NAMES=Object.keys(parsed);
+          _questionsSource='Firebase';
+          console.log('[觀察問題] 從 Firebase 載入觀察問題 ✓（'+OBS_PART_NAMES.length+'個部位）');
+        }else{console.log('[觀察問題] Firebase 問題格式異常，使用內建問題');}
+      }catch(e){console.log('[觀察問題] Firebase 問題解析失敗，使用內建問題',e);}
+    }else{console.log('[觀察問題] Firebase 無問題資料，使用內建問題');}
+  }catch(e){console.log('[觀察問題] Firebase 問題讀取失敗，使用內建問題',e);}
 
   /* ===== Step 2: 載入使用者資料 ===== */
   try{const doc=await db.collection('users').doc(userName).get();
