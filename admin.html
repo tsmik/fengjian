@@ -156,17 +156,21 @@ function renderRules(){
   document.getElementById('editor').innerHTML=eh;
   // Auto-open edit form for newly added node
   if(_autoEditPath){
-    var ap=_autoEditPath;_autoEditPath=null;
+    var ap=_autoEditPath;var aqp=_autoEditQPart;_autoEditPath=null;_autoEditQPart=null;
     setTimeout(function(){
       var node=getPath(rules[curDim],ap);if(!node)return;
+      var rulePart=getRulePartFromPath(ap);
+      var allowedQParts=aqp?[aqp]:(RULE_TO_QPARTS[rulePart]||Q_PART_NAMES);
       var nodes=document.querySelectorAll('.node');
       var targetEl=null;
       nodes.forEach(function(el){var r=el.querySelector('.node-ref');if(r&&r.textContent===node.ref)targetEl=el;});
       if(targetEl){
         var qmap=buildQmap();
         var mv=Array.isArray(node.match)?node.match:[node.match];
-        var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>';
-        h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelect(node.ref)+'</select></div>';
+        var warnMap=PARTRESULT_WARN[rulePart]||{};
+        var warnText=aqp&&warnMap[aqp]?'<div style="font-size:11px;color:#999;margin-bottom:6px">提醒：'+aqp+'通常以 partResult 引用，此處為'+rulePart+'特殊條件</div>':'';
+        var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
+        h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
         h+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(function(o){return '<option value="'+o+'"'+(mv.includes(o)?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
         h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
         h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
@@ -217,30 +221,46 @@ function renderNode(node,path,depth,qmap){
 
 function nodeActs(p){return `<span class="node-actions"><button onclick="editRuleNode('${p}')">編輯</button><button class="del" onclick="deleteRuleNode('${p}')">刪除</button></span>`;}
 
-// Build ref <select> options grouped by part
-function buildRefSelect(selected){
+// Rule part → allowed question parts mapping
+var RULE_TO_QPARTS={
+  '頭':['頭'],'上停':['額'],'耳':['耳'],'眉':['眉'],'眼':['眼'],'鼻':['鼻'],'口':['口'],
+  '中停':['眉','眼','鼻','顴'],'下停':['口','人中','地閣','頤']
+};
+var PARTRESULT_WARN={'中停':{'眉':true,'眼':true,'鼻':true},'下停':{'口':true}};
+
+// Build ref <select> filtered by allowed question parts, grouped by section
+function buildRefSelectFiltered(selected,allowedQParts,currentRef){
   var src=Object.keys(questions).length>0?questions:(typeof ALL_QUESTIONS_DEFAULT!=='undefined'?ALL_QUESTIONS_DEFAULT:{});
   var h='<option value="">選擇題目</option>';
-  Q_PART_NAMES.forEach(pn=>{
+  var foundCurrent=false;
+  (allowedQParts||Q_PART_NAMES).forEach(pn=>{
     var pd=src[pn];if(!pd||!pd.sections)return;
-    h+=`<optgroup label="${pn}">`;
-    pd.sections.forEach(s=>s.qs.forEach(q=>{
-      var v=typeof q.opts[0]==='string'?q.opts[0]:q.opts[0].v;
-      h+=`<option value="${q.id}"${q.id===selected?' selected':''}>${q.id} ${q.text}</option>`;
-    }));
-    h+='</optgroup>';
+    pd.sections.forEach(sec=>{
+      h+=`<optgroup label="${pn} — ${sec.label}">`;
+      sec.qs.forEach(q=>{
+        if(q.id===currentRef)foundCurrent=true;
+        h+=`<option value="${q.id}"${q.id===selected?' selected':''}>${q.id} ${q.text}</option>`;
+      });
+      h+='</optgroup>';
+    });
   });
+  // If currentRef exists but wasn't in allowed parts, add it under "其他"
+  if(currentRef&&!foundCurrent){
+    var qmap=buildQmap();var qi=qmap[currentRef];
+    if(qi)h+=`<optgroup label="其他"><option value="${currentRef}" selected>${currentRef} ${qi.text}</option></optgroup>`;
+  }
   return h;
 }
 
-// Guess default ref prefix from rule path (e.g. parts.眉.items.0 → br)
-function guessDefaultRef(path){
-  var partName=path.split('.')[1]||'';
-  // Map rule part names to question part names
-  var map={'頭':'頭','上停':'額','耳':'耳','眉':'眉','眼':'眼','鼻':'鼻','口':'口','中停':'眉','下停':'口'};
-  var qPartName=map[partName]||'頭';
-  var prefix=Q_PREFIXES[qPartName]||'h';
-  return prefix+'1';
+// Get rule part name from path
+function getRulePartFromPath(path){return path.split('.')[1]||'';}
+
+// Get first ref for a question part
+function getFirstRef(qPartName){
+  var src=Object.keys(questions).length>0?questions:(typeof ALL_QUESTIONS_DEFAULT!=='undefined'?ALL_QUESTIONS_DEFAULT:{});
+  var pd=src[qPartName];
+  if(pd&&pd.sections&&pd.sections[0]&&pd.sections[0].qs&&pd.sections[0].qs[0])return pd.sections[0].qs[0].id;
+  return 'h1';
 }
 
 function getPath(obj,p){var c=obj;p.split('.').forEach(k=>{if(c==null)return;c=/^\d+$/.test(k)?c[+k]:c[k];});return c;}
@@ -249,9 +269,11 @@ function delPath(obj,p){var ps=p.split('.'),c=obj;for(var i=0;i<ps.length-1;i++)
 function editRuleNode(path){
   var node=getPath(rules[curDim],path);if(!node)return;
   var qmap=buildQmap();
+  var rulePart=getRulePartFromPath(path);
+  var allowedQParts=RULE_TO_QPARTS[rulePart]||Q_PART_NAMES;
   var html='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
   if(node.ref!==undefined){
-    html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelect(node.ref)+'</select></div>';
+    html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
     html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${mv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
     html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
@@ -280,16 +302,56 @@ function saveRuleEdit(path){
   renderAll();setStatus('已修改（未儲存）');
 }
 function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();setStatus('已刪除（未儲存）');}
-var _autoEditPath=null; // path of newly added node to auto-edit
+var _autoEditPath=null;
+var _autoEditQPart=null; // for multi-part selection (中停/下停)
+
 function addRuleItem(p){
   var n=getPath(rules[curDim],p);if(!n||!n.items)return;
-  var defRef=guessDefaultRef(p);
+  var rulePart=getRulePartFromPath(p);
+  var allowedQParts=RULE_TO_QPARTS[rulePart]||['頭'];
+  var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+
+  if(allowedQParts.length>1){
+    // Multi-part: show part selection buttons first
+    _pendingAddPath=p;
+    var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
+    var warn='';
+    var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+    // Find the add button and insert after it
+    renderAll();
+    setTimeout(function(){
+      var addBtns=document.querySelectorAll('.add-btn');
+      addBtns.forEach(function(btn){
+        if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes(p)){
+          var d=document.createElement('div');d.innerHTML=container;btn.after(d);
+        }
+      });
+    },50);
+    return;
+  }
+
+  // Single part: add directly
+  doAddItem(p,allowedQParts[0]);
+}
+
+var _pendingAddPath=null;
+function finishAddWithPart(qPartName){
+  if(!_pendingAddPath)return;
+  var form=document.getElementById('part-select-form');if(form)form.remove();
+  doAddItem(_pendingAddPath,qPartName);
+  _pendingAddPath=null;
+}
+
+function doAddItem(p,qPartName){
+  var n=getPath(rules[curDim],p);if(!n||!n.items)return;
+  var defRef=getFirstRef(qPartName);
   var qmap=buildQmap();
   var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
   var newIdx=n.items.length;
   n.items.push({ref:defRef,match:defMatch});
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
+  _autoEditQPart=qPartName;
   renderAll();setStatus('已新增（未儲存）');
 }
 function toggleSec(key,el){
