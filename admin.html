@@ -44,7 +44,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .q-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
 .edit-form{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:6px 0}
 .edit-form .row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
-.edit-form label{font-size:12px;color:var(--text-3);min-width:50px}
+.edit-form label{font-size:13px;color:var(--text-3);min-width:50px}
 .edit-form input,.edit-form select{font-size:14px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
 .edit-form input[type=text]{flex:1;min-width:150px}
 .opt-row{display:flex;gap:4px;align-items:center;margin:2px 0 2px 56px}
@@ -174,15 +174,19 @@ function getHintForMatch(qmap,ref,matchVal){
   var opt=q.fullOpts.find(o=>o.v===matchVal);
   return opt?opt.hint:'';
 }
-var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'partResult'};
+var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'引用結果'};
 function isInsideLR(path){return path.indexOf('.each')!==-1;}
-function sideFieldHtml(curSide){
-  var opts='<option value=""'+((!curSide||curSide==='')?' selected':'')+'>不分左右</option>';
-  opts+='<option value="L"'+(curSide==='L'?' selected':'')+'>左</option>';
-  opts+='<option value="R"'+(curSide==='R'?' selected':'')+'>右</option>';
-  opts+='<option value="null"'+(curSide===null?' selected':'')+'>自動（由 LR 決定）</option>';
-  return '<div class="row" id="side-toggle-row"><span style="font-size:12px;color:var(--text-3);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'side-advanced\').style.display=\'flex\';this.parentElement.style.display=\'none\'">進階：調整左右設定</span></div>'
-    +'<div class="row" id="side-advanced" style="display:none"><label>Side</label><select id="er-side">'+opts+'</select></div>';
+function advancedFieldsHtml(curSide,curWeight){
+  var sOpts='<option value=""'+((!curSide||curSide==='')?' selected':'')+'>不分左右</option>';
+  sOpts+='<option value="L"'+(curSide==='L'?' selected':'')+'>左</option>';
+  sOpts+='<option value="R"'+(curSide==='R'?' selected':'')+'>右</option>';
+  sOpts+='<option value="null"'+(curSide===null?' selected':'')+'>自動（由 LR 決定）</option>';
+  var wt=curWeight||1;
+  return '<div class="row" id="side-toggle-row"><span style="font-size:12px;color:var(--text-3);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'advanced-fields\').style.display=\'block\';this.parentElement.style.display=\'none\'">進階設定 ▸</span></div>'
+    +'<div id="advanced-fields" style="display:none">'
+    +'<div class="row"><label>Side</label><select id="er-side">'+sOpts+'</select></div>'
+    +'<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+wt+'" min="1" style="width:50px"></div>'
+    +'</div>';
 }
 function matchOptsHtml(qmap,ref,selectedArr){
   var qi=qmap[ref]||{fullOpts:[]};
@@ -202,7 +206,7 @@ function renderRules(){
   rules.forEach((d,i)=>{
     var cat=d.category||'';
     if(cat!==lastCat){sh+=`<div class="sb-cat">${cat}</div>`;lastCat=cat;}
-    sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}">${d.positive}${d.negative}</div>`;
+    sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${DIM_COLORS[i]};margin-right:6px;vertical-align:middle"></span>${d.positive}${d.negative}</div>`;
   });
   document.getElementById('sidebar').innerHTML=sh;
 
@@ -215,10 +219,11 @@ function renderRules(){
     var pd=dim.parts[pn];
     var secKey='r-'+curDim+'-'+pn;
     var isOpen=openSections.has(secKey);
-    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3)">${isOpen?'▲':'▼'}</span></div><div class="section-body${isOpen?' open':''}">`;
+    var leafInfo=pd?countLeafNodes(pd)+'個條件':'無規則';
+    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3);font-weight:400;margin-left:6px">${leafInfo}</span> <span style="font-size:12px;color:var(--text-3)">${isOpen?'▲':'▼'}</span></div><div class="section-body${isOpen?' open':''}">`;
     if(pd)eh+=renderNode(pd,'parts.'+pn,0,qmap);
     else eh+='<div style="color:var(--text-3);font-size:13px">此部位無規則</div>';
-    eh+=`<button class="add-btn" id="add-btn-root-${pn}" onclick="addRootItem('${pn}')">+ 新增條件（根層級）</button>`;
+    eh+=`<button class="add-btn" id="add-btn-root-${pn}" onclick="addRootItem('${pn}')">+ 另起一組條件</button>`;
     eh+='</div></div>';
   });
   document.getElementById('editor').innerHTML=eh;
@@ -240,8 +245,7 @@ function renderRules(){
         var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
         h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
         h+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
-        h+=sideFieldHtml(node.side);
-        h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
+        h+=advancedFieldsHtml(node.side,1);
         h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="cancelNewNode()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
         var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;targetEl.after(d);
         targetEl.scrollIntoView({behavior:'smooth',block:'center'});
@@ -262,7 +266,7 @@ function renderNode(node,path,depth,qmap){
   if(!node)return '';
   var h='',ind=depth*8,bg=depthStyle(depth);
   if(node.partResult!==undefined){
-    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
+    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${node.partResult}</span>${nodeActs(path)}</div>`;
   }
   if(node.ref!==undefined){
     var q=(qmap||{})[node.ref]||{text:'?',fullOpts:[]};
@@ -370,8 +374,7 @@ function editRuleNode(path){
     html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
     html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
-    html+=sideFieldHtml(node.side);
-    html+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
+    html+=advancedFieldsHtml(node.side,node.weight||1);
   }else if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
     html+='<div class="row"><label>類型</label><select id="er-optype"><option value="AND"'+(node.op==='AND'?' selected':'')+'>AND</option><option value="OR"'+(node.op==='OR'?' selected':'')+'>OR</option><option value="COUNT"'+(node.op==='COUNT'?' selected':'')+'>COUNT</option></select></div>';
     if(node.op==='COUNT')html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
@@ -382,7 +385,7 @@ function editRuleNode(path){
       html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.item.ref,allowedQParts,node.item.ref)+'</select></div>';
       var nmv=Array.isArray(node.item.match)?node.item.match:[node.item.match];
       html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.item.ref,nmv)+'</select></div>';
-      html+=sideFieldHtml(node.item.side);
+      html+=advancedFieldsHtml(node.item.side,1);
     }
   }else if(node.partResult!==undefined){
     html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
