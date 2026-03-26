@@ -616,8 +616,11 @@ function pushUndo(){
 function undo(){
   if(_undoStack.length===0){showToast('沒有可復原的操作',false);return;}
   var snap=_undoStack.pop();
-  rules=snap.rules;
-  questions=snap.questions;
+  // Replace array/object contents in-place (preserve references)
+  rules.length=0;
+  snap.rules.forEach(function(r){rules.push(r);});
+  Object.keys(questions).forEach(function(k){delete questions[k];});
+  Object.keys(snap.questions).forEach(function(k){questions[k]=snap.questions[k];});
   // Clear all editing state
   editingQ=null;
   _autoEditPath=null;
