@@ -261,7 +261,7 @@ function renderNode(node,path,depth,qmap){
     var matchArr=Array.isArray(node.match)?node.match:[node.match];
     var msHtml=matchArr.map(function(mv){
       var hint=getHintForMatch(qmap,node.ref,mv);
-      if(hint)return '<span title="'+hint.replace(/"/g,'&quot;')+'" style="cursor:help;border-bottom:1px dotted var(--static)">'+mv+'</span><span style="font-size:11px;color:var(--text-3);cursor:help" title="'+hint.replace(/"/g,'&quot;')+'"> ⓘ</span>';
+      if(hint){var hp=hint.length>10?hint.substring(0,10)+'...':hint;return '<span title="'+hint.replace(/"/g,'&quot;')+'" style="cursor:help;border-bottom:1px dotted var(--static)">'+mv+'</span><span style="font-size:11px;color:var(--text-3);cursor:help" title="'+hint.replace(/"/g,'&quot;')+'"> ⓘ '+hp+'</span>';}
       return mv;
     }).join('｜');
     h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msHtml}</span>`;
@@ -419,7 +419,11 @@ function deleteRuleNode(p){
   var lc=countLeafNodes(node);
   var msg=lc>1?'此節點包含 '+lc+' 個條件，刪除後將全部移除。\n確定刪除？':'確定刪除？';
   if(!confirm(msg))return;
-  pushUndo();delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();
+  pushUndo();delPath(rules[curDim],p);
+  // Clean up empty NOT shell: if deleted path ends with .item, remove parent NOT too
+  var pp=p.split('.');
+  if(pp[pp.length-1]==='item'){var parentPath=pp.slice(0,-1).join('.');delPath(rules[curDim],parentPath);}
+  var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();
 }
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
@@ -470,7 +474,11 @@ function addNodeOfType(type){
   if(type==='AND'){n.items.push({op:'AND',items:[]});}
   else if(type==='OR'){n.items.push({op:'OR',items:[]});}
   else if(type==='COUNT'){n.items.push({op:'COUNT',min:1,items:[]});}
-  else if(type==='NOT'){n.items.push({op:'NOT',item:{ref:'h1',match:'龜背'}});}
+  else if(type==='NOT'){
+    var rp=getRulePartFromPath(p);var aqp=RULE_TO_QPARTS[rp]||Q_PART_NAMES;
+    var dr=getFirstRef(aqp[0]);var qm=buildQmap();var dm=(qm[dr]||{opts:['']}).opts[0];
+    n.items.push({op:'NOT',item:{ref:dr,match:dm}});
+  }
   markDirty();renderAll();
 }
 
@@ -507,7 +515,11 @@ function createRootNode(type){
   if(type==='COUNT')rules[curDim].parts[partName]={op:'COUNT',min:1,items:[]};
   else if(type==='AND')rules[curDim].parts[partName]={op:'AND',items:[]};
   else if(type==='OR')rules[curDim].parts[partName]={op:'OR',items:[]};
-  else if(type==='NOT')rules[curDim].parts[partName]={op:'NOT',item:{ref:'h1',match:'龜背'}};
+  else if(type==='NOT'){
+    var aqp2=RULE_TO_QPARTS[partName]||Q_PART_NAMES;var dr2=getFirstRef(aqp2[0]);
+    var qm2=buildQmap();var dm2=(qm2[dr2]||{opts:['']}).opts[0];
+    rules[curDim].parts[partName]={op:'NOT',item:{ref:dr2,match:dm2}};
+  }
   else if(type==='ref'){
     var defRef=getFirstRef(RULE_TO_QPARTS[partName]?RULE_TO_QPARTS[partName][0]:'頭');
     var qmap=buildQmap();var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
