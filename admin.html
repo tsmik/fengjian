@@ -175,6 +175,15 @@ function getHintForMatch(qmap,ref,matchVal){
   return opt?opt.hint:'';
 }
 var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'partResult'};
+function isInsideLR(path){return path.indexOf('.each')!==-1;}
+function sideFieldHtml(curSide){
+  var opts='<option value=""'+((!curSide||curSide==='')?' selected':'')+'>不分左右</option>';
+  opts+='<option value="L"'+(curSide==='L'?' selected':'')+'>左</option>';
+  opts+='<option value="R"'+(curSide==='R'?' selected':'')+'>右</option>';
+  opts+='<option value="null"'+(curSide===null?' selected':'')+'>自動（由 LR 決定）</option>';
+  return '<div class="row" id="side-toggle-row"><span style="font-size:12px;color:var(--text-3);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'side-advanced\').style.display=\'flex\';this.parentElement.style.display=\'none\'">進階：調整左右設定</span></div>'
+    +'<div class="row" id="side-advanced" style="display:none"><label>Side</label><select id="er-side">'+opts+'</select></div>';
+}
 function matchOptsHtml(qmap,ref,selectedArr){
   var qi=qmap[ref]||{fullOpts:[]};
   return (qi.fullOpts||[]).map(function(o){
@@ -231,7 +240,7 @@ function renderRules(){
         var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
         h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
         h+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
-        h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
+        h+=sideFieldHtml(node.side);
         h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
         h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="cancelNewNode()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
         var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;targetEl.after(d);
@@ -361,7 +370,7 @@ function editRuleNode(path){
     html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
     html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
-    html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
+    html+=sideFieldHtml(node.side);
     html+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
   }else if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
     html+='<div class="row"><label>類型</label><select id="er-optype"><option value="AND"'+(node.op==='AND'?' selected':'')+'>AND</option><option value="OR"'+(node.op==='OR'?' selected':'')+'>OR</option><option value="COUNT"'+(node.op==='COUNT'?' selected':'')+'>COUNT</option></select></div>';
@@ -373,7 +382,7 @@ function editRuleNode(path){
       html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.item.ref,allowedQParts,node.item.ref)+'</select></div>';
       var nmv=Array.isArray(node.item.match)?node.item.match:[node.item.match];
       html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.item.ref,nmv)+'</select></div>';
-      html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.item.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.item.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.item.side===null?' selected':'')+'>null</option></select></div>';
+      html+=sideFieldHtml(node.item.side);
     }
   }else if(node.partResult!==undefined){
     html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
@@ -477,7 +486,8 @@ function addNodeOfType(type){
   else if(type==='NOT'){
     var rp=getRulePartFromPath(p);var aqp=RULE_TO_QPARTS[rp]||Q_PART_NAMES;
     var dr=getFirstRef(aqp[0]);var qm=buildQmap();var dm=(qm[dr]||{opts:['']}).opts[0];
-    n.items.push({op:'NOT',item:{ref:dr,match:dm}});
+    var ni={ref:dr,match:dm};if(isInsideLR(p))ni.side=null;
+    n.items.push({op:'NOT',item:ni});
   }
   markDirty();renderAll();
 }
@@ -602,7 +612,9 @@ function doAddItem(p,qPartName){
   var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
   var newIdx=n.items.length;
   pushUndo();
-  n.items.push({ref:defRef,match:defMatch});
+  var newItem={ref:defRef,match:defMatch};
+  if(isInsideLR(p))newItem.side=null;
+  n.items.push(newItem);
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
   _autoEditQPart=qPartName;
