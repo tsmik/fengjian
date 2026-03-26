@@ -681,6 +681,29 @@ function showToast(msg,isOk){
   t.className='toast show '+(isOk?'toast-ok':'toast-err');
   setTimeout(function(){t.className='toast';},2000);
 }
+function countLeafNodes(node){
+  if(!node)return 0;
+  if(node.ref!==undefined)return 1;
+  if(node.partResult!==undefined)return 1;
+  if(node.rule&&!node.veto)return countLeafNodes(node.rule);
+  var c=0;
+  if(node.veto){node.veto.forEach(function(v){c+=countLeafNodes(v.condition);});if(node.rule)c+=countLeafNodes(node.rule);}
+  if(node.items)node.items.forEach(function(it){c+=countLeafNodes(it);});
+  if(node.each)c+=countLeafNodes(node.each);
+  return c;
+}
+function buildQMap(partData){
+  var m={};
+  if(!partData||!partData.sections)return m;
+  partData.sections.forEach(function(s){s.qs.forEach(function(q){m[q.id]=q;});});
+  return m;
+}
+function buildQIdOrder(partData){
+  var ids=[];
+  if(!partData||!partData.sections)return ids;
+  partData.sections.forEach(function(s){s.qs.forEach(function(q){ids.push(q.id);});});
+  return ids;
+}
 function buildDiffSummary(){
   var lines=[];
   // Rules diff
@@ -689,32 +712,61 @@ function buildDiffSummary(){
     for(var i=0;i<13;i++){
       if(JSON.stringify(rules[i])!==JSON.stringify(oldRules[i])){
         var dimName=(rules[i]||oldRules[i]).positive+(rules[i]||oldRules[i]).negative;
-        // Per-part diff
-        var partChanges=[];
         PART_ORDER.forEach(function(pn){
-          var newP=JSON.stringify((rules[i]||{parts:{}}).parts[pn]||null);
-          var oldP=JSON.stringify((oldRules[i]||{parts:{}}).parts[pn]||null);
-          if(newP!==oldP)partChanges.push(pn);
+          var newP=(rules[i]||{parts:{}}).parts[pn]||null;
+          var oldP=(oldRules[i]||{parts:{}}).parts[pn]||null;
+          if(JSON.stringify(newP)===JSON.stringify(oldP))return;
+          var nc=countLeafNodes(newP),oc=countLeafNodes(oldP);
+          if(nc!==oc)lines.push('• 規則 '+dimName+' → '+pn+'：條件數 '+oc+' → '+nc);
+          else lines.push('• 規則 '+dimName+' → '+pn+'：條件內容已修改');
         });
-        if(partChanges.length>0)lines.push('規則 '+dimName+'：'+partChanges.join('、')+' 已修改');
-        else lines.push('規則 '+dimName+' 已修改');
       }
     }
-  }catch(e){lines.push('規則：有修改（無法比較細節）');}
+  }catch(e){lines.push('• 規則：有修改（無法比較細節）');}
   // Questions diff
   try{
     var oldQ=JSON.parse(_cleanQuestionsJson);
-    var allParts=Object.keys(questions);
-    allParts.forEach(function(pn){
-      if(JSON.stringify(questions[pn])!==JSON.stringify(oldQ[pn])){
-        lines.push('觀察問題 → '+pn+' 已修改');
+    Object.keys(questions).forEach(function(pn){
+      if(JSON.stringify(questions[pn])===JSON.stringify(oldQ[pn]))return;
+      var newMap=buildQMap(questions[pn]),oldMap=buildQMap(oldQ[pn]||{});
+      var newOrder=buildQIdOrder(questions[pn]),oldOrder=buildQIdOrder(oldQ[pn]||{});
+      // Section name changes
+      var newSecs=(questions[pn].sections||[]),oldSecs=((oldQ[pn]||{}).sections||[]);
+      for(var si=0;si<Math.max(newSecs.length,oldSecs.length);si++){
+        var ns=newSecs[si],os=oldSecs[si];
+        if(ns&&os&&ns.label!==os.label)lines.push('• 觀察問題 → '+pn+' → 分組名稱「'+os.label+'」改為「'+ns.label+'」');
+      }
+      // New questions
+      Object.keys(newMap).forEach(function(qid){
+        if(!oldMap[qid])lines.push('• 觀察問題 → '+pn+' → + '+qid+' '+newMap[qid].text);
+      });
+      // Deleted questions
+      Object.keys(oldMap).forEach(function(qid){
+        if(!newMap[qid])lines.push('• 觀察問題 → '+pn+' → - '+qid+' '+oldMap[qid].text);
+      });
+      // Modified questions
+      Object.keys(newMap).forEach(function(qid){
+        if(!oldMap[qid])return;
+        var nq=newMap[qid],oq=oldMap[qid];
+        if(JSON.stringify(nq)===JSON.stringify(oq))return;
+        if(nq.text!==oq.text)lines.push('• 觀察問題 → '+pn+' → '+qid+' '+oq.text+'：文字從「'+oq.text+'」改為「'+nq.text+'」');
+        if(!!nq.paired!==!!oq.paired)lines.push('• 觀察問題 → '+pn+' → '+qid+'：左右題 '+(nq.paired?'開啟':'關閉'));
+        var no=nq.opts.length,oo=oq.opts.length;
+        if(JSON.stringify(nq.opts)!==JSON.stringify(oq.opts)){
+          if(no!==oo)lines.push('• 觀察問題 → '+pn+' → '+qid+' '+nq.text+'：選項變更（原 '+oo+' 項 → 新 '+no+' 項）');
+          else lines.push('• 觀察問題 → '+pn+' → '+qid+' '+nq.text+'：選項文字變更');
+        }
+      });
+      // Order changes
+      if(newOrder.length===oldOrder.length&&newOrder.join(',')!==oldOrder.join(',')){
+        var sameSet=newOrder.slice().sort().join(',')=== oldOrder.slice().sort().join(',');
+        if(sameSet)lines.push('• 觀察問題 → '+pn+'：題目順序變更');
       }
     });
-    // Check for removed parts
     Object.keys(oldQ).forEach(function(pn){
-      if(!questions[pn])lines.push('觀察問題 → '+pn+' 已刪除');
+      if(!questions[pn])lines.push('• 觀察問題 → '+pn+' 已刪除');
     });
-  }catch(e){lines.push('觀察問題：有修改（無法比較細節）');}
+  }catch(e){lines.push('• 觀察問題：有修改（無法比較細節）');}
   return lines.join('\n');
 }
 function saveAll(){
