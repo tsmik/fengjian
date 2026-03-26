@@ -393,6 +393,7 @@ function doAddItem(p,qPartName){
 function toggleSec(key,el){
   if(openSections.has(key))openSections.delete(key);else openSections.add(key);
   el.nextElementSibling.classList.toggle('open');
+  updateBreadcrumb();
 }
 
 // ==================== QUESTIONS EDITOR ====================
