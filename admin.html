@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>人相兵法 — 評分規則編輯器</title>
+<title>人相兵法 — 管理介面</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#c03830;--static:#7A9E7E;--dynamic:#C17A5A;--dark:#1e2127}
@@ -14,432 +14,472 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 #top-bar button{height:32px;padding:0 16px;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
 .btn-save{background:var(--static);color:white}
 .btn-load{background:var(--dynamic);color:white}
+#tab-bar{display:flex;gap:0;background:var(--sidebar);border-bottom:1px solid var(--border)}
+.tab-btn{padding:10px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Serif TC',serif}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);font-weight:700;border-bottom-color:var(--active);background:var(--bg)}
 #main{flex:1;display:grid;grid-template-columns:200px 1fr;overflow:hidden}
-#dim-list{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0}
-.dim-item{padding:10px 14px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
-.dim-item:hover{background:var(--hover)}
-.dim-item.active{background:white;border-left-color:var(--active);font-weight:700;color:var(--text)}
-.dim-cat{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px}
+#sidebar{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0}
+.sb-item{padding:10px 14px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
+.sb-item:hover{background:var(--hover)}
+.sb-item.active{background:white;border-left-color:var(--active);font-weight:700;color:var(--text)}
+.sb-cat{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:10px 14px 4px}
+.sb-count{font-size:11px;color:var(--text-3);margin-left:4px}
 #editor{overflow-y:auto;padding:20px}
-.part-section{margin-bottom:16px;background:white;border-radius:8px;border:1px solid var(--border);overflow:hidden}
-.part-header{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:700;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.part-header:hover{background:var(--hover)}
-.part-body{padding:12px 14px;display:none}
-.part-body.open{display:block}
+.section-block{margin-bottom:16px;background:white;border-radius:8px;border:1px solid var(--border);overflow:hidden}
+.section-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:700;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.section-hdr:hover{background:var(--hover)}
+.section-body{padding:12px 14px;display:none}
+.section-body.open{display:block}
+.q-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:13px}
+.q-row:hover{background:var(--hover)}
+.q-id{font-weight:700;color:var(--static);min-width:36px}
+.q-text{flex:1;color:var(--text-2)}
+.q-paired{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--dynamic);color:white;font-weight:700}
+.q-opts{font-size:11px;color:var(--text-3)}
+.q-actions{display:flex;gap:3px;opacity:0.3}
+.q-row:hover .q-actions{opacity:1}
+.q-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.q-actions button:hover{background:var(--hover)}
+.q-actions .del{color:var(--active);border-color:var(--active)}
+.edit-form{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:6px 0}
+.edit-form .row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
+.edit-form label{font-size:12px;color:var(--text-3);min-width:50px}
+.edit-form input,.edit-form select{font-size:13px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
+.edit-form input[type=text]{flex:1;min-width:150px}
+.opt-row{display:flex;gap:4px;align-items:center;margin:2px 0 2px 56px}
+.opt-row input{font-size:12px;padding:2px 4px}
+.opt-row button{font-size:11px;padding:1px 5px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer}
+.add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0;font-family:'Noto Serif TC',serif}
+.add-btn:hover{background:var(--hover);border-color:var(--text-3)}
+/* Rule editor nodes */
 .node{margin:4px 0 4px 16px;padding:6px 10px;border-left:2px solid var(--border);font-size:13px}
 .node-op{font-weight:700;color:var(--active);margin-right:6px}
-.node-leaf{color:var(--text-2)}
 .node-ref{font-weight:700;color:var(--text)}
 .node-match{color:var(--static);font-weight:500}
 .node-meta{color:var(--text-3);font-size:12px;margin-left:8px}
 .node-actions{display:inline-flex;gap:4px;margin-left:8px;opacity:0.3}
 .node:hover .node-actions{opacity:1}
 .node-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
-.node-actions button:hover{background:var(--hover)}
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
-.edit-row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
-.edit-row select,.edit-row input{font-size:13px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
-.edit-row select{min-width:100px}
-.edit-row input[type=number]{width:50px}
-.edit-row label{font-size:12px;color:var(--text-3);min-width:40px}
-.add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0 6px 16px;font-family:'Noto Serif TC',serif}
-.add-btn:hover{background:var(--hover);border-color:var(--text-3)}
-.del-btn{color:var(--active);border-color:var(--active)}
-.del-btn:hover{background:#fef0ef}
 </style>
 </head>
 <body>
 <div id="top-bar">
-  <span>風鑑學堂 評分規則編輯器</span>
-  <button class="btn-load" onclick="loadFromFirebase()">從 Firebase 載入</button>
-  <button class="btn-save" onclick="saveToFirebase()">儲存到 Firebase</button>
-  <span class="status" id="status">就緒</span>
+  <span>風鑑學堂 管理介面</span>
+  <button class="btn-save" onclick="saveActive()">儲存到 Firebase</button>
+  <span class="status" id="status">載入中...</span>
+</div>
+<div id="tab-bar">
+  <div class="tab-btn active" onclick="switchTab('rules')">評分規則</div>
+  <div class="tab-btn" onclick="switchTab('questions')">觀察問題</div>
 </div>
 <div id="main">
-  <div id="dim-list"></div>
+  <div id="sidebar"></div>
   <div id="editor"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="rules/all_questions.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-
-// Dimension colors
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
 const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
-const OP_LABELS={AND:'AND（全部符合）',OR:'OR（任一符合）',COUNT:'COUNT（計數門檻）',LR:'LR（左右分判）'};
+const Q_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+const Q_PREFIXES={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
 
-// Question map for ref/match dropdowns
-const QMAP={"h1":{"text":"頂骨型相","paired":true,"opts":["龜背","圓","平寬"]},"h2":{"text":"頂骨中央接合","paired":false,"opts":["突起","平順","凹陷"]},"h3":{"text":"頂骨左右一致性","paired":false,"opts":["左右一致","左右不一致"]},"h4":{"text":"頂骨中線","paired":false,"opts":["中線直","中線斜歪"]},"h5":{"text":"枕骨型相","paired":false,"opts":["後腦圓","後腦平"]},"h6":{"text":"枕骨凹凸","paired":false,"opts":["順無凹凸","有凹凸"]},"h7":{"text":"枕骨自剋骨","paired":false,"opts":["有自剋骨","無自剋骨"]},"h8":{"text":"枕骨橫條骨","paired":false,"opts":["有橫條骨","無橫條骨"]},"h9":{"text":"枕骨中線","paired":false,"opts":["中線直","中線歪"]},"h10":{"text":"枕骨左右一致性","paired":false,"opts":["兩側一致","兩側不一致"]},"h11":{"text":"華陽骨型相","paired":true,"opts":["圓隆","平直","突露","凹陷"]},"h12":{"text":"華陽骨銜接","paired":true,"opts":["順接","有轉折起伏"]},"h13":{"text":"華陽骨左右一致性","paired":false,"opts":["左右一致","左右不一致"]},"h14":{"text":"頭骨寬窄","paired":false,"opts":["頭窄","頭寬"]},"h15":{"text":"頭骨硬度","paired":false,"opts":["偏硬","一般"]},"e1":{"text":"額高低","paired":false,"opts":["額高","額低"]},"e2":{"text":"額圓方","paired":false,"opts":["額圓","額方"]},"e3":{"text":"額寬窄","paired":false,"opts":["額寬","額窄"]},"e4":{"text":"額平整","paired":false,"opts":["額平","額不平"]},"e5":{"text":"額乾淨","paired":false,"opts":["額淨","額有缺陷"]},"e6":{"text":"額隆起","paired":false,"opts":["額隆","額均","額陷"]},"e7":{"text":"額立斜","paired":false,"opts":["額立","額斜"]},"e8":{"text":"額長方","paired":false,"opts":["額長","額方"]},"e9":{"text":"額順折","paired":false,"opts":["額順","額折"]},"e10":{"text":"額鬆緊","paired":false,"opts":["額緊","額鬆"]},"e11":{"text":"大小天庭","paired":false,"opts":["大天庭","小天庭","無"]},"e12":{"text":"美人尖","paired":false,"opts":["有美人尖","無美人尖"]},"e13":{"text":"日月角隆","paired":false,"opts":["日月角起","不清晰"]},"e14":{"text":"日月角開合","paired":false,"opts":["日月角開","日月角合"]},"e15":{"text":"日月角骨肉","paired":false,"opts":["有肉包","骨感明顯"]},"e16":{"text":"輔角骨","paired":false,"opts":["有輔角骨","不明顯"]},"e17":{"text":"佐串骨","paired":false,"opts":["有佐串骨","不明顯"]},"er1":{"text":"耳長短","paired":true,"opts":["耳長","耳短"]},"er2":{"text":"耳大小","paired":true,"opts":["耳大","耳適中","耳小"]},"er3":{"text":"耳立提","paired":true,"opts":["耳立","耳提","耳提強"]},"er4":{"text":"耳圓缺","paired":true,"opts":["耳圓","耳尖","耳缺"]},"er5":{"text":"耳貼程度","paired":true,"opts":["貼耳","一般","招風耳"]},"er6":{"text":"耳孔","paired":true,"opts":["耳孔大","耳孔小"]},"er7":{"text":"耳高低","paired":true,"opts":["耳高","耳低"]},"er8":{"text":"輪廓有無","paired":true,"opts":["有輪有廓","有輪無廓","無輪有廓"]},"er9":{"text":"輪包廓","paired":true,"opts":["輪包廓","輪不包廓"]},"er10":{"text":"耳厚薄","paired":true,"opts":["耳厚","耳正常","耳薄"]},"er11":{"text":"耳質硬軟","paired":true,"opts":["耳堅","耳硬","耳軟"]},"er12":{"text":"垂珠","paired":true,"opts":["有垂珠","無垂珠"]},"er13":{"text":"耳垂方向","paired":true,"opts":["耳垂朝口","耳垂朝下","其他"]},"er14":{"text":"雙耳一致性","paired":false,"opts":["雙耳一致","雙耳不一致"]},"er15":{"text":"耳勢","paired":true,"opts":["耳勢朝上","一般"]},"br1":{"text":"眉長短","paired":true,"opts":["眉長","眉短"]},"br2":{"text":"眉粗細","paired":true,"opts":["眉形細","眉型適中","眉型粗"]},"br3":{"text":"眉形走向","paired":true,"opts":["眉彎","眉平"]},"br4":{"text":"鷹角","paired":true,"opts":["有鷹角","無鷹角"]},"br5":{"text":"眉毛中斷","paired":true,"opts":["無中斷","有中斷"]},"br6":{"text":"眉尾","paired":true,"opts":["有聚","散"]},"br7":{"text":"特殊眉型","paired":true,"opts":["短粗眉","將軍眉","無"]},"br8":{"text":"眉尾方向","paired":true,"opts":["有揚","平","往下"]},"br9":{"text":"眉頭與山根","paired":true,"opts":["不沖根","沖根"]},"br10":{"text":"眉的位置高低","paired":true,"opts":["眉高居額","一般"]},"br11":{"text":"眉眼間距","paired":true,"opts":["不壓眼","壓眼"]},"br12":{"text":"眉頭位置","paired":true,"opts":["退印","蓋印堂"]},"br13":{"text":"眉附骨位","paired":true,"opts":["貼附眉骨","不貼附"]},"br14":{"text":"眉毛順亂","paired":true,"opts":["眉順","眉亂"]},"br15":{"text":"眉毛硬軟","paired":true,"opts":["柔順","質硬"]},"br16":{"text":"眉毛量","paired":true,"opts":["眉毛多","眉毛稀少"]},"br17":{"text":"眉身鋪陳","paired":true,"opts":["鋪陳有致","一般","有交叉"]},"br18":{"text":"眉毛單根長度","paired":true,"opts":["毛不過短","眉毛短"]},"br19":{"text":"眉頭與印堂","paired":true,"opts":["不沖印","沖印"]},"br20":{"text":"雙眉一致性","paired":false,"opts":["雙眉一致","雙眉不一致"]},"ey1":{"text":"眼長短","paired":true,"opts":["眼長","眼短"]},"ey2":{"text":"眼大小","paired":true,"opts":["眼大","眼小"]},"ey3":{"text":"眼細圓","paired":true,"opts":["眼細","眼圓"]},"ey4":{"text":"眼尾方向","paired":true,"opts":["眼尾平","眼尾朝上","眼尾朝下"]},"ey5":{"text":"睛凸","paired":true,"opts":["睛凸","正常"]},"ey6":{"text":"眼鉤","paired":true,"opts":["有眼鉤","無眼鉤"]},"ey7":{"text":"刀裁","paired":true,"opts":["有刀裁","無刀裁"]},"ey8":{"text":"上眼瞼","paired":true,"opts":["眼上弧","有較硬轉角"]},"ey9":{"text":"下眼瞼","paired":true,"opts":["下眼瞼平直","下眼瞼有弧"]},"ey10":{"text":"黑睛大小","paired":true,"opts":["睛大","適中","睛小"]},"ey11":{"text":"眼白","paired":true,"opts":["上下不白","上三白","下三白","四白"]},"ey12":{"text":"雙眼一致性","paired":false,"opts":["雙眼一致","雙眼不一致"]},"n1":{"text":"鼻長短","paired":false,"opts":["鼻長","鼻短"]},"n2":{"text":"鼻高低","paired":false,"opts":["鼻高","鼻低"]},"n3":{"text":"鼻直曲","paired":false,"opts":["鼻直","鼻曲"]},"n4":{"text":"鼻寬窄","paired":false,"opts":["鼻寬","鼻窄小"]},"n5":{"text":"鼻準形","paired":false,"opts":["鼻準圓","鼻準尖"]},"n6":{"text":"鼻順","paired":false,"opts":["鼻順","鼻不順"]},"n7":{"text":"鼻接印","paired":false,"opts":["鼻接印","鼻不接印"]},"n8":{"text":"鼻橫張","paired":false,"opts":["有橫張","無橫張"]},"n9":{"text":"山根寬窄","paired":false,"opts":["山根寬","山根窄"]},"n10":{"text":"鼻骨肉比","paired":false,"opts":["肉多於骨","骨肉勻稱","骨多於肉"]},"n11":{"text":"鼻起節","paired":false,"opts":["無起節","有起節突露"]},"n12":{"text":"鼻聚散","paired":false,"opts":["鼻聚","鼻散"]},"q1":{"text":"顴骨形態","paired":true,"opts":["顴高且隆","顴有而不明","顴平"]},"q2":{"text":"顴骨大小","paired":true,"opts":["顴大","顴不過大","顴小尖"]},"q3":{"text":"顴骨肉比","paired":true,"opts":["顴有肉","顴無肉少肉"]},"q4":{"text":"顴柄走向","paired":true,"opts":["顴柄插天","顴柄平","無明顯顴柄"]},"q5":{"text":"顴鼻相稱","paired":false,"opts":["相稱","不相稱"]},"q6":{"text":"雙顴一致性","paired":false,"opts":["雙顴一致","雙顴不一致"]},"m1":{"text":"口大小","paired":false,"opts":["口開大合小","口適中","口小"]},"m2":{"text":"涯岸","paired":false,"opts":["涯岸分明","唇緣較不明顯"]},"m3":{"text":"嘴角收斂","paired":false,"opts":["嘴角收","嘴角不收"]},"m4":{"text":"嘴角方向","paired":false,"opts":["嘴角朝上","嘴角水平","嘴角朝下"]},"m5":{"text":"上唇V形","paired":false,"opts":["水星明顯","水星不明顯"]},"m6":{"text":"閉合線","paired":false,"opts":["閉合線平","閉合線有曲度"]},"m7":{"text":"口閉緊","paired":false,"opts":["閉合線密","閉合線較鬆","放鬆見齒"]},"m8":{"text":"唇厚度","paired":false,"opts":["唇一般","唇明顯厚","唇薄"]},"m9":{"text":"唇厚均","paired":false,"opts":["唇厚平均","唇厚不均"]},"m10":{"text":"唇起","paired":false,"opts":["唇凸","唇不凸"]},"m11":{"text":"唇垂珠","paired":false,"opts":["有唇珠","無唇珠"]},"m12":{"text":"口中線","paired":false,"opts":["口位置適中","口位置不中"]},"m13":{"text":"口對稱","paired":false,"opts":["口對稱","口不對稱"]},"p1":{"text":"人中深淺","paired":false,"opts":["人中深","人中淺"]},"p2":{"text":"人中長短","paired":false,"opts":["人中長","人中短"]},"p3":{"text":"人中寬窄","paired":false,"opts":["人中寬度適中","人中窄"]},"p4":{"text":"人中方向","paired":false,"opts":["人中直","人中不直"]},"c1":{"text":"地閣朝","paired":false,"opts":["地閣起","地閣凸","地閣縮"]},"c2":{"text":"地閣平","paired":false,"opts":["地閣平","地閣圓","地閣凹"]},"c3":{"text":"地閣長短","paired":false,"opts":["地閣長","地閣適中","地閣短"]},"c4":{"text":"地閣寬窄","paired":false,"opts":["地閣寬","地閣窄尖"]},"c5":{"text":"地閣位置","paired":false,"opts":["地閣置中","地閣歪"]},"c6":{"text":"地閣骨肉","paired":false,"opts":["地閣有肉","地閣無肉"]},"y1":{"text":"頤角度","paired":true,"opts":["頤寬","頤平","頤削"]},"y2":{"text":"頤肉量","paired":true,"opts":["頤豐","頤有肉","頤露尖"]},"y3":{"text":"頤長短","paired":true,"opts":["頤長度正常","頤短"]},"y4":{"text":"雙頤一致性","paired":false,"opts":["雙頤一致","雙頤不一致"]}};
-
-// All ref options for dropdown
-const ALL_REFS=Object.keys(QMAP).sort((a,b)=>{
-  const pa=a.replace(/\d+/,'').padEnd(3,' ');const pb=b.replace(/\d+/,'').padEnd(3,' ');
-  if(pa!==pb)return pa<pb?-1:1;
-  return parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''));
-});
-
+var activeTab='rules';
 var rules=[];
+var questions={}; // OBS_PARTS_DATA format
 var curDim=0;
+var curPart=0;
+var editingQ=null; // qId being edited
+var openSections=new Set(); // track which sections are expanded
 
-// Build ref dropdown options HTML
-function refOptionsHtml(selected){
-  let h='<option value="">選擇題目</option>';
-  ALL_REFS.forEach(r=>{
-    const q=QMAP[r];
-    h+=`<option value="${r}"${r===selected?' selected':''}>${r} ${q.text}</option>`;
+function setStatus(m){document.getElementById('status').textContent=m;}
+
+function switchTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${t}"]`).classList.add('active');
+  renderAll();
+}
+
+// ==================== SHARED ====================
+function renderAll(){
+  if(activeTab==='rules')renderRules();
+  else renderQuestions();
+}
+
+// Build QMAP from questions for rule editor dropdowns
+function buildQmap(){
+  var m={};
+  Object.keys(questions).forEach(pn=>{
+    var pd=questions[pn];if(!pd||!pd.sections)return;
+    pd.sections.forEach(s=>s.qs.forEach(q=>{
+      m[q.id]={text:q.text,paired:!!q.paired,opts:q.opts.map(o=>typeof o==='string'?o:o.v)};
+    }));
   });
-  return h;
+  return m;
 }
 
-// Build match dropdown for a given ref
-function matchOptionsHtml(ref,selected){
-  const q=QMAP[ref];
-  if(!q)return '<option>先選題目</option>';
-  let h='';
-  const selArr=Array.isArray(selected)?selected:[selected];
-  q.opts.forEach(o=>{
-    h+=`<option value="${o}"${selArr.includes(o)?' selected':''}>${o}</option>`;
-  });
-  return h;
-}
-
-// Render node tree (recursive)
-function renderNode(node,path,depth){
-  if(!node)return '<div class="node" style="color:var(--text-3)">(空)</div>';
-  let h='';
-  const indent=depth*8;
-
-  // partResult
-  if(node.partResult!==undefined){
-    h+=`<div class="node" style="margin-left:${indent}px">`;
-    h+=`<span class="node-op">partResult</span>`;
-    h+=`<span class="node-ref">${node.partResult}</span>`;
-    h+=nodeActions(path);
-    h+='</div>';
-    return h;
-  }
-
-  // Leaf node
-  if(node.ref!==undefined){
-    const q=QMAP[node.ref]||{text:'?'};
-    const matchStr=Array.isArray(node.match)?node.match.join('｜'):node.match;
-    h+=`<div class="node" style="margin-left:${indent}px">`;
-    h+=`<span class="node-ref">${node.ref}</span> `;
-    h+=`<span class="node-leaf">${q.text}</span> = `;
-    h+=`<span class="node-match">${matchStr}</span>`;
-    if(node.side)h+=`<span class="node-meta">side:${node.side}</span>`;
-    if(node.weight&&node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
-    h+=nodeActions(path);
-    h+='</div>';
-    return h;
-  }
-
-  // VETO wrapper
-  if(node.veto){
-    h+=`<div class="node node-veto" style="margin-left:${indent}px">`;
-    h+=`<span class="node-op" style="color:var(--active)">VETO</span>`;
-    h+=nodeActions(path);
-    node.veto.forEach((v,vi)=>{
-      h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`;
-      h+=renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1);
-    });
-    if(node.rule){
-      h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>`;
-      h+=renderNode(node.rule,path+'.rule',depth+1);
-    }
-    h+='</div>';
-    return h;
-  }
-
-  // Inline rule
-  if(node.rule&&!node.veto){
-    return renderNode(node.rule,path+'.rule',depth);
-  }
-
-  // Operators
-  const op=node.op;
-  if(op==='AND'||op==='OR'||op==='COUNT'){
-    h+=`<div class="node" style="margin-left:${indent}px">`;
-    h+=`<span class="node-op">${op}</span>`;
-    if(op==='COUNT')h+=`<span class="node-meta">min=${node.min}</span>`;
-    h+=nodeActions(path);
-    if(node.items){
-      node.items.forEach((item,ii)=>{
-        h+=renderNode(item,path+'.items.'+ii,depth+1);
-      });
-    }
-    h+=addItemBtn(path);
-    h+='</div>';
-    return h;
-  }
-
-  if(op==='LR'){
-    h+=`<div class="node node-lr" style="margin-left:${indent}px">`;
-    h+=`<span class="node-op">LR</span>`;
-    h+=`<span class="node-meta">merge=${node.merge}</span>`;
-    h+=nodeActions(path);
-    h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>`;
-    h+=renderNode(node.each,path+'.each',depth+1);
-    h+='</div>';
-    return h;
-  }
-
-  // Unknown
-  h+=`<div class="node" style="margin-left:${indent}px;color:var(--text-3)">[未知節點: ${JSON.stringify(node).substring(0,80)}...]</div>`;
-  return h;
-}
-
-function nodeActions(path){
-  return `<span class="node-actions">
-    <button onclick="editNode('${path}')">編輯</button>
-    <button class="del-btn" onclick="deleteNode('${path}')">刪除</button>
-  </span>`;
-}
-
-function addItemBtn(path){
-  return `<button class="add-btn" onclick="addItem('${path}')">+ 新增條件</button>`;
-}
-
-// Get node by path string like "parts.頭.rule.items.0"
-function getNode(obj,path){
-  const parts=path.split('.');
-  let cur=obj;
-  for(const p of parts){
-    if(cur===undefined)return undefined;
-    if(/^\d+$/.test(p))cur=cur[parseInt(p)];
-    else cur=cur[p];
-  }
-  return cur;
-}
-
-function setNode(obj,path,value){
-  const parts=path.split('.');
-  let cur=obj;
-  for(let i=0;i<parts.length-1;i++){
-    const p=parts[i];
-    if(/^\d+$/.test(p))cur=cur[parseInt(p)];
-    else cur=cur[p];
-  }
-  const last=parts[parts.length-1];
-  if(/^\d+$/.test(last))cur[parseInt(last)]=value;
-  else cur[last]=value;
-}
-
-function deleteAtPath(obj,path){
-  const parts=path.split('.');
-  let cur=obj;
-  for(let i=0;i<parts.length-1;i++){
-    const p=parts[i];
-    if(/^\d+$/.test(p))cur=cur[parseInt(p)];
-    else cur=cur[p];
-  }
-  const last=parts[parts.length-1];
-  if(Array.isArray(cur)&&/^\d+$/.test(last)){
-    cur.splice(parseInt(last),1);
-  }else{
-    delete cur[last];
-  }
-}
-
-// Edit node inline
-function editNode(path){
-  const dimDef=rules[curDim];
-  const node=getNode(dimDef,path);
-  if(!node)return;
-
-  // Build edit dialog
-  let html='<div style="background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:8px 0">';
-  html+='<div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
-
-  if(node.ref!==undefined){
-    // Leaf edit
-    html+=`<div class="edit-row"><label>題目</label><select id="edit-ref" onchange="updateMatchOpts()">${refOptionsHtml(node.ref)}</select></div>`;
-    const matchVal=Array.isArray(node.match)?node.match:[node.match];
-    html+=`<div class="edit-row"><label>選項</label><select id="edit-match" multiple size="3">${matchOptionsHtml(node.ref,matchVal)}</select></div>`;
-    html+=`<div class="edit-row"><label>Side</label><select id="edit-side"><option value=""${!node.side?' selected':''}>無</option><option value="L"${node.side==='L'?' selected':''}>L</option><option value="R"${node.side==='R'?' selected':''}>R</option><option value="null"${node.side===null?' selected':''}>null（LR不覆蓋）</option></select></div>`;
-    html+=`<div class="edit-row"><label>Weight</label><input type="number" id="edit-weight" value="${node.weight||1}" min="1"></div>`;
-  }else if(node.op==='COUNT'){
-    html+=`<div class="edit-row"><label>min</label><input type="number" id="edit-min" value="${node.min}" min="0"></div>`;
-  }else if(node.op==='LR'){
-    html+=`<div class="edit-row"><label>merge</label><select id="edit-merge"><option value="any"${node.merge==='any'?' selected':''}>any（任一邊）</option><option value="all"${node.merge==='all'?' selected':''}>all（雙邊都要）</option></select></div>`;
-  }else if(node.partResult!==undefined){
-    html+=`<div class="edit-row"><label>部位</label><input type="text" id="edit-partresult" value="${node.partResult}" style="width:120px"></div>`;
-  }
-
-  html+=`<div style="margin-top:8px;display:flex;gap:6px">`;
-  html+=`<button onclick="saveEdit('${path}')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer;font-family:'Noto Serif TC',serif">確定</button>`;
-  html+=`<button onclick="render()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:'Noto Serif TC',serif">取消</button>`;
-  html+=`</div></div>`;
-
-  // Insert after the node
-  const nodeEl=event.target.closest('.node');
-  if(nodeEl){
-    const div=document.createElement('div');
-    div.innerHTML=html;
-    nodeEl.after(div);
-  }
-}
-
-function updateMatchOpts(){
-  const ref=document.getElementById('edit-ref').value;
-  const sel=document.getElementById('edit-match');
-  sel.innerHTML=matchOptionsHtml(ref,[]);
-}
-
-function saveEdit(path){
-  const dimDef=rules[curDim];
-  const node=getNode(dimDef,path);
-  if(!node)return;
-
-  if(node.ref!==undefined){
-    node.ref=document.getElementById('edit-ref').value;
-    const sel=document.getElementById('edit-match');
-    const vals=[...sel.selectedOptions].map(o=>o.value);
-    node.match=vals.length===1?vals[0]:vals;
-    const side=document.getElementById('edit-side').value;
-    if(side==='null')node.side=null;
-    else if(side)node.side=side;
-    else delete node.side;
-    const w=parseInt(document.getElementById('edit-weight').value)||1;
-    if(w>1)node.weight=w;else delete node.weight;
-  }else if(node.op==='COUNT'){
-    node.min=parseInt(document.getElementById('edit-min').value)||0;
-  }else if(node.op==='LR'){
-    node.merge=document.getElementById('edit-merge').value;
-  }else if(node.partResult!==undefined){
-    node.partResult=document.getElementById('edit-partresult').value;
-  }
-
-  render();
-  setStatus('已修改（未儲存）');
-}
-
-function deleteNode(path){
-  if(!confirm('確定刪除此節點？'))return;
-  deleteAtPath(rules[curDim],path);
-  render();
-  setStatus('已刪除（未儲存）');
-}
-
-function addItem(path){
-  const node=getNode(rules[curDim],path);
-  if(!node||!node.items)return;
-  // Add a new leaf node
-  node.items.push({ref:'h1',match:'龜背'});
-  render();
-  setStatus('已新增（未儲存）');
-}
-
-// Render sidebar + editor
-function render(){
+// ==================== RULES EDITOR ====================
+function renderRules(){
+  var qmap=buildQmap();
   // Sidebar
-  let sh='';
-  let lastCat='';
+  var sh='';var lastCat='';
   rules.forEach((d,i)=>{
-    const cat=d.category||'';
-    if(cat!==lastCat){sh+=`<div class="dim-cat">${cat}</div>`;lastCat=cat;}
-    sh+=`<div class="dim-item${i===curDim?' active':''}" onclick="selectDim(${i})" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}">${d.positive}${d.negative}</div>`;
+    var cat=d.category||'';
+    if(cat!==lastCat){sh+=`<div class="sb-cat">${cat}</div>`;lastCat=cat;}
+    sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}">${d.positive}${d.negative}</div>`;
   });
-  document.getElementById('dim-list').innerHTML=sh;
+  document.getElementById('sidebar').innerHTML=sh;
 
-  // Editor
-  const dim=rules[curDim];
-  if(!dim){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無資料</div>';return;}
-  let eh=`<div style="font-size:18px;font-weight:900;margin-bottom:4px;color:var(--text)">${dim.positive}${dim.negative}</div>`;
-  eh+=`<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">${dim.category} · ${dim.positive}（${dim.positiveType}）vs ${dim.negative}（${dim.negativeType}）</div>`;
+  var dim=rules[curDim];
+  if(!dim){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無規則資料</div>';return;}
+  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:4px">${dim.positive}${dim.negative}</div>`;
+  eh+=`<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">${dim.category||''} · ${dim.positive}（${dim.positiveType}）vs ${dim.negative}（${dim.negativeType}）</div>`;
 
   PART_ORDER.forEach(pn=>{
-    const partDef=dim.parts[pn];
-    const hasRule=!!partDef;
-    eh+=`<div class="part-section">`;
-    eh+=`<div class="part-header" onclick="togglePart(this)">${pn} ${hasRule?'':'<span style=\"color:var(--text-3);font-weight:400\">（未定義）</span>'}<span style="font-size:12px;color:var(--text-3)">▼</span></div>`;
-    eh+=`<div class="part-body">`;
-    if(hasRule){
-      eh+=renderNode(partDef,'parts.'+pn,0);
-    }else{
-      eh+=`<div style="color:var(--text-3);font-size:13px">此部位無規則</div>`;
-    }
+    var pd=dim.parts[pn];
+    var secKey='r-'+curDim+'-'+pn;
+    var isOpen=openSections.has(secKey);
+    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${secKey}',this)">${pn} <span style="font-size:12px;color:var(--text-3)">▼</span></div><div class="section-body${isOpen?' open':''}">`;
+    if(pd)eh+=renderNode(pd,'parts.'+pn,0,qmap);
+    else eh+='<div style="color:var(--text-3);font-size:13px">此部位無規則</div>';
+    eh+='</div></div>';
+  });
+  document.getElementById('editor').innerHTML=eh;
+}
+
+function renderNode(node,path,depth,qmap){
+  if(!node)return '';
+  var h='',ind=depth*8;
+  if(node.partResult!==undefined){
+    return `<div class="node" style="margin-left:${ind}px"><span class="node-op">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
+  }
+  if(node.ref!==undefined){
+    var q=(qmap||{})[node.ref]||{text:'?'};
+    var ms=Array.isArray(node.match)?node.match.join('｜'):node.match;
+    h+=`<div class="node" style="margin-left:${ind}px"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${q.text}</span> = <span class="node-match">${ms}</span>`;
+    if(node.side)h+=`<span class="node-meta">side:${node.side}</span>`;
+    if(node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
+    h+=nodeActs(path)+'</div>';return h;
+  }
+  if(node.veto){
+    h+=`<div class="node node-veto" style="margin-left:${ind}px"><span class="node-op" style="color:var(--active)">VETO</span>${nodeActs(path)}`;
+    node.veto.forEach((v,vi)=>{h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`+renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1,qmap);});
+    if(node.rule)h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>'+renderNode(node.rule,path+'.rule',depth+1,qmap);
+    return h+'</div>';
+  }
+  if(node.rule&&!node.veto)return renderNode(node.rule,path+'.rule',depth,qmap);
+  var op=node.op;
+  if(op==='AND'||op==='OR'||op==='COUNT'){
+    h+=`<div class="node" style="margin-left:${ind}px"><span class="node-op">${op}</span>`;
+    if(op==='COUNT')h+=`<span class="node-meta">min=${node.min}</span>`;
+    h+=nodeActs(path);
+    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
+    h+=`<button class="add-btn" onclick="addRuleItem('${path}')">+ 新增條件</button></div>`;return h;
+  }
+  if(op==='LR'){
+    h+=`<div class="node node-lr" style="margin-left:${ind}px"><span class="node-op">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}`;
+    h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>'+renderNode(node.each,path+'.each',depth+1,qmap);
+    return h+'</div>';
+  }
+  return `<div class="node" style="margin-left:${ind}px;color:var(--text-3)">[${JSON.stringify(node).substring(0,60)}...]</div>`;
+}
+
+function nodeActs(p){return `<span class="node-actions"><button onclick="editRuleNode('${p}')">編輯</button><button class="del" onclick="deleteRuleNode('${p}')">刪除</button></span>`;}
+
+function getPath(obj,p){var c=obj;p.split('.').forEach(k=>{if(c==null)return;c=/^\d+$/.test(k)?c[+k]:c[k];});return c;}
+function delPath(obj,p){var ps=p.split('.'),c=obj;for(var i=0;i<ps.length-1;i++)c=/^\d+$/.test(ps[i])?c[+ps[i]]:c[ps[i]];var l=ps[ps.length-1];Array.isArray(c)&&/^\d+$/.test(l)?c.splice(+l,1):delete c[l];}
+
+function editRuleNode(path){
+  var node=getPath(rules[curDim],path);if(!node)return;
+  var qmap=buildQmap();
+  var html='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
+  if(node.ref!==undefined){
+    var allRefs=Object.keys(qmap).sort();
+    html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+allRefs.map(r=>`<option value="${r}"${r===node.ref?' selected':''}>${r} ${qmap[r].text}</option>`).join('')+'</select></div>';
+    var mv=Array.isArray(node.match)?node.match:[node.match];
+    html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${mv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
+    html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
+    html+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
+  }else if(node.op==='COUNT'){
+    html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
+  }else if(node.op==='LR'){
+    html+='<div class="row"><label>merge</label><select id="er-merge"><option value="any"'+(node.merge==='any'?' selected':'')+'>any</option><option value="all"'+(node.merge==='all'?' selected':'')+'>all</option></select></div>';
+  }else if(node.partResult!==undefined){
+    html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
+  }
+  html+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+path+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
+  var el=event.target.closest('.node');if(el){var d=document.createElement('div');d.innerHTML=html;el.after(d);}
+}
+function erUpdateMatch(){
+  var qmap=buildQmap();var ref=document.getElementById('er-ref').value;var sel=document.getElementById('er-match');
+  sel.innerHTML=(qmap[ref]||{opts:[]}).opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+}
+function saveRuleEdit(path){
+  var n=getPath(rules[curDim],path);if(!n)return;
+  if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='null')n.side=null;else if(sd)n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
+  else if(n.op==='COUNT')n.min=+document.getElementById('er-min').value||0;
+  else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
+  else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
+  var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
+  renderAll();setStatus('已修改（未儲存）');
+}
+function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();setStatus('已刪除（未儲存）');}
+function addRuleItem(p){
+  var n=getPath(rules[curDim],p);if(!n||!n.items)return;
+  n.items.push({ref:'h1',match:'龜背'});
+  // Keep the section open
+  var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+  renderAll();setStatus('已新增（未儲存）');
+}
+function toggleSec(key,el){
+  if(openSections.has(key))openSections.delete(key);else openSections.add(key);
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ==================== QUESTIONS EDITOR ====================
+function renderQuestions(){
+  var partNames=Object.keys(questions);
+  // Sidebar
+  var sh='';
+  partNames.forEach((pn,i)=>{
+    var pd=questions[pn];var cnt=0;
+    if(pd&&pd.sections)pd.sections.forEach(s=>cnt+=s.qs.length);
+    sh+=`<div class="sb-item${i===curPart?' active':''}" onclick="curPart=${i};renderAll()">${pn}<span class="sb-count">(${cnt})</span></div>`;
+  });
+  document.getElementById('sidebar').innerHTML=sh;
+
+  var pn=partNames[curPart];
+  var pd=questions[pn];
+  if(!pd){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無資料</div>';return;}
+
+  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:16px">${pn}</div>`;
+
+  pd.sections.forEach((sec,si)=>{
+    var qSecKey='q-'+curPart+'-'+si;
+    if(!openSections.has(qSecKey))openSections.add(qSecKey); // questions default open
+    var qSecOpen=openSections.has(qSecKey);
+    eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${qSecKey}',this)">`;
+    eh+=`<span ondblclick="editSectionName(${si},this)" style="cursor:text">${sec.label}</span>`;
+    eh+=`<span style="font-size:12px;color:var(--text-3)">${sec.qs.length}題 ▼</span></div>`;
+    eh+=`<div class="section-body${qSecOpen?' open':''}">`;
+
+    sec.qs.forEach((q,qi)=>{
+      var optsStr=q.opts.map(o=>typeof o==='string'?o:o.v).join('、');
+      eh+=`<div class="q-row" id="qr-${q.id}">`;
+      eh+=`<span class="q-id">${q.id}</span>`;
+      eh+=`<span class="q-text">${q.text}</span>`;
+      if(q.paired)eh+=`<span class="q-paired">左右</span>`;
+      eh+=`<span class="q-opts">${q.opts.length}項</span>`;
+      eh+=`<span class="q-actions">`;
+      eh+=`<button onclick="moveQ(${si},${qi},-1)">↑</button>`;
+      eh+=`<button onclick="moveQ(${si},${qi},1)">↓</button>`;
+      eh+=`<button onclick="editQ(${si},${qi})">編輯</button>`;
+      eh+=`<button class="del" onclick="deleteQ(${si},${qi})">刪除</button>`;
+      eh+=`</span></div>`;
+
+      // Edit form (shown when editingQ matches)
+      if(editingQ===q.id){
+        eh+=renderQEditForm(si,qi,q);
+      }
+    });
+
+    eh+=`<button class="add-btn" onclick="addQ(${si})">+ 新增題目</button>`;
     eh+=`</div></div>`;
   });
 
   document.getElementById('editor').innerHTML=eh;
 }
 
-function selectDim(i){curDim=i;render();}
-function togglePart(el){el.nextElementSibling.classList.toggle('open');}
-function setStatus(msg){document.getElementById('status').textContent=msg;}
+function renderQEditForm(si,qi,q){
+  var h='<div class="edit-form">';
+  h+=`<div class="row"><label>ID</label><input type="text" id="qe-id" value="${q.id}" style="width:60px" disabled></div>`;
+  h+=`<div class="row"><label>題目</label><input type="text" id="qe-text" value="${q.text}"></div>`;
+  h+=`<div class="row"><label>左右題</label><input type="checkbox" id="qe-paired" ${q.paired?'checked':''}></div>`;
+  h+='<div style="font-size:12px;color:var(--text-3);margin:6px 0 4px 56px">選項：</div>';
+  q.opts.forEach((opt,oi)=>{
+    var v=typeof opt==='string'?opt:opt.v;
+    var hint=typeof opt==='string'?'':opt.hint||'';
+    h+=`<div class="opt-row"><input type="text" value="${v}" id="qe-ov-${oi}" style="width:100px" placeholder="值"><input type="text" value="${hint}" id="qe-oh-${oi}" style="flex:1;min-width:120px" placeholder="提示"><button onclick="removeOpt(${si},${qi},${oi})">×</button></div>`;
+  });
+  h+=`<button class="add-btn" style="margin-left:56px" onclick="addOpt(${si},${qi})">+ 新增選項</button>`;
+  h+=`<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveQEdit(${si},${qi})" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="editingQ=null;renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div>`;
+  h+='</div>';
+  return h;
+}
 
-// Firebase
-function saveToFirebase(){
+function editQ(si,qi){
+  var pn=Object.keys(questions)[curPart];
+  editingQ=questions[pn].sections[si].qs[qi].id;
+  renderAll();
+}
+
+function saveQEdit(si,qi){
+  var pn=Object.keys(questions)[curPart];
+  var q=questions[pn].sections[si].qs[qi];
+  q.text=document.getElementById('qe-text').value;
+  q.paired=document.getElementById('qe-paired').checked;
+  // Collect options
+  var newOpts=[];
+  for(var oi=0;oi<100;oi++){
+    var ve=document.getElementById('qe-ov-'+oi);if(!ve)break;
+    var he=document.getElementById('qe-oh-'+oi);
+    newOpts.push({v:ve.value,hint:he?he.value:''});
+  }
+  q.opts=newOpts;
+  // Update total
+  var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
+  questions[pn].total=total;
+  editingQ=null;
+  renderAll();setStatus('已修改（未儲存）');
+}
+
+function deleteQ(si,qi){
+  var pn=Object.keys(questions)[curPart];
+  var q=questions[pn].sections[si].qs[qi];
+  // Check rule references
+  var rulesStr=JSON.stringify(rules);
+  var refs=[];
+  rules.forEach((dim,di)=>{
+    Object.keys(dim.parts||{}).forEach(partName=>{
+      var ps=JSON.stringify(dim.parts[partName]);
+      if(ps.includes('"'+q.id+'"'))refs.push(dim.positive+dim.negative+'→'+partName);
+    });
+  });
+  if(refs.length>0){
+    alert('以下規則引用了 '+q.id+'：\n'+refs.join('\n')+'\n\n請先到規則編輯器移除這些引用');
+    return;
+  }
+  if(!confirm('確定刪除 '+q.id+' '+q.text+'？'))return;
+  questions[pn].sections[si].qs.splice(qi,1);
+  var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
+  questions[pn].total=total;
+  renderAll();setStatus('已刪除（未儲存）');
+}
+
+function addQ(si){
+  var pn=Object.keys(questions)[curPart];
+  var prefix=Q_PREFIXES[pn]||'x';
+  // Find max ID number for this prefix
+  var maxN=0;
+  questions[pn].sections.forEach(s=>s.qs.forEach(q=>{
+    var m=q.id.match(new RegExp('^'+prefix+'(\\d+)$'));
+    if(m)maxN=Math.max(maxN,+m[1]);
+  }));
+  var newId=prefix+(maxN+1);
+  var newQ={id:newId,text:'新題目',opts:[{v:'選項A',hint:''},{v:'選項B',hint:''}]};
+  questions[pn].sections[si].qs.push(newQ);
+  questions[pn].total=(questions[pn].total||0)+1;
+  editingQ=newId;
+  renderAll();setStatus('已新增 '+newId+'（未儲存）');
+}
+
+function moveQ(si,qi,dir){
+  var pn=Object.keys(questions)[curPart];
+  var qs=questions[pn].sections[si].qs;
+  var ni=qi+dir;
+  if(ni<0||ni>=qs.length)return;
+  var tmp=qs[qi];qs[qi]=qs[ni];qs[ni]=tmp;
+  renderAll();setStatus('已移動（未儲存）');
+}
+
+// Sync current edit form inputs back to data
+function syncQEditForm(si,qi){
+  var pn=Object.keys(questions)[curPart];
+  var q=questions[pn].sections[si].qs[qi];
+  var te=document.getElementById('qe-text');if(te)q.text=te.value;
+  var pe=document.getElementById('qe-paired');if(pe)q.paired=pe.checked;
+  var newOpts=[];
+  for(var oi=0;oi<100;oi++){
+    var ve=document.getElementById('qe-ov-'+oi);if(!ve)break;
+    var he=document.getElementById('qe-oh-'+oi);
+    newOpts.push({v:ve.value,hint:he?he.value:''});
+  }
+  if(newOpts.length>0)q.opts=newOpts;
+}
+
+function addOpt(si,qi){
+  syncQEditForm(si,qi);
+  var pn=Object.keys(questions)[curPart];
+  questions[pn].sections[si].qs[qi].opts.push({v:'新選項',hint:''});
+  editingQ=questions[pn].sections[si].qs[qi].id;
+  renderAll();
+}
+
+function removeOpt(si,qi,oi){
+  syncQEditForm(si,qi);
+  var pn=Object.keys(questions)[curPart];
+  questions[pn].sections[si].qs[qi].opts.splice(oi,1);
+  editingQ=questions[pn].sections[si].qs[qi].id;
+  renderAll();
+}
+
+function editSectionName(si,el){
+  var name=prompt('修改 Section 名稱：',el.textContent);
+  if(name===null)return;
+  var pn=Object.keys(questions)[curPart];
+  questions[pn].sections[si].label=name;
+  renderAll();setStatus('已修改（未儲存）');
+}
+
+// ==================== FIREBASE ====================
+function saveActive(){
   setStatus('儲存中...');
-  db.collection('settings').doc('rules').set({
-    rulesJson:JSON.stringify(rules),
-    updatedAt:new Date().toISOString()
-  }).then(()=>{setStatus('已儲存到 Firebase ✓');})
-    .catch(e=>{setStatus('儲存失敗: '+e.message);});
+  var promises=[];
+  if(activeTab==='rules'){
+    promises.push(db.collection('settings').doc('rules').set({rulesJson:JSON.stringify(rules),updatedAt:new Date().toISOString()}));
+  }else{
+    promises.push(db.collection('settings').doc('questions').set({questionsJson:JSON.stringify(questions),updatedAt:new Date().toISOString()}));
+  }
+  Promise.all(promises).then(()=>setStatus('已儲存到 Firebase ✓')).catch(e=>setStatus('儲存失敗: '+e.message));
 }
 
-function loadFromFirebase(){
-  setStatus('載入中...');
-  db.collection('settings').doc('rules').get().then(doc=>{
-    if(doc.exists&&doc.data().rulesJson){
-      rules=JSON.parse(doc.data().rulesJson);
-      render();
-      setStatus('已從 Firebase 載入 ✓');
-    }else{
-      setStatus('Firebase 無資料，使用本地規則');
+// ==================== INIT ====================
+async function init(){
+  // Load rules
+  try{
+    var rdoc=await db.collection('settings').doc('rules').get();
+    if(rdoc.exists&&rdoc.data().rulesJson){
+      var p=JSON.parse(rdoc.data().rulesJson);
+      if(Array.isArray(p)&&p.length===13&&p[0]&&p[0].parts){rules=p;console.log('[Rules] Firebase ✓');}
     }
-  }).catch(e=>{setStatus('載入失敗: '+e.message);});
+  }catch(e){console.log('[Rules] Firebase error',e);}
+  if(rules.length===0){
+    try{var r=await fetch('rules/all_rules.json');rules=await r.json();console.log('[Rules] Local fallback');
+      db.collection('settings').doc('rules').set({rulesJson:JSON.stringify(rules),updatedAt:new Date().toISOString()}).catch(()=>{});
+    }catch(e){console.log('[Rules] Load failed',e);}
+  }
+
+  // Load questions
+  try{
+    var qdoc=await db.collection('settings').doc('questions').get();
+    if(qdoc.exists&&qdoc.data().questionsJson){
+      var pq=JSON.parse(qdoc.data().questionsJson);
+      if(pq&&typeof pq==='object'&&Object.keys(pq).length>=11){questions=pq;console.log('[Questions] Firebase ✓');}
+    }
+  }catch(e){console.log('[Questions] Firebase error',e);}
+  if(Object.keys(questions).length===0){
+    // Fallback: use ALL_QUESTIONS_DEFAULT from all_questions.js
+    if(typeof ALL_QUESTIONS_DEFAULT!=='undefined'){
+      questions=JSON.parse(JSON.stringify(ALL_QUESTIONS_DEFAULT));
+      console.log('[Questions] Local fallback (all_questions.js)');
+      db.collection('settings').doc('questions').set({questionsJson:JSON.stringify(questions),updatedAt:new Date().toISOString()}).catch(()=>{});
+    }else{console.log('[Questions] No fallback available');}
+  }
+
+  renderAll();
+  setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位）');
 }
 
-// Init: 先讀 Firebase，沒有則從本地 JSON 載入並自動存回 Firebase
-setStatus('載入中...');
-db.collection('settings').doc('rules').get().then(doc=>{
-  var loaded=false;
-  if(doc.exists){
-    var raw=doc.data();
-    console.log('Firebase settings/rules raw:', raw);
-    if(raw.rulesJson){
-      try{
-        var parsed=JSON.parse(raw.rulesJson);
-        console.log('Parsed rules:', Array.isArray(parsed), 'length:', parsed.length);
-        if(Array.isArray(parsed)&&parsed.length===13&&parsed[0]&&parsed[0].parts){
-          rules=parsed;
-          render();
-          setStatus('已從 Firebase 載入（'+rules.length+' 維度）');
-          loaded=true;
-        }
-      }catch(e){console.log('Parse error:',e);}
-    }
-  }
-  if(!loaded){
-    // Firebase 無資料，從本地 JSON 初始化
-    fetch('rules/all_rules.json')
-      .then(r=>r.json())
-      .then(data=>{
-        rules=data;
-        render();
-        setStatus('首次初始化：存入 Firebase...');
-        return db.collection('settings').doc('rules').set({
-          rulesJson:JSON.stringify(rules),
-          updatedAt:new Date().toISOString()
-        });
-      })
-      .then(()=>{setStatus('初始化完成，已存入 Firebase ✓');})
-      .catch(e=>{setStatus('本地載入失敗: '+e.message);});
-  }
-}).catch(e=>{
-  // Firebase 讀取失敗，fallback 到本地
-  fetch('rules/all_rules.json')
-    .then(r=>r.json())
-    .then(data=>{rules=data;render();setStatus('Firebase 不可用，已載入本地規則');})
-    .catch(()=>{setStatus('載入失敗');});
-});
+init();
 </script>
 </body>
 </html>
