@@ -334,7 +334,7 @@ function erUpdateMatch(){
   sel.innerHTML=(qmap[ref]||{opts:[]}).opts.map(o=>`<option value="${o}">${o}</option>`).join('');
 }
 function saveRuleEdit(path){
-  pushUndo();
+  if(_pendingNewNodePath!==path){pushUndo();}
   var n=getPath(rules[curDim],path);if(!n)return;
   if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='null')n.side=null;else if(sd)n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
   else if(n.op==='COUNT')n.min=+document.getElementById('er-min').value||0;
@@ -391,6 +391,7 @@ function doAddItem(p,qPartName){
   var qmap=buildQmap();
   var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
   var newIdx=n.items.length;
+  pushUndo();
   n.items.push({ref:defRef,match:defMatch});
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
@@ -404,6 +405,7 @@ function cancelNewNode(){
   if(_pendingNewNodePath){
     delPath(rules[curDim],_pendingNewNodePath);
     _pendingNewNodePath=null;
+    if(_undoStack.length>0){_undoStack.pop();updateUndoBtn();}
   }
   _autoEditPath=null;
   _autoEditQPart=null;
