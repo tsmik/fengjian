@@ -53,8 +53,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0;font-family:'Noto Serif TC',serif}
 .add-btn:hover{background:var(--hover);border-color:var(--text-3)}
 /* Rule editor nodes */
-.node{margin:4px 0 4px 16px;padding:6px 10px;border-left:2px solid var(--border);font-size:13px}
-.node-op{font-weight:700;color:var(--active);margin-right:6px}
+.node{margin:4px 0 4px 16px;padding:6px 10px;border-left:2px solid var(--border);font-size:13px;border-radius:4px;margin-bottom:2px}
+.node-op{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;color:white;background:var(--active);margin-right:6px;letter-spacing:1px}
 .node-ref{font-weight:700;color:var(--text)}
 .node-match{color:var(--static);font-weight:500}
 .node-meta{color:var(--text-3);font-size:12px;margin-left:8px}
@@ -218,22 +218,24 @@ function renderRules(){
   }
 }
 
+function depthBg(d){return d<=0?'':'background:rgba(0,0,0,'+(Math.min(d,3)*0.02).toFixed(2)+')';}
+
 function renderNode(node,path,depth,qmap){
   if(!node)return '';
-  var h='',ind=depth*8;
+  var h='',ind=depth*8,bg=depthBg(depth);
   if(node.partResult!==undefined){
-    return `<div class="node" style="margin-left:${ind}px"><span class="node-op">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
+    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
   }
   if(node.ref!==undefined){
     var q=(qmap||{})[node.ref]||{text:'?'};
     var ms=Array.isArray(node.match)?node.match.join('｜'):node.match;
-    h+=`<div class="node" style="margin-left:${ind}px"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${q.text}</span> = <span class="node-match">${ms}</span>`;
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${q.text}</span> = <span class="node-match">${ms}</span>`;
     if(node.side)h+=`<span class="node-meta">side:${node.side}</span>`;
     if(node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
     h+=nodeActs(path)+'</div>';return h;
   }
   if(node.veto){
-    h+=`<div class="node node-veto" style="margin-left:${ind}px"><span class="node-op" style="color:var(--active)">VETO</span>${nodeActs(path)}`;
+    h+=`<div class="node node-veto" style="margin-left:${ind}px;${bg}"><span class="node-op">VETO</span>${nodeActs(path)}`;
     node.veto.forEach((v,vi)=>{h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`+renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1,qmap);});
     if(node.rule)h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>'+renderNode(node.rule,path+'.rule',depth+1,qmap);
     return h+'</div>';
@@ -241,18 +243,18 @@ function renderNode(node,path,depth,qmap){
   if(node.rule&&!node.veto)return renderNode(node.rule,path+'.rule',depth,qmap);
   var op=node.op;
   if(op==='AND'||op==='OR'||op==='COUNT'){
-    h+=`<div class="node" style="margin-left:${ind}px"><span class="node-op">${op}</span>`;
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op">${op}</span>`;
     if(op==='COUNT')h+=`<span class="node-meta">min=${node.min}</span>`;
     h+=nodeActs(path);
     if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
     h+=`<button class="add-btn" onclick="addRuleItem('${path}')">+ 新增條件</button></div>`;return h;
   }
   if(op==='LR'){
-    h+=`<div class="node node-lr" style="margin-left:${ind}px"><span class="node-op">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}`;
+    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}`;
     h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>'+renderNode(node.each,path+'.each',depth+1,qmap);
     return h+'</div>';
   }
-  return `<div class="node" style="margin-left:${ind}px;color:var(--text-3)">[${JSON.stringify(node).substring(0,60)}...]</div>`;
+  return `<div class="node" style="margin-left:${ind}px;${bg};color:var(--text-3)">[${JSON.stringify(node).substring(0,60)}...]</div>`;
 }
 
 function nodeActs(p){return `<span class="node-actions"><button onclick="editRuleNode('${p}')">編輯</button><button class="del" onclick="deleteRuleNode('${p}')">刪除</button></span>`;}
