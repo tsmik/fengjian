@@ -400,11 +400,24 @@ function loadFromFirebase(){
 // Init: 先讀 Firebase，沒有則從本地 JSON 載入並自動存回 Firebase
 setStatus('載入中...');
 db.collection('settings').doc('rules').get().then(doc=>{
-  if(doc.exists&&doc.data().rulesJson){
-    rules=JSON.parse(doc.data().rulesJson);
-    render();
-    setStatus('已從 Firebase 載入');
-  }else{
+  var loaded=false;
+  if(doc.exists){
+    var raw=doc.data();
+    console.log('Firebase settings/rules raw:', raw);
+    if(raw.rulesJson){
+      try{
+        var parsed=JSON.parse(raw.rulesJson);
+        console.log('Parsed rules:', Array.isArray(parsed), 'length:', parsed.length);
+        if(Array.isArray(parsed)&&parsed.length===13&&parsed[0]&&parsed[0].parts){
+          rules=parsed;
+          render();
+          setStatus('已從 Firebase 載入（'+rules.length+' 維度）');
+          loaded=true;
+        }
+      }catch(e){console.log('Parse error:',e);}
+    }
+  }
+  if(!loaded){
     // Firebase 無資料，從本地 JSON 初始化
     fetch('rules/all_rules.json')
       .then(r=>r.json())
