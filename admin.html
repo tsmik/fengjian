@@ -397,11 +397,36 @@ function loadFromFirebase(){
   }).catch(e=>{setStatus('載入失敗: '+e.message);});
 }
 
-// Init: load from local JSON
-fetch('rules/all_rules.json')
-  .then(r=>r.json())
-  .then(data=>{rules=data;render();setStatus('已載入本地規則');})
-  .catch(()=>{setStatus('載入失敗');});
+// Init: 先讀 Firebase，沒有則從本地 JSON 載入並自動存回 Firebase
+setStatus('載入中...');
+db.collection('settings').doc('rules').get().then(doc=>{
+  if(doc.exists&&doc.data().rulesJson){
+    rules=JSON.parse(doc.data().rulesJson);
+    render();
+    setStatus('已從 Firebase 載入');
+  }else{
+    // Firebase 無資料，從本地 JSON 初始化
+    fetch('rules/all_rules.json')
+      .then(r=>r.json())
+      .then(data=>{
+        rules=data;
+        render();
+        setStatus('首次初始化：存入 Firebase...');
+        return db.collection('settings').doc('rules').set({
+          rulesJson:JSON.stringify(rules),
+          updatedAt:new Date().toISOString()
+        });
+      })
+      .then(()=>{setStatus('初始化完成，已存入 Firebase ✓');})
+      .catch(e=>{setStatus('本地載入失敗: '+e.message);});
+  }
+}).catch(e=>{
+  // Firebase 讀取失敗，fallback 到本地
+  fetch('rules/all_rules.json')
+    .then(r=>r.json())
+    .then(data=>{rules=data;render();setStatus('Firebase 不可用，已載入本地規則');})
+    .catch(()=>{setStatus('載入失敗');});
+});
 </script>
 </body>
 </html>
