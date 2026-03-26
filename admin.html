@@ -160,11 +160,20 @@ function buildQmap(){
   Object.keys(questions).forEach(pn=>{
     var pd=questions[pn];if(!pd||!pd.sections)return;
     pd.sections.forEach(s=>s.qs.forEach(q=>{
-      m[q.id]={text:q.text,paired:!!q.paired,opts:q.opts.map(o=>typeof o==='string'?o:o.v)};
+      m[q.id]={text:q.text,paired:!!q.paired,
+        opts:q.opts.map(o=>typeof o==='string'?o:o.v),
+        fullOpts:q.opts.map(o=>typeof o==='string'?{v:o,hint:''}:{v:o.v,hint:o.hint||''})
+      };
     }));
   });
   return m;
 }
+function getHintForMatch(qmap,ref,matchVal){
+  var q=qmap[ref];if(!q||!q.fullOpts)return '';
+  var opt=q.fullOpts.find(o=>o.v===matchVal);
+  return opt?opt.hint:'';
+}
+var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'partResult'};
 
 // ==================== RULES EDITOR ====================
 function renderRules(){
@@ -230,15 +239,19 @@ function renderNode(node,path,depth,qmap){
     return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">partResult</span><span class="node-ref">${node.partResult}</span>${nodeActs(path)}</div>`;
   }
   if(node.ref!==undefined){
-    var q=(qmap||{})[node.ref]||{text:'?'};
-    var ms=Array.isArray(node.match)?node.match.join('｜'):node.match;
-    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${q.text}</span> = <span class="node-match">${ms}</span>`;
-    if(node.side)h+=`<span class="node-meta">side:${node.side}</span>`;
+    var q=(qmap||{})[node.ref]||{text:'?',fullOpts:[]};
+    var sidePrefix=node.side==='L'?'左':node.side==='R'?'右':'';
+    var matchArr=Array.isArray(node.match)?node.match:[node.match];
+    var msWithHint=matchArr.map(function(mv){
+      var hint=getHintForMatch(qmap,node.ref,mv);
+      return hint?mv+'（'+hint+'）':mv;
+    }).join('｜');
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msWithHint}</span>`;
     if(node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
     h+=nodeActs(path)+'</div>';return h;
   }
   if(node.veto){
-    h+=`<div class="node node-veto" style="margin-left:${ind}px;${bg}"><span class="node-op">VETO</span>${nodeActs(path)}`;
+    h+=`<div class="node node-veto" style="margin-left:${ind}px;${bg}"><span class="node-op">VETO</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
     node.veto.forEach((v,vi)=>{h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`+renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1,qmap);});
     if(node.rule)h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>'+renderNode(node.rule,path+'.rule',depth+1,qmap);
     return h+'</div>';
@@ -246,19 +259,20 @@ function renderNode(node,path,depth,qmap){
   if(node.rule&&!node.veto)return renderNode(node.rule,path+'.rule',depth,qmap);
   var op=node.op;
   if(op==='AND'||op==='OR'||op==='COUNT'){
-    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op">${op}</span>`;
-    if(op==='COUNT')h+=`<span class="node-meta">min=${node.min}</span>`;
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op">${OP_CN[op]||op}</span>`;
+    if(op==='COUNT')h+=`<span class="node-op" style="background:#d4564e">${'最少'+node.min+'項 min='+node.min}</span>`;
     h+=nodeActs(path);
+    h+=`<div class="edit-placeholder" data-path="${path}"></div>`;
     if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
     h+=`<button class="add-btn" onclick="addRuleItem('${path}')">+ 新增條件</button></div>`;return h;
   }
   if(op==='LR'){
-    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}`;
+    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">LR</span><span class="node-meta">merge=${node.merge}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
     h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>'+renderNode(node.each,path+'.each',depth+1,qmap);
     return h+'</div>';
   }
   if(op==='NOT'){
-    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#8B5CF6">NOT</span>${nodeActs(path)}`;
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#8B5CF6">${OP_CN.NOT}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
     if(node.item)h+=renderNode(node.item,path+'.item',depth+1,qmap);
     return h+'</div>';
   }
@@ -340,7 +354,10 @@ function editRuleNode(path){
     html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
   }
   html+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+path+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
-  var el=event.target.closest('.node');if(el){var d=document.createElement('div');d.innerHTML=html;el.after(d);}
+  // For operator nodes, insert into placeholder; for leaf nodes, insert after
+  var ph=document.querySelector('.edit-placeholder[data-path="'+path+'"]');
+  if(ph){ph.innerHTML=html;}
+  else{var el=event.target.closest('.node');if(el){var d=document.createElement('div');d.innerHTML=html;el.after(d);}}
 }
 function erUpdateMatch(){
   var qmap=buildQmap();var ref=document.getElementById('er-ref').value;var sel=document.getElementById('er-match');
