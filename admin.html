@@ -282,6 +282,8 @@ function renderNode(node,path,depth,qmap){
     var mergeLabel=node.merge==='all'?'都符合':'一邊符合即可';
     h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">左右部位 LR</span><span class="node-op" style="background:#b5a078">${mergeLabel}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
     h+=renderNode(node.each,path+'.each',depth+1,qmap);
+    _addBtnCounter++;
+    h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addLrEachItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button>`;
     return h+'</div>';
   }
   if(op==='NOT'){
@@ -530,6 +532,40 @@ function wrapRootWithContainer(partName,containerType){
   rules[curDim].parts[partName]=newContainer;
   openSections.add('r-'+curDim+'-'+partName);
   markDirty();renderAll();
+}
+
+// ==================== LR EACH ADD ====================
+function addLrEachItem(lrPath,btnId){
+  var lrNode=getPath(rules[curDim],lrPath);
+  if(!lrNode||lrNode.op!=='LR')return;
+  clearDynamicForms();
+  // If each is already a container with items, delegate to addRuleItem
+  if(lrNode.each&&lrNode.each.items){
+    addRuleItem(lrPath+'.each',btnId);
+    return;
+  }
+  // each is a single node — need to wrap in container first
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
+  var h='<div class="edit-form dynamic-edit-form" id="lr-wrap-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇容器類型（現有條件和新條件將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
+  h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'AND\')" style="'+bs+'">都符合 AND</button>';
+  h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'OR\')" style="'+bs+'">或 OR</button>';
+  h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+  var btn=document.getElementById(btnId);
+  if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
+}
+
+function wrapLrEach(lrPath,containerType){
+  clearDynamicForms();
+  var lrNode=getPath(rules[curDim],lrPath);if(!lrNode)return;
+  pushUndo();
+  var currentEach=lrNode.each;
+  if(containerType==='COUNT')lrNode.each={op:'COUNT',min:1,items:[currentEach]};
+  else if(containerType==='AND')lrNode.each={op:'AND',items:[currentEach]};
+  else lrNode.each={op:'OR',items:[currentEach]};
+  markDirty();
+  var partName=lrPath.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+  renderAll();
 }
 
 var _pendingAddPath=null;
