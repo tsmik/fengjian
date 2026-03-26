@@ -257,6 +257,11 @@ function renderNode(node,path,depth,qmap){
     h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">each:</div>'+renderNode(node.each,path+'.each',depth+1,qmap);
     return h+'</div>';
   }
+  if(op==='NOT'){
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#8B5CF6">NOT</span>${nodeActs(path)}`;
+    if(node.item)h+=renderNode(node.item,path+'.item',depth+1,qmap);
+    return h+'</div>';
+  }
   return `<div class="node" style="margin-left:${ind}px;${bg};color:var(--text-3)">[${JSON.stringify(node).substring(0,60)}...]</div>`;
 }
 
@@ -319,10 +324,18 @@ function editRuleNode(path){
     html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${mv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
     html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
     html+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
-  }else if(node.op==='COUNT'){
-    html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
+  }else if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
+    html+='<div class="row"><label>類型</label><select id="er-optype"><option value="AND"'+(node.op==='AND'?' selected':'')+'>AND</option><option value="OR"'+(node.op==='OR'?' selected':'')+'>OR</option><option value="COUNT"'+(node.op==='COUNT'?' selected':'')+'>COUNT</option></select></div>';
+    if(node.op==='COUNT')html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
   }else if(node.op==='LR'){
     html+='<div class="row"><label>merge</label><select id="er-merge"><option value="any"'+(node.merge==='any'?' selected':'')+'>any</option><option value="all"'+(node.merge==='all'?' selected':'')+'>all</option></select></div>';
+  }else if(node.op==='NOT'){
+    if(node.item&&node.item.ref!==undefined){
+      html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.item.ref,allowedQParts,node.item.ref)+'</select></div>';
+      var nmv=Array.isArray(node.item.match)?node.item.match:[node.item.match];
+      html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.item.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${nmv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
+      html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.item.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.item.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.item.side===null?' selected':'')+'>null</option></select></div>';
+    }
   }else if(node.partResult!==undefined){
     html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
   }
@@ -337,8 +350,23 @@ function saveRuleEdit(path){
   if(_pendingNewNodePath!==path){pushUndo();}
   var n=getPath(rules[curDim],path);if(!n)return;
   if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='null')n.side=null;else if(sd)n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
-  else if(n.op==='COUNT')n.min=+document.getElementById('er-min').value||0;
+  else if(n.op==='AND'||n.op==='OR'||n.op==='COUNT'){
+    var newOp=document.getElementById('er-optype');
+    if(newOp){
+      var nt=newOp.value;
+      if(nt==='COUNT'&&n.op!=='COUNT')n.min=1;
+      if(nt!=='COUNT')delete n.min;
+      n.op=nt;
+    }
+    var minEl=document.getElementById('er-min');
+    if(minEl&&n.op==='COUNT')n.min=+minEl.value||0;
+  }
   else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
+  else if(n.op==='NOT'&&n.item){
+    var re=document.getElementById('er-ref');if(re)n.item.ref=re.value;
+    var me=document.getElementById('er-match');if(me){var mv=[...me.selectedOptions].map(o=>o.value);n.item.match=mv.length===1?mv[0]:mv;}
+    var se=document.getElementById('er-side');if(se){var sv=se.value;if(sv==='null')n.item.side=null;else if(sv)n.item.side=sv;else delete n.item.side;}
+  }
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
   if(_pendingNewNodePath===path)_pendingNewNodePath=null;
@@ -350,31 +378,63 @@ var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
 function addRuleItem(p){
   var n=getPath(rules[curDim],p);if(!n||!n.items)return;
-  var rulePart=getRulePartFromPath(p);
-  var allowedQParts=RULE_TO_QPARTS[rulePart]||['頭'];
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+  _pendingAddPath=p;
+  // Show type selection first
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
+  var h='<div class="edit-form" id="type-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h+='<button onclick="addNodeOfType(\'ref\')" style="'+bs+'">比對條件</button>';
+  h+='<button onclick="addNodeOfType(\'AND\')" style="'+bs+'">AND</button>';
+  h+='<button onclick="addNodeOfType(\'OR\')" style="'+bs+'">OR</button>';
+  h+='<button onclick="addNodeOfType(\'COUNT\')" style="'+bs+'">COUNT</button>';
+  h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
+  h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+  renderAll();
+  setTimeout(function(){
+    var addBtns=document.querySelectorAll('.add-btn');
+    addBtns.forEach(function(btn){
+      if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes(p)){
+        var d=document.createElement('div');d.innerHTML=h;btn.after(d);
+      }
+    });
+  },50);
+}
 
-  if(allowedQParts.length>1){
-    // Multi-part: show part selection buttons first
+function addNodeOfType(type){
+  var form=document.getElementById('type-select-form');if(form)form.remove();
+  var p=_pendingAddPath;if(!p)return;_pendingAddPath=null;
+  var n=getPath(rules[curDim],p);if(!n||!n.items)return;
+
+  if(type==='ref'){
+    // Go to part selection (original flow)
+    var rulePart=getRulePartFromPath(p);
+    var allowedQParts=RULE_TO_QPARTS[rulePart]||['頭'];
     _pendingAddPath=p;
-    var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
-    var warn='';
-    var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
-    // Find the add button and insert after it
-    renderAll();
-    setTimeout(function(){
-      var addBtns=document.querySelectorAll('.add-btn');
-      addBtns.forEach(function(btn){
-        if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes(p)){
-          var d=document.createElement('div');d.innerHTML=container;btn.after(d);
-        }
-      });
-    },50);
+    if(allowedQParts.length>1){
+      var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
+      var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+      setTimeout(function(){
+        var addBtns=document.querySelectorAll('.add-btn');
+        addBtns.forEach(function(btn){
+          if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes(p)){
+            var d=document.createElement('div');d.innerHTML=container;btn.after(d);
+          }
+        });
+      },50);
+    }else{
+      doAddItem(p,allowedQParts[0]);
+    }
     return;
   }
 
-  // Single part: add directly
-  doAddItem(p,allowedQParts[0]);
+  // Operator nodes
+  pushUndo();
+  var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
+  if(type==='AND'){n.items.push({op:'AND',items:[]});}
+  else if(type==='OR'){n.items.push({op:'OR',items:[]});}
+  else if(type==='COUNT'){n.items.push({op:'COUNT',min:1,items:[]});}
+  else if(type==='NOT'){n.items.push({op:'NOT',item:{ref:'h1',match:'龜背'}});}
+  markDirty();renderAll();
 }
 
 var _pendingAddPath=null;

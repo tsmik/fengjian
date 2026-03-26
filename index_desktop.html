@@ -856,7 +856,12 @@ function evaluate(node, obsData, side, partResults) {
     return count >= node.min;
   }
 
-  // 8. LR
+  // 8. NOT
+  if (node.op === 'NOT') {
+    return !evaluate(node.item, obsData, side, partResults);
+  }
+
+  // 9. LR
   if (node.op === 'LR') {
     var leftResult = evaluate(node.each, obsData, 'L', partResults);
     var rightResult = evaluate(node.each, obsData, 'R', partResults);
