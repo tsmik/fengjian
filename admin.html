@@ -175,6 +175,13 @@ function getHintForMatch(qmap,ref,matchVal){
   return opt?opt.hint:'';
 }
 var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'partResult'};
+function matchOptsHtml(qmap,ref,selectedArr){
+  var qi=qmap[ref]||{fullOpts:[]};
+  return (qi.fullOpts||[]).map(function(o){
+    var label=o.hint?o.v+' — '+o.hint:o.v;
+    return '<option value="'+o.v+'"'+(selectedArr.includes(o.v)?' selected':'')+'>'+label+'</option>';
+  }).join('');
+}
 
 // ==================== RULES EDITOR ====================
 var _addBtnCounter=0;
@@ -223,7 +230,7 @@ function renderRules(){
         var warnText=aqp&&warnMap[aqp]?'<div style="font-size:11px;color:#999;margin-bottom:6px">提醒：'+aqp+'通常以 partResult 引用，此處為'+rulePart+'特殊條件</div>':'';
         var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
         h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
-        h+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(function(o){return '<option value="'+o+'"'+(mv.includes(o)?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
+        h+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
         h+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L">L</option><option value="R">R</option><option value="null">null</option></select></div>';
         h+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="1" min="1" style="width:50px"></div>';
         h+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+ap+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="cancelNewNode()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
@@ -353,7 +360,7 @@ function editRuleNode(path){
   if(node.ref!==undefined){
     html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
-    html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${mv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
+    html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
     html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.side===null?' selected':'')+'>null</option></select></div>';
     html+='<div class="row"><label>Weight</label><input type="number" id="er-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
   }else if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
@@ -365,7 +372,7 @@ function editRuleNode(path){
     if(node.item&&node.item.ref!==undefined){
       html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.item.ref,allowedQParts,node.item.ref)+'</select></div>';
       var nmv=Array.isArray(node.item.match)?node.item.match:[node.item.match];
-      html+='<div class="row"><label>選項</label><select id="er-match" multiple size="3">'+(qmap[node.item.ref]||{opts:[]}).opts.map(o=>`<option value="${o}"${nmv.includes(o)?' selected':''}>${o}</option>`).join('')+'</select></div>';
+      html+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.item.ref,nmv)+'</select></div>';
       html+='<div class="row"><label>Side</label><select id="er-side"><option value="">無</option><option value="L"'+(node.item.side==='L'?' selected':'')+'>L</option><option value="R"'+(node.item.side==='R'?' selected':'')+'>R</option><option value="null"'+(node.item.side===null?' selected':'')+'>null</option></select></div>';
     }
   }else if(node.partResult!==undefined){
@@ -379,7 +386,7 @@ function editRuleNode(path){
 }
 function erUpdateMatch(){
   var qmap=buildQmap();var ref=document.getElementById('er-ref').value;var sel=document.getElementById('er-match');
-  sel.innerHTML=(qmap[ref]||{opts:[]}).opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+  sel.innerHTML=matchOptsHtml(qmap,ref,[]);
 }
 function saveRuleEdit(path){
   if(_pendingNewNodePath!==path){pushUndo();}
