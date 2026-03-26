@@ -63,14 +63,21 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .node-actions button{font-size:11px;padding:1px 6px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
+.btn-save.dirty{background:#c03830;animation:pulse-save 1.5s ease-in-out infinite}
+@keyframes pulse-save{0%,100%{opacity:1}50%{opacity:0.85}}
+.toast{position:fixed;top:60px;right:20px;padding:10px 20px;border-radius:6px;color:white;font-size:13px;font-weight:700;font-family:'Noto Serif TC',serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
+.toast-ok{background:#4a8a5a}
+.toast-err{background:#c03830}
 </style>
 </head>
 <body>
 <div id="top-bar">
   <span>風鑑學堂 管理介面</span>
-  <button class="btn-save" onclick="saveActive()">儲存到 Firebase</button>
+  <button class="btn-save" id="btn-save" onclick="saveAll()">儲存到 Firebase</button>
   <span class="status" id="status">載入中...</span>
 </div>
+<div id="toast" class="toast"></div>
 <div id="tab-bar">
   <div class="tab-btn active" onclick="switchTab('rules')">評分規則</div>
   <div class="tab-btn" onclick="switchTab('questions')">觀察問題</div>
@@ -103,6 +110,7 @@ var openSections=new Set(); // track which sections are expanded
 function setStatus(m){document.getElementById('status').textContent=m;}
 
 function switchTab(t){
+  if(_dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
   activeTab=t;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector(`.tab-btn[onclick*="${t}"]`).classList.add('active');
@@ -168,7 +176,6 @@ function renderRules(){
         var qmap=buildQmap();
         var mv=Array.isArray(node.match)?node.match:[node.match];
         var warnMap=PARTRESULT_WARN[rulePart]||{};
-        console.log('[autoEdit] rulePart='+rulePart+' aqp='+aqp+' warnMap=',warnMap,' warnMap[aqp]=',aqp?warnMap[aqp]:'-');
         var warnText=aqp&&warnMap[aqp]?'<div style="font-size:11px;color:#999;margin-bottom:6px">提醒：'+aqp+'通常以 partResult 引用，此處為'+rulePart+'特殊條件</div>':'';
         var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
         h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
@@ -300,9 +307,9 @@ function saveRuleEdit(path){
   else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
-  renderAll();setStatus('已修改（未儲存）');
+  renderAll();markDirty();
 }
-function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();setStatus('已刪除（未儲存）');}
+function deleteRuleNode(p){if(!confirm('確定刪除？'))return;delPath(rules[curDim],p);var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();}
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
 
@@ -353,7 +360,7 @@ function doAddItem(p,qPartName){
   var partName=p.split('.')[1];if(partName)openSections.add('r-'+curDim+'-'+partName);
   _autoEditPath=p+'.items.'+newIdx;
   _autoEditQPart=qPartName;
-  renderAll();setStatus('已新增（未儲存）');
+  renderAll();markDirty();
 }
 function toggleSec(key,el){
   if(openSections.has(key))openSections.delete(key);else openSections.add(key);
@@ -454,7 +461,7 @@ function saveQEdit(si,qi){
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
   editingQ=null;
-  renderAll();setStatus('已修改（未儲存）');
+  renderAll();markDirty();
 }
 
 function deleteQ(si,qi){
@@ -477,7 +484,7 @@ function deleteQ(si,qi){
   questions[pn].sections[si].qs.splice(qi,1);
   var total=0;questions[pn].sections.forEach(s=>total+=s.qs.length);
   questions[pn].total=total;
-  renderAll();setStatus('已刪除（未儲存）');
+  renderAll();markDirty();
 }
 
 function addQ(si){
@@ -494,7 +501,7 @@ function addQ(si){
   questions[pn].sections[si].qs.push(newQ);
   questions[pn].total=(questions[pn].total||0)+1;
   editingQ=newId;
-  renderAll();setStatus('已新增 '+newId+'（未儲存）');
+  renderAll();markDirty();
 }
 
 function moveQ(si,qi,dir){
@@ -503,7 +510,7 @@ function moveQ(si,qi,dir){
   var ni=qi+dir;
   if(ni<0||ni>=qs.length)return;
   var tmp=qs[qi];qs[qi]=qs[ni];qs[ni]=tmp;
-  renderAll();setStatus('已移動（未儲存）');
+  renderAll();markDirty();
 }
 
 // Sync current edit form inputs back to data
@@ -542,20 +549,60 @@ function editSectionName(si,el){
   if(name===null)return;
   var pn=Object.keys(questions)[curPart];
   questions[pn].sections[si].label=name;
-  renderAll();setStatus('已修改（未儲存）');
+  renderAll();markDirty();
 }
 
 // ==================== FIREBASE ====================
-function saveActive(){
-  setStatus('儲存中...');
-  var promises=[];
-  if(activeTab==='rules'){
-    promises.push(db.collection('settings').doc('rules').set({rulesJson:JSON.stringify(rules),updatedAt:new Date().toISOString()}));
-  }else{
-    promises.push(db.collection('settings').doc('questions').set({questionsJson:JSON.stringify(questions),updatedAt:new Date().toISOString()}));
-  }
-  Promise.all(promises).then(()=>setStatus('已儲存到 Firebase ✓')).catch(e=>setStatus('儲存失敗: '+e.message));
+// ==================== DIRTY TRACKING + SAVE ====================
+var _dirtyCount=0;
+function markDirty(){
+  _dirtyCount++;
+  updateSaveBtn();
+  setStatus(_dirtyCount+'筆修改未儲存');
 }
+function takeSnapshot(){
+  _dirtyCount=0;
+  updateSaveBtn();
+}
+function updateSaveBtn(){
+  var btn=document.getElementById('btn-save');if(!btn)return;
+  if(_dirtyCount>0){
+    btn.classList.add('dirty');
+    btn.textContent='儲存（'+_dirtyCount+'筆修改）';
+  }else{
+    btn.classList.remove('dirty');
+    btn.textContent='儲存到 Firebase';
+  }
+}
+function showToast(msg,isOk){
+  var t=document.getElementById('toast');if(!t)return;
+  t.textContent=msg;
+  t.className='toast show '+(isOk?'toast-ok':'toast-err');
+  setTimeout(function(){t.className='toast';},2000);
+}
+function saveAll(){
+  if(_dirtyCount===0){showToast('沒有需要儲存的修改',true);return;}
+  var btn=document.getElementById('btn-save');
+  btn.disabled=true;btn.style.opacity='0.6';
+  setStatus('儲存中...');
+  var ts=new Date().toISOString();
+  Promise.all([
+    db.collection('settings').doc('rules').set({rulesJson:JSON.stringify(rules),updatedAt:ts}),
+    db.collection('settings').doc('questions').set({questionsJson:JSON.stringify(questions),updatedAt:ts})
+  ]).then(function(){
+    takeSnapshot();
+    showToast('規則 + 問題已儲存 ✓',true);
+    setStatus('已儲存');
+  }).catch(function(e){
+    showToast('儲存失敗：'+e.message,false);
+    setStatus('儲存失敗');
+  }).finally(function(){
+    btn.disabled=false;btn.style.opacity='1';
+  });
+}
+window.addEventListener('beforeunload',function(e){
+  if(_dirtyCount>0){e.preventDefault();e.returnValue='';}
+});
 
 // ==================== INIT ====================
 async function init(){
@@ -591,6 +638,7 @@ async function init(){
   }
 
   renderAll();
+  takeSnapshot();
   setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位）');
 }
 
