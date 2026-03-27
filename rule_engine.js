@@ -96,12 +96,21 @@ function evaluate(node, obsData, side, partResults) {
     return false;
   }
 
-  // 7. COUNT (supports weight per item, default 1)
+  // 7. COUNT (supports weight per item, default 1; supports group nodes)
   if (node.op === 'COUNT') {
     var count = 0;
     for (var ci = 0; ci < node.items.length; ci++) {
-      if (evaluate(node.items[ci], obsData, side, partResults)) {
-        count += (node.items[ci].weight || 1);
+      var cItem = node.items[ci];
+      if (cItem.group !== undefined && cItem.items) {
+        for (var gi = 0; gi < cItem.items.length; gi++) {
+          if (evaluate(cItem.items[gi], obsData, side, partResults)) {
+            count += (cItem.items[gi].weight || 1);
+          }
+        }
+      } else {
+        if (evaluate(cItem, obsData, side, partResults)) {
+          count += (cItem.weight || 1);
+        }
       }
     }
     return count >= node.min;

@@ -847,12 +847,21 @@ function evaluate(node, obsData, side, partResults) {
     return false;
   }
 
-  // 7. COUNT (supports weight per item, default 1)
+  // 7. COUNT (supports weight per item, default 1; supports group nodes)
   if (node.op === 'COUNT') {
     var count = 0;
     for (var ci = 0; ci < node.items.length; ci++) {
-      if (evaluate(node.items[ci], obsData, side, partResults)) {
-        count += (node.items[ci].weight || 1);
+      var cItem = node.items[ci];
+      if (cItem.group !== undefined && cItem.items) {
+        for (var gi = 0; gi < cItem.items.length; gi++) {
+          if (evaluate(cItem.items[gi], obsData, side, partResults)) {
+            count += (cItem.items[gi].weight || 1);
+          }
+        }
+      } else {
+        if (evaluate(cItem, obsData, side, partResults)) {
+          count += (cItem.weight || 1);
+        }
       }
     }
     return count >= node.min;
@@ -1068,6 +1077,7 @@ function _collectRefs(node){
   if(!node)return [];
   if(node.ref!==undefined)return [node.ref];
   if(node.partResult!==undefined)return [];
+  if(node.group!==undefined&&node.items){var gr=[];node.items.forEach(function(it){gr=gr.concat(_collectRefs(it));});return gr;}
   var refs=[];
   if(node.items)node.items.forEach(function(it){refs=refs.concat(_collectRefs(it));});
   if(node.item)refs=refs.concat(_collectRefs(node.item));
@@ -1150,9 +1160,18 @@ function _expandItems(node,side,qMap,partResults){
   if(node.op==='COUNT'){
     var items=[];
     node.items.forEach(function(it){
-      if(it.ref!==undefined)items.push(_flattenLeaf(it,side,qMap));
-      else if(it.partResult!==undefined)items.push(_flattenItem(it,side,qMap,partResults));
-      else items.push(_flattenItem(it,side,qMap,partResults));
+      if(it.group!==undefined&&it.items){
+        it.items.forEach(function(gi){
+          var flat;
+          if(gi.ref!==undefined)flat=_flattenLeaf(gi,side,qMap);
+          else flat=_flattenItem(gi,side,qMap,partResults);
+          if(flat){flat.groupLabel=it.group;items.push(flat);}
+        });
+      }else{
+        if(it.ref!==undefined)items.push(_flattenLeaf(it,side,qMap));
+        else if(it.partResult!==undefined)items.push(_flattenItem(it,side,qMap,partResults));
+        else items.push(_flattenItem(it,side,qMap,partResults));
+      }
     });
     return items.filter(Boolean);
   }
@@ -1172,7 +1191,17 @@ function _expandLR(node,qMap,partResults){
   }else if(eachNode.op==='COUNT'||eachNode.op==='AND'||eachNode.op==='OR'){
     // Expand each child for L and R
     (eachNode.items||[]).forEach(function(it){
-      if(it.ref!==undefined){
+      if(it.group!==undefined&&it.items){
+        it.items.forEach(function(gi){
+          if(gi.ref!==undefined){
+            var l=_flattenLeaf(gi,'L',qMap);if(l){l.groupLabel=it.group;items.push(l);}
+            var r=_flattenLeaf(gi,'R',qMap);if(r){r.groupLabel=it.group;items.push(r);}
+          }else{
+            var l2=_flattenItem(gi,'L',qMap,partResults);if(l2){l2.groupLabel=it.group;items.push(l2);}
+            var r2=_flattenItem(gi,'R',qMap,partResults);if(r2){r2.groupLabel=it.group;items.push(r2);}
+          }
+        });
+      }else if(it.ref!==undefined){
         items.push(_flattenLeaf(it,'L',qMap));
         items.push(_flattenLeaf(it,'R',qMap));
       }else{
@@ -1595,7 +1624,7 @@ function showKnowledgePage(){
 }
 
 /* ===== 維度條件評分頁 ===== */
-let cpCur=0,cpPartCur=0,_cpLrExpanded={};
+let cpCur=0,cpPartCur=0,_cpLrExpanded={},_cpGroupExpanded={};
 var CP_PART_ORDER=[0,1,4,5,6,7,8,2,3];
 var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
 
@@ -1812,35 +1841,36 @@ function cpRenderMain(){
     '</div>';
 
     // --- 合併左右配對項 ---
-    // 將 items 分組：配對題(side=L/R 且 qid 相同)合併，無 side 或無配對的獨立顯示
-    var merged=[];
-    var usedIdx={};
-    for(var i=0;i<p.items.length;i++){
-      if(usedIdx[i])continue;
-      var item=p.items[i];
-      var qid=item.ids&&item.ids.length?item.ids[0]:'';
-      var q=qid?qMap[qid]:null;
-      // 找配對：同 qid、一個 L 一個 R
-      if(item.side&&q&&q.paired){
-        var pairIdx=-1;
-        var otherSide=item.side==='L'?'R':'L';
-        for(var j=i+1;j<p.items.length;j++){
-          if(usedIdx[j])continue;
-          var jItem=p.items[j];
-          if(jItem.ids&&jItem.ids.length&&jItem.ids[0]===qid&&jItem.side===otherSide){
-            pairIdx=j;break;
+    function buildMerged(itemList){
+      var merged=[];
+      var usedIdx={};
+      for(var i=0;i<itemList.length;i++){
+        if(usedIdx[i])continue;
+        var item=itemList[i];
+        var qid=item.ids&&item.ids.length?item.ids[0]:'';
+        var q=qid?qMap[qid]:null;
+        if(item.side&&q&&q.paired){
+          var pairIdx=-1;
+          var otherSide=item.side==='L'?'R':'L';
+          for(var j=i+1;j<itemList.length;j++){
+            if(usedIdx[j])continue;
+            var jItem=itemList[j];
+            if(jItem.ids&&jItem.ids.length&&jItem.ids[0]===qid&&jItem.side===otherSide){
+              pairIdx=j;break;
+            }
+          }
+          if(pairIdx>=0){
+            usedIdx[i]=true;usedIdx[pairIdx]=true;
+            var lItem=item.side==='L'?item:itemList[pairIdx];
+            var rItem=item.side==='R'?item:itemList[pairIdx];
+            merged.push({type:'paired',qid:qid,q:q,lItem:lItem,rItem:rItem});
+            continue;
           }
         }
-        if(pairIdx>=0){
-          usedIdx[i]=true;usedIdx[pairIdx]=true;
-          var lItem=item.side==='L'?item:p.items[pairIdx];
-          var rItem=item.side==='R'?item:p.items[pairIdx];
-          merged.push({type:'paired',qid:qid,q:q,lItem:lItem,rItem:rItem});
-          continue;
-        }
+        usedIdx[i]=true;
+        merged.push({type:'single',item:item,qid:qid,q:q});
       }
-      usedIdx[i]=true;
-      merged.push({type:'single',item:item,qid:qid,q:q});
+      return merged;
     }
 
     // 渲染單題一列（含 side tag）
@@ -1885,87 +1915,135 @@ function cpRenderMain(){
       return '<div style="font-size:var(--cp-option-desc);color:var(--text-3);padding:0 8px;font-weight:700">'+text+'</div>';
     }
 
-    html+='<div style="display:flex;flex-direction:column">';
-    merged.forEach(function(m){
-      if(m.type==='single'){
-        var item=m.item;
-        var allIds=item.ids||[];
-        if(allIds.length===0||!qMap[allIds[0]]){
-          html+=statusRow(item.ok,item.label);
+    // 渲染一組 merged items 為 HTML
+    function renderMergedList(merged){
+      var out='';
+      merged.forEach(function(m){
+        if(m.type==='single'){
+          var item=m.item;
+          var allIds=item.ids||[];
+          if(allIds.length===0||!qMap[allIds[0]]){
+            out+=statusRow(item.ok,item.label);
+            return;
+          }
+          out+='<div style="border-bottom:1px solid var(--border)">';
+          allIds.forEach(function(qid,qi){
+            var q=qMap[qid];
+            if(!q)return;
+            if(qi>0)out+=connLabel(item.connType||'AND');
+            out+=renderQRow(qid,q,item.side||'');
+          });
+          out+='</div>';
           return;
         }
-        html+='<div style="border-bottom:1px solid var(--border)">';
+
+        // --- 配對題：合併顯示（支援多 id）---
+        var allIds=m.lItem.ids||[m.qid];
+        var anyDiff=false,anyExpanded=false;
+        allIds.forEach(function(qid){
+          var q=qMap[qid];
+          if(!q)return;
+          var vL=obsData[qid+'_L']||obsData[qid]||'';
+          var vR=obsData[qid+'_R']||obsData[qid]||'';
+          if(vL!==vR&&(vL||vR))anyDiff=true;
+          var lrKey=cpCur+'_'+qid;
+          if(_cpLrExpanded[lrKey])anyExpanded=true;
+        });
+        var gKey=cpCur+'_'+allIds[0];
+        var isExp=!!_cpLrExpanded[gKey]||(anyDiff&&!anyExpanded);
+
+        out+='<div style="border-bottom:1px solid var(--border);padding:8px 0">';
+
         allIds.forEach(function(qid,qi){
           var q=qMap[qid];
           if(!q)return;
-          if(qi>0)html+=connLabel(item.connType||'AND');
-          html+=renderQRow(qid,q,item.side||'');
-        });
-        html+='</div>';
-        return;
-      }
+          var isPaired=!!q.paired;
+          if(qi>0)out+=connLabel(m.lItem.connType||'AND');
 
-      // --- 配對題：合併顯示（支援多 id）---
-      var allIds=m.lItem.ids||[m.qid];
-      var firstQ=m.q;
-      // 判斷是否有任何 id 的 L≠R
-      var anyDiff=false,anyExpanded=false;
-      allIds.forEach(function(qid){
-        var q=qMap[qid];
-        if(!q)return;
-        var vL=obsData[qid+'_L']||obsData[qid]||'';
-        var vR=obsData[qid+'_R']||obsData[qid]||'';
-        if(vL!==vR&&(vL||vR))anyDiff=true;
-        var lrKey=cpCur+'_'+qid;
-        if(_cpLrExpanded[lrKey])anyExpanded=true;
-      });
-      // 用第一個 paired id 控制整組展開
-      var groupKey=cpCur+'_'+allIds[0];
-      var isExpanded=!!_cpLrExpanded[groupKey]||(anyDiff&&!anyExpanded);
+          if(isPaired){
+            var vL=obsData[qid+'_L']||obsData[qid]||'';
+            var vR=obsData[qid+'_R']||obsData[qid]||'';
+            var bothSame=vL===vR;
+            var mergedVal=bothSame?vL:'';
+            var diffMark=(!bothSame&&(vL||vR));
 
-      html+='<div style="border-bottom:1px solid var(--border);padding:8px 0">';
+            out+='<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:2px">'+
+              '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>';
+            if(qi===0||allIds.length===1){
+              out+='<button onclick="cpToggleLR(\''+gKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExp?'var(--static)':'transparent')+';color:'+(isExp?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExp?'▲ 收合':'▶ 左右不同')+'</button>';
+              if(anyDiff&&!isExp)out+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>';
+            }
+            out+='</div>';
 
-      allIds.forEach(function(qid,qi){
-        var q=qMap[qid];
-        if(!q)return;
-        var isPaired=!!q.paired;
-        if(qi>0)html+=connLabel(m.lItem.connType||'AND');
-
-        if(isPaired){
-          var vL=obsData[qid+'_L']||obsData[qid]||'';
-          var vR=obsData[qid+'_R']||obsData[qid]||'';
-          var bothSame=vL===vR;
-          var mergedVal=bothSame?vL:'';
-          var diffMark=(!bothSame&&(vL||vR));
-
-          // 題目名稱 + 展開按鈕（只在第一個 paired 題顯示按鈕）
-          html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:2px">'+
-            '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>';
-          if(qi===0||allIds.length===1){
-            html+='<button onclick="cpToggleLR(\''+groupKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExpanded?'var(--static)':'transparent')+';color:'+(isExpanded?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExpanded?'▲ 收合':'▶ 左右不同')+'</button>';
-            if(anyDiff&&!isExpanded)html+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>';
-          }
-          html+='</div>';
-
-          if(!isExpanded){
-            html+=renderMergedOpts(qid,q,mergedVal,diffMark,vL,vR);
+            if(!isExp){
+              out+=renderMergedOpts(qid,q,mergedVal,diffMark,vL,vR);
+            }else{
+              ['L','R'].forEach(function(side){
+                var sideLabel=side==='L'?'左':'右';
+                var cv=obsData[qid+'_'+side]||obsData[qid]||'';
+                out+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:16px">'+
+                  '<span style="font-size:var(--cp-part-meta);padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
+                  renderOpts(q,qid,side,cv)+
+                '</div>';
+              });
+            }
           }else{
-            ['L','R'].forEach(function(side){
-              var sideLabel=side==='L'?'左':'右';
-              var cv=obsData[qid+'_'+side]||obsData[qid]||'';
-              html+='<div style="display:flex;align-items:center;gap:10px;padding:4px 0;margin-left:16px">'+
-                '<span style="font-size:var(--cp-part-meta);padding:2px 8px;border-radius:6px;background:var(--sidebar);color:var(--text-3);flex-shrink:0">'+sideLabel+'</span>'+
-                renderOpts(q,qid,side,cv)+
-              '</div>';
-            });
+            out+=renderQRow(qid,q,'');
           }
-        }else{
-          // 非配對題：直接顯示
-          html+=renderQRow(qid,q,'');
-        }
-      });
+        });
 
-      html+='</div>';
+        out+='</div>';
+      });
+      return out;
+    }
+
+    // --- 按 groupLabel 分組 ---
+    var groups=[];
+    var currentGroup=null;
+    p.items.forEach(function(item){
+      if(item.groupLabel){
+        if(!currentGroup||currentGroup.label!==item.groupLabel){
+          currentGroup={label:item.groupLabel,items:[item]};
+          groups.push(currentGroup);
+        }else{
+          currentGroup.items.push(item);
+        }
+      }else{
+        groups.push({label:null,items:[item]});
+        currentGroup=null;
+      }
+    });
+
+    html+='<div style="display:flex;flex-direction:column">';
+    groups.forEach(function(g){
+      if(g.label){
+        // group 摺疊顯示
+        var groupOk=g.items.filter(function(i){return i.ok;}).length;
+        var groupTotal=g.items.length;
+        var allOk=groupOk===groupTotal;
+        var groupId='grp_'+cpCur+'_'+pi+'_'+g.label.replace(/\s/g,'');
+        var isGrpExp=!!_cpGroupExpanded[groupId];
+        var headerColor=allOk?'var(--static)':'var(--text-3)';
+        var arrow=isGrpExp?'▼':'▶';
+        var scoreBadge='<span style="font-size:var(--cp-option-desc);color:'+headerColor+'">'+groupOk+'/'+groupTotal+'</span>';
+
+        html+='<div onclick="cpToggleGroup(\''+groupId+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 8px;cursor:pointer;border-bottom:1px solid var(--border)">'+
+          '<span style="font-size:12px;color:'+headerColor+'">'+arrow+'</span>'+
+          '<span style="font-size:var(--cp-question);color:'+(allOk?'var(--text)':'var(--text-3)')+';font-weight:700;flex:1">'+g.label+'</span>'+
+          scoreBadge+
+        '</div>';
+
+        if(isGrpExp){
+          html+='<div style="padding-left:20px;border-left:2px solid var(--border);margin-left:12px">';
+          var gMerged=buildMerged(g.items);
+          html+=renderMergedList(gMerged);
+          html+='</div>';
+        }
+      }else{
+        // 無 group：直接渲染
+        var gMerged=buildMerged(g.items);
+        html+=renderMergedList(gMerged);
+      }
     });
     html+='</div>';
   });
@@ -1986,6 +2064,11 @@ function cpToggleLR(lrKey){
       localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
     }
   }
+  cpRenderMain();
+}
+
+function cpToggleGroup(groupId){
+  _cpGroupExpanded[groupId]=!_cpGroupExpanded[groupId];
   cpRenderMain();
 }
 
@@ -2091,16 +2174,47 @@ function renderDimCondMain(){
       '</div>'+
       '<div class="dim-part-body" style="display:flex;flex-direction:column;gap:6px;padding:10px 14px">';
 
-    p.items.forEach(function(item,ii){
+    // 按 groupLabel 分組
+    var dGroups=[];
+    var dCurGrp=null;
+    p.items.forEach(function(item){
+      if(item.groupLabel){
+        if(!dCurGrp||dCurGrp.label!==item.groupLabel){
+          dCurGrp={label:item.groupLabel,items:[item]};
+          dGroups.push(dCurGrp);
+        }else{
+          dCurGrp.items.push(item);
+        }
+      }else{
+        dGroups.push({label:null,items:[item]});
+        dCurGrp=null;
+      }
+    });
+
+    function renderCondItem(item){
       var sideLabel=item.side?'<span class="dim-cond-side">'+(item.side==='L'?'左':'右')+'</span>':'';
       var okClass=item.ok?'ok':'ng';
       var mark=item.ok?'\u2713':'\u2717';
       var lbl=item.label||'(空)';
-      html+='<div class="dim-cond-item">'+
+      return '<div class="dim-cond-item">'+
         '<div class="dim-cond-mark '+okClass+'">'+mark+'</div>'+
         '<div class="dim-cond-label '+okClass+'">'+lbl+'</div>'+
         sideLabel+
       '</div>';
+    }
+
+    dGroups.forEach(function(g){
+      if(g.label){
+        var gOk=g.items.filter(function(i){return i.ok;}).length;
+        var gTot=g.items.length;
+        var allOk=gOk===gTot;
+        var gColor=allOk?'var(--static)':'var(--text-3)';
+        html+='<div style="font-size:13px;font-weight:700;color:'+gColor+';padding:4px 0 2px;margin-top:4px;border-bottom:1px solid var(--border)">'+
+          g.label+' <span style="font-weight:400;font-size:12px">'+gOk+'/'+gTot+'</span></div>';
+        g.items.forEach(function(item){html+=renderCondItem(item);});
+      }else{
+        g.items.forEach(function(item){html+=renderCondItem(item);});
+      }
     });
 
     html+='</div></div>';
