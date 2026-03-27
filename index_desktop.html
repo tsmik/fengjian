@@ -290,6 +290,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <button class="entry-btn" onclick="startApp()">開始</button>
   <div class="entry-deco">2026</div>
 </div>
+<div id="toast-notify" style="position:fixed;top:20px;right:20px;background:#7A9E7E;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none"></div>
 
 <!-- Top Nav Bar -->
 <nav id="top-nav">
@@ -302,6 +303,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
+  <a href="admin.html" target="_blank" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
 </nav>
 
 <!-- Mode Page -->
@@ -2895,6 +2897,50 @@ async function startApp(){
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
   showModePage();
+
+  // 監聽規則和問題變更（onSnapshot）
+  var _snapshotFirst={rules:true,questions:true};
+  db.collection('settings').doc('rules').onSnapshot(function(doc){
+    if(_snapshotFirst.rules){_snapshotFirst.rules=false;return;}
+    if(doc.exists&&doc.data().rulesJson){
+      try{
+        var nr=JSON.parse(doc.data().rulesJson);
+        if(Array.isArray(nr)&&nr.length===13){
+          DIM_RULES=nr;_rulesSource='Firebase';
+          recalcFromObs();_renderCurrentTab();_showToast('規則已更新');
+        }
+      }catch(e){console.log('規則更新解析失敗',e);}
+    }
+  });
+  db.collection('settings').doc('questions').onSnapshot(function(doc){
+    if(_snapshotFirst.questions){_snapshotFirst.questions=false;return;}
+    if(doc.exists&&doc.data().questionsJson){
+      try{
+        var nq=JSON.parse(doc.data().questionsJson);
+        if(nq&&typeof nq==='object'&&Object.keys(nq).length>=11){
+          OBS_PARTS_DATA=nq;OBS_PART_NAMES=Object.keys(nq);_questionsSource='Firebase';
+          recalcFromObs();_renderCurrentTab();_showToast('觀察問題已更新');
+        }
+      }catch(e){console.log('問題更新解析失敗',e);}
+    }
+  });
+}
+
+function _showToast(msg){
+  var t=document.getElementById('toast-notify');if(!t)return;
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(function(){t.style.opacity='0';},2000);
+}
+function _renderCurrentTab(){
+  var active=document.querySelector('.nav-tab.active');
+  var tab=active?active.id:'';
+  try{
+    if(tab==='nav-obs'){renderFaceMap();renderObsCenter();renderDimIndex();}
+    else if(tab==='nav-cond'){cpRender();}
+    else if(tab==='nav-report'){showReport();}
+    else if(tab==='nav-sens'){renderSensPage();}
+    else if(tab==='nav-know'){renderDimIndex();}
+  }catch(e){console.log('重渲染失敗',e);}
 }
 
 function editName(){document.getElementById('name-edit-input').value=userName;document.getElementById('name-edit-overlay').style.display='flex';setTimeout(()=>document.getElementById('name-edit-input').focus(),100);}
