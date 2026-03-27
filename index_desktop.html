@@ -1021,15 +1021,21 @@ function recalcFromObs(){
       var ruleNode=pd.rule||pd;
       var result=_buildPartCond(ruleNode,pd,pn,_di,pi,_pos,qMap,_partEvalResults);
       condResults[_di][pi]=result;
-      // Store for partResult lookups
-      _partEvalResults[pn]={pass:result.pass};
+      // Store for partResult lookups (evaluate-compatible format)
+      var _prEntry={result:result.pass?'positive':'negative',pass:result.pass};
+      var _rn=pd.rule||pd;
+      if(_rn.op==='LR'){
+        _prEntry.L=evaluate(_rn.each,obsData,'L',_partEvalResults);
+        _prEntry.R=evaluate(_rn.each,obsData,'R',_partEvalResults);
+      }
+      _partEvalResults[pn]=_prEntry;
     });
   }
 }
 
 // ===== buildCondResults helpers =====
-function _evalNode(node,side){
-  return evaluate(node,obsData,side||null,{});
+function _evalNode(node,side,partResults){
+  return evaluate(node,obsData,side||null,partResults||{});
 }
 
 function _nodeLabel(node,side,qMap){
@@ -1080,9 +1086,9 @@ function _flattenLeaf(node,side,qMap){
   return {label:label,ok:ok,ids:[node.ref],side:eSide||null,val:Array.isArray(node.match)?null:node.match,wt:node.weight||1};
 }
 
-function _flattenCompound(node,side,qMap){
+function _flattenCompound(node,side,qMap,partResults){
   var label=_nodeLabel(node,side,qMap);
-  var ok=_evalNode(node,side);
+  var ok=_evalNode(node,side,partResults);
   var refs=_collectRefs(node);
   var eSide=null;
   if(node.items&&node.items.length>0){
@@ -1100,21 +1106,26 @@ function _flattenItem(node,side,qMap,partResults){
   if(node.partResult!==undefined){
     var pr=node.partResult;
     var ok=false;
-    if(pr.indexOf('.')>=0){
-      // partResult like "眉.L"
-      ok=_evalNode(node,null);
+    var label='';
+    var dotIdx=pr.indexOf('.');
+    if(dotIdx>=0){
+      var partN=pr.substring(0,dotIdx);
+      var subSide=pr.substring(dotIdx+1);
+      ok=partResults[partN]?partResults[partN][subSide]===true:false;
+      label=(subSide==='L'?'左':'右')+partN+'達標';
     }else{
-      ok=partResults[pr]?partResults[pr].pass:false;
+      ok=partResults[pr]?(partResults[pr].result==='positive'):false;
+      label=pr+'達標';
     }
-    return {label:'引用 '+pr+' 結果',ok:ok,ids:[],side:null,val:null,wt:1};
+    return {label:label,ok:ok,ids:[],side:dotIdx>=0?pr.substring(dotIdx+1):null,val:null,wt:1};
   }
   if(node.op==='NOT'){
     var inner=_flattenItem(node.item,side,qMap,partResults);
-    var notOk=!_evalNode(node.item,side);
+    var notOk=!_evalNode(node.item,side,partResults);
     return {label:'不可有 '+(inner?inner.label:''),ok:notOk,ids:_collectRefs(node.item),side:inner?inner.side:null,val:null,wt:1};
   }
   // Complex node (AND/OR/VETO) → flatten as one item
-  return _flattenCompound(node,side,qMap);
+  return _flattenCompound(node,side,qMap,partResults);
 }
 
 function _expandItems(node,side,qMap,partResults){
@@ -1142,7 +1153,7 @@ function _expandItems(node,side,qMap,partResults){
     });
     return items.filter(Boolean);
   }
-  return [_flattenCompound(node,side,qMap)];
+  return [_flattenCompound(node,side,qMap,partResults)];
 }
 
 function _expandLR(node,qMap,partResults){
