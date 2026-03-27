@@ -177,6 +177,7 @@ function getHintForMatch(qmap,ref,matchVal){
   return opt?opt.hint:'';
 }
 var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'引用結果'};
+function formatPartResult(pr){var d=pr.indexOf('.');if(d>=0){var p=pr.substring(0,d),s=pr.substring(d+1);return (s==='L'?'左':'右')+p;}return pr;}
 function isInsideLR(path){return path.indexOf('.each')!==-1;}
 function advancedFieldsHtml(curSide,curWeight){
   var sOpts='<option value=""'+((!curSide||curSide==='')?' selected':'')+'>不分左右</option>';
@@ -268,7 +269,7 @@ function renderNode(node,path,depth,qmap){
   if(!node)return '';
   var h='',ind=depth*8,bg=depthStyle(depth);
   if(node.partResult!==undefined){
-    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${node.partResult}</span>${nodeActs(path)}</div>`;
+    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${formatPartResult(node.partResult)}</span>${nodeActs(path)}</div>`;
   }
   if(node.ref!==undefined){
     var q=(qmap||{})[node.ref]||{text:'?',fullOpts:[]};
