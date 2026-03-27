@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "dimIndex": 12,
+  "positive": "進",
+  "negative": "退",
+  "positiveType": "動",
+  "negativeType": "靜",
+  "parts": {
+    "頭": {
+      "op": "COUNT",
+      "min": 3,
+      "items": [
+        {
+          "ref": "h14",
+          "match": "頭窄",
+          "weight": 2
+        },
+        {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "h10",
+              "match": "兩側不一致"
+            },
+            {
+              "ref": "h7",
+              "match": "有自剋骨"
+            },
+            {
+              "ref": "h8",
+              "match": "有橫條骨"
+            }
+          ]
+        },
+        {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "h11",
+              "match": "突露",
+              "side": "L"
+            },
+            {
+              "ref": "h11",
+              "match": "凹陷",
+              "side": "L"
+            }
+          ]
+        },
+        {
+          "op": "OR",
+          "items": [
+            {
+              "ref": "h11",
+              "match": "突露",
+              "side": "R"
+            },
+            {
+              "ref": "h11",
+              "match": "凹陷",
+              "side": "R"
+            }
+          ]
+        }
+      ]
+    },
+    "上停": {
+      "ref": "e8",
+      "match": "額方"
+    },
+    "耳": {
+      "op": "LR",
+      "merge": "any",
+      "each": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "er1",
+            "match": "耳短"
+          },
+          {
+            "ref": "er7",
+            "match": "耳高"
+          },
+          {
+            "ref": "er5",
+            "match": "招風耳"
+          }
+        ]
+      }
+    },
+    "眉": {
+      "op": "LR",
+      "merge": "any",
+      "each": {
+        "op": "OR",
+        "items": [
+          {
+            "ref": "br15",
+            "match": "質硬"
+          },
+          {
+            "ref": "br1",
+            "match": "眉短"
+          },
+          {
+            "ref": "br18",
+            "match": "眉毛短"
+          }
+        ]
+      }
+    },
+    "眼": {
+      "op": "LR",
+      "merge": "any",
+      "each": {
+        "ref": "ey1",
+        "match": "眼短"
+      }
+    },
+    "鼻": {
+      "op": "OR",
+      "items": [
+        {
+          "ref": "n10",
+          "match": "肉多於骨"
+        },
+        {
+          "ref": "n1",
+          "match": "鼻短"
+        },
+        {
+          "ref": "n4",
+          "match": "鼻窄小"
+        },
+        {
+          "ref": "n11",
+          "match": "無起節"
+        }
+      ]
+    },
+    "口": {
+      "ref": "m1",
+      "match": [
+        "口開大合小",
+        "口適中"
+      ]
+    },
+    "中停": {
+      "op": "COUNT",
+      "min": 4,
+      "items": [
+        {
+          "partResult": "眉.L"
+        },
+        {
+          "partResult": "眉.R"
+        },
+        {
+          "partResult": "眼.L"
+        },
+        {
+          "partResult": "眼.R"
+        },
+        {
+          "partResult": "鼻"
+        },
+        {
+          "ref": "q3",
+          "match": "顴無肉少肉",
+          "side": "L"
+        },
+        {
+          "ref": "q3",
+          "match": "顴無肉少肉",
+          "side": "R"
+        }
+      ]
+    },
+    "下停": {
+      "op": "COUNT",
+      "min": 3,
+      "items": [
+        {
+          "partResult": "口"
+        },
+        {
+          "ref": "p2",
+          "match": "人中短"
+        },
+        {
+          "ref": "c4",
+          "match": "地閣窄尖"
+        },
+        {
+          "op": "AND",
+          "items": [
+            {
+              "ref": "y1",
+              "match": "頤削",
+              "side": "L"
+            },
+            {
+              "ref": "y2",
+              "match": "頤露尖",
+              "side": "L"
+            }
+          ]
+        },
+        {
+          "op": "AND",
+          "items": [
+            {
+              "ref": "y1",
+              "match": "頤削",
+              "side": "R"
+            },
+            {
+              "ref": "y2",
+              "match": "頤露尖",
+              "side": "R"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

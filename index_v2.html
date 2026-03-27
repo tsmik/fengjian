@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="2026">
+<meta property="og:title" content="風鑑學堂 人相兵法">
+<meta property="og:description" content="2026">
+<meta property="og:type" content="website">
+<meta name="twitter:title" content="風鑑學堂 人相兵法">
+<meta name="twitter:description" content="2026">
+<title>風鑑學堂 人相兵法</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fcfaf8; --sidebar: #f7f2ed; --text: #1d1c16;
+  --active: #d97757; --static: #8ba888; --border: #e8e3dd;
+  --dark: #2d2d2d; --gold: #d4a373;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); font-family: 'Noto Serif TC', serif; margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text); padding-top: env(safe-area-inset-top); }
+.sidebar { width: 33.33%; background: var(--sidebar); display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid var(--border); flex-shrink: 0; }
+.cat-header { padding: clamp(14px,2vw,22px) clamp(15px,1.5vw,18px); font-size: clamp(15px,2vw,20px); font-weight: 900; letter-spacing: 2px; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
+.dim-item { padding: clamp(15px,2vw,22px); font-size: clamp(15px,2vw,20px); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+.dim-item.active { background: white !important; color: var(--text) !important; font-weight: 900; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.1); flex-shrink: 0; margin-left: 10px; }
+.status-dot.done { background: var(--static); }
+.main-panel { width: 66.66%; display: flex; flex-direction: column; height: 100vh; }
+.main-header { padding: 15px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: white; }
+.main-header h2 { margin: 0; font-size: clamp(16px,2.2vw,24px); font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdr-btn { background:var(--dark);border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-family:'Noto Serif TC',serif;cursor:pointer;color:white;white-space:nowrap; }
+.scoring-area { flex-grow: 1; padding: 10px; display: flex; flex-direction: column; overflow-y: auto; }
+.score-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.part-label { width: clamp(75px,8vw,100px); text-align: center; font-size: clamp(13px,1.5vw,18px); font-weight: 700; background: #f0ede8; padding: 8px 0; border-radius: 6px; }
+.option-box { flex: 1; position: relative; }
+.option-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+.option-label { display: block; padding: clamp(12px,1.5vw,18px) 4px; text-align: center; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-radius: 8px; font-size: clamp(15px,2vw,20px); font-weight: 500; color: #bbb; transition: all 0.2s; }
+.static-type input:checked + .option-label { background: var(--static); color: white; box-shadow: none; }
+.dynamic-type input:checked + .option-label { background: var(--active); color: white; box-shadow: none; }
+.footer-analysis { background: white; border-top: 1px solid var(--border); padding: 12px 15px; padding-bottom: max(12px, env(safe-area-inset-bottom)); flex-shrink: 0; }
+.result-row { display: flex; align-items: stretch; gap: 8px; }
+.result-box { flex: 1; background: #f4f1ed; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: clamp(20px,2.5vw,28px); font-weight: 700; color: #888; }
+.result-mid { flex: 1.5; text-align: center; font-size: clamp(20px,2.5vw,28px); font-weight: 700; background: white; padding: 10px 0; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+#report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 3000; padding: 15px; padding-top: max(15px, env(safe-area-inset-top)); padding-bottom: max(80px, env(safe-area-inset-bottom)); overflow-y: auto; }
+.report-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.report-name { width: 50%; border-bottom: 2px solid var(--text); padding: 8px 0; font-size: clamp(22px,3vw,32px); font-weight: 900; font-family: 'Noto Serif TC', serif; }
+.report-title { font-size: clamp(22px,3vw,32px); font-weight: 900; letter-spacing: 1px; }
+.stat-grid { display: grid; grid-template-columns: 35px repeat(13, 1fr); gap: 1px; margin-bottom: 4px; }
+.stat-item { padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; border-radius: 4px; }
+.stat-item span { font-size: clamp(14px,1.5vw,18px); font-weight: 900; white-space: nowrap; }
+.stat-val { font-size: clamp(15px,1.5vw,20px); font-weight: 900; font-family: monospace; }
+.s-overall { grid-column: 2/span 13; background: var(--dark); color: white; flex-direction: row; justify-content: flex-start; align-items: center; gap: 8px; }
+.s-pre   { grid-column: 2/8;   background: #f0ebe5; border-radius: 4px 0 0 4px; }
+.s-luck  { grid-column: 8/11;  background: #e5edf0; }
+.s-post  { grid-column: 11/15; background: #e8f0e5; border-radius: 0 4px 4px 0; }
+.s-lead  { grid-column: 2/5;   background: #ebe6e0; border-radius: 4px 0 0 0; }
+.s-sub   { grid-column: 5/8;   background: #f5f2ed; border-radius: 0 4px 0 0; }
+.ds-bar-wrap { display: grid; grid-template-columns: 35px 1fr; gap: 1px; margin-bottom: 4px; }
+.ds-bar { height: 28px; border-radius: 4px; overflow: hidden; position: relative; background: #eee; display: flex; align-items: center; }
+.ds-bar-static { height: 100%; background: var(--static); transition: width 0.4s ease; }
+.ds-bar-dynamic { height: 100%; background: var(--active); transition: width 0.4s ease; }
+.ds-bar-label { position: absolute; left: 8px; color: white; font-size: clamp(14px,1.5vw,18px); font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.ds-bar-label-r { position: absolute; right: 8px; color: white; font-size: clamp(14px,1.5vw,18px); font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+#name-edit-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 8000; align-items: center; justify-content: center; }
+#name-edit-overlay.show { display: flex; }
+.name-edit-box { background: white; border-radius: 12px; padding: 28px 24px; width: 80%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+.name-edit-box h3 { margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 2px; }
+.name-edit-input { border: none; border-bottom: 2px solid var(--text); padding: 8px 0; font-size: 22px; font-weight: 900; font-family: 'Noto Serif TC', serif; outline: none; width: 100%; }
+.name-edit-btns { display: flex; gap: 8px; }
+.name-edit-btns button { flex: 1; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 900; font-family: 'Noto Serif TC', serif; cursor: pointer; border: none; }
+.name-edit-confirm { background: var(--dark); color: white; }
+.name-edit-cancel { background: #f0ede8; color: var(--text); }
+#entry-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; padding-top: max(30px, env(safe-area-inset-top)); padding-bottom: max(30px, env(safe-area-inset-bottom)); }
+.entry-logo { font-size: clamp(32px,8vw,56px); font-weight: 900; letter-spacing: 4px; color: var(--text); margin-bottom: 4px; }
+.entry-sub { font-size: clamp(32px,8vw,56px); font-weight: 900; color: var(--text); letter-spacing: 4px; margin-bottom: 48px; }
+.entry-input { width: 100%; max-width: 340px; border: none; border-bottom: 2px solid var(--text); padding: 12px 0; font-size: clamp(22px,4vw,30px); font-weight: 900; background: transparent; outline: none; font-family: 'Noto Serif TC', serif; color: var(--text); margin-bottom: 32px; }
+.entry-input::placeholder { color: #ccc; }
+.entry-btn { width: 100%; max-width: 340px; height: 54px; background: var(--dark); color: white; border: none; border-radius: 8px; font-size: clamp(16px,2vw,20px); font-weight: 900; letter-spacing: 3px; cursor: pointer; font-family: 'Noto Serif TC', serif; transition: opacity 0.2s; }
+.entry-btn:active { opacity: 0.8; }
+.entry-deco { position: absolute; bottom: 30px; font-size: 12px; color: #ccc; letter-spacing: 2px; }
+.btn-line { width: clamp(40%,45%,50%); height: clamp(45px,5vw,55px); background: #06C755; color: white; border: none; border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; margin: 8px 0 0; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Noto Serif TC', serif; }
+.btn-line svg { flex-shrink: 0; }
+.report-actions { display: flex; flex-direction: column; align-items: flex-start; }
+.matrix-wrap { width: 100%; margin-top: 5px; }
+.matrix-layout { display: grid; grid-template-columns: 35px repeat(13, 1fr); gap: 1px; }
+.matrix-labels { grid-column: 1; display: flex; flex-direction: column; gap: 2px; }
+.row-label { height: 28px; display: flex; align-items: center; justify-content: center; font-size: clamp(13px,1.6vw,17px); color: #666; font-weight: 900; }
+.matrix-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dim-header-v { height: clamp(60px,7vw,80px); font-size: clamp(14px,1.6vw,18px); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; padding: 4px 0; border-radius: 3px 3px 0 0; line-height: 1.3; }
+.prop-bar { height: 12px; background: #eee; border-radius: 2px; }
+.prop-bar.red { background: var(--active); }
+.prop-bar.green { background: var(--static); }
+.coeff-lbl { height: 14px; font-size: 12px; font-weight: 900; color: #666; display: flex; align-items: center; justify-content: center; font-family: monospace; }
+.stack-area { height: clamp(50px,6vw,80px); display: flex; flex-direction: column-reverse; gap: 1px; background: var(--bg); border-bottom: 1px solid #eee; border-radius: 2px; }
+.stack-unit { width: 100%; height: clamp(4px,0.5vw,7px); background: var(--gold); opacity: 0.8; }
+.im-cell { height: 28px; width: 100%; background: #f9f7f4; border-radius: 2px; }
+.im-box { height: 100%; display: flex; align-items: center; justify-content: center; font-size: clamp(13px,1.6vw,17px); font-weight: 900; color: white; border-radius: 2px; }
+.im-box.red { background: var(--active); opacity: 0.95; }
+.im-box.green { background: var(--static); opacity: 0.95; }
+.legend { font-size: clamp(12px,1.5vw,16px); color: #aaa; margin-top: 10px; display: flex; justify-content: center; gap: clamp(12px,2vw,24px); font-weight: 900; }
+.btn-back { width: clamp(40%,45%,50%); height: clamp(45px,5vw,55px); background: transparent; color: var(--dark); border: 2px solid var(--dark); border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; margin: 15px 0 30px; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif TC', serif; }
+.api-key-row { width: 100%; max-width: 340px; margin-bottom: 20px; }
+.api-key-row label { font-size: clamp(13px,1.5vw,16px); font-weight: 700; color: #888; letter-spacing: 2px; display: block; margin-bottom: 6px; }
+.api-key-row input { width: 100%; border: none; border-bottom: 2px solid #ccc; padding: 8px 0; font-size: 16px; font-weight: 500; background: transparent; outline: none; font-family: 'Noto Serif TC', serif; color: var(--text); }
+.api-key-row input:focus { border-bottom-color: var(--text); }
+.btn-ai { flex: 1; height: clamp(45px,5vw,55px); background: var(--gold); color: white; border: none; border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif TC', serif; margin: 0; }
+.btn-ai:disabled { opacity: 0.6; cursor: not-allowed; }
+.ai-section { margin-top: 16px; padding: 16px; background: #faf8f5; border-radius: 10px; border: 1px solid var(--border); }
+.ai-section h3 { margin: 0 0 12px; font-size: clamp(16px,2vw,20px); font-weight: 900; letter-spacing: 2px; color: var(--text); }
+.ai-block { margin-bottom: 14px; }
+.ai-block h4 { margin: 0 0 4px; font-size: clamp(14px,1.6vw,17px); font-weight: 900; color: var(--gold); }
+.ai-block p { margin: 0; font-size: clamp(14px,1.5vw,16px); line-height: 1.8; color: #444; }
+.ai-loading { text-align: center; padding: 30px 0; color: #999; font-size: 16px; font-weight: 700; }
+.ai-loading .dots::after { content: ''; animation: dots 1.5s steps(4,end) infinite; }
+@keyframes dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
+.detail-section { margin-top: 16px; }
+.detail-section h3 { margin: 0 0 10px; font-size: clamp(16px,2vw,20px); font-weight: 900; letter-spacing: 2px; color: var(--text); }
+.detail-group { margin-bottom: 6px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.detail-group-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f0ede8; cursor: pointer; font-size: clamp(14px,1.6vw,17px); font-weight: 900; color: var(--text); user-select: none; }
+.detail-group-header .toggle-arrow { transition: transform 0.2s; font-size: 12px; color: #999; }
+.detail-group-header.collapsed .toggle-arrow { transform: rotate(-90deg); }
+.detail-group-body { padding: 6px 14px 10px; }
+.detail-group-body.hidden { display: none; }
+.detail-check { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer; }
+.detail-check:last-child { border-bottom: none; }
+.detail-check input[type="checkbox"] { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--static); cursor: pointer; }
+.detail-check label { font-size: clamp(13px,1.5vw,16px); color: #666; cursor: pointer; line-height: 1.5; transition: color 0.2s; }
+.detail-check input:checked + label { color: var(--text); font-weight: 700; }
+.detail-stats { font-size: clamp(12px,1.4vw,15px); color: #999; font-weight: 700; padding: 8px 0 0; text-align: right; }
+</style>
+</head>
+<body>
+
+<div id="entry-page">
+  <div class="entry-logo">風鑑學堂</div>
+  <div class="entry-sub">人相兵法</div>
+  <input class="entry-input" id="entry-name" placeholder="輸入姓名" maxlength="20">
+  <div style="width:100%;max-width:340px;font-size:clamp(16px,2vw,20px);font-weight:900;color:#888;letter-spacing:2px;margin-bottom:24px;margin-top:-16px;">存檔後，請用相同姓名登入</div>
+  <div class="api-key-row">
+    <label>Anthropic API Key（選填，用於 AI 評析）</label>
+    <input type="password" id="entry-api-key" placeholder="sk-ant-..." autocomplete="off">
+  </div>
+  <button class="entry-btn" onclick="startApp()">開始</button>
+  <div class="entry-deco">2026</div>
+</div>
+
+<div id="name-edit-overlay" style="display:none">
+  <div class="name-edit-box">
+    <h3>修改姓名</h3>
+    <input class="name-edit-input" id="name-edit-input" maxlength="20">
+    <div class="name-edit-btns">
+      <button class="name-edit-cancel" onclick="closeEditName()">取消</button>
+      <button class="name-edit-confirm" onclick="confirmEditName()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- 觀察輸入頁 -->
+<div class="sidebar" id="obs-sidebar" style="display:none"></div>
+<div class="main-panel" id="obs-main-panel" style="display:none">
+  <div class="main-header">
+    <h2 id="obs-title">觀察輸入</h2>
+    <button class="hdr-btn" onclick="showReport()" style="margin-left:auto;">報告</button>
+  </div>
+  <div class="scoring-area" id="obs-area"></div>
+  <div class="footer-analysis" id="obs-footer"></div>
+</div>
+
+<!-- 13 維度頁 -->
+<div class="sidebar" id="sidebar" style="display:none"></div>
+<div class="main-panel" id="main-panel" style="display:none">
+  <div class="main-header">
+    <h2 id="dim-title">系統載入中...</h2>
+    <button class="hdr-btn" onclick="showObsPage()" style="margin-left:auto;">觀察</button>
+    <button class="hdr-btn" onclick="showReport()">報告</button>
+  </div>
+  <div class="scoring-area" id="scoring-area"></div>
+  <div class="footer-analysis" id="footer"></div>
+</div>
+
+<div id="report-overlay">
+  <div class="report-top">
+    <div class="report-name" id="report-name-display"></div>
+    <div class="report-title">人相兵法</div>
+  </div>
+  <div class="stat-grid"><div></div><div class="stat-item s-overall"><span>總合係數 <strong class="stat-val" id="v-total">0.0</strong></span></div></div>
+  <div class="stat-grid"><div></div><div class="stat-item s-pre"><span>先天</span><strong class="stat-val" id="v-pre">0.0</strong></div><div class="stat-item s-luck"><span>運氣</span><strong class="stat-val" id="v-luck">0.0</strong></div><div class="stat-item s-post"><span>後天</span><strong class="stat-val" id="v-post">0.0</strong></div></div>
+  <div class="stat-grid"><div></div><div class="stat-item s-lead"><span>領導</span><strong class="stat-val" id="v-lead">0.0</strong></div><div class="stat-item s-sub"><span>從屬</span><strong class="stat-val" id="v-sub">0.0</strong></div></div>
+  <div class="ds-bar-wrap"><div></div><div class="ds-bar" id="ds-bar"><div class="ds-bar-static" id="ds-bar-s" style="width:50%"></div><div class="ds-bar-dynamic" id="ds-bar-d" style="width:50%"></div><span class="ds-bar-label" id="ds-label-s">靜 0</span><span class="ds-bar-label-r" id="ds-label-d">動 0</span></div></div>
+  <div class="matrix-wrap"><div class="matrix-layout" id="matrix-layout"><div class="matrix-labels" id="matrix-labels"></div></div></div>
+  <div class="legend"><span><span style="color:var(--static)">■</span> 靜</span><span><span style="color:var(--active)">■</span> 動</span><span><span style="color:var(--gold)">■</span> 係數</span></div>
+  <div id="detail-conditions-area"></div>
+  <div id="ai-analysis-area"></div>
+  <div class="report-actions" style="flex-direction:row;gap:8px;margin-top:16px;flex-wrap:wrap;padding-bottom:max(20px,env(safe-area-inset-bottom));">
+    <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">← 回到觀察</button>
+    <button class="btn-back" onclick="closeReport()" style="flex:1;margin:0;">← 修改評分</button>
+    <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
+    <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-ai" onclick="generateAI()" id="btn-ai" style="flex-basis:100%;">生成 AI 評析</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
+const PARTS_SHORT=["頭","上","中","下","耳","眉","眼","鼻","口"];
+const PALETTE=[{bg:"#f0ebe5",tx:"#4a453e"},{bg:"#ece4db",tx:"#4a4138"},{bg:"#ebe6e0",tx:"#45403a"},{bg:"#f5efe6",tx:"#4d463d"},{bg:"#f2ece4",tx:"#4a433b"},{bg:"#e8e2d9",tx:"#403a31"},{bg:"#e5edf0",tx:"#3b4d54"},{bg:"#d9e5eb",tx:"#2d3a40"},{bg:"#cedde6",tx:"#253138"},{bg:"#e8f0e5",tx:"#3d4a3b"},{bg:"#dce8d9",tx:"#2e3a2c"},{bg:"#d1e0cc",tx:"#243122"},{bg:"#c6d8bf",tx:"#1d291b"}];
+const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"方",b:"圓",aT:"動",bT:"靜",view:"成就"},{cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
+
+/* ===== 觀察條件資料 ===== */
+const OBS_GROUPS=[
+  {name:'頭',items:[{id:'h01',label:'左頂骨龜背，緩緩向中間隆起'},{id:'h02',label:'右頂骨龜背，緩緩向中間隆起'},{id:'h03',label:'左右頂骨大小一致'},{id:'h04L',label:'左頂骨圓而不方'},{id:'h04R',label:'右頂骨圓而不方'},{id:'h05',label:'中線直前（百會穴→前方為直線）'},{id:'h06',label:'中線直後（百會穴→枕骨為直線）'},{id:'h07',label:'枕骨圓（後腦為圓不為平）'},{id:'h08',label:'枕骨兩側一致，無傾斜'},{id:'h09',label:'枕骨無凹凸或自剋骨'},{id:'h10',label:'左華陽圓隆起，不尖平凹'},{id:'h11',label:'右華陽圓隆起，不尖平凹'},{id:'h12',label:'左右華陽大小一致'},{id:'h13',label:'左華陽平直'},{id:'h14',label:'右華陽平直'}]},
+  {name:'上停（額）',items:[{id:'f01',label:'額無疵（無痕紋痣疤）'},{id:'f02',label:'額平寬（正面看平且寬）'},{id:'f03',label:'額無凹凸（無左低右傾）'},{id:'f04',label:'額隆（側面有隆起弧度）'},{id:'f05',label:'額立（側面偏直上非斜上）'},{id:'f06',label:'日月角隆（側看隆起）'},{id:'f07',label:'日月角開（正面看偏兩側）'}]},
+  {name:'左耳',items:[{id:'eL01',label:'耳長（超過眼到鼻準底2/3）'},{id:'eL02',label:'耳高（耳上緣齊眉或以上）'},{id:'eL03',label:'耳立（接近垂直，無提耳）'},{id:'eL04',label:'耳圓（輪圓無凹陷波浪）'},{id:'eL05',label:'耳大'},{id:'eL06',label:'耳厚（耳肉多）'},{id:'eL07',label:'耳堅（耳肉不軟）'},{id:'eL08',label:'輪廓分明'},{id:'eL09',label:'輪包廓（廓不擋輪）'},{id:'eL10',label:'有垂珠'}]},
+  {name:'右耳',items:[{id:'eR01',label:'耳長（超過眼到鼻準底2/3）'},{id:'eR02',label:'耳高（耳上緣齊眉或以上）'},{id:'eR03',label:'耳立（接近垂直，無提耳）'},{id:'eR04',label:'耳圓（輪圓無凹陷波浪）'},{id:'eR05',label:'耳大'},{id:'eR06',label:'耳厚（耳肉多）'},{id:'eR07',label:'耳堅（耳肉不軟）'},{id:'eR08',label:'輪廓分明'},{id:'eR09',label:'輪包廓（廓不擋輪）'},{id:'eR10',label:'有垂珠'}]},
+  {name:'耳（整體）',items:[{id:'e00',label:'左右耳高度、大小、耳型一致'}]},
+  {name:'左眉',items:[{id:'mL01',label:'眉長過目'},{id:'mL02',label:'眉彎（尾1/3有彎朝下）'},{id:'mL03',label:'眉平（一條線，無彎）'},{id:'mL04',label:'有鷹角（2/3處有轉折）'},{id:'mL05',label:'眉質好（毛順濃淡均勻）'},{id:'mL06',label:'眉無中斷'},{id:'mL07',label:'眉頭退印（不蓋印堂）'},{id:'mL08',label:'眉尾有聚（收攏不散）'},{id:'mL09',label:'眉身鋪陳有致（毛距相等）'},{id:'mL10',label:'眉附骨位'},{id:'mL11',label:'眉長有揚（眉尾往上）'},{id:'mL12',label:'眉高居額'},{id:'mL13',label:'眉不壓眼（間距一指幅以上）'},{id:'mL14',label:'眉不沖根'},{id:'mL15',label:'眉不過目（一小段濃短）'},{id:'mL16',label:'根根見肉（毛距見皮膚）'}]},
+  {name:'右眉',items:[{id:'mR01',label:'眉長過目'},{id:'mR02',label:'眉彎（尾1/3有彎朝下）'},{id:'mR03',label:'眉平（一條線，無彎）'},{id:'mR04',label:'有鷹角（2/3處有轉折）'},{id:'mR05',label:'眉質好（毛順濃淡均勻）'},{id:'mR06',label:'眉無中斷'},{id:'mR07',label:'眉頭退印（不蓋印堂）'},{id:'mR08',label:'眉尾有聚（收攏不散）'},{id:'mR09',label:'眉身鋪陳有致（毛距相等）'},{id:'mR10',label:'眉附骨位'},{id:'mR11',label:'眉長有揚（眉尾往上）'},{id:'mR12',label:'眉高居額'},{id:'mR13',label:'眉不壓眼（間距一指幅以上）'},{id:'mR14',label:'眉不沖根'},{id:'mR15',label:'眉不過目（一小段濃短）'},{id:'mR16',label:'根根見肉（毛距見皮膚）'}]},
+  {name:'眉（整體）',items:[{id:'m00',label:'雙眉大小、高低一致'}]},
+  {name:'左眼',items:[{id:'yL01',label:'眼長（細長或大而長）'},{id:'yL02',label:'眼平（眼尾不朝上或朝下）'},{id:'yL03',label:'眼弧（上下眼瞼有弧度）'},{id:'yL04',label:'眼頭有鉤'},{id:'yL05',label:'眼尾有刀裁'}]},
+  {name:'右眼',items:[{id:'yR01',label:'眼長（細長或大而長）'},{id:'yR02',label:'眼平（眼尾不朝上或朝下）'},{id:'yR03',label:'眼弧（上下眼瞼有弧度）'},{id:'yR04',label:'眼頭有鉤'},{id:'yR05',label:'眼尾有刀裁'}]},
+  {name:'眼（整體）',items:[{id:'y00',label:'左右眼高度、大小、眼型一致'}]},
+  {name:'鼻',items:[{id:'n01',label:'鼻長'},{id:'n02',label:'鼻高（鼻樑年壽高）'},{id:'n03',label:'鼻直（與面部中線重合）'},{id:'n04',label:'鼻肉多於骨'},{id:'n05',label:'鼻樑無明顯起節'}]},
+  {name:'口',items:[{id:'k01',label:'口大（開大合小）'},{id:'k02',label:'涯岸分明（唇邊界明顯，有肉）'},{id:'k03',label:'嘴角有收'},{id:'k04',label:'嘴角不朝下'},{id:'k05',label:'嘴角平（水平一字）'},{id:'k06',label:'嘴角朝上'},{id:'k07',label:'唇厚均（上下唇差不多）'},{id:'k08',label:'閉合線有曲度弧度'},{id:'k09',label:'閉合線為水平一字'},{id:'k10',label:'口中線在臉中線上'}]},
+  {name:'左顴',items:[{id:'qL01',label:'顴高（靠近眼下緣）'},{id:'qL02',label:'顴隆（骨感明顯）'},{id:'qL03',label:'顴肉多於骨'},{id:'qL04',label:'顴鼻相稱'}]},
+  {name:'右顴',items:[{id:'qR01',label:'顴高（靠近眼下緣）'},{id:'qR02',label:'顴隆（骨感明顯）'},{id:'qR03',label:'顴肉多於骨'},{id:'qR04',label:'顴鼻相稱'}]},
+  {name:'人中',items:[{id:'r01',label:'人中深（如剖竹狀）'},{id:'r02',label:'人中長（至少食指寬）'},{id:'r03',label:'人中直（與中線重合）'}]},
+  {name:'地閣',items:[{id:'g01',label:'地閣起（豐滿有起，承漿凹）'},{id:'g02',label:'地閣平（下巴骨平，無凹凸）'},{id:'g03',label:'地閣圓（下巴骨圓）'},{id:'g04',label:'地閣寬（至少與口同寬）'}]},
+  {name:'左頤',items:[{id:'iL01',label:'頤豐（豐隆有肉）'},{id:'iL02',label:'頤不削'},{id:'iL03',label:'頤圓（有弧度有肉）'},{id:'iL04',label:'頤平直（不隆不凹不尖削）'}]},
+  {name:'右頤',items:[{id:'iR01',label:'頤豐（豐隆有肉）'},{id:'iR02',label:'頤不削'},{id:'iR03',label:'頤圓（有弧度有肉）'},{id:'iR04',label:'頤平直（不隆不凹不尖削）'}]},
+  {name:'頤（整體）',items:[{id:'i00',label:'左右頤大小一致'}]}
+];
+const OBS_PARTS=[{name:'頭',groups:[0]},{name:'上停',groups:[1]},{name:'耳',groups:[2,3,4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8,9,10]},{name:'鼻',groups:[11]},{name:'口',groups:[12]},{name:'顴骨',groups:[13,14]},{name:'人中',groups:[15]},{name:'地閣',groups:[16]},{name:'頤',groups:[17,18,19]}];
+
+let obsData={}, curObsPart=0;
+
+/* ===== recalcFromObs ===== */
+function recalcFromObs(){
+  const hasAny=Object.keys(obsData).length>0;
+  if(!hasAny){for(let d=0;d<4;d++)data[d]=Array(9).fill(null);return;}
+  const ck=id=>!!obsData[id],cnt=(...c)=>c.filter(Boolean).length;let s;
+  // Dim 0 形勢 pass→A
+  s=cnt(ck('h01'),ck('h02'),ck('h07')&&ck('h09'),ck('h10'),ck('h11'));data[0][0]=s>=3?'A':'B';
+  s=cnt(ck('f02'),ck('f04'),ck('f01'));data[0][1]=s>=3?'A':'B';
+  const d0eL=cnt(ck('eL01'),ck('eL04')&&ck('eL08')&&ck('eL09'),ck('eL02'),ck('eL10')),d0eR=cnt(ck('eR01'),ck('eR04')&&ck('eR08')&&ck('eR09'),ck('eR02'),ck('eR10'));
+  data[0][4]=(d0eL+d0eR)>=8?'A':'B';
+  const d0mL=cnt(ck('mL01'),ck('mL05'),!ck('mL04'),ck('mL06')),d0mR=cnt(ck('mR01'),ck('mR05'),!ck('mR04'),ck('mR06'));
+  data[0][5]=(d0mL+d0mR)>=8?'A':'B';
+  const d0yL=cnt(ck('yL01'),ck('yL04'),ck('yL05')),d0yR=cnt(ck('yR01'),ck('yR04'),ck('yR05'));
+  data[0][6]=(d0yL+d0yR)>=6?'A':'B';
+  const d0n=cnt(ck('n01'),ck('n02'),ck('n04'),ck('n05'));data[0][7]=d0n>=4?'A':'B';
+  const d0k=cnt(ck('k01'),ck('k02'),ck('k03'),ck('k04'));data[0][8]=d0k>=4?'A':'B';
+  s=cnt(d0mL>=4,d0mR>=4,d0yL>=3,d0yR>=3,d0n>=4,ck('qL03'),ck('qR03'));data[0][2]=s>=4?'A':'B';
+  s=cnt(d0k>=4,ck('r01'),ck('r02'),ck('g01'),ck('iL01'),ck('iR01'));data[0][3]=s>=3?'A':'B';
+  // Dim 1 經緯 pass→A
+  s=(ck('h03')?2:0)+(ck('h08')?1:0)+(ck('h12')?2:0);data[1][0]=s>=3?'A':'B';
+  s=cnt(ck('f01')&&ck('f03'),ck('f07'),ck('f06'));data[1][1]=s>=3?'A':'B';
+  const d1eL=cnt(ck('eL02'),ck('eL03'),ck('eL05'),ck('eL06'),ck('eL07')),d1eR=cnt(ck('eR02'),ck('eR03'),ck('eR05'),ck('eR06'),ck('eR07'));
+  data[1][4]=(d1eL+d1eR+(ck('e00')?1:0))>=11?'A':'B';
+  const d1mL=cnt(ck('mL07'),ck('mL08'),ck('mL09'),ck('mL01'),ck('mL10'),ck('mL11'),ck('mL16'),ck('mL12'),ck('mL13'),ck('mL14'),ck('mL01')&&ck('mL04'),ck('m00'));
+  const d1mR=cnt(ck('mR07'),ck('mR08'),ck('mR09'),ck('mR01'),ck('mR10'),ck('mR11'),ck('mR16'),ck('mR12'),ck('mR13'),ck('mR14'),ck('mR01')&&ck('mR04'),ck('m00'));
+  data[1][5]=(d1mL>=7&&d1mR>=7)?'A':'B';
+  const d1yL=cnt(ck('yL01'),ck('yL02'),ck('yL04'),ck('yL05')),d1yR=cnt(ck('yR01'),ck('yR02'),ck('yR04'),ck('yR05'));
+  data[1][6]=(d1yL+d1yR+(ck('y00')?1:0))>=9?'A':'B';
+  const d1n=cnt(ck('n02'),ck('n03'),ck('n01'),ck('n05'));data[1][7]=d1n>=4?'A':'B';
+  const d1k=cnt(ck('k01'),ck('k07'),ck('k05'),ck('k10'));data[1][8]=d1k>=4?'A':'B';
+  const d1qL=ck('qL01')&&ck('qL02')&&ck('qL03'),d1qR=ck('qR01')&&ck('qR02')&&ck('qR03');
+  s=cnt(d1mL>=7,d1mR>=7,d1yL>=4,d1yR>=4,d1n>=4,d1qL,d1qR);data[1][2]=s>=4?'A':'B';
+  s=cnt(d1k>=4,ck('r01'),ck('r02'),ck('g02'),ck('g04'),ck('iL02')&&ck('iR02'),ck('i00'));data[1][3]=s>=3?'A':'B';
+  // Dim 2 方圓 pass→B=圓
+  s=cnt(ck('h04L'),ck('h04R'),ck('h09'),ck('h10'),ck('h11'));data[2][0]=s>=3?'B':'A';
+  s=cnt(ck('f03'),ck('f04'));data[2][1]=s>=2?'B':'A';
+  const d2eL=cnt(ck('eL04'),ck('eL08'),ck('eL09')),d2eR=cnt(ck('eR04'),ck('eR08'),ck('eR09'));
+  data[2][4]=(d2eL+d2eR)>=6?'B':'A';
+  const d2mL=cnt(ck('mL02'),!ck('mL04')),d2mR=cnt(ck('mR02'),!ck('mR04'));
+  data[2][5]=(d2mL+d2mR)>=4?'B':'A';
+  const d2yL=cnt(ck('yL03'),ck('yL04'),ck('yL05')),d2yR=cnt(ck('yR03'),ck('yR04'),ck('yR05'));
+  data[2][6]=(d2yL+d2yR)>=6?'B':'A';
+  const d2n=cnt(ck('n01'),ck('n05'));data[2][7]=d2n>=2?'B':'A';
+  const d2k=cnt(ck('k02'),ck('k08'),ck('k03'));data[2][8]=d2k>=3?'B':'A';
+  s=cnt(d2mL>=2,d2mR>=2,d2yL>=3,d2yR>=3,d2n>=2,ck('qL03')&&ck('qL01'),ck('qR03')&&ck('qR01'));data[2][2]=s>=4?'B':'A';
+  s=cnt(d2k>=3,ck('r01'),ck('r02'),ck('g03'),ck('iL03'),ck('iR03'));data[2][3]=s>=3?'B':'A';
+  // Dim 3 曲直 pass→B=直
+  s=(ck('h05')?2:0)+(ck('h06')?1:0)+(ck('h13')?1:0)+(ck('h14')?1:0);data[3][0]=s>=3?'B':'A';
+  s=cnt(ck('f05'),ck('f07'));data[3][1]=s>=2?'B':'A';
+  const d3eL=cnt(ck('eL02'),ck('eL03'),ck('eL01')),d3eR=cnt(ck('eR02'),ck('eR03'),ck('eR01'));
+  data[3][4]=(d3eL+d3eR)>=6?'B':'A';
+  const d3mL=cnt(ck('mL03')&&!ck('mL04'),ck('mL15')),d3mR=cnt(ck('mR03')&&!ck('mR04'),ck('mR15'));
+  data[3][5]=(d3mL>=1&&d3mR>=1)?'B':'A';
+  const d3yL=cnt(ck('yL01'),!ck('yL04'),!ck('yL05')),d3yR=cnt(ck('yR01'),!ck('yR04'),!ck('yR05'));
+  data[3][6]=(d3yL+d3yR)>=6?'B':'A';
+  const d3n=cnt(ck('n02'),ck('n01'),ck('n03'));data[3][7]=d3n>=3?'B':'A';
+  const d3k=cnt(ck('k09'),ck('k03'),ck('k05'));data[3][8]=d3k>=3?'B':'A';
+  s=cnt(d3mL>=1,d3mR>=1,d3yL>=3,d3yR>=3,d3n>=3,ck('qL04'),ck('qR04'));data[3][2]=s>=4?'B':'A';
+  s=cnt(d3k>=3,ck('r03'),ck('g02'),ck('g04'),ck('iL04'),ck('iR04'));data[3][3]=s>=3?'B':'A';
+}
+
+/* ===== 觀察頁 ===== */
+function renderObsSidebar(){
+  const el=document.getElementById('obs-sidebar');
+  let html='<div class="cat-header" style="background:#4a453e;color:#fcfaf8">觀察條件</div>';
+  OBS_PARTS.forEach((part,i)=>{
+    let ck=0,tot=0;part.groups.forEach(gi=>{const g=OBS_GROUPS[gi];tot+=g.items.length;ck+=g.items.filter(it=>obsData[it.id]).length;});
+    const active=i===curObsPart,st=active?'background:white;border-left:8px solid var(--dark)':'background:var(--sidebar);color:var(--text)';
+    html+='<div class="dim-item'+(active?' active':'')+'" style="'+st+'" onclick="gotoObsPart('+i+')"><span>'+part.name+'</span><span style="font-size:clamp(12px,1.4vw,15px);color:#999;font-weight:700">'+ck+'/'+tot+'</span></div>';
+  });
+  html+='<div class="dim-item" style="background:var(--dark);color:#fff;font-weight:900;position:sticky;bottom:0;margin-top:auto;" onclick="showDimPage()"><span>進入評分</span><span style="font-size:18px">→</span></div>';
+  html+='<div style="height:max(20px,env(safe-area-inset-bottom));background:var(--dark);"></div>';
+  el.innerHTML=html;
+}
+function renderObsMain(){
+  const part=OBS_PARTS[curObsPart];
+  document.getElementById('obs-title').innerText=part.name;
+  const area=document.getElementById('obs-area');let html='';
+  part.groups.forEach(gi=>{
+    const group=OBS_GROUPS[gi],items=group.items,cc=items.filter(it=>obsData[it.id]).length;
+    html+='<div class="detail-group"><div class="detail-group-header" onclick="toggleDetailGroup(this)"><span>'+group.name+'（'+cc+'/'+items.length+'）</span><span class="toggle-arrow">▼</span></div><div class="detail-group-body">';
+    for(const it of items){html+='<div class="detail-check"><input type="checkbox" id="obs-'+it.id+'" '+(obsData[it.id]?'checked':'')+' onchange="onObsChange(\''+it.id+'\',this.checked)"><label for="obs-'+it.id+'">'+it.label+'</label></div>';}
+    html+='</div></div>';
+  });
+  area.innerHTML=html;
+}
+function renderObsFooter(){
+  let tot=0,ck=0;OBS_GROUPS.forEach(g=>{tot+=g.items.length;ck+=g.items.filter(it=>obsData[it.id]).length;});
+  document.getElementById('obs-footer').innerHTML='<div class="result-row"><div class="result-mid" style="background:var(--sidebar);color:var(--text);border-color:var(--border);font-size:clamp(14px,1.6vw,18px)">已觀察 '+ck+' / '+tot+' 項</div></div>';
+}
+function gotoObsPart(i){curObsPart=i;renderObsSidebar();renderObsMain();}
+function onObsChange(id,checked){
+  if(checked)obsData[id]=true;else delete obsData[id];
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  recalcFromObs();save();
+  const area=document.getElementById('obs-area'),st=area.scrollTop;
+  renderObsMain();area.scrollTop=st;renderObsSidebar();renderObsFooter();
+}
+function toggleDetailGroup(header){header.classList.toggle('collapsed');header.nextElementSibling.classList.toggle('hidden');}
+function collectDetailForPrompt(){const checked=[],unchecked=[];for(const g of OBS_GROUPS)for(const it of g.items){if(obsData[it.id])checked.push(g.name+'：'+it.label);else unchecked.push(g.name+'：'+it.label);}return{checked,unchecked};}
+function renderDetailConditions(){
+  const area=document.getElementById('detail-conditions-area');let tot=0,ck=0,html='<div class="detail-section"><h3>觀察條件紀錄</h3>';
+  for(const g of OBS_GROUPS){const cc=g.items.filter(it=>obsData[it.id]).length;tot+=g.items.length;ck+=cc;
+    html+='<div class="detail-group"><div class="detail-group-header collapsed" onclick="toggleDetailGroup(this)"><span>'+g.name+'（'+cc+'/'+g.items.length+'）</span><span class="toggle-arrow">▼</span></div><div class="detail-group-body hidden">';
+    for(const it of g.items){html+='<div class="detail-check"><input type="checkbox" id="rpt-'+it.id+'" '+(obsData[it.id]?'checked':'')+' disabled><label for="rpt-'+it.id+'">'+it.label+'</label></div>';}
+    html+='</div></div>';}
+  html+='<div class="detail-stats">已觀察：'+ck+' / '+tot+'</div></div>';area.innerHTML=html;
+}
+
+/* ===== 頁面切換 ===== */
+function showObsPage(){
+  document.getElementById('obs-sidebar').style.display='flex';document.getElementById('obs-main-panel').style.display='flex';
+  document.getElementById('sidebar').style.display='none';document.getElementById('main-panel').style.display='none';
+  document.getElementById('report-overlay').style.display='none';
+  renderObsSidebar();renderObsMain();renderObsFooter();
+}
+function showDimPage(){
+  document.getElementById('obs-sidebar').style.display='none';document.getElementById('obs-main-panel').style.display='none';
+  document.getElementById('sidebar').style.display='flex';document.getElementById('main-panel').style.display='flex';
+  document.getElementById('report-overlay').style.display='none';
+  renderSidebar();renderMain();renderFooter();
+}
+
+/* ===== 13 維度頁 ===== */
+const CAT_STYLE={"先天指數":"background:#4a453e;color:#fcfaf8","運氣指數":"background:#3b4d54;color:#fcfaf8","後天指數":"background:#3d4a3b;color:#fcfaf8"};
+const emptyData=()=>Array(13).fill(null).map(()=>Array(9).fill(null));
+let cur=0,data=emptyData();
+
+function save(){
+  if(!userName)return;localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),updatedAt:new Date().toISOString()}).catch(e=>console.log('雲端儲存失敗',e));
+}
+function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
+function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=null);return vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(1):"0.0";}
+
+function renderSidebar(){
+  const el=document.getElementById('sidebar');let html='',lastCat='';
+  DIMS.forEach((d,i)=>{if(d.cat!==lastCat){html+='<div class="cat-header" style="'+CAT_STYLE[d.cat]+'">'+d.cat+'</div>';lastCat=d.cat;}
+    const c=PALETTE[i],res=calcDim(i),label=res?d.a+d.b+' · '+res.type+'['+res.coeff.toFixed(1)+']':d.a+d.b;
+    const ast=i===cur?'background:white;border-left:8px solid '+c.tx:'background:'+c.bg+';color:'+c.tx;
+    html+='<div class="dim-item'+(i===cur?' active':'')+'" style="'+ast+'" onclick="goto('+i+')"><span>'+label+'</span><div class="status-dot'+(res?' done':'')+'"></div></div>';});
+  html+='<div class="dim-item" style="background:var(--dark);color:#fff;font-weight:900;position:sticky;bottom:0;margin-top:auto;" onclick="showReport()"><span>總合係數</span><span style="font-size:18px">➔</span></div>';
+  html+='<div style="height:max(20px,env(safe-area-inset-bottom));background:var(--dark);"></div>';el.innerHTML=html;
+}
+function renderMain(){
+  const d=DIMS[cur],r=data[cur];document.getElementById('dim-title').innerText=d.a+d.b+' - '+d.view;
+  const aC=d.aT==='動'?'dynamic-type':'static-type',bC=d.bT==='動'?'dynamic-type':'static-type';
+  document.getElementById('scoring-area').innerHTML=PARTS.map((p,i)=>'<div class="score-row"><div class="option-box '+aC+'"><input type="radio" name="p'+i+'" value="A" '+(r[i]==='A'?'checked':'')+' onclick="toggle('+i+',\'A\',this)"><span class="option-label">'+d.a+' ('+d.aT+')</span></div><div class="part-label">'+p+'</div><div class="option-box '+bC+'"><input type="radio" name="p'+i+'" value="B" '+(r[i]==='B'?'checked':'')+' onclick="toggle('+i+',\'B\',this)"><span class="option-label">'+d.b+' ('+d.bT+')</span></div></div>').join('');
+}
+function renderFooter(){
+  const d=DIMS[cur],res=calcDim(cur),mid=res?'['+res.coeff.toFixed(1)+'] | '+res.type:'評估中';
+  const bg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'white',color=res?'white':'var(--text)',border=res?'transparent':'var(--border)';
+  document.getElementById('footer').innerHTML='<div class="result-row"><div class="result-box">'+d.a+' '+(res?.a??0)+'</div><div class="result-mid" style="background:'+bg+';color:'+color+';border-color:'+border+'">'+mid+'</div><div class="result-box">'+d.b+' '+(res?.b??0)+'</div></div>';
+}
+function toggle(i,v,el){if(data[cur][i]===v){data[cur][i]=null;el.checked=false;}else{data[cur][i]=v;}save();renderMain();renderFooter();renderSidebar();}
+function pick(i,v){data[cur][i]=v;save();renderMain();renderFooter();renderSidebar();}
+function goto(i){cur=i;renderSidebar();renderMain();renderFooter();}
+
+function reportSave(){
+  const btn=document.getElementById('report-save-btn');if(!userName)return;
+  localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
+  db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),updatedAt:new Date().toISOString()})
+    .then(()=>{btn.innerText='已儲存 ✓';btn.style.color='var(--static)';btn.style.borderColor='var(--static)';setTimeout(()=>{btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';},2000);})
+    .catch(()=>{btn.innerText='失敗，請重試';setTimeout(()=>{btn.innerText='儲存評分';},2000);});
+}
+
+function showReport(){
+  document.getElementById('report-overlay').style.display='block';
+  document.getElementById('report-name-display').innerText=userName||'未命名';
+  [['v-total',[0,1,2,3,4,5,6,7,8,9,10,11,12]],['v-pre',[0,1,2,3,4,5]],['v-luck',[6,7,8]],['v-post',[9,10,11,12]],['v-lead',[0,1,2]],['v-sub',[3,4,5]]].forEach(([id,ids])=>{document.getElementById(id).innerText=avgCoeff(ids);});
+  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
+  const total=sT+dT||1;
+  document.getElementById('ds-bar-s').style.width=(sT/total*100).toFixed(1)+'%';document.getElementById('ds-bar-d').style.width=(dT/total*100).toFixed(1)+'%';
+  document.getElementById('ds-label-s').innerText='靜 '+sT;document.getElementById('ds-label-d').innerText='動 '+dT;
+  const labelsEl=document.getElementById('matrix-labels'),layoutEl=document.getElementById('matrix-layout');
+  layoutEl.querySelectorAll('.matrix-col').forEach(c=>c.remove());
+  labelsEl.innerHTML='<div id="label-spacer"></div>'+PARTS_SHORT.map((p,pi)=>'<div class="row-label" style="position:relative;'+(pi===4?'margin-top:6px;':'')+'">'+p+'</div>').join('');
+  DIMS.forEach((d,i)=>{const c=PALETTE[i],res=calcDim(i),coeff=res?.coeff??0,col=document.createElement('div');col.className='matrix-col';
+    const hdr=document.createElement('div');hdr.className='dim-header-v';hdr.style.cssText='background:'+c.bg+';color:'+c.tx;hdr.innerHTML='<span>'+d.a+'</span><span>'+d.b+'</span>';col.appendChild(hdr);
+    const bar=document.createElement('div');bar.className='prop-bar';if(res)bar.classList.add(res.type==='動'?'red':'green');col.appendChild(bar);
+    const lbl=document.createElement('div');lbl.className='coeff-lbl';lbl.innerText=res?coeff.toFixed(1):'-';col.appendChild(lbl);
+    const stack=document.createElement('div');stack.className='stack-area';if(res)for(let j=0;j<Math.round(coeff*10);j++){const u=document.createElement('div');u.className='stack-unit';stack.appendChild(u);}col.appendChild(stack);
+    data[i].forEach((v,pi)=>{const cell=document.createElement('div');cell.className='im-cell';if(pi===4)cell.style.marginTop='6px';const box=document.createElement('div');box.className='im-box';if(v){const t=v==='A'?d.aT:d.bT;box.classList.add(t==='動'?'red':'green');box.innerText=v==='A'?d.a:d.b;}cell.appendChild(box);col.appendChild(cell);});
+    layoutEl.appendChild(col);});
+  renderDetailConditions();
+  requestAnimationFrame(()=>{const fc=layoutEl.querySelector('.matrix-col');if(!fc)return;let off=0;for(const el of[...fc.children]){if(el.classList.contains('im-cell'))break;off+=el.offsetHeight+2;}const sp=document.getElementById('label-spacer');if(sp)sp.style.height=off+'px';});
+}
+function closeReport(){document.getElementById('report-overlay').style.display='none';}
+
+/* ===== App ===== */
+let userName='';
+async function startApp(){
+  const name=document.getElementById('entry-name').value.trim();if(!name){document.getElementById('entry-name').focus();return;}
+  userName=name;localStorage.setItem('rxbf_username',userName);
+  const btn=document.querySelector('.entry-btn');btn.innerText='載入中...';btn.disabled=true;
+  try{const doc=await db.collection('users').doc(userName).get();
+    if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else if(doc.exists&&doc.data().data)data=doc.data().data;else data=emptyData();
+    if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else{try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e){obsData={};}}
+  }catch(e){console.log('載入失敗',e);data=emptyData();try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e2){obsData={};}}
+  recalcFromObs();
+  document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
+  showObsPage();
+}
+
+function editName(){document.getElementById('name-edit-input').value=userName;document.getElementById('name-edit-overlay').style.display='flex';setTimeout(()=>document.getElementById('name-edit-input').focus(),100);}
+function confirmEditName(){const n=document.getElementById('name-edit-input').value.trim();if(n){userName=n;localStorage.setItem('rxbf_username',userName);}closeEditName();}
+function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
+
+async function exportPNG(){
+  const btn=document.getElementById('btn-export'),actions=document.querySelector('.report-actions'),overlay=document.getElementById('report-overlay');
+  btn.innerText='產生中...';btn.disabled=true;actions.style.display='none';overlay.scrollTop=0;await new Promise(r=>setTimeout(r,100));
+  try{const canvas=await html2canvas(overlay,{backgroundColor:'#ffffff',scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:overlay.scrollWidth,width:overlay.scrollWidth,height:overlay.scrollHeight});
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);const file=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'人相兵法_'+(userName||'報告')+'.png',{type:'image/png'});
+    if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'人相兵法報告',text:(userName||'')+' 的人相兵法報告'});}catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}}else{fallbackDownload(canvas);}
+  }catch(e){alert('產生失敗，請截圖儲存');}
+  actions.style.display='flex';btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>分享報告';btn.disabled=false;
+}
+function fallbackDownload(canvas){const dataUrl=canvas.toDataURL('image/png');const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);if(isIOS){const w=window.open('');w.document.write('<html><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;gap:12px"><div style="background:#06C755;border-radius:10px;padding:14px 20px;width:100%;max-width:480px;text-align:center"><div style="color:white;font-size:18px;font-weight:900;margin-bottom:4px">長按圖片 → 儲存到相簿</div><div style="color:rgba(255,255,255,0.8);font-size:13px">儲存後開啟「照片」→ 分享 → LINE</div></div><img src="'+dataUrl+'" style="max-width:100%;border-radius:8px"></body></html>');}else{const link=document.createElement('a');link.download='人相兵法_'+(userName||'報告')+'.png';link.href=dataUrl;link.click();}}
+
+async function generateAI(){
+  const apiKey=localStorage.getItem('anthropic_api_key');if(!apiKey){alert('請先在登入頁輸入 Anthropic API Key');return;}
+  const btn=document.getElementById('btn-ai'),area=document.getElementById('ai-analysis-area');btn.disabled=true;btn.innerText='分析中...';
+  area.innerHTML='<div class="ai-section"><div class="ai-loading">風鑑師正在解讀面相<span class="dots"></span></div></div>';
+  const dimSummary=DIMS.map((d,i)=>{const res=calcDim(i);if(!res)return d.a+d.b+'（'+d.view+'）：尚未評分';return d.a+d.b+'（'+d.view+'，'+d.cat+'）：'+d.a+'='+res.a+', '+d.b+'='+res.b+', 係數='+res.coeff.toFixed(2)+', 屬性='+res.type;}).join('\n');
+  const totalCoeff=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),preCoeff=avgCoeff([0,1,2,3,4,5]),luckCoeff=avgCoeff([6,7,8]),postCoeff=avgCoeff([9,10,11,12]);
+  let sT=0,dT=0;DIMS.forEach((d,i)=>{data[i].forEach(v=>{if(!v)return;const t=v==='A'?d.aT:d.bT;t==='靜'?sT++:dT++;});});
+  const detail=collectDetailForPrompt(),detailText=detail.checked.length?'\n\n【觀察條件紀錄】\n符合的觀察條件：'+detail.checked.join('、')+'\n（共 '+detail.checked.length+'/'+(detail.checked.length+detail.unchecked.length)+' 項符合）':'';
+  const userPrompt='以下是「'+userName+'」的人相兵法評分結果：\n\n各維度評分：\n'+dimSummary+'\n\n綜合統計：\n- 總合係數：'+totalCoeff+'\n- 先天指數：'+preCoeff+'\n- 運氣指數：'+luckCoeff+'\n- 後天指數：'+postCoeff+'\n- 動態票數：'+dT+'，靜態票數：'+sT+detailText+'\n\n請根據以上數據進行評析。';
+  try{const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-dangerous-direct-browser-access':'true','anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'你是一位精通人相兵法的風鑑師，擅長從面相的動靜、形勢、經緯等維度分析一個人的命格與運勢。你的分析風格穩重而深刻，引經據典但不晦澀，用繁體中文回覆。\n\n請根據提供的人相兵法各維度係數數據，分五段進行評析，每段約150字：\n1. 【性格分析】從先天指數的形勢、經緯、方圓等維度分析其性格特質\n2. 【事業運勢】從後天指數的攻守、奇正、虛實、進退分析事業格局\n3. 【人際關係】從動靜比例與分合、真假等維度分析人際互動模式\n4. 【健康提示】從整體係數平衡與各部位評分提出養生建議\n5. 【流年運程】從運氣指數的順逆、分合、真假綜合判斷當前運勢走向\n\n係數越接近1.0表示該維度越平衡和諧，越接近0表示越偏向單一極端。動與靜的比例反映其人整體的行動傾向。',messages:[{role:'user',content:userPrompt}]})});
+    if(!resp.ok)throw new Error('API 錯誤 '+resp.status+': '+await resp.text());
+    const result=await resp.json(),text=result.content[0].text;
+    const sections=text.split(/【(性格分析|事業運勢|人際關係|健康提示|流年運程)】/).filter(s=>s.trim());
+    let html='<div class="ai-section"><h3>風鑑師 AI 評析</h3>';for(let i=0;i<sections.length;i+=2){html+='<div class="ai-block"><h4>【'+sections[i]+'】</h4><p>'+(sections[i+1]||'').trim()+'</p></div>';}html+='</div>';area.innerHTML=html;
+  }catch(e){area.innerHTML='<div class="ai-section"><p style="color:#c0392b;font-weight:700;">評析失敗：'+e.message+'</p></div>';}
+  btn.disabled=false;btn.innerText='生成 AI 評析';
+}
+
+window.onload=()=>{
+  const savedName=localStorage.getItem('rxbf_username');if(savedName)document.getElementById('entry-name').value=savedName;
+  const savedKey=localStorage.getItem('anthropic_api_key');if(savedKey)document.getElementById('entry-api-key').value=savedKey;
+  document.getElementById('entry-api-key').addEventListener('change',e=>{const val=e.target.value.trim();if(val)localStorage.setItem('anthropic_api_key',val);else localStorage.removeItem('anthropic_api_key');});
+  document.getElementById('entry-name').addEventListener('keydown',e=>{if(e.key==='Enter')startApp();});
+  document.getElementById('name-edit-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEditName();});
+};
+</script>
+</body>
+</html>
