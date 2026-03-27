@@ -1148,12 +1148,21 @@ function _expandItems(node,side,qMap,partResults){
   if(node.partResult!==undefined){var f2=_flattenItem(node,side,qMap,partResults);return f2?[f2]:[];}
   if(node.op==='NOT'){var f3=_flattenItem(node,side,qMap,partResults);return f3?[f3]:[];}
   if(node.op==='AND'||node.op==='OR'){
-    // Each child becomes one item (may be compound)
+    // Each child becomes one item (may be compound); group nodes are expanded
     var items=[];
     node.items.forEach(function(it){
-      if(it.ref!==undefined)items.push(_flattenLeaf(it,side,qMap));
-      else if(it.partResult!==undefined)items.push(_flattenItem(it,side,qMap,partResults));
-      else items.push(_flattenItem(it,side,qMap,partResults));
+      if(it.group!==undefined&&it.items){
+        it.items.forEach(function(gi){
+          var flat;
+          if(gi.ref!==undefined)flat=_flattenLeaf(gi,side,qMap);
+          else flat=_flattenItem(gi,side,qMap,partResults);
+          if(flat){flat.groupLabel=it.group;items.push(flat);}
+        });
+      }else{
+        if(it.ref!==undefined)items.push(_flattenLeaf(it,side,qMap));
+        else if(it.partResult!==undefined)items.push(_flattenItem(it,side,qMap,partResults));
+        else items.push(_flattenItem(it,side,qMap,partResults));
+      }
     });
     return items.filter(Boolean);
   }
