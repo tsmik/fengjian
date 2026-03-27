@@ -1081,7 +1081,7 @@ function _flattenLeaf(node,side,qMap){
   var eSide=('side' in node)?node.side:side;
   var prefix='';
   if(eSide&&q.paired)prefix=(eSide==='L'?'左':'右');
-  var matchStr=Array.isArray(node.match)?node.match.join('OR'):String(node.match||'');
+  var matchStr=Array.isArray(node.match)?node.match.join('或'):String(node.match||'');
   var label=prefix+(q.text||node.ref)+'（'+matchStr+'）';
   var answer=getAnswer(node.ref,eSide,obsData);
   var ok=Array.isArray(node.match)?node.match.indexOf(answer)>=0:answer===node.match;
