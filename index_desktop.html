@@ -1099,7 +1099,8 @@ function _flattenCompound(node,side,qMap,partResults){
   }
   if(('side' in node))eSide=node.side;
   if(side)eSide=side;
-  return {label:label,ok:ok,ids:refs,side:eSide,val:null,wt:1};
+  var connType=node.op||'AND';
+  return {label:label,ok:ok,ids:refs,side:eSide,val:null,wt:1,connType:connType};
 }
 
 function _flattenItem(node,side,qMap,partResults){
@@ -1879,7 +1880,10 @@ function cpRenderMain(){
     }
 
     // 連接符號
-    var connAnd='<div style="font-size:var(--cp-option-desc);color:var(--text-3);padding:0 8px;font-weight:700">以及</div>';
+    function connLabel(type){
+      var text=type==='OR'?'或':'以及';
+      return '<div style="font-size:var(--cp-option-desc);color:var(--text-3);padding:0 8px;font-weight:700">'+text+'</div>';
+    }
 
     html+='<div style="display:flex;flex-direction:column">';
     merged.forEach(function(m){
@@ -1894,7 +1898,7 @@ function cpRenderMain(){
         allIds.forEach(function(qid,qi){
           var q=qMap[qid];
           if(!q)return;
-          if(qi>0)html+=connAnd;
+          if(qi>0)html+=connLabel(item.connType||'AND');
           html+=renderQRow(qid,q,item.side||'');
         });
         html+='</div>';
@@ -1925,7 +1929,7 @@ function cpRenderMain(){
         var q=qMap[qid];
         if(!q)return;
         var isPaired=!!q.paired;
-        if(qi>0)html+=connAnd;
+        if(qi>0)html+=connLabel(m.lItem.connType||'AND');
 
         if(isPaired){
           var vL=obsData[qid+'_L']||obsData[qid]||'';
