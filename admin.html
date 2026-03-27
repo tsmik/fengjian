@@ -176,7 +176,7 @@ function getHintForMatch(qmap,ref,matchVal){
   var opt=q.fullOpts.find(o=>o.v===matchVal);
   return opt?opt.hint:'';
 }
-var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'引用結果'};
+var OP_CN={'AND':'都符合 AND','OR':'或 OR','COUNT':'計數 COUNT','NOT':'不可有 NOT','LR':'LR','VETO':'VETO','partResult':'引用結果','group':'敘述分組'};
 function formatPartResult(pr){var d=pr.indexOf('.');if(d>=0){var p=pr.substring(0,d),s=pr.substring(d+1);return (s==='L'?'左':'右')+p;}return pr;}
 function isInsideLR(path){return path.indexOf('.each')!==-1;}
 function advancedFieldsHtml(curSide,curWeight){
@@ -270,6 +270,15 @@ function renderNode(node,path,depth,qmap){
   var h='',ind=depth*8,bg=depthStyle(depth);
   if(node.partResult!==undefined){
     return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${formatPartResult(node.partResult)}</span>${nodeActs(path)}</div>`;
+  }
+  if(node.group!==undefined){
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#6B8E6B">敘述分組</span><span style="margin-left:6px;color:var(--text-2);font-style:italic">${node.group||'（未填敘述）'}</span>`;
+    h+=nodeActs(path);
+    h+=`<div class="edit-placeholder" data-path="${path}"></div>`;
+    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
+    _addBtnCounter++;
+    h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addRuleItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button></div>`;
+    return h;
   }
   if(node.ref!==undefined){
     var q=(qmap||{})[node.ref]||{text:'?',fullOpts:[]};
@@ -392,6 +401,8 @@ function editRuleNode(path){
     }
   }else if(node.partResult!==undefined){
     html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
+  }else if(node.group!==undefined){
+    html+='<div class="row"><label>敘述</label><input type="text" id="er-group" value="'+(node.group||'').replace(/"/g,'&quot;')+'" style="width:240px" placeholder="輸入分組敘述文字"></div>';
   }
   html+='<div style="margin-top:8px;display:flex;gap:6px"><button onclick="saveRuleEdit(\''+path+'\')" style="padding:4px 12px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer">確定</button><button onclick="renderAll()" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer">取消</button></div></div>';
   // For operator nodes, insert into placeholder; for leaf nodes, insert after
@@ -425,6 +436,7 @@ function saveRuleEdit(path){
     var se=document.getElementById('er-side');if(se){var sv=se.value;if(sv==='null')n.item.side=null;else if(sv)n.item.side=sv;else delete n.item.side;}
   }
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
+  else if(n.group!==undefined){var ge=document.getElementById('er-group');if(ge)n.group=ge.value;}
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
   if(_pendingNewNodePath===path)_pendingNewNodePath=null;
   renderAll();markDirty();
@@ -458,6 +470,7 @@ function addRuleItem(p,btnId){
   h+='<button onclick="addNodeOfType(\'OR\')" style="'+bs+'">OR</button>';
   h+='<button onclick="addNodeOfType(\'COUNT\')" style="'+bs+'">COUNT</button>';
   h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
+  if(n.op==='COUNT')h+='<button onclick="addNodeOfType(\'group\')" style="'+bs+'">敘述分組</button>';
   h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
   var btn=document.getElementById(btnId);
   if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
@@ -495,6 +508,7 @@ function addNodeOfType(type){
     var ni={ref:dr,match:dm};if(isInsideLR(p))ni.side=null;
     n.items.push({op:'NOT',item:ni});
   }
+  else if(type==='group'){n.items.push({group:'',items:[]});}
   markDirty();renderAll();
 }
 
@@ -912,6 +926,7 @@ function countLeafNodes(node){
   if(!node)return 0;
   if(node.ref!==undefined)return 1;
   if(node.partResult!==undefined)return 1;
+  if(node.group!==undefined){var gc=0;if(node.items)node.items.forEach(function(it){gc+=countLeafNodes(it);});return gc;}
   if(node.rule&&!node.veto)return countLeafNodes(node.rule);
   var c=0;
   if(node.veto){node.veto.forEach(function(v){c+=countLeafNodes(v.condition);});if(node.rule)c+=countLeafNodes(node.rule);}
