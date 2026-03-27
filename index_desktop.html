@@ -14,7 +14,7 @@
 <meta http-equiv="Expires" content="0">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#c03830;--static:#4c6472;--accent:#c03830;--dark:#1e2127;--gold:#9a7c4a;--cp-dim-title:18px;--cp-dim-sub:14px;--cp-part-title:15px;--cp-part-meta:14px;--cp-question:14px;--cp-option:14px;--cp-option-desc:14px;--cp-right-header:14px;--cp-right-label:14px;--cp-right-part:14px;--cp-right-badge:14px}
+:root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#C17A5A;--static:#7A9E7E;--accent:#c03830;--dark:#1e2127;--gold:#9a7c4a;--cp-dim-title:18px;--cp-dim-sub:14px;--cp-part-title:15px;--cp-part-meta:14px;--cp-question:14px;--cp-option:14px;--cp-option-desc:14px;--cp-right-header:14px;--cp-right-label:14px;--cp-right-part:14px;--cp-right-badge:14px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
 
@@ -1048,18 +1048,18 @@ function _nodeLabel(node,side,qMap){
     var eSide=('side' in node)?node.side:side;
     var prefix='';
     if(eSide&&q&&q.paired)prefix=(eSide==='L'?'左':'右');
-    var matchStr=Array.isArray(node.match)?node.match.join('OR'):String(node.match);
+    var matchStr=Array.isArray(node.match)?node.match.join('或'):String(node.match);
     return prefix+text+'（'+matchStr+'）';
   }
   if(node.partResult!==undefined)return '引用 '+node.partResult+' 結果';
   if(node.op==='AND'){
-    return node.items.map(function(it){return _nodeLabel(it,side,qMap);}).join(' AND ');
+    return node.items.map(function(it){return _nodeLabel(it,side,qMap);}).join(' 以及 ');
   }
   if(node.op==='OR'){
-    return node.items.map(function(it){return _nodeLabel(it,side,qMap);}).join(' OR ');
+    return node.items.map(function(it){return _nodeLabel(it,side,qMap);}).join(' 或 ');
   }
   if(node.op==='NOT'){
-    return '不可有 '+_nodeLabel(node.item,side,qMap);
+    return '不可以有 '+_nodeLabel(node.item,side,qMap);
   }
   return JSON.stringify(node).substring(0,40);
 }
@@ -1124,7 +1124,7 @@ function _flattenItem(node,side,qMap,partResults){
   if(node.op==='NOT'){
     var inner=_flattenItem(node.item,side,qMap,partResults);
     var notOk=!_evalNode(node.item,side,partResults);
-    return {label:'不可有 '+(inner?inner.label:''),ok:notOk,ids:_collectRefs(node.item),side:inner?inner.side:null,val:null,wt:1};
+    return {label:'不可以有 '+(inner?inner.label:''),ok:notOk,ids:_collectRefs(node.item),side:inner?inner.side:null,val:null,wt:1};
   }
   // Complex node (AND/OR/VETO) → flatten as one item
   return _flattenCompound(node,side,qMap,partResults);
@@ -1650,7 +1650,7 @@ function renderDimPanel(el,dimIndex){
         var chipColor=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
         html+='<div onclick="cpGoto('+di+')" style="'+cellStyle+';'+(isActive?activeStyle:'color:var(--text-2)')+'">'+
           '<div>'+dm.a+dm.b+
-          '<div style="font-size:10px;margin-top:2px;color:'+chipColor+';font-weight:900">'+(dimRes?dimRes.type:'—')+'</div>'+
+          '<div style="height:3px;margin-top:4px;border-radius:1.5px;background:'+chipColor+'"></div>'+
           '</div></div>';
       });
       html+='</div>';
@@ -1700,9 +1700,14 @@ function renderDimPanel(el,dimIndex){
   });
   html+='</tbody></table>';
   // 整體結果
-  html+='<div style="margin-top:10px;padding:8px 10px;text-align:center">'+
-    '<span style="font-size:14px;font-weight:900;padding:4px 16px;background:'+resBg+';color:white;border-radius:8px">'+(res?res.type+'　'+res.coeff.toFixed(1):'—')+'</span>'+
-  '</div>';
+  if(res){
+    html+='<div style="margin-top:8px;padding:8px 12px;background:'+resBg+';color:white;border-radius:4px;display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:14px">'+
+      '<span>'+res.type+'</span>'+
+      '<span>係數 '+res.coeff.toFixed(1)+'</span>'+
+    '</div>';
+  }else{
+    html+='<div style="margin-top:8px;padding:8px 12px;background:#ccc;color:white;border-radius:4px;text-align:center;font-weight:900;font-size:14px">—</div>';
+  }
   html+='</div>';
 
   el.innerHTML=html;
@@ -2044,13 +2049,11 @@ function renderDimCondMain(){
   try{
   const d=DIMS[cur];
   const res=calcDim(cur);
-  const resColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
   const kdEntry=null; // KD 在知識頁 scope，此處不可用，essence 暫略
 
   let html='<div class="dim-cond-header">'+
     '<div class="dim-cond-title">'+d.a+d.b+' · '+d.view+'</div>'+
     '<div class="dim-cond-essence"><b>'+d.a+'（'+d.aT+'）</b> vs <b>'+d.b+'（'+d.bT+'）</b></div>'+
-    '<span class="dim-cond-result" style="background:'+resColor+'">'+(res?res.type+'　係數 '+res.coeff.toFixed(1):'尚未填寫')+'</span>'+
   '</div>';
 
   const cr=condResults[cur];
