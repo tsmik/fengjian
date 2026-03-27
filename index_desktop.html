@@ -1505,7 +1505,7 @@ function _refreshObsUI(){
 
 /* ===== Right Column - Dim Panel (shared) ===== */
 function renderDimIndex(){
-  renderDimPanel(document.getElementById('dim-index-col'));
+  renderDimPanel(document.getElementById('dim-index-col'),cur);
 }
 
 /* ===== Obs page legacy functions ===== */
@@ -1613,17 +1613,18 @@ function cpHide(){
   document.getElementById('cond-page').style.display='none';
 }
 
-function cpGoto(i){cpCur=i;cpRender();renderDimIndex();}
+function cpGoto(i){cpCur=i;cur=i;cpRender();renderDimIndex();}
 
 function cpRender(){
   try{cpRenderRight();}catch(e){console.error('cpRenderRight:',e);}
   try{cpRenderMain();}catch(e){console.error('cpRenderMain:',e);document.getElementById('cp-main').innerHTML='<div style="color:red;padding:20px">'+e.message+'</div>';}
 }
 
-function renderDimPanel(el){
+function renderDimPanel(el,dimIndex){
   if(!el)return;
-  var d=DIMS[cpCur];
-  var res=calcDim(cpCur);
+  var useDim=(dimIndex!==undefined)?dimIndex:cpCur;
+  var d=DIMS[useDim];
+  var res=calcDim(useDim);
   var resBg=res?(res.type==='靜'?'#7A9E7E':'#C17A5A'):'#ccc';
   var SBG='#7A9E7E',DBG='#C17A5A';
 
@@ -1644,7 +1645,7 @@ function renderDimPanel(el){
       html+='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:4px;margin-bottom:4px">';
       row.forEach(function(di){
         var dm=DIMS[di];
-        var isActive=di===cpCur;
+        var isActive=di===useDim;
         var dimRes=calcDim(di);
         var chipColor=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
         html+='<div onclick="cpGoto('+di+')" style="'+cellStyle+';'+(isActive?activeStyle:'color:var(--text-2)')+'">'+
@@ -1661,7 +1662,7 @@ function renderDimPanel(el){
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
   var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
-  var colS=sLabels[cpCur], colD=dLabels[cpCur];
+  var colS=sLabels[useDim], colD=dLabels[useDim];
 
   html+='<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">';
   html+='<table style="width:100%;border-collapse:collapse;font-size:14px">';
@@ -1671,7 +1672,7 @@ function renderDimPanel(el){
     '<th style="text-align:center;padding:5px 4px;border-bottom:2px solid var(--border);color:'+DBG+';font-weight:700">'+colD+'</th>'+
   '</tr></thead><tbody>';
   partOrder.forEach(function(pi,i){
-    var v=data[cpCur][pi];
+    var v=data[useDim][pi];
     var label=partLabels[i];
     var isStatic=false,isDynamic=false;
     if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
@@ -1999,7 +2000,7 @@ function avgCoeff(ids){const vals=ids.map(i=>calcDim(i)?.coeff).filter(v=>v!=nul
 const PART_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
 const PART_ORDER=[0,1,4,5,6,7,8,2,3];
 
-function dimGoto(i){cur=i;renderDimCondPage();}
+function dimGoto(i){cur=i;cpCur=i;renderDimCondPage();}
 
 function renderDimSidebar(){
   const el=document.getElementById('dim-sidebar-new');if(!el)return;
