@@ -686,7 +686,7 @@ const db=firebase.firestore();
 const PARTS=["頭","上停","中停","下停","耳","眉","眼","鼻","口/法令"];
 const PARTS_SHORT=["頭","上","中","下","耳","眉","眼","鼻","口"];
 const PALETTE=[{bg:"#f0ebe5",tx:"#4a453e"},{bg:"#ece4db",tx:"#4a4138"},{bg:"#ebe6e0",tx:"#45403a"},{bg:"#f5efe6",tx:"#4d463d"},{bg:"#f2ece4",tx:"#4a433b"},{bg:"#e8e2d9",tx:"#403a31"},{bg:"#e5edf0",tx:"#3b4d54"},{bg:"#d9e5eb",tx:"#2d3a40"},{bg:"#cedde6",tx:"#253138"},{bg:"#e8f0e5",tx:"#3d4a3b"},{bg:"#dce8d9",tx:"#2e3a2c"},{bg:"#d1e0cc",tx:"#243122"},{bg:"#c6d8bf",tx:"#1d291b"}];
-const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"方",b:"圓",aT:"靜",bT:"動",view:"成就"},{cat:"先天指數",a:"曲",b:"直",aT:"動",bT:"靜",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"分",b:"合",aT:"動",bT:"靜",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"虛",b:"實",aT:"動",bT:"靜",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
+const DIMS=[{cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},{cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},{cat:"先天指數",a:"圓",b:"方",aT:"動",bT:"靜",view:"成就"},{cat:"先天指數",a:"直",b:"曲",aT:"靜",bT:"動",view:"責任"},{cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},{cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},{cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},{cat:"運氣指數",a:"合",b:"分",aT:"靜",bT:"動",view:"地運資源"},{cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},{cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},{cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},{cat:"後天指數",a:"實",b:"虛",aT:"靜",bT:"動",view:"算略"},{cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}];
 
 /* ===== Observation Data ===== */
 const OBS_GROUPS=[
@@ -1660,8 +1660,8 @@ function renderDimPanel(el,dimIndex){
   // === 下半部：各部位三欄結果表 ===
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-  var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
-  var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+  var sLabels=['形','經','圓','直','收','緩','順','合','真','守','正','實','退'];
+  var dLabels=['勢','緯','方','曲','放','急','逆','分','假','攻','奇','虛','進'];
   var colS=sLabels[useDim], colD=dLabels[useDim];
 
   html+='<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">';
@@ -2357,8 +2357,8 @@ function showSensPage(){
 function renderSensPage(){
   var el=document.getElementById('sens-content');if(!el)return;
   var SBG='#7A9E7E',DBG='#C17A5A';
-  var sLabels=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
-  var dLabels=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+  var sLabels=['形','經','圓','直','收','緩','順','合','真','守','正','實','退'];
+  var dLabels=['勢','緯','方','曲','放','急','逆','分','假','攻','奇','虛','進'];
 
   // 完整備份原始狀態
   var origObs=JSON.parse(JSON.stringify(obsData));
