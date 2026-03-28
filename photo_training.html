@@ -287,8 +287,49 @@ input { font-family: 'Noto Serif TC', serif; }
   height: calc(100vh - 48px);
   overflow: hidden;
 }
+.detail-sidebar {
+  width: 100px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  padding: 8px 0;
+}
+.sidebar-nav-item {
+  display: block;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text3);
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+  line-height: 1.3;
+}
+.sidebar-nav-item:hover {
+  background: var(--bg2);
+  color: var(--text2);
+}
+.sidebar-nav-item.sb-active {
+  background: var(--bg2);
+  border-left-color: var(--accent);
+  color: var(--text);
+}
+.sidebar-nav-item.sb-done {
+  color: var(--green);
+}
+.sidebar-nav-item.sb-partial {
+  color: #d4a834;
+}
+.sidebar-nav-count {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 1px;
+}
 .detail-left {
-  width: 55%;
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -299,7 +340,7 @@ input { font-family: 'Noto Serif TC', serif; }
   overflow-y: auto;
 }
 .detail-right {
-  width: 45%;
+  width: 40%;
   display: flex;
   flex-direction: column;
   background: var(--bg2);
@@ -472,41 +513,6 @@ input { font-family: 'Noto Serif TC', serif; }
 .zoom-pct { min-width: 44px; text-align: center; font-weight: 700; }
 
 /* ===== Part Index Nav ===== */
-.part-index-nav {
-  display: flex;
-  gap: 2px;
-  padding: 6px 8px;
-  overflow-x: auto;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  scrollbar-width: none;
-}
-.part-index-nav::-webkit-scrollbar { display: none; }
-.part-idx {
-  flex-shrink: 0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  border: 1px solid transparent;
-  transition: all 0.1s;
-  color: var(--text3);
-  background: transparent;
-}
-.part-idx:hover { background: var(--bg3); }
-.part-idx.idx-active { background: var(--bg3); border-color: var(--accent); color: var(--text); }
-.part-idx.idx-done { color: var(--green); }
-.part-idx.idx-partial { color: #d4a834; }
-.part-idx .idx-count {
-  font-size: 11px;
-  font-weight: 500;
-  margin-left: 3px;
-  opacity: 0.7;
-}
-
 /* ===== Review Section ===== */
 .review-sections {
   padding-bottom: 40px;
@@ -701,6 +707,7 @@ input { font-family: 'Noto Serif TC', serif; }
 
 @media (max-width: 768px) {
   .detail-split { flex-direction: column-reverse; height: auto; min-height: calc(100vh - 48px); }
+  .detail-sidebar { display: none; }
   .detail-left { width: 100%; border-right: none; height: auto; overflow: visible; }
   .detail-left-scroll { overflow: visible; }
   .detail-right { width: 100%; height: 40vh; min-height: 200px; border-bottom: 1px solid var(--border); }
@@ -756,10 +763,12 @@ input { font-family: 'Noto Serif TC', serif; }
 <!-- View: Detail -->
 <div class="view" id="viewDetail">
   <div class="detail-split">
+    <div class="detail-sidebar" id="detailSidebar">
+      <div class="sidebar-nav" id="sidebarNav"></div>
+    </div>
     <div class="detail-left">
       <div class="detail-status" id="detailStatus"></div>
       <div class="detail-progress" id="detailProgress" style="display:none"></div>
-      <div class="part-index-nav" id="partIndexNav" style="display:none"></div>
       <div class="detail-left-scroll" id="detailLeftScroll">
         <div class="review-sections" id="reviewSections"></div>
       </div>
@@ -1427,7 +1436,6 @@ function renderDetail() {
     initScrollSpy();
   } else {
     document.getElementById('reviewSections').innerHTML = '<div class="empty-state"><p>請先進行 Claude 判讀</p></div>';
-    document.getElementById('partIndexNav').style.display = 'none';
   }
 }
 
@@ -1464,12 +1472,15 @@ function renderProgress() {
 }
 
 function renderPartIndex() {
-  const nav = document.getElementById('partIndexNav');
+  const nav = document.getElementById('sidebarNav');
+  if (!nav) return;
   if (!currentDoc || !currentDoc.claudeResults) {
-    nav.style.display = 'none';
+    nav.innerHTML = PARTS.map(part => {
+      const label = PART_LABELS[part] || part;
+      return `<div class="sidebar-nav-item" onclick="scrollToPart('${part}')">${label}</div>`;
+    }).join('');
     return;
   }
-  nav.style.display = '';
   const mr = currentDoc.mikeReview || {};
 
   nav.innerHTML = PARTS.map(part => {
@@ -1479,8 +1490,8 @@ function renderPartIndex() {
       if (q.lr) return sum + (mr[q.qId+'_L'] ? 1 : 0) + (mr[q.qId+'_R'] ? 1 : 0);
       return sum + (mr[q.qId] ? 1 : 0);
     }, 0);
-    const cls = partDone === partTotal ? 'idx-done' : partDone > 0 ? 'idx-partial' : '';
-    return `<div class="part-idx ${cls}" data-part="${part}" onclick="scrollToPart('${part}')">${PART_LABELS[part] || part}<span class="idx-count">${partDone}/${partTotal}</span></div>`;
+    const cls = partDone === partTotal ? 'sb-done' : partDone > 0 ? 'sb-partial' : '';
+    return `<div class="sidebar-nav-item ${cls}" data-part="${part}" onclick="scrollToPart('${part}')">${PART_LABELS[part] || part}<span class="sidebar-nav-count">${partDone}/${partTotal}</span></div>`;
   }).join('');
 }
 
@@ -1495,12 +1506,16 @@ function getOffsetTopIn(el, container) {
 }
 
 function scrollToPart(part) {
-  var el = document.getElementById('sec-' + part);
+  var anchor = document.getElementById('anchor-' + part);
   var scroll = document.getElementById('detailLeftScroll');
-  if (el && scroll) {
-    var top = getOffsetTopIn(el, scroll);
+  if (anchor && scroll) {
+    var top = getOffsetTopIn(anchor, scroll);
     scroll.scrollTo({ top: top, behavior: 'smooth' });
   }
+  // Highlight active sidebar item
+  document.querySelectorAll('.sidebar-nav-item').forEach(el => {
+    el.classList.toggle('sb-active', el.dataset.part === part);
+  });
 }
 
 // Track active section on scroll
@@ -1522,8 +1537,8 @@ function initScrollSpy() {
       for (const t of tops) {
         if (t.top <= scrollTop + 10) active = t.part;
       }
-      document.querySelectorAll('.part-idx').forEach(el => {
-        el.classList.toggle('idx-active', el.dataset.part === active);
+      document.querySelectorAll('.sidebar-nav-item').forEach(el => {
+        el.classList.toggle('sb-active', el.dataset.part === active);
       });
     });
   });
@@ -1549,6 +1564,7 @@ function renderReview() {
     }, 0);
     const partTotal = qs.reduce((sum, q) => sum + (q.lr ? 2 : 1), 0);
 
+    html += `<div id="anchor-${part}" style="height:0;overflow:hidden"></div>`;
     html += `<div class="section-header" id="sec-${part}">${PART_LABELS[part] || part} <span class="section-count">${partReviewCount}/${partTotal}</span></div>`;
 
     for (const q of qs) {
