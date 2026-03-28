@@ -885,7 +885,7 @@ input { font-family: 'Noto Serif TC', serif; }
 </div>
 
 <!-- Offline Banner -->
-<div class="offline-banner" id="offlineBanner">離線模式</div>
+<div class="offline-banner" id="offlineBanner">📴 離線模式 — 資料將在連線後同步</div>
 
 <!-- View: List -->
 <div class="view active" id="viewList">
@@ -970,6 +970,10 @@ input { font-family: 'Noto Serif TC', serif; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('photo_training_sw.js').catch(() => {});
+}
+
 // ============================================================
 // Firebase Init
 // ============================================================
