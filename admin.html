@@ -265,17 +265,18 @@ function depthStyle(d){
   return s;
 }
 
-function renderNode(node,path,depth,qmap){
+function renderNode(node,path,depth,qmap,parentOp){
   if(!node)return '';
   var h='',ind=depth*8,bg=depthStyle(depth);
+  var canWrap=parentOp==='COUNT';
   if(node.partResult!==undefined){
-    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${formatPartResult(node.partResult)}</span>${nodeActs(path)}</div>`;
+    return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${formatPartResult(node.partResult)}</span>${nodeActs(path,canWrap)}</div>`;
   }
   if(node.group!==undefined){
     h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#6B8E6B">敘述分組</span><span style="margin-left:6px;color:var(--text-2);font-style:italic">${node.group||'（未填敘述）'}</span>`;
-    h+=nodeActs(path);
+    h+=nodeActs(path,canWrap);
     h+=`<div class="edit-placeholder" data-path="${path}"></div>`;
-    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
+    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap,'GROUP');});
     _addBtnCounter++;
     h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addRuleItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button></div>`;
     return h;
@@ -291,42 +292,47 @@ function renderNode(node,path,depth,qmap){
     }).join('｜');
     h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-ref">${node.ref}</span> <span style="color:var(--text-2)">${sidePrefix}${q.text}</span> = <span class="node-match">${msHtml}</span>`;
     if(node.weight>1)h+=`<span class="node-meta">×${node.weight}</span>`;
-    h+=nodeActs(path)+'</div>';return h;
+    h+=nodeActs(path,canWrap)+'</div>';return h;
   }
   if(node.veto){
-    h+=`<div class="node node-veto" style="margin-left:${ind}px;${bg}"><span class="node-op">VETO</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
-    node.veto.forEach((v,vi)=>{h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`+renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1,qmap);});
-    if(node.rule)h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>'+renderNode(node.rule,path+'.rule',depth+1,qmap);
+    h+=`<div class="node node-veto" style="margin-left:${ind}px;${bg}"><span class="node-op">VETO</span>${nodeActs(path,false)}<div class="edit-placeholder" data-path="${path}"></div>`;
+    node.veto.forEach((v,vi)=>{h+=`<div style="margin-left:16px;font-size:12px;color:var(--text-3)">觸發→${v.result}</div>`+renderNode(v.condition,path+'.veto.'+vi+'.condition',depth+1,qmap,'VETO');});
+    if(node.rule)h+='<div style="margin-left:16px;font-size:12px;color:var(--text-3)">正常規則：</div>'+renderNode(node.rule,path+'.rule',depth+1,qmap,null);
     return h+'</div>';
   }
-  if(node.rule&&!node.veto)return renderNode(node.rule,path+'.rule',depth,qmap);
+  if(node.rule&&!node.veto)return renderNode(node.rule,path+'.rule',depth,qmap,parentOp);
   var op=node.op;
   if(op==='AND'||op==='OR'||op==='COUNT'){
     h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op">${OP_CN[op]||op}</span>`;
     if(op==='COUNT')h+=`<span class="node-op" style="background:#d4564e">${'最少'+node.min+'項 min='+node.min}</span>`;
-    h+=nodeActs(path);
+    h+=nodeActs(path,canWrap);
     h+=`<div class="edit-placeholder" data-path="${path}"></div>`;
-    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap);});
+    if(node.items)node.items.forEach((it,ii)=>{h+=renderNode(it,path+'.items.'+ii,depth+1,qmap,op);});
     _addBtnCounter++;
     h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addRuleItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button></div>`;return h;
   }
   if(op==='LR'){
     var mergeLabel=node.merge==='all'?'都符合':'一邊符合即可';
-    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">左右部位 LR</span><span class="node-op" style="background:#b5a078">${mergeLabel}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
-    h+=renderNode(node.each,path+'.each',depth+1,qmap);
+    h+=`<div class="node node-lr" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#9E8A5A">左右部位 LR</span><span class="node-op" style="background:#b5a078">${mergeLabel}</span>${nodeActs(path,canWrap)}<div class="edit-placeholder" data-path="${path}"></div>`;
+    h+=renderNode(node.each,path+'.each',depth+1,qmap,'LR');
     _addBtnCounter++;
     h+=`<button class="add-btn" id="add-btn-${_addBtnCounter}" onclick="addLrEachItem('${path}','add-btn-${_addBtnCounter}')">+ 新增條件</button>`;
     return h+'</div>';
   }
   if(op==='NOT'){
-    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#8B5CF6">${OP_CN.NOT}</span>${nodeActs(path)}<div class="edit-placeholder" data-path="${path}"></div>`;
-    if(node.item)h+=renderNode(node.item,path+'.item',depth+1,qmap);
+    h+=`<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:#8B5CF6">${OP_CN.NOT}</span>${nodeActs(path,canWrap)}<div class="edit-placeholder" data-path="${path}"></div>`;
+    if(node.item)h+=renderNode(node.item,path+'.item',depth+1,qmap,'NOT');
     return h+'</div>';
   }
   return `<div class="node" style="margin-left:${ind}px;${bg};color:var(--text-3)">[${JSON.stringify(node).substring(0,60)}...]</div>`;
 }
 
-function nodeActs(p){return `<span class="node-actions"><button onclick="editRuleNode('${p}')">編輯</button><button class="del" onclick="deleteRuleNode('${p}')">刪除</button></span>`;}
+function nodeActs(p,showWrap){
+  var h='<span class="node-actions"><button onclick="editRuleNode(\''+p+'\')">編輯</button><button class="del" onclick="deleteRuleNode(\''+p+'\')">刪除</button>';
+  if(showWrap)h+='<button onclick="wrapInGroup(\''+p+'\')" style="color:#6B8E6B">包入分組</button>';
+  h+='</span>';
+  return h;
+}
 
 // Rule part → allowed question parts mapping
 var RULE_TO_QPARTS={
@@ -451,6 +457,23 @@ function deleteRuleNode(p){
   var pp=p.split('.');
   if(pp[pp.length-1]==='item'){var parentPath=pp.slice(0,-1).join('.');delPath(rules[curDim],parentPath);}
   var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();
+}
+function wrapInGroup(path){
+  var desc=prompt('輸入分組敘述文字：');
+  if(desc===null)return;
+  pushUndo();
+  var node=getPath(rules[curDim],path);
+  if(!node)return;
+  var pp=path.split('.');
+  var lastKey=pp[pp.length-1];
+  var parentPath=pp.slice(0,-1).join('.');
+  var parent=getPath(rules[curDim],parentPath);
+  if(!parent)return;
+  if(Array.isArray(parent)&&/^\d+$/.test(lastKey)){
+    parent[+lastKey]={group:desc,items:[node]};
+  }
+  var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
+  renderAll();markDirty();
 }
 var _autoEditPath=null;
 var _autoEditQPart=null; // for multi-part selection (中停/下停)
