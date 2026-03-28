@@ -459,19 +459,83 @@ function deleteRuleNode(p){
   var pn=p.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);renderAll();markDirty();
 }
 function wrapInGroup(path){
-  var desc=prompt('輸入分組敘述文字：');
-  if(desc===null)return;
-  pushUndo();
-  var node=getPath(rules[curDim],path);
-  if(!node)return;
   var pp=path.split('.');
   var lastKey=pp[pp.length-1];
   var parentPath=pp.slice(0,-1).join('.');
   var parent=getPath(rules[curDim],parentPath);
-  if(!parent)return;
-  if(Array.isArray(parent)&&/^\d+$/.test(lastKey)){
-    parent[+lastKey]={group:desc,items:[node]};
+  if(!parent||!Array.isArray(parent))return;
+  var itemIdx=+lastKey;
+  var node=parent[itemIdx];
+  if(!node)return;
+
+  var existingGroups=[];
+  parent.forEach(function(it,i){
+    if(i!==itemIdx && it.group!==undefined){
+      existingGroups.push({index:i, label:it.group});
+    }
+  });
+
+  if(existingGroups.length===0){
+    var desc=prompt('輸入新分組敘述文字：');
+    if(desc===null)return;
+    pushUndo();
+    parent[itemIdx]={group:desc,items:[node]};
+    var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
+    renderAll();markDirty();
+    return;
   }
+
+  clearDynamicForms();
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
+  var h='<div class="edit-form" id="wrap-group-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">包入分組</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px">';
+  existingGroups.forEach(function(g){
+    h+='<button onclick="wrapIntoExistingGroup(\''+path+'\','+g.index+')" style="'+bs+';text-align:left">→ '+g.label+'</button>';
+  });
+  h+='<button onclick="wrapIntoNewGroup(\''+path+'\')" style="'+bs+';text-align:left;color:#6B8E6B">+ 建立新分組</button>';
+  h+='</div>';
+  h+='<div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+
+  var targetEl=event.target.closest('.node');
+  if(targetEl){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;targetEl.after(d);}
+}
+
+function wrapIntoExistingGroup(path,groupIdx){
+  clearDynamicForms();
+  var pp=path.split('.');
+  var lastKey=pp[pp.length-1];
+  var parentPath=pp.slice(0,-1).join('.');
+  var parent=getPath(rules[curDim],parentPath);
+  if(!parent||!Array.isArray(parent))return;
+  var itemIdx=+lastKey;
+  var node=parent[itemIdx];
+  if(!node)return;
+
+  pushUndo();
+  var targetGroup=parent[groupIdx];
+  if(!targetGroup||targetGroup.group===undefined)return;
+  targetGroup.items.push(node);
+  parent.splice(itemIdx,1);
+
+  var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
+  renderAll();markDirty();
+}
+
+function wrapIntoNewGroup(path){
+  clearDynamicForms();
+  var desc=prompt('輸入新分組敘述文字：');
+  if(desc===null)return;
+  var pp=path.split('.');
+  var lastKey=pp[pp.length-1];
+  var parentPath=pp.slice(0,-1).join('.');
+  var parent=getPath(rules[curDim],parentPath);
+  if(!parent||!Array.isArray(parent))return;
+  var itemIdx=+lastKey;
+  var node=parent[itemIdx];
+  if(!node)return;
+
+  pushUndo();
+  parent[itemIdx]={group:desc,items:[node]};
   var pn=path.split('.')[1];if(pn)openSections.add('r-'+curDim+'-'+pn);
   renderAll();markDirty();
 }
