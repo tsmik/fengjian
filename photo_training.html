@@ -692,11 +692,97 @@ const db = firebase.firestore();
 const COL = 'photo_training';
 
 // ============================================================
-// 124 Questions
+// Category Map (qId → A/B/C) — independent of Firebase
 // ============================================================
-const QUESTIONS = [
-  // === 頭（15題，全C）===
-  // 頂骨（4題）
+const CAT_MAP = {
+  // 頭 — all C
+  h1:"C",h2:"C",h3:"C",h4:"C",h5:"C",h6:"C",h7:"C",h8:"C",h9:"C",h10:"C",h11:"C",h12:"C",h13:"C",h14:"C",h15:"C",
+  // 上停/額
+  e1:"A",e2:"A",e3:"A",e4:"A",e5:"A",e6:"B",e7:"B",e8:"A",e9:"B",e10:"C",e11:"B",e12:"A",e13:"A",e14:"A",e15:"C",e16:"A",e17:"C",
+  // 耳
+  er1:"A",er2:"A",er3:"A",er4:"A",er5:"A",er6:"B",er7:"A",er8:"B",er9:"B",er10:"C",er11:"C",er12:"A",er13:"A",er14:"C",er15:"C",
+  // 眉
+  br1:"A",br2:"A",br3:"A",br4:"A",br5:"A",br6:"A",br7:"A",br8:"A",br9:"A",br10:"A",br11:"A",br12:"A",br13:"B",br14:"B",br15:"C",br16:"B",br17:"B",br18:"C",br19:"C",br20:"C",
+  // 眼
+  ey1:"A",ey2:"A",ey3:"A",ey4:"A",ey5:"A",ey6:"A",ey7:"A",ey8:"A",ey9:"A",ey10:"A",ey11:"A",ey12:"C",
+  // 鼻
+  n1:"A",n2:"A",n3:"A",n4:"A",n5:"A",n6:"B",n7:"B",n8:"A",n9:"A",n10:"C",n11:"A",n12:"A",
+  // 顴
+  q1:"A",q2:"A",q3:"B",q4:"C",q5:"A",q6:"B",
+  // 口
+  m1:"A",m2:"A",m3:"A",m4:"A",m5:"A",m6:"A",m7:"A",m8:"A",m9:"A",m10:"B",m11:"A",m12:"A",m13:"B",
+  // 人中
+  p1:"A",p2:"A",p3:"B",p4:"A",
+  // 地閣
+  c1:"B",c2:"A",c3:"A",c4:"A",c5:"A",c6:"C",
+  // 頤
+  y1:"A",y2:"B",y3:"A",y4:"C"
+};
+
+// Firebase part key → display part name
+const PART_KEY_MAP = {"頭":"頭","額":"上停","耳":"耳","眉":"眉","眼":"眼","鼻":"鼻","顴":"顴","口":"口","人中":"人中","地閣":"地閣","頤":"頤"};
+const PART_ORDER = ["頭","額","耳","眉","眼","鼻","顴","口","人中","地閣","頤"];
+
+// ============================================================
+// Questions — mutable, loaded from Firebase or fallback
+// ============================================================
+let QUESTIONS = [];
+let PARTS = [];
+let PART_LABELS = {};
+let ALL_KEYS = [];
+
+// Convert Firebase format to flat QUESTIONS array
+function convertFirebaseQuestions(fbData) {
+  const result = [];
+  for (const partKey of PART_ORDER) {
+    const partData = fbData[partKey];
+    if (!partData || !partData.sections) continue;
+    const displayPart = PART_KEY_MAP[partKey] || partKey;
+    for (const sec of partData.sections) {
+      for (const q of (sec.qs || [])) {
+        result.push({
+          qId: q.id,
+          part: displayPart,
+          section: sec.label || sec.name || '',
+          text: q.text,
+          cat: CAT_MAP[q.id] || 'B',
+          lr: !!q.paired,
+          options: (q.opts || []).map(o => typeof o === 'string' ? o : o.v)
+        });
+      }
+    }
+  }
+  return result;
+}
+
+function rebuildDerivedData() {
+  // Rebuild PARTS, PART_LABELS, ALL_KEYS from QUESTIONS
+  const seen = new Set();
+  PARTS = [];
+  PART_LABELS = {};
+  for (const q of QUESTIONS) {
+    if (!seen.has(q.part)) {
+      seen.add(q.part);
+      PARTS.push(q.part);
+      // Label: "上停" → "上停（額）", others same
+      PART_LABELS[q.part] = q.part === '上停' ? '上停（額）' : q.part;
+    }
+  }
+  ALL_KEYS = [];
+  for (const q of QUESTIONS) {
+    if (q.lr) {
+      ALL_KEYS.push({ key: q.qId + '_L', q, side: '左' });
+      ALL_KEYS.push({ key: q.qId + '_R', q, side: '右' });
+    } else {
+      ALL_KEYS.push({ key: q.qId, q, side: null });
+    }
+  }
+}
+
+// ============================================================
+// Default 124 Questions (fallback)
+// ============================================================
+const QUESTIONS_DEFAULT = [
   { qId:"h1", part:"頭", section:"頂骨", text:"頂骨型相", cat:"C", lr:true, options:["龜背","圓","平寬"] },
   { qId:"h2", part:"頭", section:"頂骨", text:"頂骨中央接合", cat:"C", lr:false, options:["突起","平順","凹陷"] },
   { qId:"h3", part:"頭", section:"頂骨", text:"頂骨左右一致性", cat:"C", lr:false, options:["左右一致","左右不一致"] },
@@ -875,40 +961,22 @@ const QUESTIONS = [
   { qId:"y4", part:"頤", section:"頤一致", text:"雙頤一致性", cat:"C", lr:false, options:["雙頤一致","雙頤不一致"] },
 ];
 
-// Part display order and names
-const PARTS = ["頭","上停","耳","眉","眼","鼻","顴","口","人中","地閣","頤"];
-const PART_LABELS = { "頭":"頭","上停":"上停（額）","耳":"耳","眉":"眉","眼":"眼","鼻":"鼻","顴":"顴","口":"口","人中":"人中","地閣":"地閣","頤":"頤" };
-
 // Build question text for Claude prompt
 function buildQuestionPrompt() {
-  let text = '以下是 124 題觀察問題，請逐題根據照片回答。\n\n';
+  const total = QUESTIONS.length;
+  let text = `以下是 ${total} 題觀察問題，請逐題根據照片回答。\n\n`;
   let currentPart = '';
   for (const q of QUESTIONS) {
     if (q.part !== currentPart) {
       currentPart = q.part;
       const count = QUESTIONS.filter(x => x.part === currentPart).length;
-      text += `\n## ${PART_LABELS[currentPart]}（${count}題）\n`;
+      text += `\n## ${PART_LABELS[currentPart] || currentPart}（${count}題）\n`;
     }
     const lr = q.lr ? ' [左右]' : '';
     text += `${q.qId}${lr} ${q.text}：${q.options.join(' / ')}\n`;
   }
   return text;
 }
-
-// Expand questions (LR -> _L/_R keys)
-function expandKeys() {
-  const keys = [];
-  for (const q of QUESTIONS) {
-    if (q.lr) {
-      keys.push({ key: q.qId + '_L', q, side: '左' });
-      keys.push({ key: q.qId + '_R', q, side: '右' });
-    } else {
-      keys.push({ key: q.qId, q, side: null });
-    }
-  }
-  return keys;
-}
-const ALL_KEYS = expandKeys();
 
 // ============================================================
 // State
@@ -1583,9 +1651,31 @@ function photoReset() {
 })();
 
 // ============================================================
-// Init
+// Init — load questions from Firebase, then show UI
 // ============================================================
-loadList();
+async function initApp() {
+  showLoading('載入題目中...');
+  try {
+    const qdoc = await db.collection('settings').doc('questions').get();
+    if (qdoc.exists && qdoc.data().questionsJson) {
+      const fbData = JSON.parse(qdoc.data().questionsJson);
+      if (fbData && typeof fbData === 'object' && Object.keys(fbData).length >= 5) {
+        QUESTIONS = convertFirebaseQuestions(fbData);
+        console.log('[Questions] Firebase ✓', QUESTIONS.length, '題');
+      }
+    }
+  } catch (e) {
+    console.log('[Questions] Firebase error, using fallback', e);
+  }
+  if (QUESTIONS.length === 0) {
+    QUESTIONS = QUESTIONS_DEFAULT;
+    console.log('[Questions] Using default fallback', QUESTIONS.length, '題');
+  }
+  rebuildDerivedData();
+  hideLoading();
+  loadList();
+}
+initApp();
 </script>
 </body>
 </html>
