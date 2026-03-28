@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>照片輔助觀察訓練</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1e2127;
+  --bg2: #262930;
+  --bg3: #2c2f36;
+  --border: #3a3d44;
+  --text: #e8e0d0;
+  --text2: #b0a898;
+  --text3: #7a7468;
+  --accent: #C17A5A;
+  --green: #7A9E7E;
+  --red: #c03830;
+  --gold: #9a7c4a;
+  --blue: #5a8abf;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Serif TC', serif;
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+button { font-family: 'Noto Serif TC', serif; cursor: pointer; }
+input { font-family: 'Noto Serif TC', serif; }
+
+/* ===== Top Nav ===== */
+.top-nav {
+  height: 48px;
+  background: #16181c;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.nav-back {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+.nav-back:hover { border-color: var(--text2); color: var(--text); }
+.nav-spacer { flex: 1; }
+.nav-stats {
+  font-size: 12px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+/* ===== View: List ===== */
+.view { display: none; }
+.view.active { display: block; }
+
+.list-header {
+  padding: 24px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.list-header h1 {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  flex: 1;
+}
+.btn-add {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.btn-add:hover { opacity: 0.9; }
+
+.photo-list {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.photo-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.photo-card:hover { border-color: var(--accent); }
+.photo-card-top {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.photo-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--bg3);
+  flex-shrink: 0;
+}
+.photo-card-info { flex: 1; min-width: 0; }
+.photo-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.photo-card-date {
+  font-size: 12px;
+  color: var(--text3);
+}
+.photo-card-bar {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.photo-card-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.photo-card-stats {
+  font-size: 12px;
+  color: var(--text2);
+  display: flex;
+  gap: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text3);
+}
+.empty-state p { font-size: 16px; margin-bottom: 20px; letter-spacing: 2px; }
+
+/* ===== View: Upload ===== */
+.upload-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+.upload-container h2 {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.form-group input[type="text"] {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+.form-group input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+.upload-area:hover { border-color: var(--accent); }
+.upload-area.has-file { border-color: var(--green); border-style: solid; }
+.upload-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.upload-area p { color: var(--text3); font-size: 14px; }
+.upload-area .file-name { color: var(--green); font-weight: 700; }
+.upload-preview {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+.upload-hint {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+.btn-submit {
+  width: 100%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-top: 8px;
+}
+.btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== View: Detail ===== */
+.detail-photos {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  background: var(--bg2);
+}
+.detail-photo {
+  height: 160px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.detail-photo:hover { opacity: 0.85; }
+
+.detail-status {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.status-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+.status-badge.pending { background: var(--bg3); color: var(--text3); }
+.status-badge.loading { background: #3a3520; color: #d4a834; }
+.status-badge.done { background: #1e3320; color: var(--green); }
+.btn-claude {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.btn-claude:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-delete-record {
+  background: none;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.btn-delete-record:hover { background: var(--red); color: white; }
+
+.detail-progress {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.accuracy-num { font-weight: 700; color: var(--green); }
+
+/* ===== Review Section ===== */
+.review-sections {
+  padding-bottom: 80px;
+}
+.section-header {
+  position: sticky;
+  top: 48px;
+  z-index: 10;
+  background: var(--bg3);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-count {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.review-card {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.review-card.reviewed { background: var(--bg2); }
+
+.review-q-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.review-qid {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text3);
+  background: var(--bg3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.review-cat {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.review-cat.cat-A { background: #1e3320; color: var(--green); }
+.review-cat.cat-B { background: #3a3520; color: #d4a834; }
+.review-cat.cat-C { background: #3a2020; color: #c06060; }
+.review-q-text {
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+
+/* LR layout */
+.review-lr-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.review-lr-col {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 10px;
+}
+.review-lr-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+/* Claude answer display */
+.claude-answer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.claude-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.claude-null {
+  font-size: 13px;
+  color: var(--text3);
+  font-style: italic;
+}
+.conf-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.conf-H { background: #1e3320; color: var(--green); }
+.conf-M { background: #3a3520; color: #d4a834; }
+.conf-L { background: #3a2020; color: #c06060; }
+
+/* Review buttons */
+.review-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rbtn {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  letter-spacing: 1px;
+  transition: all 0.1s;
+}
+.rbtn:hover { border-color: var(--text2); }
+.rbtn.sel-correct { background: var(--green); color: white; border-color: var(--green); }
+.rbtn.sel-wrong { background: var(--red); color: white; border-color: var(--red); }
+.rbtn.sel-cannot { background: var(--text3); color: white; border-color: var(--text3); }
+
+/* Correct answer selector (when marked wrong) */
+.correct-select {
+  margin-top: 6px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.correct-opt {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+}
+.correct-opt:hover { border-color: var(--accent); }
+.correct-opt.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Photo lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.lightbox.show { display: flex; }
+.lightbox img {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-overlay.show { display: flex; }
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--text2); font-size: 14px; letter-spacing: 2px; }
+
+@media (max-width: 600px) {
+  .review-lr-wrap { grid-template-columns: 1fr; }
+  .photo-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<div class="top-nav">
+  <div class="nav-brand">照片觀察訓練</div>
+  <button class="nav-back" id="navBack" style="display:none" onclick="showView('list')">← 返回清單</button>
+  <div class="nav-spacer"></div>
+  <div class="nav-stats" id="navStats"></div>
+</div>
+
+<!-- View: List -->
+<div class="view active" id="viewList">
+  <div class="list-header">
+    <h1>照片記錄</h1>
+    <button class="btn-add" onclick="showView('upload')">＋ 新增照片</button>
+  </div>
+  <div id="photoList" class="photo-list"></div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <p>尚無照片記錄</p>
+    <button class="btn-add" onclick="showView('upload')">＋ 新增第一張照片</button>
+  </div>
+</div>
+
+<!-- View: Upload -->
+<div class="view" id="viewUpload">
+  <div class="upload-container">
+    <h2>新增照片</h2>
+    <div class="form-group">
+      <label>標示名稱</label>
+      <input type="text" id="inputName" placeholder="例如：案例01" />
+    </div>
+    <div class="form-group">
+      <label>正面照（必要）</label>
+      <div class="upload-area" id="frontArea">
+        <input type="file" accept="image/*" capture="environment" onchange="handleFile(this,'front')" />
+        <p id="frontLabel">點擊上傳或拍照</p>
+        <img class="upload-preview" id="frontPreview" style="display:none" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>側面照（選填）</label>
+      <div class="upload-area" id="sideArea">
+        <input type="file" accept="image/*" capture="environment" onchange="handleFile(this,'side')" />
+        <p id="sideLabel">點擊上傳或拍照</p>
+        <img class="upload-preview" id="sidePreview" style="display:none" />
+      </div>
+    </div>
+    <button class="btn-submit" id="btnUpload" disabled onclick="doUpload()">建立並上傳</button>
+  </div>
+</div>
+
+<!-- View: Detail -->
+<div class="view" id="viewDetail">
+  <div class="detail-photos" id="detailPhotos"></div>
+  <div class="detail-status" id="detailStatus"></div>
+  <div class="detail-progress" id="detailProgress" style="display:none"></div>
+  <div class="review-sections" id="reviewSections"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <img id="lightboxImg" />
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">處理中...</div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script>
+// ============================================================
+// Firebase Init
+// ============================================================
+firebase.initializeApp({
+  apiKey: "AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",
+  authDomain: "renxiangbingfa.firebaseapp.com",
+  projectId: "renxiangbingfa",
+  storageBucket: "renxiangbingfa.firebasestorage.app",
+  messagingSenderId: "912262878667",
+  appId: "1:912262878667:web:cd7a74f1378221dbe3524e"
+});
+const db = firebase.firestore();
+const storage = firebase.storage();
+const COL = 'photo_training';
+
+// ============================================================
+// 124 Questions
+// ============================================================
+const QUESTIONS = [
+  // === 頭（15題，全C）===
+  // 頂骨（4題）
+  { qId:"h1", part:"頭", section:"頂骨", text:"頂骨型相", cat:"C", lr:true, options:["龜背","圓","平寬"] },
+  { qId:"h2", part:"頭", section:"頂骨", text:"頂骨中央接合", cat:"C", lr:false, options:["突起","平順","凹陷"] },
+  { qId:"h3", part:"頭", section:"頂骨", text:"頂骨左右一致性", cat:"C", lr:false, options:["左右一致","左右不一致"] },
+  { qId:"h4", part:"頭", section:"頂骨", text:"頂骨中線", cat:"C", lr:false, options:["中線直","中線斜歪"] },
+  // 枕骨（6題）
+  { qId:"h5", part:"頭", section:"枕骨", text:"枕骨型相", cat:"C", lr:false, options:["後腦圓","後腦平"] },
+  { qId:"h6", part:"頭", section:"枕骨", text:"枕骨凹凸", cat:"C", lr:false, options:["順無凹凸","有凹凸"] },
+  { qId:"h7", part:"頭", section:"枕骨", text:"枕骨自剋骨", cat:"C", lr:false, options:["有自剋骨","無自剋骨"] },
+  { qId:"h8", part:"頭", section:"枕骨", text:"枕骨橫條骨", cat:"C", lr:false, options:["有橫條骨","無橫條骨"] },
+  { qId:"h9", part:"頭", section:"枕骨", text:"枕骨中線", cat:"C", lr:false, options:["中線直","中線歪"] },
+  { qId:"h10", part:"頭", section:"枕骨", text:"枕骨左右一致性", cat:"C", lr:false, options:["兩側一致","兩側不一致"] },
+  // 華陽骨（3題）
+  { qId:"h11", part:"頭", section:"華陽骨", text:"華陽骨型相", cat:"C", lr:true, options:["圓隆","平直","突露","凹陷"] },
+  { qId:"h12", part:"頭", section:"華陽骨", text:"華陽骨銜接", cat:"C", lr:true, options:["順接","有轉折起伏"] },
+  { qId:"h13", part:"頭", section:"華陽骨", text:"華陽骨左右一致性", cat:"C", lr:false, options:["左右一致","左右不一致"] },
+  // 頭骨整體（2題）
+  { qId:"h14", part:"頭", section:"頭骨整體", text:"頭骨寬窄", cat:"C", lr:false, options:["頭窄","頭寬"] },
+  { qId:"h15", part:"頭", section:"頭骨整體", text:"頭骨硬度", cat:"C", lr:false, options:["偏硬","一般"] },
+
+  // === 上停/額（17題，A:10/B:4/C:3）===
+  // 額型（10題）
+  { qId:"e1", part:"上停", section:"額型", text:"額高低", cat:"A", lr:false, options:["額高","額低"] },
+  { qId:"e2", part:"上停", section:"額型", text:"額圓方", cat:"A", lr:false, options:["額圓","額方"] },
+  { qId:"e3", part:"上停", section:"額型", text:"額寬窄", cat:"A", lr:false, options:["額寬","額窄"] },
+  { qId:"e4", part:"上停", section:"額型", text:"額平整", cat:"A", lr:false, options:["額平","額不平"] },
+  { qId:"e5", part:"上停", section:"額型", text:"額乾淨", cat:"A", lr:false, options:["額淨","額有缺陷"] },
+  { qId:"e6", part:"上停", section:"額型", text:"額隆起", cat:"B", lr:false, options:["額隆","額均","額陷"] },
+  { qId:"e7", part:"上停", section:"額型", text:"額立斜", cat:"B", lr:false, options:["額立","額斜"] },
+  { qId:"e8", part:"上停", section:"額型", text:"額長方", cat:"A", lr:false, options:["額長","額方"] },
+  { qId:"e9", part:"上停", section:"額型", text:"額順折", cat:"B", lr:false, options:["額順","額折"] },
+  { qId:"e10", part:"上停", section:"額型", text:"額鬆緊", cat:"C", lr:false, options:["額緊","額鬆"] },
+  // 額型續
+  { qId:"e11", part:"上停", section:"額型", text:"大小天庭", cat:"B", lr:false, options:["大天庭","小天庭","無大小天庭"] },
+  // 髮際線
+  { qId:"e12", part:"上停", section:"髮際線", text:"美人尖", cat:"A", lr:false, options:["有美人尖","無美人尖"] },
+  // 額內部位
+  { qId:"e13", part:"上停", section:"額內部位", text:"日月角隆", cat:"A", lr:false, options:["日月角起","日月角不清晰"] },
+  { qId:"e14", part:"上停", section:"額內部位", text:"日月角開合", cat:"A", lr:false, options:["日月角開","日月角合"] },
+  { qId:"e15", part:"上停", section:"額內部位", text:"日月角骨肉", cat:"C", lr:false, options:["日月角有肉包","日月角骨感明顯"] },
+  { qId:"e16", part:"上停", section:"額內部位", text:"輔角骨", cat:"A", lr:false, options:["有輔角骨","輔角骨不明顯"] },
+  { qId:"e17", part:"上停", section:"額內部位", text:"佐串骨", cat:"C", lr:false, options:["有佐串骨","佐串骨不明顯"] },
+
+  // === 耳（15題，A:8/B:3/C:4）===
+  // 耳形（6題）
+  { qId:"er1", part:"耳", section:"耳形", text:"耳長短", cat:"A", lr:true, options:["耳長","耳短"] },
+  { qId:"er2", part:"耳", section:"耳形", text:"耳大小", cat:"A", lr:true, options:["耳大","耳適中","耳小"] },
+  { qId:"er3", part:"耳", section:"耳形", text:"耳立提", cat:"A", lr:true, options:["耳立","耳提","耳提強"] },
+  { qId:"er4", part:"耳", section:"耳形", text:"耳圓缺", cat:"A", lr:true, options:["耳圓","耳尖","耳缺"] },
+  { qId:"er5", part:"耳", section:"耳形", text:"耳貼程度", cat:"A", lr:true, options:["貼耳","一般","招風耳"] },
+  { qId:"er6", part:"耳", section:"耳形", text:"耳孔", cat:"B", lr:true, options:["耳孔大","耳孔小"] },
+  // 耳位置
+  { qId:"er7", part:"耳", section:"耳位置", text:"耳高低", cat:"A", lr:true, options:["耳高","耳低"] },
+  // 輪廓
+  { qId:"er8", part:"耳", section:"輪廓", text:"輪廓有無", cat:"B", lr:true, options:["有輪有廓","有輪無廓","無輪有廓"] },
+  { qId:"er9", part:"耳", section:"輪廓", text:"輪包廓", cat:"B", lr:true, options:["輪包廓","輪不包廓"] },
+  // 耳質
+  { qId:"er10", part:"耳", section:"耳質", text:"耳厚薄", cat:"C", lr:true, options:["耳厚","耳正常","耳薄"] },
+  { qId:"er11", part:"耳", section:"耳質", text:"耳質硬軟", cat:"C", lr:true, options:["耳堅","耳硬","耳軟"] },
+  // 垂珠
+  { qId:"er12", part:"耳", section:"垂珠", text:"垂珠", cat:"A", lr:true, options:["有垂珠","無垂珠"] },
+  { qId:"er13", part:"耳", section:"垂珠", text:"耳垂方向", cat:"A", lr:true, options:["耳垂朝口","耳垂朝下","其他"] },
+  // 一致性
+  { qId:"er14", part:"耳", section:"一致性", text:"雙耳一致性", cat:"C", lr:false, options:["雙耳一致","雙耳不一致"] },
+  // 耳勢
+  { qId:"er15", part:"耳", section:"耳勢", text:"耳勢", cat:"C", lr:true, options:["耳勢朝上","一般"] },
+
+  // === 眉（20題，A:12/B:4/C:4）===
+  // 眉型（7題）
+  { qId:"br1", part:"眉", section:"眉型", text:"眉長短", cat:"A", lr:true, options:["眉長","眉短"] },
+  { qId:"br2", part:"眉", section:"眉型", text:"眉粗細", cat:"A", lr:true, options:["眉形細","眉型適中","眉型粗"] },
+  { qId:"br3", part:"眉", section:"眉型", text:"眉形走向", cat:"A", lr:true, options:["眉彎","眉平"] },
+  { qId:"br4", part:"眉", section:"眉型", text:"鷹角", cat:"A", lr:true, options:["有鷹角","無鷹角"] },
+  { qId:"br5", part:"眉", section:"眉型", text:"眉毛中斷", cat:"A", lr:true, options:["無中斷","有中斷"] },
+  { qId:"br6", part:"眉", section:"眉型", text:"眉尾", cat:"A", lr:true, options:["有聚","散"] },
+  { qId:"br7", part:"眉", section:"眉型", text:"特殊眉型", cat:"A", lr:true, options:["短粗眉","將軍眉","無"] },
+  // 眉勢（3題）
+  { qId:"br8", part:"眉", section:"眉勢", text:"眉尾方向", cat:"A", lr:true, options:["有揚","平","往下"] },
+  { qId:"br9", part:"眉", section:"眉勢", text:"眉頭與山根", cat:"A", lr:true, options:["不沖根","沖根"] },
+  { qId:"br10", part:"眉", section:"眉勢", text:"眉的位置高低", cat:"A", lr:true, options:["眉高居額","一般"] },
+  // 眉位（4題）
+  { qId:"br11", part:"眉", section:"眉位", text:"眉眼間距", cat:"A", lr:true, options:["不壓眼","壓眼"] },
+  { qId:"br12", part:"眉", section:"眉位", text:"眉頭位置", cat:"A", lr:true, options:["退印","蓋印堂"] },
+  { qId:"br13", part:"眉", section:"眉位", text:"眉附骨位", cat:"B", lr:true, options:["貼附眉骨","不貼附"] },
+  { qId:"br14", part:"眉", section:"眉位", text:"眉毛順亂", cat:"B", lr:true, options:["眉順","眉亂"] },
+  // 眉質（5題）
+  { qId:"br15", part:"眉", section:"眉質", text:"眉毛硬軟", cat:"C", lr:true, options:["柔順","質硬"] },
+  { qId:"br16", part:"眉", section:"眉質", text:"眉毛量", cat:"B", lr:true, options:["眉毛多","眉毛稀少"] },
+  { qId:"br17", part:"眉", section:"眉質", text:"眉身鋪陳", cat:"B", lr:true, options:["鋪陳有致","一般","有交叉"] },
+  { qId:"br18", part:"眉", section:"眉質", text:"眉毛單根長度", cat:"C", lr:true, options:["毛不過短","眉毛短"] },
+  { qId:"br19", part:"眉", section:"眉質", text:"眉頭與印堂", cat:"C", lr:true, options:["不沖印","沖印"] },
+  // 眉一致（1題）
+  { qId:"br20", part:"眉", section:"眉一致", text:"雙眉一致性", cat:"C", lr:false, options:["雙眉一致","雙眉不一致"] },
+
+  // === 眼（12題，A:11/B:0/C:1）===
+  // 眼型（5題）
+  { qId:"ey1", part:"眼", section:"眼型", text:"眼長短", cat:"A", lr:true, options:["眼長","眼短"] },
+  { qId:"ey2", part:"眼", section:"眼型", text:"眼大小", cat:"A", lr:true, options:["眼大","眼小"] },
+  { qId:"ey3", part:"眼", section:"眼型", text:"眼細圓", cat:"A", lr:true, options:["眼細","眼圓"] },
+  { qId:"ey4", part:"眼", section:"眼型", text:"眼尾方向", cat:"A", lr:true, options:["眼尾平","眼尾朝上","眼尾朝下"] },
+  { qId:"ey5", part:"眼", section:"眼型", text:"睛凸", cat:"A", lr:true, options:["睛凸","正常"] },
+  // 眼輪廓（4題）
+  { qId:"ey6", part:"眼", section:"眼輪廓", text:"眼鉤", cat:"A", lr:true, options:["有眼鉤","無眼鉤"] },
+  { qId:"ey7", part:"眼", section:"眼輪廓", text:"刀裁", cat:"A", lr:true, options:["有刀裁","無刀裁"] },
+  { qId:"ey8", part:"眼", section:"眼輪廓", text:"上眼瞼", cat:"A", lr:true, options:["眼上弧","有較硬轉角"] },
+  { qId:"ey9", part:"眼", section:"眼輪廓", text:"下眼瞼", cat:"A", lr:true, options:["下眼瞼平直","下眼瞼有弧"] },
+  // 睛瞳（2題）
+  { qId:"ey10", part:"眼", section:"睛瞳", text:"黑睛大小", cat:"A", lr:true, options:["睛大","適中","睛小"] },
+  { qId:"ey11", part:"眼", section:"睛瞳", text:"眼白", cat:"A", lr:true, options:["上下不白","上三白","下三白","四白"] },
+  // 眼一致（1題）
+  { qId:"ey12", part:"眼", section:"眼一致", text:"雙眼一致性", cat:"C", lr:false, options:["雙眼一致","雙眼不一致"] },
+
+  // === 鼻（12題，A:9/B:2/C:1）===
+  // 鼻型（9題）
+  { qId:"n1", part:"鼻", section:"鼻型", text:"鼻長短", cat:"A", lr:false, options:["鼻長","鼻短"] },
+  { qId:"n2", part:"鼻", section:"鼻型", text:"鼻高低", cat:"A", lr:false, options:["鼻高","鼻低"] },
+  { qId:"n3", part:"鼻", section:"鼻型", text:"鼻直曲", cat:"A", lr:false, options:["鼻直","鼻曲"] },
+  { qId:"n4", part:"鼻", section:"鼻型", text:"鼻寬窄", cat:"A", lr:false, options:["鼻寬","鼻窄小"] },
+  { qId:"n5", part:"鼻", section:"鼻型", text:"鼻準形", cat:"A", lr:false, options:["鼻準圓","鼻準尖"] },
+  { qId:"n6", part:"鼻", section:"鼻型", text:"鼻順", cat:"B", lr:false, options:["鼻順","鼻不順"] },
+  { qId:"n7", part:"鼻", section:"鼻型", text:"鼻接印", cat:"B", lr:false, options:["鼻接印","鼻不接印"] },
+  { qId:"n8", part:"鼻", section:"鼻型", text:"鼻橫張", cat:"A", lr:false, options:["有橫張","無橫張"] },
+  { qId:"n9", part:"鼻", section:"鼻型", text:"山根寬窄", cat:"A", lr:false, options:["山根寬","山根窄"] },
+  // 鼻骨肉（3題）
+  { qId:"n10", part:"鼻", section:"鼻骨肉", text:"鼻骨肉比", cat:"C", lr:false, options:["肉多於骨","骨肉勻稱","骨多於肉"] },
+  { qId:"n11", part:"鼻", section:"鼻骨肉", text:"鼻起節", cat:"A", lr:false, options:["無起節","有起節突露"] },
+  { qId:"n12", part:"鼻", section:"鼻骨肉", text:"鼻聚散", cat:"A", lr:false, options:["鼻聚","鼻散"] },
+
+  // === 顴（6題，A:3/B:2/C:1）===
+  // 顴形（2題）
+  { qId:"q1", part:"顴", section:"顴形", text:"顴骨形態", cat:"A", lr:true, options:["顴高且隆","顴有而不明","顴平"] },
+  { qId:"q2", part:"顴", section:"顴形", text:"顴骨大小", cat:"A", lr:true, options:["顴大","顴不過大","顴小"] },
+  // 顴骨肉
+  { qId:"q3", part:"顴", section:"顴骨肉", text:"顴骨肉比", cat:"B", lr:true, options:["顴有肉","顴無肉"] },
+  // 顴柄
+  { qId:"q4", part:"顴", section:"顴柄", text:"顴柄走向", cat:"C", lr:true, options:["顴柄插天","顴柄平","無明顯顴柄"] },
+  // 顴整體
+  { qId:"q5", part:"顴", section:"顴整體", text:"顴鼻相稱", cat:"A", lr:false, options:["相稱","不相稱"] },
+  { qId:"q6", part:"顴", section:"顴整體", text:"雙顴一致性", cat:"B", lr:false, options:["雙顴一致","雙顴不一致"] },
+
+  // === 口（13題，A:11/B:2/C:0）===
+  // 口型（7題）
+  { qId:"m1", part:"口", section:"口型", text:"口大小", cat:"A", lr:false, options:["口開大合小","口適中","口小"] },
+  { qId:"m2", part:"口", section:"口型", text:"涯岸", cat:"A", lr:false, options:["涯岸分明","唇緣較不明顯"] },
+  { qId:"m3", part:"口", section:"口型", text:"嘴角收斂", cat:"A", lr:false, options:["嘴角收","嘴角不收"] },
+  { qId:"m4", part:"口", section:"口型", text:"嘴角方向", cat:"A", lr:false, options:["嘴角朝上","嘴角水平","嘴角朝下"] },
+  { qId:"m5", part:"口", section:"口型", text:"上唇V形", cat:"A", lr:false, options:["水星明顯","水星不明顯"] },
+  { qId:"m6", part:"口", section:"口型", text:"閉合線", cat:"A", lr:false, options:["閉合線平","閉合線有曲度弓線"] },
+  { qId:"m7", part:"口", section:"口型", text:"口閉緊", cat:"A", lr:false, options:["閉合線密","閉合線較鬆","放鬆見齒"] },
+  // 唇型（4題）
+  { qId:"m8", part:"口", section:"唇型", text:"唇厚度", cat:"A", lr:false, options:["上下唇厚一般","唇明顯厚度大","唇薄"] },
+  { qId:"m9", part:"口", section:"唇型", text:"唇厚均", cat:"A", lr:false, options:["唇厚平均","唇厚不均"] },
+  { qId:"m10", part:"口", section:"唇型", text:"唇起", cat:"B", lr:false, options:["唇凸","唇不凸"] },
+  { qId:"m11", part:"口", section:"唇型", text:"唇垂珠", cat:"A", lr:false, options:["有唇珠","無唇珠"] },
+  // 口一致（2題）
+  { qId:"m12", part:"口", section:"口一致", text:"口中線", cat:"A", lr:false, options:["口位置適中","口位置不中"] },
+  { qId:"m13", part:"口", section:"口一致", text:"口對稱", cat:"B", lr:false, options:["口對稱","口不對稱"] },
+
+  // === 人中（4題，A:3/B:1/C:0）===
+  { qId:"p1", part:"人中", section:"人中", text:"人中深淺", cat:"A", lr:false, options:["人中深","人中淺"] },
+  { qId:"p2", part:"人中", section:"人中", text:"人中長短", cat:"A", lr:false, options:["人中長","人中短"] },
+  { qId:"p3", part:"人中", section:"人中", text:"人中寬窄", cat:"B", lr:false, options:["人中寬度適中","人中窄"] },
+  { qId:"p4", part:"人中", section:"人中", text:"人中方向", cat:"A", lr:false, options:["人中直","人中不直"] },
+
+  // === 地閣（6題，A:4/B:1/C:1）===
+  { qId:"c1", part:"地閣", section:"地閣型", text:"地閣朝", cat:"B", lr:false, options:["地閣起","地閣凸","地閣縮"] },
+  { qId:"c2", part:"地閣", section:"地閣型", text:"地閣平", cat:"A", lr:false, options:["地閣平","地閣圓","地閣凹"] },
+  { qId:"c3", part:"地閣", section:"地閣大小", text:"地閣長短", cat:"A", lr:false, options:["地閣長","地閣適中","地閣短"] },
+  { qId:"c4", part:"地閣", section:"地閣大小", text:"地閣寬窄", cat:"A", lr:false, options:["地閣寬","地閣窄尖"] },
+  { qId:"c5", part:"地閣", section:"地閣位置", text:"地閣位置", cat:"A", lr:false, options:["地閣置中","地閣歪"] },
+  { qId:"c6", part:"地閣", section:"地閣骨肉", text:"地閣骨肉", cat:"C", lr:false, options:["地閣有肉","地閣無肉"] },
+
+  // === 頤（4題，A:2/B:1/C:1）===
+  { qId:"y1", part:"頤", section:"頤角度", text:"頤角度", cat:"A", lr:true, options:["頤寬","頤平","頤削"] },
+  { qId:"y2", part:"頤", section:"頤肉", text:"頤肉量", cat:"B", lr:true, options:["頤豐","頤有肉","頤露尖"] },
+  { qId:"y3", part:"頤", section:"頤長短", text:"頤長短", cat:"A", lr:true, options:["頤長度正常","頤短"] },
+  { qId:"y4", part:"頤", section:"頤一致", text:"雙頤一致性", cat:"C", lr:false, options:["雙頤一致","雙頤不一致"] },
+];
+
+// Part display order and names
+const PARTS = ["頭","上停","耳","眉","眼","鼻","顴","口","人中","地閣","頤"];
+const PART_LABELS = { "頭":"頭","上停":"上停（額）","耳":"耳","眉":"眉","眼":"眼","鼻":"鼻","顴":"顴","口":"口","人中":"人中","地閣":"地閣","頤":"頤" };
+
+// Build question text for Claude prompt
+function buildQuestionPrompt() {
+  let text = '以下是 124 題觀察問題，請逐題根據照片回答。\n\n';
+  let currentPart = '';
+  for (const q of QUESTIONS) {
+    if (q.part !== currentPart) {
+      currentPart = q.part;
+      const count = QUESTIONS.filter(x => x.part === currentPart).length;
+      text += `\n## ${PART_LABELS[currentPart]}（${count}題）\n`;
+    }
+    const lr = q.lr ? ' [左右]' : '';
+    text += `${q.qId}${lr} ${q.text}：${q.options.join(' / ')}\n`;
+  }
+  return text;
+}
+
+// Expand questions (LR -> _L/_R keys)
+function expandKeys() {
+  const keys = [];
+  for (const q of QUESTIONS) {
+    if (q.lr) {
+      keys.push({ key: q.qId + '_L', q, side: '左' });
+      keys.push({ key: q.qId + '_R', q, side: '右' });
+    } else {
+      keys.push({ key: q.qId, q, side: null });
+    }
+  }
+  return keys;
+}
+const ALL_KEYS = expandKeys();
+
+// ============================================================
+// State
+// ============================================================
+let currentDocId = null;
+let currentDoc = null;
+let uploadFiles = { front: null, side: null };
+
+// ============================================================
+// Cloud Function URL
+// ============================================================
+// Cloud Function URL — update after deploying with: firebase deploy --only functions
+// The URL will be shown in the deploy output. Format: https://claudeVision-XXXXXXX.us-central1.run.app
+const CLOUD_FN_URL = 'https://claudevision-m5j5hxsljq-uc.a.run.app';
+
+// ============================================================
+// View Switching
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  document.getElementById('navBack').style.display = (name === 'list') ? 'none' : '';
+  if (name === 'list') loadList();
+}
+
+// ============================================================
+// List View
+// ============================================================
+async function loadList() {
+  const snap = await db.collection(COL).orderBy('createdAt', 'desc').get();
+  const list = document.getElementById('photoList');
+  const empty = document.getElementById('emptyState');
+
+  if (snap.empty) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = snap.docs.map(doc => {
+    const d = doc.data();
+    const stats = d.stats || {};
+    const total = ALL_KEYS.length;
+    const reviewed = stats.reviewed || 0;
+    const pct = total ? Math.round(reviewed / total * 100) : 0;
+    const acc = stats.accuracy != null ? stats.accuracy.toFixed(1) + '%' : '—';
+    const barColor = (stats.accuracy != null && stats.accuracy >= 70) ? 'var(--green)' : 'var(--accent)';
+    const date = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('zh-TW') : '';
+    const thumb = d.photoFrontURL || '';
+    return `<div class="photo-card" onclick="openDetail('${doc.id}')">
+      <div class="photo-card-top">
+        ${thumb ? `<img class="photo-thumb" src="${thumb}" />` : '<div class="photo-thumb"></div>'}
+        <div class="photo-card-info">
+          <div class="photo-card-name">${esc(d.name || '未命名')}</div>
+          <div class="photo-card-date">${date}</div>
+        </div>
+      </div>
+      <div class="photo-card-bar"><div class="photo-card-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="photo-card-stats">
+        <span>審核 ${reviewed}/${total}</span>
+        <span>準確率 ${acc}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ============================================================
+// Upload View
+// ============================================================
+function handleFile(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+  uploadFiles[type] = file;
+  const area = document.getElementById(type + 'Area');
+  const label = document.getElementById(type + 'Label');
+  const preview = document.getElementById(type + 'Preview');
+  area.classList.add('has-file');
+  label.innerHTML = `<span class="file-name">${esc(file.name)}</span>`;
+  const reader = new FileReader();
+  reader.onload = e => { preview.src = e.target.result; preview.style.display = ''; };
+  reader.readAsDataURL(file);
+  checkUploadReady();
+}
+
+function checkUploadReady() {
+  const name = document.getElementById('inputName').value.trim();
+  document.getElementById('btnUpload').disabled = !(name && uploadFiles.front);
+}
+
+// Listen for name input changes
+document.getElementById('inputName').addEventListener('input', checkUploadReady);
+
+async function doUpload() {
+  const name = document.getElementById('inputName').value.trim();
+  if (!name || !uploadFiles.front) return;
+
+  showLoading('上傳照片中...');
+
+  try {
+    // Create Firestore doc first
+    const docRef = await db.collection(COL).add({
+      name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      photoFrontURL: null,
+      photoSideURL: null,
+      claudeResults: null,
+      mikeReview: {},
+      stats: { totalJudged: 0, reviewed: 0, correct: 0, wrong: 0, cannot: 0, accuracy: 0 }
+    });
+
+    const docId = docRef.id;
+
+    // Upload front photo
+    const frontRef = storage.ref(`photo_training/${docId}/front.jpg`);
+    await frontRef.put(uploadFiles.front);
+    const frontURL = await frontRef.getDownloadURL();
+
+    let sideURL = null;
+    if (uploadFiles.side) {
+      const sideRef = storage.ref(`photo_training/${docId}/side.jpg`);
+      await sideRef.put(uploadFiles.side);
+      sideURL = await sideRef.getDownloadURL();
+    }
+
+    await docRef.update({
+      photoFrontURL: frontURL,
+      photoSideURL: sideURL,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Reset upload form
+    uploadFiles = { front: null, side: null };
+    document.getElementById('inputName').value = '';
+    document.getElementById('frontArea').classList.remove('has-file');
+    document.getElementById('sideArea').classList.remove('has-file');
+    document.getElementById('frontLabel').textContent = '點擊上傳或拍照';
+    document.getElementById('sideLabel').textContent = '點擊上傳或拍照';
+    document.getElementById('frontPreview').style.display = 'none';
+    document.getElementById('sidePreview').style.display = 'none';
+    document.getElementById('btnUpload').disabled = true;
+
+    hideLoading();
+    openDetail(docId);
+  } catch (err) {
+    hideLoading();
+    alert('上傳失敗：' + err.message);
+  }
+}
+
+// ============================================================
+// Detail View
+// ============================================================
+async function openDetail(docId) {
+  currentDocId = docId;
+  showView('detail');
+  showLoading('載入中...');
+
+  const snap = await db.collection(COL).doc(docId).get();
+  if (!snap.exists) { hideLoading(); alert('記錄不存在'); showView('list'); return; }
+  currentDoc = snap.data();
+  hideLoading();
+  renderDetail();
+}
+
+function renderDetail() {
+  const d = currentDoc;
+
+  // Photos
+  const photosEl = document.getElementById('detailPhotos');
+  let photosHTML = '';
+  if (d.photoFrontURL) {
+    photosHTML += `<img class="detail-photo" src="${d.photoFrontURL}" onclick="showLightbox('${d.photoFrontURL}')" title="正面照" />`;
+  }
+  if (d.photoSideURL) {
+    photosHTML += `<img class="detail-photo" src="${d.photoSideURL}" onclick="showLightbox('${d.photoSideURL}')" title="側面照" />`;
+  }
+  photosEl.innerHTML = photosHTML;
+
+  // Status
+  const statusEl = document.getElementById('detailStatus');
+  const hasClaude = d.claudeResults != null;
+  let statusHTML = '';
+  if (!hasClaude) {
+    statusHTML = `<span class="status-badge pending">未判讀</span>
+      <button class="btn-claude" onclick="startClaude()">開始 Claude 判讀</button>`;
+  } else {
+    statusHTML = `<span class="status-badge done">已判讀</span>`;
+  }
+  statusHTML += `<div style="flex:1"></div>`;
+  statusHTML += `<button class="btn-delete-record" onclick="deleteRecord()">刪除記錄</button>`;
+  statusEl.innerHTML = statusHTML;
+
+  // Progress
+  renderProgress();
+
+  // Review sections
+  if (hasClaude) {
+    renderReview();
+  } else {
+    document.getElementById('reviewSections').innerHTML = '<div class="empty-state"><p>請先進行 Claude 判讀</p></div>';
+  }
+}
+
+function renderProgress() {
+  const d = currentDoc;
+  const progEl = document.getElementById('detailProgress');
+  const stats = d.stats || {};
+  const total = ALL_KEYS.length;
+  const reviewed = stats.reviewed || 0;
+
+  if (!d.claudeResults) {
+    progEl.style.display = 'none';
+    return;
+  }
+
+  progEl.style.display = '';
+  const pct = total ? Math.round(reviewed / total * 100) : 0;
+  const correct = stats.correct || 0;
+  const wrong = stats.wrong || 0;
+  const cannot = stats.cannot || 0;
+  const acc = (correct + wrong) > 0 ? (correct / (correct + wrong) * 100).toFixed(1) : '—';
+
+  progEl.innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <span>${reviewed}/${total} 已審</span>
+    <span style="color:var(--green)">✓${correct}</span>
+    <span style="color:var(--red)">✗${wrong}</span>
+    <span style="color:var(--text3)">⊘${cannot}</span>
+    <span class="accuracy-num">${acc}${acc !== '—' ? '%' : ''}</span>
+  `;
+}
+
+function renderReview() {
+  const d = currentDoc;
+  const cr = d.claudeResults || {};
+  const mr = d.mikeReview || {};
+  const container = document.getElementById('reviewSections');
+  let html = '';
+  let currentPart = '';
+
+  for (const part of PARTS) {
+    const qs = QUESTIONS.filter(q => q.part === part);
+    if (!qs.length) continue;
+
+    const partReviewCount = qs.reduce((sum, q) => {
+      if (q.lr) {
+        return sum + (mr[q.qId+'_L'] ? 1 : 0) + (mr[q.qId+'_R'] ? 1 : 0);
+      }
+      return sum + (mr[q.qId] ? 1 : 0);
+    }, 0);
+    const partTotal = qs.reduce((sum, q) => sum + (q.lr ? 2 : 1), 0);
+
+    html += `<div class="section-header">${PART_LABELS[part]} <span class="section-count">${partReviewCount}/${partTotal}</span></div>`;
+
+    for (const q of qs) {
+      html += `<div class="review-card ${isFullyReviewed(q, mr) ? 'reviewed' : ''}" id="card-${q.qId}">`;
+      html += `<div class="review-q-top">
+        <span class="review-qid">${q.qId}</span>
+        <span class="review-cat cat-${q.cat}">${q.cat === 'A' ? '照片高' : q.cat === 'B' ? '照片中' : '照片難'}</span>
+        <span class="review-q-text">${esc(q.text)}</span>
+      </div>`;
+
+      if (q.lr) {
+        html += `<div class="review-lr-wrap">`;
+        for (const side of ['L', 'R']) {
+          const key = q.qId + '_' + side;
+          const label = side === 'L' ? '左' : '右';
+          html += `<div class="review-lr-col">
+            <div class="review-lr-label">${label}</div>
+            ${renderClaudeAnswer(key, cr)}
+            ${renderReviewButtons(key, q, cr, mr)}
+          </div>`;
+        }
+        html += `</div>`;
+      } else {
+        html += renderClaudeAnswer(q.qId, cr);
+        html += renderReviewButtons(q.qId, q, cr, mr);
+      }
+
+      html += `</div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function isFullyReviewed(q, mr) {
+  if (q.lr) return !!(mr[q.qId+'_L'] && mr[q.qId+'_R']);
+  return !!mr[q.qId];
+}
+
+function renderClaudeAnswer(key, cr) {
+  const r = cr[key];
+  if (!r || r.answer == null) {
+    return `<div class="claude-answer"><span class="claude-null">Claude 無法判斷</span></div>`;
+  }
+  const confClass = r.confidence ? 'conf-' + r.confidence : '';
+  const confText = r.confidence || '';
+  return `<div class="claude-answer">
+    <span class="claude-val">${esc(r.answer)}</span>
+    ${confText ? `<span class="conf-badge ${confClass}">${confText}</span>` : ''}
+  </div>`;
+}
+
+function renderReviewButtons(key, q, cr, mr) {
+  const review = mr[key];
+  const claudeResult = cr[key];
+  const hasAnswer = claudeResult && claudeResult.answer != null;
+
+  let html = '<div class="review-btns">';
+
+  if (hasAnswer) {
+    const isCorrect = review && review.status === 'correct';
+    const isWrong = review && review.status === 'wrong';
+    const isCannot = review && review.status === 'cannot';
+
+    html += `<button class="rbtn ${isCorrect ? 'sel-correct' : ''}" onclick="markReview('${key}','correct')">✓ 對</button>`;
+    html += `<button class="rbtn ${isWrong ? 'sel-wrong' : ''}" onclick="markReview('${key}','wrong')">✗ 錯</button>`;
+    html += `<button class="rbtn ${isCannot ? 'sel-cannot' : ''}" onclick="markReview('${key}','cannot')">⊘ 無法判</button>`;
+    html += `</div>`;
+
+    // If marked wrong, show correct answer selector
+    if (isWrong) {
+      html += `<div class="correct-select">`;
+      for (const opt of q.options) {
+        if (opt === claudeResult.answer) continue; // skip the wrong answer
+        const selected = review.correctAnswer === opt;
+        html += `<button class="correct-opt ${selected ? 'selected' : ''}" onclick="setCorrectAnswer('${key}','${opt.replace(/'/g, "\\'")}')">
+          ${esc(opt)}
+        </button>`;
+      }
+      html += `</div>`;
+    }
+  } else {
+    // Claude couldn't judge - Mike can fill in or mark cannot
+    const isCannot = review && review.status === 'cannot';
+    html += `<button class="rbtn ${isCannot ? 'sel-cannot' : ''}" onclick="markReview('${key}','cannot')">⊘ 無法判</button>`;
+    html += `</div>`;
+    // Let Mike pick an answer directly
+    html += `<div class="correct-select" style="margin-top:6px">`;
+    for (const opt of q.options) {
+      const selected = review && review.status === 'filled' && review.correctAnswer === opt;
+      html += `<button class="correct-opt ${selected ? 'selected' : ''}" onclick="fillAnswer('${key}','${opt.replace(/'/g, "\\'")}')">
+        ${esc(opt)}
+      </button>`;
+    }
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+// ============================================================
+// Review Actions
+// ============================================================
+async function markReview(key, status) {
+  if (!currentDocId || !currentDoc) return;
+  const mr = currentDoc.mikeReview || {};
+
+  if (status === 'correct' || status === 'cannot') {
+    mr[key] = { status };
+  } else if (status === 'wrong') {
+    mr[key] = { status: 'wrong', correctAnswer: null };
+  }
+
+  currentDoc.mikeReview = mr;
+  recalcStats();
+  renderReview();
+  renderProgress();
+  saveReview();
+}
+
+async function setCorrectAnswer(key, answer) {
+  if (!currentDocId || !currentDoc) return;
+  const mr = currentDoc.mikeReview || {};
+  if (mr[key]) {
+    mr[key].correctAnswer = answer;
+  }
+  currentDoc.mikeReview = mr;
+  renderReview();
+  saveReview();
+}
+
+async function fillAnswer(key, answer) {
+  if (!currentDocId || !currentDoc) return;
+  const mr = currentDoc.mikeReview || {};
+  mr[key] = { status: 'filled', correctAnswer: answer };
+  currentDoc.mikeReview = mr;
+  recalcStats();
+  renderReview();
+  renderProgress();
+  saveReview();
+}
+
+function recalcStats() {
+  const mr = currentDoc.mikeReview || {};
+  const cr = currentDoc.claudeResults || {};
+  let reviewed = 0, correct = 0, wrong = 0, cannot = 0, totalJudged = 0;
+
+  for (const { key } of ALL_KEYS) {
+    const c = cr[key];
+    if (c && c.answer != null) totalJudged++;
+    const r = mr[key];
+    if (r) {
+      reviewed++;
+      if (r.status === 'correct') correct++;
+      else if (r.status === 'wrong') wrong++;
+      else if (r.status === 'cannot' || r.status === 'filled') cannot++;
+    }
+  }
+
+  const accuracy = (correct + wrong) > 0 ? (correct / (correct + wrong) * 100) : 0;
+  currentDoc.stats = { totalJudged, reviewed, correct, wrong, cannot, accuracy };
+}
+
+let saveTimer = null;
+function saveReview() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if (!currentDocId) return;
+    try {
+      await db.collection(COL).doc(currentDocId).update({
+        mikeReview: currentDoc.mikeReview,
+        stats: currentDoc.stats,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
+  }, 500);
+}
+
+// ============================================================
+// Claude Vision
+// ============================================================
+async function startClaude() {
+  if (!currentDoc || !currentDoc.photoFrontURL) return;
+
+  showLoading('Claude 判讀中，請稍候（約30秒）...');
+
+  try {
+    // Fetch images as base64
+    const frontB64 = await imageUrlToBase64(currentDoc.photoFrontURL);
+    let sideB64 = null;
+    if (currentDoc.photoSideURL) {
+      sideB64 = await imageUrlToBase64(currentDoc.photoSideURL);
+    }
+
+    const body = {
+      frontImage: frontB64,
+      sideImage: sideB64,
+      questions: buildQuestionPrompt()
+    };
+
+    const resp = await fetch(CLOUD_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+
+    // Normalize results: ensure all expected keys exist
+    const results = {};
+    for (const { key } of ALL_KEYS) {
+      if (data.results[key]) {
+        results[key] = data.results[key];
+      } else {
+        results[key] = { answer: null, confidence: null };
+      }
+    }
+
+    currentDoc.claudeResults = results;
+    recalcStats();
+
+    await db.collection(COL).doc(currentDocId).update({
+      claudeResults: results,
+      stats: currentDoc.stats,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    hideLoading();
+    renderDetail();
+  } catch (err) {
+    hideLoading();
+    alert('Claude 判讀失敗：' + err.message);
+  }
+}
+
+async function imageUrlToBase64(url) {
+  const resp = await fetch(url);
+  const blob = await resp.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Remove data:image/xxx;base64, prefix
+      const b64 = reader.result.split(',')[1];
+      resolve(b64);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ============================================================
+// Delete Record
+// ============================================================
+async function deleteRecord() {
+  if (!confirm('確定刪除此記錄？此操作無法復原。')) return;
+  showLoading('刪除中...');
+  try {
+    // Delete storage files
+    if (currentDoc.photoFrontURL) {
+      try { await storage.ref(`photo_training/${currentDocId}/front.jpg`).delete(); } catch(e) {}
+    }
+    if (currentDoc.photoSideURL) {
+      try { await storage.ref(`photo_training/${currentDocId}/side.jpg`).delete(); } catch(e) {}
+    }
+    await db.collection(COL).doc(currentDocId).delete();
+    hideLoading();
+    currentDocId = null;
+    currentDoc = null;
+    showView('list');
+  } catch (err) {
+    hideLoading();
+    alert('刪除失敗：' + err.message);
+  }
+}
+
+// ============================================================
+// Lightbox
+// ============================================================
+function showLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+// ============================================================
+// Loading
+// ============================================================
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || '處理中...';
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+
+// ============================================================
+// Init
+// ============================================================
+loadList();
+</script>
+</body>
+</html>
