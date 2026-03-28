@@ -596,7 +596,6 @@ input { font-family: 'Noto Serif TC', serif; }
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 // ============================================================
 // Firebase Init
@@ -610,7 +609,6 @@ firebase.initializeApp({
   appId: "1:912262878667:web:cd7a74f1378221dbe3524e"
 });
 const db = firebase.firestore();
-const storage = firebase.storage();
 const COL = 'photo_training';
 
 // ============================================================
@@ -903,6 +901,30 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 // ============================================================
 // Upload View
 // ============================================================
+function fileToDataURL(file, maxDim) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        // Resize if needed to keep Firestore doc under 1MB
+        const max = maxDim || 1200;
+        let w = img.width, h = img.height;
+        if (w > max || h > max) {
+          if (w > h) { h = Math.round(h * max / w); w = max; }
+          else { w = Math.round(w * max / h); h = max; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function handleFile(input, type) {
   const file = input.files[0];
   if (!file) return;
@@ -930,39 +952,28 @@ async function doUpload() {
   const name = document.getElementById('inputName').value.trim();
   if (!name || !uploadFiles.front) return;
 
-  showLoading('上傳照片中...');
+  showLoading('處理照片中...');
 
   try {
-    // Create Firestore doc first
+    // Convert photos to base64 DataURL (resized to max 1200px)
+    const frontDataURL = await fileToDataURL(uploadFiles.front, 1200);
+    let sideDataURL = null;
+    if (uploadFiles.side) {
+      sideDataURL = await fileToDataURL(uploadFiles.side, 1200);
+    }
+
+    showLoading('儲存中...');
+
+    // Store base64 DataURL directly in Firestore (no Storage needed)
     const docRef = await db.collection(COL).add({
       name,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      photoFrontURL: null,
-      photoSideURL: null,
+      photoFrontURL: frontDataURL,
+      photoSideURL: sideDataURL,
       claudeResults: null,
       mikeReview: {},
       stats: { totalJudged: 0, reviewed: 0, correct: 0, wrong: 0, cannot: 0, accuracy: 0 }
-    });
-
-    const docId = docRef.id;
-
-    // Upload front photo
-    const frontRef = storage.ref(`photo_training/${docId}/front.jpg`);
-    await frontRef.put(uploadFiles.front);
-    const frontURL = await frontRef.getDownloadURL();
-
-    let sideURL = null;
-    if (uploadFiles.side) {
-      const sideRef = storage.ref(`photo_training/${docId}/side.jpg`);
-      await sideRef.put(uploadFiles.side);
-      sideURL = await sideRef.getDownloadURL();
-    }
-
-    await docRef.update({
-      photoFrontURL: frontURL,
-      photoSideURL: sideURL,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     // Reset upload form
@@ -977,7 +988,7 @@ async function doUpload() {
     document.getElementById('btnUpload').disabled = true;
 
     hideLoading();
-    openDetail(docId);
+    openDetail(docRef.id);
   } catch (err) {
     hideLoading();
     alert('上傳失敗：' + err.message);
@@ -1270,17 +1281,22 @@ function saveReview() {
 // ============================================================
 // Claude Vision
 // ============================================================
+function dataURLtoBase64(dataURL) {
+  // Strip "data:image/jpeg;base64," prefix
+  return dataURL.split(',')[1];
+}
+
 async function startClaude() {
   if (!currentDoc || !currentDoc.photoFrontURL) return;
 
   showLoading('Claude 判讀中，請稍候（約30秒）...');
 
   try {
-    // Fetch images as base64
-    const frontB64 = await imageUrlToBase64(currentDoc.photoFrontURL);
+    // Photos are already base64 DataURLs in Firestore, just strip prefix
+    const frontB64 = dataURLtoBase64(currentDoc.photoFrontURL);
     let sideB64 = null;
     if (currentDoc.photoSideURL) {
-      sideB64 = await imageUrlToBase64(currentDoc.photoSideURL);
+      sideB64 = dataURLtoBase64(currentDoc.photoSideURL);
     }
 
     const body = {
@@ -1329,20 +1345,6 @@ async function startClaude() {
   }
 }
 
-async function imageUrlToBase64(url) {
-  const resp = await fetch(url);
-  const blob = await resp.blob();
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // Remove data:image/xxx;base64, prefix
-      const b64 = reader.result.split(',')[1];
-      resolve(b64);
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
 // ============================================================
 // Delete Record
 // ============================================================
@@ -1350,13 +1352,6 @@ async function deleteRecord() {
   if (!confirm('確定刪除此記錄？此操作無法復原。')) return;
   showLoading('刪除中...');
   try {
-    // Delete storage files
-    if (currentDoc.photoFrontURL) {
-      try { await storage.ref(`photo_training/${currentDocId}/front.jpg`).delete(); } catch(e) {}
-    }
-    if (currentDoc.photoSideURL) {
-      try { await storage.ref(`photo_training/${currentDocId}/side.jpg`).delete(); } catch(e) {}
-    }
     await db.collection(COL).doc(currentDocId).delete();
     hideLoading();
     currentDocId = null;
