@@ -405,10 +405,21 @@ input { font-family: 'Noto Serif TC', serif; }
   text-align: center;
   color: var(--text3);
   background: var(--bg2);
-  padding: 1px 0;
+  padding: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.photo-thumb-label select {
+  width: 100%;
+  background: var(--bg2);
+  color: var(--text3);
+  border: none;
+  font-size: 9px;
+  padding: 1px 0;
+  text-align: center;
+  font-family: 'Noto Serif TC', serif;
+  cursor: pointer;
 }
 
 /* ===== Photo Viewer (right pane) ===== */
@@ -1056,6 +1067,12 @@ let currentDoc = null;
 let uploadPhotos = []; // [{file, dataURL, type}]
 let currentPhotoIdx = 0;
 
+const ANGLE_OPTIONS = ["正面","左側15°","左側30°","左側45°","左側60°","左側75°","左側90°","右側15°","右側30°","右側45°","右側60°","右側75°","右側90°","背面","頂部","其他"];
+
+function angleSelectHTML(selected, onchangeAttr) {
+  return `<select ${onchangeAttr}>${ANGLE_OPTIONS.map(a => `<option value="${a}" ${a===selected?'selected':''}>${a}</option>`).join('')}</select>`;
+}
+
 // ============================================================
 // Cloud Function URL
 // ============================================================
@@ -1148,7 +1165,7 @@ function handleMultiFiles(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
   for (const file of files) {
-    const type = uploadPhotos.length === 0 ? '正面' : (uploadPhotos.length === 1 ? '側面' : '其他');
+    const type = uploadPhotos.length === 0 ? '正面' : '其他';
     const reader = new FileReader();
     reader.onload = e => {
       uploadPhotos.push({ file, preview: e.target.result, type });
@@ -1176,11 +1193,7 @@ function renderUploadGrid() {
     <div class="upload-photo-item">
       <img src="${p.preview}" />
       <button class="upload-photo-remove" onclick="removeUploadPhoto(${i})">✕</button>
-      <select onchange="changeUploadType(${i},this.value)">
-        <option value="正面" ${p.type==='正面'?'selected':''}>正面</option>
-        <option value="側面" ${p.type==='側面'?'selected':''}>側面</option>
-        <option value="其他" ${p.type==='其他'?'selected':''}>其他</option>
-      </select>
+      ${angleSelectHTML(p.type, `onchange="changeUploadType(${i},this.value)"`)}
     </div>
   `).join('');
 }
@@ -1248,10 +1261,16 @@ async function openDetail(docId) {
 
 // Get photos array (backward compat with old photoFrontURL/photoSideURL format)
 function getPhotos(d) {
-  if (d.photos && d.photos.length > 0) return d.photos;
+  if (d.photos && d.photos.length > 0) {
+    // Ensure all photos have a type (backward compat for photos saved before angle feature)
+    return d.photos.map((p, i) => ({
+      ...p,
+      type: p.type || (i === 0 ? '正面' : '其他')
+    }));
+  }
   const arr = [];
   if (d.photoFrontURL) arr.push({ dataURL: d.photoFrontURL, type: '正面', index: 0 });
-  if (d.photoSideURL) arr.push({ dataURL: d.photoSideURL, type: '側面', index: 1 });
+  if (d.photoSideURL) arr.push({ dataURL: d.photoSideURL, type: '左側90°', index: 1 });
   return arr;
 }
 
@@ -1269,18 +1288,71 @@ function showPhoto(idx) {
   photoReset();
 }
 
+async function addPhotosToRecord(input) {
+  const files = Array.from(input.files);
+  if (!files.length || !currentDocId || !currentDoc) return;
+  input.value = '';
+
+  showLoading('處理照片中...');
+  try {
+    const photos = getPhotos(currentDoc);
+    for (const file of files) {
+      const dataURL = await fileToDataURL(file, 1200);
+      photos.push({ dataURL, type: '其他', index: photos.length });
+    }
+    currentDoc.photos = photos;
+    await db.collection(COL).doc(currentDocId).update({
+      photos,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    hideLoading();
+    renderDetail();
+    // Show last added photo
+    showPhoto(photos.length - 1);
+  } catch (err) {
+    hideLoading();
+    alert('新增照片失敗：' + err.message);
+  }
+}
+
+async function changePhotoAngle(idx, newType) {
+  if (!currentDocId || !currentDoc) return;
+  const photos = getPhotos(currentDoc);
+  if (idx < 0 || idx >= photos.length) return;
+  photos[idx].type = newType;
+  currentDoc.photos = photos;
+  // Update label display
+  document.querySelectorAll('.photo-thumb-label')[idx].textContent = newType;
+  if (idx === currentPhotoIdx) {
+    document.getElementById('photoLabel').textContent = `${newType}（${idx+1}/${photos.length}）`;
+  }
+  try {
+    await db.collection(COL).doc(currentDocId).update({
+      photos,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error('Failed to save angle change:', err);
+  }
+}
+
 function renderDetail() {
   const d = currentDoc;
   const photos = getPhotos(d);
 
-  // Thumbnail strip
+  // Thumbnail strip with angle selectors + add button
   const strip = document.getElementById('photoThumbStrip');
   strip.innerHTML = photos.map((p, i) => `
     <div class="photo-thumb-item ${i === 0 ? 'active' : ''}" onclick="showPhoto(${i})">
       <img src="${p.dataURL}" />
-      <div class="photo-thumb-label">${esc(p.type)}</div>
+      <div class="photo-thumb-label">${angleSelectHTML(p.type || '其他', `onclick="event.stopPropagation()" onchange="event.stopPropagation();changePhotoAngle(${i},this.value)"`)}</div>
     </div>
-  `).join('');
+  `).join('') + `
+    <div class="photo-thumb-item" style="border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;position:relative;min-height:56px">
+      <span style="font-size:18px;color:var(--text3)">＋</span>
+      <input type="file" accept="image/*" multiple onchange="addPhotosToRecord(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />
+    </div>
+  `;
 
   // Show first photo
   currentPhotoIdx = 0;
