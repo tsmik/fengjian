@@ -889,6 +889,7 @@ async function loadList() {
       </div>
       <div class="photo-card-bar"><div class="photo-card-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
       <div class="photo-card-stats">
+        <span>Claude ${stats.claudeJudged || 0}/${total}</span>
         <span>審核 ${reviewed}/${total}</span>
         <span>準確率 ${acc}</span>
       </div>
@@ -1068,8 +1069,11 @@ function renderProgress() {
   const cannot = stats.cannot || 0;
   const acc = (correct + wrong) > 0 ? (correct / (correct + wrong) * 100).toFixed(1) : '—';
 
+  const claudeJudged = stats.claudeJudged || stats.totalJudged || 0;
+
   progEl.innerHTML = `
     <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <span style="color:var(--blue)">Claude ${claudeJudged}/${total}</span>
     <span>${reviewed}/${total} 已審</span>
     <span style="color:var(--green)">✓${correct}</span>
     <span style="color:var(--red)">✗${wrong}</span>
@@ -1258,7 +1262,7 @@ function recalcStats() {
   }
 
   const accuracy = (correct + wrong) > 0 ? (correct / (correct + wrong) * 100) : 0;
-  currentDoc.stats = { totalJudged, reviewed, correct, wrong, cannot, accuracy };
+  currentDoc.stats = { totalJudged, claudeJudged: totalJudged, reviewed, correct, wrong, cannot, accuracy };
 }
 
 let saveTimer = null;
