@@ -1281,11 +1281,14 @@ function saveReview() {
 // ============================================================
 // Claude Vision
 // ============================================================
-function dataURLtoBase64(dataURL) {
-  if (!dataURL) return null;
-  const idx = dataURL.indexOf(',');
-  if (idx === -1) return dataURL; // already raw base64
-  return dataURL.substring(idx + 1);
+function parseDataURL(dataURL) {
+  if (!dataURL) return { base64: null, mediaType: null };
+  const match = dataURL.match(/^data:(image\/[a-z]+);base64,(.+)$/s);
+  if (match) {
+    return { base64: match[2].replace(/\s/g, ''), mediaType: match[1] };
+  }
+  // Already raw base64
+  return { base64: dataURL.replace(/\s/g, ''), mediaType: 'image/jpeg' };
 }
 
 async function startClaude() {
@@ -1312,21 +1315,23 @@ async function startClaude() {
   showLoading('Claude 判讀中，請稍候（約30秒）...');
 
   try {
-    const frontB64 = dataURLtoBase64(currentDoc.photoFrontURL);
-    let sideB64 = null;
+    const front = parseDataURL(currentDoc.photoFrontURL);
+    let side = { base64: null, mediaType: null };
     if (currentDoc.photoSideURL) {
-      sideB64 = dataURLtoBase64(currentDoc.photoSideURL);
+      side = parseDataURL(currentDoc.photoSideURL);
     }
 
-    if (!frontB64) {
+    if (!front.base64) {
       hideLoading();
       alert('照片 base64 資料為空，請重新上傳照片');
       return;
     }
 
     const body = {
-      frontImage: frontB64,
-      sideImage: sideB64,
+      frontImage: front.base64,
+      frontType: front.mediaType,
+      sideImage: side.base64,
+      sideType: side.mediaType,
       questions: buildQuestionPrompt()
     };
 

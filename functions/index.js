@@ -27,7 +27,7 @@ exports.claudeVision = onRequest(
       return;
     }
 
-    const {frontImage, sideImage, questions} = req.body;
+    const {frontImage, frontType, sideImage, sideType, questions} = req.body;
 
     if (!frontImage) {
       res.status(400).json({error: "frontImage is required"});
@@ -41,25 +41,29 @@ exports.claudeVision = onRequest(
       return;
     }
 
+    // Clean base64 data (remove any whitespace/newlines)
+    const cleanFront = frontImage.replace(/\s/g, "");
+    const cleanSide = sideImage ? sideImage.replace(/\s/g, "") : null;
+
     // Build image content blocks
     const imageContent = [
       {
         type: "image",
         source: {
           type: "base64",
-          media_type: frontImage.startsWith("/9j/") ? "image/jpeg" : "image/png",
-          data: frontImage,
+          media_type: frontType || "image/jpeg",
+          data: cleanFront,
         },
       },
     ];
 
-    if (sideImage) {
+    if (cleanSide) {
       imageContent.push({
         type: "image",
         source: {
           type: "base64",
-          media_type: sideImage.startsWith("/9j/") ? "image/jpeg" : "image/png",
-          data: sideImage,
+          media_type: sideType || "image/jpeg",
+          data: cleanSide,
         },
       });
     }
