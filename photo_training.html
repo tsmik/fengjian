@@ -705,15 +705,125 @@ input { font-family: 'Noto Serif TC', serif; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { color: var(--text2); font-size: 14px; letter-spacing: 2px; }
 
+/* ===== Offline Banner ===== */
+.offline-banner {
+  display: none;
+  background: #d4a834;
+  color: #1e2127;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 0;
+}
+.offline-banner.show { display: block; }
+
+/* ===== Mobile Bottom Tab Bar ===== */
+.mobile-part-tabs {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  .detail-split { flex-direction: column-reverse; height: auto; min-height: calc(100vh - 48px); }
+  /* Detail: vertical split — photo top, questions bottom */
+  .detail-split {
+    flex-direction: column;
+    height: calc(100vh - 48px);
+    overflow: hidden;
+  }
+  /* Hide desktop sidebar */
   .detail-sidebar { display: none; }
-  .detail-left { width: 100%; border-right: none; height: auto; overflow: visible; }
-  .detail-left-scroll { overflow: visible; }
-  .detail-right { width: 100%; height: 40vh; min-height: 200px; border-bottom: 1px solid var(--border); }
+
+  /* Photo viewer: top half, fixed height */
+  .detail-right {
+    width: 100%;
+    height: 50vh;
+    min-height: 180px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    border-right: none;
+    order: -1;
+  }
+
+  /* Review questions: bottom half, scrollable */
+  .detail-left {
+    width: 100%;
+    flex: 1;
+    border-right: none;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .detail-left-scroll {
+    overflow-y: auto;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 56px; /* space for bottom tab bar */
+  }
+
   .section-header { top: 0; }
   .review-lr-wrap { grid-template-columns: 1fr; }
   .photo-list { grid-template-columns: 1fr; }
+
+  /* Mobile bottom part tab bar */
+  .mobile-part-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: #16181c;
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+    align-items: stretch;
+    scrollbar-width: none;
+  }
+  .mobile-part-tabs::-webkit-scrollbar { display: none; }
+  .mobile-part-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    background: none;
+    border: none;
+    border-top: 3px solid transparent;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-family: 'Noto Serif TC', serif;
+  }
+  .mobile-part-tab.mpt-active {
+    color: var(--text);
+    border-top-color: var(--accent);
+    background: var(--bg2);
+  }
+  .mobile-part-tab.mpt-done { color: var(--green); }
+  .mobile-part-tab.mpt-partial { color: #d4a834; }
+  .mobile-part-tab-count {
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  /* Thumb strip: horizontal scroll with smaller items */
+  .photo-thumb-strip {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .photo-thumb-item { width: 48px; }
+  .photo-thumb-item img { height: 36px; }
+
+  /* Ensure body doesn't scroll behind fixed elements */
+  body.detail-open {
+    overflow: hidden;
+  }
 }
 </style>
 </head>
@@ -726,6 +836,9 @@ input { font-family: 'Noto Serif TC', serif; }
   <div class="nav-spacer"></div>
   <div class="nav-stats" id="navStats"></div>
 </div>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner">離線模式</div>
 
 <!-- View: List -->
 <div class="view active" id="viewList">
@@ -789,6 +902,9 @@ input { font-family: 'Noto Serif TC', serif; }
   </div>
 </div>
 
+<!-- Mobile Part Tabs (bottom bar) -->
+<div class="mobile-part-tabs" id="mobilePartTabs"></div>
+
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
   <img id="lightboxImg" />
@@ -816,6 +932,7 @@ firebase.initializeApp({
   appId: "1:912262878667:web:cd7a74f1378221dbe3524e"
 });
 const db = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: false }).catch(() => {});
 const COL = 'photo_training';
 
 // ============================================================
@@ -1990,6 +2107,100 @@ async function initApp() {
   loadList();
 }
 initApp();
+
+// ============================================================
+// Offline Detection
+// ============================================================
+function updateOnlineStatus() {
+  const banner = document.getElementById('offlineBanner');
+  if (banner) banner.classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ============================================================
+// Mobile Part Tab Bar
+// ============================================================
+function renderMobilePartTabs() {
+  const tabs = document.getElementById('mobilePartTabs');
+  if (!tabs) return;
+  if (!currentDoc || !currentDoc.claudeResults) {
+    tabs.innerHTML = '';
+    return;
+  }
+  const mr = currentDoc.mikeReview || {};
+  tabs.innerHTML = PARTS.map(part => {
+    const qs = QUESTIONS.filter(q => q.part === part);
+    const partTotal = qs.reduce((sum, q) => sum + (q.lr ? 2 : 1), 0);
+    const partDone = qs.reduce((sum, q) => {
+      if (q.lr) return sum + (mr[q.qId+'_L'] ? 1 : 0) + (mr[q.qId+'_R'] ? 1 : 0);
+      return sum + (mr[q.qId] ? 1 : 0);
+    }, 0);
+    const cls = partDone === partTotal ? 'mpt-done' : partDone > 0 ? 'mpt-partial' : '';
+    return `<button class="mobile-part-tab ${cls}" data-part="${part}" onclick="scrollToPart('${part}');highlightMobileTab('${part}')">${PART_LABELS[part] || part}<span class="mobile-part-tab-count">${partDone}/${partTotal}</span></button>`;
+  }).join('');
+}
+
+function highlightMobileTab(part) {
+  document.querySelectorAll('.mobile-part-tab').forEach(el => {
+    el.classList.toggle('mpt-active', el.dataset.part === part);
+  });
+}
+
+// Patch showView to toggle mobile detail state and tab bar visibility
+const _origShowView = showView;
+showView = function(name) {
+  _origShowView(name);
+  document.body.classList.toggle('detail-open', name === 'detail');
+  document.getElementById('mobilePartTabs').style.display = (name === 'detail') ? '' : 'none';
+  if (name !== 'detail') {
+    document.getElementById('mobilePartTabs').innerHTML = '';
+  }
+};
+document.getElementById('mobilePartTabs').style.display = 'none';
+
+// Patch renderDetail to also render mobile tabs
+const _origRenderDetail = renderDetail;
+renderDetail = function() {
+  _origRenderDetail();
+  renderMobilePartTabs();
+};
+
+// Patch initScrollSpy to also update mobile tabs
+const _origInitScrollSpy = initScrollSpy;
+initScrollSpy = function() {
+  _origInitScrollSpy();
+  const scroll = document.getElementById('detailLeftScroll');
+  if (!scroll) return;
+  scroll.addEventListener('scroll', () => {
+    requestAnimationFrame(() => {
+      const scrollTop = scroll.scrollTop;
+      const tops = PARTS.map(p => {
+        const el = document.getElementById('sec-' + p);
+        if (!el) return null;
+        return { part: p, top: getOffsetTopIn(el, scroll) };
+      }).filter(Boolean);
+      let active = tops[0]?.part;
+      for (const t of tops) {
+        if (t.top <= scrollTop + 10) active = t.part;
+      }
+      highlightMobileTab(active);
+    });
+  });
+};
+
+// Patch markReview/fillAnswer to update mobile tabs
+const _origMarkReview = markReview;
+markReview = async function(key, status) {
+  await _origMarkReview(key, status);
+  renderMobilePartTabs();
+};
+const _origFillAnswer = fillAnswer;
+fillAnswer = async function(key, answer) {
+  await _origFillAnswer(key, answer);
+  renderMobilePartTabs();
+};
 </script>
 </body>
 </html>
