@@ -244,30 +244,39 @@ input { font-family: 'Noto Serif TC', serif; }
 }
 .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ===== View: Detail ===== */
-.detail-photos {
+/* ===== View: Detail — Split Pane ===== */
+.detail-split {
   display: flex;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+.detail-left {
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.detail-left-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+.detail-right {
+  width: 45%;
+  display: flex;
+  flex-direction: column;
   background: var(--bg2);
+  overflow: hidden;
 }
-.detail-photo {
-  height: 160px;
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.detail-photo:hover { opacity: 0.85; }
 
 .detail-status {
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .status-badge {
   font-size: 12px;
@@ -302,13 +311,14 @@ input { font-family: 'Noto Serif TC', serif; }
 .btn-delete-record:hover { background: var(--red); color: white; }
 
 .detail-progress {
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: 10px;
+  font-size: 12px;
   color: var(--text2);
+  flex-shrink: 0;
 }
 .progress-bar {
   flex: 1;
@@ -325,13 +335,62 @@ input { font-family: 'Noto Serif TC', serif; }
 }
 .accuracy-num { font-weight: 700; color: var(--green); }
 
+/* ===== Photo Viewer (right pane) ===== */
+.photo-viewer {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+}
+.photo-viewer:active { cursor: grabbing; }
+.photo-viewer-inner {
+  transform-origin: 0 0;
+  will-change: transform;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.photo-viewer-inner img {
+  width: 100%;
+  border-radius: 6px;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.photo-zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text2);
+}
+.photo-zoom-bar button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-zoom-bar button:hover { border-color: var(--text2); color: var(--text); }
+.zoom-pct { min-width: 44px; text-align: center; font-weight: 700; }
+
 /* ===== Review Section ===== */
 .review-sections {
-  padding-bottom: 80px;
+  padding-bottom: 40px;
 }
 .section-header {
   position: sticky;
-  top: 48px;
+  top: 0;
   z-index: 10;
   background: var(--bg3);
   padding: 10px 16px;
@@ -517,7 +576,12 @@ input { font-family: 'Noto Serif TC', serif; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { color: var(--text2); font-size: 14px; letter-spacing: 2px; }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .detail-split { flex-direction: column-reverse; height: auto; min-height: calc(100vh - 48px); }
+  .detail-left { width: 100%; border-right: none; height: auto; overflow: visible; }
+  .detail-left-scroll { overflow: visible; }
+  .detail-right { width: 100%; height: 40vh; min-height: 200px; border-bottom: 1px solid var(--border); }
+  .section-header { top: 0; }
   .review-lr-wrap { grid-template-columns: 1fr; }
   .photo-list { grid-template-columns: 1fr; }
 }
@@ -576,10 +640,26 @@ input { font-family: 'Noto Serif TC', serif; }
 
 <!-- View: Detail -->
 <div class="view" id="viewDetail">
-  <div class="detail-photos" id="detailPhotos"></div>
-  <div class="detail-status" id="detailStatus"></div>
-  <div class="detail-progress" id="detailProgress" style="display:none"></div>
-  <div class="review-sections" id="reviewSections"></div>
+  <div class="detail-split">
+    <div class="detail-left">
+      <div class="detail-status" id="detailStatus"></div>
+      <div class="detail-progress" id="detailProgress" style="display:none"></div>
+      <div class="detail-left-scroll">
+        <div class="review-sections" id="reviewSections"></div>
+      </div>
+    </div>
+    <div class="detail-right">
+      <div class="photo-zoom-bar">
+        <button onclick="photoZoom(-0.25)">−</button>
+        <span class="zoom-pct" id="zoomPct">100%</span>
+        <button onclick="photoZoom(0.25)">+</button>
+        <button onclick="photoReset()" style="font-size:12px;width:auto;padding:0 8px">重置</button>
+      </div>
+      <div class="photo-viewer" id="photoViewer">
+        <div class="photo-viewer-inner" id="photoViewerInner"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Lightbox -->
@@ -1014,16 +1094,17 @@ async function openDetail(docId) {
 function renderDetail() {
   const d = currentDoc;
 
-  // Photos
-  const photosEl = document.getElementById('detailPhotos');
+  // Photos in right pane
+  const viewerInner = document.getElementById('photoViewerInner');
   let photosHTML = '';
   if (d.photoFrontURL) {
-    photosHTML += `<img class="detail-photo" src="${d.photoFrontURL}" onclick="showLightbox('${d.photoFrontURL}')" title="正面照" />`;
+    photosHTML += `<img src="${d.photoFrontURL}" title="正面照" />`;
   }
   if (d.photoSideURL) {
-    photosHTML += `<img class="detail-photo" src="${d.photoSideURL}" onclick="showLightbox('${d.photoSideURL}')" title="側面照" />`;
+    photosHTML += `<img src="${d.photoSideURL}" title="側面照" />`;
   }
-  photosEl.innerHTML = photosHTML;
+  viewerInner.innerHTML = photosHTML;
+  photoReset();
 
   // Status
   const statusEl = document.getElementById('detailStatus');
@@ -1415,6 +1496,91 @@ function showLoading(text) {
 function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('show');
 }
+
+// ============================================================
+// Photo Viewer — Zoom & Pan
+// ============================================================
+let pvScale = 1;
+let pvX = 0, pvY = 0;
+let pvDragging = false;
+let pvStartX, pvStartY, pvStartPanX, pvStartPanY;
+
+function pvApply() {
+  const inner = document.getElementById('photoViewerInner');
+  if (inner) inner.style.transform = `translate(${pvX}px, ${pvY}px) scale(${pvScale})`;
+  const pct = document.getElementById('zoomPct');
+  if (pct) pct.textContent = Math.round(pvScale * 100) + '%';
+}
+
+function photoZoom(delta) {
+  pvScale = Math.max(0.25, Math.min(5, pvScale + delta));
+  pvApply();
+}
+
+function photoReset() {
+  pvScale = 1; pvX = 0; pvY = 0;
+  pvApply();
+}
+
+(function initPhotoViewer() {
+  const viewer = document.getElementById('photoViewer');
+  if (!viewer) return;
+
+  // Mouse wheel zoom
+  viewer.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    pvScale = Math.max(0.25, Math.min(5, pvScale + delta));
+    pvApply();
+  }, { passive: false });
+
+  // Double click reset
+  viewer.addEventListener('dblclick', () => photoReset());
+
+  // Mouse drag pan
+  viewer.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    pvDragging = true;
+    pvStartX = e.clientX; pvStartY = e.clientY;
+    pvStartPanX = pvX; pvStartPanY = pvY;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!pvDragging) return;
+    pvX = pvStartPanX + (e.clientX - pvStartX);
+    pvY = pvStartPanY + (e.clientY - pvStartY);
+    pvApply();
+  });
+  window.addEventListener('mouseup', () => { pvDragging = false; });
+
+  // Touch drag pan
+  let pvTouchDist = 0;
+  viewer.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      pvDragging = true;
+      pvStartX = e.touches[0].clientX; pvStartY = e.touches[0].clientY;
+      pvStartPanX = pvX; pvStartPanY = pvY;
+    } else if (e.touches.length === 2) {
+      pvDragging = false;
+      pvTouchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+    }
+  }, { passive: true });
+  viewer.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && pvDragging) {
+      pvX = pvStartPanX + (e.touches[0].clientX - pvStartX);
+      pvY = pvStartPanY + (e.touches[0].clientY - pvStartY);
+      pvApply();
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      if (pvTouchDist > 0) {
+        pvScale = Math.max(0.25, Math.min(5, pvScale * (dist / pvTouchDist)));
+        pvTouchDist = dist;
+        pvApply();
+      }
+    }
+  }, { passive: true });
+  viewer.addEventListener('touchend', () => { pvDragging = false; pvTouchDist = 0; });
+})();
 
 // ============================================================
 // Init
