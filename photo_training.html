@@ -166,7 +166,7 @@ input { font-family: 'Noto Serif TC', serif; }
 
 /* ===== View: Upload ===== */
 .upload-container {
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
   padding: 32px 20px;
 }
@@ -200,35 +200,72 @@ input { font-family: 'Noto Serif TC', serif; }
   outline: none;
   border-color: var(--accent);
 }
-.upload-area {
+.upload-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg2);
   border: 2px dashed var(--border);
+  color: var(--text2);
+  padding: 10px 20px;
   border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s;
+  font-size: 14px;
+  font-weight: 700;
   position: relative;
+  overflow: hidden;
 }
-.upload-area:hover { border-color: var(--accent); }
-.upload-area.has-file { border-color: var(--green); border-style: solid; }
-.upload-area input[type="file"] {
+.upload-add-btn:hover { border-color: var(--accent); color: var(--text); }
+.upload-add-btn input[type="file"] {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
 }
-.upload-area p { color: var(--text3); font-size: 14px; }
-.upload-area .file-name { color: var(--green); font-weight: 700; }
-.upload-preview {
-  max-width: 120px;
-  max-height: 120px;
-  border-radius: 6px;
-  margin-top: 8px;
+.upload-photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
 }
-.upload-hint {
+.upload-photo-item {
+  position: relative;
+  width: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--bg3);
+}
+.upload-photo-item img {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+}
+.upload-photo-item select {
+  width: 100%;
+  background: var(--bg2);
+  color: var(--text2);
+  border: none;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  padding: 3px 4px;
+  font-family: 'Noto Serif TC', serif;
+}
+.upload-photo-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
   font-size: 12px;
-  color: var(--text3);
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 .btn-submit {
   width: 100%;
@@ -334,6 +371,45 @@ input { font-family: 'Noto Serif TC', serif; }
   transition: width 0.3s;
 }
 .accuracy-num { font-weight: 700; color: var(--green); }
+
+/* ===== Photo Thumbnail Strip ===== */
+.photo-thumb-strip {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.photo-thumb-item {
+  flex-shrink: 0;
+  width: 56px;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+  position: relative;
+}
+.photo-thumb-item.active { border-color: var(--accent); }
+.photo-thumb-item:hover { border-color: var(--text3); }
+.photo-thumb-item img {
+  width: 100%;
+  height: 42px;
+  object-fit: cover;
+  display: block;
+}
+.photo-thumb-label {
+  font-size: 9px;
+  text-align: center;
+  color: var(--text3);
+  background: var(--bg2);
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ===== Photo Viewer (right pane) ===== */
 .photo-viewer {
@@ -619,20 +695,12 @@ input { font-family: 'Noto Serif TC', serif; }
       <input type="text" id="inputName" placeholder="例如：案例01" />
     </div>
     <div class="form-group">
-      <label>正面照（必要）</label>
-      <div class="upload-area" id="frontArea">
-        <input type="file" accept="image/*" capture="environment" onchange="handleFile(this,'front')" />
-        <p id="frontLabel">點擊上傳或拍照</p>
-        <img class="upload-preview" id="frontPreview" style="display:none" />
-      </div>
-    </div>
-    <div class="form-group">
-      <label>側面照（選填）</label>
-      <div class="upload-area" id="sideArea">
-        <input type="file" accept="image/*" capture="environment" onchange="handleFile(this,'side')" />
-        <p id="sideLabel">點擊上傳或拍照</p>
-        <img class="upload-preview" id="sidePreview" style="display:none" />
-      </div>
+      <label>照片（至少一張）</label>
+      <button class="upload-add-btn" type="button">
+        ＋ 新增照片
+        <input type="file" accept="image/*" multiple onchange="handleMultiFiles(this)" />
+      </button>
+      <div class="upload-photo-grid" id="uploadPhotoGrid"></div>
     </div>
     <button class="btn-submit" id="btnUpload" disabled onclick="doUpload()">建立並上傳</button>
   </div>
@@ -654,10 +722,12 @@ input { font-family: 'Noto Serif TC', serif; }
         <span class="zoom-pct" id="zoomPct">100%</span>
         <button onclick="photoZoom(0.25)">+</button>
         <button onclick="photoReset()" style="font-size:12px;width:auto;padding:0 8px">重置</button>
+        <span id="photoLabel" style="margin-left:auto;font-size:11px;color:var(--text3)"></span>
       </div>
       <div class="photo-viewer" id="photoViewer">
         <div class="photo-viewer-inner" id="photoViewerInner"></div>
       </div>
+      <div class="photo-thumb-strip" id="photoThumbStrip"></div>
     </div>
   </div>
 </div>
@@ -983,7 +1053,8 @@ function buildQuestionPrompt() {
 // ============================================================
 let currentDocId = null;
 let currentDoc = null;
-let uploadFiles = { front: null, side: null };
+let uploadPhotos = []; // [{file, dataURL, type}]
+let currentPhotoIdx = 0;
 
 // ============================================================
 // Cloud Function URL
@@ -1026,7 +1097,7 @@ async function loadList() {
     const acc = stats.accuracy != null ? stats.accuracy.toFixed(1) + '%' : '—';
     const barColor = (stats.accuracy != null && stats.accuracy >= 70) ? 'var(--green)' : 'var(--accent)';
     const date = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('zh-TW') : '';
-    const thumb = d.photoFrontURL || '';
+    const thumb = (d.photos && d.photos.length > 0) ? d.photos[0].dataURL : (d.photoFrontURL || '');
     return `<div class="photo-card" onclick="openDetail('${doc.id}')">
       <div class="photo-card-top">
         ${thumb ? `<img class="photo-thumb" src="${thumb}" />` : '<div class="photo-thumb"></div>'}
@@ -1056,7 +1127,6 @@ function fileToDataURL(file, maxDim) {
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        // Resize if needed to keep Firestore doc under 1MB
         const max = maxDim || 1200;
         let w = img.width, h = img.height;
         if (w > max || h > max) {
@@ -1074,66 +1144,83 @@ function fileToDataURL(file, maxDim) {
   });
 }
 
-function handleFile(input, type) {
-  const file = input.files[0];
-  if (!file) return;
-  uploadFiles[type] = file;
-  const area = document.getElementById(type + 'Area');
-  const label = document.getElementById(type + 'Label');
-  const preview = document.getElementById(type + 'Preview');
-  area.classList.add('has-file');
-  label.innerHTML = `<span class="file-name">${esc(file.name)}</span>`;
-  const reader = new FileReader();
-  reader.onload = e => { preview.src = e.target.result; preview.style.display = ''; };
-  reader.readAsDataURL(file);
+function handleMultiFiles(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  for (const file of files) {
+    const type = uploadPhotos.length === 0 ? '正面' : (uploadPhotos.length === 1 ? '側面' : '其他');
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadPhotos.push({ file, preview: e.target.result, type });
+      renderUploadGrid();
+      checkUploadReady();
+    };
+    reader.readAsDataURL(file);
+  }
+  input.value = '';
+}
+
+function removeUploadPhoto(idx) {
+  uploadPhotos.splice(idx, 1);
+  renderUploadGrid();
   checkUploadReady();
+}
+
+function changeUploadType(idx, val) {
+  uploadPhotos[idx].type = val;
+}
+
+function renderUploadGrid() {
+  const grid = document.getElementById('uploadPhotoGrid');
+  grid.innerHTML = uploadPhotos.map((p, i) => `
+    <div class="upload-photo-item">
+      <img src="${p.preview}" />
+      <button class="upload-photo-remove" onclick="removeUploadPhoto(${i})">✕</button>
+      <select onchange="changeUploadType(${i},this.value)">
+        <option value="正面" ${p.type==='正面'?'selected':''}>正面</option>
+        <option value="側面" ${p.type==='側面'?'selected':''}>側面</option>
+        <option value="其他" ${p.type==='其他'?'selected':''}>其他</option>
+      </select>
+    </div>
+  `).join('');
 }
 
 function checkUploadReady() {
   const name = document.getElementById('inputName').value.trim();
-  document.getElementById('btnUpload').disabled = !(name && uploadFiles.front);
+  document.getElementById('btnUpload').disabled = !(name && uploadPhotos.length > 0);
 }
 
-// Listen for name input changes
 document.getElementById('inputName').addEventListener('input', checkUploadReady);
 
 async function doUpload() {
   const name = document.getElementById('inputName').value.trim();
-  if (!name || !uploadFiles.front) return;
+  if (!name || !uploadPhotos.length) return;
 
   showLoading('處理照片中...');
 
   try {
-    // Convert photos to base64 DataURL (resized to max 1200px)
-    const frontDataURL = await fileToDataURL(uploadFiles.front, 1200);
-    let sideDataURL = null;
-    if (uploadFiles.side) {
-      sideDataURL = await fileToDataURL(uploadFiles.side, 1200);
+    const photos = [];
+    for (let i = 0; i < uploadPhotos.length; i++) {
+      const dataURL = await fileToDataURL(uploadPhotos[i].file, 1200);
+      photos.push({ dataURL, type: uploadPhotos[i].type, index: i });
     }
 
     showLoading('儲存中...');
 
-    // Store base64 DataURL directly in Firestore (no Storage needed)
     const docRef = await db.collection(COL).add({
       name,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      photoFrontURL: frontDataURL,
-      photoSideURL: sideDataURL,
+      photos,
       claudeResults: null,
       mikeReview: {},
       stats: { totalJudged: 0, reviewed: 0, correct: 0, wrong: 0, cannot: 0, accuracy: 0 }
     });
 
-    // Reset upload form
-    uploadFiles = { front: null, side: null };
+    // Reset
+    uploadPhotos = [];
     document.getElementById('inputName').value = '';
-    document.getElementById('frontArea').classList.remove('has-file');
-    document.getElementById('sideArea').classList.remove('has-file');
-    document.getElementById('frontLabel').textContent = '點擊上傳或拍照';
-    document.getElementById('sideLabel').textContent = '點擊上傳或拍照';
-    document.getElementById('frontPreview').style.display = 'none';
-    document.getElementById('sidePreview').style.display = 'none';
+    document.getElementById('uploadPhotoGrid').innerHTML = '';
     document.getElementById('btnUpload').disabled = true;
 
     hideLoading();
@@ -1159,19 +1246,52 @@ async function openDetail(docId) {
   renderDetail();
 }
 
+// Get photos array (backward compat with old photoFrontURL/photoSideURL format)
+function getPhotos(d) {
+  if (d.photos && d.photos.length > 0) return d.photos;
+  const arr = [];
+  if (d.photoFrontURL) arr.push({ dataURL: d.photoFrontURL, type: '正面', index: 0 });
+  if (d.photoSideURL) arr.push({ dataURL: d.photoSideURL, type: '側面', index: 1 });
+  return arr;
+}
+
+function showPhoto(idx) {
+  const photos = getPhotos(currentDoc);
+  if (idx < 0 || idx >= photos.length) return;
+  currentPhotoIdx = idx;
+  const viewerInner = document.getElementById('photoViewerInner');
+  viewerInner.innerHTML = `<img src="${photos[idx].dataURL}" title="${esc(photos[idx].type)}" />`;
+  document.getElementById('photoLabel').textContent = `${photos[idx].type}（${idx+1}/${photos.length}）`;
+  // Highlight active thumb
+  document.querySelectorAll('.photo-thumb-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+  photoReset();
+}
+
 function renderDetail() {
   const d = currentDoc;
+  const photos = getPhotos(d);
 
-  // Photos in right pane
+  // Thumbnail strip
+  const strip = document.getElementById('photoThumbStrip');
+  strip.innerHTML = photos.map((p, i) => `
+    <div class="photo-thumb-item ${i === 0 ? 'active' : ''}" onclick="showPhoto(${i})">
+      <img src="${p.dataURL}" />
+      <div class="photo-thumb-label">${esc(p.type)}</div>
+    </div>
+  `).join('');
+
+  // Show first photo
+  currentPhotoIdx = 0;
   const viewerInner = document.getElementById('photoViewerInner');
-  let photosHTML = '';
-  if (d.photoFrontURL) {
-    photosHTML += `<img src="${d.photoFrontURL}" title="正面照" />`;
+  if (photos.length > 0) {
+    viewerInner.innerHTML = `<img src="${photos[0].dataURL}" title="${esc(photos[0].type)}" />`;
+    document.getElementById('photoLabel').textContent = `${photos[0].type}（1/${photos.length}）`;
+  } else {
+    viewerInner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">無照片</div>';
+    document.getElementById('photoLabel').textContent = '';
   }
-  if (d.photoSideURL) {
-    photosHTML += `<img src="${d.photoSideURL}" title="側面照" />`;
-  }
-  viewerInner.innerHTML = photosHTML;
   photoReset();
 
   // Status
@@ -1459,32 +1579,30 @@ async function startClaude() {
     return;
   }
 
-  if (!currentDoc.photoFrontURL) {
+  const photos = getPhotos(currentDoc);
+  if (photos.length === 0) {
     hideLoading();
-    alert('找不到正面照片資料');
+    alert('找不到照片資料');
     return;
   }
 
   showLoading('Claude 判讀中，請稍候（約30秒）...');
 
   try {
-    const front = parseDataURL(currentDoc.photoFrontURL);
-    let side = { base64: null, mediaType: null };
-    if (currentDoc.photoSideURL) {
-      side = parseDataURL(currentDoc.photoSideURL);
-    }
+    // Build images array for Cloud Function
+    const images = photos.map(p => {
+      const parsed = parseDataURL(p.dataURL);
+      return { base64: parsed.base64, mediaType: parsed.mediaType, type: p.type };
+    }).filter(img => img.base64);
 
-    if (!front.base64) {
+    if (images.length === 0) {
       hideLoading();
       alert('照片 base64 資料為空，請重新上傳照片');
       return;
     }
 
     const body = {
-      frontImage: front.base64,
-      frontType: front.mediaType,
-      sideImage: side.base64,
-      sideType: side.mediaType,
+      images,
       questions: buildQuestionPrompt()
     };
 

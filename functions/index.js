@@ -27,10 +27,19 @@ exports.claudeVision = onRequest(
       return;
     }
 
-    const {frontImage, frontType, sideImage, sideType, questions} = req.body;
+    // Support new format (images array) and old format (frontImage/sideImage)
+    let {images, frontImage, frontType, sideImage, sideType, questions} = req.body;
 
-    if (!frontImage) {
-      res.status(400).json({error: "frontImage is required"});
+    // Convert old format to new
+    if (!images && frontImage) {
+      images = [{base64: frontImage, mediaType: frontType || "image/jpeg", type: "正面"}];
+      if (sideImage) {
+        images.push({base64: sideImage, mediaType: sideType || "image/jpeg", type: "側面"});
+      }
+    }
+
+    if (!images || images.length === 0) {
+      res.status(400).json({error: "images is required"});
       return;
     }
 
@@ -41,32 +50,18 @@ exports.claudeVision = onRequest(
       return;
     }
 
-    // Clean base64 data (remove any whitespace/newlines)
-    const cleanFront = frontImage.replace(/\s/g, "");
-    const cleanSide = sideImage ? sideImage.replace(/\s/g, "") : null;
-
     // Build image content blocks
-    const imageContent = [
-      {
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: frontType || "image/jpeg",
-          data: cleanFront,
-        },
+    const imageContent = images.map((img) => ({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: img.mediaType || "image/jpeg",
+        data: (img.base64 || "").replace(/\s/g, ""),
       },
-    ];
+    }));
 
-    if (cleanSide) {
-      imageContent.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: sideType || "image/jpeg",
-          data: cleanSide,
-        },
-      });
-    }
+    // Build photo description for prompt
+    const photoDesc = images.map((img, i) => `第${i + 1}張：${img.type || "照片"}`).join("、");
 
     const systemPrompt = `你是面相學觀察助手。你的任務是根據照片，逐題回答觀察問題。
 
@@ -92,9 +87,8 @@ exports.claudeVision = onRequest(
 左右分開題的 key 用 _L 和 _R 後綴。
 非左右題直接用 qId 作為 key。`;
 
-    const userMessage = sideImage ?
-      `以下是正面照（第一張）和側面照（第二張）。請根據照片逐題回答以下 124 題觀察問題。\n\n${questions}` :
-      `以下是正面照。沒有側面照，需要側面才能判的題目請填 null。請根據照片逐題回答以下 124 題觀察問題。\n\n${questions}`;
+    const hasSide = images.some((img) => img.type === "側面");
+    const userMessage = `共 ${images.length} 張照片（${photoDesc}）。${hasSide ? "" : "沒有側面照，需要側面才能判的題目請填 null。"}請根據照片逐題回答以下觀察問題。\n\n${questions}`;
 
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -138,7 +132,6 @@ exports.claudeVision = onRequest(
       // Parse the JSON from Claude's response
       let parsed;
       try {
-        // Try to extract JSON from the response (Claude might wrap it in markdown code blocks)
         let jsonStr = textContent.text.trim();
         const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (jsonMatch) {
