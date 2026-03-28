@@ -485,9 +485,9 @@ input { font-family: 'Noto Serif TC', serif; }
 .part-index-nav::-webkit-scrollbar { display: none; }
 .part-idx {
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 6px 12px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -501,7 +501,7 @@ input { font-family: 'Noto Serif TC', serif; }
 .part-idx.idx-done { color: var(--green); }
 .part-idx.idx-partial { color: #d4a834; }
 .part-idx .idx-count {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   margin-left: 3px;
   opacity: 0.7;
@@ -1484,22 +1484,14 @@ function renderPartIndex() {
   }).join('');
 }
 
-function getElTopInScroll(el, scrollEl) {
-  let top = 0;
-  let node = el;
-  while (node && node !== scrollEl) {
-    top += node.offsetTop;
-    node = node.offsetParent;
-  }
-  return top;
-}
-
 function scrollToPart(part) {
   const el = document.getElementById('sec-' + part);
   const scroll = document.getElementById('detailLeftScroll');
   if (el && scroll) {
-    const top = getElTopInScroll(el, scroll);
-    scroll.scrollTo({ top, behavior: 'smooth' });
+    const elRect = el.getBoundingClientRect();
+    const scrollRect = scroll.getBoundingClientRect();
+    const targetTop = scroll.scrollTop + (elRect.top - scrollRect.top);
+    scroll.scrollTo({ top: targetTop, behavior: 'smooth' });
   }
 }
 
@@ -1512,15 +1504,15 @@ function initScrollSpy() {
     if (scrollRAF) return;
     scrollRAF = requestAnimationFrame(() => {
       scrollRAF = null;
-      const scrollTop = scroll.scrollTop;
+      const scrollRect = scroll.getBoundingClientRect();
       const tops = PARTS.map(p => {
         const el = document.getElementById('sec-' + p);
         if (!el) return null;
-        return { part: p, top: getElTopInScroll(el, scroll) };
+        return { part: p, top: el.getBoundingClientRect().top - scrollRect.top };
       }).filter(Boolean);
       let active = tops[0]?.part;
       for (const t of tops) {
-        if (t.top <= scrollTop + 10) active = t.part;
+        if (t.top <= 10) active = t.part;
       }
       document.querySelectorAll('.part-idx').forEach(el => {
         el.classList.toggle('idx-active', el.dataset.part === active);
