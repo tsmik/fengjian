@@ -6,12 +6,22 @@ const claudeApiKey = defineSecret("CLAUDE_API_KEY");
 
 exports.claudeVision = onRequest(
   {
-    cors: ["https://tsmik.github.io", "http://localhost:8080", "http://127.0.0.1:8080"],
     maxInstances: 1,
     timeoutSeconds: 120,
     secrets: [claudeApiKey],
+    invoker: "public",
   },
   async (req, res) => {
+    // CORS - must be before anything else
+    res.set("Access-Control-Allow-Origin", "https://tsmik.github.io");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
     if (req.method !== "POST") {
       res.status(405).json({error: "Method not allowed"});
       return;

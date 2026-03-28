@@ -1282,21 +1282,46 @@ function saveReview() {
 // Claude Vision
 // ============================================================
 function dataURLtoBase64(dataURL) {
-  // Strip "data:image/jpeg;base64," prefix
-  return dataURL.split(',')[1];
+  if (!dataURL) return null;
+  const idx = dataURL.indexOf(',');
+  if (idx === -1) return dataURL; // already raw base64
+  return dataURL.substring(idx + 1);
 }
 
 async function startClaude() {
-  if (!currentDoc || !currentDoc.photoFrontURL) return;
+  if (!currentDoc) return;
+
+  // Re-read from Firestore to ensure we have the full document
+  showLoading('讀取照片中...');
+  try {
+    const snap = await db.collection(COL).doc(currentDocId).get();
+    if (!snap.exists) { hideLoading(); alert('記錄不存在'); return; }
+    currentDoc = snap.data();
+  } catch (err) {
+    hideLoading();
+    alert('讀取失敗：' + err.message);
+    return;
+  }
+
+  if (!currentDoc.photoFrontURL) {
+    hideLoading();
+    alert('找不到正面照片資料');
+    return;
+  }
 
   showLoading('Claude 判讀中，請稍候（約30秒）...');
 
   try {
-    // Photos are already base64 DataURLs in Firestore, just strip prefix
     const frontB64 = dataURLtoBase64(currentDoc.photoFrontURL);
     let sideB64 = null;
     if (currentDoc.photoSideURL) {
       sideB64 = dataURLtoBase64(currentDoc.photoSideURL);
+    }
+
+    if (!frontB64) {
+      hideLoading();
+      alert('照片 base64 資料為空，請重新上傳照片');
+      return;
     }
 
     const body = {
