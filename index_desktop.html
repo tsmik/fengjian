@@ -1936,8 +1936,8 @@ function cpRenderMain(){
 
     // 連接符號
     function connLabel(type){
-      var text=type==='OR'?'或':'以及';
-      return '<div style="font-size:var(--cp-option-desc);color:var(--text-3);padding:0 8px;font-weight:700">'+text+'</div>';
+      if(type==='OR')return '<div style="padding:0 8px"><span style="font-size:var(--cp-option-desc);padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3)">或</span></div>';
+      return '';
     }
 
     // 渲染一組 merged items 為 HTML
