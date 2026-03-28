@@ -1054,7 +1054,7 @@ function _nodeLabel(node,side,qMap){
   if(node.ref!==undefined){
     var q=qMap[node.ref];
     var text=q?q.text:node.ref;
-    var eSide=('side' in node)?node.side:side;
+    var eSide=('side' in node && node.side !== null)?node.side:side;
     var prefix='';
     if(eSide&&q&&q.paired)prefix=(eSide==='L'?'左':'右');
     var matchStr=Array.isArray(node.match)?node.match.join('或'):String(node.match);
@@ -1088,7 +1088,7 @@ function _collectRefs(node){
 
 function _flattenLeaf(node,side,qMap){
   var q=qMap[node.ref]||{};
-  var eSide=('side' in node)?node.side:side;
+  var eSide=('side' in node && node.side !== null)?node.side:side;
   var prefix='';
   if(eSide&&q.paired)prefix=(eSide==='L'?'左':'右');
   var matchStr=Array.isArray(node.match)?node.match.join('或'):String(node.match||'');
@@ -1107,7 +1107,7 @@ function _flattenCompound(node,side,qMap,partResults){
     var s0=node.items[0].side;
     if(s0)eSide=s0;
   }
-  if(('side' in node))eSide=node.side;
+  if(('side' in node && node.side !== null))eSide=node.side;
   if(side)eSide=side;
   var connType=node.op||'AND';
   return {label:label,ok:ok,ids:refs,side:eSide,val:null,wt:1,connType:connType};

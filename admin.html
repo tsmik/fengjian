@@ -417,7 +417,7 @@ function erUpdateMatch(){
 function saveRuleEdit(path){
   if(_pendingNewNodePath!==path){pushUndo();}
   var n=getPath(rules[curDim],path);if(!n)return;
-  if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='null')n.side=null;else if(sd)n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
+  if(n.ref!==undefined){n.ref=document.getElementById('er-ref').value;var s=document.getElementById('er-match');var v=[...s.selectedOptions].map(o=>o.value);n.match=v.length===1?v[0]:v;var sd=document.getElementById('er-side').value;if(sd==='L'||sd==='R')n.side=sd;else delete n.side;var w=+document.getElementById('er-wt').value||1;if(w>1)n.weight=w;else delete n.weight;}
   else if(n.op==='AND'||n.op==='OR'||n.op==='COUNT'){
     var newOp=document.getElementById('er-optype');
     if(newOp){
@@ -433,7 +433,7 @@ function saveRuleEdit(path){
   else if(n.op==='NOT'&&n.item){
     var re=document.getElementById('er-ref');if(re)n.item.ref=re.value;
     var me=document.getElementById('er-match');if(me){var mv=[...me.selectedOptions].map(o=>o.value);n.item.match=mv.length===1?mv[0]:mv;}
-    var se=document.getElementById('er-side');if(se){var sv=se.value;if(sv==='null')n.item.side=null;else if(sv)n.item.side=sv;else delete n.item.side;}
+    var se=document.getElementById('er-side');if(se){var sv=se.value;if(sv==='L'||sv==='R')n.item.side=sv;else delete n.item.side;}
   }
   else if(n.partResult!==undefined)n.partResult=document.getElementById('er-pr').value;
   else if(n.group!==undefined){var ge=document.getElementById('er-group');if(ge)n.group=ge.value;}
