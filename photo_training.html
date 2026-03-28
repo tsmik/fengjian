@@ -485,9 +485,9 @@ input { font-family: 'Noto Serif TC', serif; }
 .part-index-nav::-webkit-scrollbar { display: none; }
 .part-idx {
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -501,7 +501,7 @@ input { font-family: 'Noto Serif TC', serif; }
 .part-idx.idx-done { color: var(--green); }
 .part-idx.idx-partial { color: #d4a834; }
 .part-idx .idx-count {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   margin-left: 3px;
   opacity: 0.7;
@@ -1482,6 +1482,16 @@ function renderPartIndex() {
     const cls = partDone === partTotal ? 'idx-done' : partDone > 0 ? 'idx-partial' : '';
     return `<div class="part-idx ${cls}" data-part="${part}" onclick="scrollToPart('${part}')">${PART_LABELS[part] || part}<span class="idx-count">${partDone}/${partTotal}</span></div>`;
   }).join('');
+}
+
+function getElTopInScroll(el, scrollEl) {
+  let top = 0;
+  let node = el;
+  while (node && node !== scrollEl) {
+    top += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return top;
 }
 
 function scrollToPart(part) {
