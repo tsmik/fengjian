@@ -1617,7 +1617,8 @@ function renderDetail() {
     statusHTML = `<span class="status-badge pending">未判讀</span>
       <button class="btn-claude" onclick="startClaude()">開始 Claude 判讀</button>`;
   } else {
-    statusHTML = `<span class="status-badge done">已判讀</span>`;
+    statusHTML = `<span class="status-badge done">已判讀</span>
+      <button class="btn-claude" onclick="startClaude()">🔄 重新判讀</button>`;
   }
   statusHTML += `<div style="flex:1"></div>`;
   statusHTML += `<button class="btn-delete-record" onclick="deleteRecord()">刪除記錄</button>`;
