@@ -729,6 +729,58 @@ input { font-family: 'Noto Serif TC', serif; }
   letter-spacing: 2px;
 }
 
+/* ===== Report View ===== */
+.report-top-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.report-actions-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 15px 24px;
+  background: var(--bg);
+}
+.report-btn {
+  flex: 1;
+  height: 44px;
+  background: transparent;
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Serif TC', serif;
+  letter-spacing: 1px;
+}
+.report-btn-green { background: #06C755; color: white; border-color: #06C755; }
+.report-btn-orange { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Missing answers panel */
+.missing-panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9500;
+  display: flex; align-items: center; justify-content: center;
+}
+.missing-panel {
+  background: var(--bg2); border-radius: 12px; padding: 20px; max-width: 500px; width: 90%;
+  max-height: 70vh; display: flex; flex-direction: column;
+}
+.missing-panel-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+.missing-list { overflow-y: auto; flex: 1; margin-bottom: 16px; }
+.missing-item {
+  padding: 6px 8px; font-size: 13px; color: var(--text2); cursor: pointer; border-radius: 4px;
+}
+.missing-item:hover { background: var(--bg3); color: var(--text); }
+.missing-actions { display: flex; gap: 8px; }
+
+/* Report update warnings */
+.report-warning {
+  font-size: 12px; color: #d4a834; font-weight: 700; padding: 6px 16px;
+  background: #3a3520; border-bottom: 1px solid var(--border);
+}
+
 /* ===== Offline Banner ===== */
 .offline-banner {
   display: none;
@@ -978,6 +1030,33 @@ input { font-family: 'Noto Serif TC', serif; }
   </div>
 </div>
 
+<!-- View: Report -->
+<div class="view" id="viewReport">
+  <div id="reportContent" style="background:#fff;padding:15px;min-height:100vh">
+    <div class="report-top-row">
+      <span id="reportName" style="font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif"></span>
+      <span style="font-size:15px;color:#888;font-family:'Noto Serif TC',serif;margin-left:12px">人相兵法係數報告</span>
+    </div>
+    <div id="reportTable" style="margin:8px 0;overflow-x:auto;width:100%"></div>
+  </div>
+  <div class="report-actions-bar">
+    <button class="report-btn" onclick="showView('detail')">← 返回審核</button>
+    <button class="report-btn report-btn-green" onclick="exportReportPNG()">📱 匯出圖片</button>
+  </div>
+</div>
+
+<!-- Missing answers panel (modal) -->
+<div class="missing-panel-overlay" id="missingPanelOverlay" style="display:none">
+  <div class="missing-panel">
+    <div class="missing-panel-title">以下觀察項目尚未確認</div>
+    <div id="missingList" class="missing-list"></div>
+    <div class="missing-actions">
+      <button class="report-btn" onclick="closeMissingPanel()">返回補填</button>
+      <button class="report-btn report-btn-orange" onclick="closeMissingPanel();generateReport(true)">強制產出</button>
+    </div>
+  </div>
+</div>
+
 <!-- Mobile Part Tabs (bottom bar) -->
 <div class="mobile-part-tabs" id="mobilePartTabs"></div>
 
@@ -991,6 +1070,9 @@ input { font-family: 'Noto Serif TC', serif; }
   <div class="spinner"></div>
   <div class="loading-text" id="loadingText">處理中...</div>
 </div>
+
+<!-- html2canvas for PNG export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1371,6 +1453,7 @@ async function loadList() {
         <span>Claude ${stats.claudeJudged || 0}/${total}</span>
         <span>審核 ${reviewed}/${total}</span>
         <span>準確率 ${acc}</span>
+        ${d.report && needsReportUpdate(d) ? '<span style="color:#d4a834">⚠️</span>' : ''}
       </div>
     </div>`;
   }).join('');
@@ -1618,11 +1701,15 @@ function renderDetail() {
       <button class="btn-claude" onclick="startClaude()">開始 Claude 判讀</button>`;
   } else {
     statusHTML = `<span class="status-badge done">已判讀</span>
-      <button class="btn-claude" onclick="startClaude()">🔄 重新判讀</button>`;
+      <button class="btn-claude" onclick="startClaude()">🔄 重新判讀</button>
+      <button class="btn-claude" style="background:var(--gold)" onclick="prepareReport()">📊 產出報告</button>`;
   }
   statusHTML += `<div style="flex:1"></div>`;
   statusHTML += `<button class="btn-delete-record" onclick="deleteRecord()">刪除記錄</button>`;
   statusEl.innerHTML = statusHTML;
+
+  // Report update warnings
+  renderReportWarnings();
 
   // Progress
   renderProgress();
@@ -1931,14 +2018,17 @@ function recalcStats() {
 let saveTimer = null;
 function saveReview() {
   if (saveTimer) clearTimeout(saveTimer);
+  currentDoc.reviewUpdatedAt = new Date().toISOString();
   saveTimer = setTimeout(async () => {
     if (!currentDocId) return;
     try {
       await db.collection(COL).doc(currentDocId).update({
         mikeReview: currentDoc.mikeReview,
         stats: currentDoc.stats,
+        reviewUpdatedAt: currentDoc.reviewUpdatedAt,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      renderReportWarnings();
     } catch (err) {
       console.error('Save failed:', err);
     }
@@ -2518,6 +2608,551 @@ async function dropAddPhotos(dataURLs) {
     alert('新增照片失敗：' + err.message);
   }
 }
+
+// ============================================================
+// Rule Engine (ported from rule_engine.js)
+// ============================================================
+function reGetAnswer(ref, side, od) {
+  if (side) {
+    const k = ref + '_' + side;
+    if (k in od) return od[k];
+    return od[ref] || '';
+  }
+  return od[ref] || '';
+}
+
+function reEvaluate(node, od, side, pr) {
+  if (!node) return false;
+  // leaf match
+  if (node.ref !== undefined) {
+    const es = ('side' in node) ? node.side : side;
+    const ans = reGetAnswer(node.ref, es, od);
+    if (Array.isArray(node.match)) return node.match.indexOf(ans) >= 0;
+    return ans === node.match;
+  }
+  // partResult
+  if (node.partResult !== undefined) {
+    const prr = node.partResult;
+    const di = prr.indexOf('.');
+    if (di >= 0) {
+      const pn = prr.substring(0, di), ss = prr.substring(di + 1);
+      return pr[pn] ? pr[pn][ss] === true : false;
+    }
+    return pr[prr] ? pr[prr].result === 'positive' : false;
+  }
+  // inline rule
+  if (node.rule !== undefined && !node.veto) return reEvaluate(node.rule, od, side, pr);
+  // VETO
+  if (node.veto !== undefined) {
+    for (const v of node.veto) { if (reEvaluate(v.condition, od, side, pr)) return v.result === 'positive'; }
+    return node.rule ? reEvaluate(node.rule, od, side, pr) : false;
+  }
+  // AND
+  if (node.op === 'AND') { for (const it of node.items) { if (!reEvaluate(it, od, side, pr)) return false; } return true; }
+  // OR
+  if (node.op === 'OR') { for (const it of node.items) { if (reEvaluate(it, od, side, pr)) return true; } return false; }
+  // COUNT
+  if (node.op === 'COUNT') {
+    let cnt = 0;
+    for (const ci of node.items) {
+      if (ci.group !== undefined && ci.items) {
+        for (const gi of ci.items) { if (reEvaluate(gi, od, side, pr)) cnt += (gi.weight || 1); }
+      } else { if (reEvaluate(ci, od, side, pr)) cnt += (ci.weight || 1); }
+    }
+    return cnt >= node.min;
+  }
+  // NOT
+  if (node.op === 'NOT') return !reEvaluate(node.item, od, side, pr);
+  // LR
+  if (node.op === 'LR') {
+    const lr = reEvaluate(node.each, od, 'L', pr);
+    const rr = reEvaluate(node.each, od, 'R', pr);
+    reEvaluate._lastLR = { L: lr, R: rr };
+    return node.merge === 'all' ? (lr && rr) : (lr || rr);
+  }
+  return false;
+}
+reEvaluate._lastLR = null;
+
+function reEvalPart(partDef, od, pr) {
+  if (!partDef) return { result: 'negative' };
+  const ruleNode = partDef.rule || partDef;
+  const hasRule = partDef.rule || partDef.op || partDef.items || partDef.ref;
+  if (!hasRule) return { result: 'negative' };
+  if (partDef.veto) {
+    for (const v of partDef.veto) { if (reEvaluate(v.condition, od, null, pr)) return { result: v.result }; }
+  }
+  reEvaluate._lastLR = null;
+  const result = reEvaluate(ruleNode, od, null, pr);
+  const out = { result: result ? 'positive' : 'negative' };
+  if (reEvaluate._lastLR) { out.L = reEvaluate._lastLR.L; out.R = reEvaluate._lastLR.R; }
+  return out;
+}
+
+function reEvalDimension(dimDef, od) {
+  const partOrder = ['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+  const pr = {};
+  for (const pn of partOrder) {
+    pr[pn] = dimDef.parts[pn] ? reEvalPart(dimDef.parts[pn], od, pr) : { result: 'negative' };
+  }
+  let pos = 0, neg = 0;
+  for (const pn of partOrder) { if (pr[pn].result === 'positive') pos++; else neg++; }
+  const attribute = pos > neg ? dimDef.positiveType : dimDef.negativeType;
+  const coefficient = Math.max(pos, neg) > 0 ? Math.min(pos, neg) / Math.max(pos, neg) : 0;
+  return { results: pr, positiveCount: pos, negativeCount: neg, attribute, coefficient };
+}
+
+// ============================================================
+// Report: Build obsData from mikeReview + claudeResults
+// ============================================================
+function buildObsData() {
+  const d = currentDoc;
+  if (!d || !d.claudeResults) return {};
+  const cr = d.claudeResults;
+  const mr = d.mikeReview || {};
+  const od = {};
+  for (const { key } of ALL_KEYS) {
+    const review = mr[key];
+    const claude = cr[key];
+    if (review) {
+      if (review.status === 'correct' && claude && claude.answer != null) {
+        od[key] = claude.answer;
+      } else if (review.status === 'wrong' && review.correctAnswer) {
+        od[key] = review.correctAnswer;
+      } else if (review.status === 'filled' && review.correctAnswer) {
+        od[key] = review.correctAnswer;
+      }
+      // status === 'cannot' → no answer
+    }
+  }
+  return od;
+}
+
+// ============================================================
+// Report: Collect refs used by rules
+// ============================================================
+function collectRefs(node, refs) {
+  if (!node) return;
+  if (node.ref !== undefined) { refs.add(node.ref); return; }
+  if (node.rule) collectRefs(node.rule, refs);
+  if (node.items) node.items.forEach(it => {
+    collectRefs(it, refs);
+    if (it.items) it.items.forEach(gi => collectRefs(gi, refs));
+  });
+  if (node.item) collectRefs(node.item, refs);
+  if (node.each) collectRefs(node.each, refs);
+  if (node.veto) node.veto.forEach(v => collectRefs(v.condition, refs));
+  if (node.condition) collectRefs(node.condition, refs);
+}
+
+function collectAllRefs(rulesData) {
+  const refs = new Set();
+  for (const dimKey of Object.keys(rulesData)) {
+    const dim = rulesData[dimKey];
+    if (!dim || !dim.parts) continue;
+    for (const partKey of Object.keys(dim.parts)) {
+      const partDef = dim.parts[partKey];
+      if (!partDef) continue;
+      collectRefs(partDef.rule || partDef, refs);
+      if (partDef.veto) partDef.veto.forEach(v => collectRefs(v.condition, refs));
+    }
+  }
+  return refs;
+}
+
+// ============================================================
+// Report: Load rules and check completeness
+// ============================================================
+let cachedRules = null;
+let cachedRulesUpdatedAt = null;
+
+async function loadRules() {
+  if (cachedRules) return cachedRules;
+  const snap = await db.collection('settings').doc('rules').get();
+  if (!snap.exists) throw new Error('找不到評分規則');
+  const d = snap.data();
+  cachedRulesUpdatedAt = d.updatedAt || null;
+  cachedRules = JSON.parse(d.rulesJson);
+  return cachedRules;
+}
+
+async function prepareReport() {
+  if (!currentDoc || !currentDoc.claudeResults) { alert('請先完成 Claude 判讀'); return; }
+  showLoading('檢查觀察答案...');
+  try {
+    const rules = await loadRules();
+    const obsData = buildObsData();
+    const neededRefs = collectAllRefs(rules);
+
+    // Find missing refs: refs needed by rules but not in obsData
+    // For LR questions, check both _L and _R
+    const missing = [];
+    for (const ref of neededRefs) {
+      const q = QUESTIONS.find(qq => qq.qId === ref);
+      if (!q) continue;
+      if (q.lr) {
+        const hasL = (ref + '_L') in obsData;
+        const hasR = (ref + '_R') in obsData;
+        if (!hasL) missing.push({ ref, key: ref + '_L', q, side: '左' });
+        if (!hasR) missing.push({ ref, key: ref + '_R', q, side: '右' });
+      } else {
+        if (!(ref in obsData)) missing.push({ ref, key: ref, q, side: null });
+      }
+    }
+
+    hideLoading();
+    if (missing.length > 0) {
+      showMissingPanel(missing);
+    } else {
+      generateReport(false);
+    }
+  } catch (err) {
+    hideLoading();
+    alert('載入規則失敗：' + err.message);
+  }
+}
+
+function showMissingPanel(missing) {
+  const list = document.getElementById('missingList');
+  list.innerHTML = missing.map(m => {
+    const sideLabel = m.side ? `（${m.side}）` : '';
+    return `<div class="missing-item" onclick="closeMissingPanel();jumpToQuestion('${m.q.qId}')">${m.q.part} ${m.ref}${sideLabel}（${m.q.text}）</div>`;
+  }).join('');
+  document.getElementById('missingPanelOverlay').style.display = 'flex';
+}
+
+function closeMissingPanel() {
+  document.getElementById('missingPanelOverlay').style.display = 'none';
+}
+
+function jumpToQuestion(qId) {
+  showView('detail');
+  setTimeout(() => {
+    const card = document.getElementById('card-' + qId);
+    const scroll = document.getElementById('detailLeftScroll');
+    if (card && scroll) {
+      const top = getOffsetTopIn(card, scroll);
+      scroll.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, 100);
+}
+
+// ============================================================
+// Report: Generate and render
+// ============================================================
+const DIMS = [
+  {cat:"先天指數",a:"形",b:"勢",aT:"靜",bT:"動",view:"格局"},
+  {cat:"先天指數",a:"經",b:"緯",aT:"靜",bT:"動",view:"核心價值"},
+  {cat:"先天指數",a:"圓",b:"方",aT:"動",bT:"靜",view:"成就"},
+  {cat:"先天指數",a:"直",b:"曲",aT:"靜",bT:"動",view:"責任"},
+  {cat:"先天指數",a:"收",b:"放",aT:"靜",bT:"動",view:"能耐"},
+  {cat:"先天指數",a:"緩",b:"急",aT:"靜",bT:"動",view:"成敗"},
+  {cat:"運氣指數",a:"順",b:"逆",aT:"靜",bT:"動",view:"天運天機"},
+  {cat:"運氣指數",a:"合",b:"分",aT:"靜",bT:"動",view:"地運資源"},
+  {cat:"運氣指數",a:"真",b:"假",aT:"靜",bT:"動",view:"人運人和"},
+  {cat:"後天指數",a:"攻",b:"守",aT:"動",bT:"靜",view:"戰略"},
+  {cat:"後天指數",a:"奇",b:"正",aT:"動",bT:"靜",view:"戰術"},
+  {cat:"後天指數",a:"實",b:"虛",aT:"靜",bT:"動",view:"算略"},
+  {cat:"後天指數",a:"進",b:"退",aT:"動",bT:"靜",view:"智略"}
+];
+const DIM_COLORS = ['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+const DIM_ALPHA = ['rgba(94,128,128,0.4)','rgba(110,146,146,0.4)','rgba(126,164,164,0.4)','rgba(82,112,112,0.4)','rgba(96,130,130,0.4)','rgba(110,148,148,0.4)','rgba(158,138,90,0.4)','rgba(178,158,110,0.4)','rgba(198,178,130,0.4)','rgba(122,90,80,0.4)','rgba(142,108,98,0.4)','rgba(162,126,116,0.4)','rgba(182,144,136,0.4)'];
+const SBG = '#7A9E7E', DBG = '#C17A5A';
+const DIM_KEYS = ['形勢','經緯','圓方','直曲','收放','緩急','順逆','合分','真假','攻守','奇正','實虛','進退'];
+const RPT_PART_ORDER = [0,1,2,3,4,5,6,7,8]; // 頭,上停,中停,下停,耳,眉,眼,鼻,口
+const RPT_PART_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+const RE_PART_ORDER = ['頭','上停','耳','眉','眼','鼻','口','中停','下停']; // evaluation order
+const sL = ['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
+const dL = ['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+
+async function generateReport(force) {
+  showLoading('計算報告中...');
+  try {
+    const rules = await loadRules();
+    const obsData = buildObsData();
+
+    // Evaluate all 13 dimensions
+    // data[dimIndex][partIndex] = 'A'(positive) or 'B'(negative) or null
+    const data = Array(13).fill(null).map(() => Array(9).fill(null));
+    const dimResults = {};
+
+    for (let di = 0; di < 13; di++) {
+      const dimKey = DIM_KEYS[di];
+      const dimDef = rules[dimKey];
+      if (!dimDef) continue;
+      const result = reEvalDimension(dimDef, obsData);
+      dimResults[dimKey] = result;
+
+      // Map results to data array: evaluation part order → display part order
+      // eval order: 頭,上停,耳,眉,眼,鼻,口,中停,下停
+      // display order: 頭(0),上停(1),中停(2),下停(3),耳(4),眉(5),眼(6),鼻(7),口(8)
+      const evalToDisplay = { '頭':0, '上停':1, '中停':2, '下停':3, '耳':4, '眉':5, '眼':6, '鼻':7, '口':8 };
+      for (const pn of RE_PART_ORDER) {
+        const pi = evalToDisplay[pn];
+        if (pi === undefined) continue;
+        data[di][pi] = result.results[pn].result === 'positive' ? 'A' : 'B';
+      }
+    }
+
+    // Calculate indices
+    function calcDim(i) {
+      const r = data[i];
+      const a = r.filter(v => v === 'A').length;
+      const b = r.filter(v => v === 'B').length;
+      return { a, b, coeff: Math.max(a, b) > 0 ? Math.min(a, b) / Math.max(a, b) : 0, type: a > b ? DIMS[i].aT : DIMS[i].bT };
+    }
+    function avgCoeff(ids) {
+      const vals = ids.map(i => calcDim(i).coeff);
+      return vals.length ? (vals.reduce((a, b) => a + b) / vals.length) : 0;
+    }
+
+    const indices = {
+      total: avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
+      innate: avgCoeff([0,1,2,3,4,5]),
+      boss: avgCoeff([0,1,2]),
+      manager: avgCoeff([3,4,5]),
+      luck: avgCoeff([6,7,8]),
+      post: avgCoeff([9,10,11,12])
+    };
+
+    // Save to Firestore
+    const report = {
+      obsData,
+      dimResults: Object.fromEntries(Object.entries(dimResults).map(([k, v]) => [k, {
+        attribute: v.attribute,
+        coefficient: v.coefficient,
+        positiveCount: v.positiveCount,
+        negativeCount: v.negativeCount
+      }])),
+      indices,
+      rulesUpdatedAt: cachedRulesUpdatedAt || '',
+      reviewUpdatedAt: currentDoc.reviewUpdatedAt || '',
+      generatedAt: new Date().toISOString()
+    };
+    currentDoc.report = report;
+    await db.collection(COL).doc(currentDocId).update({ report });
+
+    hideLoading();
+    renderReport(data, indices, calcDim);
+    showView('report');
+  } catch (err) {
+    hideLoading();
+    alert('產出報告失敗：' + err.message);
+  }
+}
+
+function renderReport(data, indices, calcDim) {
+  document.getElementById('reportName').textContent = currentDoc.name || '未命名';
+  const ftEl = document.getElementById('reportTable');
+
+  const vTotal = indices.total.toFixed(2);
+  const vPre = indices.innate.toFixed(2);
+  const vLuck = indices.luck.toFixed(2);
+  const vPost = indices.post.toFixed(2);
+  const vLead = indices.boss.toFixed(2);
+  const vSub = indices.manager.toFixed(2);
+
+  function countSD(dimIds) {
+    let s = 0, d = 0;
+    dimIds.forEach(di => {
+      data[di].forEach(v => {
+        if (!v) return;
+        const tp = v === 'A' ? DIMS[di].aT : DIMS[di].bT;
+        if (tp === '靜') s++; else d++;
+      });
+    });
+    return { s, d };
+  }
+  function sdTag(sd) {
+    return `<span style="font-weight:700"><span style="color:${DBG}">動${sd.d}</span><span style="color:#999">/</span><span style="color:${SBG}">靜${sd.s}</span></span>`;
+  }
+  function cellFlex(label, val, sd, bg, color) {
+    return `<td style="border-radius:4px;background:${bg};color:${color};padding:6px 10px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="flex:1;text-align:center;font-weight:700">${label}　${val}</span><span style="font-weight:700;white-space:nowrap">${sdTag(sd)}</span></div></td>`;
+  }
+
+  const sdAll = countSD([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+  const sdPre = countSD([0,1,2,3,4,5]);
+  const sdLuck = countSD([6,7,8]);
+  const sdPost = countSD([9,10,11,12]);
+  const sdLead = countSD([0,1,2]);
+  const sdSub = countSD([3,4,5]);
+
+  const rc = 'border-radius:4px';
+  const nb = 'background:transparent;border:none;padding:4px';
+  const pw = 'width:38px;min-width:38px';
+
+  let t = `<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:'Noto Serif TC',serif;white-space:nowrap;width:100%">`;
+
+  // Row 1: total
+  t += `<tr><td style="${nb};${pw}"></td>`;
+  t += `<td colspan="26" style="${rc};background:#c8bfb0;color:#3a3228;padding:8px 14px;font-size:18px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="flex:1;text-align:center;font-weight:700">總係數　${vTotal}</span><span style="font-weight:700;white-space:nowrap">${sdTag(sdAll)}</span></div></td>`;
+  t += `<td style="${nb};${pw}"></td></tr>`;
+
+  // Row 2: innate + luck + post
+  t += `<tr><td rowspan="2" style="${nb};${pw}"></td>`;
+  t += cellFlex('先天係數', vPre, sdPre, '#bdd4d4', '#2e4a4a').replace('<td', '<td colspan="12"');
+  t += cellFlex('運氣係數', vLuck, sdLuck, '#e8dcc8', '#5a4a2a').replace('<td', '<td colspan="6"');
+  t += cellFlex('後天係數', vPost, sdPost, '#e0cdc6', '#5a3a30').replace('<td', '<td colspan="8"');
+  t += `<td rowspan="2" style="${nb};${pw}"></td></tr>`;
+
+  // Row 3: boss + manager
+  t += `<tr>`;
+  t += cellFlex('老闆係數', vLead, sdLead, '#cce0e0', '#2e4a4a').replace('<td', '<td colspan="6"');
+  t += cellFlex('主管係數', vSub, sdSub, '#d8eaea', '#2e4a4a').replace('<td', '<td colspan="6"');
+  t += `<td colspan="6" style="${nb}"></td><td colspan="8" style="${nb}"></td></tr>`;
+
+  // Dimension header row
+  const dimSCounts = [], dimDCounts = [];
+  for (let di = 0; di < 13; di++) {
+    let sc = 0, dc = 0;
+    data[di].forEach(v => { if (!v) return; const tp = v === 'A' ? DIMS[di].aT : DIMS[di].bT; if (tp === '靜') sc++; else dc++; });
+    dimSCounts.push(sc); dimDCounts.push(dc);
+  }
+
+  t += `<tr><td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;position:sticky;left:0;z-index:2;${rc};${pw};text-align:center"></td>`;
+  DIMS.forEach((d, i) => {
+    t += `<th colspan="2" style="padding:10px 8px;background:${DIM_COLORS[i]};color:white;font-weight:700;text-align:center;letter-spacing:2px;${rc}">${d.a}${d.b}</th>`;
+  });
+  t += `<td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;${rc};${pw};text-align:center"></td></tr>`;
+
+  // Sub-header: static/dynamic counts
+  t += `<tr>`;
+  DIMS.forEach((d, i) => {
+    t += `<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid ${SBG}">${sL[i]}${dimSCounts[i]}</th>`;
+    t += `<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid ${DBG}">${dL[i]}${dimDCounts[i]}</th>`;
+  });
+  t += `</tr>`;
+
+  // Coefficient + stacked bars row
+  t += `<tr>`;
+  DIMS.forEach((d, i) => {
+    const res = calcDim(i);
+    const coeff = res.coeff.toFixed(2);
+    const sc = dimSCounts[i], dc = dimDCounts[i];
+    const coeffBg = res.type === '靜' ? SBG : DBG;
+    let bars = `<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">`;
+    bars += `<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">`;
+    for (let b = 0; b < sc; b++) bars += `<div style="height:3px;background:${SBG};border-radius:1px"></div>`;
+    bars += `</div><div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">`;
+    for (let b = 0; b < dc; b++) bars += `<div style="height:3px;background:${DBG};border-radius:1px"></div>`;
+    bars += `</div></div>`;
+    t += `<td colspan="2" style="padding:4px 6px;vertical-align:top"><div style="background:${coeffBg};color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">${coeff}</div>${bars}</td>`;
+  });
+  t += `</tr>`;
+
+  // Data rows
+  const partCellL = `padding:4px 6px;font-weight:700;background:#e8e3da;position:sticky;left:0;z-index:1;${rc};${pw};text-align:center`;
+  const partCellR = `padding:4px 6px;font-weight:700;background:#e8e3da;${rc};${pw};text-align:center`;
+  RPT_PART_ORDER.forEach((pi, idx) => {
+    // Separator between 下停 and 耳
+    if (idx === 4) {
+      t += `<tr><td colspan="28" style="height:2px;background:#b8b0a0;padding:0"></td></tr>`;
+    }
+    t += `<tr><td style="${partCellL}">${RPT_PART_LABELS[idx]}</td>`;
+    DIMS.forEach((d, di) => {
+      const v = data[di][pi];
+      let isStatic = false, isDynamic = false;
+      if (v) { const tp = v === 'A' ? d.aT : d.bT; isStatic = tp === '靜'; isDynamic = tp === '動'; }
+      if (isStatic) {
+        t += `<td style="padding:4px 8px;text-align:center;background:${SBG};color:white;font-weight:700;${rc}">${sL[di]}</td>`;
+        t += `<td style="padding:4px 8px;text-align:center;background:${DIM_ALPHA[di]};${rc}"></td>`;
+      } else if (isDynamic) {
+        t += `<td style="padding:4px 8px;text-align:center;background:${DIM_ALPHA[di]};${rc}"></td>`;
+        t += `<td style="padding:4px 8px;text-align:center;background:${DBG};color:white;font-weight:700;${rc}">${dL[di]}</td>`;
+      } else {
+        t += `<td style="padding:4px 8px;text-align:center;${rc}"></td><td style="padding:4px 8px;text-align:center;${rc}"></td>`;
+      }
+    });
+    t += `<td style="${partCellR}">${RPT_PART_LABELS[idx]}</td></tr>`;
+  });
+  t += `</table>`;
+  ftEl.innerHTML = t;
+}
+
+// ============================================================
+// Report: Export PNG
+// ============================================================
+async function exportReportPNG() {
+  const content = document.getElementById('reportContent');
+  const actions = document.querySelector('.report-actions-bar');
+  actions.style.display = 'none';
+  content.scrollTop = 0;
+  await new Promise(r => setTimeout(r, 100));
+  try {
+    const canvas = await html2canvas(content, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      scrollX: 0, scrollY: 0,
+      windowWidth: content.scrollWidth,
+      width: content.scrollWidth,
+      height: content.scrollHeight
+    });
+    const name = currentDoc.name || '報告';
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const file = new File(
+      [await new Promise(r => canvas.toBlob(r, 'image/png'))],
+      `人相兵法_${name}.png`, { type: 'image/png' }
+    );
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: '人相兵法報告', text: `${name} 的人相兵法報告` }); }
+      catch (e) { if (e.name !== 'AbortError') fallbackDL(canvas, name); }
+    } else {
+      fallbackDL(canvas, name);
+    }
+  } catch (e) {
+    alert('產生失敗，請截圖儲存');
+  }
+  actions.style.display = 'flex';
+}
+function fallbackDL(canvas, name) {
+  const link = document.createElement('a');
+  link.download = `人相兵法_${name}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ============================================================
+// Report: Update warnings
+// ============================================================
+function needsReportUpdate(d) {
+  if (!d.report) return false;
+  const rpt = d.report;
+  // Check if rules updated after report
+  if (cachedRulesUpdatedAt && rpt.rulesUpdatedAt && cachedRulesUpdatedAt > rpt.rulesUpdatedAt) return true;
+  // Check if review updated after report
+  if (d.reviewUpdatedAt && rpt.generatedAt && d.reviewUpdatedAt > rpt.generatedAt) return true;
+  return false;
+}
+
+function renderReportWarnings() {
+  // Remove existing warnings
+  document.querySelectorAll('.report-warning').forEach(el => el.remove());
+  if (!currentDoc || !currentDoc.report) return;
+
+  const warnings = [];
+  const rpt = currentDoc.report;
+  if (cachedRulesUpdatedAt && rpt.rulesUpdatedAt && cachedRulesUpdatedAt > rpt.rulesUpdatedAt) {
+    warnings.push('⚠️ 評分規則已更新，建議重新產出報告');
+  }
+  if (currentDoc.reviewUpdatedAt && rpt.generatedAt && currentDoc.reviewUpdatedAt > rpt.generatedAt) {
+    warnings.push('⚠️ 審核內容已更新，建議重新產出報告');
+  }
+  if (warnings.length === 0) return;
+
+  const statusEl = document.getElementById('detailStatus');
+  if (!statusEl) return;
+  const warnDiv = document.createElement('div');
+  warnDiv.className = 'report-warning';
+  warnDiv.innerHTML = warnings.join('<br>');
+  statusEl.parentNode.insertBefore(warnDiv, statusEl.nextSibling);
+}
+
+// Pre-load rules on app init for warnings
+async function preloadRules() {
+  try { await loadRules(); } catch (_) {}
+}
+preloadRules();
 </script>
 </body>
 </html>
