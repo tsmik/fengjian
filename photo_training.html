@@ -739,8 +739,12 @@ input { font-family: 'Noto Serif TC', serif; }
 .report-actions-bar {
   display: flex;
   gap: 8px;
-  padding: 12px 15px 24px;
+  padding: 10px 15px;
   background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
 }
 .report-btn {
   flex: 1;
@@ -1031,17 +1035,17 @@ input { font-family: 'Noto Serif TC', serif; }
 </div>
 
 <!-- View: Report -->
-<div class="view" id="viewReport">
-  <div id="reportContent" style="background:#fff;padding:15px;min-height:calc(100vh - 110px);color:#333">
+<div class="view" id="viewReport" style="position:relative">
+  <div class="report-actions-bar" id="reportActionsBar">
+    <button class="report-btn" onclick="showView('detail')">← 返回審核</button>
+    <button class="report-btn report-btn-green" onclick="exportReportPNG()">📱 匯出圖片</button>
+  </div>
+  <div id="reportContent" style="background:#fff;padding:15px 15px 80px;color:#333">
     <div class="report-top-row">
       <span id="reportName" style="font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif;color:#3a3228"></span>
       <span style="font-size:15px;color:#888;font-family:'Noto Serif TC',serif;margin-left:12px">人相兵法係數報告</span>
     </div>
     <div id="reportTable" style="margin:8px 0;overflow-x:auto;width:100%"></div>
-  </div>
-  <div class="report-actions-bar">
-    <button class="report-btn" onclick="showView('detail')">← 返回審核</button>
-    <button class="report-btn report-btn-green" onclick="exportReportPNG()">📱 匯出圖片</button>
   </div>
 </div>
 
@@ -2989,7 +2993,7 @@ function renderReport(data, indices, calcDim) {
   const nb = 'background:transparent;border:none;padding:4px';
   const pw = 'width:38px;min-width:38px';
 
-  let t = `<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:'Noto Serif TC',serif;white-space:nowrap;width:100%">`;
+  let t = `<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:'Noto Serif TC',serif;white-space:nowrap;width:100%;color:#333">`;
 
   // Row 1: total
   t += `<tr><td style="${nb};${pw}"></td>`;
@@ -3082,9 +3086,8 @@ function renderReport(data, indices, calcDim) {
 // ============================================================
 async function exportReportPNG() {
   const content = document.getElementById('reportContent');
-  const actions = document.querySelector('.report-actions-bar');
+  const actions = document.getElementById('reportActionsBar');
   actions.style.display = 'none';
-  content.scrollTop = 0;
   await new Promise(r => setTimeout(r, 100));
   try {
     const canvas = await html2canvas(content, {
