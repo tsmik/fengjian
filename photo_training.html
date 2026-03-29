@@ -1960,6 +1960,13 @@ function parseDataURL(dataURL) {
 async function startClaude() {
   if (!currentDoc) return;
 
+  // If already has results, confirm before re-running
+  if (currentDoc.claudeResults) {
+    if (!confirm('重新判讀將清除所有審核結果，確定嗎？')) return;
+    currentDoc.mikeReview = {};
+    currentDoc.stats = { totalJudged: 0, claudeJudged: 0, reviewed: 0, correct: 0, wrong: 0, cannot: 0, accuracy: 0 };
+  }
+
   // Re-read from Firestore to ensure we have the full document
   showLoading('讀取照片中...');
   try {
@@ -2023,10 +2030,12 @@ async function startClaude() {
     }
 
     currentDoc.claudeResults = results;
+    currentDoc.mikeReview = {};
     recalcStats();
 
     await db.collection(COL).doc(currentDocId).update({
       claudeResults: results,
+      mikeReview: {},
       stats: currentDoc.stats,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
