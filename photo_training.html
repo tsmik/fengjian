@@ -2278,16 +2278,131 @@ fillAnswer = async function(key, answer) {
 };
 
 // ============================================================
+// Drag & Drop — Shared: extract images from drop event
+// ============================================================
+
+// Prevent browser default drag behavior globally
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => e.preventDefault());
+
+// Extract image URL from dataTransfer (when dragging from web pages)
+function extractDropImageURLs(dt) {
+  const urls = [];
+  // Try text/html first — extract <img src="...">
+  const html = dt.getData('text/html');
+  if (html) {
+    const matches = html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi);
+    for (const m of matches) {
+      if (m[1] && /^https?:\/\//i.test(m[1])) urls.push(m[1]);
+    }
+    if (urls.length) return urls;
+  }
+  // Try text/uri-list or text/plain
+  const uri = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
+  for (const line of uri.split('\n')) {
+    const u = line.trim();
+    if (/^https?:\/\/.+\.(jpe?g|png|gif|webp|bmp|svg)/i.test(u)) urls.push(u);
+    else if (/^https?:\/\/.+/i.test(u) && /image/i.test(u)) urls.push(u);
+  }
+  // If single URL that doesn't look like image extension, still try it
+  if (!urls.length && uri.trim() && /^https?:\/\//i.test(uri.trim())) {
+    urls.push(uri.trim());
+  }
+  return urls;
+}
+
+// Fetch an image URL and return a dataURL via Canvas compression
+async function fetchImageAsDataURL(url, maxDim) {
+  const max = maxDim || 1200;
+  // Strategy 1: fetch as blob
+  try {
+    const resp = await fetch(url, { mode: 'cors' });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      if (blob.type.startsWith('image/')) {
+        return await blobToCompressedDataURL(blob, max);
+      }
+    }
+  } catch (_) { /* CORS or network error, try next strategy */ }
+
+  // Strategy 2: hidden <img> with crossOrigin
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > max || h > max) {
+          if (w > h) { h = Math.round(h * max / w); w = max; }
+          else { w = Math.round(w * max / h); h = max; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('img load failed'));
+    img.src = url;
+  });
+}
+
+function blobToCompressedDataURL(blob, maxDim) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = () => reject(new Error('decode failed'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Process a drop event and return array of dataURLs
+async function getDataURLsFromDrop(dt) {
+  // Strategy A: local files
+  const files = Array.from(dt.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) {
+    const results = [];
+    for (const file of files) {
+      results.push(await fileToDataURL(file, 1200));
+    }
+    return results;
+  }
+  // Strategy B: URLs from web page drag
+  const urls = extractDropImageURLs(dt);
+  if (!urls.length) return [];
+  const results = [];
+  for (const url of urls) {
+    try {
+      results.push(await fetchImageAsDataURL(url, 1200));
+    } catch (_) {
+      // skip individual failures silently
+    }
+  }
+  return results;
+}
+
+// ============================================================
 // Drag & Drop — List page (create new record)
 // ============================================================
 (function initListDrop() {
   const view = document.getElementById('viewList');
   const overlay = document.getElementById('listDropOverlay');
   let dragCounter = 0;
-
-  // Prevent browser default drag behavior globally
-  document.addEventListener('dragover', (e) => e.preventDefault());
-  document.addEventListener('drop', (e) => e.preventDefault());
 
   view.addEventListener('dragenter', (e) => {
     e.preventDefault();
@@ -2303,24 +2418,25 @@ fillAnswer = async function(key, answer) {
     e.preventDefault();
     dragCounter = 0;
     overlay.classList.remove('show');
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    if (!files.length) return;
-    await dropCreateRecord(files);
+    showLoading('處理照片中...');
+    try {
+      const dataURLs = await getDataURLsFromDrop(e.dataTransfer);
+      if (!dataURLs.length) { hideLoading(); alert('無法讀取此圖片，請改用右鍵另存後上傳'); return; }
+      await dropCreateRecord(dataURLs);
+    } catch (err) {
+      hideLoading();
+      alert('無法讀取此圖片，請改用右鍵另存後上傳');
+    }
   });
 })();
 
-async function dropCreateRecord(files) {
-  showLoading('處理照片中...');
+async function dropCreateRecord(dataURLs) {
+  const photos = dataURLs.map((dataURL, i) => ({ dataURL, type: i === 0 ? '正面' : '其他', index: i }));
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const name = `照片 ${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  showLoading('儲存中...');
   try {
-    const photos = [];
-    for (let i = 0; i < files.length; i++) {
-      const dataURL = await fileToDataURL(files[i], 1200);
-      photos.push({ dataURL, type: i === 0 ? '正面' : '其他', index: i });
-    }
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const name = `照片 ${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    showLoading('儲存中...');
     const docRef = await db.collection(COL).add({
       name,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2360,21 +2476,26 @@ async function dropCreateRecord(files) {
     e.preventDefault();
     dragCounter = 0;
     overlay.classList.remove('show');
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    if (!files.length || !currentDocId || !currentDoc) return;
-    await dropAddPhotos(files);
+    if (!currentDocId || !currentDoc) return;
+    showLoading('處理照片中...');
+    try {
+      const dataURLs = await getDataURLsFromDrop(e.dataTransfer);
+      if (!dataURLs.length) { hideLoading(); alert('無法讀取此圖片，請改用右鍵另存後上傳'); return; }
+      await dropAddPhotos(dataURLs);
+    } catch (err) {
+      hideLoading();
+      alert('無法讀取此圖片，請改用右鍵另存後上傳');
+    }
   });
 })();
 
-async function dropAddPhotos(files) {
-  showLoading('處理照片中...');
+async function dropAddPhotos(dataURLs) {
+  const photos = getPhotos(currentDoc);
+  for (const dataURL of dataURLs) {
+    photos.push({ dataURL, type: '其他', index: photos.length });
+  }
+  currentDoc.photos = photos;
   try {
-    const photos = getPhotos(currentDoc);
-    for (const file of files) {
-      const dataURL = await fileToDataURL(file, 1200);
-      photos.push({ dataURL, type: '其他', index: photos.length });
-    }
-    currentDoc.photos = photos;
     await db.collection(COL).doc(currentDocId).update({
       photos,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
