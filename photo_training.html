@@ -1032,9 +1032,9 @@ input { font-family: 'Noto Serif TC', serif; }
 
 <!-- View: Report -->
 <div class="view" id="viewReport">
-  <div id="reportContent" style="background:#fff;padding:15px;min-height:100vh">
+  <div id="reportContent" style="background:#fff;padding:15px;min-height:calc(100vh - 110px);color:#333">
     <div class="report-top-row">
-      <span id="reportName" style="font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif"></span>
+      <span id="reportName" style="font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif;color:#3a3228"></span>
       <span style="font-size:15px;color:#888;font-family:'Noto Serif TC',serif;margin-left:12px">人相兵法係數報告</span>
     </div>
     <div id="reportTable" style="margin:8px 0;overflow-x:auto;width:100%"></div>
@@ -3049,8 +3049,8 @@ function renderReport(data, indices, calcDim) {
   t += `</tr>`;
 
   // Data rows
-  const partCellL = `padding:4px 6px;font-weight:700;background:#e8e3da;position:sticky;left:0;z-index:1;${rc};${pw};text-align:center`;
-  const partCellR = `padding:4px 6px;font-weight:700;background:#e8e3da;${rc};${pw};text-align:center`;
+  const partCellL = `padding:4px 6px;font-weight:700;background:#e8e3da;color:#3a3228;position:sticky;left:0;z-index:1;${rc};${pw};text-align:center`;
+  const partCellR = `padding:4px 6px;font-weight:700;background:#e8e3da;color:#3a3228;${rc};${pw};text-align:center`;
   RPT_PART_ORDER.forEach((pi, idx) => {
     // Separator between 下停 and 耳
     if (idx === 4) {
@@ -3100,7 +3100,7 @@ async function exportReportPNG() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const file = new File(
       [await new Promise(r => canvas.toBlob(r, 'image/png'))],
-      `人相兵法_${name}.png`, { type: 'image/png' }
+      `${name}_人相兵法報告.png`, { type: 'image/png' }
     );
     if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: '人相兵法報告', text: `${name} 的人相兵法報告` }); }
@@ -3115,7 +3115,7 @@ async function exportReportPNG() {
 }
 function fallbackDL(canvas, name) {
   const link = document.createElement('a');
-  link.download = `人相兵法_${name}.png`;
+  link.download = `${name}_人相兵法報告.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
