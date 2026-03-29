@@ -542,7 +542,7 @@ input { font-family: 'Noto Serif TC', serif; }
   border-bottom: 1px solid var(--border);
 }
 .review-card.reviewed { background: var(--bg2); }
-.review-card.review-card-missing { background: rgba(193, 122, 90, 0.15); }
+.review-card.review-card-missing { background: rgba(193, 122, 90, 0.15) !important; }
 
 .review-q-top {
   display: flex;
@@ -1858,8 +1858,9 @@ function renderReview() {
     html += `<div class="section-header" id="sec-${part}">${PART_LABELS[part] || part} <span class="section-count">${partReviewCount}/${partTotal}</span></div>`;
 
     for (const q of qs) {
-      const cardCls = isFullyReviewed(q, mr) ? 'reviewed' : (isMissingRequired(q, mr) ? 'review-card-missing' : '');
-      html += `<div class="review-card ${cardCls}" id="card-${q.qId}">`;
+      const reviewedCls = isFullyReviewed(q, mr) ? 'reviewed' : '';
+      const missingCls = isMissingRequired(q, mr) ? 'review-card-missing' : '';
+      html += `<div class="review-card ${reviewedCls} ${missingCls}" id="card-${q.qId}">`;
       html += `<div class="review-q-top">
         <span class="review-qid">${q.qId}</span>
         <span class="review-cat cat-${q.cat}">${q.cat === 'A' ? '照片高' : q.cat === 'B' ? '照片中' : '照片難'}</span>
