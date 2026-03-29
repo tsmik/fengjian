@@ -542,6 +542,7 @@ input { font-family: 'Noto Serif TC', serif; }
   border-bottom: 1px solid var(--border);
 }
 .review-card.reviewed { background: var(--bg2); }
+.review-card.review-card-missing { background: rgba(193, 122, 90, 0.15); }
 
 .review-q-top {
   display: flex;
@@ -1857,7 +1858,8 @@ function renderReview() {
     html += `<div class="section-header" id="sec-${part}">${PART_LABELS[part] || part} <span class="section-count">${partReviewCount}/${partTotal}</span></div>`;
 
     for (const q of qs) {
-      html += `<div class="review-card ${isFullyReviewed(q, mr) ? 'reviewed' : ''}" id="card-${q.qId}">`;
+      const cardCls = isFullyReviewed(q, mr) ? 'reviewed' : (isMissingRequired(q, mr) ? 'review-card-missing' : '');
+      html += `<div class="review-card ${cardCls}" id="card-${q.qId}">`;
       html += `<div class="review-q-top">
         <span class="review-qid">${q.qId}</span>
         <span class="review-cat cat-${q.cat}">${q.cat === 'A' ? '照片高' : q.cat === 'B' ? '照片中' : '照片難'}</span>
@@ -1891,6 +1893,22 @@ function renderReview() {
 function isFullyReviewed(q, mr) {
   if (q.lr) return !!(mr[q.qId+'_L'] && mr[q.qId+'_R']);
   return !!mr[q.qId];
+}
+
+function hasValidAnswer(key, mr) {
+  const r = mr[key];
+  return r && (r.status === 'correct' || r.status === 'wrong' || r.status === 'filled');
+}
+
+function isMissingRequired(q, mr) {
+  if (requiredKeys.size === 0) return false;
+  if (q.lr) {
+    const lKey = q.qId + '_L', rKey = q.qId + '_R';
+    const lNeeded = requiredKeys.has(lKey) && !hasValidAnswer(lKey, mr);
+    const rNeeded = requiredKeys.has(rKey) && !hasValidAnswer(rKey, mr);
+    return lNeeded || rNeeded;
+  }
+  return requiredKeys.has(q.qId) && !hasValidAnswer(q.qId, mr);
 }
 
 function renderClaudeAnswer(key, cr) {
@@ -2770,6 +2788,8 @@ function collectAllRefs(rulesData) {
 // ============================================================
 let cachedRules = null;
 let cachedRulesUpdatedAt = null;
+let requiredRefs = new Set(); // qId refs needed by rules
+let requiredKeys = new Set(); // full keys (with _L/_R) needed by rules
 
 async function loadRules() {
   if (cachedRules) return cachedRules;
@@ -2782,6 +2802,19 @@ async function loadRules() {
   if (!Array.isArray(parsed) || parsed.length < 13) throw new Error('規則格式異常');
   cachedRules = parsed;
   console.log('[Rules] Loaded', parsed.length, 'dimensions');
+  // Build requiredRefs and requiredKeys
+  requiredRefs = collectAllRefs(parsed);
+  requiredKeys = new Set();
+  for (const ref of requiredRefs) {
+    const q = QUESTIONS.find(qq => qq.qId === ref);
+    if (q && q.lr) {
+      requiredKeys.add(ref + '_L');
+      requiredKeys.add(ref + '_R');
+    } else {
+      requiredKeys.add(ref);
+    }
+  }
+  console.log('[Rules] Required refs:', requiredRefs.size, 'keys:', requiredKeys.size);
   return cachedRules;
 }
 
