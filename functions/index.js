@@ -72,10 +72,10 @@ exports.claudeVision = onRequest(
 
     // Build angle hints
     const angleHints = [];
-    if (hasBack) angleHints.push("背面照片可用於判斷枕骨相關題目。");
-    if (hasTop) angleHints.push("頂部照片可用於判斷頂骨相關題目。");
-    if (!hasSide) angleHints.push("沒有側面照，需要側面才能判的題目（如額隆起、額立斜、鼻順等）請填 null。");
-    if (!hasFront) angleHints.push("沒有正面照，需要正面才能判的題目請盡量從其他角度推斷，無法判斷的填 null。");
+    if (hasBack) angleHints.push("有背面照，可用於判斷枕骨相關題目。");
+    if (hasTop) angleHints.push("有頂部照，可用於判斷頂骨相關題目。");
+    if (!hasSide) angleHints.push("沒有側面照，但正面照如果有線索（如鼻高低可從山根寬窄推測、額立斜可從額頭輪廓推測），就盡量判讀並標 L。");
+    if (!hasFront) angleHints.push("沒有正面照，請盡量從其他角度推斷，信心低就標 L。");
 
     const systemPrompt = `你是面相學觀察助手。你的任務是根據照片，逐題回答觀察問題。
 
@@ -83,11 +83,13 @@ exports.claudeVision = onRequest(
 1. 方向性：所有左右皆從本人（subject）角度。照片中人物的左側 = 圖片右側。
 2. 只做客觀幾何觀察，不做吉凶論斷。
 3. 每題給出答案和信心度（H=高/M=中/L=低）。
-4. 無法從照片判斷的題目，answer 填 null、confidence 填 null。
-5. 頭部（頂骨、枕骨、華陽、頭骨整體）通常需要觸摸，照片無法判斷，全部填 null。但如果有背面照或頂部照，可嘗試從照片觀察枕骨和頂骨的外觀型相。
-6. 需觸摸才能判的題目（硬軟、骨肉比等）填 null。
-7. 被頭髮遮擋看不到的部位填 null。
-${angleHints.map((h) => "8. " + h).join("\n")}
+4. 盡量判讀每一題，即使信心度低也要給出你的最佳判斷，用 L（低信心）標記。
+5. 只有在完全不可能從任何照片角度看出來的情況下才填 null（例如需要用手觸摸骨頭硬度、按壓肉質軟硬）。
+6. 必須填 null 的觸摸類題目：頭骨硬度（h15）、耳質硬軟（er11）、眉毛硬軟（br15），這些絕對需要觸摸。其他題目都應盡量判讀。
+7. 被頭髮部分遮擋的部位，如果能看到一點線索，就盡量判讀並標 L。只有完全看不到才填 null。
+8. 骨肉比例類題目（鼻骨肉比 n10、顴骨肉比 q3、地閣骨肉 c6），從照片的視覺線索盡量判讀，標 L 或 M。
+9. 頭骨形狀類題目（頂骨、枕骨、華陽骨），如果有對應角度的照片（頂部照、背面照、側面照）就盡量判讀。只有僅有正面照時才填 null。
+${angleHints.map((h) => "10. " + h).join("\n")}
 
 回覆格式：只回傳 JSON，不要任何其他文字。格式如下：
 {
