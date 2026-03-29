@@ -2747,8 +2747,9 @@ function collectRefs(node, refs) {
 
 function collectAllRefs(rulesData) {
   const refs = new Set();
-  for (const dimKey of Object.keys(rulesData)) {
-    const dim = rulesData[dimKey];
+  // rulesData is an array[13] of dimension definitions
+  for (let di = 0; di < rulesData.length; di++) {
+    const dim = rulesData[di];
     if (!dim || !dim.parts) continue;
     for (const partKey of Object.keys(dim.parts)) {
       const partDef = dim.parts[partKey];
@@ -2772,7 +2773,11 @@ async function loadRules() {
   if (!snap.exists) throw new Error('找不到評分規則');
   const d = snap.data();
   cachedRulesUpdatedAt = d.updatedAt || null;
-  cachedRules = JSON.parse(d.rulesJson);
+  const parsed = JSON.parse(d.rulesJson);
+  // Rules are stored as an array[13] indexed by dimension index (0-12)
+  if (!Array.isArray(parsed) || parsed.length < 13) throw new Error('規則格式異常');
+  cachedRules = parsed;
+  console.log('[Rules] Loaded', parsed.length, 'dimensions');
   return cachedRules;
 }
 
@@ -2870,6 +2875,8 @@ async function generateReport(force) {
   try {
     const rules = await loadRules();
     const obsData = buildObsData();
+    console.log('[Report] obsData keys:', Object.keys(obsData).length, 'rules:', rules.length);
+    console.log('[Report] obsData sample:', Object.entries(obsData).slice(0, 5));
 
     // Evaluate all 13 dimensions
     // data[dimIndex][partIndex] = 'A'(positive) or 'B'(negative) or null
@@ -2878,10 +2885,11 @@ async function generateReport(force) {
 
     for (let di = 0; di < 13; di++) {
       const dimKey = DIM_KEYS[di];
-      const dimDef = rules[dimKey];
+      const dimDef = rules[di]; // rules is array[13], indexed by number
       if (!dimDef) continue;
       const result = reEvalDimension(dimDef, obsData);
       dimResults[dimKey] = result;
+      console.log(`[Report] ${dimKey}: pos=${result.positiveCount} neg=${result.negativeCount} attr=${result.attribute} coeff=${result.coefficient.toFixed(2)}`);
 
       // Map results to data array: evaluation part order → display part order
       // eval order: 頭,上停,耳,眉,眼,鼻,口,中停,下停
