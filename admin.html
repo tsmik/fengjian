@@ -268,7 +268,7 @@ function depthStyle(d){
 function renderNode(node,path,depth,qmap,parentOp){
   if(!node)return '';
   var h='',ind=depth*8,bg=depthStyle(depth);
-  var canWrap=parentOp==='COUNT';
+  var canWrap=parentOp==='COUNT'||parentOp==='AND'||parentOp==='OR';
   if(node.partResult!==undefined){
     return `<div class="node" style="margin-left:${ind}px;${bg}"><span class="node-op" style="background:var(--text-3)">引用結果</span><span class="node-ref" style="margin-left:4px">→ ${formatPartResult(node.partResult)}</span>${nodeActs(path,canWrap)}</div>`;
   }
@@ -556,6 +556,7 @@ function addRuleItem(p,btnId){
   h+='<button onclick="addNodeOfType(\'AND\')" style="'+bs+'">AND</button>';
   h+='<button onclick="addNodeOfType(\'OR\')" style="'+bs+'">OR</button>';
   h+='<button onclick="addNodeOfType(\'COUNT\')" style="'+bs+'">COUNT</button>';
+  h+='<button onclick="addNodeOfType(\'LR\')" style="'+bs+'">左右 LR</button>';
   h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
   if(n.op==='COUNT')h+='<button onclick="addNodeOfType(\'group\')" style="'+bs+'">敘述分組</button>';
   h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
@@ -592,8 +593,13 @@ function addNodeOfType(type){
   else if(type==='NOT'){
     var rp=getRulePartFromPath(p);var aqp=RULE_TO_QPARTS[rp]||Q_PART_NAMES;
     var dr=getFirstRef(aqp[0]);var qm=buildQmap();var dm=(qm[dr]||{opts:['']}).opts[0];
-    var ni={ref:dr,match:dm};if(isInsideLR(p))ni.side=null;
+    var ni={ref:dr,match:dm};
     n.items.push({op:'NOT',item:ni});
+  }
+  else if(type==='LR'){
+    var rp=getRulePartFromPath(p);var aqp=RULE_TO_QPARTS[rp]||Q_PART_NAMES;
+    var dr=getFirstRef(aqp[0]);var qm=buildQmap();var dm=(qm[dr]||{opts:['']}).opts[0];
+    n.items.push({op:'LR',merge:'all',each:{ref:dr,match:dm}});
   }
   else if(type==='group'){n.items.push({group:'',items:[]});}
   markDirty();renderAll();
@@ -614,6 +620,7 @@ function addRootItem(partName){
     h+='<button onclick="createRootNode(\'OR\')" style="'+bs+'">或 OR</button>';
     h+='<button onclick="createRootNode(\'ref\')" style="'+bs+'">比對條件</button>';
     h+='<button onclick="createRootNode(\'NOT\')" style="'+bs+'">不可有 NOT</button>';
+    h+='<button onclick="createRootNode(\'LR\')" style="'+bs+'">左右 LR</button>';
     h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
     var btn=document.getElementById('add-btn-root-'+partName);
     if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
@@ -637,6 +644,11 @@ function createRootNode(type){
     var qm2=buildQmap();var dm2=(qm2[dr2]||{opts:['']}).opts[0];
     rules[curDim].parts[partName]={op:'NOT',item:{ref:dr2,match:dm2}};
   }
+  else if(type==='LR'){
+    var aqpL=RULE_TO_QPARTS[partName]||Q_PART_NAMES;var drL=getFirstRef(aqpL[0]);
+    var qmL=buildQmap();var dmL=(qmL[drL]||{opts:['']}).opts[0];
+    rules[curDim].parts[partName]={op:'LR',merge:'all',each:{ref:drL,match:dmL}};
+  }
   else if(type==='ref'){
     var defRef=getFirstRef(RULE_TO_QPARTS[partName]?RULE_TO_QPARTS[partName][0]:'頭');
     var qmap=buildQmap();var defMatch=(qmap[defRef]||{opts:['']}).opts[0];
@@ -652,6 +664,7 @@ function showRootWrapSelect(partName){
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'AND\')" style="'+bs+'">都符合 AND</button>';
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'OR\')" style="'+bs+'">或 OR</button>';
+  h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'LR\')" style="'+bs+'">左右 LR</button>';
   h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
   var btn=document.getElementById('add-btn-root-'+partName);
   if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
@@ -664,6 +677,7 @@ function wrapRootWithContainer(partName,containerType){
   var newContainer;
   if(containerType==='COUNT')newContainer={op:'COUNT',min:1,items:[currentRoot]};
   else if(containerType==='AND')newContainer={op:'AND',items:[currentRoot]};
+  else if(containerType==='LR')newContainer={op:'LR',merge:'all',each:currentRoot};
   else newContainer={op:'OR',items:[currentRoot]};
   rules[curDim].parts[partName]=newContainer;
   openSections.add('r-'+curDim+'-'+partName);
