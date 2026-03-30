@@ -183,7 +183,7 @@ function advancedFieldsHtml(curSide,curWeight){
   var sOpts='<option value=""'+((!curSide||curSide==='')?' selected':'')+'>不分左右</option>';
   sOpts+='<option value="L"'+(curSide==='L'?' selected':'')+'>左</option>';
   sOpts+='<option value="R"'+(curSide==='R'?' selected':'')+'>右</option>';
-  sOpts+='<option value="null"'+(curSide===null?' selected':'')+'>自動（由 LR 決定）</option>';
+
   var wt=curWeight||1;
   return '<div class="row" id="side-toggle-row"><span style="font-size:12px;color:var(--text-3);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'advanced-fields\').style.display=\'block\';this.parentElement.style.display=\'none\'">進階設定 ▸</span></div>'
     +'<div id="advanced-fields" style="display:none">'
