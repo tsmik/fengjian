@@ -558,6 +558,7 @@ function addRuleItem(p,btnId){
   h+='<button onclick="addNodeOfType(\'COUNT\')" style="'+bs+'">COUNT</button>';
   h+='<button onclick="addNodeOfType(\'LR\')" style="'+bs+'">左右 LR</button>';
   h+='<button onclick="addNodeOfType(\'NOT\')" style="'+bs+'">NOT</button>';
+  h+='<button onclick="addNodeOfType(\'partResult\')" style="'+bs+'">引用結果</button>';
   if(n.op==='COUNT')h+='<button onclick="addNodeOfType(\'group\')" style="'+bs+'">敘述分組</button>';
   h+='</div><div style="margin-top:6px"><button onclick="document.getElementById(\'type-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
   var btn=document.getElementById(btnId);
@@ -602,6 +603,7 @@ function addNodeOfType(type){
     n.items.push({op:'LR',merge:'all',each:{ref:dr,match:dm}});
   }
   else if(type==='group'){n.items.push({group:'',items:[]});}
+  else if(type==='partResult'){n.items.push({partResult:'鼻'});}
   markDirty();renderAll();
 }
 
@@ -621,6 +623,7 @@ function addRootItem(partName){
     h+='<button onclick="createRootNode(\'ref\')" style="'+bs+'">比對條件</button>';
     h+='<button onclick="createRootNode(\'NOT\')" style="'+bs+'">不可有 NOT</button>';
     h+='<button onclick="createRootNode(\'LR\')" style="'+bs+'">左右 LR</button>';
+    h+='<button onclick="createRootNode(\'partResult\')" style="'+bs+'">引用結果</button>';
     h+='</div><div style="margin-top:6px"><button onclick="clearDynamicForms()" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
     var btn=document.getElementById('add-btn-root-'+partName);
     if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=h;btn.after(d);}
@@ -648,6 +651,9 @@ function createRootNode(type){
     var aqpL=RULE_TO_QPARTS[partName]||Q_PART_NAMES;var drL=getFirstRef(aqpL[0]);
     var qmL=buildQmap();var dmL=(qmL[drL]||{opts:['']}).opts[0];
     rules[curDim].parts[partName]={op:'LR',merge:'all',each:{ref:drL,match:dmL}};
+  }
+  else if(type==='partResult'){
+    rules[curDim].parts[partName]={partResult:'鼻'};
   }
   else if(type==='ref'){
     var defRef=getFirstRef(RULE_TO_QPARTS[partName]?RULE_TO_QPARTS[partName][0]:'頭');
