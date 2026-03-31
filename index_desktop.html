@@ -2133,7 +2133,8 @@ function cpTogglePartGroups(partToggleId,dimIdx,partIdx){
 function cpToggleAllGroups(dimIdx){
   var cr=condResults[dimIdx];if(!cr)return;
   var allIds=[];
-  cr.forEach(function(p,pi){
+  Object.keys(cr).forEach(function(pi){
+    var p=cr[pi];
     if(!p||!p.items)return;
     var currentLabel=null;
     p.items.forEach(function(item){
