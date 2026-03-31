@@ -406,7 +406,19 @@ function editRuleNode(path){
       html+=advancedFieldsHtml(node.item.side,1);
     }
   }else if(node.partResult!==undefined){
-    html+='<div class="row"><label>部位</label><input type="text" id="er-pr" value="'+node.partResult+'" style="width:120px"></div>';
+    var prOpts='';
+    var prSides=[
+      {v:'頭',label:'頭'},{v:'上停',label:'上停'},
+      {v:'耳',label:'耳'},
+      {v:'眉',label:'眉（整體）'},{v:'眉.L',label:'左眉'},{v:'眉.R',label:'右眉'},
+      {v:'眼',label:'眼（整體）'},{v:'眼.L',label:'左眼'},{v:'眼.R',label:'右眼'},
+      {v:'鼻',label:'鼻'},{v:'口',label:'口'},
+      {v:'中停',label:'中停'},{v:'下停',label:'下停'}
+    ];
+    prSides.forEach(function(pr){
+      prOpts+='<option value="'+pr.v+'"'+(node.partResult===pr.v?' selected':'')+'>'+pr.label+'</option>';
+    });
+    html+='<div class="row"><label>引用部位</label><select id="er-pr">'+prOpts+'</select></div>';
   }else if(node.group!==undefined){
     html+='<div class="row"><label>敘述</label><input type="text" id="er-group" value="'+(node.group||'').replace(/"/g,'&quot;')+'" style="width:240px" placeholder="輸入分組敘述文字"></div>';
   }
