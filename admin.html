@@ -1116,6 +1116,17 @@ function saveAll(){
   if(_dirtyCount===0){showToast('沒有需要儲存的修改',true);return;}
   var diff=buildDiffSummary();
   if(diff&&!confirm('即將儲存以下修改：\n\n'+diff+'\n\n確定儲存？'))return;
+  // 清理規則裡的 null items
+  function cleanNulls(node){
+    if(!node)return;
+    if(node.items){node.items=node.items.filter(function(it){return it!==null;});node.items.forEach(cleanNulls);}
+    if(node.each)cleanNulls(node.each);
+    if(node.rule)cleanNulls(node.rule);
+    if(node.item)cleanNulls(node.item);
+    if(node.veto)node.veto.forEach(function(v){if(v.condition)cleanNulls(v.condition);});
+    if(node.parts){Object.keys(node.parts).forEach(function(k){cleanNulls(node.parts[k]);});}
+  }
+  rules.forEach(function(dim){if(dim.parts){Object.keys(dim.parts).forEach(function(k){cleanNulls(dim.parts[k]);});}});
   var btn=document.getElementById('btn-save');
   btn.disabled=true;btn.style.opacity='0.6';
   setStatus('儲存中...');

@@ -834,6 +834,7 @@ function evaluate(node, obsData, side, partResults) {
   // 5. AND
   if (node.op === 'AND') {
     for (var ai = 0; ai < node.items.length; ai++) {
+      if (!node.items[ai]) continue;
       if (!evaluate(node.items[ai], obsData, side, partResults)) return false;
     }
     return true;
@@ -842,6 +843,7 @@ function evaluate(node, obsData, side, partResults) {
   // 6. OR
   if (node.op === 'OR') {
     for (var oi = 0; oi < node.items.length; oi++) {
+      if (!node.items[oi]) continue;
       if (evaluate(node.items[oi], obsData, side, partResults)) return true;
     }
     return false;
@@ -852,6 +854,7 @@ function evaluate(node, obsData, side, partResults) {
     var count = 0;
     for (var ci = 0; ci < node.items.length; ci++) {
       var cItem = node.items[ci];
+      if (!cItem) continue;
       if (cItem.group !== undefined && cItem.items) {
         for (var gi = 0; gi < cItem.items.length; gi++) {
           if (evaluate(cItem.items[gi], obsData, side, partResults)) {
@@ -1077,9 +1080,9 @@ function _collectRefs(node){
   if(!node)return [];
   if(node.ref!==undefined)return [node.ref];
   if(node.partResult!==undefined)return [];
-  if(node.group!==undefined&&node.items){var gr=[];node.items.forEach(function(it){gr=gr.concat(_collectRefs(it));});return gr;}
+  if(node.group!==undefined&&node.items){var gr=[];node.items.forEach(function(it){if(!it)return;gr=gr.concat(_collectRefs(it));});return gr;}
   var refs=[];
-  if(node.items)node.items.forEach(function(it){refs=refs.concat(_collectRefs(it));});
+  if(node.items)node.items.forEach(function(it){if(!it)return;refs=refs.concat(_collectRefs(it));});
   if(node.item)refs=refs.concat(_collectRefs(node.item));
   if(node.each)refs=refs.concat(_collectRefs(node.each));
   if(node.rule)refs=refs.concat(_collectRefs(node.rule));
@@ -1151,6 +1154,7 @@ function _expandItems(node,side,qMap,partResults){
     // Each child becomes one item (may be compound); group nodes are expanded
     var items=[];
     node.items.forEach(function(it){
+      if(!it)return;
       if(it.group!==undefined&&it.items){
         it.items.forEach(function(gi){
           if(gi.op==='LR'){
@@ -1174,6 +1178,7 @@ function _expandItems(node,side,qMap,partResults){
   if(node.op==='COUNT'){
     var items=[];
     node.items.forEach(function(it){
+      if(!it)return;
       if(it.group!==undefined&&it.items){
         it.items.forEach(function(gi){
           if(gi.op==='LR'){
@@ -1210,6 +1215,7 @@ function _expandLR(node,qMap,partResults){
   }else if(eachNode.op==='COUNT'||eachNode.op==='AND'||eachNode.op==='OR'){
     // Expand each child for L and R
     (eachNode.items||[]).forEach(function(it){
+      if(!it)return;
       if(it.group!==undefined&&it.items){
         it.items.forEach(function(gi){
           if(gi.ref!==undefined){
