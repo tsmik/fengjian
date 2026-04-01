@@ -42,6 +42,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .q-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
 .q-actions button:hover{background:var(--hover)}
 .q-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
+.q-dims{display:flex;gap:3px;flex-wrap:wrap;margin-left:4px}
+.q-dim-tag{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;color:white;white-space:nowrap}
 .edit-form{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:6px 0}
 .edit-form .row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
 .edit-form label{font-size:13px;color:var(--text-3);min-width:50px}
@@ -826,6 +828,31 @@ function toggleSec(key,el){
 }
 
 // ==================== QUESTIONS EDITOR ====================
+function buildRefDimMap(){
+  var map={};
+  function scan(node,dimIdx){
+    if(!node)return;
+    if(node.ref!==undefined){
+      var rid=node.ref;
+      if(!map[rid])map[rid]=new Set();
+      map[rid].add(dimIdx);
+    }
+    if(node.items){node.items.forEach(function(it){scan(it,dimIdx);});}
+    if(node.each)scan(node.each,dimIdx);
+    if(node.rule)scan(node.rule,dimIdx);
+    if(node.item)scan(node.item,dimIdx);
+    if(node.veto){node.veto.forEach(function(v){if(v.condition)scan(v.condition,dimIdx);});}
+  }
+  if(!rules||!rules.length)return map;
+  rules.forEach(function(dim,di){
+    if(!dim.parts)return;
+    Object.keys(dim.parts).forEach(function(pk){
+      scan(dim.parts[pk],di);
+    });
+  });
+  return map;
+}
+
 function renderQuestions(){
   var partNames=Object.keys(questions);
   // Sidebar
@@ -842,6 +869,8 @@ function renderQuestions(){
   if(!pd){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無資料</div>';return;}
 
   var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:16px">${pn}</div>`;
+  var refDimMap=buildRefDimMap();
+  var DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 
   pd.sections.forEach((sec,si)=>{
     var qSecKey='q-'+curPart+'-'+si;
@@ -858,6 +887,20 @@ function renderQuestions(){
       eh+=`<span class="q-id">${q.id}</span>`;
       eh+=`<span class="q-text">${q.text}</span>`;
       if(q.paired)eh+=`<span class="q-paired">左右</span>`;
+      // 維度引用標籤
+      var _allDimRefs=new Set();
+      var _qr=refDimMap[q.id];if(_qr)_qr.forEach(function(d){_allDimRefs.add(d);});
+      if(q.paired){
+        var _qrL=refDimMap[q.id+'_L'];if(_qrL)_qrL.forEach(function(d){_allDimRefs.add(d);});
+        var _qrR=refDimMap[q.id+'_R'];if(_qrR)_qrR.forEach(function(d){_allDimRefs.add(d);});
+      }
+      if(_allDimRefs.size>0){
+        eh+='<span class="q-dims">';
+        Array.from(_allDimRefs).sort(function(a,b){return a-b;}).forEach(function(di){
+          eh+='<span class="q-dim-tag" style="background:'+DIM_COLORS[di]+'">'+DIM_NAMES[di]+'</span>';
+        });
+        eh+='</span>';
+      }
       eh+=`<span class="q-opts">${q.opts.length}項</span>`;
       eh+=`<span class="q-actions">`;
       eh+=`<button onclick="moveQ(${si},${qi},-1)">↑</button>`;
