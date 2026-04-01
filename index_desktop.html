@@ -3177,10 +3177,23 @@ function closeEditName(){document.getElementById('name-edit-overlay').style.disp
 async function exportPNG(){
   const btn=document.getElementById('btn-export'),overlay=document.getElementById('report-overlay'),actions=overlay.querySelector('.report-actions');
   btn.innerText='產生中...';btn.disabled=true;actions.style.display='none';overlay.scrollTop=0;await new Promise(r=>setTimeout(r,100));
-  try{const canvas=await html2canvas(overlay,{backgroundColor:'#ffffff',scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:overlay.scrollWidth,width:overlay.scrollWidth,height:overlay.scrollHeight});
+  var oldOverflow=overlay.style.overflow;
+  var oldOverflowX=overlay.style.overflowX;
+  var oldHeight=overlay.style.height;
+  try{
+    overlay.style.overflow='visible';
+    overlay.style.overflowX='visible';
+    overlay.style.height='auto';
+    await new Promise(r=>setTimeout(r,50));
+    var fullW=overlay.scrollWidth;
+    var fullH=overlay.scrollHeight;
+    const canvas=await html2canvas(overlay,{backgroundColor:'#ffffff',scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:fullW,width:fullW,height:fullH});
+    overlay.style.overflow=oldOverflow;
+    overlay.style.overflowX=oldOverflowX;
+    overlay.style.height=oldHeight;
     const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);const file=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'人相兵法_'+(userName||'報告')+'.png',{type:'image/png'});
     if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'人相兵法報告',text:(userName||'')+' 的人相兵法報告'});}catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}}else{fallbackDownload(canvas);}
-  }catch(e){alert('產生失敗，請截圖儲存');}
+  }catch(e){overlay.style.overflow=oldOverflow||'';overlay.style.overflowX=oldOverflowX||'';overlay.style.height=oldHeight||'';alert('產生失敗，請截圖儲存');}
   actions.style.display='flex';btn.innerText='分享報告';btn.disabled=false;
 }
 function fallbackDownload(canvas){const dataUrl=canvas.toDataURL('image/png');const link=document.createElement('a');link.download='人相兵法_'+(userName||'報告')+'.png';link.href=dataUrl;link.click();}
