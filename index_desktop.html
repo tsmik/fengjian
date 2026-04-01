@@ -52,7 +52,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 /* ===== Mode Page ===== */
 #mode-page{position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:8500;display:none;align-items:center;justify-content:center}
-.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:520px;width:100%;padding:30px}
+.mode-grid{max-width:680px;width:100%;padding:30px}
+.mode-section{margin-bottom:24px}
+.mode-section-title{font-size:14px;font-weight:700;color:var(--text-3);letter-spacing:2px;margin-bottom:10px;padding-left:4px}
+.mode-section-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mode-card{background:white;border-radius:10px;padding:28px 24px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-top:4px solid #ccc}
 .mode-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px)}
 .mode-card h3{font-size:18px;font-weight:900;margin-bottom:6px;letter-spacing:2px}
@@ -332,6 +335,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-sens" onclick="showSensPage()">敏感度分析</div>
   <div class="nav-tab" id="nav-cases" onclick="showCasePage()" style="display:none">案例清單</div>
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
+  <div class="nav-tab" id="nav-clear" onclick="clearObsData()" style="color:rgba(255,100,100,0.6);font-size:12px">清除資料</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
   <a href="admin.html" target="_blank" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
@@ -370,21 +374,61 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- Mode Page -->
 <div id="mode-page">
   <div class="mode-grid">
-    <div class="mode-card" style="border-top-color:var(--active)" onclick="showObsPage()">
-      <h3>頭面部位觀察評分</h3>
-      <p>逐一觀察頭、額、耳、眉、眼、鼻、口等各部位特徵條件</p>
+    <!-- 區塊 1：各部位面相觀察評分 -->
+    <div class="mode-section">
+      <div class="mode-section-title">各部位面相觀察評分</div>
+      <div class="mode-section-cards">
+        <div class="mode-card" style="border-top-color:var(--active)" onclick="showObsPage()">
+          <h3>頭面部位觀察評分</h3>
+          <p>逐一觀察頭、額、耳、眉、眼、鼻、口等各部位特徵條件</p>
+        </div>
+        <div class="mode-card" style="border-top-color:var(--static)" onclick="showCondPage()">
+          <h3>13維度觀察評分</h3>
+          <p>根據觀察結果，查看形勢、經緯、方圓等13個維度的條件與評分</p>
+        </div>
+        <div class="mode-card" style="border-top-color:#8a9aaa" onclick="showReport()">
+          <h3>兵法報告</h3>
+          <p>查看綜合係數矩陣與動靜比例報告</p>
+        </div>
+        <div class="mode-card" style="border-top-color:#9a7c8a" onclick="showSensPage()">
+          <h3>敏感度分析</h3>
+          <p>模擬觀察題目變動對總係數的影響</p>
+        </div>
+      </div>
     </div>
-    <div class="mode-card" style="border-top-color:var(--static)" onclick="showCondPage()">
-      <h3>13維度觀察評分</h3>
-      <p>根據觀察結果，查看形勢、經緯、方圓等13個維度的條件與評分</p>
+    <!-- 區塊 2：手動輸入兵法報告 -->
+    <div class="mode-section">
+      <div class="mode-section-title">手動輸入兵法報告</div>
+      <div class="mode-section-cards">
+        <div class="mode-card" style="border-top-color:#7a8a6a" onclick="showManualPage()">
+          <h3>手動輸入報告</h3>
+          <p>直接輸入 9 部位 × 13 維度的動靜判定</p>
+        </div>
+        <div class="mode-card" style="border-top-color:#8a7a6a" onclick="showManualSensPage()">
+          <h3>手動敏感度分析</h3>
+          <p>模擬部位變動對手動報告總係數的影響</p>
+        </div>
+      </div>
     </div>
-    <div class="mode-card" style="border-top-color:#8a9aaa" onclick="showReport()">
-      <h3>兵法報告</h3>
-      <p>查看綜合係數矩陣與動靜比例報告</p>
+    <!-- 區塊 3：參考資料 -->
+    <div class="mode-section">
+      <div class="mode-section-title">參考資料</div>
+      <div class="mode-section-cards">
+        <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
+          <h3>各維度評分標準</h3>
+          <p>查看每個維度的判斷標準與依據說明</p>
+        </div>
+      </div>
     </div>
-    <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
-      <h3>參考資料：各維度評分標準</h3>
-      <p>查看每個維度的判斷標準與依據說明</p>
+    <!-- 區塊 4：案例清單管理（僅助教）-->
+    <div class="mode-section" id="mode-case-section" style="display:none">
+      <div class="mode-section-title">案例管理</div>
+      <div class="mode-section-cards">
+        <div class="mode-card" style="border-top-color:var(--static)" onclick="showCasePage()">
+          <h3>案例清單管理</h3>
+          <p>新增、選擇、編輯個案紀錄</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1687,6 +1731,8 @@ function showModePage(){
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  var mcs=document.getElementById('mode-case-section');
+  if(mcs){mcs.style.display=_isTA?'':'none';}
   setNavActive(null);
 }
 
@@ -3547,6 +3593,10 @@ function deleteCase(caseId,caseName){
 }
 
 function editName(){
+  if(_isTA&&_currentCaseId){
+    editCase(_currentCaseId);
+    return;
+  }
   document.getElementById('name-edit-input').value=userName;
   document.getElementById('profile-gender').value=_userGender||'';
   document.getElementById('profile-birthday').value=_userBirthday||'';
@@ -3570,6 +3620,24 @@ function confirmEditName(){
   closeEditName();
 }
 function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
+
+function clearObsData(){
+  if(!confirm('確定要清除所有觀察評分資料嗎？此操作無法復原。'))return;
+  data=emptyData();
+  obsData={};
+  obsOverride={};
+  recalcFromObs();
+  save();
+  var active=document.querySelector('.nav-tab.active');
+  var tab=active?active.id:'';
+  if(tab==='nav-obs'){renderFaceMap();renderObsCenter();renderDimIndex();}
+  else if(tab==='nav-cond'){cpRender();}
+  _showToast('觀察評分資料已清除');
+}
+
+function showManualSensPage(){
+  alert('手動敏感度分析功能開發中');
+}
 
 async function exportPNG(){
   var btn=document.getElementById('btn-export');
