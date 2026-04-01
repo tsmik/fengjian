@@ -3316,10 +3316,10 @@ async function startApp(){
   /* ===== Step 2: 載入使用者資料 ===== */
   try{const doc=await db.collection('users').doc(userName).get();
     if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else if(doc.exists&&doc.data().data)data=doc.data().data;else data=emptyData();
-    if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else{try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e){obsData={};}}
-    if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else{try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e){obsOverride={};}}
+    if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else obsData={};
+    if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else obsOverride={};
     if(doc.exists){_userGender=doc.data().gender||'';_userBirthday=doc.data().birthday||'';}
-  }catch(e){console.log('載入失敗',e);data=emptyData();try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e2){obsData={};}try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e3){obsOverride={};}}
+  }catch(e){console.log('載入失敗',e);data=emptyData();obsData={};obsOverride={};}
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
 
