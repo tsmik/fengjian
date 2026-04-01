@@ -73,6 +73,32 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .toast.show{opacity:1}
 .toast-ok{background:#4a8a5a}
 .toast-err{background:#c03830}
+/* ===== Liunian Table ===== */
+#liunian-wrap{padding:20px;overflow:auto;height:100%}
+.ln-tabs{display:flex;gap:0;margin-bottom:16px}
+.ln-tab{padding:8px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Serif TC',serif}
+.ln-tab:hover{color:var(--text)}
+.ln-tab.active{color:var(--text);font-weight:700;border-bottom-color:var(--dynamic)}
+.ln-table{border-collapse:separate;border-spacing:0;font-size:13px;width:100%}
+.ln-table th{position:sticky;top:0;background:var(--nav);color:white;padding:8px 10px;font-weight:700;text-align:center;letter-spacing:1px;z-index:2;white-space:nowrap}
+.ln-table td{padding:6px 8px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);white-space:nowrap}
+.ln-table tr:hover td{background:var(--hover)}
+.ln-table td.mark-cell{font-weight:900;color:var(--active)}
+.ln-table td input{width:100%;border:none;border-bottom:1px solid transparent;background:transparent;font-size:13px;font-family:'Noto Serif TC',serif;text-align:center;padding:2px 0;outline:none}
+.ln-table td input:focus{border-bottom-color:var(--active);background:#fff8f0}
+.ln-table td select{border:none;background:transparent;font-size:13px;font-family:'Noto Serif TC',serif;text-align:center;cursor:pointer;outline:none}
+.ln-table td select:focus{background:#fff8f0}
+.ln-age{font-weight:900;color:var(--text);min-width:36px}
+.ln-mark{min-width:30px}
+.ln-guan{background:#fff0e0;color:#c07030;font-weight:900}
+.ln-ai{background:#ffe8e8;color:#c03830;font-weight:900}
+.ln-row-guan{background:#fffaf0}
+.ln-row-ai{background:#fff5f5}
+.ln-save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 20px;display:flex;gap:12px;align-items:center;z-index:3}
+.ln-save-bar button{height:36px;padding:0 20px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
+.ln-save-bar .ln-btn-save{background:var(--static);color:white}
+.ln-save-bar .ln-btn-reset{background:#eee;color:var(--text)}
+.ln-dirty{color:var(--active);font-weight:700;font-size:13px}
 </style>
 </head>
 <body>
@@ -86,10 +112,12 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 <div id="tab-bar">
   <div class="tab-btn active" onclick="switchTab('rules')">評分規則</div>
   <div class="tab-btn" onclick="switchTab('questions')">觀察問題</div>
+  <div class="tab-btn" onclick="switchTab('liunian')">流年表</div>
   <div style="flex:1"></div>
   <a href="index_desktop.html" target="_blank" style="font-size:12px;color:var(--text-3);text-decoration:none;padding:10px 14px;display:flex;align-items:center">→ 前台預覽</a>
 </div>
 <div id="breadcrumb"></div>
+<div id="liunian-page" style="display:none;flex:1;overflow:hidden;flex-direction:column"></div>
 <div id="main">
   <div id="sidebar"></div>
   <div id="editor"></div>
@@ -108,6 +136,9 @@ const Q_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','�
 const Q_PREFIXES={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
 
 var activeTab='rules';
+var liunianData=null;
+var _liunianSnapshot=null;
+var _liunianDirty=false;
 var rules=[];
 var questions={}; // OBS_PARTS_DATA format
 var curDim=0;
@@ -118,17 +149,30 @@ var openSections=new Set(); // track which sections are expanded
 function setStatus(m){document.getElementById('status').textContent=m;}
 
 function switchTab(t){
-  if(_dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
+  if(t!=='liunian' && _dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
+  if(t==='liunian' && activeTab!=='liunian' && _dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
+  if(activeTab==='liunian' && t!=='liunian' && _liunianDirty&&!confirm('流年表有未儲存的修改，確定要切換嗎？'))return;
   activeTab=t;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector(`.tab-btn[onclick*="${t}"]`).classList.add('active');
-  renderAll();
+  document.querySelector('.tab-btn[onclick*="'+t+'"]').classList.add('active');
+  if(t==='liunian'){
+    document.getElementById('main').style.display='none';
+    document.getElementById('breadcrumb').style.display='none';
+    document.getElementById('liunian-page').style.display='flex';
+    renderLiunian();
+  }else{
+    document.getElementById('main').style.display='grid';
+    document.getElementById('breadcrumb').style.display='';
+    document.getElementById('liunian-page').style.display='none';
+    renderAll();
+  }
 }
 
 // ==================== SHARED ====================
 function renderAll(){
   if(activeTab==='rules')renderRules();
-  else renderQuestions();
+  else if(activeTab==='questions')renderQuestions();
+  else if(activeTab==='liunian')renderLiunian();
   updateBreadcrumb();
 }
 
@@ -1169,8 +1213,315 @@ document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
 });
 window.addEventListener('beforeunload',function(e){
-  if(_dirtyCount>0){e.preventDefault();e.returnValue='';}
+  if(_dirtyCount>0||_liunianDirty){e.preventDefault();e.returnValue='';}
 });
+
+// ==================== LIUNIAN ====================
+var _lnGender='男';
+
+function renderLiunian(){
+  var wrap=document.getElementById('liunian-page');
+  if(!wrap)return;
+  if(!liunianData){wrap.innerHTML='<div style="padding:40px;color:#aaa;text-align:center">載入中...</div>';return;}
+
+  var cols=['age','mark','name75','area75','jiuzhi','yewu','qinzu','zinv','erbei','wuguan','santing'];
+  var colNames=['歲','關/隘','七十五','部位','九執','業務','親族','子女','耳鼻','五官','三停'];
+  var rows=liunianData[_lnGender]||[];
+
+  var h='';
+  h+='<div style="padding:12px 20px 0;flex-shrink:0"><div class="ln-tabs">';
+  h+='<div class="ln-tab'+(_lnGender==='男'?' active':'')+'" onclick="_lnGender=\'男\';renderLiunian()">男</div>';
+  h+='<div class="ln-tab'+(_lnGender==='女'?' active':'')+'" onclick="_lnGender=\'女\';renderLiunian()">女</div>';
+  h+='</div></div>';
+
+  h+='<div style="flex:1;overflow:auto;padding:0 20px">';
+  h+='<table class="ln-table"><thead><tr>';
+  colNames.forEach(function(cn){h+='<th>'+cn+'</th>';});
+  h+='</tr></thead><tbody>';
+
+  rows.forEach(function(row,idx){
+    var rowClass='';
+    if(row.mark==='關')rowClass=' class="ln-row-guan"';
+    else if(row.mark==='隘')rowClass=' class="ln-row-ai"';
+    h+='<tr'+rowClass+'>';
+
+    cols.forEach(function(col){
+      var val=row[col]!=null?row[col]:'';
+      if(col==='age'){
+        h+='<td class="ln-age">'+val+'</td>';
+      }else if(col==='mark'){
+        var cls='ln-mark';
+        if(val==='關')cls+=' ln-guan';
+        else if(val==='隘')cls+=' ln-ai';
+        h+='<td class="'+cls+'">';
+        h+='<select onchange="lnEdit(\''+_lnGender+'\','+idx+',\'mark\',this.value)">';
+        h+='<option value=""'+(val===''?' selected':'')+'></option>';
+        h+='<option value="關"'+(val==='關'?' selected':'')+'>關</option>';
+        h+='<option value="隘"'+(val==='隘'?' selected':'')+'>隘</option>';
+        h+='</select></td>';
+      }else{
+        h+='<td><input value="'+String(val).replace(/"/g,'&quot;')+'" onchange="lnEdit(\''+_lnGender+'\','+idx+',\''+col+'\',this.value)"></td>';
+      }
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+
+  h+='<div class="ln-save-bar">';
+  h+='<button class="ln-btn-save" onclick="saveLiunian()">儲存流年表</button>';
+  h+='<button class="ln-btn-reset" onclick="resetLiunian()">還原</button>';
+  if(_liunianDirty)h+='<span class="ln-dirty">有未儲存的修改</span>';
+  h+='<span style="flex:1"></span>';
+  h+='<span style="font-size:12px;color:var(--text-3)">'+_lnGender+' 共 '+rows.length+' 筆</span>';
+  h+='</div>';
+
+  wrap.innerHTML=h;
+}
+
+function lnEdit(gender,idx,col,val){
+  if(!liunianData||!liunianData[gender])return;
+  liunianData[gender][idx][col]=val;
+  _liunianDirty=true;
+  var bar=document.querySelector('.ln-save-bar');
+  if(bar){
+    var dirtySpan=bar.querySelector('.ln-dirty');
+    if(!dirtySpan){
+      var sp=document.createElement('span');sp.className='ln-dirty';sp.textContent='有未儲存的修改';
+      bar.insertBefore(sp,bar.children[2]);
+    }
+  }
+}
+
+function saveLiunian(){
+  if(!liunianData)return;
+  var btn=document.querySelector('.ln-btn-save');
+  if(btn){btn.disabled=true;btn.textContent='儲存中...';}
+  var ts=new Date().toISOString();
+  db.collection('settings').doc('liunian').set({
+    liunianJson:JSON.stringify(liunianData),
+    updatedAt:ts
+  }).then(function(){
+    _liunianSnapshot=JSON.stringify(liunianData);
+    _liunianDirty=false;
+    showToast('流年表已儲存 ✓',true);
+    if(btn){btn.disabled=false;btn.textContent='儲存流年表';}
+    renderLiunian();
+  }).catch(function(e){
+    showToast('儲存失敗：'+e.message,false);
+    if(btn){btn.disabled=false;btn.textContent='儲存流年表';}
+  });
+}
+
+function resetLiunian(){
+  if(!_liunianSnapshot)return;
+  if(!confirm('確定還原到上次儲存的狀態？'))return;
+  liunianData=JSON.parse(_liunianSnapshot);
+  _liunianDirty=false;
+  renderLiunian();
+}
+
+// ===== 流年表預設資料 =====
+var LIUNIAN_DEFAULT_DATA={"男":[
+{"age":1,"mark":"","name75":"天輪","area75":"左耳","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":2,"mark":"","name75":"天輪","area75":"左耳","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":3,"mark":"","name75":"天城","area75":"左耳","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":4,"mark":"","name75":"天城","area75":"左耳","jiuzhi":"左耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":5,"mark":"","name75":"天郭","area75":"左耳","jiuzhi":"左眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":6,"mark":"","name75":"天郭","area75":"左耳","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":7,"mark":"","name75":"天郭","area75":"右耳","jiuzhi":"右眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":8,"mark":"","name75":"天輪","area75":"右耳","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":9,"mark":"","name75":"天輪","area75":"右耳","jiuzhi":"右耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":10,"mark":"","name75":"人輪","area75":"左耳","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":11,"mark":"","name75":"人輪","area75":"右耳","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":12,"mark":"","name75":"地輪","area75":"右耳","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":13,"mark":"","name75":"地輪","area75":"右耳","jiuzhi":"左耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":14,"mark":"","name75":"地輪","area75":"右耳","jiuzhi":"左眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":15,"mark":"關","name75":"火星","area75":"額","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"耳","santing":"上停"},
+{"age":16,"mark":"","name75":"天中","area75":"額","jiuzhi":"右眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"眉","santing":"上停"},
+{"age":17,"mark":"","name75":"日角","area75":"額","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"眉","santing":"上停"},
+{"age":18,"mark":"","name75":"月角","area75":"額","jiuzhi":"右耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"眉","santing":"上停"},
+{"age":19,"mark":"","name75":"天庭","area75":"額","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"眉","santing":"上停"},
+{"age":20,"mark":"","name75":"輔骨","area75":"額","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"眉","santing":"上停"},
+{"age":21,"mark":"","name75":"輔骨","area75":"額","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":22,"mark":"","name75":"司空","area75":"額","jiuzhi":"左耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":23,"mark":"","name75":"邊城","area75":"額","jiuzhi":"左眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":24,"mark":"","name75":"邊城","area75":"額","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":25,"mark":"關","name75":"中正","area75":"額","jiuzhi":"右眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":26,"mark":"","name75":"丘陵","area75":"額","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":27,"mark":"","name75":"塚墓","area75":"額","jiuzhi":"右耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":28,"mark":"","name75":"印堂","area75":"額","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":29,"mark":"","name75":"山林","area75":"額","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":30,"mark":"","name75":"山林","area75":"額","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":31,"mark":"","name75":"凌雲","area75":"左眉","jiuzhi":"左耳","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":32,"mark":"","name75":"紫氣","area75":"右眉","jiuzhi":"左眼","yewu":"左法令","qinzu":"右眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":33,"mark":"","name75":"繁霞","area75":"左眉","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":34,"mark":"","name75":"彩霞","area75":"右眉","jiuzhi":"右眉","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":35,"mark":"關","name75":"太陽","area75":"左眼","jiuzhi":"右眼","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":36,"mark":"","name75":"太陰","area75":"右眼","jiuzhi":"右耳","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":37,"mark":"","name75":"中陽","area75":"左眼","jiuzhi":"左眉","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":38,"mark":"","name75":"中陰","area75":"右眼","jiuzhi":"鼻","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":39,"mark":"","name75":"少陽","area75":"左眼","jiuzhi":"口","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":40,"mark":"","name75":"少陰","area75":"右眼","jiuzhi":"左耳","yewu":"左法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":41,"mark":"隘","name75":"山根","area75":"鼻","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"鼻","santing":"中停"},
+{"age":42,"mark":"","name75":"精舍","area75":"鼻","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"鼻","santing":"中停"},
+{"age":43,"mark":"","name75":"光殿","area75":"鼻","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"鼻","santing":"中停"},
+{"age":44,"mark":"","name75":"年上","area75":"鼻","jiuzhi":"右眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"鼻","santing":"中停"},
+{"age":45,"mark":"","name75":"壽上","area75":"鼻","jiuzhi":"右耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"鼻","santing":"中停"},
+{"age":46,"mark":"","name75":"顴骨","area75":"顴骨","jiuzhi":"左眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"中停"},
+{"age":47,"mark":"","name75":"顴骨","area75":"顴骨","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"中停"},
+{"age":48,"mark":"","name75":"準頭","area75":"鼻","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"中停"},
+{"age":49,"mark":"","name75":"蘭臺","area75":"鼻","jiuzhi":"左耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"中停"},
+{"age":50,"mark":"","name75":"廷尉","area75":"鼻","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"中停"},
+{"age":51,"mark":"隘","name75":"人沖","area75":"人中","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":52,"mark":"","name75":"仙庫","area75":"口","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":53,"mark":"","name75":"仙庫","area75":"口","jiuzhi":"右眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":54,"mark":"","name75":"食倉","area75":"口","jiuzhi":"右耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":55,"mark":"","name75":"祿倉","area75":"口","jiuzhi":"左眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":56,"mark":"","name75":"法令","area75":"左法令","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":57,"mark":"","name75":"法令","area75":"右法令","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":58,"mark":"","name75":"虎耳","area75":"頰","jiuzhi":"左耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":59,"mark":"","name75":"虎耳","area75":"頰","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"口","santing":"下停"},
+{"age":60,"mark":"","name75":"水星","area75":"口","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"","erbei":"右耳","wuguan":"","santing":"下停"},
+{"age":61,"mark":"隘","name75":"承漿","area75":"地閣","jiuzhi":"右眉","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":62,"mark":"","name75":"地庫","area75":"地閣","jiuzhi":"右眼","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":63,"mark":"","name75":"地庫","area75":"地閣","jiuzhi":"右耳","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":64,"mark":"","name75":"陂地","area75":"頰","jiuzhi":"左眉","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":65,"mark":"","name75":"鵝鴨","area75":"頰","jiuzhi":"鼻","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":66,"mark":"","name75":"金縷","area75":"頰","jiuzhi":"口","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":67,"mark":"","name75":"金縷","area75":"頰","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":68,"mark":"","name75":"歸來","area75":"頰","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":69,"mark":"","name75":"歸來","area75":"頰","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":70,"mark":"","name75":"頌堂","area75":"地閣","jiuzhi":"右眉","yewu":"右法令","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":71,"mark":"隘","name75":"地閣","area75":"地閣","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":72,"mark":"","name75":"奴僕","area75":"地閣","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":73,"mark":"","name75":"奴僕","area75":"地閣","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":74,"mark":"","name75":"腮骨","area75":"腮骨","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":75,"mark":"","name75":"腮骨","area75":"腮骨","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":76,"mark":"","name75":"子","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":77,"mark":"","name75":"子","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":78,"mark":"","name75":"丑","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":79,"mark":"","name75":"丑","area75":"","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":80,"mark":"","name75":"寅","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":81,"mark":"","name75":"寅","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":82,"mark":"","name75":"卯","area75":"","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":83,"mark":"","name75":"卯","area75":"","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":84,"mark":"","name75":"辰","area75":"","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":85,"mark":"","name75":"辰","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":86,"mark":"","name75":"巳","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":87,"mark":"","name75":"巳","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":88,"mark":"","name75":"午","area75":"","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":89,"mark":"","name75":"午","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":90,"mark":"","name75":"未","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":91,"mark":"","name75":"未","area75":"","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":92,"mark":"","name75":"申","area75":"","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":93,"mark":"","name75":"申","area75":"","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":94,"mark":"","name75":"酉","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":95,"mark":"","name75":"酉","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":96,"mark":"","name75":"戌","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":97,"mark":"","name75":"戌","area75":"","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":98,"mark":"","name75":"亥","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":99,"mark":"","name75":"亥","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""}
+],"女":[
+{"age":1,"mark":"","name75":"天輪","area75":"右耳","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":2,"mark":"","name75":"天輪","area75":"右耳","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":3,"mark":"","name75":"天城","area75":"右耳","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":4,"mark":"","name75":"天城","area75":"右耳","jiuzhi":"右耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":5,"mark":"","name75":"天郭","area75":"右耳","jiuzhi":"右眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":6,"mark":"","name75":"天郭","area75":"右耳","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":7,"mark":"","name75":"天郭","area75":"右耳","jiuzhi":"左眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":8,"mark":"","name75":"天輪","area75":"左耳","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":9,"mark":"","name75":"天輪","area75":"左耳","jiuzhi":"左耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":10,"mark":"","name75":"人輪","area75":"左耳","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":11,"mark":"","name75":"人輪","area75":"左耳","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":12,"mark":"","name75":"地輪","area75":"左耳","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":13,"mark":"","name75":"地輪","area75":"左耳","jiuzhi":"右耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":14,"mark":"","name75":"地輪","area75":"左耳","jiuzhi":"右眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":15,"mark":"關","name75":"火星","area75":"額","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"耳","santing":"上停"},
+{"age":16,"mark":"","name75":"天中","area75":"額","jiuzhi":"左眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"眉","santing":"上停"},
+{"age":17,"mark":"","name75":"日角","area75":"額","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"眉","santing":"上停"},
+{"age":18,"mark":"","name75":"月角","area75":"額","jiuzhi":"左耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"眉","santing":"上停"},
+{"age":19,"mark":"","name75":"天庭","area75":"額","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"眉","santing":"上停"},
+{"age":20,"mark":"","name75":"輔骨","area75":"額","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"右耳","wuguan":"眉","santing":"上停"},
+{"age":21,"mark":"","name75":"輔骨","area75":"額","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":22,"mark":"","name75":"司空","area75":"額","jiuzhi":"右耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":23,"mark":"","name75":"邊城","area75":"額","jiuzhi":"右眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":24,"mark":"","name75":"邊城","area75":"額","jiuzhi":"額","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":25,"mark":"關","name75":"中正","area75":"額","jiuzhi":"左眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"上停"},
+{"age":26,"mark":"","name75":"丘陵","area75":"額","jiuzhi":"左眼","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":27,"mark":"","name75":"塚墓","area75":"額","jiuzhi":"左耳","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":28,"mark":"","name75":"印堂","area75":"額","jiuzhi":"右眉","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":29,"mark":"","name75":"山林","area75":"額","jiuzhi":"鼻","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":30,"mark":"","name75":"山林","area75":"額","jiuzhi":"口","yewu":"右法令","qinzu":"右眉","zinv":"右淚堂","erbei":"鼻","wuguan":"眉","santing":"中停"},
+{"age":31,"mark":"","name75":"凌雲","area75":"右眉","jiuzhi":"右耳","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":32,"mark":"","name75":"紫氣","area75":"左眉","jiuzhi":"右眼","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":33,"mark":"","name75":"繁霞","area75":"右眉","jiuzhi":"額","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":34,"mark":"","name75":"彩霞","area75":"左眉","jiuzhi":"左眉","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":35,"mark":"關","name75":"太陽","area75":"右眼","jiuzhi":"左眼","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":36,"mark":"","name75":"太陰","area75":"左眼","jiuzhi":"左耳","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":37,"mark":"","name75":"中陽","area75":"右眼","jiuzhi":"右眉","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":38,"mark":"","name75":"中陰","area75":"左眼","jiuzhi":"鼻","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":39,"mark":"","name75":"少陽","area75":"右眼","jiuzhi":"口","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":40,"mark":"","name75":"少陰","area75":"左眼","jiuzhi":"右耳","yewu":"右法令","qinzu":"左眉","zinv":"左淚堂","erbei":"鼻","wuguan":"鼻","santing":"中停"},
+{"age":41,"mark":"隘","name75":"山根","area75":"鼻","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"鼻","santing":"中停"},
+{"age":42,"mark":"","name75":"精舍","area75":"鼻","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"鼻","santing":"中停"},
+{"age":43,"mark":"","name75":"光殿","area75":"鼻","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"鼻","santing":"中停"},
+{"age":44,"mark":"","name75":"年上","area75":"鼻","jiuzhi":"左眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"鼻","santing":"中停"},
+{"age":45,"mark":"","name75":"壽上","area75":"鼻","jiuzhi":"左耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"鼻","santing":"中停"},
+{"age":46,"mark":"","name75":"顴骨","area75":"顴骨","jiuzhi":"右眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"中停"},
+{"age":47,"mark":"","name75":"顴骨","area75":"顴骨","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"中停"},
+{"age":48,"mark":"","name75":"準頭","area75":"鼻","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"中停"},
+{"age":49,"mark":"","name75":"蘭臺","area75":"鼻","jiuzhi":"右耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"中停"},
+{"age":50,"mark":"","name75":"廷尉","area75":"鼻","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"中停"},
+{"age":51,"mark":"隘","name75":"人沖","area75":"人中","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":52,"mark":"","name75":"仙庫","area75":"口","jiuzhi":"左眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":53,"mark":"","name75":"仙庫","area75":"口","jiuzhi":"左眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":54,"mark":"","name75":"食倉","area75":"口","jiuzhi":"左耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":55,"mark":"","name75":"祿倉","area75":"口","jiuzhi":"右眉","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":56,"mark":"","name75":"法令","area75":"右法令","jiuzhi":"鼻","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":57,"mark":"","name75":"法令","area75":"左法令","jiuzhi":"口","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":58,"mark":"","name75":"虎耳","area75":"頰","jiuzhi":"右耳","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":59,"mark":"","name75":"虎耳","area75":"頰","jiuzhi":"右眼","yewu":"左法令","qinzu":"左眉","zinv":"左淚堂","erbei":"左耳","wuguan":"口","santing":"下停"},
+{"age":60,"mark":"","name75":"水星","area75":"口","jiuzhi":"額","yewu":"左法令","qinzu":"左眉","zinv":"","erbei":"左耳","wuguan":"","santing":"下停"},
+{"age":61,"mark":"隘","name75":"承漿","area75":"地閣","jiuzhi":"左眉","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":62,"mark":"","name75":"地庫","area75":"地閣","jiuzhi":"左眼","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":63,"mark":"","name75":"地庫","area75":"地閣","jiuzhi":"左耳","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":64,"mark":"","name75":"陂地","area75":"頰","jiuzhi":"右眉","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":65,"mark":"","name75":"鵝鴨","area75":"頰","jiuzhi":"鼻","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":66,"mark":"","name75":"金縷","area75":"頰","jiuzhi":"口","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"口","santing":""},
+{"age":67,"mark":"","name75":"金縷","area75":"頰","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":68,"mark":"","name75":"歸來","area75":"頰","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":69,"mark":"","name75":"歸來","area75":"頰","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":70,"mark":"","name75":"頌堂","area75":"地閣","jiuzhi":"左眉","yewu":"左法令","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":71,"mark":"隘","name75":"地閣","area75":"地閣","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":72,"mark":"","name75":"奴僕","area75":"地閣","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":73,"mark":"","name75":"奴僕","area75":"地閣","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":74,"mark":"","name75":"腮骨","area75":"腮骨","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":75,"mark":"","name75":"腮骨","area75":"腮骨","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":76,"mark":"","name75":"子","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":77,"mark":"","name75":"子","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":78,"mark":"","name75":"丑","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":79,"mark":"","name75":"丑","area75":"","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":80,"mark":"","name75":"寅","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":81,"mark":"","name75":"寅","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":82,"mark":"","name75":"卯","area75":"","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":83,"mark":"","name75":"卯","area75":"","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":84,"mark":"","name75":"辰","area75":"","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":85,"mark":"","name75":"辰","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":86,"mark":"","name75":"巳","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":87,"mark":"","name75":"巳","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":88,"mark":"","name75":"午","area75":"","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":89,"mark":"","name75":"午","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":90,"mark":"","name75":"未","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":91,"mark":"","name75":"未","area75":"","jiuzhi":"右眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":92,"mark":"","name75":"申","area75":"","jiuzhi":"鼻","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":93,"mark":"","name75":"申","area75":"","jiuzhi":"口","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":94,"mark":"","name75":"酉","area75":"","jiuzhi":"右耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":95,"mark":"","name75":"酉","area75":"","jiuzhi":"右眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":96,"mark":"","name75":"戌","area75":"","jiuzhi":"額","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":97,"mark":"","name75":"戌","area75":"","jiuzhi":"左眉","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":98,"mark":"","name75":"亥","area75":"","jiuzhi":"左眼","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""},
+{"age":99,"mark":"","name75":"亥","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""}
+]};
 
 // ==================== INIT ====================
 async function init(){
@@ -1205,9 +1556,24 @@ async function init(){
     }else{console.log('[Questions] No fallback available');}
   }
 
+  // Load liunian
+  try{
+    var ldoc=await db.collection('settings').doc('liunian').get();
+    if(ldoc.exists&&ldoc.data().liunianJson){
+      var pl=JSON.parse(ldoc.data().liunianJson);
+      if(pl&&pl['男']&&pl['女']){liunianData=pl;console.log('[Liunian] Firebase ✓');}
+    }
+  }catch(e){console.log('[Liunian] Firebase error',e);}
+  if(!liunianData){
+    liunianData=JSON.parse(JSON.stringify(LIUNIAN_DEFAULT_DATA));
+    console.log('[Liunian] Using default, uploading to Firebase...');
+    db.collection('settings').doc('liunian').set({liunianJson:JSON.stringify(liunianData),updatedAt:new Date().toISOString()}).catch(function(){});
+  }
+  _liunianSnapshot=JSON.stringify(liunianData);
+
   renderAll();
   takeSnapshot();
-  setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位）');
+  setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位，流年 '+(liunianData?liunianData['男'].length+liunianData['女'].length:0)+' 筆）');
 }
 
 init();
