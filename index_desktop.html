@@ -262,7 +262,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 /* ===== Name Edit Overlay ===== */
 #name-edit-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:8000;display:none;align-items:center;justify-content:center}
 #name-edit-overlay.show{display:flex}
-.name-edit-box{background:white;border-radius:12px;padding:28px 24px;width:80%;max-width:320px;display:flex;flex-direction:column;gap:16px}
+.name-edit-box{background:white;border-radius:12px;padding:28px 24px;width:80%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 .name-edit-box h3{margin:0;font-size:18px;font-weight:900;letter-spacing:2px}
 .name-edit-input{border:none;border-bottom:2px solid var(--text);padding:8px 0;font-size:22px;font-weight:900;font-family:'Noto Serif TC',serif;outline:none;width:100%}
 .name-edit-btns{display:flex;gap:8px}
@@ -404,8 +404,15 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- Name Edit Overlay -->
 <div id="name-edit-overlay">
   <div class="name-edit-box">
-    <h3>修改姓名</h3>
+    <h3>個人資料設定</h3>
+    <label style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:-8px">姓名</label>
     <input class="name-edit-input" id="name-edit-input" maxlength="20">
+    <label style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:-8px">性別</label>
+    <select id="profile-gender" style="border:none;border-bottom:2px solid var(--border);padding:8px 0;font-size:18px;font-weight:700;font-family:'Noto Serif TC',serif;outline:none;width:100%;background:transparent;cursor:pointer">
+      <option value="">未填</option><option value="男">男</option><option value="女">女</option>
+    </select>
+    <label style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:-8px">生日</label>
+    <input id="profile-birthday" type="date" style="border:none;border-bottom:2px solid var(--border);padding:8px 0;font-size:18px;font-weight:700;font-family:'Noto Serif TC',serif;outline:none;width:100%">
     <div class="name-edit-btns">
       <button class="name-edit-cancel" onclick="closeEditName()">取消</button>
       <button class="name-edit-confirm" onclick="confirmEditName()">確認</button>
@@ -2468,6 +2475,85 @@ function reportSave(){
     .catch(()=>{btn.innerText='失敗，請重試';setTimeout(()=>{btn.innerText='儲存評分';},2000);});
 }
 
+/* ===== 流年計算 ===== */
+function calcXuSui(birthday, refDate){
+  if(!birthday)return null;
+  var bd=new Date(birthday);
+  var rd=refDate?new Date(refDate):new Date();
+  if(isNaN(bd.getTime())||isNaN(rd.getTime()))return null;
+  var age=rd.getFullYear()-bd.getFullYear();
+  var m=rd.getMonth()-bd.getMonth();
+  if(m<0||(m===0&&rd.getDate()<bd.getDate()))age--;
+  return age+1;
+}
+
+function getLiunian(gender, xusui){
+  if(!_liunianTable||!gender||!xusui||xusui<1||xusui>99)return null;
+  var rows=_liunianTable[gender];
+  if(!rows)return null;
+  return rows.find(function(r){return r.age===xusui;})||null;
+}
+
+function _getLiunianInfo(){
+  var gender, birthday, refDate;
+  if(_isTA&&_currentCaseId){
+    gender=_caseGender;birthday=_caseBirthday;refDate=_caseDate||null;
+  }else if(_isTA&&!_currentCaseId){
+    gender=_caseGender;birthday=_caseBirthday;refDate=null;
+  }else{
+    gender=_userGender;birthday=_userBirthday;refDate=null;
+  }
+  if(!gender||!birthday)return null;
+  var xusui=calcXuSui(birthday,refDate);
+  if(!xusui||xusui<1)return null;
+  var ln=getLiunian(gender,xusui);
+  if(!ln)return null;
+  return {xusui:xusui, mark:ln.mark, ln:ln};
+}
+
+function buildLiunianTitleHtml(info){
+  if(!info)return '';
+  var h=' <span style="font-size:15px;font-weight:700;margin-left:8px">虛歲 '+info.xusui+'</span>';
+  if(info.mark){
+    h+=' <span style="font-size:12px;color:#fff;background:#c03830;padding:1px 6px;border-radius:4px;font-weight:900;margin-left:6px">'+info.mark+'</span>';
+  }
+  return h;
+}
+
+function buildLiunianTableHtml(info){
+  if(!info)return '';
+  var ln=info.ln;
+  var bgA='#d6cfc4',bgB='#c8cfd6';
+  var lbgA='#ece8e0',lbgB='#e0e5ea';
+  var tc='#3a3228';
+  var hc1='#4a453e',hc2='#3a4450';
+  var rc='border-radius:3px';
+
+  var t='<table style="border-collapse:separate;border-spacing:2px;font-size:13px;width:100%;margin-bottom:6px;font-family:\'Noto Serif TC\',serif">';
+  t+='<tr>';
+  t+='<td colspan="2" style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">七十五</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">九執</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">業務</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">親族</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">子女</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">耳鼻</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">五官</td>';
+  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">三停</td>';
+  t+='</tr>';
+  t+='<tr>';
+  t+='<td style="padding:5px 8px;text-align:center;font-weight:700;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.name75||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.area75||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.jiuzhi||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.yewu||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.qinzu||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.zinv||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.erbei||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.wuguan||'')+'</td>';
+  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.santing||'')+'</td>';
+  t+='</tr></table>';
+  return t;
+}
+
 function showReport(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
@@ -2481,7 +2567,8 @@ function showReport(){
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
   recalcFromObs();
-  document.getElementById('report-name-display').innerText=_currentCaseName||userName||'未命名';
+  var _lnInfo=_getLiunianInfo();
+  document.getElementById('report-name-display').innerHTML=(_currentCaseName||userName||'未命名')+buildLiunianTitleHtml(_lnInfo);
   // 統計數據
   const vTotal=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
   const vPre=avgCoeff([0,1,2,3,4,5]),vLuck=avgCoeff([6,7,8]),vPost=avgCoeff([9,10,11,12]);
@@ -2536,6 +2623,7 @@ function showReport(){
         '</div></td>';
     }
 
+    var _lnTableHtml=buildLiunianTableHtml(_lnInfo);
     // === 單一表格（頂部摘要 + 維度矩陣）===
     let t='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
 
@@ -2637,7 +2725,7 @@ function showReport(){
       t+='</tr>';
     });
     t+='</table>';
-    ftEl.innerHTML=t;
+    ftEl.innerHTML=_lnTableHtml+t;
   }
 }
 
@@ -3152,6 +3240,9 @@ function renderManualPage(){
 /* ===== App ===== */
 let userName='';
 var _isTA=false, _currentCaseId=null, _currentCaseName='';
+var _liunianTable=null;
+var _userGender='', _userBirthday='';
+var _caseGender='', _caseBirthday='', _caseDate='';
 var _editingCaseId=null;
 async function startApp(){
   const name=document.getElementById('entry-name').value.trim();if(!name){document.getElementById('entry-name').focus();return;}
@@ -3189,11 +3280,21 @@ async function startApp(){
     }else{console.log('[觀察問題] Firebase 無問題資料，使用內建問題');}
   }catch(e){console.log('[觀察問題] Firebase 問題讀取失敗，使用內建問題',e);}
 
+  /* ===== Step 1.8: 載入流年表 ===== */
+  try{
+    var lnDoc=await db.collection('settings').doc('liunian').get();
+    if(lnDoc.exists&&lnDoc.data().liunianJson){
+      var lnp=JSON.parse(lnDoc.data().liunianJson);
+      if(lnp&&lnp['男']&&lnp['女']){_liunianTable=lnp;console.log('[流年表] 從 Firebase 載入 ✓');}
+    }
+  }catch(e){console.log('[流年表] 載入失敗',e);}
+
   /* ===== Step 2: 載入使用者資料 ===== */
   try{const doc=await db.collection('users').doc(userName).get();
     if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else if(doc.exists&&doc.data().data)data=doc.data().data;else data=emptyData();
     if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else{try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e){obsData={};}}
     if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else{try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e){obsOverride={};}}
+    if(doc.exists){_userGender=doc.data().gender||'';_userBirthday=doc.data().birthday||'';}
   }catch(e){console.log('載入失敗',e);data=emptyData();try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e2){obsData={};}try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e3){obsOverride={};}}
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
@@ -3314,6 +3415,7 @@ function loadCase(caseId){
       if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else data=emptyData();
       if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else obsData={};
       if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else obsOverride={};
+      if(doc.exists){_caseGender=doc.data().gender||'';_caseBirthday=doc.data().birthday||'';_caseDate='';}
       recalcFromObs();
       showModePage();
     }).catch(function(e){console.log('載入失敗',e);data=emptyData();obsData={};obsOverride={};recalcFromObs();showModePage();});
@@ -3323,6 +3425,9 @@ function loadCase(caseId){
       if(!doc.exists){alert('個案不存在');return;}
       var c=doc.data();
       _currentCaseName=c.name||'未命名';
+      _caseGender=c.gender||'';
+      _caseBirthday=c.birthday||'';
+      _caseDate=c.date||'';
       if(c.dataJson)data=JSON.parse(c.dataJson);else data=emptyData();
       if(c.obsJson)obsData=JSON.parse(c.obsJson);else obsData={};
       if(c.overrideJson)obsOverride=JSON.parse(c.overrideJson);else obsOverride={};
@@ -3417,8 +3522,29 @@ function deleteCase(caseId,caseName){
   });
 }
 
-function editName(){document.getElementById('name-edit-input').value=userName;document.getElementById('name-edit-overlay').style.display='flex';setTimeout(()=>document.getElementById('name-edit-input').focus(),100);}
-function confirmEditName(){const n=document.getElementById('name-edit-input').value.trim();if(n){userName=n;localStorage.setItem('rxbf_username',userName);document.getElementById('nav-name').innerText=userName;}closeEditName();}
+function editName(){
+  document.getElementById('name-edit-input').value=userName;
+  document.getElementById('profile-gender').value=_userGender||'';
+  document.getElementById('profile-birthday').value=_userBirthday||'';
+  document.getElementById('name-edit-overlay').style.display='flex';
+  setTimeout(function(){document.getElementById('name-edit-input').focus();},100);
+}
+function confirmEditName(){
+  var n=document.getElementById('name-edit-input').value.trim();
+  if(n){
+    userName=n;
+    localStorage.setItem('rxbf_username',userName);
+    document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  }
+  _userGender=document.getElementById('profile-gender').value;
+  _userBirthday=document.getElementById('profile-birthday').value;
+  db.collection('users').doc(userName).set({
+    gender:_userGender,
+    birthday:_userBirthday,
+    updatedAt:new Date().toISOString()
+  },{merge:true}).catch(function(e){console.log('個人資料儲存失敗',e);});
+  closeEditName();
+}
 function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
 
 async function exportPNG(){
