@@ -3175,7 +3175,7 @@ function confirmEditName(){const n=document.getElementById('name-edit-input').va
 function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
 
 async function exportPNG(){
-  const btn=document.getElementById('btn-export'),actions=document.querySelector('.report-actions'),overlay=document.getElementById('report-overlay');
+  const btn=document.getElementById('btn-export'),overlay=document.getElementById('report-overlay'),actions=overlay.querySelector('.report-actions');
   btn.innerText='產生中...';btn.disabled=true;actions.style.display='none';overlay.scrollTop=0;await new Promise(r=>setTimeout(r,100));
   try{const canvas=await html2canvas(overlay,{backgroundColor:'#ffffff',scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:overlay.scrollWidth,width:overlay.scrollWidth,height:overlay.scrollHeight});
     const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);const file=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'人相兵法_'+(userName||'報告')+'.png',{type:'image/png'});
