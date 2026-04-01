@@ -511,7 +511,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <div id="manual-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5800;overflow-y:auto;padding:15px;overflow-x:hidden">
   <div id="manual-table" style="overflow-x:auto;width:100%"></div>
   <div class="report-actions">
-    <button class="btn-back" onclick="manualClear()" style="flex:1;margin:0;">&#8592; 清除全部</button>
+    <button class="btn-back" onclick="manualImportObs()" style="flex:1;margin:0;">帶入觀察資料</button>
+    <button class="btn-back" onclick="manualClear()" style="flex:1;margin:0;">清除全部</button>
     <button class="btn-back" onclick="manualSave()" id="manual-save-btn" style="flex:1;margin:0;">儲存評分</button>
   </div>
 </div>
@@ -3117,9 +3118,24 @@ function manualCellClick(di,pi){
 }
 
 function manualClear(){
+  if(!confirm('確定要清除所有手動輸入資料嗎？'))return;
   manualData=null;initManualData();
   manualSaveLocal();
   renderManualPage();
+  _showToast('手動資料已清除');
+}
+
+function manualImportObs(){
+  if(!confirm('確定要將觀察評分資料帶入手動報告嗎？現有的手動資料會被覆蓋。'))return;
+  initManualData();
+  for(var di=0;di<13;di++){
+    for(var pi=0;pi<9;pi++){
+      manualData[di][pi]=data[di][pi]||null;
+    }
+  }
+  manualSaveLocal();
+  renderManualPage();
+  _showToast('已帶入觀察評分資料');
 }
 
 function manualSave(){
