@@ -3597,8 +3597,7 @@ function fallbackDownload(canvas){
 }
 
 function drawReportCanvas(){
-  // ========== 常數 ==========
-  var SC=2; // 輸出 scale（2x 高清）
+  var SC=2;
   var SBG='#7A9E7E', DBG='#C17A5A';
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494',
                  '#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
@@ -3609,48 +3608,47 @@ function drawReportCanvas(){
                  'rgba(182,144,136,0.35)'];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   // 動態取靜/動標籤（修復 bug）
+  // 顯示用陣列（與 showReport 一致）
   var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
   var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
   var colL=DIMS.map(function(d){return d.da;});
   var colR=DIMS.map(function(d){return d.db;});
   var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
 
-  // ========== 佈局參數（1x 座標）==========
-  var PAD=20;           // 外邊距
-  var G=3;              // 格間距
-  var PART_W=38;        // 左右部位欄寬
-  var DIM_W=66;         // 每個維度欄寬
-  var SUB_W=DIM_W/2;    // 子欄寬
-  var ROW_H=28;         // 資料行高
-  var HDR_H=32;         // 維度 header 高
-  var SUB_H=22;         // 子欄 header 高
-  var COEFF_H=82;       // 係數方塊+堆疊條區高
-  var SUM_H=34;         // 摘要行高
-  var TITLE_H=40;       // 標題列高
-  var SEP_H=4;          // 三停與五官分隔線高
+  // 佈局參數
+  var PAD=20, G=3;
+  var PART_W=38, DIM_W=66, SUB_W=DIM_W/2;
+  var ROW_H=28, HDR_H=32, SUB_H=22, COEFF_H=82, SUM_H=34, TITLE_H=40, SEP_H=4;
+  var LN_HDR_H=24, LN_ROW_H=24;
 
-  // 水平佈局
   var contentW=PART_W + G + 13*(DIM_W+G) + PART_W;
   var totalW=PAD*2+contentW;
 
-  // 垂直佈局計算
+  // 流年資訊
+  var lnInfo=_getLiunianInfo();
+  var hasLn=!!lnInfo;
+
+  // 垂直佈局
   var curY=PAD;
   var yTitle=curY; curY+=TITLE_H+G;
-  var ySum1=curY;  curY+=SUM_H+G;     // 總係數
-  var ySum2=curY;  curY+=SUM_H+G;     // 先天/運氣/後天
-  var ySum3=curY;  curY+=SUM_H+G*3;   // 老闆/主管
-  var yDimHdr=curY; curY+=HDR_H+G;    // 維度名
-  var ySubHdr=curY; curY+=SUB_H+G;    // 靜X/動X
-  var yCoeff=curY;  curY+=COEFF_H+G;  // 係數+堆疊條
+  var yLnHdr=0, yLnRow=0;
+  if(hasLn){
+    yLnHdr=curY; curY+=LN_HDR_H+G;
+    yLnRow=curY; curY+=LN_ROW_H+G*2;
+  }
+  var ySum1=curY;  curY+=SUM_H+G;
+  var ySum2=curY;  curY+=SUM_H+G;
+  var ySum3=curY;  curY+=SUM_H+G*3;
+  var yDimHdr=curY; curY+=HDR_H+G;
+  var ySubHdr=curY; curY+=SUB_H+G;
+  var yCoeff=curY;  curY+=COEFF_H+G;
   var yDataStart=curY;
-  // 4行（頭/上停/中停/下停）
   curY+=4*(ROW_H+G);
-  var ySep=curY; curY+=SEP_H+G;       // 分隔線
-  // 5行（耳/眉/眼/鼻/口）
+  var ySep=curY; curY+=SEP_H+G;
   curY+=5*(ROW_H+G);
   var totalH=curY+PAD;
 
-  // ========== 建立 Canvas ==========
+  // 建立 Canvas
   var canvas=document.createElement('canvas');
   canvas.width=totalW*SC;
   canvas.height=totalH*SC;
@@ -3659,7 +3657,7 @@ function drawReportCanvas(){
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,totalW,totalH);
 
-  // ========== 輔助函式 ==========
+  // 輔助函式
   function rRect(x,y,w,h,r,fill){
     ctx.beginPath();
     ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
@@ -3688,7 +3686,7 @@ function drawReportCanvas(){
     ctx.fillText(text,x,y+h/2);
   }
 
-  // ========== 計算數據 ==========
+  // 計算數據
   var vTotal=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
   var vPre=avgCoeff([0,1,2,3,4,5]),vLuck=avgCoeff([6,7,8]),vPost=avgCoeff([9,10,11,12]);
   var vLead=avgCoeff([0,1,2]),vSub=avgCoeff([3,4,5]);
@@ -3708,7 +3706,6 @@ function drawReportCanvas(){
   var sdPre=countSD([0,1,2,3,4,5]),sdLuck=countSD([6,7,8]),sdPost=countSD([9,10,11,12]);
   var sdLead=countSD([0,1,2]),sdSub=countSD([3,4,5]);
 
-  // 各維度靜/動部位計數
   var dimSC=[],dimDC=[];
   for(var di=0;di<13;di++){
     var sc=0,dc=0;
@@ -3722,23 +3719,92 @@ function drawReportCanvas(){
 
   // ========== 繪製 ==========
 
-  // --- 1. 標題列 ---
-  txtL(userName||'未命名',PAD,yTitle,TITLE_H,'#3a3228',18,true);
+  // --- 1. 標題列（含虛歲+關隘）---
+  var displayName=_currentCaseName||userName||'未命名';
+  txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',18,true);
   ctx.font='bold 18px "Noto Serif TC",serif';
-  var nameW=ctx.measureText(userName||'未命名').width;
-  txtL('人相兵法係數報告',PAD+nameW+12,yTitle,TITLE_H,'#888',14,false);
+  var nx=PAD+ctx.measureText(displayName).width;
 
-  // --- 2. 摘要區輔助 ---
-  // 摘要格的 x 起點和可用寬度（排除左右部位欄）
+  if(lnInfo){
+    var ageText='虛歲 '+lnInfo.xusui;
+    txtL(ageText,nx+10,yTitle,TITLE_H,'#3a3228',15,true);
+    ctx.font='bold 15px "Noto Serif TC",serif';
+    nx+=10+ctx.measureText(ageText).width;
+    if(lnInfo.mark){
+      nx+=6;
+      rRect(nx,yTitle+(TITLE_H-18)/2,28,18,4,'#c03830');
+      ctx.fillStyle='#ffffff';
+      ctx.font='bold 12px "Noto Serif TC",serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(lnInfo.mark,nx+14,yTitle+TITLE_H/2);
+      nx+=34;
+    }
+  }
+
+  txtL('人相兵法係數報告',nx+36,yTitle,TITLE_H,'#888',14,false);
+
+  // --- 2. 流年表格 ---
+  if(hasLn){
+    var ln=lnInfo.ln;
+    var bgA='#d6cfc4',bgB='#c8cfd6';
+    var lbgA='#ece8e0',lbgB='#e0e5ea';
+    var tc='#3a3228',hc1='#4a453e',hc2='#3a4450';
+
+    var lnCols=[
+      {h:'七十五',v1:ln.name75||'',v2:ln.area75||'',span:2},
+      {h:'九執',v1:ln.jiuzhi||''},
+      {h:'業務',v1:ln.yewu||''},
+      {h:'親族',v1:ln.qinzu||''},
+      {h:'子女',v1:ln.zinv||''},
+      {h:'耳鼻',v1:ln.erbei||''},
+      {h:'五官',v1:ln.wuguan||''},
+      {h:'三停',v1:ln.santing||''}
+    ];
+
+    var totalCols=10;
+    var lnColW=Math.floor(contentW/totalCols);
+    var lnX=PAD;
+
+    // header 行
+    var cx=lnX;
+    for(var ci=0;ci<lnCols.length;ci++){
+      var col=lnCols[ci];
+      var cw=col.span?lnColW*col.span:lnColW;
+      var bg=(ci%2===0)?bgA:bgB;
+      var hc=(ci%2===0)?hc1:hc2;
+      rRect(cx,yLnHdr,cw-2,LN_HDR_H,3,bg);
+      txtC(col.h,cx,yLnHdr,cw-2,LN_HDR_H,hc,12,true);
+      cx+=cw;
+    }
+
+    // 資料行
+    cx=lnX;
+    for(var ci=0;ci<lnCols.length;ci++){
+      var col=lnCols[ci];
+      var cw=col.span?lnColW*col.span:lnColW;
+      var bg=(ci%2===0)?lbgA:lbgB;
+      if(col.span){
+        var hw=Math.floor(cw/2);
+        rRect(cx,yLnRow,hw-1,LN_ROW_H,3,bg);
+        txtC(col.v1,cx,yLnRow,hw-1,LN_ROW_H,tc,12,true);
+        rRect(cx+hw,yLnRow,hw-1,LN_ROW_H,3,bg);
+        txtC(col.v2||'',cx+hw,yLnRow,hw-1,LN_ROW_H,tc,12,false);
+      }else{
+        rRect(cx,yLnRow,cw-2,LN_ROW_H,3,bg);
+        txtC(col.v1,cx,yLnRow,cw-2,LN_ROW_H,tc,12,false);
+      }
+      cx+=cw;
+    }
+  }
+
+  // --- 3. 摘要區 ---
   var sumX=PAD+PART_W+G;
   var sumW=contentW-PART_W*2-G*2;
 
   function drawSumCell(x,y,w,h,bg,color,label,val,sd){
     rRect(x,y,w,h,4,bg);
-    // 主文字居中
     var mainText=label+'　'+val;
     txtC(mainText,x,y,w*0.75,h,color,14,true);
-    // 動X/靜X 靠右
     var rx=x+w-8;
     txtR('靜'+sd.s,rx,y,h,SBG,11,true);
     ctx.font='bold 11px "Noto Serif TC",serif';
@@ -3748,85 +3814,73 @@ function drawReportCanvas(){
     txtR('動'+sd.d,rx-sW-slW,y,h,DBG,11,true);
   }
 
-  // 總係數（滿寬）
   drawSumCell(sumX,ySum1,sumW,SUM_H,'#c8bfb0','#3a3228','總係數',vTotal,sdAll);
 
-  // 先天/運氣/後天（按 12:6:8 比例）
   var r26=sumW/26;
   var preW=Math.round(r26*12)-G, luckW=Math.round(r26*6)-G, postW=sumW-Math.round(r26*12)-Math.round(r26*6)-G;
   drawSumCell(sumX,ySum2,preW,SUM_H,'#bdd4d4','#2e4a4a','先天係數',vPre,sdPre);
   drawSumCell(sumX+preW+G,ySum2,luckW,SUM_H,'#e8dcc8','#5a4a2a','運氣係數',vLuck,sdLuck);
   drawSumCell(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#e0cdc6','#5a3a30','後天係數',vPost,sdPost);
 
-  // 老闆/主管（各佔 6/26 寬度）
   var halfW=Math.round(r26*6)-G;
   drawSumCell(sumX,ySum3,halfW,SUM_H,'#cce0e0','#2e4a4a','老闆係數',vLead,sdLead);
   drawSumCell(sumX+halfW+G,ySum3,halfW,SUM_H,'#d8eaea','#2e4a4a','主管係數',vSub,sdSub);
 
-  // --- 3. 維度 header 行 ---
+  // --- 4. 維度 header 行 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
     rRect(dx,yDimHdr,DIM_W,HDR_H,4,dimColors[i]);
     txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#ffffff',13,true);
   }
 
-  // --- 4. 子欄行（靜X / 動X）---
+  // --- 5. 子欄行 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
     var lBg=colLIsS[i]?SBG:DBG;
     var rBg=colLIsS[i]?DBG:SBG;
     var lCnt=colLIsS[i]?dimSC[i]:dimDC[i];
     var rCnt=colLIsS[i]?dimDC[i]:dimSC[i];
-    // 左欄
     txtC(colL[i]+lCnt,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
     ctx.fillStyle=lBg;
     ctx.fillRect(dx,ySubHdr+SUB_H-3,SUB_W,2.5);
-    // 右欄
     txtC(colR[i]+rCnt,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
     ctx.fillStyle=rBg;
     ctx.fillRect(dx+SUB_W,ySubHdr+SUB_H-3,SUB_W,2.5);
   }
 
-  // --- 5. 係數格+堆疊橫條 ---
+  // --- 6. 係數格+堆疊橫條 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
     var res=calcDim(i);
     var coeff=res?res.coeff.toFixed(2):'—';
     var coeffBg=res?(res.type==='靜'?SBG:DBG):'#ddd';
-    // 係數方塊（上半）
     var cbH=22;
     rRect(dx,yCoeff,DIM_W,cbH,4,coeffBg);
     txtC(coeff,dx,yCoeff,DIM_W,cbH,'#ffffff',13,true);
-    // 堆疊橫條（下半）
     var barTop=yCoeff+cbH+4;
     var barH=COEFF_H-cbH-6;
-    var sc=dimSC[i],dc=dimDC[i];
-    var barUnitH=Math.min(3,(barH-2)/(Math.max(sc,dc,1)));
-    // 靜條（左半）
+    var sc2=dimSC[i],dc2=dimDC[i];
+    var barUnitH=Math.min(3,(barH-2)/(Math.max(sc2,dc2,1)));
     var barLX=dx+4, barW=(DIM_W-12)/2;
-    for(var b=0;b<sc;b++){
+    for(var b=0;b<sc2;b++){
       var by=barTop+barH-2-(b+1)*(barUnitH+1);
       rRect(barLX,by,barW,barUnitH,1,SBG);
     }
-    // 動條（右半）
     var barRX=dx+DIM_W/2+2;
-    for(var b=0;b<dc;b++){
+    for(var b=0;b<dc2;b++){
       var by=barTop+barH-2-(b+1)*(barUnitH+1);
       rRect(barRX,by,barW,barUnitH,1,DBG);
     }
   }
 
-  // --- 6. 部位資料行 ---
+  // --- 7. 部位資料行 ---
   function drawPartRow(partIdx,rowIdx,yy){
     var label=partLabels[rowIdx];
-    // 左部位欄
     rRect(PAD,yy,PART_W,ROW_H,4,'#e8e3da');
     txtC(label,PAD,yy,PART_W,ROW_H,'#3a3228',12,true);
-    // 右部位欄
     var rx=PAD+PART_W+G+13*(DIM_W+G);
     rRect(rx,yy,PART_W,ROW_H,4,'#e8e3da');
     txtC(label,rx,yy,PART_W,ROW_H,'#3a3228',12,true);
-    // 13 維度格
     for(var di=0;di<13;di++){
       var dx=PAD+PART_W+G+di*(DIM_W+G);
       var v=data[di][partIdx];
@@ -3849,18 +3903,14 @@ function drawReportCanvas(){
           txtC(cellLabel,dx+SUB_W,yy,SUB_W,ROW_H,'#ffffff',12,true);
         }
       }
-      // 無資料：不畫任何東西（白底）
     }
   }
 
-  // 頭(0)/上停(1)/中停(2)/下停(3)
   for(var r=0;r<4;r++){
     drawPartRow(r,r,yDataStart+r*(ROW_H+G));
   }
-  // 分隔線
   ctx.fillStyle='#b8b0a0';
   ctx.fillRect(PAD,ySep,contentW,2);
-  // 耳(4)/眉(5)/眼(6)/鼻(7)/口(8)
   var yAfterSep=ySep+SEP_H+G;
   for(var r=0;r<5;r++){
     drawPartRow(r+4,r+4,yAfterSep+r*(ROW_H+G));
