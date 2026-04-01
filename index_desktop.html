@@ -273,6 +273,34 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 /* ===== Knowledge placeholder ===== */
 #knowledge-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:7000;align-items:center;justify-content:center}
 #knowledge-overlay .k-msg{font-size:24px;font-weight:900;color:#ccc;letter-spacing:4px}
+/* ===== Case Management Page ===== */
+#case-page{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:2000;padding:30px;overflow-y:auto}
+.case-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.case-header h2{font-size:24px;font-weight:900;letter-spacing:2px;color:var(--text)}
+.case-add-btn{height:40px;padding:0 20px;background:var(--dark);color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
+.case-add-btn:hover{opacity:0.85}
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.case-card{background:white;border-radius:12px;padding:20px;cursor:pointer;transition:box-shadow 0.2s;border:2px solid transparent;position:relative}
+.case-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);border-color:var(--border)}
+.case-card.is-self{border-left:4px solid var(--static)}
+.case-card-name{font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px}
+.case-card-meta{font-size:13px;color:var(--text-3);line-height:1.8}
+.case-card-meta span{margin-right:12px}
+.case-card-date{font-size:12px;color:#aaa;margin-top:8px}
+.case-card-del{position:absolute;top:12px;right:12px;width:28px;height:28px;border:none;background:transparent;color:#ccc;font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.case-card-del:hover{background:#fee;color:#c03830}
+#case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
+#case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+#case-form-overlay .case-form h3{font-size:20px;font-weight:900;margin-bottom:20px;letter-spacing:2px}
+#case-form-overlay .case-form label{display:block;font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:4px;margin-top:14px;letter-spacing:1px}
+#case-form-overlay .case-form input,#case-form-overlay .case-form select,#case-form-overlay .case-form textarea{width:100%;border:none;border-bottom:2px solid #ddd;padding:8px 0;font-size:16px;font-weight:500;background:transparent;outline:none;font-family:'Noto Serif TC',serif;color:var(--text)}
+#case-form-overlay .case-form input:focus,#case-form-overlay .case-form select:focus,#case-form-overlay .case-form textarea:focus{border-bottom-color:var(--text)}
+#case-form-overlay .case-form textarea{resize:vertical;min-height:60px}
+#case-form-overlay .case-form select{cursor:pointer;-webkit-appearance:none}
+.case-form-actions{display:flex;gap:12px;margin-top:24px}
+.case-form-actions button{flex:1;height:44px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
+.case-form-save{background:var(--dark);color:white}
+.case-form-cancel{background:#eee;color:var(--text)}
 </style>
 </head>
 <body>
@@ -300,11 +328,42 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-report" onclick="showReport()">兵法報告</div>
   <div class="nav-tab" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
   <div class="nav-tab" id="nav-sens" onclick="showSensPage()">敏感度分析</div>
+  <div class="nav-tab" id="nav-cases" onclick="showCasePage()" style="display:none">案例清單</div>
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name" onclick="editName()"></div>
   <a href="admin.html" target="_blank" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
 </nav>
+
+<!-- Case Management Page (TA only) -->
+<div id="case-page">
+  <div class="case-header">
+    <h2>案例管理</h2>
+    <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
+  </div>
+  <div id="case-list" class="case-grid"></div>
+</div>
+
+<!-- Case Form Overlay -->
+<div id="case-form-overlay">
+  <div class="case-form">
+    <h3 id="case-form-title">新增個案</h3>
+    <label>姓名 *</label>
+    <input id="cf-name" placeholder="輸入姓名" maxlength="20">
+    <label>性別</label>
+    <select id="cf-gender"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select>
+    <label>生日</label>
+    <input id="cf-birthday" type="date">
+    <label>觀察日期</label>
+    <input id="cf-date" type="date">
+    <label>備註</label>
+    <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
+    <div class="case-form-actions">
+      <button class="case-form-cancel" onclick="closeCaseForm()">取消</button>
+      <button class="case-form-save" onclick="saveCaseForm()">建立</button>
+    </div>
+  </div>
+</div>
 
 <!-- Mode Page -->
 <div id="mode-page">
@@ -1613,11 +1672,12 @@ function showModePage(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('app-body').style.display='none';
+  document.getElementById('case-page').style.display='none';
   document.getElementById('mode-page').style.display='flex';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive(null);
 }
 
@@ -1625,6 +1685,7 @@ function showObsPage(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('mode-page').style.display='none';
+  document.getElementById('case-page').style.display='none';
   document.getElementById('app-body').style.display='grid';
   document.getElementById('obs-page').style.display='grid';
   document.getElementById('dim-page').style.display='none';
@@ -1632,7 +1693,7 @@ function showObsPage(){
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
   document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
 }
@@ -1641,12 +1702,13 @@ function showKnowledgePage(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('mode-page').style.display='none';
+  document.getElementById('case-page').style.display='none';
   document.getElementById('app-body').style.display='none';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='flex';
   document.getElementById('cond-page').style.display='none';
   document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-know');
 }
 
@@ -1656,11 +1718,11 @@ var CP_PART_ORDER=[0,1,4,5,6,7,8,2,3];
 var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
 
 function showCondPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','manual-page'].forEach(id=>document.getElementById(id).style.display='none');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','manual-page','case-page'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('cond-page').style.display='flex';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-cond');
   recalcFromObs();
   cpRender();
@@ -2174,6 +2236,14 @@ const CAT_STYLE={"先天指數":"background:#3a3530;color:#f7f4ef","運氣指數
 const emptyData=()=>Array(13).fill(null).map(()=>Array(9).fill(null));
 let cur=0,data=emptyData(),_basisVars={},condResults={};
 
+/* ===== 助教模式：Firestore 路徑輔助 ===== */
+function _getUserDocRef(){
+  if(_isTA && _currentCaseId){
+    return db.collection('users').doc(userName).collection('cases').doc(_currentCaseId);
+  }
+  return db.collection('users').doc(userName);
+}
+
 let _saveTimer=null;
 function save(){
   if(!userName)return;
@@ -2181,7 +2251,7 @@ function save(){
   localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(function(){
-    db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()}).catch(e=>console.log('雲端儲存失敗',e));
+    _getUserDocRef().set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()},{merge:true}).catch(function(e){console.log('雲端儲存失敗',e);});
   },1500);
 }
 function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
@@ -2391,7 +2461,7 @@ function reportSave(){
   const btn=document.getElementById('report-save-btn');if(!userName)return;
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
-  db.collection('users').doc(userName).set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()})
+  _getUserDocRef().set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()},{merge:true})
     .then(()=>{btn.innerText='已儲存 \u2713';btn.style.color='var(--static)';btn.style.borderColor='var(--static)';setTimeout(()=>{btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';},2000);})
     .catch(()=>{btn.innerText='失敗，請重試';setTimeout(()=>{btn.innerText='儲存評分';},2000);});
 }
@@ -2400,15 +2470,16 @@ function showReport(){
   document.getElementById('entry-page').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('mode-page').style.display='none';
+  document.getElementById('case-page').style.display='none';
   document.getElementById('app-body').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
   document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
   document.getElementById('report-overlay').style.display='block';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
   recalcFromObs();
-  document.getElementById('report-name-display').innerText=userName||'未命名';
+  document.getElementById('report-name-display').innerText=_currentCaseName||userName||'未命名';
   // 統計數據
   const vTotal=avgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
   const vPre=avgCoeff([0,1,2,3,4,5]),vLuck=avgCoeff([6,7,8]),vPost=avgCoeff([9,10,11,12]);
@@ -2572,11 +2643,11 @@ function closeReport(){document.getElementById('report-overlay').style.display='
 
 /* ===== 敏感度分析頁 ===== */
 function showSensPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page'].forEach(id=>document.getElementById(id).style.display='none');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','case-page'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('sens-page').style.display='block';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-sens');
   recalcFromObs();
   renderSensPage();
@@ -2859,7 +2930,7 @@ function manualSaveLocal(){
 function manualLoadData(){
   // 優先 Firebase，備用 localStorage
   if(!userName){manualLoadLocal();return;}
-  db.collection('users').doc(userName).get().then(function(doc){
+  _getUserDocRef().get().then(function(doc){
     if(doc.exists&&doc.data().manualDataJson){
       try{manualData=JSON.parse(doc.data().manualDataJson);}catch(e){manualLoadLocal();}
     }else{manualLoadLocal();}
@@ -2872,11 +2943,11 @@ function manualLoadLocal(){
 }
 
 function showManualPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','cond-page'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','cond-page','case-page'].forEach(function(id){document.getElementById(id).style.display='none';});
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('manual-page').style.display='block';
-  document.getElementById('nav-name').innerText=userName||'';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual');
   initManualData();
   manualLoadData();
@@ -2909,7 +2980,7 @@ function manualSave(){
   var btn=document.getElementById('manual-save-btn');
   btn.innerText='儲存中...';btn.disabled=true;
   // 存到 users/{userName} 的 manualDataJson 欄位（持久化）
-  var savePromise=db.collection('users').doc(userName).set({
+  var savePromise=_getUserDocRef().set({
     manualDataJson:JSON.stringify(manualData),
     manualCoeffs:JSON.stringify(coeffs),
     manualTotalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
@@ -3078,6 +3149,7 @@ function renderManualPage(){
 
 /* ===== App ===== */
 let userName='';
+var _isTA=false, _currentCaseId=null, _currentCaseName='';
 async function startApp(){
   const name=document.getElementById('entry-name').value.trim();if(!name){document.getElementById('entry-name').focus();return;}
   userName=name;localStorage.setItem('rxbf_username',userName);
@@ -3122,7 +3194,18 @@ async function startApp(){
   }catch(e){console.log('載入失敗',e);data=emptyData();try{obsData=JSON.parse(localStorage.getItem('obs_data_v1')||'{}');}catch(e2){obsData={};}try{obsOverride=JSON.parse(localStorage.getItem('obs_override_v1')||'{}');}catch(e3){obsOverride={};}}
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';btn.innerText='開始';btn.disabled=false;
-  showModePage();
+
+  // 助教模式判斷
+  _isTA = (userName === '曾麥可');
+  if(_isTA){
+    document.getElementById('nav-cases').style.display='';
+    _currentCaseId=null;
+    _currentCaseName=userName;
+    showCasePage();
+  }else{
+    document.getElementById('nav-cases').style.display='none';
+    showModePage();
+  }
 
   // 監聽規則和問題變更（onSnapshot）
   var _snapshotFirst={rules:true,questions:true};
@@ -3169,6 +3252,135 @@ function _renderCurrentTab(){
   }catch(e){console.log('重渲染失敗',e);}
 }
 
+/* ===== 助教模式：案例管理 ===== */
+function showCasePage(){
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page'].forEach(function(id){document.getElementById(id).style.display='none';});
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('case-page').style.display='block';
+  document.getElementById('nav-name').innerText=userName||'';
+  setNavActive('nav-cases');
+  renderCaseList();
+}
+
+function renderCaseList(){
+  var listEl=document.getElementById('case-list');
+  if(!listEl)return;
+  listEl.innerHTML='<div style="color:#aaa;padding:20px;text-align:center">載入中...</div>';
+
+  db.collection('users').doc(userName).get().then(function(selfDoc){
+    var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
+    var html='';
+
+    html+='<div class="case-card is-self" onclick="loadCase(null)">';
+    html+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:500">（本人）</span></div>';
+    if(selfUpdated) html+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
+    html+='</div>';
+
+    db.collection('users').doc(userName).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
+      snap.forEach(function(doc){
+        var c=doc.data();
+        html+='<div class="case-card" onclick="loadCase(\''+doc.id+'\')">';
+        html+='<button class="case-card-del" onclick="event.stopPropagation();deleteCase(\''+doc.id+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
+        html+='<div class="case-card-name">'+(c.name||'未命名')+'</div>';
+        html+='<div class="case-card-meta">';
+        if(c.gender) html+='<span>'+c.gender+'</span>';
+        if(c.birthday) html+='<span>生日：'+c.birthday+'</span>';
+        if(c.date) html+='<span>日期：'+c.date+'</span>';
+        html+='</div>';
+        if(c.note) html+='<div class="case-card-meta" style="margin-top:4px;color:#999">'+_escHtml(c.note)+'</div>';
+        if(c.updatedAt) html+='<div class="case-card-date">更新：'+c.updatedAt.substring(0,10)+'</div>';
+        html+='</div>';
+      });
+      listEl.innerHTML=html;
+    }).catch(function(e){
+      console.log('載入案例失敗',e);
+      listEl.innerHTML=html+'<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
+    });
+  });
+}
+
+function _escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+function loadCase(caseId){
+  if(caseId===null){
+    _currentCaseId=null;
+    _currentCaseName=userName;
+    db.collection('users').doc(userName).get().then(function(doc){
+      if(doc.exists&&doc.data().dataJson)data=JSON.parse(doc.data().dataJson);else data=emptyData();
+      if(doc.exists&&doc.data().obsJson)obsData=JSON.parse(doc.data().obsJson);else obsData={};
+      if(doc.exists&&doc.data().overrideJson)obsOverride=JSON.parse(doc.data().overrideJson);else obsOverride={};
+      recalcFromObs();
+      showModePage();
+    }).catch(function(e){console.log('載入失敗',e);data=emptyData();obsData={};obsOverride={};recalcFromObs();showModePage();});
+  }else{
+    _currentCaseId=caseId;
+    db.collection('users').doc(userName).collection('cases').doc(caseId).get().then(function(doc){
+      if(!doc.exists){alert('個案不存在');return;}
+      var c=doc.data();
+      _currentCaseName=c.name||'未命名';
+      if(c.dataJson)data=JSON.parse(c.dataJson);else data=emptyData();
+      if(c.obsJson)obsData=JSON.parse(c.obsJson);else obsData={};
+      if(c.overrideJson)obsOverride=JSON.parse(c.overrideJson);else obsOverride={};
+      recalcFromObs();
+      showModePage();
+    }).catch(function(e){console.log('載入個案失敗',e);alert('載入失敗');});
+  }
+}
+
+function showCaseForm(){
+  document.getElementById('case-form-title').innerText='新增個案';
+  document.getElementById('cf-name').value='';
+  document.getElementById('cf-gender').value='';
+  document.getElementById('cf-birthday').value='';
+  document.getElementById('cf-date').value=new Date().toISOString().substring(0,10);
+  document.getElementById('cf-note').value='';
+  document.getElementById('case-form-overlay').style.display='flex';
+  setTimeout(function(){document.getElementById('cf-name').focus();},100);
+}
+
+function closeCaseForm(){
+  document.getElementById('case-form-overlay').style.display='none';
+}
+
+function saveCaseForm(){
+  var name=document.getElementById('cf-name').value.trim();
+  if(!name){document.getElementById('cf-name').focus();return;}
+  var caseData={
+    name:name,
+    gender:document.getElementById('cf-gender').value,
+    birthday:document.getElementById('cf-birthday').value,
+    date:document.getElementById('cf-date').value,
+    note:document.getElementById('cf-note').value.trim(),
+    dataJson:JSON.stringify(emptyData()),
+    obsJson:'{}',
+    overrideJson:'{}',
+    createdAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  var saveBtn=document.querySelector('.case-form-save');
+  saveBtn.innerText='建立中...';saveBtn.disabled=true;
+  db.collection('users').doc(userName).collection('cases').add(caseData).then(function(){
+    closeCaseForm();
+    saveBtn.innerText='建立';saveBtn.disabled=false;
+    renderCaseList();
+  }).catch(function(e){
+    console.log('建立失敗',e);
+    alert('建立失敗，請重試');
+    saveBtn.innerText='建立';saveBtn.disabled=false;
+  });
+}
+
+function deleteCase(caseId,caseName){
+  if(!confirm('確定要刪除「'+caseName+'」的所有紀錄嗎？此操作無法復原。'))return;
+  db.collection('users').doc(userName).collection('cases').doc(caseId).delete().then(function(){
+    renderCaseList();
+  }).catch(function(e){
+    console.log('刪除失敗',e);
+    alert('刪除失敗，請重試');
+  });
+}
+
 function editName(){document.getElementById('name-edit-input').value=userName;document.getElementById('name-edit-overlay').style.display='flex';setTimeout(()=>document.getElementById('name-edit-input').focus(),100);}
 function confirmEditName(){const n=document.getElementById('name-edit-input').value.trim();if(n){userName=n;localStorage.setItem('rxbf_username',userName);document.getElementById('nav-name').innerText=userName;}closeEditName();}
 function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
@@ -3180,10 +3392,11 @@ async function exportPNG(){
   try{
     var canvas=drawReportCanvas();
     var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    var _expName=_currentCaseName||userName||'報告';
     var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
-      '人相兵法_'+(userName||'報告')+'.png',{type:'image/png'});
+      '人相兵法_'+_expName+'.png',{type:'image/png'});
     if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:'人相兵法報告',text:(userName||'')+' 的人相兵法報告'});}
+      try{await navigator.share({files:[file],title:'人相兵法報告',text:_expName+' 的人相兵法報告'});}
       catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}
     }else{fallbackDownload(canvas);}
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
@@ -3193,7 +3406,7 @@ async function exportPNG(){
 function fallbackDownload(canvas){
   var dataUrl=canvas.toDataURL('image/png');
   var link=document.createElement('a');
-  link.download='人相兵法_'+(userName||'報告')+'.png';
+  link.download='人相兵法_'+(_currentCaseName||userName||'報告')+'.png';
   link.href=dataUrl;link.click();
 }
 
