@@ -2585,8 +2585,11 @@ function showReport(){
     const dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
     const dimAlpha=['rgba(94,128,128,0.4)','rgba(110,146,146,0.4)','rgba(126,164,164,0.4)','rgba(82,112,112,0.4)','rgba(96,130,130,0.4)','rgba(110,148,148,0.4)','rgba(158,138,90,0.4)','rgba(178,158,110,0.4)','rgba(198,178,130,0.4)','rgba(122,90,80,0.4)','rgba(142,108,98,0.4)','rgba(162,126,116,0.4)','rgba(182,144,136,0.4)'];
     const SBG='#7A9E7E',DBG='#C17A5A';
-    const sL=DIMS.map(function(d){return d.da;});
-    const dL=DIMS.map(function(d){return d.db;});
+    var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
+    var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
+    var colL=DIMS.map(function(d){return d.da;});
+    var colR=DIMS.map(function(d){return d.db;});
+    var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
     const bd='border:1px solid rgba(0,0,0,0.15)';
     var rc='border-radius:4px';
     var csTop='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;text-align:center';
@@ -2671,15 +2674,12 @@ function showReport(){
     // 子欄行：靜X｜動X（透明底、棕色字、底線）
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      var _daIsA=(DIMS[i].da===DIMS[i].a);
-      var _colLType=_daIsA?DIMS[i].aT:DIMS[i].bT;
-      var _colRType=_daIsA?DIMS[i].bT:DIMS[i].aT;
-      var _colLBg=_colLType==='靜'?SBG:DBG;
-      var _colRBg=_colRType==='靜'?SBG:DBG;
-      var _colLC=_colLType==='靜'?dimSCounts[i]:dimDCounts[i];
-      var _colRC=_colRType==='靜'?dimSCounts[i]:dimDCounts[i];
-      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+_colLBg+'">'+sL[i]+_colLC+'</th>';
-      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+_colRBg+'">'+dL[i]+_colRC+'</th>';
+      var lBg=colLIsS[i]?SBG:DBG;
+      var rBg=colLIsS[i]?DBG:SBG;
+      var lCnt=colLIsS[i]?dimSCounts[i]:dimDCounts[i];
+      var rCnt=colLIsS[i]?dimDCounts[i]:dimSCounts[i];
+      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+lBg+'">'+colL[i]+lCnt+'</th>';
+      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+rBg+'">'+colR[i]+rCnt+'</th>';
     });
     t+='</tr>';
     // 係數格（獨立圓角方塊 + 堆疊橫條）
@@ -2718,17 +2718,15 @@ function showReport(){
         var isStatic=false,isDynamic=false;
         if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
         if(isStatic||isDynamic){
-          var _daIsA2=(DIMS[di].da===DIMS[di].a);
-          var _colLType2=_daIsA2?DIMS[di].aT:DIMS[di].bT;
-          var _cellBg=isStatic?SBG:DBG;
-          var _cellLabel=isStatic?sL[di]:dL[di];
-          var _goLeft=(isStatic&&_colLType2==='靜')||(isDynamic&&_colLType2==='動');
-          if(_goLeft){
-            t+='<td style="padding:4px 8px;text-align:center;background:'+_cellBg+';color:white;font-weight:700;'+rc+'">'+_cellLabel+'</td>';
+          var cellBg=isStatic?SBG:DBG;
+          var cellLabel=isStatic?sChar[di]:dChar[di];
+          var goLeft=(isStatic&&colLIsS[di])||(isDynamic&&!colLIsS[di]);
+          if(goLeft){
+            t+='<td style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+'">'+cellLabel+'</td>';
             t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
           }else{
             t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
-            t+='<td style="padding:4px 8px;text-align:center;background:'+_cellBg+';color:white;font-weight:700;'+rc+'">'+_cellLabel+'</td>';
+            t+='<td style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+'">'+cellLabel+'</td>';
           }
         }else{
           t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
@@ -3126,8 +3124,11 @@ function renderManualPage(){
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
   var dimAlpha=['rgba(94,128,128,0.4)','rgba(110,146,146,0.4)','rgba(126,164,164,0.4)','rgba(82,112,112,0.4)','rgba(96,130,130,0.4)','rgba(110,148,148,0.4)','rgba(158,138,90,0.4)','rgba(178,158,110,0.4)','rgba(198,178,130,0.4)','rgba(122,90,80,0.4)','rgba(142,108,98,0.4)','rgba(162,126,116,0.4)','rgba(182,144,136,0.4)'];
   var SBG='#7A9E7E',DBG='#C17A5A';
-  var sL=['形','經','方','直','收','緩','順','合','真','守','正','實','退'];
-  var dL=['勢','緯','圓','曲','放','急','逆','分','假','攻','奇','虛','進'];
+  var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
+  var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
+  var colL=DIMS.map(function(d){return d.da;});
+  var colR=DIMS.map(function(d){return d.db;});
+  var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
   var rc='border-radius:4px';
   var pw='width:38px;min-width:38px';
   var nb='background:transparent;border:none;padding:4px';
@@ -3199,15 +3200,12 @@ function renderManualPage(){
   // 子欄行
   t+='<tr>';
   DIMS.forEach(function(d,i){
-    var _daIsA=(DIMS[i].da===DIMS[i].a);
-    var _colLType=_daIsA?DIMS[i].aT:DIMS[i].bT;
-    var _colRType=_daIsA?DIMS[i].bT:DIMS[i].aT;
-    var _colLBg=_colLType==='靜'?SBG:DBG;
-    var _colRBg=_colRType==='靜'?SBG:DBG;
-    var _colLC=_colLType==='靜'?dimSCounts[i]:dimDCounts[i];
-    var _colRC=_colRType==='靜'?dimSCounts[i]:dimDCounts[i];
-    t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+_colLBg+'">'+sL[i]+_colLC+'</th>';
-    t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+_colRBg+'">'+dL[i]+_colRC+'</th>';
+    var lBg=colLIsS[i]?SBG:DBG;
+    var rBg=colLIsS[i]?DBG:SBG;
+    var lCnt=colLIsS[i]?dimSCounts[i]:dimDCounts[i];
+    var rCnt=colLIsS[i]?dimDCounts[i]:dimSCounts[i];
+    t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+lBg+'">'+colL[i]+lCnt+'</th>';
+    t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+rBg+'">'+colR[i]+rCnt+'</th>';
   });
   t+='</tr>';
   // 係數格
@@ -3241,17 +3239,15 @@ function renderManualPage(){
       var isStatic=false,isDynamic=false;
       if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
       if(isStatic||isDynamic){
-        var _daIsA2=(DIMS[di].da===DIMS[di].a);
-        var _colLType2=_daIsA2?DIMS[di].aT:DIMS[di].bT;
-        var _cellBg=isStatic?SBG:DBG;
-        var _cellLabel=isStatic?sL[di]:dL[di];
-        var _goLeft=(isStatic&&_colLType2==='靜')||(isDynamic&&_colLType2==='動');
-        if(_goLeft){
-          t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+_cellBg+';color:white;font-weight:700;'+rc+';cursor:pointer">'+_cellLabel+'</td>';
+        var cellBg=isStatic?SBG:DBG;
+        var cellLabel=isStatic?sChar[di]:dChar[di];
+        var goLeft=(isStatic&&colLIsS[di])||(isDynamic&&!colLIsS[di]);
+        if(goLeft){
+          t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+';cursor:pointer">'+cellLabel+'</td>';
           t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+';cursor:pointer"></td>';
         }else{
           t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+';cursor:pointer"></td>';
-          t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+_cellBg+';color:white;font-weight:700;'+rc+';cursor:pointer">'+_cellLabel+'</td>';
+          t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+';cursor:pointer">'+cellLabel+'</td>';
         }
       }else{
         t+='<td onclick="manualCellClick('+di+','+pi+')" style="padding:4px 8px;text-align:center;'+rc+';cursor:pointer;background:rgba(0,0,0,0.03)"></td>';
@@ -3613,8 +3609,11 @@ function drawReportCanvas(){
                  'rgba(182,144,136,0.35)'];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   // 動態取靜/動標籤（修復 bug）
-  var sL=DIMS.map(function(d){return d.da;});
-  var dL=DIMS.map(function(d){return d.db;});
+  var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
+  var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
+  var colL=DIMS.map(function(d){return d.da;});
+  var colR=DIMS.map(function(d){return d.db;});
+  var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
 
   // ========== 佈局參數（1x 座標）==========
   var PAD=20;           // 外邊距
@@ -3774,20 +3773,17 @@ function drawReportCanvas(){
   // --- 4. 子欄行（靜X / 動X）---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
-    var _daIsA=(DIMS[i].da===DIMS[i].a);
-    var _colLType=_daIsA?DIMS[i].aT:DIMS[i].bT;
-    var _colRType=_daIsA?DIMS[i].bT:DIMS[i].aT;
-    var _colLBg=_colLType==='靜'?SBG:DBG;
-    var _colRBg=_colRType==='靜'?SBG:DBG;
-    var _colLC=_colLType==='靜'?dimSC[i]:dimDC[i];
-    var _colRC=_colRType==='靜'?dimSC[i]:dimDC[i];
+    var lBg=colLIsS[i]?SBG:DBG;
+    var rBg=colLIsS[i]?DBG:SBG;
+    var lCnt=colLIsS[i]?dimSC[i]:dimDC[i];
+    var rCnt=colLIsS[i]?dimDC[i]:dimSC[i];
     // 左欄
-    txtC(sL[i]+_colLC,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-    ctx.fillStyle=_colLBg;
+    txtC(colL[i]+lCnt,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
+    ctx.fillStyle=lBg;
     ctx.fillRect(dx,ySubHdr+SUB_H-3,SUB_W,2.5);
     // 右欄
-    txtC(dL[i]+_colRC,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-    ctx.fillStyle=_colRBg;
+    txtC(colR[i]+rCnt,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
+    ctx.fillStyle=rBg;
     ctx.fillRect(dx+SUB_W,ySubHdr+SUB_H-3,SUB_W,2.5);
   }
 
@@ -3840,19 +3836,17 @@ function drawReportCanvas(){
         isStatic=tp==='靜';isDynamic=tp==='動';
       }
       if(isStatic||isDynamic){
-        var _daIsA2=(DIMS[di].da===DIMS[di].a);
-        var _colLType2=_daIsA2?DIMS[di].aT:DIMS[di].bT;
-        var _cellBg=isStatic?SBG:DBG;
-        var _cellLabel=isStatic?sL[di]:dL[di];
-        var _goLeft=(isStatic&&_colLType2==='靜')||(isDynamic&&_colLType2==='動');
-        if(_goLeft){
-          rRect(dx,yy,SUB_W,ROW_H,4,_cellBg);
-          txtC(_cellLabel,dx,yy,SUB_W,ROW_H,'#ffffff',12,true);
+        var cellBg=isStatic?SBG:DBG;
+        var cellLabel=isStatic?sChar[di]:dChar[di];
+        var goLeft=(isStatic&&colLIsS[di])||(isDynamic&&!colLIsS[di]);
+        if(goLeft){
+          rRect(dx,yy,SUB_W,ROW_H,4,cellBg);
+          txtC(cellLabel,dx,yy,SUB_W,ROW_H,'#ffffff',12,true);
           rRect(dx+SUB_W,yy,SUB_W,ROW_H,4,dimAlphas[di]);
         }else{
           rRect(dx,yy,SUB_W,ROW_H,4,dimAlphas[di]);
-          rRect(dx+SUB_W,yy,SUB_W,ROW_H,4,_cellBg);
-          txtC(_cellLabel,dx+SUB_W,yy,SUB_W,ROW_H,'#ffffff',12,true);
+          rRect(dx+SUB_W,yy,SUB_W,ROW_H,4,cellBg);
+          txtC(cellLabel,dx+SUB_W,yy,SUB_W,ROW_H,'#ffffff',12,true);
         }
       }
       // 無資料：不畫任何東西（白底）
