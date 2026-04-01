@@ -88,6 +88,8 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .ln-table td input:focus{border-bottom-color:var(--active);background:#fff8f0}
 .ln-table td select{border:none;background:transparent;font-size:13px;font-family:'Noto Serif TC',serif;text-align:center;cursor:pointer;outline:none}
 .ln-table td select:focus{background:#fff8f0}
+.ln-orig{font-size:10px;color:#ccc;display:block;line-height:1.2;margin-top:1px}
+.ln-orig.changed{color:var(--active);font-weight:700}
 .ln-age{font-weight:900;color:var(--text);min-width:36px}
 .ln-mark{min-width:30px}
 .ln-guan{background:#fff0e0;color:#c07030;font-weight:900}
@@ -1258,9 +1260,16 @@ function renderLiunian(){
         h+='<option value=""'+(val===''?' selected':'')+'></option>';
         h+='<option value="關"'+(val==='關'?' selected':'')+'>關</option>';
         h+='<option value="隘"'+(val==='隘'?' selected':'')+'>隘</option>';
-        h+='</select></td>';
+        var defRow2=LIUNIAN_DEFAULT_DATA[_lnGender]&&LIUNIAN_DEFAULT_DATA[_lnGender][idx]?LIUNIAN_DEFAULT_DATA[_lnGender][idx]:{};
+        var defMark=defRow2.mark||'';
+        var markChanged=(val||'')!==(defMark||'');
+        h+='</select><span class="ln-orig'+(markChanged?' changed':'')+'">'+defMark+'</span></td>';
       }else{
-        h+='<td><input value="'+String(val).replace(/"/g,'&quot;')+'" onchange="lnEdit(\''+_lnGender+'\','+idx+',\''+col+'\',this.value)"></td>';
+        var defRow=LIUNIAN_DEFAULT_DATA[_lnGender]&&LIUNIAN_DEFAULT_DATA[_lnGender][idx]?LIUNIAN_DEFAULT_DATA[_lnGender][idx]:{};
+        var defVal=defRow[col]!=null?defRow[col]:'';
+        var isChanged=String(val)!==String(defVal);
+        h+='<td><input value="'+String(val).replace(/"/g,'&quot;')+'" onchange="lnEdit(\''+_lnGender+'\','+idx+',\''+col+'\',this.value)">';
+        h+='<span class="ln-orig'+(isChanged?' changed':'')+'">'+defVal+'</span></td>';
       }
     });
     h+='</tr>';
