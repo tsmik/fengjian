@@ -333,6 +333,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-tab" id="nav-report" onclick="showReport()">兵法報告</div>
   <div class="nav-tab" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
   <div class="nav-tab" id="nav-sens" onclick="showSensPage()">敏感度分析</div>
+  <div class="nav-tab" id="nav-manual-sens" onclick="showManualSensPage()">手動敏感度</div>
   <div class="nav-tab" id="nav-cases" onclick="showCasePage()" style="display:none">案例清單</div>
   <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料：各維度評分標準</div>
   <div class="nav-tab" id="nav-clear" onclick="clearObsData()" style="color:rgba(255,100,100,0.6);font-size:12px">清除資料</div>
@@ -517,6 +518,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <!-- 敏感度分析頁 -->
 <div id="sens-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5500;overflow-y:auto;padding:20px">
   <div id="sens-content" style="max-width:900px;margin:0 auto"></div>
+</div>
+<!-- 手動敏感度分析頁 -->
+<div id="manual-sens-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5000;padding:20px;overflow-y:auto">
+  <div id="manual-sens-content" style="max-width:900px;margin:0 auto"></div>
 </div>
 <!-- 維度條件評分頁 -->
 <div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000;flex-direction:column">
@@ -1729,7 +1734,7 @@ function showModePage(){
   document.getElementById('mode-page').style.display='flex';
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
-  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';document.getElementById('manual-sens-page').style.display='none';
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   var mcs=document.getElementById('mode-case-section');
   if(mcs){mcs.style.display=_isTA?'':'none';}
@@ -1747,7 +1752,7 @@ function showObsPage(){
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
-  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';document.getElementById('manual-sens-page').style.display='none';
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
@@ -1762,7 +1767,7 @@ function showKnowledgePage(){
   document.getElementById('report-overlay').style.display='none';
   document.getElementById('knowledge-overlay').style.display='flex';
   document.getElementById('cond-page').style.display='none';
-  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';document.getElementById('manual-sens-page').style.display='none';
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-know');
 }
@@ -1773,7 +1778,7 @@ var CP_PART_ORDER=[0,1,4,5,6,7,8,2,3];
 var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
 
 function showCondPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','manual-page','case-page'].forEach(id=>document.getElementById(id).style.display='none');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','manual-page','case-page','manual-sens-page'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('cond-page').style.display='flex';
@@ -2608,7 +2613,7 @@ function showReport(){
   document.getElementById('app-body').style.display='none';
   document.getElementById('knowledge-overlay').style.display='none';
   document.getElementById('cond-page').style.display='none';
-  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';
+  document.getElementById('sens-page').style.display='none';document.getElementById('manual-page').style.display='none';document.getElementById('manual-sens-page').style.display='none';
   document.getElementById('report-overlay').style.display='block';
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
@@ -2791,7 +2796,7 @@ function closeReport(){document.getElementById('report-overlay').style.display='
 
 /* ===== 敏感度分析頁 ===== */
 function showSensPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','case-page'].forEach(id=>document.getElementById(id).style.display='none');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','case-page','manual-sens-page'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('sens-page').style.display='block';
@@ -3091,7 +3096,7 @@ function manualLoadLocal(){
 }
 
 function showManualPage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','cond-page','case-page'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','cond-page','case-page','manual-sens-page'].forEach(function(id){document.getElementById(id).style.display='none';});
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('manual-page').style.display='block';
@@ -3428,7 +3433,7 @@ function _renderCurrentTab(){
 
 /* ===== 助教模式：案例管理 ===== */
 function showCasePage(){
-  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page','manual-sens-page'].forEach(function(id){document.getElementById(id).style.display='none';});
   document.getElementById('app-body').style.display='none';
   document.getElementById('top-nav').style.display='flex';
   document.getElementById('case-page').style.display='block';
@@ -3636,7 +3641,134 @@ function clearObsData(){
 }
 
 function showManualSensPage(){
-  alert('手動敏感度分析功能開發中');
+  ['entry-page','mode-page','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page','case-page','manual-sens-page'].forEach(function(id){document.getElementById(id).style.display='none';});
+  document.getElementById('app-body').style.display='none';
+  document.getElementById('top-nav').style.display='flex';
+  document.getElementById('manual-sens-page').style.display='block';
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  setNavActive('nav-manual-sens');
+  initManualData();
+  manualLoadData();
+  setTimeout(renderManualSensPage, 300);
+}
+
+function renderManualSensPage(){
+  var el=document.getElementById('manual-sens-content');if(!el)return;
+  if(!manualData){el.innerHTML='<div style="color:#aaa;padding:20px">請先在「手動輸入報告」中填入資料</div>';return;}
+  var SBG='#7A9E7E',DBG='#C17A5A';
+  var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+
+  var origManual=JSON.parse(JSON.stringify(manualData));
+
+  var baseCoeffs=[];
+  for(var di=0;di<13;di++){var r=manualCalcDim(di);baseCoeffs.push(r?r.coeff:0);}
+  var baseTotalCoeff=baseCoeffs.reduce(function(a,b){return a+b;},0)/13;
+
+  var baseTypes=[];
+  for(var di=0;di<13;di++){var r=manualCalcDim(di);baseTypes.push(r?r.type:null);}
+
+  var results=[];
+  for(var di=0;di<13;di++){
+    for(var pi=0;pi<9;pi++){
+      var curVal=origManual[di][pi];
+      var tryVals=['A','B',null];
+      var bestDelta=0, bestNewTotal=baseTotalCoeff, bestNewType=null, bestFlipped=false;
+
+      tryVals.forEach(function(tv){
+        if(tv===curVal)return;
+        manualData=JSON.parse(JSON.stringify(origManual));
+        manualData[di][pi]=tv;
+        var newCoeffs=[];
+        for(var d2=0;d2<13;d2++){var r2=manualCalcDim(d2);newCoeffs.push(r2?r2.coeff:0);}
+        var newTotal=newCoeffs.reduce(function(a,b){return a+b;},0)/13;
+        var delta=newTotal-baseTotalCoeff;
+        var newDimRes=manualCalcDim(di);
+        var newType=newDimRes?newDimRes.type:null;
+        var flipped=(baseTypes[di]==='動'&&newType==='靜');
+
+        if(delta>bestDelta||(Math.abs(delta-bestDelta)<0.001&&flipped&&!bestFlipped)){
+          bestDelta=delta;
+          bestNewTotal=newTotal;
+          bestNewType=newType;
+          bestFlipped=flipped;
+        }
+      });
+
+      manualData=JSON.parse(JSON.stringify(origManual));
+
+      if(bestDelta>0.001||bestFlipped){
+        var curTypeStr='';
+        if(curVal==='A')curTypeStr=DIMS[di].aT;
+        else if(curVal==='B')curTypeStr=DIMS[di].bT;
+        else curTypeStr='空';
+        results.push({
+          di:di, pi:pi,
+          part:partLabels[pi],
+          dim:DIMS[di].dn,
+          curType:curTypeStr,
+          delta:bestDelta,
+          newTotal:bestNewTotal,
+          newType:bestNewType,
+          flipped:bestFlipped
+        });
+      }
+    }
+  }
+
+  manualData=JSON.parse(JSON.stringify(origManual));
+
+  results.sort(function(a,b){
+    if(Math.abs(b.delta-a.delta)>0.001)return b.delta-a.delta;
+    if(b.flipped&&!a.flipped)return 1;
+    if(a.flipped&&!b.flipped)return -1;
+    return 0;
+  });
+
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動敏感度分析</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × 13 維度矩陣，模擬每個格子翻轉後對總係數的影響</div>';
+
+  html+='<div style="margin-bottom:16px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<span style="font-size:14px;font-weight:700;color:var(--text)">目前總係數：'+baseTotalCoeff.toFixed(2)+'</span>';
+  html+='</div>';
+
+  if(results.length===0){
+    html+='<div style="padding:12px;font-size:14px;color:var(--text-3)">無可提升的變動（所有格子翻轉後總係數都不會提高）</div>';
+  }else{
+    html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">可提升的部位變動（依影響排序）</div>';
+
+    results.forEach(function(r,idx){
+      if(idx>=20)return;
+      var deltaStr=r.delta>0.001?'+'+r.delta.toFixed(3):'±0';
+      var flipStr=r.flipped?' <span style="color:'+SBG+';font-weight:700">動→靜</span>':'';
+      html+='<div style="margin-bottom:6px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+      html+='<span style="font-weight:900;color:var(--text);min-width:36px">'+r.part+'</span>';
+      html+='<span style="font-weight:700;color:var(--text-2)">'+r.dim+'</span>';
+      html+='<span style="font-size:13px;color:var(--text-3)">（目前：'+r.curType+'）</span>';
+      html+='<span style="font-size:13px;color:var(--active);font-weight:700">總係數 → '+r.newTotal.toFixed(2)+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">'+deltaStr+'</span>';
+      html+=flipStr;
+      html+='</div>';
+    });
+  }
+
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度現況</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+
+  for(var di=0;di<13;di++){
+    var d=DIMS[di];
+    var res=manualCalcDim(di);
+    var dimType=res?res.type:'—';
+    var dimCoeff=res?res.coeff:0;
+    var bg=dimType==='靜'?SBG:(dimType==='動'?DBG:'#ccc');
+    html+='<div style="padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
+    html+='<span style="font-weight:700;color:var(--text)">'+d.dn+'</span>';
+    html+='<span style="font-size:13px;color:var(--text-3)">'+d.view+'</span>';
+    html+='<span style="display:inline-block;padding:1px 8px;border-radius:4px;background:'+bg+';color:white;font-weight:700;font-size:13px;margin-left:auto">'+dimType+' '+(res?dimCoeff.toFixed(2):'—')+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+
+  el.innerHTML=html;
 }
 
 async function exportPNG(){
