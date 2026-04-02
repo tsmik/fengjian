@@ -2849,7 +2849,12 @@ function showSensPage(){
 function renderSensPage(){
   var el=document.getElementById('sens-content');if(!el)return;
   var SBG='#7A9E7E',DBG='#C17A5A';
-  // 完整備份原始狀態
+  var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+
+  el.innerHTML='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">敏感度分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
+
+  setTimeout(function(){
+
   var origObs=JSON.parse(JSON.stringify(obsData));
   var origData=JSON.parse(JSON.stringify(data));
   var origOverride=JSON.parse(JSON.stringify(obsOverride));
@@ -2863,252 +2868,254 @@ function renderSensPage(){
     });});
   });
 
-  // 計算基準係數
+  // 基準
   var baseCoeffs=[];
   for(var di=0;di<13;di++){var r=calcDim(di);baseCoeffs.push(r?r.coeff:0);}
   var baseTotalCoeff=baseCoeffs.reduce(function(a,b){return a+b;},0)/13;
-
-  // 基準維度類型（靜/動）
   var baseTypes=[];
-  for(var di=0;di<13;di++){var r=calcDim(di);baseTypes.push(r?r.type:null);}
+  for(var di=0;di<13;di++){var r2=calcDim(di);baseTypes.push(r2?r2.type:null);}
 
-  // 對每個題目模擬改變，每題模擬後立即還原
-  // 收集：係數提升結果 + 動轉靜結果
-  var results=[];    // 係數有提升的
-  var flipResults=[]; // 係數不變但動→靜的
+  // 對每題計算敏感度
+  var sensResults=[];
   allQs.forEach(function(q){
     var curVal=origObs[q.id]||'';
-    var bestDelta=0,bestDimDeltas=[],bestNewCoeffs=[],bestNewTypes=[];
-    // 也追蹤動轉靜（係數不變時）
-    var canFlip=false,flipDimDeltas=[],flipNewCoeffs=[],flipNewTypes=[];
+    var maxAbsDelta=0;
+    var bestUpDelta=0;
+    var bestDownDelta=0;
+    var affectedDims=new Set();
+    var flipDims=new Set();
 
     q.opts.forEach(function(opt){
       var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
       obsData=JSON.parse(JSON.stringify(origObs));
       obsData[q.id]=v;
       if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
       recalcFromObs();
-      var newCoeffs=[],dimDeltas=[],newTypes=[];
+      var newCoeffs=[],newTypes=[];
       for(var di=0;di<13;di++){
         var r=calcDim(di);var nc=r?r.coeff:0;
-        newCoeffs.push(nc);dimDeltas.push(nc-baseCoeffs[di]);newTypes.push(r?r.type:null);
+        newCoeffs.push(nc);newTypes.push(r?r.type:null);
+        if(Math.abs(nc-baseCoeffs[di])>0.001)affectedDims.add(di);
+        if(baseTypes[di]==='動'&&(r?r.type:null)==='靜')flipDims.add(di);
       }
       var newTotal=newCoeffs.reduce(function(a,b){return a+b;},0)/13;
       var totalDelta=newTotal-baseTotalCoeff;
-      if(totalDelta>bestDelta){
-        bestDelta=totalDelta;bestDimDeltas=dimDeltas.slice();bestNewCoeffs=newCoeffs.slice();bestNewTypes=newTypes.slice();
-      }
-      // 檢查是否有任何維度從動轉靜（即使係數沒變）
-      var hasFlip=false;
-      for(var di=0;di<13;di++){
-        if(baseTypes[di]==='動'&&newTypes[di]==='靜')hasFlip=true;
-      }
-      if(hasFlip&&totalDelta<=0.001&&!canFlip){
-        canFlip=true;flipDimDeltas=dimDeltas.slice();flipNewCoeffs=newCoeffs.slice();flipNewTypes=newTypes.slice();
-      }
+      var absDelta=Math.abs(totalDelta);
+      if(absDelta>maxAbsDelta)maxAbsDelta=absDelta;
+      if(totalDelta>bestUpDelta)bestUpDelta=totalDelta;
+      if(totalDelta<bestDownDelta)bestDownDelta=totalDelta;
     });
 
     obsData=JSON.parse(JSON.stringify(origObs));
     data=JSON.parse(JSON.stringify(origData));
 
-    if(bestDelta>0.001){
-      var affected=[],flipped=[];
-      for(var di=0;di<13;di++){
-        if(Math.abs(bestDimDeltas[di])>0.001)affected.push(di);
-        if(baseTypes[di]==='動'&&bestNewTypes[di]==='靜')flipped.push(di);
-      }
-      results.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
-        totalDelta:bestDelta,dimDeltas:bestDimDeltas,newCoeffs:bestNewCoeffs,newTypes:bestNewTypes,affected:affected,flipped:flipped});
-    }
-    if(canFlip){
-      var flipDims=[];
-      for(var di=0;di<13;di++){if(baseTypes[di]==='動'&&flipNewTypes[di]==='靜')flipDims.push(di);}
-      flipResults.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',flipDims:flipDims,newTypes:flipNewTypes,newCoeffs:flipNewCoeffs,totalDelta:0});
-    }
+    sensResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',paired:q.paired,
+      sensitivity:maxAbsDelta,bestUp:bestUpDelta,bestDown:bestDownDelta,
+      affectedDims:Array.from(affectedDims).sort(function(a,b){return a-b;}),
+      flipDims:Array.from(flipDims).sort(function(a,b){return a-b;})
+    });
   });
 
-  // 最終還原確保乾淨
+  // 最終還原
   obsData=JSON.parse(JSON.stringify(origObs));
   obsOverride=JSON.parse(JSON.stringify(origOverride));
   data=JSON.parse(JSON.stringify(origData));
   recalcFromObs();
 
-  // helpers
-  function rk(n){return Math.round(n*1000);}
-  function badge(type,coeff){
-    var bg=type==='靜'?SBG:DBG;
-    return '<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:'+bg+';color:white;font-weight:700">'+type+' '+coeff.toFixed(2)+'</span>';
-  }
-  function badgeSmall(type,coeff){
-    var bg=type==='靜'?SBG:DBG;
-    return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;background:'+bg+';color:white;font-weight:700;font-size:13px">'+type+' '+coeff.toFixed(2)+'</span>';
-  }
-  var nums='①②③④⑤⑥⑦⑧⑨⑩';
+  // 分類
+  var HIGH_THRESHOLD=0.02;
+  var LOW_THRESHOLD=0.001;
+  var highSens=sensResults.filter(function(r){return r.sensitivity>HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var midSens=sensResults.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<=HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var lowSens=sensResults.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
 
-  // 按部位彙整條件列表
-  function renderItemsByPart(items){
-    var byPart={};
-    items.forEach(function(r){
-      var p=r.part||'其他';
-      if(!byPart[p])byPart[p]=[];
-      byPart[p].push(r);
-    });
-    var out='';
-    var partOrder=OBS_PART_NAMES;
-    partOrder.forEach(function(p){
-      if(!byPart[p])return;
-      out+='<div style="padding:2px 0 2px 18px;font-size:14px;color:var(--text-2)">'+
-        '<b style="color:var(--text)">'+p+'：</b>';
-      byPart[p].forEach(function(r,ri){
-        if(ri>0)out+='<span style="margin-left:30px"></span>';
-        out+='<span>'+r.text+'</span>'+
-          '<span style="color:var(--text-3);margin-left:4px">（目前：'+r.curVal+'）</span><br>';
-      });
-      out+='</div>';
-    });
-    return out;
-  }
-  // 影響明細
-  function dimDetailStr(r){
-    var details=[];
-    var all=(r.affected||[]).slice();
-    (r.flipped||[]).forEach(function(di){if(all.indexOf(di)<0)all.push(di);});
-    all.sort(function(a,b){return a-b;});
-    all.forEach(function(di){
-      var dn=DIMS[di].dn;
-      var isFlip=r.flipped&&r.flipped.indexOf(di)>=0;
-      var isUp=r.affected&&r.affected.indexOf(di)>=0&&r.dimDeltas&&r.dimDeltas[di]>0.001;
-      if(isFlip&&isUp)details.push(dn+'↑動→靜');
-      else if(isFlip)details.push(dn+' 動→靜');
-      else if(isUp)details.push(dn+'↑');
-    });
-    return details.join('、');
-  }
-
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px">敏感度分析</div>';
-
-  // ===== 區塊一（置頂）：跨維度最大影響 =====
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">跨維度最大影響</div>';
-
-  var allCross=results.slice();
-  flipResults.forEach(function(fr){
-    if(!allCross.some(function(r){return r.id===fr.id;})){
-      allCross.push({id:fr.id,text:fr.text,part:fr.part,curVal:fr.curVal,
-        totalDelta:0,affected:[],flipped:fr.flipDims,newTypes:fr.newTypes,newCoeffs:fr.newCoeffs,dimDeltas:[]});
-    }
+  // 部位彙整
+  var partSens={};
+  sensResults.forEach(function(r){
+    if(!partSens[r.part])partSens[r.part]={total:0,count:0,highCount:0,dims:new Set()};
+    partSens[r.part].total+=r.sensitivity;
+    partSens[r.part].count++;
+    if(r.sensitivity>HIGH_THRESHOLD)partSens[r.part].highCount++;
+    r.affectedDims.forEach(function(di){partSens[r.part].dims.add(di);});
   });
-  allCross.sort(function(a,b){
-    if(Math.abs(b.totalDelta-a.totalDelta)>0.001)return b.totalDelta-a.totalDelta;
-    return (b.flipped?b.flipped.length:0)-(a.flipped?a.flipped.length:0);
-  });
-  var filtered=allCross.filter(function(r){return r.totalDelta>0.001||(r.flipped&&r.flipped.length>0);});
-  var crossGroups=[],lastCk=-1;
-  filtered.forEach(function(r){
-    var k=rk(r.totalDelta);
-    if(k!==lastCk){crossGroups.push({delta:r.totalDelta,items:[]});lastCk=k;}
-    crossGroups[crossGroups.length-1].items.push(r);
-  });
-  crossGroups=crossGroups.slice(0,5);
+  var partRank=Object.keys(partSens).map(function(pn){
+    return {part:pn,total:partSens[pn].total,count:partSens[pn].count,
+      highCount:partSens[pn].highCount,dims:Array.from(partSens[pn].dims).sort(function(a,b){return a-b;})};
+  }).sort(function(a,b){return b.total-a.total;});
 
-  if(crossGroups.length===0){
-    html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">無可提升的條件</div>';
+  // 輔助
+  function dimTag(di){
+    return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;color:white;background:'+dimColors[di]+';white-space:nowrap">'+DIMS[di].dn+'</span>';
+  }
+  function sensBar(val,maxVal){
+    var pct=maxVal>0?Math.min(val/maxVal*100,100):0;
+    var color=val>HIGH_THRESHOLD?'var(--active)':val>=LOW_THRESHOLD?'#d4b870':'#ccc';
+    return '<div style="width:80px;height:6px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">'+
+      '<div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:3px"></div></div>';
+  }
+  var globalMax=highSens.length>0?highSens[0].sensitivity:0.01;
+
+  // 渲染
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">敏感度分析</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">分析 '+allQs.length+' 題觀察項目，找出對結果影響最大的關鍵觀察</div>';
+
+  // 基準統計
+  html+='<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">目前總係數</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:var(--text)">'+baseTotalCoeff.toFixed(2)+'</div></div>';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">高敏感度題目</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:var(--active)">'+highSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">低影響題目</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='</div>';
+
+  // 排序切換
+  html+='<div id="sens-view-toggle" style="display:flex;gap:0;margin-bottom:16px">';
+  html+='<div onclick="sensSwitchView(\'rank\')" id="sens-btn-rank" style="padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:6px 0 0 6px;background:var(--nav);color:white">按敏感度排序</div>';
+  html+='<div onclick="sensSwitchView(\'part\')" id="sens-btn-part" style="padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;background:white;color:var(--text-2)">按部位分組</div>';
+  html+='</div>';
+
+  // 按敏感度排序視圖
+  html+='<div id="sens-view-rank">';
+
+  // 部位影響力排名
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
+  var partMax=partRank.length>0?partRank[0].total:1;
+  partRank.forEach(function(p){
+    var pct=Math.min(p.total/partMax*100,100);
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0">';
+    html+='<span style="font-weight:700;color:var(--text);min-width:36px">'+p.part+'</span>';
+    html+='<div style="flex:1;height:10px;background:#eee;border-radius:5px;overflow:hidden">';
+    html+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:5px"></div></div>';
+    html+='<span style="font-size:12px;color:var(--text-3);min-width:80px">'+p.highCount+'關鍵 / '+p.count+'題</span>';
+    html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+    p.dims.forEach(function(di){html+=dimTag(di);});
+    html+='</span></div>';
+  });
+
+  // 高敏感度
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
+  if(highSens.length===0){
+    html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">沒有高敏感度的題目</div>';
   }else{
-    crossGroups.forEach(function(g,gi){
-      html+='<div style="margin-bottom:14px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-      if(g.delta>0.001){
-        var newTotalVal=baseTotalCoeff+g.delta;
-        html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數 '+baseTotalCoeff.toFixed(2)+' → '+newTotalVal.toFixed(2)+'</div>';
-      }else{
-        var fc=g.items[0].flipped?g.items[0].flipped.length:0;
-        html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">'+nums[gi]+' 總合係數不變（'+fc+'個維度由動轉靜）</div>';
+    highSens.forEach(function(r){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
+      html+='<span style="font-weight:900;color:var(--active);min-width:42px;font-size:13px">'+r.id+'</span>';
+      html+='<span style="font-weight:700;color:var(--text);min-width:36px">'+r.part+'</span>';
+      html+='<span style="flex:1;color:var(--text-2);font-size:14px">'+r.text+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
+      html+=sensBar(r.sensitivity,globalMax);
+      html+='<span style="font-size:12px;color:var(--active);font-weight:700;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+      if(r.affectedDims.length>0){
+        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+        r.affectedDims.forEach(function(di){html+=dimTag(di);});
+        html+='</span>';
       }
-      if(g.items.length>1)html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:4px">以下條件任一調整均可達到：</div>';
-      g.items.forEach(function(r){
-        html+='<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">'+
-          '<div style="font-size:14px;color:var(--text-2)"><b style="color:var(--text)">'+r.part+'：</b>'+r.text+
-          '<span style="color:var(--text-3);margin-left:4px">（目前：'+r.curVal+'）</span></div>'+
-          '<div style="font-size:13px;color:var(--text-2);padding-left:18px">影響：'+dimDetailStr(r)+'</div></div>';
-      });
       html+='</div>';
     });
   }
 
-  // ===== 區塊二（下方）：各維度關鍵條件（兩欄）=====
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度關鍵條件</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
-
-  // 左欄：先天 0-5，右欄：運氣 6-8 + 後天 9-12
-  var leftDims=[0,1,2,3,4,5],rightDims=[6,7,8,9,10,11,12];
-
-  function renderDimBlock(di){
-    var d=DIMS[di];
-    var dimRes=calcDim(di);
-    var dimType=dimRes?dimRes.type:'—';
-    var dimCoeff=dimRes?dimRes.coeff:0;
-    var isMax=dimCoeff>=0.8-0.001;
-    var isStatic=dimType==='靜';
-    var out='<div style="margin-bottom:12px">';
-    out+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap">'+
-      '<span style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px">'+d.dn+'</span>'+
-      (dimRes?badge(dimType,dimCoeff):'<span style="color:var(--text-3)">—</span>');
-
-    if(isMax&&isStatic){
-      out+='<span style="font-size:13px;color:var(--text-3)">已達最佳狀態</span></div></div>';
-      return out;
-    }
-    if(isMax&&!isStatic){
-      out+='<span style="font-size:13px;color:var(--text-3)">係數已最高，可嘗試轉為靜</span></div>';
-      var flipItems=flipResults.filter(function(r){return r.flipDims.indexOf(di)>=0;});
-      if(flipItems.length===0){
-        out+='<div style="padding:4px 8px;font-size:13px;color:var(--text-3)">無可轉換的條件</div>';
-      }else{
-        out+='<div style="padding:4px 8px;margin-bottom:4px">'+
-          '<div style="font-size:13px;color:var(--text-2)">'+nums[0]+' 調整後可轉為 '+badgeSmall('靜',dimCoeff)+'</div>'+
-          renderItemsByPart(flipItems)+'</div>';
+  // 中敏感度
+  if(midSens.length>0){
+    html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">一般觀察 <span style="font-size:13px;font-weight:400;color:#d4b870">（'+midSens.length+'題）</span></div>';
+    midSens.forEach(function(r){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:3px;flex-wrap:wrap">';
+      html+='<span style="color:var(--text-3);min-width:42px;font-size:12px">'+r.id+'</span>';
+      html+='<span style="font-weight:700;color:var(--text-2);min-width:36px;font-size:13px">'+r.part+'</span>';
+      html+='<span style="flex:1;color:var(--text-2);font-size:13px">'+r.text+'</span>';
+      html+=sensBar(r.sensitivity,globalMax);
+      html+='<span style="font-size:11px;color:var(--text-3);min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+      if(r.affectedDims.length>0){
+        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+        r.affectedDims.forEach(function(di){html+=dimTag(di);});
+        html+='</span>';
       }
-      out+='</div>';return out;
-    }
-
-    // 情況一
-    out+='</div>';
-    var dimItems=results.filter(function(r){return r.dimDeltas[di]>0.001;})
-      .sort(function(a,b){return b.dimDeltas[di]-a.dimDeltas[di];});
-    var groups=[],lastKey=-1;
-    dimItems.forEach(function(r){
-      var k=rk(r.dimDeltas[di]);
-      if(k!==lastKey){groups.push({delta:r.dimDeltas[di],newCoeff:r.newCoeffs[di],newType:r.newTypes[di],items:[]});lastKey=k;}
-      groups[groups.length-1].items.push(r);
+      html+='</div>';
     });
-    if(groups.length===0){
-      out+='<div style="padding:4px 8px;font-size:13px;color:var(--text-3)">無可提升的條件</div>';
-    }else{
-      groups.forEach(function(g,gi){
-        var baseType=baseTypes[di]||'動';
-        var newType=g.newType||baseType;
-        out+='<div style="padding:4px 8px;margin-bottom:4px">'+
-          '<div style="font-size:13px;color:var(--text-2)">'+nums[gi]+' 調整後 '+badgeSmall(baseType,baseCoeffs[di])+' → '+badgeSmall(newType,g.newCoeff)+'</div>'+
-          renderItemsByPart(g.items)+'</div>';
-      });
-    }
-    out+='</div>';return out;
   }
 
-  // 左欄
-  html+='<div>';
-  html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:4px 0 8px">先天係數</div>';
-  leftDims.forEach(function(di){html+=renderDimBlock(di);});
-  html+='</div>';
-  // 右欄
-  html+='<div>';
-  html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:4px 0 8px">運氣＋後天係數</div>';
-  rightDims.forEach(function(di){
-    if(di===9)html+='<div style="font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:12px 0 4px;border-top:1px solid var(--border);margin-top:8px">後天係數</div>';
-    html+=renderDimBlock(di);
+  // 低敏感度
+  if(lowSens.length>0){
+    html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border);cursor:pointer" onclick="var el=document.getElementById(\'sens-low-list\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'">低影響觀察 <span style="font-size:13px;font-weight:400;color:#ccc">（'+lowSens.length+'題 — 點擊展開）</span></div>';
+    html+='<div id="sens-low-list" style="display:none">';
+    lowSens.forEach(function(r){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;color:var(--text-3);font-size:12px">';
+      html+='<span style="min-width:42px">'+r.id+'</span>';
+      html+='<span style="min-width:36px">'+r.part+'</span>';
+      html+='<span style="flex:1">'+r.text+'</span>';
+      html+='<span>影響極低</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  html+='</div>'; // close sens-view-rank
+
+  // 按部位分組視圖
+  html+='<div id="sens-view-part" style="display:none">';
+
+  OBS_PART_NAMES.forEach(function(pn){
+    var partItems=sensResults.filter(function(r){return r.part===pn;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+    if(partItems.length===0)return;
+    var partInfo=partSens[pn]||{total:0,highCount:0,count:0,dims:new Set()};
+    html+='<div style="margin-bottom:16px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:2px solid var(--border)">';
+    html+='<span style="font-size:16px;font-weight:900;color:var(--text)">'+pn+'</span>';
+    html+='<span style="font-size:13px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partItems.length+'題</span>';
+    if(partInfo.dims&&partInfo.dims.size>0){
+      html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+      Array.from(partInfo.dims).sort(function(a,b){return a-b;}).forEach(function(di){html+=dimTag(di);});
+      html+='</span>';
+    }
+    html+='</div>';
+    partItems.forEach(function(r){
+      var isHigh=r.sensitivity>HIGH_THRESHOLD;
+      var isLow=r.sensitivity<LOW_THRESHOLD;
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;margin-bottom:2px;border-radius:4px;'+(isHigh?'background:#fff8f5;':'')+'flex-wrap:wrap">';
+      html+='<span style="font-weight:700;color:'+(isHigh?'var(--active)':'var(--text-3)')+';min-width:42px;font-size:12px">'+r.id+'</span>';
+      html+='<span style="flex:1;color:'+(isLow?'var(--text-3)':'var(--text-2)')+';font-size:13px">'+r.text+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
+      html+=sensBar(r.sensitivity,globalMax);
+      html+='<span style="font-size:11px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:'+(isHigh?'700':'400')+';min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+      if(r.affectedDims.length>0){
+        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+        r.affectedDims.forEach(function(di){html+=dimTag(di);});
+        html+='</span>';
+      }
+      html+='</div>';
+    });
+    html+='</div>';
   });
-  html+='</div>';
-  html+='</div>'; // close grid
+
+  html+='</div>'; // close sens-view-part
 
   el.innerHTML=html;
+
+
+  },50); // end setTimeout
+}
+
+// 敏感度視圖切換
+function sensSwitchView(view){
+  var rankEl=document.getElementById('sens-view-rank');
+  var partEl=document.getElementById('sens-view-part');
+  var rankBtn=document.getElementById('sens-btn-rank');
+  var partBtn=document.getElementById('sens-btn-part');
+  if(!rankEl||!partEl)return;
+  if(view==='rank'){
+    rankEl.style.display='block';partEl.style.display='none';
+    rankBtn.style.background='var(--nav)';rankBtn.style.color='white';rankBtn.style.fontWeight='700';
+    partBtn.style.background='white';partBtn.style.color='var(--text-2)';partBtn.style.fontWeight='500';
+  }else{
+    rankEl.style.display='none';partEl.style.display='block';
+    partBtn.style.background='var(--nav)';partBtn.style.color='white';partBtn.style.fontWeight='700';
+    rankBtn.style.background='white';rankBtn.style.color='var(--text-2)';rankBtn.style.fontWeight='500';
+  }
 }
 
 /* ===== 手動輸入兵法報告頁 ===== */
