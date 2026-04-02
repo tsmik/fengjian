@@ -2924,12 +2924,16 @@ function renderSensPage(){
   data=JSON.parse(JSON.stringify(origData));
   recalcFromObs();
 
-  // 分類
-  var HIGH_THRESHOLD=0.02;
-  var LOW_THRESHOLD=0.001;
-  var highSens=sensResults.filter(function(r){return r.sensitivity>HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
-  var midSens=sensResults.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<=HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
-  var lowSens=sensResults.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
+  // 按敏感度降序排列，用相對排名分類
+  var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var LOW_THRESHOLD=0.0005;
+  var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
+  var topN=Math.max(1,Math.ceil(nonZero.length*0.2));
+  var HIGH_THRESHOLD=nonZero.length>0&&topN<nonZero.length?nonZero[topN-1].sensitivity:0;
+
+  var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var midSens=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var lowSens=sorted.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
 
   // 部位彙整
   var partSens={};
