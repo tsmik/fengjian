@@ -2978,16 +2978,7 @@ function renderSensPage(){
   html+='<div style="font-size:20px;font-weight:900;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
   html+='</div>';
 
-  // 排序切換
-  html+='<div id="sens-view-toggle" style="display:flex;gap:0;margin-bottom:16px">';
-  html+='<div onclick="sensSwitchView(\'rank\')" id="sens-btn-rank" style="padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:6px 0 0 6px;background:var(--nav);color:white">按敏感度排序</div>';
-  html+='<div onclick="sensSwitchView(\'part\')" id="sens-btn-part" style="padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;background:white;color:var(--text-2)">按部位分組</div>';
-  html+='</div>';
-
-  // --- 按敏感度排序視圖 ---
-  html+='<div id="sens-view-rank">';
-
-  // 部位影響力排名
+  // --- 部位影響力排名 ---
   html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
   var partMax=partRank.length>0?partRank[0].total:1;
   partRank.forEach(function(p){
@@ -2999,31 +2990,44 @@ function renderSensPage(){
     html+='<span style="font-size:12px;color:var(--text-3);min-width:80px">'+p.highCount+'關鍵 / '+p.count+'題</span>';
     html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
     p.dims.forEach(function(di){html+=dimTag(di);});
-    html+='</span></div>';
+    html+='</span>';
+    html+='</div>';
   });
 
-  // 關鍵觀察 — 按部位分組
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
+  // --- 關鍵觀察 — 按影響力排名順序展開 ---
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
 
   if(highSens.length===0){
     html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">沒有高敏感度的題目</div>';
   }else{
-    var highByPart={};
-    highSens.forEach(function(r){
-      if(!highByPart[r.part])highByPart[r.part]=[];
-      highByPart[r.part].push(r);
-    });
-    OBS_PART_NAMES.forEach(function(pn){
-      var items=highByPart[pn];
-      if(!items||items.length===0)return;
-      html+='<div style="margin-bottom:12px">';
-      html+='<div style="font-size:14px;font-weight:900;color:var(--text);padding:6px 0">'+pn+' <span style="font-size:12px;font-weight:400;color:var(--text-3)">'+items.length+'題</span></div>';
+    partRank.forEach(function(p){
+      var items=highSens.filter(function(r){return r.part===p.part;});
+      if(items.length===0){
+        var allPartItems=sensResults.filter(function(r){return r.part===p.part;})
+          .sort(function(a,b){return b.sensitivity-a.sensitivity;});
+        if(allPartItems.length>0)items=[allPartItems[0]];
+      }
+      if(items.length===0)return;
+
+      var partInfo=partSens[p.part]||{highCount:0,count:0,dims:new Set()};
+      html+='<div style="margin-bottom:14px">';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">';
+      html+='<span style="font-size:15px;font-weight:900;color:var(--text)">'+p.part+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partInfo.count+'題</span>';
+      if(partInfo.dims&&partInfo.dims.size>0){
+        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+        Array.from(partInfo.dims).sort(function(a,b){return a-b;}).forEach(function(di){html+=dimTag(di);});
+        html+='</span>';
+      }
+      html+='</div>';
+
       items.forEach(function(r){
+        var isHigh=r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;
         html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
         html+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:14px">'+r.text+'</span>';
         html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
         html+=sensBar(r.sensitivity,globalMax);
-        html+='<span style="font-size:12px;color:var(--active);font-weight:700;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+        html+='<span style="font-size:12px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:700;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
         if(r.affectedDims.length>0){
           html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
           r.affectedDims.forEach(function(di){html+=dimTag(di);});
@@ -3035,51 +3039,6 @@ function renderSensPage(){
     });
   }
 
-  html+='</div>'; // close sens-view-rank
-
-  // --- 按部位分組視圖 ---
-  html+='<div id="sens-view-part" style="display:none">';
-
-  OBS_PART_NAMES.forEach(function(pn){
-    var partItems=sensResults.filter(function(r){return r.part===pn;})
-      .sort(function(a,b){return b.sensitivity-a.sensitivity;});
-    if(partItems.length===0)return;
-
-    var showItems=partItems.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;});
-    if(showItems.length===0&&partItems.length>0){
-      showItems=[partItems[0]];
-    }
-
-    var partInfo=partSens[pn]||{total:0,highCount:0,count:0,dims:new Set()};
-    html+='<div style="margin-bottom:16px">';
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:2px solid var(--border)">';
-    html+='<span style="font-size:16px;font-weight:900;color:var(--text)">'+pn+'</span>';
-    html+='<span style="font-size:13px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partItems.length+'題</span>';
-    if(partInfo.dims&&partInfo.dims.size>0){
-      html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
-      Array.from(partInfo.dims).sort(function(a,b){return a-b;}).forEach(function(di){html+=dimTag(di);});
-      html+='</span>';
-    }
-    html+='</div>';
-
-    showItems.forEach(function(r){
-      var isHigh=r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;
-      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;margin-bottom:2px;border-radius:4px;'+(isHigh?'background:#fff8f5;':'')+'flex-wrap:wrap">';
-      html+='<span style="flex:1;color:var(--text-2);font-size:13px">'+r.text+'</span>';
-      html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
-      html+=sensBar(r.sensitivity,globalMax);
-      html+='<span style="font-size:11px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:'+(isHigh?'700':'400')+';min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
-      if(r.affectedDims.length>0){
-        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
-        r.affectedDims.forEach(function(di){html+=dimTag(di);});
-        html+='</span>';
-      }
-      html+='</div>';
-    });
-    html+='</div>';
-  });
-
-  html+='</div>'; // close sens-view-part
 
 
   el.innerHTML=html;
@@ -3088,23 +3047,6 @@ function renderSensPage(){
   },50); // end setTimeout
 }
 
-// 敏感度視圖切換
-function sensSwitchView(view){
-  var rankEl=document.getElementById('sens-view-rank');
-  var partEl=document.getElementById('sens-view-part');
-  var rankBtn=document.getElementById('sens-btn-rank');
-  var partBtn=document.getElementById('sens-btn-part');
-  if(!rankEl||!partEl)return;
-  if(view==='rank'){
-    rankEl.style.display='block';partEl.style.display='none';
-    rankBtn.style.background='var(--nav)';rankBtn.style.color='white';rankBtn.style.fontWeight='700';
-    partBtn.style.background='white';partBtn.style.color='var(--text-2)';partBtn.style.fontWeight='500';
-  }else{
-    rankEl.style.display='none';partEl.style.display='block';
-    partBtn.style.background='var(--nav)';partBtn.style.color='white';partBtn.style.fontWeight='700';
-    rankBtn.style.background='white';rankBtn.style.color='var(--text-2)';rankBtn.style.fontWeight='500';
-  }
-}
 
 /* ===== 手動輸入兵法報告頁 ===== */
 var manualData=null;
