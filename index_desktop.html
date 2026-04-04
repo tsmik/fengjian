@@ -1037,8 +1037,85 @@ evaluate._lastLR = null;
  * @param {object} partResults
  * @returns {{ result: "positive"|"negative", L?: boolean, R?: boolean }}
  */
+/**
+ * 遞迴收集規則樹中所有 ref 及其 effective side
+ * 用於判斷該部位規則所需的觀察題是否都已填寫
+ */
+function collectRefs(node, side, out) {
+  if (!node) return;
+  if (Array.isArray(node)) {
+    for (var i = 0; i < node.length; i++) collectRefs(node[i], side, out);
+    return;
+  }
+  if (typeof node !== 'object') return;
+  if (node.ref !== undefined) {
+    out.push({ ref: node.ref, side: ('side' in node) ? node.side : side });
+    return;
+  }
+  if (node.partResult !== undefined) return;
+  // LR：分別以 L/R 收集 each，然後 return（不再走 generic each）
+  if (node.op === 'LR' && node.each) {
+    collectRefs(node.each, 'L', out);
+    collectRefs(node.each, 'R', out);
+    return;
+  }
+  if (node.items) collectRefs(node.items, side, out);
+  if (node.each) collectRefs(node.each, side, out);
+  if (node.rule) collectRefs(node.rule, side, out);
+  if (node.item) collectRefs(node.item, side, out);
+  if (node.veto && Array.isArray(node.veto)) {
+    for (var vi = 0; vi < node.veto.length; vi++) {
+      if (node.veto[vi].condition) collectRefs(node.veto[vi].condition, side, out);
+    }
+  }
+  if (node.condition && typeof node.condition === 'object') collectRefs(node.condition, side, out);
+}
+
+/**
+ * 遞迴收集規則樹中所有 partResult 依賴的部位名稱
+ * 用於判斷中停/下停依賴的子部位是否已完成
+ */
+function collectPartResultDeps(node, out) {
+  if (!node) return;
+  if (Array.isArray(node)) {
+    for (var i = 0; i < node.length; i++) collectPartResultDeps(node[i], out);
+    return;
+  }
+  if (typeof node !== 'object') return;
+  if (node.partResult !== undefined) {
+    out.push(node.partResult);
+    return;
+  }
+  if (node.items) collectPartResultDeps(node.items, out);
+  if (node.each) collectPartResultDeps(node.each, out);
+  if (node.rule) collectPartResultDeps(node.rule, out);
+  if (node.item) collectPartResultDeps(node.item, out);
+}
+
 function evaluatePart(partDef, obsData, partResults) {
   if (!partDef) return { result: 'negative' };
+
+  // === 前置檢查：觀察題是否都已填寫 ===
+  var _refs = [];
+  collectRefs(partDef.rule || partDef, null, _refs);
+  if (partDef.veto) collectRefs(partDef.veto, null, _refs);
+  for (var _ri = 0; _ri < _refs.length; _ri++) {
+    var _val = getAnswer(_refs[_ri].ref, _refs[_ri].side, obsData);
+    if (_val === '' || _val === undefined || _val === null) {
+      return { result: null };
+    }
+  }
+  // === 前置檢查：partResult 依賴的部位是否已完成 ===
+  var _deps = [];
+  collectPartResultDeps(partDef.rule || partDef, _deps);
+  for (var _di2 = 0; _di2 < _deps.length; _di2++) {
+    var _depName = _deps[_di2];
+    var _dotIdx = _depName.indexOf('.');
+    var _depPart = _dotIdx >= 0 ? _depName.substring(0, _dotIdx) : _depName;
+    if (partResults[_depPart] && partResults[_depPart].result === null) {
+      return { result: null };
+    }
+  }
 
   // Determine the rule node: either partDef.rule or partDef itself (flat format)
   var ruleNode = partDef.rule || partDef;
@@ -1090,7 +1167,9 @@ function evaluateDimension(dimDef, obsData) {
 
   var positiveCount = 0, negativeCount = 0;
   for (var ri = 0; ri < partOrder.length; ri++) {
-    if (partResults[partOrder[ri]].result === 'positive') positiveCount++;
+    var _pr = partResults[partOrder[ri]].result;
+    if (_pr === null) continue;
+    if (_pr === 'positive') positiveCount++;
     else negativeCount++;
   }
 
@@ -1133,7 +1212,8 @@ function evaluateAll(obsDataIn){
     for(var pi=0;pi<partOrder.length;pi++){
       var pn=partOrder[pi];
       var pidx=partIdxMap[pn];
-      data[di][pidx]=dimResult.results[pn].result==='positive'?'A':'B';
+      var _pResult=dimResult.results[pn].result;
+      data[di][pidx]=_pResult===null?null:(_pResult==='positive'?'A':'B');
     }
   }
   return allResults;
@@ -2354,7 +2434,7 @@ function save(){
     _getUserDocRef().set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()},{merge:true}).catch(function(e){console.log('雲端儲存失敗',e);});
   },1500);
 }
-function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;return(a+b<9)?null:{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
+function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>v==='B').length;if(a+b===0)return null;return{a,b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};}
 function avgCoeff(ids){var sumMin=0,sumMax=0;ids.forEach(function(i){var r=calcDim(i);if(r){sumMin+=Math.min(r.a,r.b);sumMax+=Math.max(r.a,r.b);}});return sumMax>0?(sumMin/sumMax).toFixed(2):"0.00";}
 
 // ===== 新版維度條件評分頁 =====
