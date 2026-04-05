@@ -604,7 +604,8 @@ window.kSelect=function(i){
     var v=pi<=8?data[i][pi]:null;
     var passColor,passLabel;
     if(pi>=9&&p){
-      passColor=p.pass?SBG:DBG;
+      var tp9=p.pass?d.aT:d.bT;
+      passColor=tp9==='靜'?SBG:DBG;
       passLabel=p.pass?d.a:d.b;
     }else if(v){
       var tp=v==='A'?d.aT:d.bT;
@@ -2105,7 +2106,8 @@ function cpRenderMain(){
     var v=pi<=8?data[cpCur][pi]:null;
     var passBg,passLabel;
     if(pi>=9&&p){
-      passBg=p.pass?'var(--static)':'var(--active)';
+      var tp9=p.pass?d.aT:d.bT;
+      passBg=tp9==='靜'?'var(--static)':'var(--active)';
       passLabel=p.pass?d.a:d.b;
     }else if(v){
       var tp=v==='A'?d.aT:d.bT;
@@ -2500,7 +2502,8 @@ function renderDimCondMain(){
     var v=pi<=8?data[cur][pi]:null;
     var passColor,passLabel;
     if(pi>=9&&p){
-      passColor=p.pass?'var(--static)':'var(--active)';
+      var tp9=p.pass?d.aT:d.bT;
+      passColor=tp9==='靜'?'var(--static)':'var(--active)';
       passLabel=p.pass?d.a:d.b;
     }else if(v){
       var tp=v==='A'?d.aT:d.bT;
@@ -2588,7 +2591,7 @@ function renderDimCondPage(){
       var label=partLabels2[i];
       var bg='#ccc',txt='—';
       if(v){var t=v==='A'?d.aT:d.bT;bg=t==='靜'?'var(--static)':'var(--active)';txt=v==='A'?d.a:d.b;}
-      else if(pi>=9){var _cr9=condResults[cur];if(_cr9&&_cr9[pi]){bg=_cr9[pi].pass?'var(--static)':'var(--active)';txt=_cr9[pi].pass?d.a:d.b;}}
+      else if(pi>=9){var _cr9=condResults[cur];if(_cr9&&_cr9[pi]){var _tp9=_cr9[pi].pass?d.aT:d.bT;bg=_tp9==='靜'?'var(--static)':'var(--active)';txt=_cr9[pi].pass?d.a:d.b;}}
       rhtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--border)">'+
         '<span style="font-size:15px;color:var(--text-2)">'+label+'</span>'+
         '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
