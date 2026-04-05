@@ -1273,6 +1273,25 @@ function recalcFromObs(){
       if(_rn.op==='LR'){
         _prEntry.L=evaluate(_rn.each,obsData,'L',_partEvalResults);
         _prEntry.R=evaluate(_rn.each,obsData,'R',_partEvalResults);
+      }else{
+        // COUNT→group→LR 等結構：往下找 LR 節點
+        var _lrNode=null;
+        if(_rn.op==='COUNT'&&_rn.items){
+          for(var _li=0;_li<_rn.items.length;_li++){
+            var _ci=_rn.items[_li];
+            if(_ci.op==='LR'){_lrNode=_ci;break;}
+            if(_ci.group&&_ci.items){
+              for(var _gi=0;_gi<_ci.items.length;_gi++){
+                if(_ci.items[_gi].op==='LR'){_lrNode=_ci.items[_gi];break;}
+              }
+              if(_lrNode)break;
+            }
+          }
+        }
+        if(_lrNode){
+          _prEntry.L=evaluate(_lrNode.each,obsData,'L',_partEvalResults);
+          _prEntry.R=evaluate(_lrNode.each,obsData,'R',_partEvalResults);
+        }
       }
       _partEvalResults[pn]=_prEntry;
     });
