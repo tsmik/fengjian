@@ -553,8 +553,9 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 </div>
 <script>
 (function(){
-const PART_ORDER_K=[0,1,4,5,6,7,8,2,3];
-const PART_LABELS_K=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+const PART_ORDER_K=[0,1,4,5,6,7,8,2,9,3,10,11,12];
+const PART_LABELS_K=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
+const INTERNAL_PARTS_K={9:true,10:true,11:true,12:true};
 const CAT_COLOR={'先天指數':'background:#5a3e35;color:#f7d9c4','運氣指數':'background:#2d4a5a;color:#c4dff7','後天指數':'background:#3a4a35;color:#c4f7d4'};
 let curK=-1;
 
@@ -600,9 +601,12 @@ window.kSelect=function(i){
     var p=cr[pi];
     if(!p)return;
     var pLabel=PART_LABELS_K[idx];
-    var v=data[i][pi];
+    var v=pi<=8?data[i][pi]:null;
     var passColor,passLabel;
-    if(v){
+    if(pi>=9&&p){
+      passColor=p.pass?SBG:DBG;
+      passLabel=p.pass?d.a:d.b;
+    }else if(v){
       var tp=v==='A'?d.aT:d.bT;
       passColor=tp==='靜'?SBG:DBG;
       passLabel=v==='A'?d.a:d.b;
@@ -611,7 +615,8 @@ window.kSelect=function(i){
       passLabel='—';
     }
 
-    html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+    var _isInternalK=INTERNAL_PARTS_K[pi]||false;
+    html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden'+(_isInternalK?';margin-left:24px':'')+'">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--sidebar)">'+
         '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
         '<span style="display:flex;align-items:center;gap:8px">'+
@@ -1236,7 +1241,7 @@ function recalcFromObs(){
     pd.sections.forEach(function(s){s.qs.forEach(function(q){qMap[q.id]=q;});});
   });
   condResults = {};
-  var PART_NAME_TO_IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8};
+  var PART_NAME_TO_IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12};
   var PART_IDX_TO_NAME=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   for(var _di=0;_di<13;_di++){
     condResults[_di]={};
@@ -1248,22 +1253,19 @@ function recalcFromObs(){
     _partOrder.forEach(function(pn){
       var pd=_dim.parts[pn];
       var pi=PART_NAME_TO_IDX[pn];
-      // 內部部位（顴/人中/地閣/頤）：只計算 partResults，不寫入 condResults
-      var _isInternal = (pi === undefined);
       if(!pd){
-        if(!_isInternal) condResults[_di][pi]={items:[],score:0,max:0,pass:false,threshold:'無規則'};
+        condResults[_di][pi]={items:[],score:0,max:0,pass:false,threshold:'無規則'};
         _partEvalResults[pn]={result:'negative'};
         return;
       }
       var ruleNode=pd.rule||pd;
-      if(_isInternal){
-        // 內部部位：只用 evaluatePart 計算結果，存入 _partEvalResults
-        var _intResult = evaluatePart(pd, obsData, _partEvalResults);
-        _partEvalResults[pn] = _intResult;
-        return;
-      }
       var result=_buildPartCond(ruleNode,pd,pn,_di,pi,_pos,qMap,_partEvalResults);
       condResults[_di][pi]=result;
+      // 內部部位的 pass 需要從 evaluatePart 重新判斷（因為不在 data[][] 中）
+      if(pi>=9){
+        var _intEval=evaluatePart(pd,obsData,_partEvalResults);
+        result.pass=(_intEval.result==='positive');
+      }
       // Store for partResult lookups (evaluate-compatible format)
       var _prEntry={result:result.pass?'positive':'negative',pass:result.pass};
       var _rn=pd.rule||pd;
@@ -1551,7 +1553,7 @@ function _buildPartCond(ruleNode,partDef,partName,dimIdx,partIdx,pos,qMap,partRe
   });
 
   var threshold=_makeThreshold(ruleNode,pos,items);
-  var pass=data[dimIdx][partIdx]==='A';
+  var pass=(partIdx<=8)?data[dimIdx][partIdx]==='A':false;
 
   return {items:items,score:score,max:max,pass:pass,threshold:threshold};
 }
@@ -2449,8 +2451,8 @@ function calcDim(i){const r=data[i],a=r.filter(v=>v==='A').length,b=r.filter(v=>
 function avgCoeff(ids){var sumMin=0,sumMax=0;ids.forEach(function(i){var r=calcDim(i);if(r){sumMin+=Math.min(r.a,r.b);sumMax+=Math.max(r.a,r.b);}});return sumMax>0?(sumMin/sumMax).toFixed(2):"0.00";}
 
 // ===== 新版維度條件評分頁 =====
-const PART_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-const PART_ORDER=[0,1,4,5,6,7,8,2,3];
+const PART_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口','顴','人中','地閣','頤'];
+const PART_ORDER=[0,1,4,5,6,7,8,2,9,3,10,11,12];
 
 function dimGoto(i){cur=i;cpCur=i;renderDimCondPage();}
 
@@ -2491,9 +2493,12 @@ function renderDimCondMain(){
     const p=cr[pi];
     if(!p)return;
     const pLabel=PART_LABELS[pi];
-    var v=data[cur][pi];
+    var v=pi<=8?data[cur][pi]:null;
     var passColor,passLabel;
-    if(v){
+    if(pi>=9&&p){
+      passColor=p.pass?'var(--static)':'var(--active)';
+      passLabel=p.pass?d.a:d.b;
+    }else if(v){
       var tp=v==='A'?d.aT:d.bT;
       passColor=tp==='靜'?'var(--static)':'var(--active)';
       passLabel=v==='A'?d.a:d.b;
@@ -2502,7 +2507,8 @@ function renderDimCondMain(){
       passLabel='—';
     }
 
-    html+='<div class="dim-part-block">'+
+    var _isInternalC=(pi>=9);
+    html+='<div class="dim-part-block" style="'+(_isInternalC?'margin-left:24px':'')+'">'+
       '<div class="dim-part-header">'+
         '<span class="dim-part-name">'+pLabel+'</span>'+
         '<span style="display:flex;align-items:center;gap:8px">'+
@@ -2569,15 +2575,16 @@ function renderDimCondPage(){
   const rc=document.getElementById('dim-right-col');
   if(rc){
     const d=DIMS[cur];
-    const partOrder2=[0,1,4,5,6,7,8,2,3];
-    const partLabels2=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+    const partOrder2=[0,1,4,5,6,7,8,2,9,3,10,11,12];
+    const partLabels2=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
     let rhtml='<div style="padding:12px 10px;overflow-y:auto;height:100%;box-sizing:border-box">';
     rhtml+='<div style="font-size:13px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:0 4px 10px">'+d.dn+'\u3000各部位</div>';
     partOrder2.forEach(function(pi,i){
-      var v=data[cur][pi];
+      var v=pi<=8?data[cur][pi]:null;
       var label=partLabels2[i];
       var bg='#ccc',txt='—';
       if(v){var t=v==='A'?d.aT:d.bT;bg=t==='靜'?'var(--static)':'var(--active)';txt=v==='A'?d.a:d.b;}
+      else if(pi>=9){var _cr9=condResults[cur];if(_cr9&&_cr9[pi]){bg=_cr9[pi].pass?'var(--static)':'var(--active)';txt=_cr9[pi].pass?d.a:d.b;}}
       rhtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--border)">'+
         '<span style="font-size:15px;color:var(--text-2)">'+label+'</span>'+
         '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
