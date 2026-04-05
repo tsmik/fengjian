@@ -343,17 +343,17 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
       <div class="nav-dropdown-item" id="nav-obs" onclick="showObsPage()">各部位觀察</div>
       <div class="nav-dropdown-item" id="nav-cond" onclick="showCondPage()">13維度評分</div>
       <div class="nav-dropdown-item" id="nav-report" onclick="showReport()">兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-sens" onclick="showSensPage()">敏感度分析</div>
+      <div class="nav-dropdown-item" id="nav-know" onclick="showKnowledgePage()">兵法評分摘要</div>
+      <div class="nav-dropdown-item" id="nav-sens" onclick="showSensPage()">重要參數分析</div>
     </div>
   </div>
   <div class="nav-dropdown" id="dd-manual">
     <div class="nav-dropdown-btn" id="dd-manual-btn">手動輸入報告 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()">敏感度分析</div>
+      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()">重要參數分析</div>
     </div>
   </div>
-  <div class="nav-tab" id="nav-know" onclick="showKnowledgePage()">參考資料</div>
   <div class="nav-dropdown" id="dd-case">
     <div class="nav-dropdown-btn" id="dd-case-btn">案例資料 ▾</div>
     <div class="nav-dropdown-menu">
@@ -414,8 +414,12 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
           <h3>兵法報告</h3>
           <p>查看綜合係數矩陣與動靜比例報告</p>
         </div>
+        <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
+          <h3>兵法評分摘要</h3>
+          <p>查看每個維度的判斷標準與依據說明</p>
+        </div>
         <div class="mode-card" style="border-top-color:#9a7c8a" onclick="showSensPage()">
-          <h3>敏感度分析</h3>
+          <h3>重要參數分析</h3>
           <p>模擬觀察題目變動對總係數的影響</p>
         </div>
       </div>
@@ -428,19 +432,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
           <p>直接輸入 9 部位 × 13 維度的動靜判定</p>
         </div>
         <div class="mode-card" style="border-top-color:#8a7a6a" onclick="showManualSensPage()">
-          <h3>敏感度分析</h3>
+          <h3>重要參數分析</h3>
           <p>模擬部位變動對手動報告總係數的影響</p>
         </div>
       </div>
     </div>
-    <div class="mode-section">
-      <div class="mode-section-title">參考資料</div>
-      <div class="mode-section-cards">
-        <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
-          <h3>各維度評分標準</h3>
-          <p>查看每個維度的判斷標準與依據說明</p>
-        </div>
-      </div>
       <div id="mode-case-section" style="display:none;margin-top:16px">
         <div class="mode-section-title">案例管理</div>
         <div class="mode-section-cards">
@@ -2975,7 +2971,7 @@ function renderSensPage(){
   var SBG='#7A9E7E',DBG='#C17A5A';
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
 
-  el.innerHTML='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">敏感度分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
+  el.innerHTML='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">重要參數分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
 
   setTimeout(function(){
 
@@ -3086,7 +3082,7 @@ function renderSensPage(){
   var globalMax=highSens.length>0?highSens[0].sensitivity:0.01;
 
   // 渲染
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">敏感度分析</div>';
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">重要參數分析</div>';
   html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">分析 '+allQs.length+' 題觀察項目，找出對結果影響最大的關鍵觀察</div>';
 
   // 基準統計
@@ -3881,7 +3877,7 @@ function renderManualSensPage(){
     return 0;
   });
 
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動敏感度分析</div>';
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動重要參數分析</div>';
   html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × 13 維度矩陣，模擬每個格子翻轉後對總係數的影響</div>';
 
   html+='<div style="margin-bottom:16px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
