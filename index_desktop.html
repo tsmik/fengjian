@@ -585,9 +585,8 @@ window.kSelect=function(i){
   document.getElementById('k-main-title').textContent=d.dn;
   document.getElementById('k-main-sub').textContent=d.cat+' ・ '+d.view;
 
-  var SBG='var(--static)',DBG='var(--active)';
+  var SBG='#7A9E7E',DBG='#C17A5A';
 
-  // 取得 condResults
   var cr=condResults[i];
   if(!cr||Object.keys(cr).length===0){
     document.getElementById('k-content').innerHTML=
@@ -612,15 +611,14 @@ window.kSelect=function(i){
       passLabel='—';
     }
 
-    html+='<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--sidebar)">'+
+    html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--sidebar)">'+
         '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
         '<span style="display:flex;align-items:center;gap:8px">'+
           '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
           '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
         '</span>'+
-      '</div>'+
-      '<div style="padding:8px 14px">';
+      '</div>';
 
     // 按 groupLabel 分組
     var groups=[];
@@ -639,26 +637,142 @@ window.kSelect=function(i){
       }
     });
 
-    groups.forEach(function(g){
-      if(g.label){
-        var gOk=g.items.filter(function(it){return it.ok;}).length;
-        var gTot=g.items.length;
-        var allOk=gOk===gTot;
-        var gColor=allOk?'var(--static)':'var(--text-3)';
-        html+='<div style="font-size:13px;font-weight:700;color:'+gColor+';padding:4px 0 2px;margin-top:6px;border-bottom:1px solid var(--border)">'+
-          g.label+' <span style="font-weight:400;font-size:12px">'+gOk+'/'+gTot+'</span></div>';
+    // 合併左右 group：相鄰兩個 group 名稱只差「左/右」開頭的，合併成一行
+    var merged=[];
+    for(var gi=0;gi<groups.length;gi++){
+      var g=groups[gi];
+      var next=groups[gi+1];
+      if(g.label&&next&&next.label){
+        var gBase=g.label.replace(/^[左右]/,'');
+        var nBase=next.label.replace(/^[左右]/,'');
+        if(gBase===nBase&&((g.label.charAt(0)==='左'&&next.label.charAt(0)==='右')||(g.label.charAt(0)==='右'&&next.label.charAt(0)==='左'))){
+          merged.push({label:gBase,items:g.items.concat(next.items),isLRMerged:true});
+          gi++;
+          continue;
+        }
       }
-      g.items.forEach(function(item){
-        var okClass=item.ok?'ok':'ng';
-        var mark=item.ok?'\u2713':'\u2717';
-        html+='<div class="dim-cond-item" style="cursor:default">'+
-          '<div class="dim-cond-mark '+okClass+'">'+mark+'</div>'+
-          '<div class="dim-cond-label '+okClass+'">'+item.label+'</div>'+
-        '</div>';
-      });
+      merged.push({label:g.label,items:g.items,isLRMerged:false});
+    }
+
+    // 分離 partResult 項目和 group 項目
+    var partResultItems=[];
+    var groupItems=[];
+    merged.forEach(function(g){
+      if(!g.label&&g.items.length===1&&g.items[0].label&&g.items[0].label.indexOf('達標')>=0){
+        partResultItems.push(g.items[0]);
+      }else{
+        groupItems.push(g);
+      }
     });
 
-    html+='</div></div>';
+    // 渲染 partResult 橫向標籤列
+    if(partResultItems.length>0){
+      html+='<div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
+        '<span style="font-size:12px;color:var(--text-3);margin-right:4px">子部位</span>';
+      partResultItems.forEach(function(item){
+        var bg=item.ok?SBG:'#f0f0f0';
+        var clr=item.ok?'white':'#bbb';
+        var mark=item.ok?'✓':'✗';
+        html+='<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:'+bg+';color:'+clr+'">'+item.label.replace('達標','')+' '+mark+'</span>';
+      });
+      html+='</div>';
+    }
+
+    // 渲染 group 表格
+    if(groupItems.length>0){
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+      groupItems.forEach(function(g,gIdx){
+        var isLast=gIdx===groupItems.length-1;
+        var borderStyle=isLast?'':'border-bottom:1px solid var(--border)';
+
+        if(g.label){
+          // 判斷 group 整體是否通過
+          var gOk=g.items.filter(function(it){return it.ok;}).length;
+          var gTot=g.items.length;
+          var allOk=gOk===gTot;
+          var gColor=allOk?SBG:'#ccc';
+
+          // 收集左右狀態
+          var badges=[];
+          if(g.isLRMerged){
+            var leftItems=g.items.filter(function(it){return it.side==='L';});
+            var rightItems=g.items.filter(function(it){return it.side==='R';});
+            var leftOk=leftItems.length>0&&leftItems.every(function(it){return it.ok;});
+            var rightOk=rightItems.length>0&&rightItems.every(function(it){return it.ok;});
+            badges.push({label:'左',ok:leftOk});
+            badges.push({label:'右',ok:rightOk});
+          }else{
+            var hasL=g.items.some(function(it){return it.side==='L';});
+            var hasR=g.items.some(function(it){return it.side==='R';});
+            if(hasL||hasR){
+              if(hasL){
+                var lOk=g.items.filter(function(it){return it.side==='L';}).every(function(it){return it.ok;});
+                badges.push({label:'左',ok:lOk});
+              }
+              if(hasR){
+                var rOk=g.items.filter(function(it){return it.side==='R';}).every(function(it){return it.ok;});
+                badges.push({label:'右',ok:rOk});
+              }
+            }else{
+              badges.push({label:'',ok:allOk});
+            }
+          }
+
+          // 條件描述
+          var descLabel='';
+          if(g.isLRMerged){
+            var leftLabels=g.items.filter(function(it){return it.side==='L';}).map(function(it){
+              return it.label.replace(/^左/,'');
+            });
+            descLabel=leftLabels.join('　且　');
+          }else{
+            descLabel=g.items.map(function(it){return it.label;}).join('　且　');
+          }
+
+          // 渲染行
+          var badgesHtml='<span style="display:inline-flex;gap:4px;margin-left:auto;flex-shrink:0">';
+          badges.forEach(function(b){
+            var bg=b.ok?SBG:'#f0f0f0';
+            var clr=b.ok?'white':'#bbb';
+            var mark=b.ok?'✓':'✗';
+            var txt=b.label?(b.label+' '+mark):mark;
+            badgesHtml+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+bg+';color:'+clr+'">'+txt+'</span>';
+          });
+          badgesHtml+='</span>';
+
+          var descColor=allOk?'var(--text)':'var(--text-3)';
+
+          html+='<tr style="'+borderStyle+'">'+
+            '<td style="padding:10px 16px;width:180px;vertical-align:top;font-weight:700;font-size:13px;color:'+gColor+'">'+g.label+'</td>'+
+            '<td style="padding:10px 12px;color:'+descColor+'">'+
+              '<div style="display:flex;align-items:center;gap:6px">'+
+                '<span style="flex:1">'+descLabel+'</span>'+
+                badgesHtml+
+              '</div>'+
+            '</td>'+
+          '</tr>';
+        }else{
+          // 無 group label 的項目
+          g.items.forEach(function(item){
+            var bg=item.ok?SBG:'#f0f0f0';
+            var clr=item.ok?'white':'#bbb';
+            var mark=item.ok?'✓':'✗';
+            html+='<tr style="'+borderStyle+'">'+
+              '<td style="padding:10px 16px;width:180px;vertical-align:top;font-size:13px;color:var(--text-3)">—</td>'+
+              '<td style="padding:10px 12px;color:'+(item.ok?'var(--text)':'var(--text-3)')+'">'+
+                '<div style="display:flex;align-items:center;gap:6px">'+
+                  '<span style="flex:1">'+item.label+'</span>'+
+                  '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+bg+';color:'+clr+'">'+mark+'</span>'+
+                '</div>'+
+              '</td>'+
+            '</tr>';
+          });
+        }
+      });
+      html+='</table>';
+    }
+
+    html+='</div>';
   });
 
   // 係數
