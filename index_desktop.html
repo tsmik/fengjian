@@ -1155,7 +1155,7 @@ function evaluatePart(partDef, obsData, partResults) {
  * @returns {{ results: object, positiveCount: number, negativeCount: number, attribute: string, coefficient: number }}
  */
 function evaluateDimension(dimDef, obsData) {
-  var partOrder = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '中停', '下停'];
+  var partOrder = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '顴', '人中', '地閣', '頤', '中停', '下停'];
   var partResults = {};
 
   for (var pi = 0; pi < partOrder.length; pi++) {
@@ -1168,9 +1168,10 @@ function evaluateDimension(dimDef, obsData) {
     partResults[partName] = evaluatePart(partDef, obsData, partResults);
   }
 
+  var _scoreParts = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '中停', '下停'];
   var positiveCount = 0, negativeCount = 0;
-  for (var ri = 0; ri < partOrder.length; ri++) {
-    var _pr = partResults[partOrder[ri]].result;
+  for (var ri = 0; ri < _scoreParts.length; ri++) {
+    var _pr = partResults[_scoreParts[ri]].result;
     if (_pr === null) continue;
     if (_pr === 'positive') positiveCount++;
     else negativeCount++;
@@ -1241,17 +1242,26 @@ function recalcFromObs(){
     condResults[_di]={};
     var _dim=DIM_RULES[_di];if(!_dim)continue;
     var _pos=_dim.positive||'A';
-    var _partOrder=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+    var _partOrder=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
     // Store per-part evaluate results for partResult references
     var _partEvalResults={};
     _partOrder.forEach(function(pn){
       var pd=_dim.parts[pn];
       var pi=PART_NAME_TO_IDX[pn];
+      // 內部部位（顴/人中/地閣/頤）：只計算 partResults，不寫入 condResults
+      var _isInternal = (pi === undefined);
       if(!pd){
-        condResults[_di][pi]={items:[],score:0,max:0,pass:false,threshold:'無規則'};
+        if(!_isInternal) condResults[_di][pi]={items:[],score:0,max:0,pass:false,threshold:'無規則'};
+        _partEvalResults[pn]={result:'negative'};
         return;
       }
       var ruleNode=pd.rule||pd;
+      if(_isInternal){
+        // 內部部位：只用 evaluatePart 計算結果，存入 _partEvalResults
+        var _intResult = evaluatePart(pd, obsData, _partEvalResults);
+        _partEvalResults[pn] = _intResult;
+        return;
+      }
       var result=_buildPartCond(ruleNode,pd,pn,_di,pi,_pos,qMap,_partEvalResults);
       condResults[_di][pi]=result;
       // Store for partResult lookups (evaluate-compatible format)
