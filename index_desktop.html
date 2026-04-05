@@ -718,15 +718,20 @@ window.kSelect=function(i){
             }
           }
 
-          // 條件描述
+          // 條件描述：去除左右前綴，合併時只顯示一份
+          function stripLR(s){return s.replace(/([以且或]\s*)[左右]/g,'$1').replace(/^[左右]/,'');}
           var descLabel='';
           if(g.isLRMerged){
-            var leftLabels=g.items.filter(function(it){return it.side==='L';}).map(function(it){
-              return it.label.replace(/^左/,'');
-            });
-            descLabel=leftLabels.join('　且　');
+            var leftItems=g.items.filter(function(it){return it.side==='L';});
+            var labels=leftItems.map(function(it){return stripLR(it.label);});
+            var unique=[];
+            labels.forEach(function(l){if(unique.indexOf(l)<0)unique.push(l);});
+            descLabel=unique.join('　且　');
           }else{
-            descLabel=g.items.map(function(it){return it.label;}).join('　且　');
+            var labels2=g.items.map(function(it){return stripLR(it.label);});
+            var unique2=[];
+            labels2.forEach(function(l){if(unique2.indexOf(l)<0)unique2.push(l);});
+            descLabel=unique2.join('　且　');
           }
 
           // 渲染行
