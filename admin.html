@@ -136,7 +136,7 @@ const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
-const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
 const Q_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
 const Q_PREFIXES={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
 
@@ -386,9 +386,10 @@ function nodeActs(p,showWrap){
 // Rule part → allowed question parts mapping
 var RULE_TO_QPARTS={
   '頭':['頭'],'上停':['額'],'耳':['耳'],'眉':['眉'],'眼':['眼'],'鼻':['鼻'],'口':['口'],
+  '顴':['顴'],'人中':['人中'],'地閣':['地閣'],'頤':['頤'],
   '中停':['眉','眼','鼻','顴'],'下停':['口','人中','地閣','頤']
 };
-var PARTRESULT_WARN={'中停':{'眉':true,'眼':true,'鼻':true},'下停':{'口':true}};
+var PARTRESULT_WARN={'中停':{'眉':true,'眼':true,'鼻':true,'顴':true},'下停':{'口':true,'人中':true,'地閣':true,'頤':true}};
 
 // Build ref <select> filtered by allowed question parts, grouped by section
 function buildRefSelectFiltered(selected,allowedQParts,currentRef){
@@ -462,6 +463,9 @@ function editRuleNode(path){
       {v:'眉',label:'眉（整體）'},{v:'眉.L',label:'左眉'},{v:'眉.R',label:'右眉'},
       {v:'眼',label:'眼（整體）'},{v:'眼.L',label:'左眼'},{v:'眼.R',label:'右眼'},
       {v:'鼻',label:'鼻'},{v:'口',label:'口'},
+      {v:'顴',label:'顴（整體）'},{v:'顴.L',label:'左顴'},{v:'顴.R',label:'右顴'},
+      {v:'人中',label:'人中'},{v:'地閣',label:'地閣'},
+      {v:'頤',label:'頤（整體）'},{v:'頤.L',label:'左頤'},{v:'頤.R',label:'右頤'},
       {v:'中停',label:'中停'},{v:'下停',label:'下停'}
     ];
     prSides.forEach(function(pr){
