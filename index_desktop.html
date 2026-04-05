@@ -1898,8 +1898,8 @@ function showKnowledgePage(){
 
 /* ===== 維度條件評分頁 ===== */
 let cpCur=0,cpPartCur=0,_cpLrExpanded={},_cpGroupExpanded={};
-var CP_PART_ORDER=[0,1,4,5,6,7,8,2,3];
-var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+var CP_PART_ORDER=[0,1,4,5,6,7,8,2,9,3,10,11,12];
+var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
 
 function showCondPage(){
   ['entry-page','mode-page','report-overlay','knowledge-overlay','sens-page','manual-page','case-page','manual-sens-page'].forEach(id=>document.getElementById(id).style.display='none');
@@ -2094,17 +2094,20 @@ function cpRenderMain(){
     '</div>';
   }
 
-  var partOrder=[0,1,4,5,6,7,8,2,3];
-  var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','下停'];
+  var partOrder=[0,1,4,5,6,7,8,2,9,3,10,11,12];
+  var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
 
   html+='<div style="display:flex;justify-content:flex-end;padding:4px 0"><button onclick="cpToggleAllGroups('+cpCur+')" style="border:1px solid var(--border);background:transparent;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:\'Noto Serif TC\',serif;color:var(--text-3)">全部展開／收合</button></div>';
 
   partOrder.forEach(function(pi,idx){
     var p=cr[pi];if(!p)return;
     var label=partLabels[idx];
-    var v=data[cpCur][pi];
+    var v=pi<=8?data[cpCur][pi]:null;
     var passBg,passLabel;
-    if(v){
+    if(pi>=9&&p){
+      passBg=p.pass?'var(--static)':'var(--active)';
+      passLabel=p.pass?d.a:d.b;
+    }else if(v){
       var tp=v==='A'?d.aT:d.bT;
       passBg=tp==='靜'?'var(--static)':'var(--active)';
       passLabel=v==='A'?d.a:d.b;
@@ -2113,6 +2116,7 @@ function cpRenderMain(){
       passLabel='—';
     }
 
+    var _isInternalCP=(pi>=9);
     // --- section label（比照觀察頁樣式）---
     // 判斷此部位是否有 group
     var hasGroups=p.items.some(function(item){return !!item.groupLabel;});
@@ -2129,7 +2133,7 @@ function cpRenderMain(){
     }
     var partArrow=partAllExpanded?'▼':'▶';
     var partToggleId='part_'+cpCur+'_'+pi;
-    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
+    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
       '<span style="min-width:5em">'+label+(hasGroups?' <span style="font-size:12px;color:var(--text-3);margin-left:4px">'+partArrow+'</span>':'')+'</span>'+
       '<span style="font-size:var(--cp-part-meta);color:var(--text-3);font-weight:400;margin-left:1em">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
       '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700;margin-left:auto">'+passLabel+'</span>'+
