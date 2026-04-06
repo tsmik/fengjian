@@ -3293,44 +3293,62 @@ function renderSensPage(){
   var _matrixDims=[0,1,2,3,4,5];
 
   function _buildMatrix(useData,isSimulation){
-    var _bCoeff=isSimulation?simBossCoeffVal:bossCoeffVal;
-    var _mCoeff=isSimulation?simMgrCoeffVal:mgrCoeffVal;
-    var _iCoeff=isSimulation?simInnateCoeffVal:innateCoeffVal;
+    var _bLabel,_mLabel;
+    if(isSimulation){
+      _bLabel='老闆 '+bossCoeffVal+'→'+simBossCoeffVal;
+      _mLabel='主管 '+mgrCoeffVal+'→'+simMgrCoeffVal;
+    }else{
+      _bLabel='老闆 '+bossCoeffVal;
+      _mLabel='主管 '+mgrCoeffVal;
+    }
     var mt='';
-    mt+='<table style="border-collapse:collapse;width:100%;font-size:11px">';
-    mt+='<tr><td style="padding:2px 4px"></td>';
-    mt+='<td colspan="6" style="text-align:center;padding:2px 4px;font-size:11px;font-weight:700;color:var(--text)">先天 '+_iCoeff+'</td></tr>';
+    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
+    // 老闆/主管 badge 行
     mt+='<tr><td></td>';
-    mt+='<td colspan="3" style="text-align:center;padding:2px 4px;font-size:10px;font-weight:700;color:#2e4a4a;background:#cce0e0;border-radius:3px">老闆 '+_bCoeff+'</td>';
-    mt+='<td colspan="3" style="text-align:center;padding:2px 4px;font-size:10px;font-weight:700;color:#4a4030;background:#e8dfc8;border-radius:3px">主管 '+_mCoeff+'</td></tr>';
-    mt+='<tr><td style="padding:2px 4px"></td>';
-    _matrixDims.forEach(function(di){
-      mt+='<td style="text-align:center;padding:2px;font-size:10px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#2e4a4a;background:#dceaea;border-radius:4px">'+_bLabel+'</td>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#4a4030;background:#e8dfc8;border-radius:4px">'+_mLabel+'</td></tr>';
+    // 維度名稱行
+    mt+='<tr><td style="padding:3px 4px"></td>';
+    _matrixDims.forEach(function(di,idx){
+      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3);'+borderR+'">'+DIMS[di].dn+'</td>';
     });
     mt+='</tr>';
+    // 9 個部位行
     _matrixParts.forEach(function(pn,pi){
-      if(pi===4){mt+='<tr><td colspan="7" style="height:4px"></td></tr>';}
+      if(pi===4){mt+='<tr><td colspan="7" style="height:6px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:2px 4px;font-size:10px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
-      _matrixDims.forEach(function(di){
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      _matrixDims.forEach(function(di,idx){
         var val=useData[di][pi];
-        var color,outline='';
+        var color,outline='',label='';
+        var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
         if(val===null){color='#e8e8e0';}
-        else{var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;color=tp==='靜'?_SBG2:_DBG2;}
-        if(isSimulation&&simFlips[di+'_'+pi]){outline='outline:2px solid #7A9E7E88;outline-offset:-2px;';}
-        mt+='<td style="padding:2px;text-align:center"><div style="width:22px;height:22px;border-radius:4px;background:'+color+';margin:auto;'+outline+'"></div></td>';
+        else{
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          color=tp==='靜'?_SBG2:_DBG2;
+          label=val==='A'?DIMS[di].a:DIMS[di].b;
+        }
+        if(isSimulation&&simFlips[di+'_'+pi]){outline='outline:3px solid #E8B000;outline-offset:-1px;';}
+        if(val===null){
+          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
+        }else{
+          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+        }
       });
       mt+='</tr>';
     });
-    mt+='<tr><td style="padding:4px 4px 2px;font-size:10px;font-weight:700;color:var(--text-3)">係數</td>';
-    _matrixDims.forEach(function(di){
+    // 係數行
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    _matrixDims.forEach(function(di,idx){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
       var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
       var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
       if(aCount===bCount)tp=DIMS[di].aT;
       var tbg=tp==='靜'?_SBG2:_DBG2;
-      mt+='<td style="text-align:center;padding:2px"><div style="font-size:10px;font-weight:700;color:white;background:'+tbg+';border-radius:3px;padding:1px 2px">'+c.toFixed(2)+'</div></td>';
+      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
+      mt+='<td style="text-align:center;padding:3px;'+borderR+'"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -3338,41 +3356,39 @@ function renderSensPage(){
   }
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
-  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">';
-  html+='<span style="font-size:16px;font-weight:900;color:var(--text)">先天係數分析</span>';
-  html+='<span style="font-size:14px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 10px;border-radius:6px">'+innateCoeffVal+'</span>';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">先天係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+innateCoeffVal+'</span>';
   html+='</div>';
 
-  html+='<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+  html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
 
-  html+='<div style="flex:1;min-width:220px;padding:10px;background:white;border-radius:8px;border:1px solid var(--border)">';
-  html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center">目前狀態</div>';
+  html+='<div style="flex:1;min-width:280px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+'</div>';
   html+=_buildMatrix(origData,false);
   html+='</div>';
 
   if(simData){
-    html+='<div style="flex:1;min-width:220px;padding:10px;background:white;border-radius:8px;border:1px solid '+_SBG2+'">';
-    html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center">調整後預估</div>';
+    html+='<div style="flex:1;min-width:280px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+' → <span style="color:var(--text);font-weight:900">'+simInnateCoeffVal+'</span></div>';
     html+=_buildMatrix(simData,true);
-    html+='<div style="margin-top:8px;padding:6px 8px;background:#f0f5f0;border-radius:5px;font-size:11px;color:var(--text)">';
-    html+='老闆 '+bossCoeffVal+' → <b>'+simBossCoeffVal+'</b>　';
-    html+='主管 '+mgrCoeffVal+' → <b>'+simMgrCoeffVal+'</b>';
-    html+='</div>';
     html+='</div>';
   }else{
-    html+='<div style="flex:1;min-width:220px;padding:10px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
-    html+='<span style="font-size:12px;color:var(--text-3)">無有效調整建議</span>';
+    html+='<div style="flex:1;min-width:280px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
+    html+='<span style="font-size:13px;color:var(--text-3)">無有效調整建議</span>';
     html+='</div>';
   }
 
   html+='</div>';
 
-  html+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;font-size:10px;color:var(--text-3)">';
-  html+='<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+_SBG2+'"></span>靜</span>';
-  html+='<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+_DBG2+'"></span>動</span>';
-  html+='<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#e8e8e0"></span>無資料</span>';
+  html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+'"></span>靜</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_DBG2+'"></span>動</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#e8e8e0"></span>無資料</span>';
   if(simData){
-    html+='<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+_SBG2+';outline:2px solid #7A9E7E88;outline-offset:-2px"></span>翻轉格</span>';
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+';outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
   }
   html+='</div>';
 
