@@ -136,6 +136,7 @@ const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+const DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
 const Q_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
 const Q_PREFIXES={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
@@ -258,13 +259,13 @@ function renderRules(){
   var DIM_CATS=[{name:'先天指數',start:0},{name:'運氣指數',start:6},{name:'後天指數',start:9}];
   rules.forEach((d,i)=>{
     if(catIdx<DIM_CATS.length&&i===DIM_CATS[catIdx].start){sh+=`<div class="sb-cat">${DIM_CATS[catIdx].name}</div>`;catIdx++;}
-    sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${DIM_COLORS[i]};margin-right:6px;vertical-align:middle"></span>${d.positive}${d.negative}</div>`;
+    sh+=`<div class="sb-item${i===curDim?' active':''}" onclick="curDim=${i};renderAll()" style="border-left-color:${i===curDim?DIM_COLORS[i]:'transparent'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${DIM_COLORS[i]};margin-right:6px;vertical-align:middle"></span>${DIM_NAMES[i]}</div>`;
   });
   document.getElementById('sidebar').innerHTML=sh;
 
   var dim=rules[curDim];
   if(!dim){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無規則資料</div>';return;}
-  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:4px">${dim.positive}${dim.negative}</div>`;
+  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:4px">${DIM_NAMES[curDim]}</div>`;
   eh+=`<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">${dim.category||''} · ${dim.positive}（${dim.positiveType}）vs ${dim.negative}（${dim.negativeType}）</div>`;
 
   PART_ORDER.forEach(pn=>{
@@ -874,7 +875,6 @@ function renderQuestions(){
 
   var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:16px">${pn}</div>`;
   var refDimMap=buildRefDimMap();
-  var DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 
   pd.sections.forEach((sec,si)=>{
     var qSecKey='q-'+curPart+'-'+si;
