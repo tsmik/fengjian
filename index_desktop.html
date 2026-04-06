@@ -435,10 +435,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
           <h3>手動輸入兵法報告</h3>
           <p>直接輸入 9 部位 × 13 維度的動靜判定</p>
         </div>
-        <div class="mode-card" style="border-top-color:#8a7a6a" onclick="showManualSensPage()">
+        <div class="mode-card" id="mode-card-manual-sens" style="border-top-color:#8a7a6a" onclick="showManualSensPage()">
           <h3>重要參數分析</h3>
           <p>模擬部位變動對手動報告總係數的影響</p>
         </div>
+        <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('mode-card-manual-sens').style.display='none';</script>
       </div>
     </div>
       <div id="mode-case-section" style="display:none;margin-top:16px">
