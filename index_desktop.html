@@ -569,7 +569,7 @@ function kRender(){
       html+='<div class="k-sidebar-item" style="opacity:0.4;pointer-events:none">'+
         '<div>'+
           '<div class="k-sidebar-title" style="color:#bbb">'+d.dn+'</div>'+
-          '<div class="k-sidebar-view" style="color:#ccc">即將開放</div>'+
+          '<div class="k-sidebar-view" style="color:#ccc">建置中</div>'+
         '</div>'+
       '</div>';
     }else{
@@ -2001,12 +2001,24 @@ function renderDimPanel(el,dimIndex){
   var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 8px;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
   var activeStyle='background:#e8eff2;border-color:#7A9E7E;border-width:2px;color:#7A9E7E';
   groups.forEach(function(g){
+    // 檢查這個 group 裡是否有超出 BETA 範圍的維度
+    var groupHidden=g.rows.every(function(row){return row.every(function(di){return di>=BETA_VISIBLE_DIMS;});});
+    if(groupHidden){
+      html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:#ccc;padding:8px 0 4px 10px">'+g.label+'</div>';
+      html+='<div style="padding:8px 10px;font-size:13px;color:#ccc">建置中</div>';
+      return;
+    }
     html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px 10px">'+g.label+'</div>';
     g.rows.forEach(function(row){
       var cols=row.length;
       html+='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:4px;margin-bottom:4px">';
       row.forEach(function(di){
         var dm=DIMS[di];
+        if(di>=BETA_VISIBLE_DIMS){
+          html+='<div style="'+cellStyle+';color:#ccc;pointer-events:none;opacity:0.5">'+
+            '<div>'+dm.dn+'</div></div>';
+          return;
+        }
         var isActive=di===useDim;
         var dimRes=calcDim(di);
         var chipColor=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
@@ -2018,6 +2030,12 @@ function renderDimPanel(el,dimIndex){
       html+='</div>';
     });
   });
+
+  // BETA 模式下，選中維度超出範圍時不顯示部位明細
+  if(useDim>=BETA_VISIBLE_DIMS){
+    el.innerHTML=html;
+    return;
+  }
 
   // === 下半部：各部位結果表（兵法報告格式）===
   var partOrder=[0,1,2,3,4,5,6,7,8];
@@ -2090,7 +2108,7 @@ function cpRenderRight(){
 function cpRenderMain(){
   var el=document.getElementById('cp-main');if(!el){console.error('cp-main not found');return;}
   if(cpCur>=BETA_VISIBLE_DIMS){
-    el.innerHTML='<div style="padding:40px;text-align:center;color:#bbb;font-size:16px">此維度即將開放</div>';
+    el.innerHTML='<div style="padding:40px;text-align:center;color:#bbb;font-size:16px">此維度建置中</div>';
     return;
   }
   var d=DIMS[cpCur];
@@ -2904,12 +2922,12 @@ function showReport(){
     if(BETA_VISIBLE_DIMS>=9){
       t+=cellFlex('運氣係數',vLuck,sdLuck,'#e8dcc8','#5a4a2a').replace('<td','<td colspan="6"');
     }else{
-      t+='<td colspan="6" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">運氣係數　即將開放</td>';
+      t+='<td colspan="6" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">運氣係數　建置中</td>';
     }
     if(BETA_VISIBLE_DIMS>=13){
       t+=cellFlex('後天係數',vPost,sdPost,'#e0cdc6','#5a3a30').replace('<td','<td colspan="8"');
     }else{
-      t+='<td colspan="8" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">後天係數　即將開放</td>';
+      t+='<td colspan="8" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">後天係數　建置中</td>';
     }
     t+='<td rowspan="2" style="'+nb+';'+pw+'"></td></tr>';
     // 第三列：老闆6 + 主管6 + 空6 + 空8
@@ -3645,7 +3663,7 @@ function renderSensPage(){
   if(BETA_VISIBLE_DIMS<9){
     html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
     html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
-    html+='<div style="font-size:14px;color:#bbb">即將開放</div>';
+    html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
   // ===== 運氣係數分析區塊（矩陣版）=====
@@ -3772,7 +3790,7 @@ function renderSensPage(){
   if(BETA_VISIBLE_DIMS<13){
     html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
     html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
-    html+='<div style="font-size:14px;color:#bbb">即將開放</div>';
+    html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
   // ===== 後天係數分析區塊（矩陣版）=====
@@ -3901,6 +3919,9 @@ function renderSensPage(){
   html+='</div>'; // 關閉後天係數分析區塊
   } // 關閉後天 BETA_VISIBLE_DIMS 判斷
 
+  // BETA 模式下隱藏基準統計和下方所有敏感度內容
+  if(BETA_VISIBLE_DIMS>=13){
+
   // 分隔線
   html+='<div style="border-top:2px solid var(--border);margin:8px 0 20px"></div>';
 
@@ -3979,6 +4000,8 @@ function renderSensPage(){
   }
 
 
+
+  } // 關閉 BETA_VISIBLE_DIMS>=13 判斷（基準統計和敏感度區段）
 
   el.innerHTML=html;
 
@@ -4640,7 +4663,7 @@ function renderManualSensPage(){
   for(var di=0;di<13;di++){var r=manualCalcDim(di);baseTypes.push(r?r.type:null);}
 
   var results=[];
-  for(var di=0;di<13;di++){
+  for(var di=0;di<BETA_VISIBLE_DIMS;di++){
     for(var pi=0;pi<9;pi++){
       var curVal=origManual[di][pi];
       var tryVals=['A','B',null];
@@ -4697,7 +4720,7 @@ function renderManualSensPage(){
   });
 
   var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動重要參數分析</div>';
-  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × 13 維度矩陣，模擬每個格子翻轉後對總係數的影響</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × '+BETA_VISIBLE_DIMS+' 維度矩陣，模擬每個格子翻轉後對係數的影響</div>';
 
   html+='<div style="margin-bottom:16px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
   html+='<span style="font-size:14px;font-weight:700;color:var(--text)">目前總係數：'+baseTotalCoeff.toFixed(2)+'</span>';
@@ -4728,6 +4751,13 @@ function renderManualSensPage(){
 
   for(var di=0;di<13;di++){
     var d=DIMS[di];
+    if(di>=BETA_VISIBLE_DIMS){
+      html+='<div style="padding:8px 12px;background:#f0f0ea;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
+      html+='<span style="font-weight:700;color:#bbb">'+d.dn+'</span>';
+      html+='<span style="font-size:13px;color:#bbb">建置中</span>';
+      html+='</div>';
+      continue;
+    }
     var res=manualCalcDim(di);
     var dimType=res?res.type:'—';
     var dimCoeff=res?res.coeff:0;
