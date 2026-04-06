@@ -3284,17 +3284,17 @@ function renderSensPage(){
       if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
       recalcFromObs();
 
-      // 計算三維度改善量（往 0.80 靠近）
+      // 計算三維度淨改善量（往 0.80 靠近為正，遠離為負）
       var improvements=[];
       LUCK_DIMS.forEach(function(di,idx){
         var nr=calcDim(di);var nc=nr?nr.coeff:0;
         var oldGap=Math.abs(0.80-baseLuckCoeffs[idx]);
         var newGap=Math.abs(0.80-nc);
-        improvements.push(Math.max(0,oldGap-newGap));
+        improvements.push(oldGap-newGap); // 可正可負
       });
-      var lAvg=improvements.reduce(function(s,v){return s+v;},0)/3;
-      var lWeak=improvements[luckMinIdx];
-      var lMain=lAvg+lWeak*2;
+      var lNet=improvements.reduce(function(s,v){return s+v;},0)/3;
+      var lWeak=improvements[luckMinIdx]; // 短板的淨改善
+      var lMain=lNet+Math.max(0,lWeak)*2; // 短板只在正向時加權
       // ��維度連帶效應：檢查其他 10 個維度的係數是否也提升
       var crossBonus=0;
       [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
@@ -3387,17 +3387,17 @@ function renderSensPage(){
       if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
       recalcFromObs();
 
-      // 計算四維度改善量（往 0.80 靠近）
+      // 計算四維度淨改善量（往 0.80 靠近為正，遠離為負）
       var improvements=[];
       POST_DIMS.forEach(function(di,idx){
         var nr=calcDim(di);var nc=nr?nr.coeff:0;
         var oldGap=Math.abs(0.80-basePostCoeffs[idx]);
         var newGap=Math.abs(0.80-nc);
-        improvements.push(Math.max(0,oldGap-newGap));
+        improvements.push(oldGap-newGap); // 可正可負
       });
-      var pAvg=improvements.reduce(function(s,v){return s+v;},0)/4;
-      var pWeak=improvements[postMinIdx];
-      var pMain=pAvg+pWeak*2;
+      var pNet=improvements.reduce(function(s,v){return s+v;},0)/4;
+      var pWeak=improvements[postMinIdx]; // 短板的淨改善
+      var pMain=pNet+Math.max(0,pWeak)*2; // 短板只在正向時加權
       // 跨維度連帶效應：檢查其他 9 個維度（先天+運氣）的係數是否也提升
       var crossBonus=0;
       [0,1,2,3,4,5,6,7,8].forEach(function(di){
