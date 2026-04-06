@@ -1391,6 +1391,26 @@ function _flattenItem(node,side,qMap,partResults){
   return _flattenCompound(node,side,qMap,partResults);
 }
 
+function _flattenToLeaves(node,side,qMap,partResults){
+  // 遞迴展開複合節點（AND/OR/COUNT）為 leaf items 陣列
+  // 用於 LR 展開時，避免把整個子樹壓成一行
+  if(!node)return [];
+  if(node.ref!==undefined){var f=_flattenLeaf(node,side,qMap);return f?[f]:[];}
+  if(node.partResult!==undefined){var f2=_flattenItem(node,side,qMap,partResults);return f2?[f2]:[];}
+  if(node.op==='NOT'){var f3=_flattenItem(node,side,qMap,partResults);return f3?[f3]:[];}
+  if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
+    var leaves=[];
+    (node.items||[]).forEach(function(it){
+      if(!it)return;
+      leaves=leaves.concat(_flattenToLeaves(it,side,qMap,partResults));
+    });
+    return leaves;
+  }
+  // 其他未知結構，保底壓成一個 item
+  var fc=_flattenCompound(node,side,qMap,partResults);
+  return fc?[fc]:[];
+}
+
 function _expandItems(node,side,qMap,partResults){
   // Expand a node into an array of condResult items
   if(!node)return [];
@@ -1472,21 +1492,30 @@ function _expandLR(node,qMap,partResults){
             var l=_flattenLeaf(gi,'L',qMap);if(l){l.groupLabel=it.group;items.push(l);}
             var r=_flattenLeaf(gi,'R',qMap);if(r){r.groupLabel=it.group;items.push(r);}
           }else{
-            var l2=_flattenItem(gi,'L',qMap,partResults);if(l2){l2.groupLabel=it.group;items.push(l2);}
-            var r2=_flattenItem(gi,'R',qMap,partResults);if(r2){r2.groupLabel=it.group;items.push(r2);}
+            // 複合節點展開為獨立條件
+            var lLeaves2=_flattenToLeaves(gi,'L',qMap,partResults);
+            var rLeaves2=_flattenToLeaves(gi,'R',qMap,partResults);
+            lLeaves2.forEach(function(ll){ll.groupLabel=it.group;items.push(ll);});
+            rLeaves2.forEach(function(rl){rl.groupLabel=it.group;items.push(rl);});
           }
         });
       }else if(it.ref!==undefined){
         items.push(_flattenLeaf(it,'L',qMap));
         items.push(_flattenLeaf(it,'R',qMap));
       }else{
-        items.push(_flattenItem(it,'L',qMap,partResults));
-        items.push(_flattenItem(it,'R',qMap,partResults));
+        // 複合節點（AND/OR等）展開為獨立條件，不壓成一行
+        var lLeaves=_flattenToLeaves(it,'L',qMap,partResults);
+        var rLeaves=_flattenToLeaves(it,'R',qMap,partResults);
+        lLeaves.forEach(function(ll){items.push(ll);});
+        rLeaves.forEach(function(rl){items.push(rl);});
       }
     });
   }else{
-    items.push(_flattenItem(eachNode,'L',qMap,partResults));
-    items.push(_flattenItem(eachNode,'R',qMap,partResults));
+    // 保底：展開為獨立條件
+    var lBot=_flattenToLeaves(eachNode,'L',qMap,partResults);
+    var rBot=_flattenToLeaves(eachNode,'R',qMap,partResults);
+    lBot.forEach(function(ll){items.push(ll);});
+    rBot.forEach(function(rl){items.push(rl);});
   }
   return items.filter(Boolean);
 }
