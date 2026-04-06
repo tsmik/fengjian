@@ -3150,14 +3150,12 @@ function renderSensPage(){
   var mgrMinIdx=0;
   baseMgrCoeffs.forEach(function(c,i){if(c<baseMgrCoeffs[mgrMinIdx])mgrMinIdx=i;});
 
-  // 合併遍歷 allQs（老闆＋主管同時計算）
-  var bossQResults=[];
-  var mgrQResults=[];
+  // 合併遍歷 allQs：先天整體最佳化（老闆＋主管同時計算）
+  var innateQResults=[];
 
   allQs.forEach(function(q){
     var curVal=origObs[q.id]||'';
-    var bestBoss=0,bestBossOpt=null;
-    var bestMgr=0,bestMgrOpt=null;
+    var bestTotal=0,bestBoss=0,bestMgr=0,bestOpt=null;
 
     q.opts.forEach(function(opt){
       var v=typeof opt==='string'?opt:opt.v;
@@ -3184,7 +3182,6 @@ function renderSensPage(){
         }
         bScore+=improve*bt.weight;
       });
-      if(bScore>bestBoss){bestBoss=bScore;bestBossOpt=v;}
 
       // 主管分數
       var mImprovements=[];
@@ -3195,14 +3192,24 @@ function renderSensPage(){
       var mAvg=mImprovements.reduce(function(s,v){return s+v;},0)/3;
       var mWeak=mImprovements[mgrMinIdx];
       var mScore=mAvg+mWeak*2;
-      if(mScore>bestMgr){bestMgr=mScore;bestMgrOpt=v;}
+
+      // 先天總分
+      var totalScore=bScore+mScore;
+      if(totalScore>bestTotal){
+        bestTotal=totalScore;
+        bestBoss=bScore;
+        bestMgr=mScore;
+        bestOpt=v;
+      }
     });
 
     obsData=JSON.parse(JSON.stringify(origObs));
     data=JSON.parse(JSON.stringify(origData));
 
-    if(bestBoss>0)bossQResults.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestBoss,bestOpt:bestBossOpt});
-    if(bestMgr>0)mgrQResults.push({id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestMgr,bestOpt:bestMgrOpt});
+    if(bestTotal>0)innateQResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
+      score:bestTotal,bossScore:bestBoss,mgrScore:bestMgr,bestOpt:bestOpt
+    });
   });
 
   // 還原
@@ -3211,22 +3218,25 @@ function renderSensPage(){
   data=JSON.parse(JSON.stringify(origData));
   recalcFromObs();
 
-  bossQResults.sort(function(a,b){return b.score-a.score;});
-  var bossTop5=bossQResults.slice(0,5);
-  mgrQResults.sort(function(a,b){return b.score-a.score;});
-  var mgrTop5=mgrQResults.slice(0,5);
+  innateQResults.sort(function(a,b){return b.score-a.score;});
+  var innateTop5=innateQResults.slice(0,5);
 
-  // 渲染輔助：建議列表
-  function _adviceList(items,maxScore){
+  // 渲染輔助：先天建議列表（含老闆/主管標籤）
+  function _innateAdviceList(items,maxScore){
     if(items.length===0)return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">目前配置下無有效調整建議</div>';
     var h='';
     items.forEach(function(r,idx){
       var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
+      // 標籤：老闆↑ / 主管↑ / 兩者
+      var tags='';
+      if(r.bossScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#cce0e0;color:#2e4a4a;font-weight:700;white-space:nowrap">老闆↑</span>';
+      if(r.mgrScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e8dfc8;color:#4a4030;font-weight:700;white-space:nowrap">主管↑</span>';
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
       h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
       h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
       h+='<span style="font-size:11px;color:var(--text-3)">（'+r.curVal+'）</span>';
+      h+='<span style="display:flex;gap:3px">'+tags+'</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
       h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
@@ -3239,70 +3249,80 @@ function renderSensPage(){
   var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">重要參數分析</div>';
   html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">分析 '+allQs.length+' 題觀察項目，找出對結果影響最大的關鍵觀察</div>';
 
-  // ===== 老闆係數區塊 =====
+  // ===== 先天係數分析區塊 =====
+  var innateCoeffVal=avgCoeff([0,1,2,3,4,5]);
   var bossCoeffVal=avgCoeff([0,1,2]);
-  html+='<div style="margin-bottom:24px;padding:16px;background:#f6f9f9;border-radius:10px;border:1px solid #d4e4e4">';
-  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
-  html+='<span style="font-size:16px;font-weight:900;color:#2e4a4a">老闆係數</span>';
-  html+='<span style="font-size:14px;font-weight:700;color:#2e4a4a;background:#cce0e0;padding:2px 10px;border-radius:6px">'+bossCoeffVal+'</span>';
-  html+='<span style="font-size:12px;color:var(--text-3)">形勢＋經緯＋方圓</span>';
+  var mgrCoeffVal=avgCoeff([3,4,5]);
+
+  html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:16px;font-weight:900;color:var(--text)">先天係數分析</span>';
+  html+='<span style="font-size:14px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 10px;border-radius:6px">'+innateCoeffVal+'</span>';
   html+='</div>';
-  html+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+
+  // --- 老闆係數 ---
+  html+='<div style="margin-bottom:16px;padding:12px;background:#f6f9f9;border-radius:8px;border:1px solid #d4e4e4">';
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html+='<span style="font-size:14px;font-weight:900;color:#2e4a4a">老闆係數</span>';
+  html+='<span style="font-size:13px;font-weight:700;color:#2e4a4a;background:#cce0e0;padding:2px 8px;border-radius:5px">'+bossCoeffVal+'</span>';
+  html+='<span style="font-size:11px;color:var(--text-3)">形勢＋經緯＋方圓</span>';
+  html+='</div>';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
   BOSS_TARGETS.forEach(function(bt,idx){
     var r=calcDim(bt.di);
     var coeff=r?r.coeff.toFixed(2):'—';
     var typeLabel=r?r.type:'—';
     var typeBg=r?(r.type==='靜'?SBG:DBG):'#ccc';
     var reached=baseBossReached[idx];
-    html+='<div style="flex:1;min-width:120px;padding:10px 14px;background:white;border-radius:8px;border:1px solid '+(reached?SBG:'var(--border)')+'">'+
+    html+='<div style="flex:1;min-width:100px;padding:8px 10px;background:white;border-radius:6px;border:1px solid '+(reached?SBG:'var(--border)')+'">'+
       '<div style="display:flex;align-items:center;justify-content:space-between">'+
-        '<span style="font-size:14px;font-weight:700;color:var(--text)">'+bt.name+'</span>'+
-        (reached?'<span style="font-size:14px;color:'+SBG+';font-weight:900">✓</span>':'')+
+        '<span style="font-size:13px;font-weight:700;color:var(--text)">'+bt.name+'</span>'+
+        (reached?'<span style="font-size:13px;color:'+SBG+';font-weight:900">✓</span>':'')+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
-        '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+typeBg+';color:white;font-weight:700">'+typeLabel+'</span>'+
-        '<span style="font-size:16px;font-weight:900;color:var(--text)">'+coeff+'</span>'+
+      '<div style="display:flex;align-items:center;gap:4px;margin-top:3px">'+
+        '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+typeBg+';color:white;font-weight:700">'+typeLabel+'</span>'+
+        '<span style="font-size:14px;font-weight:900;color:var(--text)">'+coeff+'</span>'+
       '</div>'+
-      '<div style="font-size:11px;color:var(--text-3);margin-top:4px">目標：'+bt.targetLabel+'</div>'+
+      '<div style="font-size:10px;color:var(--text-3);margin-top:3px">目標：'+bt.targetLabel+'</div>'+
     '</div>';
   });
   html+='</div>';
   var allBossReached=baseBossReached.filter(function(r,i){return BOSS_TARGETS[i].target!==null;}).every(function(r){return r;});
   if(allBossReached){
-    html+='<div style="padding:10px 14px;background:#e8f5e8;border-radius:6px;font-size:13px;color:#2e5a2e;font-weight:700">✓ 經緯、形勢均已達標，老闆係數狀態良好</div>';
-  }else{
-    html+='<div style="font-size:13px;font-weight:700;color:#2e4a4a;margin-bottom:6px">調整建議（前 5 個最有效觀察題）</div>';
-    html+=_adviceList(bossTop5,bossTop5.length>0?bossTop5[0].score:1);
+    html+='<div style="padding:6px 10px;margin-top:8px;background:#e8f5e8;border-radius:5px;font-size:12px;color:#2e5a2e;font-weight:700">✓ 經緯、形勢均已達標</div>';
   }
   html+='</div>';
 
-  // ===== 主管係數區塊 =====
-  var mgrCoeffVal=avgCoeff([3,4,5]);
-  html+='<div style="margin-bottom:24px;padding:16px;background:#f7f5f0;border-radius:10px;border:1px solid #ddd6c0">';
-  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
-  html+='<span style="font-size:16px;font-weight:900;color:#4a4030">主管係數</span>';
-  html+='<span style="font-size:14px;font-weight:700;color:#4a4030;background:#e8dfc8;padding:2px 10px;border-radius:6px">'+mgrCoeffVal+'</span>';
-  html+='<span style="font-size:12px;color:var(--text-3)">曲直＋收放＋緩急</span>';
+  // --- 主管係數 ---
+  html+='<div style="margin-bottom:16px;padding:12px;background:#f7f5f0;border-radius:8px;border:1px solid #ddd6c0">';
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html+='<span style="font-size:14px;font-weight:900;color:#4a4030">主管係數</span>';
+  html+='<span style="font-size:13px;font-weight:700;color:#4a4030;background:#e8dfc8;padding:2px 8px;border-radius:5px">'+mgrCoeffVal+'</span>';
+  html+='<span style="font-size:11px;color:var(--text-3)">曲直＋收放＋緩急</span>';
   html+='</div>';
-  html+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
   MGR_DIMS.forEach(function(di,idx){
     var r=calcDim(di);
     var coeff=r?r.coeff.toFixed(2):'—';
     var typeLabel=r?r.type:'—';
     var typeBg=r?(r.type==='靜'?SBG:DBG):'#ccc';
     var isMin=idx===mgrMinIdx;
-    html+='<div style="flex:1;min-width:120px;padding:10px 14px;background:white;border-radius:8px;border:1px solid '+(isMin?'var(--active)':'var(--border)')+'">'+
-      '<div style="font-size:14px;font-weight:700;color:var(--text)">'+MGR_NAMES[idx]+'</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
-        '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+typeBg+';color:white;font-weight:700">'+typeLabel+'</span>'+
-        '<span style="font-size:16px;font-weight:900;color:var(--text)">'+coeff+'</span>'+
+    html+='<div style="flex:1;min-width:100px;padding:8px 10px;background:white;border-radius:6px;border:1px solid '+(isMin?'var(--active)':'var(--border)')+'">'+
+      '<div style="font-size:13px;font-weight:700;color:var(--text)">'+MGR_NAMES[idx]+'</div>'+
+      '<div style="display:flex;align-items:center;gap:4px;margin-top:3px">'+
+        '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+typeBg+';color:white;font-weight:700">'+typeLabel+'</span>'+
+        '<span style="font-size:14px;font-weight:900;color:var(--text)">'+coeff+'</span>'+
       '</div>'+
-      (isMin?'<div style="font-size:11px;color:var(--active);margin-top:4px;font-weight:700">← 短板</div>':'')+
+      (isMin?'<div style="font-size:10px;color:var(--active);margin-top:3px;font-weight:700">← 短板</div>':'')+
     '</div>';
   });
   html+='</div>';
-  html+='<div style="font-size:13px;font-weight:700;color:#4a4030;margin-bottom:6px">調整建議（前 5 個最有效觀察題・短板優先）</div>';
-  html+=_adviceList(mgrTop5,mgrTop5.length>0?mgrTop5[0].score:1);
+  html+='</div>';
+
+  // --- 先天整體調整建議 ---
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">先天整體調整建議（前 5 個最有效觀察題）</div>';
+  html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
+
   html+='</div>';
 
   // 分隔線
