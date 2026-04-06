@@ -721,7 +721,7 @@ window.kSelect=function(i){
           }
 
           // 條件描述：去除左右前綴，合併時只顯示一份
-          function stripLR(s){return s.replace(/([以且或]\s*)[左右]/g,'$1').replace(/^[左右]/,'');}
+          function stripLR(s){return s.replace(/([以且或有]\s*)[左右]/g,'$1').replace(/^[左右]/,'');}
           var descLabel='';
           if(g.isLRMerged){
             var leftItems=g.items.filter(function(it){return it.side==='L';});
