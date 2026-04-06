@@ -325,10 +325,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="entry-sub">人相兵法</div>
   <input class="entry-input" id="entry-name" placeholder="輸入姓名" maxlength="20">
   <div class="entry-hint">存檔後，請用相同姓名登入</div>
-  <div class="api-key-row">
+  <div class="api-key-row" id="api-key-row-container">
     <label>Anthropic API Key（選填，用於 AI 評析）</label>
     <input type="password" id="entry-api-key" placeholder="sk-ant-..." autocomplete="off">
   </div>
+  <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('api-key-row-container').style.display='none';</script>
   <button class="entry-btn" onclick="startApp()">開始</button>
   <div class="entry-deco">2026</div>
 </div>
@@ -564,12 +565,21 @@ function kRender(){
       html+='<div class="k-sidebar-section">'+d.cat+'</div>';
       lastCat=d.cat;
     }
-    html+='<div class="k-sidebar-item" id="ksi-'+i+'" onclick="kSelect('+i+')">'+
-      '<div>'+
-        '<div class="k-sidebar-title">'+d.dn+'</div>'+
-        '<div class="k-sidebar-view">'+d.view+'</div>'+
-      '</div>'+
-    '</div>';
+    if(i>=BETA_VISIBLE_DIMS){
+      html+='<div class="k-sidebar-item" style="opacity:0.4;pointer-events:none">'+
+        '<div>'+
+          '<div class="k-sidebar-title" style="color:#bbb">'+d.dn+'</div>'+
+          '<div class="k-sidebar-view" style="color:#ccc">即將開放</div>'+
+        '</div>'+
+      '</div>';
+    }else{
+      html+='<div class="k-sidebar-item" id="ksi-'+i+'" onclick="kSelect('+i+')">'+
+        '<div>'+
+          '<div class="k-sidebar-title">'+d.dn+'</div>'+
+          '<div class="k-sidebar-view">'+d.view+'</div>'+
+        '</div>'+
+      '</div>';
+    }
   });
   sb.innerHTML=html;
 }
@@ -850,6 +860,10 @@ const OBS_GROUPS=[
   {name:'地閣',items:[{id:'g01',label:'地閣起（豐滿有起，承漿凹）'},{id:'g02',label:'地閣平（下巴骨平，無凹凸）'},{id:'g03',label:'地閣圓（下巴骨圓）'},{id:'g04',label:'地閣寬（至少與口同寬）'}]},
   {name:'頤',paired:true,pairLabel:'頤',items:[{id:'jaw_01',label:'頤豐（頤骨豐隆有肉）'},{id:'jaw_02',label:'頤削'},{id:'jaw_03',label:'頤圓（頤骨有弧度，有肉）'},{id:'jaw_04',label:'頤平直（頤骨平直，不隆不凹不尖削）'}],sharedItem:{id:'i00',label:'左右頤大小一致'}}
 ];
+// 測試版模式：只顯示前 N 個維度（6=先天, 9=+運氣, 13=全部）
+// 網址加 ?dev=1 可看全部（開發用），正常網址依此數字控制
+const BETA_VISIBLE_DIMS=(new URLSearchParams(window.location.search).get('dev')==='1')?13:6;
+
 const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
 
 const OBS_PARTS_DATA_DEFAULT = {
@@ -2075,6 +2089,10 @@ function cpRenderRight(){
 
 function cpRenderMain(){
   var el=document.getElementById('cp-main');if(!el){console.error('cp-main not found');return;}
+  if(cpCur>=BETA_VISIBLE_DIMS){
+    el.innerHTML='<div style="padding:40px;text-align:center;color:#bbb;font-size:16px">此維度即將開放</div>';
+    return;
+  }
   var d=DIMS[cpCur];
   var res=calcDim(cpCur);
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
@@ -2883,8 +2901,16 @@ function showReport(){
     // 第二列：先天12 + 運氣6 + 後天8
     t+='<tr><td rowspan="2" style="'+nb+';'+pw+'"></td>';
     t+=cellFlex('先天係數',vPre,sdPre,'#bdd4d4','#2e4a4a').replace('<td','<td colspan="12"');
-    t+=cellFlex('運氣係數',vLuck,sdLuck,'#e8dcc8','#5a4a2a').replace('<td','<td colspan="6"');
-    t+=cellFlex('後天係數',vPost,sdPost,'#e0cdc6','#5a3a30').replace('<td','<td colspan="8"');
+    if(BETA_VISIBLE_DIMS>=9){
+      t+=cellFlex('運氣係數',vLuck,sdLuck,'#e8dcc8','#5a4a2a').replace('<td','<td colspan="6"');
+    }else{
+      t+='<td colspan="6" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">運氣係數　即將開放</td>';
+    }
+    if(BETA_VISIBLE_DIMS>=13){
+      t+=cellFlex('後天係數',vPost,sdPost,'#e0cdc6','#5a3a30').replace('<td','<td colspan="8"');
+    }else{
+      t+='<td colspan="8" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">後天係數　即將開放</td>';
+    }
     t+='<td rowspan="2" style="'+nb+';'+pw+'"></td></tr>';
     // 第三列：老闆6 + 主管6 + 空6 + 空8
     t+='<tr>';
@@ -2908,38 +2934,48 @@ function showReport(){
     // 維度名稱行
     t+='<tr><td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;position:sticky;left:0;z-index:2;'+rc+';'+pw+';text-align:center"></td>';
     DIMS.forEach(function(d,i){
-      t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.dn+'</th>';
+      if(i>=BETA_VISIBLE_DIMS){
+        t+='<th colspan="2" style="padding:10px 8px;background:#e0e0da;color:#bbb;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.dn+'</th>';
+      }else{
+        t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.dn+'</th>';
+      }
     });
     t+='<td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;'+rc+';'+pw+';text-align:center"></td></tr>';
     // 子欄行：靜X｜動X（透明底、棕色字、底線）
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      var lBg=colLIsS[i]?SBG:DBG;
-      var rBg=colLIsS[i]?DBG:SBG;
-      var lCnt=colLIsS[i]?dimSCounts[i]:dimDCounts[i];
-      var rCnt=colLIsS[i]?dimDCounts[i]:dimSCounts[i];
-      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+lBg+'">'+colL[i]+lCnt+'</th>';
-      t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+rBg+'">'+colR[i]+rCnt+'</th>';
+      if(i>=BETA_VISIBLE_DIMS){
+        t+='<th colspan="2" style="padding:4px 6px;background:transparent;color:#ccc;font-weight:700;text-align:center;border-bottom:2.5px solid #ddd"></th>';
+      }else{
+        var lBg=colLIsS[i]?SBG:DBG;
+        var rBg=colLIsS[i]?DBG:SBG;
+        var lCnt=colLIsS[i]?dimSCounts[i]:dimDCounts[i];
+        var rCnt=colLIsS[i]?dimDCounts[i]:dimSCounts[i];
+        t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+lBg+'">'+colL[i]+lCnt+'</th>';
+        t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+rBg+'">'+colR[i]+rCnt+'</th>';
+      }
     });
     t+='</tr>';
     // 係數格（獨立圓角方塊 + 堆疊橫條）
     t+='<tr>';
     DIMS.forEach(function(d,i){
-      var res=calcDim(i);
-      var coeff=res?res.coeff.toFixed(2):'—';
-      var sc=dimSCounts[i],dc=dimDCounts[i];
-      // 上方：係數方塊（實色，撐滿）
-      var coeffBg=res?(res.type==='靜'?SBG:DBG):'var(--bg)';
-      var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">'+coeff+'</div>';
-      // 下方：堆疊橫條（撐滿，靠下）
-      var bars='<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">';
-      bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-      for(var b=0;b<sc;b++)bars+='<div style="height:3px;background:'+SBG+';border-radius:1px"></div>';
-      bars+='</div>';
-      bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-      for(var b=0;b<dc;b++)bars+='<div style="height:3px;background:'+DBG+';border-radius:1px"></div>';
-      bars+='</div></div>';
-      t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
+      if(i>=BETA_VISIBLE_DIMS){
+        t+='<td colspan="2" style="padding:4px 6px;vertical-align:top"><div style="background:#e0e0da;color:#bbb;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;width:100%">—</div></td>';
+      }else{
+        var res=calcDim(i);
+        var coeff=res?res.coeff.toFixed(2):'—';
+        var sc=dimSCounts[i],dc=dimDCounts[i];
+        var coeffBg=res?(res.type==='靜'?SBG:DBG):'var(--bg)';
+        var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">'+coeff+'</div>';
+        var bars='<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">';
+        bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
+        for(var b=0;b<sc;b++)bars+='<div style="height:3px;background:'+SBG+';border-radius:1px"></div>';
+        bars+='</div>';
+        bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
+        for(var b=0;b<dc;b++)bars+='<div style="height:3px;background:'+DBG+';border-radius:1px"></div>';
+        bars+='</div></div>';
+        t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
+      }
     });
     t+='</tr>';
 
@@ -2954,6 +2990,10 @@ function showReport(){
       t+='<tr>';
       t+='<td style="'+partCellL+'">'+partLabels[idx]+'</td>';
       DIMS.forEach(function(d,di){
+        if(di>=BETA_VISIBLE_DIMS){
+          t+='<td colspan="2" style="padding:4px 8px;text-align:center;background:#f5f5f0;'+rc+'"></td>';
+          return;
+        }
         var v=data[di][pi];
         var isStatic=false,isDynamic=false;
         if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
@@ -3601,6 +3641,13 @@ function renderSensPage(){
 
   html+='</div>'; // 關閉先天係數分析區塊
 
+  // 運氣區塊遮罩（測試版）
+  if(BETA_VISIBLE_DIMS<9){
+    html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
+    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
+    html+='<div style="font-size:14px;color:#bbb">即將開放</div>';
+    html+='</div>';
+  }else{
   // ===== 運氣係數分析區塊（矩陣版）=====
   var _luckMatrixDims=[6,7,8];
 
@@ -3719,7 +3766,15 @@ function renderSensPage(){
   html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
 
   html+='</div>'; // 關閉運氣係數分析區塊
+  } // 關閉運氣 BETA_VISIBLE_DIMS 判斷
 
+  // 後天區塊遮罩（測試版）
+  if(BETA_VISIBLE_DIMS<13){
+    html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
+    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
+    html+='<div style="font-size:14px;color:#bbb">即將開放</div>';
+    html+='</div>';
+  }else{
   // ===== 後天係數分析區塊（矩陣版）=====
   var _postMatrixDims=[9,10,11,12];
 
@@ -3844,6 +3899,7 @@ function renderSensPage(){
   html+=_postAdviceList(postTop5,postTop5.length>0?postTop5[0].score:1);
 
   html+='</div>'; // 關閉後天係數分析區塊
+  } // 關閉後天 BETA_VISIBLE_DIMS 判斷
 
   // 分隔線
   html+='<div style="border-top:2px solid var(--border);margin:8px 0 20px"></div>';
