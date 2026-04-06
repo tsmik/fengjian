@@ -3260,15 +3260,7 @@ function renderSensPage(){
   var LUCK_DIMS=[6,7,8];
   var LUCK_NAMES=['順逆','分合','真假'];
   var luckCoeffVal=avgCoeff(LUCK_DIMS);
-  var baseLuckCoeffs=[];
-  LUCK_DIMS.forEach(function(di){baseLuckCoeffs.push(baseCoeffs[di]);});
-  // 找短板（離 0.80 最遠的）
-  var luckMinIdx=0;
-  var luckMaxGap=Math.abs(0.80-baseLuckCoeffs[0]);
-  baseLuckCoeffs.forEach(function(c,i){
-    var gap=Math.abs(0.80-c);
-    if(gap>luckMaxGap){luckMaxGap=gap;luckMinIdx=i;}
-  });
+  var baseLuckCoeffNum=parseFloat(luckCoeffVal);
 
   // 遍歷 allQs 計算運氣調整建議
   var luckQResults=[];
@@ -3284,20 +3276,13 @@ function renderSensPage(){
       if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
       recalcFromObs();
 
-      // 主分：群組大係數（方法B）的前後差值
+      // 主分：群組大係數（方法B）提升量
       var _lSumMin=0,_lSumMax=0;
       LUCK_DIMS.forEach(function(di){
         var nr=calcDim(di);if(nr){_lSumMin+=Math.min(nr.a,nr.b);_lSumMax+=Math.max(nr.a,nr.b);}
       });
       var newLuckCoeff=_lSumMax>0?_lSumMin/_lSumMax:0;
-      var baseLuckCoeff=parseFloat(luckCoeffVal);
-      var lMain=newLuckCoeff-baseLuckCoeff;
-      // 短板 bonus：短板維度往 0.80 靠近的量
-      var _lWeakNew=0;
-      var _lwr=calcDim(LUCK_DIMS[luckMinIdx]);
-      if(_lwr)_lWeakNew=_lwr.coeff;
-      var lWeakImprove=Math.abs(0.80-baseLuckCoeffs[luckMinIdx])-Math.abs(0.80-_lWeakNew);
-      if(lWeakImprove>0)lMain+=lWeakImprove*0.5;
+      var lMain=newLuckCoeff-baseLuckCoeffNum;
       // ��維度連帶效應：檢查其他 10 個維度的係數是否也提升
       var crossBonus=0;
       [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
@@ -3726,8 +3711,8 @@ function renderSensPage(){
   }
   html+='</div>';
 
-  // 短板提示
-  html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：各維度係數往 0.80（平衡）靠近，短板 <b>'+LUCK_NAMES[luckMinIdx]+'</b>（'+baseLuckCoeffs[luckMinIdx].toFixed(2)+'）優先加權</div>';
+  // 調整說明
+  html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：提升運氣群組整體係數（動靜更平衡）</div>';
 
   // 建議列表
   html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">運氣整體調整建議（前 5 個最有效觀察題）</div>';
