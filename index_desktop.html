@@ -5042,8 +5042,18 @@ function drawReportCanvas(){
   var r26=sumW/26;
   var preW=Math.round(r26*12)-G, luckW=Math.round(r26*6)-G, postW=sumW-Math.round(r26*12)-Math.round(r26*6)-G;
   drawSumCell(sumX,ySum2,preW,SUM_H,'#bdd4d4','#2e4a4a','先天係數',vPre,sdPre);
-  drawSumCell(sumX+preW+G,ySum2,luckW,SUM_H,'#e8dcc8','#5a4a2a','運氣係數',vLuck,sdLuck);
-  drawSumCell(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#e0cdc6','#5a3a30','後天係數',vPost,sdPost);
+  if(BETA_VISIBLE_DIMS>=9){
+    drawSumCell(sumX+preW+G,ySum2,luckW,SUM_H,'#e8dcc8','#5a4a2a','運氣係數',vLuck,sdLuck);
+  }else{
+    rRect(sumX+preW+G,ySum2,luckW,SUM_H,4,'#f0f0ea');
+    txtC('運氣係數　建置中',sumX+preW+G,ySum2,luckW,SUM_H,'#bbb',12,true);
+  }
+  if(BETA_VISIBLE_DIMS>=13){
+    drawSumCell(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#e0cdc6','#5a3a30','後天係數',vPost,sdPost);
+  }else{
+    rRect(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,4,'#f0f0ea');
+    txtC('後天係數　建置中',sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#bbb',12,true);
+  }
 
   var halfW=Math.round(r26*6)-G;
   drawSumCell(sumX,ySum3,halfW,SUM_H,'#cce0e0','#2e4a4a','老闆係數',vLead,sdLead);
@@ -5052,47 +5062,61 @@ function drawReportCanvas(){
   // --- 4. 維度 header 行 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
-    rRect(dx,yDimHdr,DIM_W,HDR_H,4,dimColors[i]);
-    txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#ffffff',13,true);
+    if(i>=BETA_VISIBLE_DIMS){
+      rRect(dx,yDimHdr,DIM_W,HDR_H,4,'#e0e0da');
+      txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#bbb',13,true);
+    }else{
+      rRect(dx,yDimHdr,DIM_W,HDR_H,4,dimColors[i]);
+      txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#ffffff',13,true);
+    }
   }
 
   // --- 5. 子欄行 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
-    var lBg=colLIsS[i]?SBG:DBG;
-    var rBg=colLIsS[i]?DBG:SBG;
-    var lCnt=colLIsS[i]?dimSC[i]:dimDC[i];
-    var rCnt=colLIsS[i]?dimDC[i]:dimSC[i];
-    txtC(colL[i]+lCnt,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-    ctx.fillStyle=lBg;
-    ctx.fillRect(dx,ySubHdr+SUB_H-3,SUB_W,2.5);
-    txtC(colR[i]+rCnt,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-    ctx.fillStyle=rBg;
-    ctx.fillRect(dx+SUB_W,ySubHdr+SUB_H-3,SUB_W,2.5);
+    if(i>=BETA_VISIBLE_DIMS){
+      // 空白
+    }else{
+      var lBg=colLIsS[i]?SBG:DBG;
+      var rBg=colLIsS[i]?DBG:SBG;
+      var lCnt=colLIsS[i]?dimSC[i]:dimDC[i];
+      var rCnt=colLIsS[i]?dimDC[i]:dimSC[i];
+      txtC(colL[i]+lCnt,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
+      ctx.fillStyle=lBg;
+      ctx.fillRect(dx,ySubHdr+SUB_H-3,SUB_W,2.5);
+      txtC(colR[i]+rCnt,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
+      ctx.fillStyle=rBg;
+      ctx.fillRect(dx+SUB_W,ySubHdr+SUB_H-3,SUB_W,2.5);
+    }
   }
 
   // --- 6. 係數格+堆疊橫條 ---
   for(var i=0;i<13;i++){
     var dx=PAD+PART_W+G+i*(DIM_W+G);
-    var res=calcDim(i);
-    var coeff=res?res.coeff.toFixed(2):'—';
-    var coeffBg=res?(res.type==='靜'?SBG:DBG):'#ddd';
-    var cbH=22;
-    rRect(dx,yCoeff,DIM_W,cbH,4,coeffBg);
-    txtC(coeff,dx,yCoeff,DIM_W,cbH,'#ffffff',13,true);
-    var barTop=yCoeff+cbH+4;
-    var barH=COEFF_H-cbH-6;
-    var sc2=dimSC[i],dc2=dimDC[i];
-    var barUnitH=Math.min(3,(barH-2)/(Math.max(sc2,dc2,1)));
-    var barLX=dx+4, barW=(DIM_W-12)/2;
-    for(var b=0;b<sc2;b++){
-      var by=barTop+barH-2-(b+1)*(barUnitH+1);
-      rRect(barLX,by,barW,barUnitH,1,SBG);
-    }
-    var barRX=dx+DIM_W/2+2;
-    for(var b=0;b<dc2;b++){
-      var by=barTop+barH-2-(b+1)*(barUnitH+1);
-      rRect(barRX,by,barW,barUnitH,1,DBG);
+    if(i>=BETA_VISIBLE_DIMS){
+      rRect(dx,yCoeff,DIM_W,22,4,'#e0e0da');
+      txtC('—',dx,yCoeff,DIM_W,22,'#bbb',13,true);
+    }else{
+      var res=calcDim(i);
+      var coeff=res?res.coeff.toFixed(2):'—';
+      var coeffBg=res?(res.type==='靜'?SBG:DBG):'#ddd';
+      var cbH=22;
+      rRect(dx,yCoeff,DIM_W,cbH,4,coeffBg);
+      txtC(coeff,dx,yCoeff,DIM_W,cbH,'#ffffff',13,true);
+      var barTop=yCoeff+cbH+4;
+      var barH=COEFF_H-cbH-6;
+      var sc2=dimSC[i],dc2=dimDC[i];
+      var barUnitH=Math.min(3,(barH-2)/(Math.max(sc2,dc2,1)));
+      var barLX=dx+4, barW=(DIM_W-12)/2;
+      for(var b=0;b<sc2;b++){
+        var by=barTop+barH-2-(b+1)*(barUnitH+1);
+        rRect(barLX,by,barW,barUnitH,1,SBG);
+      }
+      var barRX=dx+DIM_W/2+2;
+      for(var b=0;b<dc2;b++){
+        var by=barTop+barH-2-(b+1)*(barUnitH+1);
+        rRect(barRX,by,barW,barUnitH,1,DBG);
+      }
     }
   }
 
@@ -5106,6 +5130,10 @@ function drawReportCanvas(){
     txtC(label,rx,yy,PART_W,ROW_H,'#3a3228',12,true);
     for(var di=0;di<13;di++){
       var dx=PAD+PART_W+G+di*(DIM_W+G);
+      if(di>=BETA_VISIBLE_DIMS){
+        rRect(dx,yy,DIM_W,ROW_H,4,'#f5f5f0');
+        continue;
+      }
       var v=data[di][partIdx];
       var isStatic=false,isDynamic=false;
       if(v){
