@@ -356,15 +356,18 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     </div>
   </div>
   <div class="nav-dropdown" id="dd-case">
-    <div class="nav-dropdown-btn" id="dd-case-btn">案例資料 ▾</div>
+    <div class="nav-dropdown-btn" id="dd-case-btn">個案資料 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-profile" onmousedown="event.preventDefault();editName()">使用者資料</div>
       <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:4px 0"></div>
+      <div class="nav-dropdown-item" onmousedown="event.preventDefault();doLogout()" style="color:rgba(255,255,255,0.4)">登出</div>
     </div>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name"></div>
-  <a href="admin.html" target="_blank" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
+  <a href="admin.html" target="_blank" id="admin-link" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
+  <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('admin-link').style.display='none';</script>
 </nav>
 
 <!-- Case Management Page (TA only) -->
@@ -4126,6 +4129,9 @@ function manualAvgCoeff(ids){
 function renderManualPage(){
   var el=document.getElementById('manual-table');if(!el)return;
   initManualData();
+  // 流年資訊
+  var _manualLnInfo=_getLiunianInfo();
+  var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
@@ -4265,7 +4271,7 @@ function renderManualPage(){
     t+='</tr>';
   });
   t+='</table>';
-  el.innerHTML=t;
+  el.innerHTML=_manualLnHtml+t;
 }
 
 /* ===== App ===== */
@@ -4591,6 +4597,19 @@ function deleteCase(caseId,caseName){
     console.log('刪除失敗',e);
     alert('刪除失敗，請重試');
   });
+}
+
+function doLogout(){
+  if(!confirm('確定要登出嗎？'))return;
+  // 不清除 localStorage 資料（下次同名登入還能用）
+  // 回到首頁登入畫面
+  document.getElementById('top-nav').style.display='none';
+  ['app-body','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page','manual-sens-page','case-page','mode-page'].forEach(function(id){
+    var e=document.getElementById(id);if(e)e.style.display='none';
+  });
+  document.getElementById('entry-page').style.display='flex';
+  document.getElementById('entry-name').value='';
+  document.getElementById('entry-name').focus();
 }
 
 function editName(){
