@@ -3305,12 +3305,15 @@ function renderSensPage(){
         var improve=nc-baseCoeffs[di];
         if(improve>0.001)crossBonus+=improve;
       });
+      if(lMain<=0){/* 群組整體未改善，跳過 */}
+      else{
       var lScore=lMain+crossBonus*0.1;
 
       if(lScore>bestTotal){
         bestTotal=lScore;
         bestOpt=v;
       }
+      } // 關閉 lMain>0 的 else
     });
 
     obsData=JSON.parse(JSON.stringify(origObs));
@@ -3411,12 +3414,15 @@ function renderSensPage(){
         var improve=nc-baseCoeffs[di];
         if(improve>0.001)crossBonus+=improve;
       });
+      if(pMain<=0){/* 群組整體未改善，跳過 */}
+      else{
       var pScore=pMain+crossBonus*0.1;
 
       if(pScore>bestTotal){
         bestTotal=pScore;
         bestOpt=v;
       }
+      } // 關閉 pMain>0 的 else
     });
 
     obsData=JSON.parse(JSON.stringify(origObs));
