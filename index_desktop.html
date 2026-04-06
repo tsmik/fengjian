@@ -3256,7 +3256,110 @@ function renderSensPage(){
     recalcFromObs();
   }
 
-  // ===== 後天係數分析 =====
+  // ===== 運氣係數分析 =====
+  var LUCK_DIMS=[6,7,8];
+  var LUCK_NAMES=['順逆','分合','真假'];
+  var luckCoeffVal=avgCoeff(LUCK_DIMS);
+  var baseLuckCoeffs=[];
+  LUCK_DIMS.forEach(function(di){baseLuckCoeffs.push(baseCoeffs[di]);});
+  // 找短板（離 0.80 最遠的）
+  var luckMinIdx=0;
+  var luckMaxGap=Math.abs(0.80-baseLuckCoeffs[0]);
+  baseLuckCoeffs.forEach(function(c,i){
+    var gap=Math.abs(0.80-c);
+    if(gap>luckMaxGap){luckMaxGap=gap;luckMinIdx=i;}
+  });
+
+  // 遍歷 allQs 計算運氣調整建議
+  var luckQResults=[];
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var bestTotal=0,bestOpt=null;
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      obsData=JSON.parse(JSON.stringify(origObs));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+
+      // 計算三維度改善量（往 0.80 靠近）
+      var improvements=[];
+      LUCK_DIMS.forEach(function(di,idx){
+        var nr=calcDim(di);var nc=nr?nr.coeff:0;
+        var oldGap=Math.abs(0.80-baseLuckCoeffs[idx]);
+        var newGap=Math.abs(0.80-nc);
+        improvements.push(Math.max(0,oldGap-newGap));
+      });
+      var lAvg=improvements.reduce(function(s,v){return s+v;},0)/3;
+      var lWeak=improvements[luckMinIdx];
+      var lMain=lAvg+lWeak*2;
+      // ��維度連帶效應：檢查其他 10 個維度的係數是否也提升
+      var crossBonus=0;
+      [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
+        var nr=calcDim(di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)crossBonus+=improve;
+      });
+      var lScore=lMain+crossBonus*0.1;
+
+      if(lScore>bestTotal){
+        bestTotal=lScore;
+        bestOpt=v;
+      }
+    });
+
+    obsData=JSON.parse(JSON.stringify(origObs));
+    data=JSON.parse(JSON.stringify(origData));
+
+    if(bestTotal>0)luckQResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
+      score:bestTotal,bestOpt:bestOpt
+    });
+  });
+
+  // 還原
+  obsData=JSON.parse(JSON.stringify(origObs));
+  obsOverride=JSON.parse(JSON.stringify(origOverride));
+  data=JSON.parse(JSON.stringify(origData));
+  recalcFromObs();
+
+  luckQResults.sort(function(a,b){return b.score-a.score;});
+  var luckTop5=luckQResults.slice(0,5);
+
+  // 模擬運氣 Top5 全翻轉
+  var luckSimData=null, luckSimCoeffVal='';
+  var luckSimFlips={};
+  if(luckTop5.length>0){
+    obsData=JSON.parse(JSON.stringify(origObs));
+    luckTop5.forEach(function(r){
+      obsData[r.id]=r.bestOpt;
+      allQs.forEach(function(q){
+        if(q.id===r.id && q.paired){
+          obsData[q.id+'_L']=r.bestOpt;
+          obsData[q.id+'_R']=r.bestOpt;
+        }
+      });
+    });
+    recalcFromObs();
+    luckSimData=[];
+    for(var _ld=0;_ld<13;_ld++){luckSimData.push(data[_ld].slice());}
+    luckSimCoeffVal=avgCoeff(LUCK_DIMS);
+    for(var _lfd=6;_lfd<9;_lfd++){
+      for(var _lfp=0;_lfp<9;_lfp++){
+        if(origData[_lfd][_lfp]!==luckSimData[_lfd][_lfp]){
+          luckSimFlips[_lfd+'_'+_lfp]=true;
+        }
+      }
+    }
+    obsData=JSON.parse(JSON.stringify(origObs));
+    obsOverride=JSON.parse(JSON.stringify(origOverride));
+    data=JSON.parse(JSON.stringify(origData));
+    recalcFromObs();
+  }
+
+  // ===== 後���係數分析 =====
   var POST_DIMS=[9,10,11,12];
   var POST_NAMES=['攻守','奇正','虛實','進退'];
   var postCoeffVal=avgCoeff(POST_DIMS);
@@ -3500,6 +3603,125 @@ function renderSensPage(){
   html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
 
   html+='</div>'; // 關閉先天係數分析區塊
+
+  // ===== 運氣係數分析區塊（矩陣版）=====
+  var _luckMatrixDims=[6,7,8];
+
+  function _buildLuckMatrix(useData,isSimulation){
+    var mt='';
+    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
+    // 維度名稱行
+    mt+='<tr><td style="padding:3px 4px"></td>';
+    _luckMatrixDims.forEach(function(di){
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+    });
+    mt+='</tr>';
+    // 9 個部位行
+    PARTS.forEach(function(pn,pi){
+      if(pi===4){mt+='<tr><td colspan="4" style="height:6px"></td></tr>';}
+      mt+='<tr>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      _luckMatrixDims.forEach(function(di){
+        var val=useData[di][pi];
+        var color,outline='',label='';
+        if(val===null){color='#e8e8e0';}
+        else{
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          color=tp==='靜'?_SBG2:_DBG2;
+          label=val==='A'?DIMS[di].a:DIMS[di].b;
+        }
+        if(isSimulation&&luckSimFlips[di+'_'+pi]){outline='outline:3px solid #E8B000;outline-offset:-1px;';}
+        if(val===null){
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
+        }else{
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+        }
+      });
+      mt+='</tr>';
+    });
+    // 係數行
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    _luckMatrixDims.forEach(function(di){
+      var aCount=useData[di].filter(function(v){return v==='A';}).length;
+      var bCount=useData[di].filter(function(v){return v==='B';}).length;
+      var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
+      var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
+      if(aCount===bCount)tp=DIMS[di].aT;
+      var tbg=tp==='靜'?_SBG2:_DBG2;
+      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+    });
+    mt+='</tr>';
+    mt+='</table>';
+    return mt;
+  }
+
+  // 運氣建議列表渲染
+  function _luckAdviceList(items,maxScore){
+    if(items.length===0)return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">目前配置下無有效調整建議</div>';
+    var h='';
+    items.forEach(function(r,idx){
+      var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
+      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
+      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
+      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
+      h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='</div>';
+    });
+    return h;
+  }
+
+  html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">運氣係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+luckCoeffVal+'</span>';
+  html+='</div>';
+
+  html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
+
+  // 左：目前狀態
+  html+='<div style="flex:1;min-width:180px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+'</div>';
+  html+=_buildLuckMatrix(origData,false);
+  html+='</div>';
+
+  // 右：調整後預估
+  if(luckSimData){
+    html+='<div style="flex:1;min-width:180px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+' → <span style="color:var(--text);font-weight:900">'+luckSimCoeffVal+'</span></div>';
+    html+=_buildLuckMatrix(luckSimData,true);
+    html+='</div>';
+  }else{
+    html+='<div style="flex:1;min-width:180px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
+    html+='<span style="font-size:13px;color:var(--text-3)">無有效調整建議</span>';
+    html+='</div>';
+  }
+
+  html+='</div>'; // 關閉左右並排容器
+
+  // 圖例
+  html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+'"></span>靜</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_DBG2+'"></span>動</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#e8e8e0"></span>無資料</span>';
+  if(luckSimData){
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+';outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+  }
+  html+='</div>';
+
+  // 短板提示
+  html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：各維度係數往 0.80（平衡）靠近，短板 <b>'+LUCK_NAMES[luckMinIdx]+'</b>（'+baseLuckCoeffs[luckMinIdx].toFixed(2)+'）優先加權</div>';
+
+  // 建議列表
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">運氣整體調整建議（前 5 個最有效觀察題）</div>';
+  html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
+
+  html+='</div>'; // 關閉運氣係數分析區塊
 
   // ===== 後天係數分析區塊（矩陣版）=====
   var _postMatrixDims=[9,10,11,12];
