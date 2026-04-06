@@ -3294,7 +3294,15 @@ function renderSensPage(){
       });
       var pAvg=improvements.reduce(function(s,v){return s+v;},0)/4;
       var pWeak=improvements[postMinIdx];
-      var pScore=pAvg+pWeak*2;
+      var pMain=pAvg+pWeak*2;
+      // 跨維度連帶效應：檢查其他 9 個維度（先天+運氣）的係數是否也提升
+      var crossBonus=0;
+      [0,1,2,3,4,5,6,7,8].forEach(function(di){
+        var nr=calcDim(di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)crossBonus+=improve;
+      });
+      var pScore=pMain+crossBonus*0.1; // 連帶效應權重 0.1，不會蓋過主分
 
       if(pScore>bestTotal){
         bestTotal=pScore;
