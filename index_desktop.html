@@ -272,7 +272,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 .detail-stats{font-size:13px;color:var(--text-3);font-weight:700;padding:8px 0 0;text-align:right}
 
 /* ===== Name Edit Overlay ===== */
-#name-edit-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:8000;display:none;align-items:center;justify-content:center}
+#name-edit-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9500;display:none;align-items:center;justify-content:center}
 #name-edit-overlay.show{display:flex}
 .name-edit-box{background:white;border-radius:12px;padding:28px 24px;width:80%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 .name-edit-box h3{margin:0;font-size:18px;font-weight:900;letter-spacing:2px}
@@ -341,10 +341,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   <div class="nav-dropdown" id="dd-obs">
     <div class="nav-dropdown-btn" id="dd-obs-btn">觀察面相評分 ▾</div>
     <div class="nav-dropdown-menu">
-      <div class="nav-dropdown-item" id="nav-obs" onclick="showObsPage()">各部位觀察</div>
-      <div class="nav-dropdown-item" id="nav-cond" onclick="showCondPage()">13維度評分</div>
-      <div class="nav-dropdown-item" id="nav-report" onclick="showReport()">兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-know" onclick="showKnowledgePage()">兵法評分摘要</div>
+      <div class="nav-dropdown-item" id="nav-obs" onclick="showObsPage()">一次輸入各部位觀察</div>
+      <div class="nav-dropdown-item" id="nav-cond" onclick="showCondPage()">13維度輸入觀察</div>
+      <div class="nav-dropdown-item" id="nav-report" onclick="showReport()">人相兵法報告</div>
+      <div class="nav-dropdown-item" id="nav-know" onclick="showKnowledgePage()">13維度評分結果</div>
       <div class="nav-dropdown-item" id="nav-sens" onclick="showSensPage()">重要參數分析</div>
     </div>
   </div>
@@ -352,13 +352,13 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     <div class="nav-dropdown-btn" id="dd-manual-btn">手動輸入報告 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()">重要參數分析</div>
+      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()" style="display:none">重要參數分析</div>
     </div>
   </div>
   <div class="nav-dropdown" id="dd-case">
     <div class="nav-dropdown-btn" id="dd-case-btn">案例資料 ▾</div>
     <div class="nav-dropdown-menu">
-      <div class="nav-dropdown-item" id="nav-profile" onclick="editName()">使用者資料</div>
+      <div class="nav-dropdown-item" id="nav-profile" onmousedown="event.preventDefault();editName()">使用者資料</div>
       <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
     </div>
   </div>
@@ -412,11 +412,11 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
           <p>根據觀察結果，查看形勢、經緯、方圓等13個維度的條件與評分</p>
         </div>
         <div class="mode-card" style="border-top-color:#8a9aaa" onclick="showReport()">
-          <h3>兵法報告</h3>
+          <h3>人相兵法報告</h3>
           <p>查看綜合係數矩陣與動靜比例報告</p>
         </div>
         <div class="mode-card" style="border-top-color:#6a9fbc" onclick="showKnowledgePage()">
-          <h3>兵法評分摘要</h3>
+          <h3>13維度評分結果</h3>
           <p>查看每個維度的判斷標準與依據說明</p>
         </div>
         <div class="mode-card" style="border-top-color:#9a7c8a" onclick="showSensPage()">
@@ -863,6 +863,7 @@ const OBS_GROUPS=[
 // 測試版模式：只顯示前 N 個維度（6=先天, 9=+運氣, 13=全部）
 // 網址加 ?dev=1 可看全部（開發用），正常網址依此數字控制
 const BETA_VISIBLE_DIMS=(new URLSearchParams(window.location.search).get('dev')==='1')?13:6;
+if(BETA_VISIBLE_DIMS>=13){var _ms=document.getElementById('nav-manual-sens');if(_ms)_ms.style.display='';}
 
 const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
 
