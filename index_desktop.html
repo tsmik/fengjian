@@ -3256,8 +3256,14 @@ function renderSensPage(){
       var mWeak=mImprovements[mgrMinIdx];
       var mScore=mAvg+mWeak*2;
 
-      // 先天總分
-      var totalScore=bScore+mScore;
+      // 先天總分 + 跨維度連帶效應（運氣+後天的改善量作為 tiebreaker）
+      var innateCrossBonus=0;
+      [6,7,8,9,10,11,12].forEach(function(di){
+        var nr=calcDim(di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)innateCrossBonus+=improve;
+      });
+      var totalScore=bScore+mScore+innateCrossBonus*0.1;
       if(totalScore>bestTotal){
         bestTotal=totalScore;
         bestBoss=bScore;
@@ -4639,6 +4645,15 @@ function confirmEditName(){
     updatedAt:new Date().toISOString()
   },{merge:true}).catch(function(e){console.log('個人資料儲存失敗',e);});
   closeEditName();
+  // 自動重新渲染當前頁面（讓流年等資料立即更新）
+  var _activeItem=document.querySelector('.nav-dropdown-item.active');
+  var _activeTab=_activeItem?_activeItem.id:'';
+  if(_activeTab==='nav-report')showReport();
+  else if(_activeTab==='nav-obs'){renderFaceMap();renderObsCenter();renderDimIndex();}
+  else if(_activeTab==='nav-cond')cpRender();
+  else if(_activeTab==='nav-know')showKnowledgePage();
+  else if(_activeTab==='nav-sens')renderSensPage();
+  else if(_activeTab==='nav-manual')renderManualPage();
 }
 function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
 
