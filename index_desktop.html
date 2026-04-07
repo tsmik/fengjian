@@ -4104,15 +4104,15 @@ function manualSave(){
     manualTotalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
     manualUpdatedAt:new Date().toISOString()
   },{merge:true});
-  // 同時存到 analyses（歷史記錄）
-  var logPromise=db.collection('analyses').add({
+  // 歷史記錄（非關鍵，失敗不影響主儲存）
+  db.collection('analyses').add({
     userName:userName,inputType:'manual',
     manualData:JSON.stringify(manualData),coefficients:JSON.stringify(coeffs),
     totalCoeff:manualAvgCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
     createdAt:new Date().toISOString()
-  });
+  }).catch(function(e){console.log('analyses log失敗（不影響儲存）',e);});
   manualSaveLocal();
-  Promise.all([savePromise,logPromise]).then(function(){
+  savePromise.then(function(){
     btn.innerText='已儲存 \u2713';btn.style.color='#7A9E7E';btn.style.borderColor='#7A9E7E';
     setTimeout(function(){btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';btn.disabled=false;},2000);
   }).catch(function(e){
