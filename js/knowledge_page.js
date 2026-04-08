@@ -254,12 +254,6 @@ export function kSelect(i){
   }
 
   document.getElementById('k-content').innerHTML=html;
-
-  // 顯示 AI 評析區域（只在 BETA 全開時顯示）
-  var aiSection=document.getElementById('ai-section');
-  if(aiSection){
-    aiSection.style.display=(BETA_VISIBLE_DIMS>=13)?'block':'none';
-  }
 }
 
 export function showKnowledgePage(){

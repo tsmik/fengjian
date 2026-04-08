@@ -526,10 +526,6 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     <div class="k-content" id="k-content">
       <div style="color:var(--text-3);font-size:14px;margin-top:40px;text-align:center">← 點選左側維度查看判斷標準</div>
     </div>
-    <div id="ai-section" style="padding:16px;border-top:2px solid var(--border);margin-top:16px;display:none">
-      <button id="btn-ai" onclick="generateAI()" style="padding:8px 24px;background:var(--active);color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px">生成 AI 評析</button>
-      <div id="ai-analysis-area" style="margin-top:12px"></div>
-    </div>
   </div>
 </div>
 </div>
@@ -567,6 +563,10 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
     <span style="font-size:15px;color:#888;font-family:'Noto Serif TC',serif;margin-left:12px">人相兵法係數報告</span>
   </div>
   <div id="report-full-table" style="margin:8px 0;overflow-x:auto;width:100%"></div>
+  <div id="ai-section" style="padding:16px 20px;border-top:2px solid var(--border);margin-top:20px;display:none">
+    <button id="btn-ai" onclick="generateAI()" style="padding:10px 28px;background:var(--active);color:white;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:2px">生成 AI 評析</button>
+    <div id="ai-analysis-area" style="margin-top:16px"></div>
+  </div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
     <button class="btn-back" onclick="showCondPage()" style="flex:1;margin:0;">&#8592; 修改評分</button>
