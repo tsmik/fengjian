@@ -1,10 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /photo_training/{docId} {
-      allow read, write: if true;
+    // settings 集合：所有已登入使用者可讀，只有 admin 可寫
+    match /settings/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    match /settings/{docId} {
+
+    // users 集合：使用者只能讀寫自己的資料
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /cases/{caseId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // analyses 集合：已登入使用者可寫
+    match /analyses/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // photo_training：保持開放（訓練用）
+    match /photo_training/{docId} {
       allow read, write: if true;
     }
   }

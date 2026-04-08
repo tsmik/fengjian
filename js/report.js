@@ -2,13 +2,13 @@
 
 import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, _currentCaseId, _currentCaseName,
          _userGender, _userBirthday, _caseGender, _caseBirthday, _caseDate, _liunianTable, BETA_VISIBLE_DIMS,
-         setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff } from './core.js';
+         setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { collectDetailForPrompt } from './obs_ui.js';
 
 /* ===== Report Save ===== */
 export function reportSave(){
-  const btn=document.getElementById('report-save-btn');if(!userName)return;
+  const btn=document.getElementById('report-save-btn');if(!currentUser)return;
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   localStorage.setItem('obs_override_v1',JSON.stringify(obsOverride));
   _getUserDocRef().set({dataJson:JSON.stringify(data),obsJson:JSON.stringify(obsData),overrideJson:JSON.stringify(obsOverride),updatedAt:new Date().toISOString()},{merge:true})

@@ -21,15 +21,13 @@ export function kRender(){
     if(i>=BETA_VISIBLE_DIMS){
       html+='<div class="k-sidebar-item" style="opacity:0.4;pointer-events:none">'+
         '<div>'+
-          '<div class="k-sidebar-title" style="color:#bbb">'+d.dn+'</div>'+
-          '<div class="k-sidebar-view" style="color:#ccc">建置中</div>'+
+          '<div class="k-sidebar-title" style="color:#bbb">'+d.dn+' - 建置中</div>'+
         '</div>'+
       '</div>';
     }else{
       html+='<div class="k-sidebar-item" id="ksi-'+i+'" onclick="kSelect('+i+')">'+
         '<div>'+
-          '<div class="k-sidebar-title">'+d.dn+'</div>'+
-          '<div class="k-sidebar-view">'+d.view+'</div>'+
+          '<div class="k-sidebar-title">'+d.dn+' - '+d.view+'</div>'+
         '</div>'+
       '</div>';
     }

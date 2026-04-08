@@ -3,7 +3,8 @@ import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _curren
          _userGender, setUserGender, _userBirthday, setUserBirthday,
          _caseGender, setCaseGender, _caseBirthday, setCaseBirthday, _caseDate, setCaseDate,
          data, setData, obsData, setObsData, obsOverride, setObsOverride, condResults,
-         emptyData, setNavActive, showPage, _showToast, _escHtml, _getUserDocRef, save } from './core.js';
+         emptyData, setNavActive, showPage, _showToast, _escHtml, _getUserDocRef, save,
+         currentUser, setCurrentUser, userRole, setUserRole } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex } from './obs_ui.js';
 import { cpRender } from './cond_page.js';
@@ -24,7 +25,7 @@ export function renderCaseList(){
   if(!listEl)return;
   listEl.innerHTML='<div style="color:#aaa;padding:20px;text-align:center">載入中...</div>';
 
-  db.collection('users').doc(userName).get().then(function(selfDoc){
+  db.collection('users').doc(currentUser.uid).get().then(function(selfDoc){
     var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
     var html='';
 
@@ -33,7 +34,7 @@ export function renderCaseList(){
     if(selfUpdated) html+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
     html+='</div>';
 
-    db.collection('users').doc(userName).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
+    db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
       snap.forEach(function(doc){
         var c=doc.data();
         html+='<div class="case-card" onclick="loadCase(\''+doc.id+'\')">';
@@ -61,7 +62,7 @@ export function loadCase(caseId){
   if(caseId===null){
     setCurrentCaseId(null);
     setCurrentCaseName(userName);
-    db.collection('users').doc(userName).get().then(function(doc){
+    db.collection('users').doc(currentUser.uid).get().then(function(doc){
       if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else setData(emptyData());
       if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
       if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});
@@ -71,7 +72,7 @@ export function loadCase(caseId){
     }).catch(function(e){console.log('載入失敗',e);setData(emptyData());setObsData({});setObsOverride({});recalcFromObs();window.showModePage();});
   }else{
     setCurrentCaseId(caseId);
-    db.collection('users').doc(userName).collection('cases').doc(caseId).get().then(function(doc){
+    db.collection('users').doc(currentUser.uid).collection('cases').doc(caseId).get().then(function(doc){
       if(!doc.exists){alert('個案不存在');return;}
       var c=doc.data();
       setCurrentCaseName(c.name||'未命名');
@@ -104,7 +105,7 @@ export function editCase(caseId){
   _editingCaseId=caseId;
   document.getElementById('case-form-title').innerText='編輯個案';
   document.querySelector('.case-form-save').innerText='儲存';
-  db.collection('users').doc(userName).collection('cases').doc(caseId).get().then(function(doc){
+  db.collection('users').doc(currentUser.uid).collection('cases').doc(caseId).get().then(function(doc){
     if(!doc.exists){alert('個案不存在');return;}
     var c=doc.data();
     document.getElementById('cf-name').value=c.name||'';
@@ -141,13 +142,13 @@ export function saveCaseForm(){
 
   var promise;
   if(_editingCaseId){
-    promise=db.collection('users').doc(userName).collection('cases').doc(_editingCaseId).set(fields,{merge:true});
+    promise=db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).set(fields,{merge:true});
   }else{
     fields.dataJson=JSON.stringify(emptyData());
     fields.obsJson='{}';
     fields.overrideJson='{}';
     fields.createdAt=new Date().toISOString();
-    promise=db.collection('users').doc(userName).collection('cases').add(fields);
+    promise=db.collection('users').doc(currentUser.uid).collection('cases').add(fields);
   }
 
   promise.then(function(){
@@ -164,7 +165,7 @@ export function saveCaseForm(){
 
 export function deleteCase(caseId,caseName){
   if(!confirm('確定要刪除「'+caseName+'」的所有紀錄嗎？此操作無法復原。'))return;
-  db.collection('users').doc(userName).collection('cases').doc(caseId).delete().then(function(){
+  db.collection('users').doc(currentUser.uid).collection('cases').doc(caseId).delete().then(function(){
     renderCaseList();
   }).catch(function(e){
     console.log('刪除失敗',e);
@@ -174,13 +175,18 @@ export function deleteCase(caseId,caseName){
 
 export function doLogout(){
   if(!confirm('確定要登出嗎？'))return;
-  document.getElementById('top-nav').style.display='none';
-  ['app-body','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page','manual-sens-page','case-page','mode-page'].forEach(function(id){
-    var e=document.getElementById(id);if(e)e.style.display='none';
-  });
-  document.getElementById('entry-page').style.display='flex';
-  document.getElementById('entry-name').value='';
-  document.getElementById('entry-name').focus();
+  auth.signOut().then(function(){
+    setCurrentUser(null);
+    setUserName('');
+    setUserRole('student');
+    document.getElementById('top-nav').style.display='none';
+    ['app-body','report-overlay','knowledge-overlay','cond-page','sens-page','manual-page','manual-sens-page','case-page','mode-page'].forEach(function(id){
+      var e=document.getElementById(id);if(e)e.style.display='none';
+    });
+    document.getElementById('entry-page').style.display='flex';
+    var loginBtn=document.getElementById('google-login-btn');
+    if(loginBtn){loginBtn.disabled=false;loginBtn.innerHTML='<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> 使用 Google 帳號登入';}
+  }).catch(function(e){console.log('登出失敗',e);});
 }
 
 export function editName(){
@@ -199,16 +205,18 @@ export function confirmEditName(){
   var n=document.getElementById('name-edit-input').value.trim();
   if(n){
     setUserName(n);
-    localStorage.setItem('rxbf_username',userName);
     document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   }
   setUserGender(document.getElementById('profile-gender').value);
   setUserBirthday(document.getElementById('profile-birthday').value);
-  db.collection('users').doc(userName).set({
-    gender:_userGender,
-    birthday:_userBirthday,
-    updatedAt:new Date().toISOString()
-  },{merge:true}).catch(function(e){console.log('個人資料儲存失敗',e);});
+  if(currentUser){
+    db.collection('users').doc(currentUser.uid).set({
+      displayName:userName,
+      gender:_userGender,
+      birthday:_userBirthday,
+      updatedAt:new Date().toISOString()
+    },{merge:true}).catch(function(e){console.log('個人資料儲存失敗',e);});
+  }
   closeEditName();
   // 自動重新渲染當前頁面（讓流年等資料立即更新）
   var _activeItem=document.querySelector('.nav-dropdown-item.active');

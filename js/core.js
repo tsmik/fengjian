@@ -91,6 +91,8 @@ export let _basisVars = {};
 export let condResults = {};
 export let userName = '';
 export let _isTA = false;
+export let currentUser = null;
+export let userRole = 'student';
 export let _currentCaseId = null;
 export let _currentCaseName = '';
 export let _userGender = '';
@@ -107,6 +109,8 @@ export function setData(v) { data = v; }
 export function setCondResults(v) { condResults = v; }
 export function setUserName(v) { userName = v; }
 export function setIsTA(v) { _isTA = v; }
+export function setCurrentUser(v) { currentUser = v; }
+export function setUserRole(v) { userRole = v; }
 export function setCurrentCaseId(v) { _currentCaseId = v; }
 export function setCurrentCaseName(v) { _currentCaseName = v; }
 export function setUserGender(v) { _userGender = v; }
@@ -141,15 +145,17 @@ export function avgCoeff(dataArr, ids) {
 }
 
 export function _getUserDocRef() {
-  if (_isTA && _currentCaseId) {
-    return db.collection('users').doc(userName).collection('cases').doc(_currentCaseId);
+  if (!currentUser) return null;
+  const uid = currentUser.uid;
+  if (userRole === 'admin' && _currentCaseId) {
+    return db.collection('users').doc(uid).collection('cases').doc(_currentCaseId);
   }
-  return db.collection('users').doc(userName);
+  return db.collection('users').doc(uid);
 }
 
 let _saveTimer = null;
 export function save() {
-  if (!userName) return;
+  if (!currentUser) return;
   localStorage.setItem('obs_data_v1', JSON.stringify(obsData));
   localStorage.setItem('obs_override_v1', JSON.stringify(obsOverride));
   clearTimeout(_saveTimer);

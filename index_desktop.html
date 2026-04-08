@@ -320,17 +320,20 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 <body>
 
 <!-- Entry Page -->
-<div id="entry-page">
+<div id="entry-page" style="display:none">
   <div class="entry-logo">風鑑學堂</div>
   <div class="entry-sub">人相兵法</div>
-  <input class="entry-input" id="entry-name" placeholder="輸入姓名" maxlength="20">
-  <div class="entry-hint">存檔後，請用相同姓名登入</div>
+  <div id="login-history-list" style="display:none;width:100%;max-width:340px;margin-bottom:16px"></div>
+  <button class="entry-btn" id="google-login-btn" onclick="googleLogin()" style="display:flex;align-items:center;justify-content:center;gap:12px">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    使用 Google 帳號登入
+  </button>
+  <div class="entry-hint" id="login-status" style="margin-top:12px;margin-bottom:0"></div>
   <div class="api-key-row" id="api-key-row-container">
     <label>Anthropic API Key（選填，用於 AI 評析）</label>
     <input type="password" id="entry-api-key" placeholder="sk-ant-..." autocomplete="off">
   </div>
   <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('api-key-row-container').style.display='none';</script>
-  <button class="entry-btn" onclick="startApp()">開始</button>
   <div class="entry-deco">2026</div>
 </div>
 <div id="toast-notify" style="position:fixed;top:20px;right:20px;background:#7A9E7E;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none"></div>
@@ -366,8 +369,7 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name"></div>
-  <a href="admin.html" target="_blank" id="admin-link" style="color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
-  <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('admin-link').style.display='none';</script>
+  <a href="admin.html" target="_blank" id="admin-link" style="display:none;color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
 </nav>
 
 <!-- Case Management Page (TA only) -->
@@ -573,10 +575,13 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;width:100%;height:10
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const auth=firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.log('persistence 設定失敗',e);});
 </script>
 <script type="module" src="./js/app.js"></script>
 </body>

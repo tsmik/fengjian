@@ -1,8 +1,8 @@
 // js/manual.js — 手動輸入模組
 import { DIMS, data, manualData, setManualData, userName, _isTA, _currentCaseId, _currentCaseName, BETA_VISIBLE_DIMS,
          setNavActive, showPage, _showToast, _getUserDocRef, calcDim, avgCoeff,
-         _liunianTable } from './core.js';
-import { buildLiunianTableHtml, _getLiunianInfo } from './report.js';
+         _liunianTable, currentUser } from './core.js';
+import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo } from './report.js';
 
 export function initManualData(){
   if(manualData)return;
@@ -13,7 +13,7 @@ export function manualSaveLocal(){
 }
 export function manualLoadData(){
   // 優先 Firebase，備用 localStorage
-  if(!userName){manualLoadLocal();return;}
+  if(!currentUser){manualLoadLocal();return;}
   _getUserDocRef().get().then(function(doc){
     if(doc.exists&&doc.data().manualDataJson){
       try{setManualData(JSON.parse(doc.data().manualDataJson));}catch(e){manualLoadLocal();}
@@ -66,7 +66,7 @@ export function manualImportObs(){
 }
 
 export function manualSave(){
-  if(!userName)return;
+  if(!currentUser)return;
   initManualData();
   var coeffs={};
   for(var i=0;i<13;i++){
@@ -106,6 +106,9 @@ export function renderManualPage(){
   // 流年資訊
   var _manualLnInfo=_getLiunianInfo();
   var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
+  // 標題列（使用者名稱 + 虛歲 + 關隘 + 報告名）
+  var _displayName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'未命名';
+  var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:900;font-family:\'Noto Serif TC\',serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:\'Noto Serif TC\',serif;margin-left:12px">人相兵法係數報告</span></div>';
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
@@ -245,5 +248,5 @@ export function renderManualPage(){
     t+='</tr>';
   });
   t+='</table>';
-  el.innerHTML=_manualLnHtml+t;
+  el.innerHTML=_manualTitleHtml+_manualLnHtml+t;
 }

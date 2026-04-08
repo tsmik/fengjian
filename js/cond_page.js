@@ -163,7 +163,7 @@ export function cpRenderMain(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
 
   var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-    '<div style="font-size:var(--cp-dim-title);font-weight:900;color:var(--text)">'+d.dn+'　<span style="font-size:var(--cp-dim-sub);font-weight:400;color:var(--text-3)">'+d.view+'</span></div>'+
+    '<div style="font-size:var(--cp-dim-title);font-weight:900;color:var(--text)">'+d.dn+' - '+d.view+'</div>'+
     '<div style="font-size:var(--cp-dim-sub);color:var(--text-3);margin-top:4px">'+d.da+'（'+(d.da===d.a?d.aT:d.bT)+'）vs '+d.db+'（'+(d.db===d.a?d.aT:d.bT)+'）</div>'+
   '</div>';
 
@@ -571,7 +571,7 @@ export function renderDimSidebar(){
     const res=calcDim(data,i);
     const chipColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
     html+='<div class="dim-sidebar-new-item'+(i===cur?' active':'')+'" onclick="dimGoto('+i+')">'+
-      '<span>'+d.dn+'</span>'+
+      '<span>'+d.dn+' - '+d.view+'</span>'+
       '<span class="dim-sidebar-chip" style="background:'+chipColor+'">'+(res?res.type:'未填')+'</span>'+
     '</div>';
   });
@@ -586,7 +586,7 @@ export function renderDimCondMain(){
   const kdEntry=null; // KD 在知識頁 scope，此處不可用，essence 暫略
 
   let html='<div class="dim-cond-header">'+
-    '<div class="dim-cond-title">'+d.dn+' · '+d.view+'</div>'+
+    '<div class="dim-cond-title">'+d.dn+' - '+d.view+'</div>'+
     '<div class="dim-cond-essence"><b>'+d.da+'（'+(d.da===d.a?d.aT:d.bT)+'）</b> vs <b>'+d.db+'（'+(d.db===d.a?d.aT:d.bT)+'）</b></div>'+
   '</div>';
 

@@ -5,7 +5,7 @@ import { evaluate, evaluateAll, evaluatePart, getAnswer } from './rule_engine.js
 /* ===== recalcFromObs v2 — v2.2 ID格式 + 字串比較 ===== */
 export function recalcFromObs(){
   const hasAny=Object.keys(obsData).length>0;
-  if(!hasAny){for(let d=0;d<13;d++)data[d]=Array(9).fill(null);return;}
+  if(!hasAny){for(let d=0;d<13;d++)data[d]=Array(9).fill(null);}
 
   // ===== 規則引擎計算（取代舊邏輯的 data[][] 賦值）=====
   evaluateAll(obsData);

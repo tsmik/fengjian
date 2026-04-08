@@ -33,10 +33,14 @@ export function renderFaceMap(){
   FACE_MAP_PARTS.forEach(fp=>{
     const c=getPartCounts(fp.obsIdx);
     let cls='face-cell';
-    if(fp.obsIdx===curObsPart) cls+=' active-part';
-    else if(c.ck>=c.tot&&c.tot>0) cls+=' complete';
+    const isActive=(fp.obsIdx===curObsPart);
+    const isComplete=(c.ck>=c.tot&&c.tot>0);
+    if(isActive) cls+=' active-part';
+    else if(isComplete) cls+=' complete';
     else if(c.ck>0) cls+=' partial';
-    html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+'" onclick="gotoObsPart('+fp.obsIdx+')">';
+    let extraStyle='';
+    if(!isActive && !isComplete) extraStyle=';background:#FFF3CD;border-color:#E6C66B';
+    html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+extraStyle+'" onclick="gotoObsPart('+fp.obsIdx+')">';
     const displayName=fp.name.replace('耳2','耳').replace('頤2','頤');
     html+='<span class="fc-name">'+displayName+'</span>';
     html+='<span class="fc-count">'+c.ck+'/'+c.tot+'</span>';
