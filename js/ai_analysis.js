@@ -45,9 +45,15 @@ export async function generateAI() {
 
   btn.disabled = true;
   btn.innerText = '評析中…';
-  area.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:14px">' +
-    '<div style="font-size:16px;font-weight:700;margin-bottom:8px">風鑑師正在解讀面相…</div>' +
-    '<div>通常需要 15-30 秒</div></div>';
+  if (!document.getElementById('ai-spin-style')) {
+    var style = document.createElement('style');
+    style.id = 'ai-spin-style';
+    style.textContent = '@keyframes aiSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+  }
+  area.innerHTML = '<div style="display:flex;align-items:center;gap:12px;padding:20px">' +
+    '<div style="width:24px;height:24px;border:3px solid var(--border);border-top:3px solid var(--active);border-radius:50%;animation:aiSpin 0.8s linear infinite"></div>' +
+    '<span style="font-size:14px;color:var(--text-3)">AI 分析中...</span></div>';
 
   // 判斷性別、生日、姓名（個案 or 使用者自己）
   const gender = (_isTA && _currentCaseId) ? _caseGender : _userGender;
