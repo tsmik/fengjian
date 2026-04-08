@@ -7,7 +7,7 @@ import { DIMS, data, obsData, obsOverride, setData, setObsData, setObsOverride,
          OBS_PARTS_DATA, setObsPartsData, OBS_PART_NAMES, setObsPartNames,
          _questionsSource, setQuestionsSource, setLiunianTable,
          emptyData, setNavActive, showPage, save, _showToast,
-         BETA_VISIBLE_DIMS, calcDim, initBetaUI, condResults } from './core.js';
+         BETA_VISIBLE_DIMS, calcDim, initBetaUI, condResults, setManualData } from './core.js';
 
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex, selectOpt, selectLROpt,
@@ -232,6 +232,18 @@ window.renderFaceMap = renderFaceMap;
 window.renderObsCenter = renderObsCenter;
 window.renderDimIndex = renderDimIndex;
 window.showCondPopup = showCondPopup;
+
+window.injectData = function(matrix) {
+  if (!Array.isArray(matrix) || matrix.length !== 13 || !matrix.every(r => Array.isArray(r) && r.length === 9)) {
+    console.error('injectData: 需要 13×9 陣列，每格為 "A"、"B" 或 null');
+    return;
+  }
+  initManualData();
+  setManualData(matrix.map(r => r.slice()));
+  manualSave();
+  renderManualPage();
+  console.log('injectData: 已注入 13×9 矩陣並儲存');
+};
 
 window.onload = () => {
   const savedName = localStorage.getItem('rxbf_username');
