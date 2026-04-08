@@ -300,7 +300,7 @@ export function showReport(){
   // 顯示 AI 評析區域（只在 BETA 全開時顯示）
   var aiSection=document.getElementById('ai-section');
   if(aiSection){
-    aiSection.style.display=(BETA_VISIBLE_DIMS>=13)?'block':'none';
+    aiSection.style.display='none'; // AI評析暫時隱藏，等 prompt 到位再開放
   }
 }
 
