@@ -208,12 +208,16 @@ export function renderManualPage(){
     var coeffBg=res?(res.type==='靜'?SBG:DBG):'var(--bg)';
     var coeffColor=res?'white':'var(--text-3)';
     var coeffBlock='<div style="background:'+coeffBg+';color:'+coeffColor+';font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">'+coeff+'</div>';
+    var lCount=colLIsS[i]?sc:dc;
+    var rCount=colLIsS[i]?dc:sc;
+    var lColor=colLIsS[i]?SBG:DBG;
+    var rColor=colLIsS[i]?DBG:SBG;
     var bars='<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">';
     bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-    for(var b=0;b<sc;b++)bars+='<div style="height:3px;background:'+SBG+';border-radius:1px"></div>';
+    for(var b=0;b<lCount;b++)bars+='<div style="height:3px;background:'+lColor+';border-radius:1px"></div>';
     bars+='</div>';
     bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-    for(var b=0;b<dc;b++)bars+='<div style="height:3px;background:'+DBG+';border-radius:1px"></div>';
+    for(var b=0;b<rCount;b++)bars+='<div style="height:3px;background:'+rColor+';border-radius:1px"></div>';
     bars+='</div></div>';
     t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
   });
