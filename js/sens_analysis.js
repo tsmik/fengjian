@@ -1,0 +1,1113 @@
+import { DIMS, PARTS, data, obsData, obsOverride, OBS_PART_NAMES, OBS_PARTS_DATA, BETA_VISIBLE_DIMS,
+         userName, _isTA, _currentCaseId, _currentCaseName, manualData, setManualData,
+         setData, setObsData, setObsOverride,
+         setNavActive, showPage, calcDim, avgCoeff } from './core.js';
+import { recalcFromObs } from './obs_recalc.js';
+import { initManualData, manualLoadData } from './manual.js';
+
+/* ===== 敏感度分析頁 ===== */
+export function showSensPage(){
+  showPage('sens-page');
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  setNavActive('nav-sens');
+  recalcFromObs();
+  renderSensPage();
+}
+
+export function renderSensPage(){
+  var el=document.getElementById('sens-content');if(!el)return;
+  var SBG='#7A9E7E',DBG='#C17A5A';
+  var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+
+  el.innerHTML='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">重要參數分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
+
+  setTimeout(function(){
+
+  var origObs=JSON.parse(JSON.stringify(obsData));
+  var origData=JSON.parse(JSON.stringify(data));
+  var origOverride=JSON.parse(JSON.stringify(obsOverride));
+
+  // 收集所有題目
+  var allQs=[];
+  OBS_PART_NAMES.forEach(function(pn){
+    var pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    pd.sections.forEach(function(sec){sec.qs.forEach(function(q){
+      allQs.push({id:q.id,text:q.text,paired:!!q.paired,opts:q.opts,part:pn});
+    });});
+  });
+
+  // 基準
+  var baseCoeffs=[];
+  for(var di=0;di<13;di++){var r=calcDim(data, di);baseCoeffs.push(r?r.coeff:0);}
+  var baseTotalCoeff=parseFloat(avgCoeff(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]));
+  var baseTypes=[];
+  for(var di=0;di<13;di++){var r2=calcDim(data, di);baseTypes.push(r2?r2.type:null);}
+
+  // 對每題計算敏感度
+  var sensResults=[];
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var maxAbsDelta=0;
+    var bestUpDelta=0;
+    var bestDownDelta=0;
+    var affectedDims=new Set();
+    var flipDims=new Set();
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      setObsData(JSON.parse(JSON.stringify(origObs)));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+      var newCoeffs=[],newTypes=[];
+      for(var di=0;di<13;di++){
+        var r=calcDim(data, di);var nc=r?r.coeff:0;
+        newCoeffs.push(nc);newTypes.push(r?r.type:null);
+        if(Math.abs(nc-baseCoeffs[di])>0.001)affectedDims.add(di);
+        if(baseTypes[di]==='動'&&(r?r.type:null)==='靜')flipDims.add(di);
+      }
+      var _sMin=0,_sMax=0;for(var _di2=0;_di2<13;_di2++){var _r3=calcDim(data, _di2);if(_r3){_sMin+=Math.min(_r3.a,_r3.b);_sMax+=Math.max(_r3.a,_r3.b);}}var newTotal=_sMax>0?_sMin/_sMax:0;
+      var totalDelta=newTotal-baseTotalCoeff;
+      var absDelta=Math.abs(totalDelta);
+      if(absDelta>maxAbsDelta)maxAbsDelta=absDelta;
+      if(totalDelta>bestUpDelta)bestUpDelta=totalDelta;
+      if(totalDelta<bestDownDelta)bestDownDelta=totalDelta;
+    });
+
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setData(JSON.parse(JSON.stringify(origData)));
+
+    sensResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',paired:q.paired,
+      sensitivity:maxAbsDelta,bestUp:bestUpDelta,bestDown:bestDownDelta,
+      affectedDims:Array.from(affectedDims).sort(function(a,b){return a-b;}),
+      flipDims:Array.from(flipDims).sort(function(a,b){return a-b;})
+    });
+  });
+
+  // 最終還原
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  // 按敏感度降序排列，用相對排名分類
+  var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var LOW_THRESHOLD=0.0005;
+  var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
+  var topN=Math.max(1,Math.ceil(nonZero.length*0.2));
+  var HIGH_THRESHOLD=nonZero.length>0&&topN<nonZero.length?nonZero[topN-1].sensitivity:0;
+
+  var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var midSens=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var lowSens=sorted.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
+
+  // 部位彙整
+  var partSens={};
+  sensResults.forEach(function(r){
+    if(!partSens[r.part])partSens[r.part]={total:0,count:0,highCount:0,dims:new Set()};
+    partSens[r.part].total+=r.sensitivity;
+    partSens[r.part].count++;
+    if(r.sensitivity>HIGH_THRESHOLD)partSens[r.part].highCount++;
+    r.affectedDims.forEach(function(di){partSens[r.part].dims.add(di);});
+  });
+  var partRank=Object.keys(partSens).map(function(pn){
+    return {part:pn,total:partSens[pn].total,count:partSens[pn].count,
+      highCount:partSens[pn].highCount,dims:Array.from(partSens[pn].dims).sort(function(a,b){return a-b;})};
+  }).sort(function(a,b){return b.total-a.total;});
+
+  // 輔助
+  function dimTag(di){
+    return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;color:white;background:'+dimColors[di]+';white-space:nowrap">'+DIMS[di].dn+'</span>';
+  }
+  function sensBar(val,maxVal){
+    var pct=maxVal>0?Math.min(val/maxVal*100,100):0;
+    var color=val>HIGH_THRESHOLD?'var(--active)':val>=LOW_THRESHOLD?'#d4b870':'#ccc';
+    return '<div style="width:80px;height:6px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">'+
+      '<div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:3px"></div></div>';
+  }
+  var globalMax=highSens.length>0?highSens[0].sensitivity:0.01;
+
+  // ===== 老闆/主管係數分析 =====
+
+  // 老闆目標定義
+  var BOSS_TARGETS=[
+    {di:1, name:'經緯', target:6/9, weight:3, targetLabel:'靜 ≥ 6:3'},
+    {di:0, name:'形勢', target:5/9, weight:2, targetLabel:'靜 ≥ 5:4'},
+    {di:2, name:'方圓', target:null, weight:1, targetLabel:'隨之提升'}
+  ];
+
+  function _bossStaticScore(di){
+    var r=calcDim(data, di);if(!r)return 0;
+    var d=DIMS[di];
+    // 靜側計數比例：靜count / 9
+    var staticCount=d.aT==='靜'?r.a:r.b;
+    return staticCount/9;
+  }
+
+  var baseBossScores=[];
+  var baseBossReached=[];
+  BOSS_TARGETS.forEach(function(bt){
+    if(bt.target!==null){
+      var ss=_bossStaticScore(bt.di);
+      baseBossScores.push(ss);
+      var r=calcDim(data, bt.di);
+      var ss=_bossStaticScore(bt.di);
+      baseBossReached.push(ss>=bt.target);
+    }else{
+      baseBossScores.push(baseCoeffs[bt.di]);
+      baseBossReached.push(false);
+    }
+  });
+
+  // 主管基準
+  var MGR_DIMS=[3,4,5];
+  var MGR_NAMES=['曲直','收放','緩急'];
+  var baseMgrCoeffs=[];
+  MGR_DIMS.forEach(function(di){baseMgrCoeffs.push(baseCoeffs[di]);});
+  var mgrMinIdx=0;
+  baseMgrCoeffs.forEach(function(c,i){if(c<baseMgrCoeffs[mgrMinIdx])mgrMinIdx=i;});
+
+  // 合併遍歷 allQs：先天整體最佳化（老闆＋主管同時計算）
+  var innateQResults=[];
+
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var bestTotal=0,bestBoss=0,bestMgr=0,bestOpt=null;
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      setObsData(JSON.parse(JSON.stringify(origObs)));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+
+      // 老闆分數
+      var bScore=0;
+      BOSS_TARGETS.forEach(function(bt,idx){
+        if(baseBossReached[idx])return;
+        var improve;
+        if(bt.target!==null){
+          var newSS=_bossStaticScore(bt.di);
+          improve=newSS-baseBossScores[idx];
+          if(improve<=0)return;
+          if(newSS>bt.target)improve=Math.max(0,bt.target-baseBossScores[idx]);
+        }else{
+          var nr=calcDim(data, bt.di);var nc=nr?nr.coeff:0;
+          improve=nc-baseBossScores[idx];
+          if(improve<=0)return;
+        }
+        bScore+=improve*bt.weight;
+      });
+
+      // 主管分數
+      var mImprovements=[];
+      MGR_DIMS.forEach(function(di,idx){
+        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+        mImprovements.push(Math.max(0,nc-baseMgrCoeffs[idx]));
+      });
+      var mAvg=mImprovements.reduce(function(s,v){return s+v;},0)/3;
+      var mWeak=mImprovements[mgrMinIdx];
+      var mScore=mAvg+mWeak*2;
+
+      // 先天總分 + 跨維度連帶效應（運氣+後天的改善量作為 tiebreaker）
+      var innateCrossBonus=0;
+      [6,7,8,9,10,11,12].forEach(function(di){
+        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)innateCrossBonus+=improve;
+      });
+      var totalScore=bScore+mScore+innateCrossBonus*0.1;
+      if(totalScore>bestTotal){
+        bestTotal=totalScore;
+        bestBoss=bScore;
+        bestMgr=mScore;
+        bestOpt=v;
+      }
+    });
+
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setData(JSON.parse(JSON.stringify(origData)));
+
+    if(bestTotal>0)innateQResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
+      score:bestTotal,bossScore:bestBoss,mgrScore:bestMgr,bestOpt:bestOpt
+    });
+  });
+
+  // 還原
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  innateQResults.sort(function(a,b){return b.score-a.score;});
+  var innateTop5=innateQResults.slice(0,5);
+
+  // ===== 模擬 Top5 全翻轉，計算調整後預估 =====
+  var simData=null, simCoeffs=[], simBossCoeffVal='', simMgrCoeffVal='', simInnateCoeffVal='';
+  var simFlips={}; // {di_pi: true} 標記哪些格子被翻轉
+  if(innateTop5.length>0){
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    innateTop5.forEach(function(r){
+      obsData[r.id]=r.bestOpt;
+      allQs.forEach(function(q){
+        if(q.id===r.id && q.paired){
+          obsData[q.id+'_L']=r.bestOpt;
+          obsData[q.id+'_R']=r.bestOpt;
+        }
+      });
+    });
+    recalcFromObs();
+    simData=[];
+    for(var _sd=0;_sd<13;_sd++){simData.push(data[_sd].slice());}
+    simCoeffs=[];
+    for(var _sc=0;_sc<13;_sc++){var _r=calcDim(data, _sc);simCoeffs.push(_r?_r.coeff:0);}
+    simBossCoeffVal=avgCoeff(data, [0,1,2]);
+    simMgrCoeffVal=avgCoeff(data, [3,4,5]);
+    simInnateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
+    for(var _fd=0;_fd<6;_fd++){
+      for(var _fp=0;_fp<9;_fp++){
+        if(origData[_fd][_fp]!==simData[_fd][_fp]){
+          simFlips[_fd+'_'+_fp]=true;
+        }
+      }
+    }
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+    setData(JSON.parse(JSON.stringify(origData)));
+    recalcFromObs();
+  }
+
+  // ===== 運氣係數分析 =====
+  var LUCK_DIMS=[6,7,8];
+  var LUCK_NAMES=['順逆','分合','真假'];
+  var luckCoeffVal=avgCoeff(data, LUCK_DIMS);
+  var baseLuckCoeffNum=parseFloat(luckCoeffVal);
+
+  // 遍歷 allQs 計算運氣調整建議
+  var luckQResults=[];
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var bestTotal=0,bestOpt=null;
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      setObsData(JSON.parse(JSON.stringify(origObs)));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+
+      // 主分：群組大係數（方法B）提升量
+      var _lSumMin=0,_lSumMax=0;
+      LUCK_DIMS.forEach(function(di){
+        var nr=calcDim(data, di);if(nr){_lSumMin+=Math.min(nr.a,nr.b);_lSumMax+=Math.max(nr.a,nr.b);}
+      });
+      var newLuckCoeff=_lSumMax>0?_lSumMin/_lSumMax:0;
+      var lMain=newLuckCoeff-baseLuckCoeffNum;
+      // 跨維度連帶效應：檢查其他 10 個維度的係數是否也提升
+      var crossBonus=0;
+      [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
+        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)crossBonus+=improve;
+      });
+      if(lMain<=0){/* 群組整體未改善，跳過 */}
+      else{
+      var lScore=lMain+crossBonus*0.1;
+
+      if(lScore>bestTotal){
+        bestTotal=lScore;
+        bestOpt=v;
+      }
+      } // 關閉 lMain>0 的 else
+    });
+
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setData(JSON.parse(JSON.stringify(origData)));
+
+    if(bestTotal>0)luckQResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
+      score:bestTotal,bestOpt:bestOpt
+    });
+  });
+
+  // 還原
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  luckQResults.sort(function(a,b){return b.score-a.score;});
+  var luckTop5=luckQResults.slice(0,5);
+
+  // 模擬運氣 Top5 全翻轉
+  var luckSimData=null, luckSimCoeffVal='';
+  var luckSimFlips={};
+  if(luckTop5.length>0){
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    luckTop5.forEach(function(r){
+      obsData[r.id]=r.bestOpt;
+      allQs.forEach(function(q){
+        if(q.id===r.id && q.paired){
+          obsData[q.id+'_L']=r.bestOpt;
+          obsData[q.id+'_R']=r.bestOpt;
+        }
+      });
+    });
+    recalcFromObs();
+    luckSimData=[];
+    for(var _ld=0;_ld<13;_ld++){luckSimData.push(data[_ld].slice());}
+    luckSimCoeffVal=avgCoeff(data, LUCK_DIMS);
+    for(var _lfd=6;_lfd<9;_lfd++){
+      for(var _lfp=0;_lfp<9;_lfp++){
+        if(origData[_lfd][_lfp]!==luckSimData[_lfd][_lfp]){
+          luckSimFlips[_lfd+'_'+_lfp]=true;
+        }
+      }
+    }
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+    setData(JSON.parse(JSON.stringify(origData)));
+    recalcFromObs();
+  }
+
+  // ===== 後天係數分析 =====
+  var POST_DIMS=[9,10,11,12];
+  var POST_NAMES=['攻守','奇正','虛實','進退'];
+  var postCoeffVal=avgCoeff(data, POST_DIMS);
+  var basePostCoeffs=[];
+  POST_DIMS.forEach(function(di){basePostCoeffs.push(baseCoeffs[di]);});
+  // 找短板（離 0.80 最遠的）
+  var postMinIdx=0;
+  var postMaxGap=Math.abs(0.80-basePostCoeffs[0]);
+  basePostCoeffs.forEach(function(c,i){
+    var gap=Math.abs(0.80-c);
+    if(gap>postMaxGap){postMaxGap=gap;postMinIdx=i;}
+  });
+
+  // 遍歷 allQs 計算後天調整建議
+  var postQResults=[];
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var bestTotal=0,bestOpt=null;
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      setObsData(JSON.parse(JSON.stringify(origObs)));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+
+      // 主分：群組大係數（方法B）的前後差值
+      var _pSumMin=0,_pSumMax=0;
+      POST_DIMS.forEach(function(di){
+        var nr=calcDim(data, di);if(nr){_pSumMin+=Math.min(nr.a,nr.b);_pSumMax+=Math.max(nr.a,nr.b);}
+      });
+      var newPostCoeff=_pSumMax>0?_pSumMin/_pSumMax:0;
+      var basePostCoeff=parseFloat(postCoeffVal);
+      var pMain=newPostCoeff-basePostCoeff;
+      // 短板 bonus：短板維度往 0.80 靠近的量
+      var _pWeakNew=0;
+      var _pwr=calcDim(data, POST_DIMS[postMinIdx]);
+      if(_pwr)_pWeakNew=_pwr.coeff;
+      var pWeakImprove=Math.abs(0.80-basePostCoeffs[postMinIdx])-Math.abs(0.80-_pWeakNew);
+      if(pWeakImprove>0)pMain+=pWeakImprove*0.5;
+      // 跨維度連帶效應
+      var crossBonus=0;
+      [0,1,2,3,4,5,6,7,8].forEach(function(di){
+        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+        var improve=nc-baseCoeffs[di];
+        if(improve>0.001)crossBonus+=improve;
+      });
+      if(pMain<=0){/* 群組整體未改善，跳過 */}
+      else{
+      var pScore=pMain+crossBonus*0.1;
+
+      if(pScore>bestTotal){
+        bestTotal=pScore;
+        bestOpt=v;
+      }
+      } // 關閉 pMain>0 的 else
+    });
+
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setData(JSON.parse(JSON.stringify(origData)));
+
+    if(bestTotal>0)postQResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
+      score:bestTotal,bestOpt:bestOpt
+    });
+  });
+
+  // 還原
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  postQResults.sort(function(a,b){return b.score-a.score;});
+  var postTop5=postQResults.slice(0,5);
+
+  // 模擬後天 Top5 全翻轉
+  var postSimData=null, postSimCoeffVal='';
+  var postSimFlips={};
+  if(postTop5.length>0){
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    postTop5.forEach(function(r){
+      obsData[r.id]=r.bestOpt;
+      allQs.forEach(function(q){
+        if(q.id===r.id && q.paired){
+          obsData[q.id+'_L']=r.bestOpt;
+          obsData[q.id+'_R']=r.bestOpt;
+        }
+      });
+    });
+    recalcFromObs();
+    postSimData=[];
+    for(var _pd=0;_pd<13;_pd++){postSimData.push(data[_pd].slice());}
+    postSimCoeffVal=avgCoeff(data, POST_DIMS);
+    for(var _pfd=9;_pfd<13;_pfd++){
+      for(var _pfp=0;_pfp<9;_pfp++){
+        if(origData[_pfd][_pfp]!==postSimData[_pfd][_pfp]){
+          postSimFlips[_pfd+'_'+_pfp]=true;
+        }
+      }
+    }
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+    setData(JSON.parse(JSON.stringify(origData)));
+    recalcFromObs();
+  }
+
+  // 渲染輔助：先天建議列表（含老闆/主管標籤）
+  function _innateAdviceList(items,maxScore){
+    if(items.length===0)return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">目前配置下無有效調整建議</div>';
+    var h='';
+    items.forEach(function(r,idx){
+      var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
+      // 標籤：老闆↑ / 主管↑ / 兩者
+      var tags='';
+      if(r.bossScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#cce0e0;color:#2e4a4a;font-weight:700;white-space:nowrap">老闆↑</span>';
+      if(r.mgrScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e8dfc8;color:#4a4030;font-weight:700;white-space:nowrap">主管↑</span>';
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
+      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
+      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
+      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<span style="display:flex;gap:3px">'+tags+'</span>';
+      h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
+      h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='</div>';
+    });
+    return h;
+  }
+
+  // 渲染
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">重要參數分析</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">分析 '+allQs.length+' 題觀察項目，找出對結果影響最大的關鍵觀察</div>';
+
+  // ===== 先天係數分析區塊（矩陣版）=====
+  var innateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
+  var bossCoeffVal=avgCoeff(data, [0,1,2]);
+  var mgrCoeffVal=avgCoeff(data, [3,4,5]);
+  var _SBG2='#7A9E7E',_DBG2='#C17A5A';
+  var _matrixParts=PARTS;
+  var _matrixDims=[0,1,2,3,4,5];
+
+  function _buildMatrix(useData,isSimulation){
+    var _bLabel,_mLabel;
+    if(isSimulation){
+      _bLabel='老闆 '+bossCoeffVal+'→'+simBossCoeffVal;
+      _mLabel='主管 '+mgrCoeffVal+'→'+simMgrCoeffVal;
+    }else{
+      _bLabel='老闆 '+bossCoeffVal;
+      _mLabel='主管 '+mgrCoeffVal;
+    }
+    var mt='';
+    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
+    // 老闆/主管 badge 行
+    mt+='<tr><td></td>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#2e4a4a;background:#dceaea;border-radius:4px">'+_bLabel+'</td>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#4a4030;background:#e8dfc8;border-radius:4px">'+_mLabel+'</td></tr>';
+    // 維度名稱行
+    mt+='<tr><td style="padding:3px 4px"></td>';
+    _matrixDims.forEach(function(di,idx){
+      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3);'+borderR+'">'+DIMS[di].dn+'</td>';
+    });
+    mt+='</tr>';
+    // 9 個部位行
+    _matrixParts.forEach(function(pn,pi){
+      if(pi===4){mt+='<tr><td colspan="7" style="height:6px"></td></tr>';}
+      mt+='<tr>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      _matrixDims.forEach(function(di,idx){
+        var val=useData[di][pi];
+        var color,outline='',label='';
+        var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
+        if(val===null){color='#e8e8e0';}
+        else{
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          color=tp==='靜'?_SBG2:_DBG2;
+          label=val==='A'?DIMS[di].a:DIMS[di].b;
+        }
+        if(isSimulation&&simFlips[di+'_'+pi]){outline='outline:3px solid #E8B000;outline-offset:-1px;';}
+        if(val===null){
+          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
+        }else{
+          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+        }
+      });
+      mt+='</tr>';
+    });
+    // 係數行
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    _matrixDims.forEach(function(di,idx){
+      var aCount=useData[di].filter(function(v){return v==='A';}).length;
+      var bCount=useData[di].filter(function(v){return v==='B';}).length;
+      var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
+      var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
+      if(aCount===bCount)tp=DIMS[di].aT;
+      var tbg=tp==='靜'?_SBG2:_DBG2;
+      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
+      mt+='<td style="text-align:center;padding:3px;'+borderR+'"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+    });
+    mt+='</tr>';
+    mt+='</table>';
+    return mt;
+  }
+
+  html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">先天係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+innateCoeffVal+'</span>';
+  html+='</div>';
+
+  html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
+
+  html+='<div style="flex:1;min-width:280px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+'</div>';
+  html+=_buildMatrix(origData,false);
+  html+='</div>';
+
+  if(simData){
+    html+='<div style="flex:1;min-width:280px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+' → <span style="color:var(--text);font-weight:900">'+simInnateCoeffVal+'</span></div>';
+    html+=_buildMatrix(simData,true);
+    html+='</div>';
+  }else{
+    html+='<div style="flex:1;min-width:280px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
+    html+='<span style="font-size:13px;color:var(--text-3)">無有效調整建議</span>';
+    html+='</div>';
+  }
+
+  html+='</div>';
+
+  html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+'"></span>靜</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_DBG2+'"></span>動</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#e8e8e0"></span>無資料</span>';
+  if(simData){
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+';outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+  }
+  html+='</div>';
+
+  // --- 先天整體調整建議 ---
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">先天整體調整建議（前 5 個最有效觀察題）</div>';
+  html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
+
+  html+='</div>'; // 關閉先天係數分析區塊
+
+  // 運氣區塊遮罩（測試版）
+  if(BETA_VISIBLE_DIMS<9){
+    html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
+    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
+    html+='<div style="font-size:14px;color:#bbb">建置中</div>';
+    html+='</div>';
+  }else{
+  // ===== 運氣係數分析區塊（矩陣版）=====
+  var _luckMatrixDims=[6,7,8];
+
+  function _buildLuckMatrix(useData,isSimulation){
+    var mt='';
+    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
+    // 維度名稱行
+    mt+='<tr><td style="padding:3px 4px"></td>';
+    _luckMatrixDims.forEach(function(di){
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+    });
+    mt+='</tr>';
+    // 9 個部位行
+    PARTS.forEach(function(pn,pi){
+      if(pi===4){mt+='<tr><td colspan="4" style="height:6px"></td></tr>';}
+      mt+='<tr>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      _luckMatrixDims.forEach(function(di){
+        var val=useData[di][pi];
+        var color,outline='',label='';
+        if(val===null){color='#e8e8e0';}
+        else{
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          color=tp==='靜'?_SBG2:_DBG2;
+          label=val==='A'?DIMS[di].a:DIMS[di].b;
+        }
+        if(isSimulation&&luckSimFlips[di+'_'+pi]){outline='outline:3px solid #E8B000;outline-offset:-1px;';}
+        if(val===null){
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
+        }else{
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+        }
+      });
+      mt+='</tr>';
+    });
+    // 係數行
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    _luckMatrixDims.forEach(function(di){
+      var aCount=useData[di].filter(function(v){return v==='A';}).length;
+      var bCount=useData[di].filter(function(v){return v==='B';}).length;
+      var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
+      var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
+      if(aCount===bCount)tp=DIMS[di].aT;
+      var tbg=tp==='靜'?_SBG2:_DBG2;
+      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+    });
+    mt+='</tr>';
+    mt+='</table>';
+    return mt;
+  }
+
+  // 運氣建議列表渲染
+  function _luckAdviceList(items,maxScore){
+    if(items.length===0)return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">目前配置下無有效調整建議</div>';
+    var h='';
+    items.forEach(function(r,idx){
+      var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
+      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
+      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
+      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
+      h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='</div>';
+    });
+    return h;
+  }
+
+  html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">運氣係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+luckCoeffVal+'</span>';
+  html+='</div>';
+
+  html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
+
+  // 左：目前狀態
+  html+='<div style="flex:1;min-width:180px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+'</div>';
+  html+=_buildLuckMatrix(origData,false);
+  html+='</div>';
+
+  // 右：調整後預估
+  if(luckSimData){
+    html+='<div style="flex:1;min-width:180px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+' → <span style="color:var(--text);font-weight:900">'+luckSimCoeffVal+'</span></div>';
+    html+=_buildLuckMatrix(luckSimData,true);
+    html+='</div>';
+  }else{
+    html+='<div style="flex:1;min-width:180px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
+    html+='<span style="font-size:13px;color:var(--text-3)">無有效調整建議</span>';
+    html+='</div>';
+  }
+
+  html+='</div>'; // 關閉左右並排容器
+
+  // 圖例
+  html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+'"></span>靜</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_DBG2+'"></span>動</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#e8e8e0"></span>無資料</span>';
+  if(luckSimData){
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+';outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+  }
+  html+='</div>';
+
+  // 調整說明
+  html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：提升運氣群組整體係數（動靜更平衡）</div>';
+
+  // 建議列表
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">運氣整體調整建議（前 5 個最有效觀察題）</div>';
+  html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
+
+  html+='</div>'; // 關閉運氣係數分析區塊
+  } // 關閉運氣 BETA_VISIBLE_DIMS 判斷
+
+  // 後天區塊遮罩（測試版）
+  if(BETA_VISIBLE_DIMS<13){
+    html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
+    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
+    html+='<div style="font-size:14px;color:#bbb">建置中</div>';
+    html+='</div>';
+  }else{
+  // ===== 後天係數分析區塊（矩陣版）=====
+  var _postMatrixDims=[9,10,11,12];
+
+  function _buildPostMatrix(useData,isSimulation){
+    var mt='';
+    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
+    // 維度名稱行
+    mt+='<tr><td style="padding:3px 4px"></td>';
+    _postMatrixDims.forEach(function(di){
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+    });
+    mt+='</tr>';
+    // 9 個部位行
+    PARTS.forEach(function(pn,pi){
+      if(pi===4){mt+='<tr><td colspan="5" style="height:6px"></td></tr>';}
+      mt+='<tr>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      _postMatrixDims.forEach(function(di){
+        var val=useData[di][pi];
+        var color,outline='',label='';
+        if(val===null){color='#e8e8e0';}
+        else{
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          color=tp==='靜'?_SBG2:_DBG2;
+          label=val==='A'?DIMS[di].a:DIMS[di].b;
+        }
+        if(isSimulation&&postSimFlips[di+'_'+pi]){outline='outline:3px solid #E8B000;outline-offset:-1px;';}
+        if(val===null){
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
+        }else{
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+        }
+      });
+      mt+='</tr>';
+    });
+    // 係數行
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    _postMatrixDims.forEach(function(di){
+      var aCount=useData[di].filter(function(v){return v==='A';}).length;
+      var bCount=useData[di].filter(function(v){return v==='B';}).length;
+      var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
+      var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
+      if(aCount===bCount)tp=DIMS[di].aT;
+      var tbg=tp==='靜'?_SBG2:_DBG2;
+      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+    });
+    mt+='</tr>';
+    mt+='</table>';
+    return mt;
+  }
+
+  // 後天建議列表渲染
+  function _postAdviceList(items,maxScore){
+    if(items.length===0)return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">目前配置下無有效調整建議</div>';
+    var h='';
+    items.forEach(function(r,idx){
+      var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
+      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
+      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
+      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
+      h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='</div>';
+    });
+    return h;
+  }
+
+  html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">後天係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+postCoeffVal+'</span>';
+  html+='</div>';
+
+  html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
+
+  // 左：目前狀態
+  html+='<div style="flex:1;min-width:220px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+'</div>';
+  html+=_buildPostMatrix(origData,false);
+  html+='</div>';
+
+  // 右：調整後預估
+  if(postSimData){
+    var postSimDimCoeffVals=[];
+    _postMatrixDims.forEach(function(di){
+      var aCount=postSimData[di].filter(function(v){return v==='A';}).length;
+      var bCount=postSimData[di].filter(function(v){return v==='B';}).length;
+      postSimDimCoeffVals.push((aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0);
+    });
+    html+='<div style="flex:1;min-width:220px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+' → <span style="color:var(--text);font-weight:900">'+postSimCoeffVal+'</span></div>';
+    html+=_buildPostMatrix(postSimData,true);
+    html+='</div>';
+  }else{
+    html+='<div style="flex:1;min-width:220px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">';
+    html+='<span style="font-size:13px;color:var(--text-3)">無有效調整建議</span>';
+    html+='</div>';
+  }
+
+  html+='</div>'; // 關閉左右並排容器
+
+  // 圖例
+  html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+'"></span>靜</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_DBG2+'"></span>動</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#e8e8e0"></span>無資料</span>';
+  if(postSimData){
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:'+_SBG2+';outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+  }
+  html+='</div>';
+
+  // 短板提示
+  html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：各維度係數往 0.80（平衡）靠近，短板 <b>'+POST_NAMES[postMinIdx]+'</b>（'+basePostCoeffs[postMinIdx].toFixed(2)+'）優先加權</div>';
+
+  // 建議列表
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">後天整體調整建議（前 5 個最有效觀察題）</div>';
+  html+=_postAdviceList(postTop5,postTop5.length>0?postTop5[0].score:1);
+
+  html+='</div>'; // 關閉後天係數分析區塊
+  } // 關閉後天 BETA_VISIBLE_DIMS 判斷
+
+  // BETA 模式下隱藏基準統計和下方所有敏感度內容
+  if(BETA_VISIBLE_DIMS>=13){
+
+  // 分隔線
+  html+='<div style="border-top:2px solid var(--border);margin:8px 0 20px"></div>';
+
+  // 基準統計
+  html+='<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">目前總係數</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:var(--text)">'+baseTotalCoeff.toFixed(2)+'</div></div>';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">高敏感度題目</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:var(--active)">'+highSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
+  html+='<div style="font-size:12px;color:var(--text-3)">低影響題目</div>';
+  html+='<div style="font-size:20px;font-weight:900;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='</div>';
+
+  // --- 部位影響力排名 ---
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
+  var partMax=partRank.length>0?partRank[0].total:1;
+  partRank.forEach(function(p){
+    var pct=Math.min(p.total/partMax*100,100);
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0">';
+    html+='<span style="font-weight:700;color:var(--text);min-width:36px">'+p.part+'</span>';
+    html+='<div style="flex:1;height:10px;background:#eee;border-radius:5px;overflow:hidden">';
+    html+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:5px"></div></div>';
+    html+='<span style="font-size:12px;color:var(--text-3);min-width:80px">'+p.highCount+'關鍵 / '+p.count+'題</span>';
+    html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+    p.dims.forEach(function(di){html+=dimTag(di);});
+    html+='</span>';
+    html+='</div>';
+  });
+
+  // --- 關鍵觀察 — 按影響力排名順序展開 ---
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
+
+  if(highSens.length===0){
+    html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">沒有高敏感度的題目</div>';
+  }else{
+    partRank.forEach(function(p){
+      var items=highSens.filter(function(r){return r.part===p.part;});
+      if(items.length===0){
+        var allPartItems=sensResults.filter(function(r){return r.part===p.part;})
+          .sort(function(a,b){return b.sensitivity-a.sensitivity;});
+        if(allPartItems.length>0)items=[allPartItems[0]];
+      }
+      if(items.length===0)return;
+
+      var partInfo=partSens[p.part]||{highCount:0,count:0,dims:new Set()};
+      html+='<div style="margin-bottom:14px">';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">';
+      html+='<span style="font-size:15px;font-weight:900;color:var(--text)">'+p.part+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partInfo.count+'題</span>';
+      if(partInfo.dims&&partInfo.dims.size>0){
+        html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+        Array.from(partInfo.dims).sort(function(a,b){return a-b;}).forEach(function(di){html+=dimTag(di);});
+        html+='</span>';
+      }
+      html+='</div>';
+
+      items.forEach(function(r){
+        var isHigh=r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;
+        html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
+        html+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:14px">'+r.text+'</span>';
+        html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
+        html+=sensBar(r.sensitivity,globalMax);
+        html+='<span style="font-size:12px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:700;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+        if(r.affectedDims.length>0){
+          html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
+          r.affectedDims.forEach(function(di){html+=dimTag(di);});
+          html+='</span>';
+        }
+        html+='</div>';
+      });
+      html+='</div>';
+    });
+  }
+
+
+
+  } // 關閉 BETA_VISIBLE_DIMS>=13 判斷（基準統計和敏感度區段）
+
+  el.innerHTML=html;
+
+
+  },50); // end setTimeout
+}
+
+/* ===== 手動敏感度分析頁 ===== */
+export function showManualSensPage(){
+  showPage('manual-sens-page');
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  setNavActive('nav-manual-sens');
+  initManualData();
+  manualLoadData();
+  setTimeout(renderManualSensPage, 300);
+}
+
+export function renderManualSensPage(){
+  var el=document.getElementById('manual-sens-content');if(!el)return;
+  if(!manualData){el.innerHTML='<div style="color:#aaa;padding:20px">請先在「手動輸入報告」中填入資料</div>';return;}
+  var SBG='#7A9E7E',DBG='#C17A5A';
+  var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+
+  var origManual=JSON.parse(JSON.stringify(manualData));
+
+  var baseCoeffs=[];
+  for(var di=0;di<13;di++){var r=calcDim(manualData, di);baseCoeffs.push(r?r.coeff:0);}
+  var baseTotalCoeff=parseFloat(avgCoeff(manualData, [0,1,2,3,4,5,6,7,8,9,10,11,12]));
+
+  var baseTypes=[];
+  for(var di=0;di<13;di++){var r=calcDim(manualData, di);baseTypes.push(r?r.type:null);}
+
+  var results=[];
+  for(var di=0;di<BETA_VISIBLE_DIMS;di++){
+    for(var pi=0;pi<9;pi++){
+      var curVal=origManual[di][pi];
+      var tryVals=['A','B',null];
+      var bestDelta=0, bestNewTotal=baseTotalCoeff, bestNewType=null, bestFlipped=false;
+
+      tryVals.forEach(function(tv){
+        if(tv===curVal)return;
+        setManualData(JSON.parse(JSON.stringify(origManual)));
+        manualData[di][pi]=tv;
+        var newCoeffs=[];
+        for(var d2=0;d2<13;d2++){var r2=calcDim(manualData, d2);newCoeffs.push(r2?r2.coeff:0);}
+        var _mMin=0,_mMax=0;for(var _d3=0;_d3<13;_d3++){var _r4=calcDim(manualData, _d3);if(_r4){_mMin+=Math.min(_r4.a,_r4.b);_mMax+=Math.max(_r4.a,_r4.b);}}var newTotal=_mMax>0?_mMin/_mMax:0;
+        var delta=newTotal-baseTotalCoeff;
+        var newDimRes=calcDim(manualData, di);
+        var newType=newDimRes?newDimRes.type:null;
+        var flipped=(baseTypes[di]==='動'&&newType==='靜');
+
+        if(delta>bestDelta||(Math.abs(delta-bestDelta)<0.001&&flipped&&!bestFlipped)){
+          bestDelta=delta;
+          bestNewTotal=newTotal;
+          bestNewType=newType;
+          bestFlipped=flipped;
+        }
+      });
+
+      setManualData(JSON.parse(JSON.stringify(origManual)));
+
+      if(bestDelta>0.001||bestFlipped){
+        var curTypeStr='';
+        if(curVal==='A')curTypeStr=DIMS[di].aT;
+        else if(curVal==='B')curTypeStr=DIMS[di].bT;
+        else curTypeStr='空';
+        results.push({
+          di:di, pi:pi,
+          part:partLabels[pi],
+          dim:DIMS[di].dn,
+          curType:curTypeStr,
+          delta:bestDelta,
+          newTotal:bestNewTotal,
+          newType:bestNewType,
+          flipped:bestFlipped
+        });
+      }
+    }
+  }
+
+  setManualData(JSON.parse(JSON.stringify(origManual)));
+
+  results.sort(function(a,b){
+    if(Math.abs(b.delta-a.delta)>0.001)return b.delta-a.delta;
+    if(b.flipped&&!a.flipped)return 1;
+    if(a.flipped&&!b.flipped)return -1;
+    return 0;
+  });
+
+  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動重要參數分析</div>';
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × '+BETA_VISIBLE_DIMS+' 維度矩陣，模擬每個格子翻轉後對係數的影響</div>';
+
+  html+='<div style="margin-bottom:16px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
+  html+='<span style="font-size:14px;font-weight:700;color:var(--text)">目前總係數：'+baseTotalCoeff.toFixed(2)+'</span>';
+  html+='</div>';
+
+  if(results.length===0){
+    html+='<div style="padding:12px;font-size:14px;color:var(--text-3)">無可提升的變動（所有格子翻轉後總係數都不會提高）</div>';
+  }else{
+    html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">可提升的部位變動（依影響排序）</div>';
+
+    results.forEach(function(r,idx){
+      if(idx>=20)return;
+      var deltaStr=r.delta>0.001?'+'+r.delta.toFixed(3):'±0';
+      var flipStr=r.flipped?' <span style="color:'+SBG+';font-weight:700">動→靜</span>':'';
+      html+='<div style="margin-bottom:6px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+      html+='<span style="font-weight:900;color:var(--text);min-width:36px">'+r.part+'</span>';
+      html+='<span style="font-weight:700;color:var(--text-2)">'+r.dim+'</span>';
+      html+='<span style="font-size:13px;color:var(--text-3)">（目前：'+r.curType+'）</span>';
+      html+='<span style="font-size:13px;color:var(--active);font-weight:700">總係數 → '+r.newTotal.toFixed(2)+'</span>';
+      html+='<span style="font-size:12px;color:var(--text-3)">'+deltaStr+'</span>';
+      html+=flipStr;
+      html+='</div>';
+    });
+  }
+
+  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度現況</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+
+  for(var di=0;di<13;di++){
+    var d=DIMS[di];
+    if(di>=BETA_VISIBLE_DIMS){
+      html+='<div style="padding:8px 12px;background:#f0f0ea;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
+      html+='<span style="font-weight:700;color:#bbb">'+d.dn+'</span>';
+      html+='<span style="font-size:13px;color:#bbb">建置中</span>';
+      html+='</div>';
+      continue;
+    }
+    var res=calcDim(manualData, di);
+    var dimType=res?res.type:'—';
+    var dimCoeff=res?res.coeff:0;
+    var bg=dimType==='靜'?SBG:(dimType==='動'?DBG:'#ccc');
+    html+='<div style="padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
+    html+='<span style="font-weight:700;color:var(--text)">'+d.dn+'</span>';
+    html+='<span style="font-size:13px;color:var(--text-3)">'+d.view+'</span>';
+    html+='<span style="display:inline-block;padding:1px 8px;border-radius:4px;background:'+bg+';color:white;font-weight:700;font-size:13px;margin-left:auto">'+dimType+' '+(res?dimCoeff.toFixed(2):'—')+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+
+  el.innerHTML=html;
+}
