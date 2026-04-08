@@ -76,11 +76,17 @@ export function kSelect(i){
     var _isInternalK=INTERNAL_PARTS_K[pi]||false;
     var _jumpJs='history.pushState({page:\'cond\',dim:'+i+',part:\''+pLabel+'\'},\'\');window._suppressPushState=true;showCondPage();cpGoto('+i+');window._suppressPushState=false;setTimeout(function(){var el=document.getElementById(\'cp-part-'+pLabel+'\');var main=document.getElementById(\'cp-main\');if(el&&main){var er=el.getBoundingClientRect();var mr=main.getBoundingClientRect();main.scrollTo({top:main.scrollTop+(er.top-mr.top)-20,behavior:\'smooth\'});}},300);';
     html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden'+(_isInternalK?';margin-left:24px':'')+'">'+
-      '<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--sidebar)">'+
-        '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
-        '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-        '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
-        '<button onclick="'+_jumpJs+'" style="font-size:12px;color:white;cursor:pointer;border:none;background:#E8B000;padding:4px 12px;border-radius:4px;font-weight:700;font-family:inherit">前往修改 →</button>'+
+      '<div style="display:grid;grid-template-columns:200px 90px 1fr;align-items:center;padding:10px 16px;background:var(--sidebar)">'+
+        '<div style="text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:8px">'+
+          '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
+          '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+        '</div>'+
+        '<div style="text-align:center">'+
+          '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<button onclick="'+_jumpJs+'" style="font-size:12px;color:white;cursor:pointer;border:none;background:#E8B000;padding:4px 12px;border-radius:4px;font-weight:700;font-family:inherit">前往修改 →</button>'+
+        '</div>'+
       '</div>';
 
     // 按 groupLabel 分組
