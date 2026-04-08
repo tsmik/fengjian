@@ -16,6 +16,7 @@ export function showCondPage(){
   setNavActive('nav-cond');
   recalcFromObs();
   cpRender();
+  if(!window._suppressPushState) history.pushState({page:'cond',dim:cpCur},'');
 }
 
 export function cpHide(){
@@ -262,7 +263,7 @@ export function cpRenderMain(){
     }
     var partArrow=partAllExpanded?'▼':'▶';
     var partToggleId='part_'+cpCur+'_'+pi;
-    html+='<div class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
+    html+='<div id="cp-part-'+label+'" class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
       '<span style="min-width:5em">'+label+(hasGroups?' <span style="font-size:12px;color:var(--text-3);margin-left:4px">'+partArrow+'</span>':'')+'</span>'+
       '<span style="font-size:var(--cp-part-meta);color:var(--text-3);font-weight:400;margin-left:1em">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
       '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700;margin-left:auto">'+passLabel+'</span>'+

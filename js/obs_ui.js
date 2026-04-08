@@ -289,4 +289,5 @@ export function showObsPage(){
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
+  if(!window._suppressPushState) history.pushState({page:'obs'},'');
 }

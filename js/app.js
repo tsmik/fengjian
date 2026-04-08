@@ -33,6 +33,7 @@ export function showModePage() {
   var mcs = document.getElementById('mode-case-section');
   if (mcs) { mcs.style.display = _isTA ? '' : 'none'; }
   setNavActive(null);
+  if (!window._suppressPushState) history.pushState({page:'mode'}, '');
 }
 
 async function quickLogin(email) {
@@ -354,6 +355,34 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('top-nav').style.display = 'none';
     document.getElementById('entry-page').style.display = 'flex';
     _renderLoginHistory();
+  }
+});
+
+// 瀏覽器上一頁支援
+window._suppressPushState = false;
+window.addEventListener('popstate', function(e){
+  if (!e.state || !e.state.page) return;
+  window._suppressPushState = true;
+  try {
+    switch(e.state.page){
+      case 'mode': showModePage(); break;
+      case 'obs': showObsPage(); break;
+      case 'cond':
+        showCondPage();
+        if (typeof e.state.dim === 'number') cpGoto(e.state.dim);
+        break;
+      case 'knowledge':
+        showKnowledgePage();
+        if (typeof e.state.dim === 'number' && e.state.dim >= 0) kSelect(e.state.dim);
+        break;
+      case 'report': showReport(); break;
+      case 'sens': showSensPage(); break;
+      case 'manual': showManualPage(); break;
+      case 'manual-sens': showManualSensPage(); break;
+      case 'case': showCasePage(); break;
+    }
+  } finally {
+    window._suppressPushState = false;
   }
 });
 

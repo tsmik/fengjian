@@ -17,6 +17,7 @@ export function showCasePage(){
   showPage('case-page');
   document.getElementById('nav-name').innerText=userName||'';
   setNavActive('nav-cases');
+  if(!window._suppressPushState) history.pushState({page:'case'},'');
   renderCaseList();
 }
 

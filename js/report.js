@@ -100,6 +100,7 @@ export function showReport(){
   showPage('report-overlay');
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
+  if(!window._suppressPushState) history.pushState({page:'report'},'');
   recalcFromObs();
   var _lnInfo=_getLiunianInfo();
   document.getElementById('report-name-display').innerHTML=(_currentCaseName||userName||'未命名')+buildLiunianTitleHtml(_lnInfo);

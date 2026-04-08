@@ -30,6 +30,7 @@ export function showManualPage(){
   showPage('manual-page');
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual');
+  if(!window._suppressPushState) history.pushState({page:'manual'},'');
   initManualData();
   manualLoadData();
 }

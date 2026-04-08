@@ -74,13 +74,13 @@ export function kSelect(i){
     }
 
     var _isInternalK=INTERNAL_PARTS_K[pi]||false;
+    var _jumpJs='history.pushState({page:\'cond\',dim:'+i+',part:\''+pLabel+'\'},\'\');window._suppressPushState=true;showCondPage();cpGoto('+i+');window._suppressPushState=false;setTimeout(function(){var el=document.getElementById(\'cp-part-'+pLabel+'\');var main=document.getElementById(\'cp-main\');if(el&&main){var er=el.getBoundingClientRect();var mr=main.getBoundingClientRect();main.scrollTo({top:main.scrollTop+(er.top-mr.top)-20,behavior:\'smooth\'});}},300);';
     html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden'+(_isInternalK?';margin-left:24px':'')+'">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--sidebar)">'+
+      '<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--sidebar)">'+
         '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
-        '<span style="display:flex;align-items:center;gap:8px">'+
-          '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-          '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
-        '</span>'+
+        '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
+        '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
+        '<button onclick="'+_jumpJs+'" style="font-size:12px;color:white;cursor:pointer;border:none;background:#E8B000;padding:4px 12px;border-radius:4px;font-weight:700;font-family:inherit">前往修改 →</button>'+
       '</div>';
 
     // 按 groupLabel 分組
@@ -141,12 +141,12 @@ export function kSelect(i){
       html+='</div>';
     }
 
-    // 渲染 group 表格
+    // 渲染 group：三欄 grid（左：條件名 / 中：勾選狀態 / 右：說明文字）
     if(groupItems.length>0){
-      html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+      html+='<div style="font-size:13px">';
       groupItems.forEach(function(g,gIdx){
         var isLast=gIdx===groupItems.length-1;
-        var borderStyle=isLast?'':'border-bottom:1px solid var(--border)';
+        var rowBorder=isLast?'':'border-bottom:1px solid var(--border)';
 
         if(g.label){
           // 判斷 group 整體是否通過
@@ -197,8 +197,7 @@ export function kSelect(i){
             descLabel=unique2.join('　且　');
           }
 
-          // 渲染行
-          var badgesHtml='<span style="display:inline-flex;gap:4px;margin-left:auto;flex-shrink:0">';
+          var badgesHtml='<span style="display:inline-flex;gap:4px;flex-wrap:wrap">';
           badges.forEach(function(b){
             var bg=b.ok?SBG:'#f0f0f0';
             var clr=b.ok?'white':'#bbb';
@@ -210,34 +209,27 @@ export function kSelect(i){
 
           var descColor=allOk?'var(--text)':'var(--text-3)';
 
-          html+='<tr style="'+borderStyle+'">'+
-            '<td style="padding:10px 16px;width:180px;vertical-align:top;font-weight:700;font-size:13px;color:'+gColor+'">'+g.label+'</td>'+
-            '<td style="padding:10px 12px;color:'+descColor+'">'+
-              '<div style="display:flex;align-items:center;gap:6px">'+
-                '<span style="flex:1">'+descLabel+'</span>'+
-                badgesHtml+
-              '</div>'+
-            '</td>'+
-          '</tr>';
+          html+='<div style="display:grid;grid-template-columns:200px 90px 1fr;align-items:center;gap:12px;padding:10px 16px;'+rowBorder+'">'+
+            '<div style="font-weight:700;color:'+gColor+'">'+g.label+'</div>'+
+            '<div>'+badgesHtml+'</div>'+
+            '<div style="color:'+descColor+'">'+descLabel+'</div>'+
+          '</div>';
         }else{
           // 無 group label 的項目
-          g.items.forEach(function(item){
+          g.items.forEach(function(item,iIdx){
             var bg=item.ok?SBG:'#f0f0f0';
             var clr=item.ok?'white':'#bbb';
             var mark=item.ok?'✓':'✗';
-            html+='<tr style="'+borderStyle+'">'+
-              '<td style="padding:10px 16px;width:180px;vertical-align:top;font-size:13px;color:var(--text-3)">—</td>'+
-              '<td style="padding:10px 12px;color:'+(item.ok?'var(--text)':'var(--text-3)')+'">'+
-                '<div style="display:flex;align-items:center;gap:6px">'+
-                  '<span style="flex:1">'+item.label+'</span>'+
-                  '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+bg+';color:'+clr+'">'+mark+'</span>'+
-                '</div>'+
-              '</td>'+
-            '</tr>';
+            var itemBorder=(isLast&&iIdx===g.items.length-1)?'':'border-bottom:1px solid var(--border)';
+            html+='<div style="display:grid;grid-template-columns:200px 90px 1fr;align-items:center;gap:12px;padding:10px 16px;'+itemBorder+'">'+
+              '<div style="color:var(--text-3)">—</div>'+
+              '<div><span style="font-size:11px;padding:2px 6px;border-radius:4px;background:'+bg+';color:'+clr+'">'+mark+'</span></div>'+
+              '<div style="color:'+(item.ok?'var(--text)':'var(--text-3)')+'">'+item.label+'</div>'+
+            '</div>';
           });
         }
       });
-      html+='</table>';
+      html+='</div>';
     }
 
     html+='</div>';
@@ -262,4 +254,7 @@ export function showKnowledgePage(){
   showPage('knowledge-overlay');
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-know');
+  if(!window._suppressPushState){
+    history.pushState({page:'knowledge',dim:curK},'');
+  }
 }

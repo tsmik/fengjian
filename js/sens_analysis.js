@@ -10,6 +10,7 @@ export function showSensPage(){
   showPage('sens-page');
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-sens');
+  if(!window._suppressPushState) history.pushState({page:'sens'},'');
   recalcFromObs();
   renderSensPage();
 }
@@ -981,6 +982,7 @@ export function showManualSensPage(){
   showPage('manual-sens-page');
   document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual-sens');
+  if(!window._suppressPushState) history.pushState({page:'manual-sens'},'');
   initManualData();
   manualLoadData();
   setTimeout(renderManualSensPage, 300);
