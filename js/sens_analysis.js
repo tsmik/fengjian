@@ -498,8 +498,8 @@ export function renderSensPage(){
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
       h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
-      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<span style="display:flex;gap:3px">'+tags+'</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
@@ -694,8 +694,8 @@ export function renderSensPage(){
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
       h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
-      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
       h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
@@ -821,8 +821,8 @@ export function renderSensPage(){
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
       h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:13px">'+r.text+'</span>';
-      h+='<span style="font-size:11px;color:var(--text-3)">'+r.curVal+' → <b>'+r.bestOpt+'</b></span>';
+      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
       h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
