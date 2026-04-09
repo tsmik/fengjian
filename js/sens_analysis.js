@@ -622,7 +622,7 @@ export function renderSensPage(){
   html+='</div>';
 
   // --- 先天整體調整建議 ---
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">先天整體調整建議（前 5 個最有效觀察題）</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響先天係數的重要部位</div>';
   html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
 
   html+='</div>'; // 關閉先天係數分析區塊
@@ -748,7 +748,7 @@ export function renderSensPage(){
   html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：提升運氣群組整體係數（動靜更平衡）</div>';
 
   // 建議列表
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">運氣整體調整建議（前 5 個最有效觀察題）</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響運氣係數的重要部位</div>';
   html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
 
   html+='</div>'; // 關閉運氣係數分析區塊
@@ -881,7 +881,7 @@ export function renderSensPage(){
   html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：各維度係數往 0.80（平衡）靠近，短板 <b>'+POST_NAMES[postMinIdx]+'</b>（'+basePostCoeffs[postMinIdx].toFixed(2)+'）優先加權</div>';
 
   // 建議列表
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">後天整體調整建議（前 5 個最有效觀察題）</div>';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響後天係數的重要部位</div>';
   html+=_postAdviceList(postTop5,postTop5.length>0?postTop5[0].score:1);
 
   html+='</div>'; // 關閉後天係數分析區塊
