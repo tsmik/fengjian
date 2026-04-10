@@ -694,7 +694,7 @@ export function drawReportCanvas(){
     if(i<9) return xLuckData + (i-6)*(DIM_CW*2+G);
     return xPostData + (i-9)*(DIM_CW*2+G);
   }
-  var DIM_FULL_W = DIM_CW*2;
+  var DIM_FULL_W = DIM_CW*2+G;
 
   // 流年資訊
   var lnInfo=_getLiunianInfo();
@@ -771,7 +771,7 @@ export function drawReportCanvas(){
     var cx=x+(w-sz)/2, cy=y+(h-sz)/2;
     rRect(cx,cy,sz,sz,2,dimDeep[di]);
     ctx.fillStyle='#ffffff';
-    ctx.font='bold '+(sz-2)+'px sans-serif';
+    ctx.font=(sz-2)+'px sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('\u2713',cx+sz/2,cy+sz/2+1);
   }
@@ -877,12 +877,12 @@ export function drawReportCanvas(){
     var dx=dimX(i);
     if(i>=BETA_VISIBLE_DIMS){
       rRect(dx,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
-      rRect(dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
+      rRect(dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
     }else{
       rRect(dx,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
       txtC(DIMS[i].da,dx,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
-      rRect(dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
-      txtC(DIMS[i].db,dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
+      rRect(dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
+      txtC(DIMS[i].db,dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
     }
   }
   // 動靜分析標題（R3-R4 合併效果）
@@ -912,8 +912,8 @@ export function drawReportCanvas(){
     var leftIsS=colLIsS[i];
     rRect(dx,yR5,DIM_CW,SD_HDR_H,2,dimBg[i]);
     txtC(leftIsS?'靜':'動',dx,yR5,DIM_CW,SD_HDR_H,leftIsS?'#000':'#980000',8,false);
-    rRect(dx+DIM_CW,yR5,DIM_CW,SD_HDR_H,2,dimBg[i]);
-    txtC(leftIsS?'動':'靜',dx+DIM_CW,yR5,DIM_CW,SD_HDR_H,leftIsS?'#980000':'#000',8,false);
+    rRect(dx+DIM_CW+G,yR5,DIM_CW,SD_HDR_H,2,dimBg[i]);
+    txtC(leftIsS?'動':'靜',dx+DIM_CW+G,yR5,DIM_CW,SD_HDR_H,leftIsS?'#980000':'#000',8,false);
   }
   function drawAnHeader(ax,y){
     var cw=AN_CW;
@@ -960,11 +960,11 @@ export function drawReportCanvas(){
         var isS=tp==='靜';
         var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
         rRect(dx,yy,DIM_CW,ROW_H,2,dimBg[i]);
-        rRect(dx+DIM_CW,yy,DIM_CW,ROW_H,2,dimBg[i]);
+        rRect(dx+DIM_CW+G,yy,DIM_CW,ROW_H,2,dimBg[i]);
         if(goLeft){
           drawCheck(dx,yy,DIM_CW,ROW_H,i);
         }else{
-          drawCheck(dx+DIM_CW,yy,DIM_CW,ROW_H,i);
+          drawCheck(dx+DIM_CW+G,yy,DIM_CW,ROW_H,i);
         }
         if(isS){
           if(i<6)preS++;else if(i<9)luckS++;else postS++;
@@ -973,7 +973,7 @@ export function drawReportCanvas(){
         }
       }else{
         rRect(dx,yy,DIM_CW,ROW_H,2,dimBg[i]);
-        rRect(dx+DIM_CW,yy,DIM_CW,ROW_H,2,dimBg[i]);
+        rRect(dx+DIM_CW+G,yy,DIM_CW,ROW_H,2,dimBg[i]);
       }
     }
 
@@ -1013,8 +1013,8 @@ export function drawReportCanvas(){
     var rv=colLIsS[i]?dn:sn;
     rRect(dx,yR15,DIM_CW,STAT_H,2,dimBg[i]);
     txtC(''+lv,dx,yR15,DIM_CW,STAT_H,'#000',9,false);
-    rRect(dx+DIM_CW,yR15,DIM_CW,STAT_H,2,dimBg[i]);
-    txtC(''+rv,dx+DIM_CW,yR15,DIM_CW,STAT_H,'#000',9,false);
+    rRect(dx+DIM_CW+G,yR15,DIM_CW,STAT_H,2,dimBg[i]);
+    txtC(''+rv,dx+DIM_CW+G,yR15,DIM_CW,STAT_H,'#000',9,false);
   }
   function drawAnStat(ax,yy,sd,bgColor,fc){
     rRect(ax,yy,AN_CW,STAT_H,2,bgColor);
@@ -1054,7 +1054,7 @@ export function drawReportCanvas(){
   }
 
   // --- R18: 老闆係數 + 主管係數 ---
-  var bossW=3*(DIM_CW*2+G)-G;
+  var bossW=3*(DIM_FULL_W+G)-G;
   rRect(xPreData,yR18,bossW,BOSS_H,3,C_BOSS);
   txtC('老闆係數 '+vLead,xPreData,yR18,bossW,BOSS_H,'#fff',10,false);
   var mgrX=xPreData+bossW+G;
