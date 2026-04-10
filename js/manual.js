@@ -511,5 +511,5 @@ export function renderManualPage(){
   t+='</tr>';
 
   t+='</table>';
-  el.innerHTML=_manualTitleHtml+_manualLnHtml+t;
+  el.innerHTML=_manualTitleHtml+t;
 }
