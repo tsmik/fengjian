@@ -69,7 +69,7 @@ export function buildLiunianTableHtml(info){
   var fc='#4A4540';
 
   var items=[
-    {label:'七十五', value:(ln.name75||'')+(ln.area75?'|'+ln.area75:'')},
+    {label:'七十五', value:(ln.name75||'')+(ln.area75?'／'+ln.area75:'')},
     {label:'九執', value:ln.jiuzhi||''},
     {label:'業務', value:ln.yewu||''},
     {label:'親族', value:ln.qinzu||''},
@@ -79,11 +79,11 @@ export function buildLiunianTableHtml(info){
     {label:'三停', value:ln.santing||''}
   ];
 
-  var t='<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px">';
+  var t='<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px;padding-left:28px">';
   items.forEach(function(item, i){
     var bg=(i%2===0)?bgA:bgB;
     t+='<div style="background:'+bg+';padding:5px 10px;border-radius:3px;font-size:13px;color:'+fc+'">'+
-       item.label+'\u3000'+item.value+'</div>';
+       item.label+' | '+item.value+'</div>';
   });
   t+='</div>';
   return t;
@@ -130,8 +130,8 @@ export function showReport(){
                  '#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
     // 結構色
     var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';
-    var C_BOSS='#6E3A3E',C_MGR='#8C6B4A',C_LUCK_C='#3A5860',C_POST_C='#605768';
-    var C_PRE_C='#5A2E32',C_TOTAL_SD='#3C3C40',C_TOTAL='#2C2C30';
+    var C_BOSS='#8E4B50',C_MGR='#8C6B4A',C_LUCK_C='#4C6E78',C_POST_C='#7B7082';
+    var C_PRE_C='#8E4B50',C_TOTAL_SD='#3C3C40',C_TOTAL='#4A4540';
     var C_PART_BG='#E8E4DF',C_PART_FC='#4A4540';
     var C_AN_BG='#E8E4DF',C_AN_FC='#4A4540';
 
@@ -268,29 +268,29 @@ export function showReport(){
       if(isLeft){isS=colLIsS[di];}else{isS=!colLIsS[di];}
       var label=isS?'靜':'動';
       var fc=isS?'#000':'#980000';
-      return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+';font-weight:700">'+label+'</td>';
+      return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+'">'+label+'</td>';
     }
     // 先天
     for(var i=0;i<6;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
     // 先天動靜分析 3 格（動/靜/比例）- 不合併
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
     t+='<td style="padding:2px 4px"></td>';
     // 運氣
     for(var i=6;i<9;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
     t+='<td style="padding:2px 4px"></td>';
     // 後天
     for(var i=9;i<13;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
     // 總動靜分析 3 格
-    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">動</td>';
-    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">動</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">靜</td>';
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
     t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
@@ -528,8 +528,8 @@ export function showReport(){
     // --- R18: 老闆係數 + 主管係數（先天區內）---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">老闆係數 '+vLead+'</td>'; // C3-C8
-    t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">主管係數 '+vSub+'</td>'; // C9-C14
+    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+vLead+'</td>'; // C3-C8
+    t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+vSub+'</td>'; // C9-C14
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
     t+='<td style="padding:2px 4px"></td>'; // C18
     t+='<td colspan="6" style="padding:2px 4px"></td>'; // C19-C24 空
@@ -544,13 +544,13 @@ export function showReport(){
     // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天係數 '+vPre+'</td>'; // C3-C14
+    t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+vPre+'</td>'; // C3-C14
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
     t+='<td style="padding:2px 4px"></td>'; // C18
-    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣係數 '+vLuck+'</td>'; // C19-C24
+    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+vLuck+'</td>'; // C19-C24
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C25-C27
     t+='<td style="padding:2px 4px"></td>'; // C28
-    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天係數 '+vPost+'</td>'; // C29-C36
+    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+vPost+'</td>'; // C29-C36
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
     t+='<td style="padding:2px 4px"></td>'; // C43
@@ -559,7 +559,7 @@ export function showReport(){
     // --- R20: 總係數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">總係數 '+vTotal+'</td>'; // C3-C36
+    t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+vTotal+'</td>'; // C3-C36
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
     t+='<td style="padding:2px 4px"></td>'; // C43
