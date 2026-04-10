@@ -163,6 +163,17 @@ export function renderManualPage(){
   var dimAttr=[];
   for(var da2=0;da2<13;da2++){ var r=dimCoeffs[da2]; dimAttr.push(r?r.type:null); }
 
+  // 判斷每個維度是否 9 個部位全部填完
+  var dimComplete=[];
+  for(var di3=0;di3<13;di3++){
+    var complete=true;
+    for(var pi3=0;pi3<9;pi3++){ if(manualData[di3][pi3]===null||manualData[di3][pi3]===undefined){ complete=false; break; } }
+    dimComplete.push(complete);
+  }
+  function groupComplete(ids){ return ids.every(function(i){ return dimComplete[i]; }); }
+  var INC='未填完';
+  var INC_STYLE='color:#bbb;font-size:10px';
+
   function ratioB(d,s){
     var total=d+s;
     if(!total)return '';
@@ -417,26 +428,38 @@ export function renderManualPage(){
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=0;i<6;i++){
-    var attr=dimAttr[i];
-    var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-    var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=6;i<9;i++){
-    var attr=dimAttr[i];
-    var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-    var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=9;i<13;i++){
-    var attr=dimAttr[i];
-    var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-    var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -447,23 +470,35 @@ export function renderManualPage(){
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=0;i<6;i++){
-    var rcf=dimCoeffs[i];
-    var cv=rcf?rcf.coeff.toFixed(2):'';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=6;i<9;i++){
-    var rcf=dimCoeffs[i];
-    var cv=rcf?rcf.coeff.toFixed(2):'';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   for(var i=9;i<13;i++){
-    var rcf=dimCoeffs[i];
-    var cv=rcf?rcf.coeff.toFixed(2):'';
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -473,8 +508,10 @@ export function renderManualPage(){
   // --- R18: 老闆係數 + 主管係數 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+vLead+'</td>';
-  t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+vSub+'</td>';
+  var bossOk=groupComplete([0,1,2]);
+  t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(bossOk?vLead:INC)+'</td>';
+  var mgrOk=groupComplete([3,4,5]);
+  t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(mgrOk?vSub:INC)+'</td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   t+='<td colspan="6" style="padding:2px 4px"></td>';
@@ -489,13 +526,16 @@ export function renderManualPage(){
   // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+vPre+'</td>';
+  var preOk=groupComplete([0,1,2,3,4,5]);
+  t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(preOk?vPre:INC)+'</td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+vLuck+'</td>';
+  var luckOk=groupComplete([6,7,8]);
+  t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(luckOk?vLuck:INC)+'</td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+vPost+'</td>';
+  var postOk=groupComplete([9,10,11,12]);
+  t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(postOk?vPost:INC)+'</td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
@@ -504,7 +544,8 @@ export function renderManualPage(){
   // --- R20: 總係數 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+vTotal+'</td>';
+  var allOk=groupComplete([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+  t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
