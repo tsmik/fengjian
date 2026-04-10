@@ -767,7 +767,7 @@ export function drawReportCanvas(){
     return (Math.min(d,s)/mx).toFixed(1);
   }
   function drawCheck(x,y,w,h,di){
-    var sz=Math.min(w-2,h-2,16);
+    var sz=Math.min(w-6,h-6,14);
     var cx=x+(w-sz)/2, cy=y+(h-sz)/2;
     rRect(cx,cy,sz,sz,2,dimDeep[di]);
     ctx.fillStyle='#ffffff';
@@ -864,13 +864,13 @@ export function drawReportCanvas(){
   // --- R2: 指數標題 ---
   var preBlockW=preDataW+G+preAnW;
   rRect(xPreData,yR2,preBlockW,HDR_H,3,C_PRE);
-  txtC('先天指數',xPreData,yR2,preBlockW,HDR_H,'#fff',11,true);
+  txtC('先天指數',xPreData,yR2,preBlockW,HDR_H,'#fff',11,false);
   var luckBlockW=luckDataW+G+luckAnW;
   rRect(xLuckData,yR2,luckBlockW,HDR_H,3,C_LUCK);
-  txtC('運氣指數',xLuckData,yR2,luckBlockW,HDR_H,'#fff',11,true);
+  txtC('運氣指數',xLuckData,yR2,luckBlockW,HDR_H,'#fff',11,false);
   var postBlockW=postDataW+G+postAnW;
   rRect(xPostData,yR2,postBlockW,HDR_H,3,C_POST);
-  txtC('後天指數',xPostData,yR2,postBlockW,HDR_H,'#fff',11,true);
+  txtC('後天指數',xPostData,yR2,postBlockW,HDR_H,'#fff',11,false);
 
   // --- R3: 維度名（深色底白字）---
   for(var i=0;i<13;i++){
@@ -894,7 +894,7 @@ export function drawReportCanvas(){
   rRect(xPostAn,yR3,postAnW,anH,2,C_AN_BG);
   txtC('動靜分析',xPostAn,yR3,postAnW,anH,C_AN_FC,9,true);
   rRect(xTotalAn,yR3,totalAnW,anH,2,C_TOTAL_SD);
-  txtC('總動靜',xTotalAn,yR3,totalAnW,anH,'#fff',9,true);
+  txtC('總動靜',xTotalAn,yR3,totalAnW,anH,'#fff',9,false);
 
   // --- R4: 維度描述 ---
   for(var i=0;i<13;i++){
@@ -1072,7 +1072,7 @@ export function drawReportCanvas(){
   // --- R20: 總係數 ---
   var totalCoeffW=xPostData+postDataW-xPreData;
   rRect(xPreData,yR20,totalCoeffW,TOTAL_H,3,C_TOTAL);
-  txtC('總係數 '+vTotal,xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,true);
+  txtC('總係數 '+vTotal,xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,false);
 
   return canvas;
 }
