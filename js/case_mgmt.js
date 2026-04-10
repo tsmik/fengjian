@@ -4,7 +4,8 @@ import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _curren
          _caseGender, setCaseGender, _caseBirthday, setCaseBirthday, _caseDate, setCaseDate,
          data, setData, obsData, setObsData, obsOverride, setObsOverride, condResults,
          emptyData, setNavActive, showPage, _showToast, _escHtml, _getUserDocRef, save,
-         currentUser, setCurrentUser, userRole, setUserRole } from './core.js';
+         currentUser, setCurrentUser, userRole, setUserRole,
+         DIMS } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex } from './obs_ui.js';
 import { cpRender } from './cond_page.js';
@@ -245,4 +246,105 @@ export function clearObsData(){
   if(tab==='nav-obs'){renderFaceMap();renderObsCenter();renderDimIndex();}
   else if(tab==='nav-cond'){cpRender();}
   _showToast('觀察評分資料已清除');
+}
+
+export async function exportAllCases(){
+  if(!currentUser){alert('請先登入');return;}
+  var PARTS_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+  var DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
+
+  function buildCaseExport(name, gender, birthday, date, dataJson){
+    var d;
+    try{d=JSON.parse(dataJson);}catch(e){return null;}
+    if(!d||!Array.isArray(d)||d.length!==13)return null;
+
+    function cDim(i){
+      var r=d[i],a=r.filter(function(v){return v==='A';}).length,b=r.filter(function(v){return v==='B';}).length;
+      if(a+b===0)return null;
+      return{a:a,b:b,coeff:Math.min(a,b)/Math.max(a,b),type:a>b?DIMS[i].aT:DIMS[i].bT};
+    }
+    function aCoeff(ids){
+      var sumMin=0,sumMax=0;
+      ids.forEach(function(i){var r=cDim(i);if(r){sumMin+=Math.min(r.a,r.b);sumMax+=Math.max(r.a,r.b);}});
+      return sumMax>0?(sumMin/sumMax).toFixed(2):'0.00';
+    }
+
+    var matrix={};
+    for(var di=0;di<13;di++){
+      var dimResult=cDim(di);
+      var parts={};
+      for(var pi=0;pi<9;pi++){
+        var v=d[di][pi];
+        if(v){
+          var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
+          var ch=v==='A'?DIMS[di].a:DIMS[di].b;
+          parts[PARTS_LABELS[pi]]=ch+'('+tp+')';
+        }else{
+          parts[PARTS_LABELS[pi]]=null;
+        }
+      }
+      matrix[DIM_NAMES[di]]={
+        parts:parts,
+        coeff:dimResult?dimResult.coeff.toFixed(2):null,
+        type:dimResult?dimResult.type:null,
+        staticCount:dimResult?Math.min(dimResult.a,dimResult.b):0,
+        dynamicCount:dimResult?Math.max(dimResult.a,dimResult.b):0
+      };
+    }
+
+    return {
+      name:name||'未命名',
+      gender:gender||'',
+      birthday:birthday||'',
+      date:date||'',
+      coefficients:{
+        total:aCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]),
+        innate:aCoeff([0,1,2,3,4,5]),
+        luck:aCoeff([6,7,8]),
+        acquired:aCoeff([9,10,11,12]),
+        boss:aCoeff([0,1,2]),
+        manager:aCoeff([3,4,5])
+      },
+      matrix:matrix,
+      rawData:d
+    };
+  }
+
+  try{
+    var results=[];
+    var selfDoc=await db.collection('users').doc(currentUser.uid).get();
+    if(selfDoc.exists&&selfDoc.data().dataJson){
+      var selfExport=buildCaseExport(userName,selfDoc.data().gender,selfDoc.data().birthday,'',selfDoc.data().dataJson);
+      if(selfExport){selfExport._source='self';results.push(selfExport);}
+    }
+    var snap=await db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get();
+    snap.forEach(function(doc){
+      var c=doc.data();
+      if(c.dataJson){
+        var caseExport=buildCaseExport(c.name,c.gender,c.birthday,c.date,c.dataJson);
+        if(caseExport){caseExport._caseId=doc.id;results.push(caseExport);}
+      }
+    });
+
+    if(results.length===0){alert('沒有可匯出的案例');return;}
+
+    var exportData={
+      exportedAt:new Date().toISOString(),
+      exportedBy:userName,
+      totalCases:results.length,
+      cases:results
+    };
+
+    var blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='人相兵法_案例匯出_'+new Date().toISOString().substring(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('已匯出 '+results.length+' 個案例');
+  }catch(e){
+    console.error('匯出失敗',e);
+    alert('匯出失敗：'+e.message);
+  }
 }
