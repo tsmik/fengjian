@@ -106,24 +106,38 @@ export function showReport(){
   const total=sT+dT||1;
   const sPct=(sT/total*100).toFixed(1),dPct=(dT/total*100).toFixed(1);
 
-  // 完整表格（頂部統計 + 維度矩陣）
+  // 完整表格（和風配色新版）
   const ftEl=document.getElementById('report-full-table');
   if(ftEl){
     const partOrder=[0,1,2,3,4,5,6,7,8];
     const partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-    const dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
-    const dimAlpha=['rgba(94,128,128,0.4)','rgba(110,146,146,0.4)','rgba(126,164,164,0.4)','rgba(82,112,112,0.4)','rgba(96,130,130,0.4)','rgba(110,148,148,0.4)','rgba(158,138,90,0.4)','rgba(178,158,110,0.4)','rgba(198,178,130,0.4)','rgba(122,90,80,0.4)','rgba(142,108,98,0.4)','rgba(162,126,116,0.4)','rgba(182,144,136,0.4)'];
     const SBG='#7A9E7E',DBG='#C17A5A';
     var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
     var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
     var colL=DIMS.map(function(d){return d.da;});
     var colR=DIMS.map(function(d){return d.db;});
     var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
-    const bd='border:1px solid rgba(0,0,0,0.15)';
-    var rc='border-radius:4px';
-    var csTop='border-radius:4px;padding:8px 14px;font-size:18px;font-weight:700;text-align:center';
-    var csBlock='border-radius:4px;padding:6px 10px;font-weight:700;text-align:center';
-    var nb='background:transparent;border:none;padding:4px';
+
+    // === 和風色彩系統 ===
+    // 13 維度淺色（和紙色）
+    var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
+               '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+    // 13 維度深色（勾選方塊用）
+    var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
+                 '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+    // 13 維度文字色（同色系深字）
+    var dimText=['#4A6B3A','#3A5E54','#6A6458','#7A5A38','#7A4858','#7A6A38',
+                 '#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
+    // 結構色
+    var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';
+    var C_BOSS='#6E3A3E',C_MGR='#8C6B4A',C_LUCK_C='#3A5860',C_POST_C='#605768';
+    var C_PRE_C='#5A2E32',C_TOTAL_SD='#3C3C40',C_TOTAL='#2C2C30';
+    var C_PART_BG='#E8E4DF',C_PART_FC='#4A4540';
+    var C_AN_BG='#E8E4DF',C_AN_FC='#4A4540';
+
+    // 維度中文描述
+    var dimDesc=['格局','核心價值','成就','責任','能耐','成敗',
+                 '天運天機','地運資源','人運人和','戰略','戰術','算略KPI','智略'];
 
     // 計算各範圍動靜總數
     function countSD(dimIds){
@@ -141,55 +155,7 @@ export function showReport(){
     var sdPre=countSD([0,1,2,3,4,5]);
     var sdLuck=countSD([6,7,8]);
     var sdPost=countSD([9,10,11,12]);
-    var sdLead=countSD([0,1,2]);
-    var sdSub=countSD([3,4,5]);
-    function sdTag(sd){
-      return '<span style="font-weight:700"><span style="color:'+DBG+'">動'+sd.d+'</span>'+
-        '<span style="color:#999">/</span><span style="color:'+SBG+'">靜'+sd.s+'</span></span>';
-    }
-    function cellFlex(label,val,sd,bg,color){
-      return '<td style="'+rc+';background:'+bg+';color:'+color+';padding:6px 10px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center">'+
-          '<span style="flex:1;text-align:center;font-weight:700">'+label+'　'+val+'</span>'+
-          '<span style="font-weight:700;white-space:nowrap">'+sdTag(sd)+'</span>'+
-        '</div></td>';
-    }
 
-    var _lnTableHtml=buildLiunianTableHtml(_lnInfo);
-    // === 單一表格（頂部摘要 + 維度矩陣）===
-    let t='<table style="border-collapse:separate;border-spacing:2px;font-size:14px;font-family:\'Noto Serif TC\',serif;white-space:nowrap;width:100%">';
-
-    var pw='width:38px;min-width:38px';
-
-    // --- 頂部摘要 ---
-    // 第一列：總係數
-    t+='<tr><td style="'+nb+';'+pw+'"></td>'+
-      '<td colspan="26" style="'+rc+';background:#c8bfb0;color:#3a3228;padding:8px 14px;font-size:18px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<span style="flex:1;text-align:center;font-weight:700">總係數　'+vTotal+'</span>'+
-      '<span style="font-weight:700;white-space:nowrap">'+sdTag(sdAll)+'</span></div></td>'+
-      '<td style="'+nb+';'+pw+'"></td></tr>';
-    // 第二列：先天12 + 運氣6 + 後天8
-    t+='<tr><td rowspan="2" style="'+nb+';'+pw+'"></td>';
-    t+=cellFlex('先天係數',vPre,sdPre,'#bdd4d4','#2e4a4a').replace('<td','<td colspan="12"');
-    if(BETA_VISIBLE_DIMS>=9){
-      t+=cellFlex('運氣係數',vLuck,sdLuck,'#e8dcc8','#5a4a2a').replace('<td','<td colspan="6"');
-    }else{
-      t+='<td colspan="6" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">運氣係數　建置中</td>';
-    }
-    if(BETA_VISIBLE_DIMS>=13){
-      t+=cellFlex('後天係數',vPost,sdPost,'#e0cdc6','#5a3a30').replace('<td','<td colspan="8"');
-    }else{
-      t+='<td colspan="8" style="border-radius:4px;background:#f0f0ea;color:#bbb;padding:6px 10px;text-align:center;font-weight:700">後天係數　建置中</td>';
-    }
-    t+='<td rowspan="2" style="'+nb+';'+pw+'"></td></tr>';
-    // 第三列：老闆6 + 主管6 + 空6 + 空8
-    t+='<tr>';
-    t+=cellFlex('老闆係數',vLead,sdLead,'#cce0e0','#2e4a4a').replace('<td','<td colspan="6"');
-    t+=cellFlex('主管係數',vSub,sdSub,'#d8eaea','#2e4a4a').replace('<td','<td colspan="6"');
-    t+='<td colspan="6" style="'+nb+'"></td><td colspan="8" style="'+nb+'"></td></tr>';
-
-    // --- 維度 header ---
     // 計算每個維度的靜/動部位數
     var dimSCounts=[],dimDCounts=[];
     for(var di2=0;di2<13;di2++){
@@ -202,95 +168,395 @@ export function showReport(){
       dimSCounts.push(sc);dimDCounts.push(dc);
     }
 
-    // 維度名稱行
-    t+='<tr><td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;position:sticky;left:0;z-index:2;'+rc+';'+pw+';text-align:center"></td>';
-    DIMS.forEach(function(d,i){
-      if(i>=BETA_VISIBLE_DIMS){
-        t+='<th colspan="2" style="padding:10px 8px;background:#e0e0da;color:#bbb;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.dn+'</th>';
-      }else{
-        t+='<th colspan="2" style="padding:10px 8px;background:'+dimColors[i]+';color:white;font-weight:700;text-align:center;letter-spacing:2px;'+rc+'">'+d.dn+'</th>';
-      }
-    });
-    t+='<td rowspan="3" style="padding:4px 6px;background:#e8e3da;font-weight:700;'+rc+';'+pw+';text-align:center"></td></tr>';
-    // 子欄行：靜X｜動X（透明底、棕色字、底線）
+    // 13 維度的係數
+    var dimCoeffs=[];
+    for(var dc2=0;dc2<13;dc2++){
+      dimCoeffs.push(calcDim(data,dc2));
+    }
+
+    // 13 維度的屬性（動 or 靜）
+    var dimAttr=[];
+    for(var da2=0;da2<13;da2++){
+      var r=dimCoeffs[da2];
+      dimAttr.push(r?r.type:null);
+    }
+
+    // 勾選方塊 HTML
+    function checkMark(di){
+      return '<span style="display:inline-block;width:18px;height:18px;background:'+dimDeep[di]+';border-radius:3px;line-height:18px;text-align:center;color:#fff;font-size:12px;font-weight:700">\u2713</span>';
+    }
+
+    // === 表格結構定義 ===
+    // 三個區塊的維度索引
+    var preIdx=[0,1,2,3,4,5]; // 先天：形勢經緯方圓曲直收放緩急
+    var luckIdx=[6,7,8]; // 運氣：順逆分合真假
+    var postIdx=[9,10,11,12]; // 後天：攻守奇正虛實進退
+
+    var _lnTableHtml=buildLiunianTableHtml(_lnInfo);
+
+    // === 開始生成表格 ===
+    var rc='border-radius:3px';
+    var t='<table style="border-collapse:separate;border-spacing:2px;white-space:nowrap;font-size:11px;font-family:sans-serif">';
+
+    // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
     t+='<tr>';
-    DIMS.forEach(function(d,i){
-      if(i>=BETA_VISIBLE_DIMS){
-        t+='<th colspan="2" style="padding:4px 6px;background:transparent;color:#ccc;font-weight:700;text-align:center;border-bottom:2.5px solid #ddd"></th>';
-      }else{
-        var lBg=colLIsS[i]?SBG:DBG;
-        var rBg=colLIsS[i]?DBG:SBG;
-        var lCnt=colLIsS[i]?dimSCounts[i]:dimDCounts[i];
-        var rCnt=colLIsS[i]?dimDCounts[i]:dimSCounts[i];
-        t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+lBg+'">'+colL[i]+lCnt+'</th>';
-        t+='<th style="padding:4px 6px;background:transparent;color:#7a6a50;font-weight:700;text-align:center;border-bottom:2.5px solid '+rBg+'">'+colR[i]+rCnt+'</th>';
-      }
-    });
-    t+='</tr>';
-    // 係數格（獨立圓角方塊 + 堆疊橫條）
-    t+='<tr>';
-    DIMS.forEach(function(d,i){
-      if(i>=BETA_VISIBLE_DIMS){
-        t+='<td colspan="2" style="padding:4px 6px;vertical-align:top"><div style="background:#e0e0da;color:#bbb;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;width:100%">—</div></td>';
-      }else{
-        var res=calcDim(data, i);
-        var coeff=res?res.coeff.toFixed(2):'—';
-        var sc=dimSCounts[i],dc=dimDCounts[i];
-        var coeffBg=res?(res.type==='靜'?SBG:DBG):'var(--bg)';
-        var coeffBlock='<div style="background:'+coeffBg+';color:white;font-weight:700;border-radius:4px;padding:3px 6px;text-align:center;margin-bottom:8px;width:100%">'+coeff+'</div>';
-        var lCount=colLIsS[i]?sc:dc;
-        var rCount=colLIsS[i]?dc:sc;
-        var lColor=colLIsS[i]?SBG:DBG;
-        var rColor=colLIsS[i]?DBG:SBG;
-        var bars='<div style="display:flex;gap:2px;height:52px;align-items:flex-end;padding-bottom:2px;width:100%">';
-        bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-        for(var b=0;b<lCount;b++)bars+='<div style="height:3px;background:'+lColor+';border-radius:1px"></div>';
-        bars+='</div>';
-        bars+='<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-end">';
-        for(var b=0;b<rCount;b++)bars+='<div style="height:3px;background:'+rColor+';border-radius:1px"></div>';
-        bars+='</div></div>';
-        t+='<td colspan="2" style="padding:4px 6px;vertical-align:top">'+coeffBlock+bars+'</td>';
-      }
-    });
+    t+='<td style="padding:2px 4px"></td>'; // C1 空
+    t+='<td colspan="15" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天指數</td>';
+    t+='<td style="padding:2px 4px"></td>'; // C18 間隔
+    t+='<td colspan="9" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣指數</td>';
+    t+='<td style="padding:2px 4px"></td>'; // C28 間隔
+    t+='<td colspan="11" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天指數</td>';
+    t+='<td colspan="4" style="padding:2px 4px"></td>'; // 總動靜分析區
     t+='</tr>';
 
-    // === 資料行 ===
-    var partCellL='padding:4px 6px;font-weight:700;background:#e8e3da;position:sticky;left:0;z-index:1;'+rc+';'+pw+';text-align:center';
-    var partCellR='padding:4px 6px;font-weight:700;background:#e8e3da;'+rc+';'+pw+';text-align:center';
-    partOrder.forEach(function(pi,idx){
-      // 下停和耳之間加分隔線（idx=3→下停，idx=4→耳）
-      if(idx===4){
-        t+='<tr><td colspan="28" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
-      }
+    // --- R3: 維度名（形勢經緯...）+ 動靜分析 + 總動靜分析 ---
+    // 先天 6 維度（各佔 2 欄）
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>'; // C1
+    for(var i=0;i<6;i++){
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+    }
+    // C15-C17: 動靜分析（rowspan=2）
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+    t+='<td style="padding:2px 4px"></td>'; // C18
+    // 運氣 3 維度
+    for(var i=6;i<9;i++){
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+    }
+    // C25-C27: 動靜分析（rowspan=2）
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+    t+='<td style="padding:2px 4px"></td>'; // C28
+    // 後天 4 維度
+    for(var i=9;i<13;i++){
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+    }
+    // C37-C39: 動靜分析（rowspan=2）
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+    // C40-C42: 總動靜分析（rowspan=2）
+    t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-size:13px;font-weight:700">總動靜分析</td>';
+    t+='<td style="padding:2px 4px"></td>'; // C43
+    t+='</tr>';
+
+    // --- R4: 維度描述（格局/核心價值...）---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=0;i<6;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
+    // C15-C17 被 rowspan 佔
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<9;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
+    // C25-C27 被 rowspan 佔
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<13;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
+    // C37-C42 被 rowspan 佔
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R5: 靜/動 標頭行（不合併，每格獨立）---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    function r5Cell(di,isLeft){
+      var dimChar=isLeft?colL[di]:colR[di];
+      var isS;
+      if(isLeft){isS=colLIsS[di];}else{isS=!colLIsS[di];}
+      var fc=isS?'#000':'#980000';
+      return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+';font-weight:700">'+dimChar+'</td>';
+    }
+    // 先天
+    for(var i=0;i<6;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    // 先天動靜分析 3 格（動/靜/比例）- 不合併
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    // 運氣
+    for(var i=6;i<9;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    // 後天
+    for(var i=9;i<13;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000;font-weight:700">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+    // 總動靜分析 3 格
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">動</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">靜</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R6~R14: 部位資料行（頭/上停/中停/下停/耳/眉/眼/鼻/口）---
+    function renderPartRow(pi, idx){
+      var label=partLabels[idx];
       t+='<tr>';
-      t+='<td style="'+partCellL+'">'+partLabels[idx]+'</td>';
-      DIMS.forEach(function(d,di){
-        if(di>=BETA_VISIBLE_DIMS){
-          t+='<td colspan="2" style="padding:4px 8px;text-align:center;background:#f5f5f0;'+rc+'"></td>';
-          return;
-        }
-        var v=data[di][pi];
-        var isStatic=false,isDynamic=false;
-        if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
-        if(isStatic||isDynamic){
-          var cellBg=isStatic?SBG:DBG;
-          var cellLabel=isStatic?sChar[di]:dChar[di];
-          var goLeft=(isStatic&&colLIsS[di])||(isDynamic&&!colLIsS[di]);
+      // 左部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+
+      // 先天 6 維度
+      for(var i=0;i<6;i++){
+        var v=data[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
           if(goLeft){
-            t+='<td style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+'">'+cellLabel+'</td>';
-            t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
           }else{
-            t+='<td style="padding:4px 8px;text-align:center;background:'+dimAlpha[di]+';'+rc+'"></td>';
-            t+='<td style="padding:4px 8px;text-align:center;background:'+cellBg+';color:white;font-weight:700;'+rc+'">'+cellLabel+'</td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
           }
         }else{
-          t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
-          t+='<td style="padding:4px 8px;text-align:center;'+rc+'"></td>';
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
         }
-      });
-      t+='<td style="'+partCellR+'">'+partLabels[idx]+'</td>';
+      }
+      // 先天動靜分析（動數/靜數/比例）
+      var preS=0,preD=0;
+      for(var i=0;i<6;i++){var v=data[i][pi];if(v){var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;tp==='靜'?preS++:preD++;}}
+      var preTotal=preS+preD;
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(preTotal?(Math.min(preD,preS)/Math.max(preD,preS)||0).toFixed(1):'')+'</td>';
+
+      // 中部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+
+      // 運氣 3 維度
+      for(var i=6;i<9;i++){
+        var v=data[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+          }else{
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
+          }
+        }else{
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+        }
+      }
+      // 運氣動靜分析
+      var luckS=0,luckD=0;
+      for(var i=6;i<9;i++){var v=data[i][pi];if(v){var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;tp==='靜'?luckS++:luckD++;}}
+      var luckTotal=luckS+luckD;
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(luckTotal?(Math.min(luckD,luckS)/Math.max(luckD,luckS)||0).toFixed(1):'')+'</td>';
+
+      // 右部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+
+      // 後天 4 維度
+      for(var i=9;i<13;i++){
+        var v=data[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+          }else{
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
+          }
+        }else{
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+        }
+      }
+      // 後天動靜分析
+      var postS=0,postD=0;
+      for(var i=9;i<13;i++){var v=data[i][pi];if(v){var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;tp==='靜'?postS++:postD++;}}
+      var postTotal=postS+postD;
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(postTotal?(Math.min(postD,postS)/Math.max(postD,postS)||0).toFixed(1):'')+'</td>';
+
+      // 總動靜分析
+      var allS=preS+luckS+postS, allD=preD+luckD+postD;
+      var allTotal=allS+allD;
+      t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allD+'</td>';
+      t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allS+'</td>';
+      t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+(allTotal?(Math.min(allD,allS)/Math.max(allD,allS)||0).toFixed(1):'')+'</td>';
+
+      // 最右部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
       t+='</tr>';
+    }
+
+    partOrder.forEach(function(pi,idx){
+      if(idx===4){
+        t+='<tr><td colspan="43" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
+      }
+      renderPartRow(pi,idx);
     });
+
+    // --- R15: 統計行 ---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    // 先天各維度統計
+    for(var i=0;i<6;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      // 左邊放靜還是動取決於 colLIsS
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    // 先天動靜合計
+    var preST=sdPre.s,preDT=sdPre.d,preTT=preST+preDT;
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preDT+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preST+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(preTT?(Math.min(preDT,preST)/Math.max(preDT,preST)).toFixed(1):'')+'</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    // 運氣
+    for(var i=6;i<9;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    var luckST=sdLuck.s,luckDT=sdLuck.d,luckTT=luckST+luckDT;
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckDT+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckST+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(luckTT?(Math.min(luckDT,luckST)/Math.max(luckDT,luckST)).toFixed(1):'')+'</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    // 後天
+    for(var i=9;i<13;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    var postST=sdPost.s,postDT=sdPost.d,postTT=postST+postDT;
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postDT+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postST+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(postTT?(Math.min(postDT,postST)/Math.max(postDT,postST)).toFixed(1):'')+'</td>';
+    // 總
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.d+'</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.s+'</td>';
+    var allTT=sdAll.s+sdAll.d;
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+(allTT?(Math.min(sdAll.d,sdAll.s)/Math.max(sdAll.d,sdAll.s)).toFixed(1):'')+'</td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R16: 屬性行（動/靜 標記）---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=0;i<6;i++){
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<9;i++){
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<13;i++){
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R17: 係數行 ---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=0;i<6;i++){
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<9;i++){
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<13;i++){
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R18: 架構指數行（老闆/主管/運氣/後天係數）---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>'; // 空
+    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">老闆係數</td>';
+    t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">主管係數</td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣係數</td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天係數</td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天係數</td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+
+    // --- R20: 總係數 ---
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">總係數</td>';
+    t+='<td colspan="7" style="padding:2px 4px"></td>';
+    t+='</tr>';
+
     t+='</table>';
     ftEl.innerHTML=_lnTableHtml+t;
   }
