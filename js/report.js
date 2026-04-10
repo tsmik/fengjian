@@ -264,11 +264,11 @@ export function showReport(){
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>';
     function r5Cell(di,isLeft){
-      var dimChar=isLeft?colL[di]:colR[di];
       var isS;
       if(isLeft){isS=colLIsS[di];}else{isS=!colLIsS[di];}
+      var label=isS?'靜':'動';
       var fc=isS?'#000':'#980000';
-      return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+';font-weight:700">'+dimChar+'</td>';
+      return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+';font-weight:700">'+label+'</td>';
     }
     // 先天
     for(var i=0;i<6;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
@@ -294,6 +294,15 @@ export function showReport(){
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
     t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
+
+    // 動靜比例（方法 B：min/max）
+    function ratioB(d,s){
+      var total=d+s;
+      if(!total)return '';
+      var mx=Math.max(d,s);
+      if(!mx)return '0.0';
+      return (Math.min(d,s)/mx).toFixed(1);
+    }
 
     // --- R6~R14: 部位資料行（頭/上停/中停/下停/耳/眉/眼/鼻/口）---
     function renderPartRow(pi, idx){
@@ -327,7 +336,7 @@ export function showReport(){
       var preTotal=preS+preD;
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preD+'</td>';
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preS+'</td>';
-      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(preTotal?(Math.min(preD,preS)/Math.max(preD,preS)||0).toFixed(1):'')+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(preD,preS)+'</td>';
 
       // 中部位欄
       t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
@@ -357,7 +366,7 @@ export function showReport(){
       var luckTotal=luckS+luckD;
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
-      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(luckTotal?(Math.min(luckD,luckS)/Math.max(luckD,luckS)||0).toFixed(1):'')+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(luckD,luckS)+'</td>';
 
       // 右部位欄
       t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
@@ -387,14 +396,14 @@ export function showReport(){
       var postTotal=postS+postD;
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
-      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(postTotal?(Math.min(postD,postS)/Math.max(postD,postS)||0).toFixed(1):'')+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(postD,postS)+'</td>';
 
       // 總動靜分析
       var allS=preS+luckS+postS, allD=preD+luckD+postD;
       var allTotal=allS+allD;
       t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allD+'</td>';
       t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allS+'</td>';
-      t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+(allTotal?(Math.min(allD,allS)/Math.max(allD,allS)||0).toFixed(1):'')+'</td>';
+      t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(allD,allS)+'</td>';
 
       // 最右部位欄
       t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
@@ -424,7 +433,7 @@ export function showReport(){
     var preST=sdPre.s,preDT=sdPre.d,preTT=preST+preDT;
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preDT+'</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preST+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(preTT?(Math.min(preDT,preST)/Math.max(preDT,preST)).toFixed(1):'')+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(preDT,preST)+'</td>';
     t+='<td style="padding:2px 4px"></td>';
     // 運氣
     for(var i=6;i<9;i++){
@@ -437,7 +446,7 @@ export function showReport(){
     var luckST=sdLuck.s,luckDT=sdLuck.d,luckTT=luckST+luckDT;
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckDT+'</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckST+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(luckTT?(Math.min(luckDT,luckST)/Math.max(luckDT,luckST)).toFixed(1):'')+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(luckDT,luckST)+'</td>';
     t+='<td style="padding:2px 4px"></td>';
     // 後天
     for(var i=9;i<13;i++){
@@ -450,12 +459,12 @@ export function showReport(){
     var postST=sdPost.s,postDT=sdPost.d,postTT=postST+postDT;
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postDT+'</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postST+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+(postTT?(Math.min(postDT,postST)/Math.max(postDT,postST)).toFixed(1):'')+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(postDT,postST)+'</td>';
     // 總
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.d+'</td>';
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.s+'</td>';
     var allTT=sdAll.s+sdAll.d;
-    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+(allTT?(Math.min(sdAll.d,sdAll.s)/Math.max(sdAll.d,sdAll.s)).toFixed(1):'')+'</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(sdAll.d,sdAll.s)+'</td>';
     t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
 
@@ -516,45 +525,47 @@ export function showReport(){
     t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
 
-    // --- R18: 架構指數行（老闆/主管/運氣/後天係數）---
+    // --- R18: 老闆係數 + 主管係數（先天區內）---
     t+='<tr>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>'; // 空
-    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">老闆係數</td>';
-    t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">主管係數</td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣係數</td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天係數</td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>'; // C1
+    t+='<td style="padding:2px 4px"></td>'; // C2
+    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">老闆係數 '+vLead+'</td>'; // C3-C8
+    t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">主管係數 '+vSub+'</td>'; // C9-C14
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
+    t+='<td style="padding:2px 4px"></td>'; // C18
+    t+='<td colspan="6" style="padding:2px 4px"></td>'; // C19-C24 空
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C25-C27
+    t+='<td style="padding:2px 4px"></td>'; // C28
+    t+='<td colspan="8" style="padding:2px 4px"></td>'; // C29-C36 空
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
+    t+='<td style="padding:2px 4px"></td>'; // C43
     t+='</tr>';
 
     // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
     t+='<tr>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天係數</td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700"></td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700"></td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>'; // C1
+    t+='<td style="padding:2px 4px"></td>'; // C2
+    t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天係數 '+vPre+'</td>'; // C3-C14
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
+    t+='<td style="padding:2px 4px"></td>'; // C18
+    t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣係數 '+vLuck+'</td>'; // C19-C24
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C25-C27
+    t+='<td style="padding:2px 4px"></td>'; // C28
+    t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天係數 '+vPost+'</td>'; // C29-C36
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
+    t+='<td style="padding:2px 4px"></td>'; // C43
     t+='</tr>';
 
     // --- R20: 總係數 ---
     t+='<tr>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">總係數</td>';
-    t+='<td colspan="7" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>'; // C1
+    t+='<td style="padding:2px 4px"></td>'; // C2
+    t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">總係數 '+vTotal+'</td>'; // C3-C36
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
+    t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
+    t+='<td style="padding:2px 4px"></td>'; // C43
     t+='</tr>';
 
     t+='</table>';
