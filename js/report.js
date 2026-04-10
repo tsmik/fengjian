@@ -56,7 +56,7 @@ export function buildLiunianTitleHtml(info){
   if(!info)return '';
   var h=' <span style="font-size:15px;font-weight:700;margin-left:8px">虛歲 '+info.xusui+'</span>';
   if(info.mark){
-    h+=' <span style="font-size:12px;color:#fff;background:#c03830;padding:1px 6px;border-radius:4px;font-weight:900;margin-left:6px">'+info.mark+'</span>';
+    h+=' <span style="font-size:12px;color:#fff;background:#8E4B50;padding:2px 8px;border-radius:3px;font-weight:700;margin-left:6px">'+info.mark+'</span>';
   }
   return h;
 }
@@ -64,34 +64,28 @@ export function buildLiunianTitleHtml(info){
 export function buildLiunianTableHtml(info){
   if(!info)return '';
   var ln=info.ln;
-  var bgA='#d6cfc4',bgB='#c8cfd6';
-  var lbgA='#ece8e0',lbgB='#e0e5ea';
-  var tc='#3a3228';
-  var hc1='#4a453e',hc2='#3a4450';
-  var rc='border-radius:3px';
+  // 兩色交替：部位色 和 淺部位色
+  var bgA='#E8E4DF', bgB='#F0EDE8';
+  var fc='#4A4540';
 
-  var t='<table style="border-collapse:separate;border-spacing:2px;font-size:13px;width:100%;margin-bottom:6px;font-family:\'Noto Serif TC\',serif">';
-  t+='<tr>';
-  t+='<td colspan="2" style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">七十五</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">九執</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">業務</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">親族</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">子女</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">耳鼻</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgA+';color:'+hc1+';'+rc+'">五官</td>';
-  t+='<td style="padding:4px 8px;font-weight:700;text-align:center;white-space:nowrap;background:'+bgB+';color:'+hc2+';'+rc+'">三停</td>';
-  t+='</tr>';
-  t+='<tr>';
-  t+='<td style="padding:5px 8px;text-align:center;font-weight:700;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.name75||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.area75||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.jiuzhi||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.yewu||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.qinzu||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.zinv||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.erbei||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgA+';color:'+tc+';'+rc+'">'+(ln.wuguan||'')+'</td>';
-  t+='<td style="padding:5px 8px;text-align:center;white-space:nowrap;background:'+lbgB+';color:'+tc+';'+rc+'">'+(ln.santing||'')+'</td>';
-  t+='</tr></table>';
+  var items=[
+    {label:'七十五', value:(ln.name75||'')+(ln.area75?'|'+ln.area75:'')},
+    {label:'九執', value:ln.jiuzhi||''},
+    {label:'業務', value:ln.yewu||''},
+    {label:'親族', value:ln.qinzu||''},
+    {label:'子女', value:ln.zinv||''},
+    {label:'耳鼻', value:ln.erbei||''},
+    {label:'五官', value:ln.wuguan||''},
+    {label:'三停', value:ln.santing||''}
+  ];
+
+  var t='<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px">';
+  items.forEach(function(item, i){
+    var bg=(i%2===0)?bgA:bgB;
+    t+='<div style="background:'+bg+';padding:5px 10px;border-radius:3px;font-size:13px;color:'+fc+'">'+
+       item.label+'\u3000'+item.value+'</div>';
+  });
+  t+='</div>';
   return t;
 }
 
