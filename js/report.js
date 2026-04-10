@@ -64,7 +64,6 @@ export function buildLiunianTitleHtml(info){
 export function buildLiunianTableHtml(info){
   if(!info)return '';
   var ln=info.ln;
-  // 兩色交替：部位色 和 淺部位色
   var bgA='#E8E4DF', bgB='#F0EDE8';
   var fc='#4A4540';
 
@@ -79,14 +78,14 @@ export function buildLiunianTableHtml(info){
     {label:'三停', value:ln.santing||''}
   ];
 
-  var t='<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px;padding-left:28px">';
+  var h='<div style="display:flex;gap:3px;flex-wrap:wrap">';
   items.forEach(function(item, i){
     var bg=(i%2===0)?bgA:bgB;
-    t+='<div style="background:'+bg+';padding:5px 10px;border-radius:3px;font-size:13px;color:'+fc+'">'+
+    h+='<div style="background:'+bg+';padding:5px 10px;border-radius:3px;font-size:13px;color:'+fc+';font-family:sans-serif">'+
        item.label+' | '+item.value+'</div>';
   });
-  t+='</div>';
-  return t;
+  h+='</div>';
+  return h;
 }
 
 /* ===== Show Report ===== */
@@ -196,7 +195,12 @@ export function showReport(){
 
     // === 開始生成表格 ===
     var rc='border-radius:3px';
-    var t='<table style="border-collapse:separate;border-spacing:2px;white-space:nowrap;font-size:11px;font-family:sans-serif">';
+    var t='<table style="border-collapse:separate;border-spacing:2px;white-space:nowrap;font-size:11px;font-family:sans-serif;width:100%">';
+
+    // --- R1: 流年（如果有的話）---
+    if(_lnTableHtml){
+      t+='<tr><td colspan="43" style="padding:0 0 8px 0">'+_lnTableHtml+'</td></tr>';
+    }
 
     // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
     t+='<tr>';
@@ -566,7 +570,7 @@ export function showReport(){
     t+='</tr>';
 
     t+='</table>';
-    ftEl.innerHTML=_lnTableHtml+t;
+    ftEl.innerHTML=t;
   }
 
   // 顯示 AI 評析區域（只在 BETA 全開時顯示）
