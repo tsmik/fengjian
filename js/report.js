@@ -528,7 +528,6 @@ export function showReport(){
     // --- R18: 老闆係數 + 主管係數（先天區內）---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td style="padding:2px 4px"></td>'; // C2
     t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">老闆係數 '+vLead+'</td>'; // C3-C8
     t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">主管係數 '+vSub+'</td>'; // C9-C14
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
@@ -545,7 +544,6 @@ export function showReport(){
     // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td style="padding:2px 4px"></td>'; // C2
     t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天係數 '+vPre+'</td>'; // C3-C14
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C15-C17
     t+='<td style="padding:2px 4px"></td>'; // C18
@@ -561,7 +559,6 @@ export function showReport(){
     // --- R20: 總係數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
-    t+='<td style="padding:2px 4px"></td>'; // C2
     t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">總係數 '+vTotal+'</td>'; // C3-C36
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C37-C39
     t+='<td colspan="3" style="padding:2px 4px"></td>'; // C40-C42
