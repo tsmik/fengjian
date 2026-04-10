@@ -218,24 +218,24 @@ export function showReport(){
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
     for(var i=0;i<6;i++){
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
     }
     // C15-C17: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
     t+='<td style="padding:2px 4px"></td>'; // C18
     // 運氣 3 維度
     for(var i=6;i<9;i++){
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
     }
     // C25-C27: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
     t+='<td style="padding:2px 4px"></td>'; // C28
     // 後天 4 維度
     for(var i=9;i<13;i++){
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+dimText[i]+';font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
     }
     // C37-C39: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
