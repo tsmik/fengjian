@@ -20,7 +20,7 @@ import { showCondPage, cpGoto, cpQuickChange, cpToggleAllGroups, cpToggleGroup,
 import { showReport, closeReport, reportSave, exportPNG } from './report.js';
 import { showSensPage, renderSensPage, showManualSensPage, renderManualSensPage } from './sens_analysis.js';
 import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSave,
-         renderManualPage, initManualData } from './manual.js';
+         renderManualPage, initManualData, exportManualPNG } from './manual.js';
 import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          closeCaseForm, saveCaseForm, deleteCase, doLogout, editName,
          confirmEditName, closeEditName, clearObsData } from './case_mgmt.js';
@@ -263,6 +263,7 @@ window.manualCellClick = manualCellClick;
 window.manualClear = manualClear;
 window.manualImportObs = manualImportObs;
 window.manualSave = manualSave;
+window.exportManualPNG = exportManualPNG;
 window.reportSave = reportSave;
 window.saveCaseForm = saveCaseForm;
 window.selectLROpt = selectLROpt;

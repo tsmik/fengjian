@@ -610,7 +610,9 @@ export function fallbackDownload(canvas){
 }
 
 /* ===== Draw Report Canvas ===== */
-export function drawReportCanvas(){
+export function drawReportCanvas(srcData, opts){
+  if(!srcData) srcData=data;
+  if(!opts) opts={};
   var SC=2;
   var SBG='#7A9E7E', DBG='#C17A5A';
 
@@ -777,14 +779,14 @@ export function drawReportCanvas(){
   }
 
   // === 計算數據 ===
-  var vTotal=avgCoeff(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]);
-  var vPre=avgCoeff(data, [0,1,2,3,4,5]),vLuck=avgCoeff(data, [6,7,8]),vPost=avgCoeff(data, [9,10,11,12]);
-  var vLead=avgCoeff(data, [0,1,2]),vSub=avgCoeff(data, [3,4,5]);
+  var vTotal=avgCoeff(srcData, [0,1,2,3,4,5,6,7,8,9,10,11,12]);
+  var vPre=avgCoeff(srcData, [0,1,2,3,4,5]),vLuck=avgCoeff(srcData, [6,7,8]),vPost=avgCoeff(srcData, [9,10,11,12]);
+  var vLead=avgCoeff(srcData, [0,1,2]),vSub=avgCoeff(srcData, [3,4,5]);
 
   function countSD(ids){
     var s=0,d=0;
     ids.forEach(function(di){
-      data[di].forEach(function(v){
+      srcData[di].forEach(function(v){
         if(!v)return;
         var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
         tp==='靜'?s++:d++;
@@ -798,7 +800,7 @@ export function drawReportCanvas(){
   var dimSCounts=[],dimDCounts=[];
   for(var di2=0;di2<13;di2++){
     var sc=0,dc=0;
-    data[di2].forEach(function(v){
+    srcData[di2].forEach(function(v){
       if(!v)return;
       var tp=v==='A'?DIMS[di2].aT:DIMS[di2].bT;
       if(tp==='靜')sc++;else dc++;
@@ -806,9 +808,22 @@ export function drawReportCanvas(){
     dimSCounts.push(sc);dimDCounts.push(dc);
   }
   var dimCoeffs=[];
-  for(var dc2=0;dc2<13;dc2++){ dimCoeffs.push(calcDim(data,dc2)); }
+  for(var dc2=0;dc2<13;dc2++){ dimCoeffs.push(calcDim(srcData,dc2)); }
   var dimAttr=[];
   for(var da2=0;da2<13;da2++){ var r=dimCoeffs[da2]; dimAttr.push(r?r.type:null); }
+
+  // 未填完判斷（手動報告用）
+  var dimComplete=[];
+  if(opts.checkComplete){
+    for(var di3=0;di3<13;di3++){
+      var complete=true;
+      for(var pi3=0;pi3<9;pi3++){ if(srcData[di3][pi3]===null||srcData[di3][pi3]===undefined){ complete=false; break; } }
+      dimComplete.push(complete);
+    }
+  }
+  function isDimOk(i){ return !opts.checkComplete || dimComplete[i]; }
+  function isGroupOk(ids){ return !opts.checkComplete || ids.every(function(i){ return dimComplete[i]; }); }
+  var INC='未填完';
 
   // ========== 繪製 ==========
 
@@ -954,7 +969,7 @@ export function drawReportCanvas(){
         rRect(dx,yy,DIM_FULL_W,ROW_H,2,'#f5f5f0');
         continue;
       }
-      var v=data[i][pi];
+      var v=srcData[i][pi];
       if(v){
         var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
         var isS=tp==='靜';
@@ -1033,11 +1048,15 @@ export function drawReportCanvas(){
   for(var i=0;i<13;i++){
     var dx=dimX(i);
     if(i>=BETA_VISIBLE_DIMS) continue;
-    var attr=dimAttr[i];
-    var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-    var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
     rRect(dx,yR16,DIM_FULL_W,ATTR_H,2,dimBg[i]);
-    txtC(alabel,dx,yR16,DIM_FULL_W,ATTR_H,fc2,9,true);
+    if(!isDimOk(i)){
+      txtC(INC,dx,yR16,DIM_FULL_W,ATTR_H,'#bbb',7,false);
+    }else{
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      txtC(alabel,dx,yR16,DIM_FULL_W,ATTR_H,fc2,9,false);
+    }
   }
 
   // --- R17: 係數行 ---
@@ -1047,32 +1066,36 @@ export function drawReportCanvas(){
       rRect(dx,yR17,DIM_FULL_W,COEFF_H,2,'#e0e0da');
       continue;
     }
-    var rcf=dimCoeffs[i];
-    var cv=rcf?rcf.coeff.toFixed(2):'';
     rRect(dx,yR17,DIM_FULL_W,COEFF_H,2,dimBg[i]);
-    txtC(cv,dx,yR17,DIM_FULL_W,COEFF_H,C_AN_FC,10,true);
+    if(!isDimOk(i)){
+      txtC(INC,dx,yR17,DIM_FULL_W,COEFF_H,'#bbb',7,false);
+    }else{
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      txtC(cv,dx,yR17,DIM_FULL_W,COEFF_H,C_AN_FC,10,false);
+    }
   }
 
   // --- R18: 老闆係數 + 主管係數 ---
   var bossW=3*(DIM_FULL_W+G)-G;
   rRect(xPreData,yR18,bossW,BOSS_H,3,C_BOSS);
-  txtC('老闆係數 '+vLead,xPreData,yR18,bossW,BOSS_H,'#fff',10,false);
+  txtC('老闆係數 '+(isGroupOk([0,1,2])?vLead:INC),xPreData,yR18,bossW,BOSS_H,'#fff',10,false);
   var mgrX=xPreData+bossW+G;
   rRect(mgrX,yR18,bossW,BOSS_H,3,C_MGR);
-  txtC('主管係數 '+vSub,mgrX,yR18,bossW,BOSS_H,'#fff',10,false);
+  txtC('主管係數 '+(isGroupOk([3,4,5])?vSub:INC),mgrX,yR18,bossW,BOSS_H,'#fff',10,false);
 
   // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
   rRect(xPreData,yR19,preDataW,SUB_COEFF_H,3,C_PRE_C);
-  txtC('先天係數 '+vPre,xPreData,yR19,preDataW,SUB_COEFF_H,'#fff',10,false);
+  txtC('先天係數 '+(isGroupOk([0,1,2,3,4,5])?vPre:INC),xPreData,yR19,preDataW,SUB_COEFF_H,'#fff',10,false);
   rRect(xLuckData,yR19,luckDataW,SUB_COEFF_H,3,C_LUCK_C);
-  txtC('運氣係數 '+vLuck,xLuckData,yR19,luckDataW,SUB_COEFF_H,'#fff',10,false);
+  txtC('運氣係數 '+(isGroupOk([6,7,8])?vLuck:INC),xLuckData,yR19,luckDataW,SUB_COEFF_H,'#fff',10,false);
   rRect(xPostData,yR19,postDataW,SUB_COEFF_H,3,C_POST_C);
-  txtC('後天係數 '+vPost,xPostData,yR19,postDataW,SUB_COEFF_H,'#fff',10,false);
+  txtC('後天係數 '+(isGroupOk([9,10,11,12])?vPost:INC),xPostData,yR19,postDataW,SUB_COEFF_H,'#fff',10,false);
 
   // --- R20: 總係數 ---
   var totalCoeffW=xPostData+postDataW-xPreData;
   rRect(xPreData,yR20,totalCoeffW,TOTAL_H,3,C_TOTAL);
-  txtC('總係數 '+vTotal,xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,false);
+  txtC('總係數 '+(isGroupOk([0,1,2,3,4,5,6,7,8,9,10,11,12])?vTotal:INC),xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,false);
 
   return canvas;
 }

@@ -2,7 +2,7 @@
 import { DIMS, data, manualData, setManualData, userName, _isTA, _currentCaseId, _currentCaseName, BETA_VISIBLE_DIMS,
          setNavActive, showPage, _showToast, _getUserDocRef, calcDim, avgCoeff,
          _liunianTable, currentUser } from './core.js';
-import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo } from './report.js';
+import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo, drawReportCanvas, fallbackDownload } from './report.js';
 
 export function initManualData(){
   if(manualData)return;
@@ -553,4 +553,23 @@ export function renderManualPage(){
 
   t+='</table>';
   el.innerHTML=_manualTitleHtml+t;
+}
+
+export async function exportManualPNG(){
+  var btn=document.getElementById('btn-manual-export');
+  if(btn){btn.innerText='產生中...';btn.disabled=true;}
+  await new Promise(function(r){setTimeout(r,50);});
+  try{
+    initManualData();
+    var canvas=drawReportCanvas(manualData, {checkComplete:true});
+    var _expName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'報告';
+    var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
+      '人相兵法_'+_expName+'_手動.png',{type:'image/png'});
+    var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'人相兵法報告',text:_expName+' 的人相兵法報告（手動）'});}
+      catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}
+    }else{fallbackDownload(canvas);}
+  }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
+  if(btn){btn.innerText='分享報告';btn.disabled=false;}
 }
