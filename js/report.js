@@ -662,11 +662,12 @@ export function drawReportCanvas(){
   var SEP_H=3;
 
   // === 計算各區塊寬度 ===
-  var preDataW = 6 * (DIM_CW*2+G) - G;
+  var DIM_FULL_W = DIM_CW*2+G;
+  var preDataW = 6 * (DIM_FULL_W+G) - G;
   var preAnW = 3 * (AN_CW+G) - G;
-  var luckDataW = 3 * (DIM_CW*2+G) - G;
+  var luckDataW = 3 * (DIM_FULL_W+G) - G;
   var luckAnW = 3 * (AN_CW+G) - G;
-  var postDataW = 4 * (DIM_CW*2+G) - G;
+  var postDataW = 4 * (DIM_FULL_W+G) - G;
   var postAnW = 3 * (AN_CW+G) - G;
   var totalAnW = 3 * (AN_CW+G) - G;
 
@@ -690,11 +691,10 @@ export function drawReportCanvas(){
   var xPart4 = xTotalAn + totalAnW + G;
 
   function dimX(i){
-    if(i<6) return xPreData + i*(DIM_CW*2+G);
-    if(i<9) return xLuckData + (i-6)*(DIM_CW*2+G);
-    return xPostData + (i-9)*(DIM_CW*2+G);
+    if(i<6) return xPreData + i*(DIM_FULL_W+G);
+    if(i<9) return xLuckData + (i-6)*(DIM_FULL_W+G);
+    return xPostData + (i-9)*(DIM_FULL_W+G);
   }
-  var DIM_FULL_W = DIM_CW*2+G;
 
   // 流年資訊
   var lnInfo=_getLiunianInfo();
@@ -743,19 +743,19 @@ export function drawReportCanvas(){
   }
   function txtC(text,x,y,w,h,color,size,bold){
     ctx.fillStyle=color;
-    ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
+    ctx.font=(bold?'bold ':'')+size+'px sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(text,x+w/2,y+h/2);
   }
   function txtL(text,x,y,h,color,size,bold){
     ctx.fillStyle=color;
-    ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
+    ctx.font=(bold?'bold ':'')+size+'px sans-serif';
     ctx.textAlign='left';ctx.textBaseline='middle';
     ctx.fillText(text,x,y+h/2);
   }
   function txtR(text,x,y,h,color,size,bold){
     ctx.fillStyle=color;
-    ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
+    ctx.font=(bold?'bold ':'')+size+'px sans-serif';
     ctx.textAlign='right';ctx.textBaseline='middle';
     ctx.fillText(text,x,y+h/2);
   }
@@ -815,19 +815,19 @@ export function drawReportCanvas(){
   // --- 1. 標題列 ---
   var displayName=_currentCaseName||userName||'未命名';
   txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',16,true);
-  ctx.font='bold 16px "Noto Serif TC",serif';
+  ctx.font='bold 16px sans-serif';
   var nx=PAD+ctx.measureText(displayName).width;
 
   if(lnInfo){
     var ageText='虛歲 '+lnInfo.xusui;
     txtL(ageText,nx+8,yTitle,TITLE_H,'#3a3228',13,true);
-    ctx.font='bold 13px "Noto Serif TC",serif';
+    ctx.font='bold 13px sans-serif';
     nx+=8+ctx.measureText(ageText).width;
     if(lnInfo.mark){
       nx+=5;
       rRect(nx,yTitle+(TITLE_H-16)/2,26,16,3,C_MARK);
       ctx.fillStyle='#ffffff';
-      ctx.font='bold 10px "Noto Serif TC",serif';
+      ctx.font='bold 10px sans-serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(lnInfo.mark,nx+13,yTitle+TITLE_H/2);
       nx+=32;
