@@ -613,56 +613,116 @@ export function fallbackDownload(canvas){
 export function drawReportCanvas(){
   var SC=2;
   var SBG='#7A9E7E', DBG='#C17A5A';
-  var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494',
-                 '#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
-  var dimAlphas=['rgba(94,128,128,0.35)','rgba(110,146,146,0.35)','rgba(126,164,164,0.35)',
-                 'rgba(82,112,112,0.35)','rgba(96,130,130,0.35)','rgba(110,148,148,0.35)',
-                 'rgba(158,138,90,0.35)','rgba(178,158,110,0.35)','rgba(198,178,130,0.35)',
-                 'rgba(122,90,80,0.35)','rgba(142,108,98,0.35)','rgba(162,126,116,0.35)',
-                 'rgba(182,144,136,0.35)'];
+
+  // === 和風色彩系統（與 showReport 完全一致）===
+  var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
+             '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+  var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
+               '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+  var dimText=['#4A6B3A','#3A5E54','#6A6458','#7A5A38','#7A4858','#7A6A38',
+               '#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
+  // 結構色
+  var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';
+  var C_BOSS='#8E4B50',C_MGR='#8C6B4A';
+  var C_PRE_C='#8E4B50',C_LUCK_C='#4C6E78',C_POST_C='#7B7082';
+  var C_TOTAL_SD='#3C3C40',C_TOTAL='#4A4540';
+  var C_PART_BG='#E8E4DF',C_PART_FC='#4A4540';
+  var C_AN_BG='#E8E4DF',C_AN_FC='#4A4540';
+  var C_LN_A='#E8E4DF',C_LN_B='#F0EDE8',C_LN_FC='#4A4540';
+  var C_MARK='#8E4B50';
+
+  var dimDesc=['格局','核心價值','成就','責任','能耐','成敗',
+               '天運天機','地運資源','人運人和','戰略','戰術','算略KPI','智略'];
+
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-  // 動態取靜/動標籤（修復 bug）
-  // 顯示用陣列（與 showReport 一致）
-  var sChar=DIMS.map(function(d){return d.aT==='靜'?d.a:d.b;});
-  var dChar=DIMS.map(function(d){return d.aT==='靜'?d.b:d.a;});
+
+  // 動態取靜/動標籤
   var colL=DIMS.map(function(d){return d.da;});
   var colR=DIMS.map(function(d){return d.db;});
   var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
 
-  // 佈局參數
-  var PAD=20, G=3;
-  var PART_W=38, DIM_W=66, SUB_W=DIM_W/2;
-  var ROW_H=28, HDR_H=32, SUB_H=22, COEFF_H=82, SUM_H=34, TITLE_H=40, SEP_H=4;
-  var LN_HDR_H=24, LN_ROW_H=24;
+  // === 佈局參數 ===
+  var PAD=16, G=2;
+  var PART_W=28;
+  var DIM_CW=20;
+  var AN_CW=22;
+  var ROW_H=22;
+  var HDR_H=22;
+  var DIM_HDR_H=20;
+  var DESC_H=16;
+  var SD_HDR_H=18;
+  var STAT_H=20;
+  var ATTR_H=18;
+  var COEFF_H=20;
+  var BOSS_H=20;
+  var SUB_COEFF_H=20;
+  var TOTAL_H=22;
+  var TITLE_H=32;
+  var LN_H=22;
+  var SEP_H=3;
 
-  var contentW=PART_W + G + 13*(DIM_W+G) + PART_W;
-  var totalW=PAD*2+contentW;
+  // === 計算各區塊寬度 ===
+  var preDataW = 6 * (DIM_CW*2+G) - G;
+  var preAnW = 3 * (AN_CW+G) - G;
+  var luckDataW = 3 * (DIM_CW*2+G) - G;
+  var luckAnW = 3 * (AN_CW+G) - G;
+  var postDataW = 4 * (DIM_CW*2+G) - G;
+  var postAnW = 3 * (AN_CW+G) - G;
+  var totalAnW = 3 * (AN_CW+G) - G;
+
+  var contentW = PART_W + G + preDataW + G + preAnW + G
+               + PART_W + G + luckDataW + G + luckAnW + G
+               + PART_W + G + postDataW + G + postAnW + G
+               + totalAnW + G + PART_W;
+  var totalW = PAD*2 + contentW;
+
+  // 各區塊起始 X
+  var xPart1 = PAD;
+  var xPreData = xPart1 + PART_W + G;
+  var xPreAn = xPreData + preDataW + G;
+  var xPart2 = xPreAn + preAnW + G;
+  var xLuckData = xPart2 + PART_W + G;
+  var xLuckAn = xLuckData + luckDataW + G;
+  var xPart3 = xLuckAn + luckAnW + G;
+  var xPostData = xPart3 + PART_W + G;
+  var xPostAn = xPostData + postDataW + G;
+  var xTotalAn = xPostAn + postAnW + G;
+  var xPart4 = xTotalAn + totalAnW + G;
+
+  function dimX(i){
+    if(i<6) return xPreData + i*(DIM_CW*2+G);
+    if(i<9) return xLuckData + (i-6)*(DIM_CW*2+G);
+    return xPostData + (i-9)*(DIM_CW*2+G);
+  }
+  var DIM_FULL_W = DIM_CW*2;
 
   // 流年資訊
   var lnInfo=_getLiunianInfo();
   var hasLn=!!lnInfo;
 
-  // 垂直佈局
+  // === 垂直佈局 ===
   var curY=PAD;
   var yTitle=curY; curY+=TITLE_H+G;
-  var yLnHdr=0, yLnRow=0;
-  if(hasLn){
-    yLnHdr=curY; curY+=LN_HDR_H+G;
-    yLnRow=curY; curY+=LN_ROW_H+G*2;
-  }
-  var ySum1=curY;  curY+=SUM_H+G;
-  var ySum2=curY;  curY+=SUM_H+G;
-  var ySum3=curY;  curY+=SUM_H+G*3;
-  var yDimHdr=curY; curY+=HDR_H+G;
-  var ySubHdr=curY; curY+=SUB_H+G;
-  var yCoeff=curY;  curY+=COEFF_H+G;
+  var yLn=0;
+  if(hasLn){ yLn=curY; curY+=LN_H+G*2; }
+  var yR2=curY; curY+=HDR_H+G;
+  var yR3=curY; curY+=DIM_HDR_H+G;
+  var yR4=curY; curY+=DESC_H+G;
+  var yR5=curY; curY+=SD_HDR_H+G;
   var yDataStart=curY;
   curY+=4*(ROW_H+G);
   var ySep=curY; curY+=SEP_H+G;
+  var yData2Start=curY;
   curY+=5*(ROW_H+G);
+  var yR15=curY; curY+=STAT_H+G;
+  var yR16=curY; curY+=ATTR_H+G;
+  var yR17=curY; curY+=COEFF_H+G;
+  var yR18=curY; curY+=BOSS_H+G;
+  var yR19=curY; curY+=SUB_COEFF_H+G;
+  var yR20=curY; curY+=TOTAL_H;
   var totalH=curY+PAD;
 
-  // 建立 Canvas
+  // === 建立 Canvas ===
   var canvas=document.createElement('canvas');
   canvas.width=totalW*SC;
   canvas.height=totalH*SC;
@@ -671,7 +731,7 @@ export function drawReportCanvas(){
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,totalW,totalH);
 
-  // 輔助函式
+  // === 輔助函式 ===
   function rRect(x,y,w,h,r,fill){
     ctx.beginPath();
     ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
@@ -687,20 +747,36 @@ export function drawReportCanvas(){
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(text,x+w/2,y+h/2);
   }
-  function txtR(text,x,y,h,color,size,bold){
-    ctx.fillStyle=color;
-    ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
-    ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillText(text,x,y+h/2);
-  }
   function txtL(text,x,y,h,color,size,bold){
     ctx.fillStyle=color;
     ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
     ctx.textAlign='left';ctx.textBaseline='middle';
     ctx.fillText(text,x,y+h/2);
   }
+  function txtR(text,x,y,h,color,size,bold){
+    ctx.fillStyle=color;
+    ctx.font=(bold?'bold ':'')+size+'px "Noto Serif TC",serif';
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(text,x,y+h/2);
+  }
+  function ratioB(d,s){
+    var total=d+s;
+    if(!total)return '';
+    var mx=Math.max(d,s);
+    if(!mx)return '0.0';
+    return (Math.min(d,s)/mx).toFixed(1);
+  }
+  function drawCheck(x,y,w,h,di){
+    var sz=Math.min(w-2,h-2,16);
+    var cx=x+(w-sz)/2, cy=y+(h-sz)/2;
+    rRect(cx,cy,sz,sz,2,dimDeep[di]);
+    ctx.fillStyle='#ffffff';
+    ctx.font='bold '+(sz-2)+'px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('\u2713',cx+sz/2,cy+sz/2+1);
+  }
 
-  // 計算數據
+  // === 計算數據 ===
   var vTotal=avgCoeff(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]);
   var vPre=avgCoeff(data, [0,1,2,3,4,5]),vLuck=avgCoeff(data, [6,7,8]),vPost=avgCoeff(data, [9,10,11,12]);
   var vLead=avgCoeff(data, [0,1,2]),vSub=avgCoeff(data, [3,4,5]);
@@ -718,234 +794,202 @@ export function drawReportCanvas(){
   }
   var sdAll=countSD([0,1,2,3,4,5,6,7,8,9,10,11,12]);
   var sdPre=countSD([0,1,2,3,4,5]),sdLuck=countSD([6,7,8]),sdPost=countSD([9,10,11,12]);
-  var sdLead=countSD([0,1,2]),sdSub=countSD([3,4,5]);
 
-  var dimSC=[],dimDC=[];
-  for(var di=0;di<13;di++){
+  var dimSCounts=[],dimDCounts=[];
+  for(var di2=0;di2<13;di2++){
     var sc=0,dc=0;
-    data[di].forEach(function(v){
+    data[di2].forEach(function(v){
       if(!v)return;
-      var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
-      tp==='靜'?sc++:dc++;
+      var tp=v==='A'?DIMS[di2].aT:DIMS[di2].bT;
+      if(tp==='靜')sc++;else dc++;
     });
-    dimSC.push(sc);dimDC.push(dc);
+    dimSCounts.push(sc);dimDCounts.push(dc);
   }
+  var dimCoeffs=[];
+  for(var dc2=0;dc2<13;dc2++){ dimCoeffs.push(calcDim(data,dc2)); }
+  var dimAttr=[];
+  for(var da2=0;da2<13;da2++){ var r=dimCoeffs[da2]; dimAttr.push(r?r.type:null); }
 
   // ========== 繪製 ==========
 
-  // --- 1. 標題列（含虛歲+關隘）---
+  // --- 1. 標題列 ---
   var displayName=_currentCaseName||userName||'未命名';
-  txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',18,true);
-  ctx.font='bold 18px "Noto Serif TC",serif';
+  txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',16,true);
+  ctx.font='bold 16px "Noto Serif TC",serif';
   var nx=PAD+ctx.measureText(displayName).width;
 
   if(lnInfo){
     var ageText='虛歲 '+lnInfo.xusui;
-    txtL(ageText,nx+10,yTitle,TITLE_H,'#3a3228',15,true);
-    ctx.font='bold 15px "Noto Serif TC",serif';
-    nx+=10+ctx.measureText(ageText).width;
+    txtL(ageText,nx+8,yTitle,TITLE_H,'#3a3228',13,true);
+    ctx.font='bold 13px "Noto Serif TC",serif';
+    nx+=8+ctx.measureText(ageText).width;
     if(lnInfo.mark){
-      nx+=6;
-      rRect(nx,yTitle+(TITLE_H-18)/2,28,18,4,'#c03830');
+      nx+=5;
+      rRect(nx,yTitle+(TITLE_H-16)/2,26,16,3,C_MARK);
       ctx.fillStyle='#ffffff';
-      ctx.font='bold 12px "Noto Serif TC",serif';
+      ctx.font='bold 10px "Noto Serif TC",serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(lnInfo.mark,nx+14,yTitle+TITLE_H/2);
-      nx+=34;
+      ctx.fillText(lnInfo.mark,nx+13,yTitle+TITLE_H/2);
+      nx+=32;
     }
   }
+  txtL('人相兵法係數報告',nx+20,yTitle,TITLE_H,'#888',12,false);
 
-  txtL('人相兵法係數報告',nx+36,yTitle,TITLE_H,'#888',14,false);
-
-  // --- 2. 流年表格 ---
+  // --- 2. 流年（flex 色塊）---
   if(hasLn){
     var ln=lnInfo.ln;
-    var bgA='#d6cfc4',bgB='#c8cfd6';
-    var lbgA='#ece8e0',lbgB='#e0e5ea';
-    var tc='#3a3228',hc1='#4a453e',hc2='#3a4450';
-
-    var lnCols=[
-      {h:'七十五',v1:ln.name75||'',v2:ln.area75||'',span:2},
-      {h:'九執',v1:ln.jiuzhi||''},
-      {h:'業務',v1:ln.yewu||''},
-      {h:'親族',v1:ln.qinzu||''},
-      {h:'子女',v1:ln.zinv||''},
-      {h:'耳鼻',v1:ln.erbei||''},
-      {h:'五官',v1:ln.wuguan||''},
-      {h:'三停',v1:ln.santing||''}
+    var items=[
+      {label:'七十五', value:(ln.name75||'')+(ln.area75?'／'+ln.area75:'')},
+      {label:'九執', value:ln.jiuzhi||''},
+      {label:'業務', value:ln.yewu||''},
+      {label:'親族', value:ln.qinzu||''},
+      {label:'子女', value:ln.zinv||''},
+      {label:'耳鼻', value:ln.erbei||''},
+      {label:'五官', value:ln.wuguan||''},
+      {label:'三停', value:ln.santing||''}
     ];
-
-    var totalCols=10;
-    var lnColW=Math.floor(contentW/totalCols);
+    var lnTotalW=contentW;
+    var lnItemW=Math.floor(lnTotalW/items.length);
     var lnX=PAD;
-
-    // header 行
-    var cx=lnX;
-    for(var ci=0;ci<lnCols.length;ci++){
-      var col=lnCols[ci];
-      var cw=col.span?lnColW*col.span:lnColW;
-      var bg=(ci%2===0)?bgA:bgB;
-      var hc=(ci%2===0)?hc1:hc2;
-      rRect(cx,yLnHdr,cw-2,LN_HDR_H,3,bg);
-      txtC(col.h,cx,yLnHdr,cw-2,LN_HDR_H,hc,12,true);
-      cx+=cw;
-    }
-
-    // 資料行
-    cx=lnX;
-    for(var ci=0;ci<lnCols.length;ci++){
-      var col=lnCols[ci];
-      var cw=col.span?lnColW*col.span:lnColW;
-      var bg=(ci%2===0)?lbgA:lbgB;
-      if(col.span){
-        var hw=Math.floor(cw/2);
-        rRect(cx,yLnRow,hw-1,LN_ROW_H,3,bg);
-        txtC(col.v1,cx,yLnRow,hw-1,LN_ROW_H,tc,12,true);
-        rRect(cx+hw,yLnRow,hw-1,LN_ROW_H,3,bg);
-        txtC(col.v2||'',cx+hw,yLnRow,hw-1,LN_ROW_H,tc,12,false);
-      }else{
-        rRect(cx,yLnRow,cw-2,LN_ROW_H,3,bg);
-        txtC(col.v1,cx,yLnRow,cw-2,LN_ROW_H,tc,12,false);
-      }
-      cx+=cw;
+    for(var li=0;li<items.length;li++){
+      var bg=(li%2===0)?C_LN_A:C_LN_B;
+      var iw=(li===items.length-1)?(lnTotalW-lnItemW*(items.length-1)):lnItemW;
+      rRect(lnX,yLn,iw-G,LN_H,3,bg);
+      var lnText=items[li].label+' | '+items[li].value;
+      txtC(lnText,lnX,yLn,iw-G,LN_H,C_LN_FC,9,false);
+      lnX+=iw;
     }
   }
 
-  // --- 3. 摘要區 ---
-  var sumX=PAD+PART_W+G;
-  var sumW=contentW-PART_W*2-G*2;
+  // --- R2: 指數標題 ---
+  var preBlockW=preDataW+G+preAnW;
+  rRect(xPreData,yR2,preBlockW,HDR_H,3,C_PRE);
+  txtC('先天指數',xPreData,yR2,preBlockW,HDR_H,'#fff',11,true);
+  var luckBlockW=luckDataW+G+luckAnW;
+  rRect(xLuckData,yR2,luckBlockW,HDR_H,3,C_LUCK);
+  txtC('運氣指數',xLuckData,yR2,luckBlockW,HDR_H,'#fff',11,true);
+  var postBlockW=postDataW+G+postAnW;
+  rRect(xPostData,yR2,postBlockW,HDR_H,3,C_POST);
+  txtC('後天指數',xPostData,yR2,postBlockW,HDR_H,'#fff',11,true);
 
-  function drawSumCell(x,y,w,h,bg,color,label,val,sd){
-    rRect(x,y,w,h,4,bg);
-    var mainText=label+'　'+val;
-    txtC(mainText,x,y,w*0.75,h,color,14,true);
-    var rx=x+w-8;
-    txtR('靜'+sd.s,rx,y,h,SBG,11,true);
-    ctx.font='bold 11px "Noto Serif TC",serif';
-    var sW=ctx.measureText('靜'+sd.s).width;
-    txtR('/',rx-sW,y,h,'#999',11,false);
-    var slW=ctx.measureText('/').width;
-    txtR('動'+sd.d,rx-sW-slW,y,h,DBG,11,true);
-  }
-
-  drawSumCell(sumX,ySum1,sumW,SUM_H,'#c8bfb0','#3a3228','總係數',vTotal,sdAll);
-
-  var r26=sumW/26;
-  var preW=Math.round(r26*12)-G, luckW=Math.round(r26*6)-G, postW=sumW-Math.round(r26*12)-Math.round(r26*6)-G;
-  drawSumCell(sumX,ySum2,preW,SUM_H,'#bdd4d4','#2e4a4a','先天係數',vPre,sdPre);
-  if(BETA_VISIBLE_DIMS>=9){
-    drawSumCell(sumX+preW+G,ySum2,luckW,SUM_H,'#e8dcc8','#5a4a2a','運氣係數',vLuck,sdLuck);
-  }else{
-    rRect(sumX+preW+G,ySum2,luckW,SUM_H,4,'#f0f0ea');
-    txtC('運氣係數　建置中',sumX+preW+G,ySum2,luckW,SUM_H,'#bbb',12,true);
-  }
-  if(BETA_VISIBLE_DIMS>=13){
-    drawSumCell(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#e0cdc6','#5a3a30','後天係數',vPost,sdPost);
-  }else{
-    rRect(sumX+preW+luckW+G*2,ySum2,postW,SUM_H,4,'#f0f0ea');
-    txtC('後天係數　建置中',sumX+preW+luckW+G*2,ySum2,postW,SUM_H,'#bbb',12,true);
-  }
-
-  var halfW=Math.round(r26*6)-G;
-  drawSumCell(sumX,ySum3,halfW,SUM_H,'#cce0e0','#2e4a4a','老闆係數',vLead,sdLead);
-  drawSumCell(sumX+halfW+G,ySum3,halfW,SUM_H,'#d8eaea','#2e4a4a','主管係數',vSub,sdSub);
-
-  // --- 4. 維度 header 行 ---
+  // --- R3: 維度名（深色底白字）---
   for(var i=0;i<13;i++){
-    var dx=PAD+PART_W+G+i*(DIM_W+G);
+    var dx=dimX(i);
     if(i>=BETA_VISIBLE_DIMS){
-      rRect(dx,yDimHdr,DIM_W,HDR_H,4,'#e0e0da');
-      txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#bbb',13,true);
+      rRect(dx,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
+      rRect(dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
     }else{
-      rRect(dx,yDimHdr,DIM_W,HDR_H,4,dimColors[i]);
-      txtC(DIMS[i].dn,dx,yDimHdr,DIM_W,HDR_H,'#ffffff',13,true);
+      rRect(dx,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
+      txtC(DIMS[i].da,dx,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
+      rRect(dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
+      txtC(DIMS[i].db,dx+DIM_CW,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
     }
   }
+  // 動靜分析標題（R3-R4 合併效果）
+  var anH=DIM_HDR_H+G+DESC_H;
+  rRect(xPreAn,yR3,preAnW,anH,2,C_AN_BG);
+  txtC('動靜分析',xPreAn,yR3,preAnW,anH,C_AN_FC,9,true);
+  rRect(xLuckAn,yR3,luckAnW,anH,2,C_AN_BG);
+  txtC('動靜分析',xLuckAn,yR3,luckAnW,anH,C_AN_FC,9,true);
+  rRect(xPostAn,yR3,postAnW,anH,2,C_AN_BG);
+  txtC('動靜分析',xPostAn,yR3,postAnW,anH,C_AN_FC,9,true);
+  rRect(xTotalAn,yR3,totalAnW,anH,2,C_TOTAL_SD);
+  txtC('總動靜',xTotalAn,yR3,totalAnW,anH,'#fff',9,true);
 
-  // --- 5. 子欄行 ---
+  // --- R4: 維度描述 ---
   for(var i=0;i<13;i++){
-    var dx=PAD+PART_W+G+i*(DIM_W+G);
-    if(i>=BETA_VISIBLE_DIMS){
-      // 空白
-    }else{
-      var lBg=colLIsS[i]?SBG:DBG;
-      var rBg=colLIsS[i]?DBG:SBG;
-      var lCnt=colLIsS[i]?dimSC[i]:dimDC[i];
-      var rCnt=colLIsS[i]?dimDC[i]:dimSC[i];
-      txtC(colL[i]+lCnt,dx,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-      ctx.fillStyle=lBg;
-      ctx.fillRect(dx,ySubHdr+SUB_H-3,SUB_W,2.5);
-      txtC(colR[i]+rCnt,dx+SUB_W,ySubHdr,SUB_W,SUB_H,'#7a6a50',11,true);
-      ctx.fillStyle=rBg;
-      ctx.fillRect(dx+SUB_W,ySubHdr+SUB_H-3,SUB_W,2.5);
+    var dx=dimX(i);
+    if(i<BETA_VISIBLE_DIMS){
+      rRect(dx,yR4,DIM_FULL_W,DESC_H,2,dimBg[i]);
+      txtC(dimDesc[i],dx,yR4,DIM_FULL_W,DESC_H,C_AN_FC,7,false);
     }
   }
 
-  // --- 6. 係數格+堆疊橫條 ---
+  // --- R5: 靜/動 標頭 ---
   for(var i=0;i<13;i++){
-    var dx=PAD+PART_W+G+i*(DIM_W+G);
-    if(i>=BETA_VISIBLE_DIMS){
-      rRect(dx,yCoeff,DIM_W,22,4,'#e0e0da');
-      txtC('—',dx,yCoeff,DIM_W,22,'#bbb',13,true);
-    }else{
-      var res=calcDim(data, i);
-      var coeff=res?res.coeff.toFixed(2):'—';
-      var coeffBg=res?(res.type==='靜'?SBG:DBG):'#ddd';
-      var cbH=22;
-      rRect(dx,yCoeff,DIM_W,cbH,4,coeffBg);
-      txtC(coeff,dx,yCoeff,DIM_W,cbH,'#ffffff',13,true);
-      var barTop=yCoeff+cbH+4;
-      var barH=COEFF_H-cbH-6;
-      var sc2=dimSC[i],dc2=dimDC[i];
-      var barUnitH=Math.min(3,(barH-2)/(Math.max(sc2,dc2,1)));
-      var barLX=dx+4, barW=(DIM_W-12)/2;
-      for(var b=0;b<sc2;b++){
-        var by=barTop+barH-2-(b+1)*(barUnitH+1);
-        rRect(barLX,by,barW,barUnitH,1,SBG);
-      }
-      var barRX=dx+DIM_W/2+2;
-      for(var b=0;b<dc2;b++){
-        var by=barTop+barH-2-(b+1)*(barUnitH+1);
-        rRect(barRX,by,barW,barUnitH,1,DBG);
-      }
-    }
+    var dx=dimX(i);
+    if(i>=BETA_VISIBLE_DIMS) continue;
+    var leftIsS=colLIsS[i];
+    rRect(dx,yR5,DIM_CW,SD_HDR_H,2,dimBg[i]);
+    txtC(leftIsS?'靜':'動',dx,yR5,DIM_CW,SD_HDR_H,leftIsS?'#000':'#980000',8,false);
+    rRect(dx+DIM_CW,yR5,DIM_CW,SD_HDR_H,2,dimBg[i]);
+    txtC(leftIsS?'動':'靜',dx+DIM_CW,yR5,DIM_CW,SD_HDR_H,leftIsS?'#980000':'#000',8,false);
   }
+  function drawAnHeader(ax,y){
+    var cw=AN_CW;
+    rRect(ax,y,cw,SD_HDR_H,2,C_AN_BG);
+    txtC('動',ax,y,cw,SD_HDR_H,'#980000',8,false);
+    rRect(ax+cw+G,y,cw,SD_HDR_H,2,C_AN_BG);
+    txtC('靜',ax+cw+G,y,cw,SD_HDR_H,'#000',8,false);
+    rRect(ax+(cw+G)*2,y,cw,SD_HDR_H,2,C_AN_BG);
+    txtC('比例',ax+(cw+G)*2,y,cw,SD_HDR_H,C_AN_FC,8,false);
+  }
+  drawAnHeader(xPreAn,yR5);
+  drawAnHeader(xLuckAn,yR5);
+  drawAnHeader(xPostAn,yR5);
+  var cw=AN_CW;
+  rRect(xTotalAn,yR5,cw,SD_HDR_H,2,C_TOTAL_SD);
+  txtC('動',xTotalAn,yR5,cw,SD_HDR_H,'#fff',8,false);
+  rRect(xTotalAn+cw+G,yR5,cw,SD_HDR_H,2,C_TOTAL_SD);
+  txtC('靜',xTotalAn+cw+G,yR5,cw,SD_HDR_H,'#fff',8,false);
+  rRect(xTotalAn+(cw+G)*2,yR5,cw,SD_HDR_H,2,C_TOTAL_SD);
+  txtC('比例',xTotalAn+(cw+G)*2,yR5,cw,SD_HDR_H,'#fff',8,false);
 
-  // --- 7. 部位資料行 ---
-  function drawPartRow(partIdx,rowIdx,yy){
-    var label=partLabels[rowIdx];
-    rRect(PAD,yy,PART_W,ROW_H,4,'#e8e3da');
-    txtC(label,PAD,yy,PART_W,ROW_H,'#3a3228',12,true);
-    var rx=PAD+PART_W+G+13*(DIM_W+G);
-    rRect(rx,yy,PART_W,ROW_H,4,'#e8e3da');
-    txtC(label,rx,yy,PART_W,ROW_H,'#3a3228',12,true);
-    for(var di=0;di<13;di++){
-      var dx=PAD+PART_W+G+di*(DIM_W+G);
-      if(di>=BETA_VISIBLE_DIMS){
-        rRect(dx,yy,DIM_W,ROW_H,4,'#f5f5f0');
+  // --- R6~R14: 部位資料行 ---
+  function drawPartRow(pi,idx,yy){
+    var label=partLabels[idx];
+    rRect(xPart1,yy,PART_W,ROW_H,2,C_PART_BG);
+    txtC(label,xPart1,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    rRect(xPart2,yy,PART_W,ROW_H,2,C_PART_BG);
+    txtC(label,xPart2,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    rRect(xPart3,yy,PART_W,ROW_H,2,C_PART_BG);
+    txtC(label,xPart3,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    rRect(xPart4,yy,PART_W,ROW_H,2,C_PART_BG);
+    txtC(label,xPart4,yy,PART_W,ROW_H,C_PART_FC,9,true);
+
+    var preS=0,preD=0,luckS=0,luckD=0,postS=0,postD=0;
+    for(var i=0;i<13;i++){
+      var dx=dimX(i);
+      if(i>=BETA_VISIBLE_DIMS){
+        rRect(dx,yy,DIM_FULL_W,ROW_H,2,'#f5f5f0');
         continue;
       }
-      var v=data[di][partIdx];
-      var isStatic=false,isDynamic=false;
+      var v=data[i][pi];
       if(v){
-        var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
-        isStatic=tp==='靜';isDynamic=tp==='動';
-      }
-      if(isStatic||isDynamic){
-        var cellBg=isStatic?SBG:DBG;
-        var cellLabel=isStatic?sChar[di]:dChar[di];
-        var goLeft=(isStatic&&colLIsS[di])||(isDynamic&&!colLIsS[di]);
+        var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+        var isS=tp==='靜';
+        var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+        rRect(dx,yy,DIM_CW,ROW_H,2,dimBg[i]);
+        rRect(dx+DIM_CW,yy,DIM_CW,ROW_H,2,dimBg[i]);
         if(goLeft){
-          rRect(dx,yy,SUB_W,ROW_H,4,cellBg);
-          txtC(cellLabel,dx,yy,SUB_W,ROW_H,'#ffffff',12,true);
-          rRect(dx+SUB_W,yy,SUB_W,ROW_H,4,dimAlphas[di]);
+          drawCheck(dx,yy,DIM_CW,ROW_H,i);
         }else{
-          rRect(dx,yy,SUB_W,ROW_H,4,dimAlphas[di]);
-          rRect(dx+SUB_W,yy,SUB_W,ROW_H,4,cellBg);
-          txtC(cellLabel,dx+SUB_W,yy,SUB_W,ROW_H,'#ffffff',12,true);
+          drawCheck(dx+DIM_CW,yy,DIM_CW,ROW_H,i);
         }
+        if(isS){
+          if(i<6)preS++;else if(i<9)luckS++;else postS++;
+        }else{
+          if(i<6)preD++;else if(i<9)luckD++;else postD++;
+        }
+      }else{
+        rRect(dx,yy,DIM_CW,ROW_H,2,dimBg[i]);
+        rRect(dx+DIM_CW,yy,DIM_CW,ROW_H,2,dimBg[i]);
       }
     }
+
+    function drawAnCells(ax,yy,d,s,bgColor,fc){
+      rRect(ax,yy,AN_CW,ROW_H,2,bgColor);
+      txtC(''+d,ax,yy,AN_CW,ROW_H,fc,9,false);
+      rRect(ax+AN_CW+G,yy,AN_CW,ROW_H,2,bgColor);
+      txtC(''+s,ax+AN_CW+G,yy,AN_CW,ROW_H,fc,9,false);
+      rRect(ax+(AN_CW+G)*2,yy,AN_CW,ROW_H,2,bgColor);
+      txtC(ratioB(d,s),ax+(AN_CW+G)*2,yy,AN_CW,ROW_H,fc,9,false);
+    }
+    drawAnCells(xPreAn,yy,preD,preS,C_AN_BG,C_AN_FC);
+    drawAnCells(xLuckAn,yy,luckD,luckS,C_AN_BG,C_AN_FC);
+    drawAnCells(xPostAn,yy,postD,postS,C_AN_BG,C_AN_FC);
+    var allD=preD+luckD+postD, allS=preS+luckS+postS;
+    drawAnCells(xTotalAn,yy,allD,allS,C_TOTAL_SD,'#fff');
   }
 
   for(var r=0;r<4;r++){
@@ -953,10 +997,82 @@ export function drawReportCanvas(){
   }
   ctx.fillStyle='#b8b0a0';
   ctx.fillRect(PAD,ySep,contentW,2);
-  var yAfterSep=ySep+SEP_H+G;
   for(var r=0;r<5;r++){
-    drawPartRow(r+4,r+4,yAfterSep+r*(ROW_H+G));
+    drawPartRow(r+4,r+4,yData2Start+r*(ROW_H+G));
   }
+
+  // --- R15: 統計行 ---
+  for(var i=0;i<13;i++){
+    var dx=dimX(i);
+    if(i>=BETA_VISIBLE_DIMS){
+      rRect(dx,yR15,DIM_FULL_W,STAT_H,2,'#f5f5f0');
+      continue;
+    }
+    var sn=dimSCounts[i],dn=dimDCounts[i];
+    var lv=colLIsS[i]?sn:dn;
+    var rv=colLIsS[i]?dn:sn;
+    rRect(dx,yR15,DIM_CW,STAT_H,2,dimBg[i]);
+    txtC(''+lv,dx,yR15,DIM_CW,STAT_H,'#000',9,false);
+    rRect(dx+DIM_CW,yR15,DIM_CW,STAT_H,2,dimBg[i]);
+    txtC(''+rv,dx+DIM_CW,yR15,DIM_CW,STAT_H,'#000',9,false);
+  }
+  function drawAnStat(ax,yy,sd,bgColor,fc){
+    rRect(ax,yy,AN_CW,STAT_H,2,bgColor);
+    txtC(''+sd.d,ax,yy,AN_CW,STAT_H,fc,9,false);
+    rRect(ax+AN_CW+G,yy,AN_CW,STAT_H,2,bgColor);
+    txtC(''+sd.s,ax+AN_CW+G,yy,AN_CW,STAT_H,fc,9,false);
+    rRect(ax+(AN_CW+G)*2,yy,AN_CW,STAT_H,2,bgColor);
+    txtC(ratioB(sd.d,sd.s),ax+(AN_CW+G)*2,yy,AN_CW,STAT_H,fc,9,false);
+  }
+  drawAnStat(xPreAn,yR15,sdPre,C_AN_BG,C_AN_FC);
+  drawAnStat(xLuckAn,yR15,sdLuck,C_AN_BG,C_AN_FC);
+  drawAnStat(xPostAn,yR15,sdPost,C_AN_BG,C_AN_FC);
+  drawAnStat(xTotalAn,yR15,sdAll,C_TOTAL_SD,'#fff');
+
+  // --- R16: 屬性行 ---
+  for(var i=0;i<13;i++){
+    var dx=dimX(i);
+    if(i>=BETA_VISIBLE_DIMS) continue;
+    var attr=dimAttr[i];
+    var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+    var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+    rRect(dx,yR16,DIM_FULL_W,ATTR_H,2,dimBg[i]);
+    txtC(alabel,dx,yR16,DIM_FULL_W,ATTR_H,fc2,9,true);
+  }
+
+  // --- R17: 係數行 ---
+  for(var i=0;i<13;i++){
+    var dx=dimX(i);
+    if(i>=BETA_VISIBLE_DIMS){
+      rRect(dx,yR17,DIM_FULL_W,COEFF_H,2,'#e0e0da');
+      continue;
+    }
+    var rcf=dimCoeffs[i];
+    var cv=rcf?rcf.coeff.toFixed(2):'';
+    rRect(dx,yR17,DIM_FULL_W,COEFF_H,2,dimBg[i]);
+    txtC(cv,dx,yR17,DIM_FULL_W,COEFF_H,C_AN_FC,10,true);
+  }
+
+  // --- R18: 老闆係數 + 主管係數 ---
+  var bossW=3*(DIM_CW*2+G)-G;
+  rRect(xPreData,yR18,bossW,BOSS_H,3,C_BOSS);
+  txtC('老闆係數 '+vLead,xPreData,yR18,bossW,BOSS_H,'#fff',10,false);
+  var mgrX=xPreData+bossW+G;
+  rRect(mgrX,yR18,bossW,BOSS_H,3,C_MGR);
+  txtC('主管係數 '+vSub,mgrX,yR18,bossW,BOSS_H,'#fff',10,false);
+
+  // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
+  rRect(xPreData,yR19,preDataW,SUB_COEFF_H,3,C_PRE_C);
+  txtC('先天係數 '+vPre,xPreData,yR19,preDataW,SUB_COEFF_H,'#fff',10,false);
+  rRect(xLuckData,yR19,luckDataW,SUB_COEFF_H,3,C_LUCK_C);
+  txtC('運氣係數 '+vLuck,xLuckData,yR19,luckDataW,SUB_COEFF_H,'#fff',10,false);
+  rRect(xPostData,yR19,postDataW,SUB_COEFF_H,3,C_POST_C);
+  txtC('後天係數 '+vPost,xPostData,yR19,postDataW,SUB_COEFF_H,'#fff',10,false);
+
+  // --- R20: 總係數 ---
+  var totalCoeffW=xPostData+postDataW-xPreData;
+  rRect(xPreData,yR20,totalCoeffW,TOTAL_H,3,C_TOTAL);
+  txtC('總係數 '+vTotal,xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,true);
 
   return canvas;
 }
