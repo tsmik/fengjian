@@ -287,37 +287,36 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 #knowledge-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:7000;align-items:center;justify-content:center}
 #knowledge-overlay .k-msg{font-size:24px;font-weight:400;color:#ccc;letter-spacing:4px}
 /* ===== Case Management Page ===== */
-#case-page{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:2000;padding:30px;overflow-y:auto}
-.case-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+#case-page{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:2000;padding:24px;overflow-y:auto}
+.case-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .case-header h2{font-size:24px;font-weight:400;letter-spacing:2px;color:var(--text)}
 .case-add-btn{height:36px;padding:0 18px;background:var(--dark);color:white;border:none;border-radius:6px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-add-btn:hover{opacity:0.85}
 .case-export-btn{height:36px;padding:0 18px;background:transparent;color:var(--text-3);border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-export-btn:hover{background:var(--hover);color:var(--text)}
-.case-list-table{width:100%;border-collapse:collapse}
-.case-row{cursor:pointer;transition:background 0.15s}
-.case-row:hover{background:rgba(0,0,0,0.03)}
-.case-row td{padding:7px 12px;font-size:14px;color:var(--text);border-bottom:1px solid #eee;white-space:nowrap}
-.case-row td:first-child{font-weight:400;padding-left:0}
-.case-row.is-self{background:rgba(122,158,126,0.06)}
-.case-row.is-self td{border-bottom:2px solid var(--static)}
-.case-row-name{min-width:80px}
-.case-row-gender{width:40px;color:var(--text-3)}
-.case-row-birthday{color:var(--text-3)}
-.case-row-note{color:#aaa;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis}
-.case-row-actions{width:60px;text-align:right;white-space:nowrap}
-.case-row-actions button{width:26px;height:26px;border:none;background:transparent;color:#ccc;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
-.case-row-actions button:hover{background:var(--hover);color:var(--text)}
-.case-row-actions .case-btn-del:hover{background:#fee;color:#c03830}
-.case-group-section{margin-bottom:20px}
-.case-group-header{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:0}
-.case-group-title{font-size:14px;font-weight:400;color:var(--text);letter-spacing:1px;flex:1}
+.case-self-bar{padding:8px 12px;margin-bottom:16px;cursor:pointer;border-bottom:2px solid var(--static);background:rgba(122,158,126,0.06);font-size:14px;color:var(--text)}
+.case-self-bar:hover{background:rgba(122,158,126,0.12)}
+.case-waterfall{display:flex;gap:16px;align-items:flex-start}
+.case-waterfall-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.case-group-section{background:white;border-radius:8px;border:1px solid #eee;overflow:hidden}
+.case-group-header{display:flex;align-items:center;gap:4px;padding:8px 10px;background:#f8f7f5;border-bottom:1px solid #eee}
+.case-group-title{font-size:13px;font-weight:400;color:var(--text);letter-spacing:1px;flex:1}
 .case-group-title.ungrouped{color:var(--text-3);font-style:italic}
-.case-group-count{font-size:12px;color:#aaa;margin-left:4px}
-.case-group-move{width:26px;height:26px;border:none;background:transparent;color:#bbb;font-size:12px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.case-group-count{font-size:11px;color:#aaa;margin-left:2px}
+.case-group-move{width:22px;height:22px;border:none;background:transparent;color:#bbb;font-size:11px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .case-group-move:hover{background:var(--hover);color:var(--text)}
 .case-group-move:disabled{opacity:0.3;cursor:default}
 .case-group-move:disabled:hover{background:transparent;color:#bbb}
+.case-group-body{padding:0}
+.case-row{display:flex;align-items:center;padding:5px 10px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid #f0f0f0}
+.case-row:last-child{border-bottom:none}
+.case-row:hover{background:rgba(0,0,0,0.03)}
+.case-row-name{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-row-gender{width:24px;font-size:12px;color:var(--text-3);text-align:center;flex-shrink:0}
+.case-row-actions{display:flex;gap:2px;flex-shrink:0;margin-left:4px}
+.case-row-actions button{width:22px;height:22px;border:none;background:transparent;color:#ccc;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.case-row-actions button:hover{background:var(--hover);color:var(--text)}
+.case-row-actions .case-btn-del:hover{background:#fee;color:#c03830}
 #case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
 #case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}

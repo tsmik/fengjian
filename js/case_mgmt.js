@@ -30,22 +30,17 @@ export function renderCaseList(){
 
   db.collection('users').doc(currentUser.uid).get().then(function(selfDoc){
     var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
-    // 讀取 groupOrder
     if(selfDoc.exists&&Array.isArray(selfDoc.data().groupOrder)){
       _groupOrder=selfDoc.data().groupOrder;
     }else{
       _groupOrder=[];
     }
 
-    // 「本人」行 HTML
-    var selfHtml='<table class="case-list-table"><tr class="case-row is-self" onclick="loadCase(null)">';
-    selfHtml+='<td class="case-row-name">'+userName+' <span style="font-size:12px;color:var(--static)">（本人）</span></td>';
-    selfHtml+='<td></td><td></td><td></td><td></td>';
-    selfHtml+='</tr></table>';
+    // 更新 datalist
+    var dl=document.getElementById('cf-group-list');
 
     db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
-      // 按組別分類
-      var grouped={}; // groupName -> [{id, data}]
+      var grouped={};
       var allGroups=new Set();
       snap.forEach(function(doc){
         var c=doc.data();
@@ -55,8 +50,6 @@ export function renderCaseList(){
         if(g)allGroups.add(g);
       });
 
-      // 更新 datalist
-      var dl=document.getElementById('cf-group-list');
       if(dl){
         dl.innerHTML='';
         _groupOrder.forEach(function(g){
@@ -69,7 +62,7 @@ export function renderCaseList(){
         });
       }
 
-      // 決定組別顯示順序
+      // 組別順序
       var orderedGroups=[];
       _groupOrder.forEach(function(g){
         if(grouped[g])orderedGroups.push(g);
@@ -77,56 +70,80 @@ export function renderCaseList(){
       allGroups.forEach(function(g){
         if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);
       });
+      // 未分組放最後
+      var allSections=orderedGroups.slice();
+      if(grouped['']&&grouped[''].length>0) allSections.push('');
 
-      var html='';
-      html+=selfHtml;
-
-      for(var oi=0;oi<orderedGroups.length;oi++){
-        var gName=orderedGroups[oi];
+      // 建立各組 HTML
+      var sectionHtmls=[];
+      for(var si=0;si<allSections.length;si++){
+        var gName=allSections[si];
         var cases=grouped[gName];
-        html+='<div class="case-group-section" style="grid-column:1/-1">';
-        html+='<div class="case-group-header">';
-        html+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
-        html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(oi===0?' disabled':'')+'>▲</button>';
-        html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(oi===orderedGroups.length-1?' disabled':'')+'>▼</button>';
-        html+='</div>';
-        html+='<table class="case-list-table">';
+        var isUngrouped=(gName==='');
+        // 計算在有名組中的索引位置（用於上移下移）
+        var namedIdx=isUngrouped?-1:orderedGroups.indexOf(gName);
+        var namedLen=orderedGroups.length;
+
+        var s='<div class="case-group-section">';
+        s+='<div class="case-group-header">';
+        if(isUngrouped){
+          s+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
+        }else{
+          s+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
+          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(namedIdx===0?' disabled':'')+'>▲</button>';
+          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(namedIdx===namedLen-1?' disabled':'')+'>▼</button>';
+        }
+        s+='</div><div class="case-group-body">';
         cases.forEach(function(item){
-          html+=_buildCaseRowHtml(item.id, item.data);
+          s+=_buildCaseRowHtml(item.id, item.data);
         });
-        html+='</table></div>';
+        s+='</div></div>';
+        sectionHtmls.push({html:s, count:cases.length});
       }
 
-      if(grouped['']&&grouped[''].length>0){
-        html+='<div class="case-group-section" style="grid-column:1/-1">';
-        html+='<div class="case-group-header">';
-        html+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+grouped[''].length+'）</span></div>';
-        html+='</div>';
-        html+='<table class="case-list-table">';
-        grouped[''].forEach(function(item){
-          html+=_buildCaseRowHtml(item.id, item.data);
-        });
-        html+='</table></div>';
+      // Waterfall 分配到 4 欄（找最短欄放入）
+      var NUM_COLS=4;
+      var cols=[];
+      var colHeights=[];
+      for(var ci=0;ci<NUM_COLS;ci++){cols.push([]);colHeights.push(0);}
+      for(var si2=0;si2<sectionHtmls.length;si2++){
+        // 找最短的欄
+        var minH=colHeights[0], minIdx=0;
+        for(var ci2=1;ci2<NUM_COLS;ci2++){
+          if(colHeights[ci2]<minH){minH=colHeights[ci2];minIdx=ci2;}
+        }
+        cols[minIdx].push(sectionHtmls[si2].html);
+        // 用案例數量當高度估算（標題+每行）
+        colHeights[minIdx]+=sectionHtmls[si2].count+2;
       }
+
+      // 組裝 HTML
+      var html='';
+      // 本人行
+      html+='<div class="case-self-bar" onclick="loadCase(null)">'+userName+' <span style="font-size:12px;color:var(--static)">（本人）</span></div>';
+      // 四欄 waterfall
+      html+='<div class="case-waterfall">';
+      for(var ci3=0;ci3<NUM_COLS;ci3++){
+        html+='<div class="case-waterfall-col">'+cols[ci3].join('')+'</div>';
+      }
+      html+='</div>';
 
       listEl.innerHTML=html;
     }).catch(function(e){
       console.log('載入案例失敗',e);
-      listEl.innerHTML=selfHtml+'<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
+      listEl.innerHTML='<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
     });
   });
 }
 
 function _buildCaseRowHtml(docId, c){
-  var html='<tr class="case-row" onclick="loadCase(\''+docId+'\')">';
-  html+='<td class="case-row-name">'+(c.name||'未命名')+'</td>';
-  html+='<td class="case-row-gender">'+(c.gender||'')+'</td>';
-  html+='<td class="case-row-birthday">'+(c.birthday||'')+'</td>';
-  html+='<td class="case-row-note">'+(c.note?_escHtml(c.note):'')+'</td>';
-  html+='<td class="case-row-actions">';
+  var html='<div class="case-row" onclick="loadCase(\''+docId+'\')">';
+  html+='<div class="case-row-name">'+(c.name||'未命名')+'</div>';
+  html+='<div class="case-row-gender">'+(c.gender||'')+'</div>';
+  html+='<div class="case-row-actions">';
   html+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
   html+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
-  html+='</td></tr>';
+  html+='</div></div>';
   return html;
 }
 
