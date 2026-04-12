@@ -12,10 +12,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#C17A5A;--static:#7A9E7E;--accent:#c03830;--dark:#1e2127;--gold:#9a7c4a;--cp-dim-title:18px;--cp-dim-sub:14px;--cp-part-title:15px;--cp-part-meta:14px;--cp-question:14px;--cp-option:14px;--cp-option-desc:14px;--cp-right-header:14px;--cp-right-label:14px;--cp-right-part:14px;--cp-right-badge:14px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);font-family:sans-serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
+button,input,select,textarea{font-family:inherit}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column;margin:0}
 
 /* ===== Nav Bar ===== */
 #top-nav{height:48px;background:var(--nav);display:none;align-items:center;padding:0 20px;gap:0;flex-shrink:0;z-index:9500}
@@ -288,9 +290,9 @@ body{background:var(--bg);font-family:sans-serif;width:100%;height:100vh;overflo
 #case-page{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:2000;padding:30px;overflow-y:auto}
 .case-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
 .case-header h2{font-size:24px;font-weight:900;letter-spacing:2px;color:var(--text)}
-.case-add-btn{height:36px;padding:0 18px;background:var(--dark);color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px}
+.case-add-btn{height:36px;padding:0 18px;background:var(--dark);color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-add-btn:hover{opacity:0.85}
-.case-export-btn{height:36px;padding:0 18px;background:transparent;color:var(--text-3);border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:1px}
+.case-export-btn{height:36px;padding:0 18px;background:transparent;color:var(--text-3);border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-export-btn:hover{background:var(--hover);color:var(--text)}
 .case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .case-card{background:white;border-radius:12px;padding:20px;cursor:pointer;transition:box-shadow 0.2s;border:2px solid transparent;position:relative}
