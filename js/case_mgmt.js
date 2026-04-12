@@ -253,10 +253,12 @@ export async function exportAllCases(){
   var PARTS_LABELS=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   var DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 
-  function buildCaseExport(name, gender, birthday, date, dataJson){
-    var d;
-    try{d=JSON.parse(dataJson);}catch(e){return null;}
+  function buildExportFromData(name, gender, birthday, date, d){
     if(!d||!Array.isArray(d)||d.length!==13)return null;
+    // 檢查是否有任何資料
+    var hasAny=false;
+    for(var ci=0;ci<13&&!hasAny;ci++){for(var cj=0;cj<9&&!hasAny;cj++){if(d[ci][cj])hasAny=true;}}
+    if(!hasAny)return null;
 
     function cDim(i){
       var r=d[i],a=r.filter(function(v){return v==='A';}).length,b=r.filter(function(v){return v==='B';}).length;
@@ -310,26 +312,97 @@ export async function exportAllCases(){
     };
   }
 
+  function parseDataJson(jsonStr){
+    if(!jsonStr)return null;
+    try{
+      var d=JSON.parse(jsonStr);
+      if(d&&Array.isArray(d)&&d.length===13)return d;
+    }catch(e){}
+    return null;
+  }
+
+  function calcDataFromObs(obsJson, overrideJson){
+    if(!obsJson)return null;
+    var obs;
+    try{obs=JSON.parse(obsJson);}catch(e){return null;}
+    if(!obs||typeof obs!=='object'||Object.keys(obs).length===0)return null;
+
+    var savedData=JSON.parse(JSON.stringify(data));
+    var savedObs=JSON.parse(JSON.stringify(obsData));
+    var savedOverride=JSON.parse(JSON.stringify(obsOverride));
+
+    setObsData(obs);
+    var ovr={};
+    if(overrideJson){try{ovr=JSON.parse(overrideJson);}catch(e){}}
+    setObsOverride(ovr);
+    setData(emptyData());
+    recalcFromObs();
+
+    var result=JSON.parse(JSON.stringify(data));
+
+    setData(savedData);
+    setObsData(savedObs);
+    setObsOverride(savedOverride);
+    recalcFromObs();
+
+    return result;
+  }
+
+  // 對一個案例 doc，收集所有可匯出的資料（可能 0~2 筆）
+  function collectExports(docData, name, gender, birthday, date, caseId, isSelf){
+    var exports=[];
+
+    // 手動資料
+    var manualD=parseDataJson(docData.manualDataJson);
+    if(manualD){
+      var ex=buildExportFromData(name,gender,birthday,date,manualD);
+      if(ex){
+        ex._dataSource='manual';
+        if(isSelf){ex._source='self';}
+        if(caseId){ex._caseId=caseId;}
+        exports.push(ex);
+      }
+    }
+
+    // 觀察資料：優先 dataJson，沒有再用 obsJson+recalc
+    var obsD=parseDataJson(docData.dataJson);
+    if(!obsD){
+      obsD=calcDataFromObs(docData.obsJson, docData.overrideJson);
+    }
+    if(obsD){
+      var ex2=buildExportFromData(name,gender,birthday,date,obsD);
+      if(ex2){
+        ex2._dataSource='obs';
+        if(isSelf){ex2._source='self';}
+        if(caseId){ex2._caseId=caseId;}
+        exports.push(ex2);
+      }
+    }
+
+    return exports;
+  }
+
   try{
     var results=[];
+
+    // 本人資料
     var selfDoc=await db.collection('users').doc(currentUser.uid).get();
     if(selfDoc.exists){
       var sd=selfDoc.data();
-      var selfJson=sd.manualDataJson||sd.dataJson;
-      if(selfJson){
-        var selfExport=buildCaseExport(userName,sd.gender,sd.birthday,'',selfJson);
-        if(selfExport){selfExport._source='self';results.push(selfExport);}
-      }
+      var selfExports=collectExports(sd,userName,sd.gender,sd.birthday,'',null,true);
+      selfExports.forEach(function(e){results.push(e);});
     }
+
+    // 所有個案
     var snap=await db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get();
-    snap.forEach(function(doc){
+    var docs=[];
+    snap.forEach(function(doc){docs.push(doc);});
+    for(var idx=0;idx<docs.length;idx++){
+      var doc=docs[idx];
       var c=doc.data();
-      var cJson=c.manualDataJson||c.dataJson;
-      if(cJson){
-        var caseExport=buildCaseExport(c.name,c.gender,c.birthday,c.date,cJson);
-        if(caseExport){caseExport._caseId=doc.id;results.push(caseExport);}
-      }
-    });
+      var caseExports=collectExports(c,c.name,c.gender,c.birthday,c.date,doc.id,false);
+      caseExports.forEach(function(e){results.push(e);});
+    }
 
     if(results.length===0){alert('沒有可匯出的案例');return;}
 
@@ -337,6 +410,7 @@ export async function exportAllCases(){
       exportedAt:new Date().toISOString(),
       exportedBy:userName,
       totalCases:results.length,
+      note:'同一案例可能有兩筆（manual=手動輸入, obs=觀察題），以 _dataSource 區分',
       cases:results
     };
 
@@ -347,7 +421,11 @@ export async function exportAllCases(){
     a.download='人相兵法_案例匯出_'+new Date().toISOString().substring(0,10)+'.json';
     a.click();
     URL.revokeObjectURL(url);
-    alert('已匯出 '+results.length+' 個案例');
+
+    // 統計
+    var manualCount=results.filter(function(r){return r._dataSource==='manual';}).length;
+    var obsCount=results.filter(function(r){return r._dataSource==='obs';}).length;
+    alert('已匯出 '+results.length+' 筆資料（手動 '+manualCount+' 筆，觀察 '+obsCount+' 筆）');
   }catch(e){
     console.error('匯出失敗',e);
     alert('匯出失敗：'+e.message);
