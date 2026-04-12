@@ -20,7 +20,7 @@ export function renderSensPage(){
   var SBG='#7A9E7E',DBG='#C17A5A';
   var dimColors=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
 
-  el.innerHTML='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">重要參數分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
+  el.innerHTML='<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px;letter-spacing:2px">重要參數分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
 
   setTimeout(function(){
 
@@ -120,7 +120,7 @@ export function renderSensPage(){
 
   // 輔助
   function dimTag(di){
-    return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;color:white;background:'+dimColors[di]+';white-space:nowrap">'+DIMS[di].dn+'</span>';
+    return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:400;color:white;background:'+dimColors[di]+';white-space:nowrap">'+DIMS[di].dn+'</span>';
   }
   function sensBar(val,maxVal){
     var pct=maxVal>0?Math.min(val/maxVal*100,100):0;
@@ -493,24 +493,24 @@ export function renderSensPage(){
       var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
       // 標籤：老闆↑ / 主管↑ / 兩者
       var tags='';
-      if(r.bossScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#cce0e0;color:#2e4a4a;font-weight:700;white-space:nowrap">老闆↑</span>';
-      if(r.mgrScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e8dfc8;color:#4a4030;font-weight:700;white-space:nowrap">主管↑</span>';
+      if(r.bossScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#cce0e0;color:#2e4a4a;font-weight:400;white-space:nowrap">老闆↑</span>';
+      if(r.mgrScore>0.001)tags+='<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e8dfc8;color:#4a4030;font-weight:400;white-space:nowrap">主管↑</span>';
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
-      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:13px;font-weight:400;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-weight:400;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
       h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<span style="display:flex;gap:3px">'+tags+'</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
-      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:400;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
       h+='</div>';
     });
     return h;
   }
 
   // 渲染
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:2px">重要參數分析</div>';
+  var html='<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:4px;letter-spacing:2px">重要參數分析</div>';
   html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">分析 '+allQs.length+' 題觀察項目，找出對結果影響最大的關鍵觀察</div>';
 
   // ===== 先天係數分析區塊（矩陣版）=====
@@ -534,20 +534,20 @@ export function renderSensPage(){
     mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
     // 老闆/主管 badge 行
     mt+='<tr><td></td>';
-    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#2e4a4a;background:#dceaea;border-radius:4px">'+_bLabel+'</td>';
-    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:700;color:#4a4030;background:#e8dfc8;border-radius:4px">'+_mLabel+'</td></tr>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:400;color:#2e4a4a;background:#dceaea;border-radius:4px">'+_bLabel+'</td>';
+    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:400;color:#4a4030;background:#e8dfc8;border-radius:4px">'+_mLabel+'</td></tr>';
     // 維度名稱行
     mt+='<tr><td style="padding:3px 4px"></td>';
     _matrixDims.forEach(function(di,idx){
       var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3);'+borderR+'">'+DIMS[di].dn+'</td>';
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:400;color:var(--text-3);'+borderR+'">'+DIMS[di].dn+'</td>';
     });
     mt+='</tr>';
     // 9 個部位行
     _matrixParts.forEach(function(pn,pi){
       if(pi===4){mt+='<tr><td colspan="7" style="height:6px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
       _matrixDims.forEach(function(di,idx){
         var val=useData[di][pi];
         var color,outline='',label='';
@@ -562,13 +562,13 @@ export function renderSensPage(){
         if(val===null){
           mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
         }else{
-          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+          mt+='<td style="padding:3px;text-align:center;'+borderR+'"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:var(--text-3)">係數</td>';
     _matrixDims.forEach(function(di,idx){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
@@ -577,7 +577,7 @@ export function renderSensPage(){
       if(aCount===bCount)tp=DIMS[di].aT;
       var tbg=tp==='靜'?_SBG2:_DBG2;
       var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
-      mt+='<td style="text-align:center;padding:3px;'+borderR+'"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td style="text-align:center;padding:3px;'+borderR+'"><div style="font-size:12px;font-weight:400;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -586,22 +586,22 @@ export function renderSensPage(){
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
   html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
-  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">先天係數分析</span>';
-  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+innateCoeffVal+'</span>';
+  html+='<span style="font-size:18px;font-weight:400;color:var(--text)">先天係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:400;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+innateCoeffVal+'</span>';
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
 
   html+='<div style="flex:1;min-width:280px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+'</div>';
+  html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+'</div>';
   html+=_buildMatrix(origData,false);
   html+='</div>';
 
   if(simData){
     html+='<div style="flex:1;min-width:280px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+' → <span style="color:var(--text);font-weight:900">'+simInnateCoeffVal+'</span></div>';
+    html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+' → <span style="color:var(--text);font-weight:400">'+simInnateCoeffVal+'</span></div>';
     html+=_buildMatrix(simData,true);
     html+='</div>';
   }else{
@@ -622,7 +622,7 @@ export function renderSensPage(){
   html+='</div>';
 
   // --- 先天整體調整建議 ---
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響先天係數的重要部位</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:6px">如果有變化，就會影響先天係數的重要部位</div>';
   html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
 
   html+='</div>'; // 關閉先天係數分析區塊
@@ -630,7 +630,7 @@ export function renderSensPage(){
   // 運氣區塊遮罩（測試版）
   if(BETA_VISIBLE_DIMS<9){
     html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
-    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
+    html+='<div style="font-size:18px;font-weight:400;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
     html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
@@ -643,14 +643,14 @@ export function renderSensPage(){
     // 維度名稱行
     mt+='<tr><td style="padding:3px 4px"></td>';
     _luckMatrixDims.forEach(function(di){
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:400;color:var(--text-3)">'+DIMS[di].dn+'</td>';
     });
     mt+='</tr>';
     // 9 個部位行
     PARTS.forEach(function(pn,pi){
       if(pi===4){mt+='<tr><td colspan="4" style="height:6px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
       _luckMatrixDims.forEach(function(di){
         var val=useData[di][pi];
         var color,outline='',label='';
@@ -664,13 +664,13 @@ export function renderSensPage(){
         if(val===null){
           mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
         }else{
-          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:var(--text-3)">係數</td>';
     _luckMatrixDims.forEach(function(di){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
@@ -678,7 +678,7 @@ export function renderSensPage(){
       var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
       if(aCount===bCount)tp=DIMS[di].aT;
       var tbg=tp==='靜'?_SBG2:_DBG2;
-      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:400;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -692,13 +692,13 @@ export function renderSensPage(){
     items.forEach(function(r,idx){
       var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
-      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:13px;font-weight:400;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-weight:400;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
       h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
-      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:400;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
       h+='</div>';
     });
     return h;
@@ -706,24 +706,24 @@ export function renderSensPage(){
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
   html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
-  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">運氣係數分析</span>';
-  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+luckCoeffVal+'</span>';
+  html+='<span style="font-size:18px;font-weight:400;color:var(--text)">運氣係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:400;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+luckCoeffVal+'</span>';
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
 
   // 左：目前狀態
   html+='<div style="flex:1;min-width:180px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+'</div>';
+  html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+'</div>';
   html+=_buildLuckMatrix(origData,false);
   html+='</div>';
 
   // 右：調整後預估
   if(luckSimData){
     html+='<div style="flex:1;min-width:180px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+' → <span style="color:var(--text);font-weight:900">'+luckSimCoeffVal+'</span></div>';
+    html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+' → <span style="color:var(--text);font-weight:400">'+luckSimCoeffVal+'</span></div>';
     html+=_buildLuckMatrix(luckSimData,true);
     html+='</div>';
   }else{
@@ -748,7 +748,7 @@ export function renderSensPage(){
   html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：提升運氣群組整體係數（動靜更平衡）</div>';
 
   // 建議列表
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響運氣係數的重要部位</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:6px">如果有變化，就會影響運氣係數的重要部位</div>';
   html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
 
   html+='</div>'; // 關閉運氣係數分析區塊
@@ -757,7 +757,7 @@ export function renderSensPage(){
   // 後天區塊遮罩（測試版）
   if(BETA_VISIBLE_DIMS<13){
     html+='<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center;position:relative;overflow:hidden">';
-    html+='<div style="font-size:18px;font-weight:900;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
+    html+='<div style="font-size:18px;font-weight:400;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
     html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
@@ -770,14 +770,14 @@ export function renderSensPage(){
     // 維度名稱行
     mt+='<tr><td style="padding:3px 4px"></td>';
     _postMatrixDims.forEach(function(di){
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:700;color:var(--text-3)">'+DIMS[di].dn+'</td>';
+      mt+='<td style="text-align:center;padding:3px 2px;font-size:12px;font-weight:400;color:var(--text-3)">'+DIMS[di].dn+'</td>';
     });
     mt+='</tr>';
     // 9 個部位行
     PARTS.forEach(function(pn,pi){
       if(pi===4){mt+='<tr><td colspan="5" style="height:6px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:700;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
+      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:var(--text-3);white-space:nowrap">'+pn+'</td>';
       _postMatrixDims.forEach(function(di){
         var val=useData[di][pi];
         var color,outline='',label='';
@@ -791,13 +791,13 @@ export function renderSensPage(){
         if(val===null){
           mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto"></div></td>';
         }else{
-          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;'+outline+'">'+label+'</div></td>';
+          mt+='<td style="padding:3px;text-align:center"><div style="width:28px;height:28px;border-radius:5px;background:'+color+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:700;color:var(--text-3)">係數</td>';
+    mt+='<tr style="border-top:1px solid #d4d4c8"><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:var(--text-3)">係數</td>';
     _postMatrixDims.forEach(function(di){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
@@ -805,7 +805,7 @@ export function renderSensPage(){
       var tp=aCount>bCount?DIMS[di].aT:DIMS[di].bT;
       if(aCount===bCount)tp=DIMS[di].aT;
       var tbg=tp==='靜'?_SBG2:_DBG2;
-      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:700;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td style="text-align:center;padding:3px"><div style="font-size:12px;font-weight:400;color:white;background:'+tbg+';border-radius:4px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -819,13 +819,13 @@ export function renderSensPage(){
     items.forEach(function(r,idx){
       var pct=maxScore>0?Math.min(r.score/maxScore*100,100):0;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px">';
-      h+='<span style="font-size:13px;font-weight:900;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
+      h+='<span style="font-size:13px;font-weight:400;color:var(--active);min-width:20px">'+(idx+1)+'</span>';
       h+='<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:#f0ebe0;color:var(--text-3);white-space:nowrap">'+r.part+'</span>';
-      h+='<span style="font-weight:700;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
+      h+='<span style="font-weight:400;color:var(--text);font-size:14px;white-space:nowrap">'+r.curVal+' → '+r.bestOpt+'</span>';
       h+='<span style="font-size:12px;color:var(--text-3);flex:1">（'+r.text+'）</span>';
       h+='<div style="width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;flex-shrink:0">';
       h+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:3px"></div></div>';
-      h+='<span style="font-size:11px;color:var(--active);font-weight:700;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
+      h+='<span style="font-size:11px;color:var(--active);font-weight:400;min-width:40px;text-align:right">+'+r.score.toFixed(3)+'</span>';
       h+='</div>';
     });
     return h;
@@ -833,16 +833,16 @@ export function renderSensPage(){
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
   html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
-  html+='<span style="font-size:18px;font-weight:900;color:var(--text)">後天係數分析</span>';
-  html+='<span style="font-size:16px;font-weight:700;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+postCoeffVal+'</span>';
+  html+='<span style="font-size:18px;font-weight:400;color:var(--text)">後天係數分析</span>';
+  html+='<span style="font-size:16px;font-weight:400;color:var(--text);background:#e0e0d4;padding:2px 12px;border-radius:6px">'+postCoeffVal+'</span>';
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
 
   // 左：目前狀態
   html+='<div style="flex:1;min-width:220px;padding:16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-  html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+'</div>';
+  html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">目前狀態</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+'</div>';
   html+=_buildPostMatrix(origData,false);
   html+='</div>';
 
@@ -855,8 +855,8 @@ export function renderSensPage(){
       postSimDimCoeffVals.push((aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0);
     });
     html+='<div style="flex:1;min-width:220px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+' → <span style="color:var(--text);font-weight:900">'+postSimCoeffVal+'</span></div>';
+    html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
+    html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+' → <span style="color:var(--text);font-weight:400">'+postSimCoeffVal+'</span></div>';
     html+=_buildPostMatrix(postSimData,true);
     html+='</div>';
   }else{
@@ -881,7 +881,7 @@ export function renderSensPage(){
   html+='<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">調整目標：各維度係數往 0.80（平衡）靠近，短板 <b>'+POST_NAMES[postMinIdx]+'</b>（'+basePostCoeffs[postMinIdx].toFixed(2)+'）優先加權</div>';
 
   // 建議列表
-  html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">如果有變化，就會影響後天係數的重要部位</div>';
+  html+='<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:6px">如果有變化，就會影響後天係數的重要部位</div>';
   html+=_postAdviceList(postTop5,postTop5.length>0?postTop5[0].score:1);
 
   html+='</div>'; // 關閉後天係數分析區塊
@@ -897,22 +897,22 @@ export function renderSensPage(){
   html+='<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">';
   html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
   html+='<div style="font-size:12px;color:var(--text-3)">目前總係數</div>';
-  html+='<div style="font-size:20px;font-weight:900;color:var(--text)">'+baseTotalCoeff.toFixed(2)+'</div></div>';
+  html+='<div style="font-size:20px;font-weight:400;color:var(--text)">'+baseTotalCoeff.toFixed(2)+'</div></div>';
   html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
   html+='<div style="font-size:12px;color:var(--text-3)">高敏感度題目</div>';
-  html+='<div style="font-size:20px;font-weight:900;color:var(--active)">'+highSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='<div style="font-size:20px;font-weight:400;color:var(--active)">'+highSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
   html+='<div style="padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);flex:1;min-width:140px">';
   html+='<div style="font-size:12px;color:var(--text-3)">低影響題目</div>';
-  html+='<div style="font-size:20px;font-weight:900;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
+  html+='<div style="font-size:20px;font-weight:400;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
   html+='</div>';
 
   // --- 部位影響力排名 ---
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
+  html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
   var partMax=partRank.length>0?partRank[0].total:1;
   partRank.forEach(function(p){
     var pct=Math.min(p.total/partMax*100,100);
     html+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0">';
-    html+='<span style="font-weight:700;color:var(--text);min-width:36px">'+p.part+'</span>';
+    html+='<span style="font-weight:400;color:var(--text);min-width:36px">'+p.part+'</span>';
     html+='<div style="flex:1;height:10px;background:#eee;border-radius:5px;overflow:hidden">';
     html+='<div style="width:'+pct+'%;height:100%;background:var(--active);border-radius:5px"></div></div>';
     html+='<span style="font-size:12px;color:var(--text-3);min-width:80px">'+p.highCount+'關鍵 / '+p.count+'題</span>';
@@ -923,7 +923,7 @@ export function renderSensPage(){
   });
 
   // --- 關鍵觀察 — 按影響力排名順序展開 ---
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
+  html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
 
   if(highSens.length===0){
     html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">沒有高敏感度的題目</div>';
@@ -940,7 +940,7 @@ export function renderSensPage(){
       var partInfo=partSens[p.part]||{highCount:0,count:0,dims:new Set()};
       html+='<div style="margin-bottom:14px">';
       html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">';
-      html+='<span style="font-size:15px;font-weight:900;color:var(--text)">'+p.part+'</span>';
+      html+='<span style="font-size:15px;font-weight:400;color:var(--text)">'+p.part+'</span>';
       html+='<span style="font-size:12px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partInfo.count+'題</span>';
       if(partInfo.dims&&partInfo.dims.size>0){
         html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
@@ -952,10 +952,10 @@ export function renderSensPage(){
       items.forEach(function(r){
         var isHigh=r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;
         html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
-        html+='<span style="font-weight:700;color:var(--text-2);flex:1;font-size:14px">'+r.text+'</span>';
+        html+='<span style="font-weight:400;color:var(--text-2);flex:1;font-size:14px">'+r.text+'</span>';
         html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
         html+=sensBar(r.sensitivity,globalMax);
-        html+='<span style="font-size:12px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:700;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
+        html+='<span style="font-size:12px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:400;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
         if(r.affectedDims.length>0){
           html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
           r.affectedDims.forEach(function(di){html+=dimTag(di);});
@@ -1060,41 +1060,41 @@ export function renderManualSensPage(){
     return 0;
   });
 
-  var html='<div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動重要參數分析</div>';
+  var html='<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px;letter-spacing:2px">手動重要參數分析</div>';
   html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × '+BETA_VISIBLE_DIMS+' 維度矩陣，模擬每個格子翻轉後對係數的影響</div>';
 
   html+='<div style="margin-bottom:16px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border)">';
-  html+='<span style="font-size:14px;font-weight:700;color:var(--text)">目前總係數：'+baseTotalCoeff.toFixed(2)+'</span>';
+  html+='<span style="font-size:14px;font-weight:400;color:var(--text)">目前總係數：'+baseTotalCoeff.toFixed(2)+'</span>';
   html+='</div>';
 
   if(results.length===0){
     html+='<div style="padding:12px;font-size:14px;color:var(--text-3)">無可提升的變動（所有格子翻轉後總係數都不會提高）</div>';
   }else{
-    html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">可提升的部位變動（依影響排序）</div>';
+    html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">可提升的部位變動（依影響排序）</div>';
 
     results.forEach(function(r,idx){
       if(idx>=20)return;
       var deltaStr=r.delta>0.001?'+'+r.delta.toFixed(3):'±0';
-      var flipStr=r.flipped?' <span style="color:'+SBG+';font-weight:700">動→靜</span>':'';
+      var flipStr=r.flipped?' <span style="color:'+SBG+';font-weight:400">動→靜</span>':'';
       html+='<div style="margin-bottom:6px;padding:10px 16px;background:white;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
-      html+='<span style="font-weight:900;color:var(--text);min-width:36px">'+r.part+'</span>';
-      html+='<span style="font-weight:700;color:var(--text-2)">'+r.dim+'</span>';
+      html+='<span style="font-weight:400;color:var(--text);min-width:36px">'+r.part+'</span>';
+      html+='<span style="font-weight:400;color:var(--text-2)">'+r.dim+'</span>';
       html+='<span style="font-size:13px;color:var(--text-3)">（目前：'+r.curType+'）</span>';
-      html+='<span style="font-size:13px;color:var(--active);font-weight:700">總係數 → '+r.newTotal.toFixed(2)+'</span>';
+      html+='<span style="font-size:13px;color:var(--active);font-weight:400">總係數 → '+r.newTotal.toFixed(2)+'</span>';
       html+='<span style="font-size:12px;color:var(--text-3)">'+deltaStr+'</span>';
       html+=flipStr;
       html+='</div>';
     });
   }
 
-  html+='<div style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度現況</div>';
+  html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">各維度現況</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
 
   for(var di=0;di<13;di++){
     var d=DIMS[di];
     if(di>=BETA_VISIBLE_DIMS){
       html+='<div style="padding:8px 12px;background:#f0f0ea;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
-      html+='<span style="font-weight:700;color:#bbb">'+d.dn+'</span>';
+      html+='<span style="font-weight:400;color:#bbb">'+d.dn+'</span>';
       html+='<span style="font-size:13px;color:#bbb">建置中</span>';
       html+='</div>';
       continue;
@@ -1104,9 +1104,9 @@ export function renderManualSensPage(){
     var dimCoeff=res?res.coeff:0;
     var bg=dimType==='靜'?SBG:(dimType==='動'?DBG:'#ccc');
     html+='<div style="padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">';
-    html+='<span style="font-weight:700;color:var(--text)">'+d.dn+'</span>';
+    html+='<span style="font-weight:400;color:var(--text)">'+d.dn+'</span>';
     html+='<span style="font-size:13px;color:var(--text-3)">'+d.view+'</span>';
-    html+='<span style="display:inline-block;padding:1px 8px;border-radius:4px;background:'+bg+';color:white;font-weight:700;font-size:13px;margin-left:auto">'+dimType+' '+(res?dimCoeff.toFixed(2):'—')+'</span>';
+    html+='<span style="display:inline-block;padding:1px 8px;border-radius:4px;background:'+bg+';color:white;font-weight:400;font-size:13px;margin-left:auto">'+dimType+' '+(res?dimCoeff.toFixed(2):'—')+'</span>';
     html+='</div>';
   }
   html+='</div>';

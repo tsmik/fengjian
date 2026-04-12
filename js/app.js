@@ -56,11 +56,11 @@ function _renderLoginHistory() {
     loginHistory.slice().reverse().forEach(h => {
       const photo = h.photoURL
         ? '<img src="'+h.photoURL+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover">'
-        : '<div style="width:36px;height:36px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;font-weight:700;color:white">'+((h.displayName||h.email||'?').charAt(0))+'</div>';
+        : '<div style="width:36px;height:36px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;font-weight:400;color:white">'+((h.displayName||h.email||'?').charAt(0))+'</div>';
       const emailSafe = (h.email||'').replace(/'/g,"\\'");
       html += '<div onclick="quickLogin(\''+emailSafe+'\')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-radius:8px;transition:background 0.2s;border:1px solid var(--border);margin-bottom:8px;background:white" onmouseover="this.style.background=\'#f0ebe5\'" onmouseout="this.style.background=\'white\'">';
       html += photo;
-      html += '<div><div style="font-weight:700;font-size:15px;color:var(--text)">'+(h.displayName||'未命名')+'</div>';
+      html += '<div><div style="font-weight:400;font-size:15px;color:var(--text)">'+(h.displayName||'未命名')+'</div>';
       html += '<div style="font-size:13px;color:var(--text-3)">'+(h.email||'')+'</div></div>';
       html += '</div>';
     });

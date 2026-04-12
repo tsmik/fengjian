@@ -54,9 +54,9 @@ export function _getLiunianInfo(){
 
 export function buildLiunianTitleHtml(info){
   if(!info)return '';
-  var h=' <span style="font-size:15px;font-weight:700;margin-left:8px">虛歲 '+info.xusui+'</span>';
+  var h=' <span style="font-size:15px;font-weight:400;margin-left:8px">虛歲 '+info.xusui+'</span>';
   if(info.mark){
-    h+=' <span style="font-size:12px;color:#fff;background:#8E4B50;padding:2px 8px;border-radius:3px;font-weight:700;margin-left:6px">'+info.mark+'</span>';
+    h+=' <span style="font-size:12px;color:#fff;background:#8E4B50;padding:2px 8px;border-radius:3px;font-weight:400;margin-left:6px">'+info.mark+'</span>';
   }
   return h;
 }
@@ -182,7 +182,7 @@ export function showReport(){
 
     // 勾選方塊 HTML
     function checkMark(di){
-      return '<span style="display:inline-block;width:18px;height:18px;background:'+dimDeep[di]+';border-radius:3px;line-height:18px;text-align:center;color:#fff;font-size:12px;font-weight:700">\u2713</span>';
+      return '<span style="display:inline-block;width:18px;height:18px;background:'+dimDeep[di]+';border-radius:3px;line-height:18px;text-align:center;color:#fff;font-size:12px;font-weight:400">\u2713</span>';
     }
 
     // === 表格結構定義 ===
@@ -205,11 +205,11 @@ export function showReport(){
     // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1 空
-    t+='<td colspan="15" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">先天指數</td>';
+    t+='<td colspan="15" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">先天指數</td>';
     t+='<td style="padding:2px 4px"></td>'; // C18 間隔
-    t+='<td colspan="9" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">運氣指數</td>';
+    t+='<td colspan="9" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">運氣指數</td>';
     t+='<td style="padding:2px 4px"></td>'; // C28 間隔
-    t+='<td colspan="11" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:700">後天指數</td>';
+    t+='<td colspan="11" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">後天指數</td>';
     t+='<td colspan="4" style="padding:2px 4px"></td>'; // 總動靜分析區
     t+='</tr>';
 
@@ -218,29 +218,29 @@ export function showReport(){
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>'; // C1
     for(var i=0;i<6;i++){
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].db+'</td>';
     }
     // C15-C17: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
     t+='<td style="padding:2px 4px"></td>'; // C18
     // 運氣 3 維度
     for(var i=6;i<9;i++){
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].db+'</td>';
     }
     // C25-C27: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
     t+='<td style="padding:2px 4px"></td>'; // C28
     // 後天 4 維度
     for(var i=9;i<13;i++){
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].da+'</td>';
-      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:700">'+DIMS[i].db+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-weight:400">'+DIMS[i].db+'</td>';
     }
     // C37-C39: 動靜分析（rowspan=2）
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
     // C40-C42: 總動靜分析（rowspan=2）
-    t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-size:13px;font-weight:700">總動靜分析</td>';
+    t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff;font-size:13px;font-weight:400">總動靜分析</td>';
     t+='<td style="padding:2px 4px"></td>'; // C43
     t+='</tr>';
 
@@ -479,7 +479,7 @@ export function showReport(){
       var attr=dimAttr[i];
       var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
       var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:400">'+alabel+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td style="padding:2px 4px"></td>';
@@ -487,7 +487,7 @@ export function showReport(){
       var attr=dimAttr[i];
       var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
       var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:400">'+alabel+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td style="padding:2px 4px"></td>';
@@ -495,7 +495,7 @@ export function showReport(){
       var attr=dimAttr[i];
       var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
       var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:700">'+alabel+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+';font-weight:400">'+alabel+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -508,21 +508,21 @@ export function showReport(){
     for(var i=0;i<6;i++){
       var rcf=dimCoeffs[i];
       var cv=rcf?rcf.coeff.toFixed(2):'';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td style="padding:2px 4px"></td>';
     for(var i=6;i<9;i++){
       var rcf=dimCoeffs[i];
       var cv=rcf?rcf.coeff.toFixed(2):'';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td style="padding:2px 4px"></td>';
     for(var i=9;i<13;i++){
       var rcf=dimCoeffs[i];
       var cv=rcf?rcf.coeff.toFixed(2):'';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:700">'+cv+'</td>';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -829,13 +829,13 @@ export function drawReportCanvas(srcData, opts){
 
   // --- 1. 標題列 ---
   var displayName=_currentCaseName||userName||'未命名';
-  txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',16,true);
+  txtL(displayName,PAD,yTitle,TITLE_H,'#3a3228',16,false);
   ctx.font='bold 16px sans-serif';
   var nx=PAD+ctx.measureText(displayName).width;
 
   if(lnInfo){
     var ageText='虛歲 '+lnInfo.xusui;
-    txtL(ageText,nx+8,yTitle,TITLE_H,'#3a3228',13,true);
+    txtL(ageText,nx+8,yTitle,TITLE_H,'#3a3228',13,false);
     ctx.font='bold 13px sans-serif';
     nx+=8+ctx.measureText(ageText).width;
     if(lnInfo.mark){
@@ -895,19 +895,19 @@ export function drawReportCanvas(srcData, opts){
       rRect(dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,2,'#e0e0da');
     }else{
       rRect(dx,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
-      txtC(DIMS[i].da,dx,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
+      txtC(DIMS[i].da,dx,yR3,DIM_CW,DIM_HDR_H,'#fff',9,false);
       rRect(dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,2,dimDeep[i]);
-      txtC(DIMS[i].db,dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,'#fff',9,true);
+      txtC(DIMS[i].db,dx+DIM_CW+G,yR3,DIM_CW,DIM_HDR_H,'#fff',9,false);
     }
   }
   // 動靜分析標題（R3-R4 合併效果）
   var anH=DIM_HDR_H+G+DESC_H;
   rRect(xPreAn,yR3,preAnW,anH,2,C_AN_BG);
-  txtC('動靜分析',xPreAn,yR3,preAnW,anH,C_AN_FC,9,true);
+  txtC('動靜分析',xPreAn,yR3,preAnW,anH,C_AN_FC,9,false);
   rRect(xLuckAn,yR3,luckAnW,anH,2,C_AN_BG);
-  txtC('動靜分析',xLuckAn,yR3,luckAnW,anH,C_AN_FC,9,true);
+  txtC('動靜分析',xLuckAn,yR3,luckAnW,anH,C_AN_FC,9,false);
   rRect(xPostAn,yR3,postAnW,anH,2,C_AN_BG);
-  txtC('動靜分析',xPostAn,yR3,postAnW,anH,C_AN_FC,9,true);
+  txtC('動靜分析',xPostAn,yR3,postAnW,anH,C_AN_FC,9,false);
   rRect(xTotalAn,yR3,totalAnW,anH,2,C_TOTAL_SD);
   txtC('總動靜',xTotalAn,yR3,totalAnW,anH,'#fff',9,false);
 
@@ -954,13 +954,13 @@ export function drawReportCanvas(srcData, opts){
   function drawPartRow(pi,idx,yy){
     var label=partLabels[idx];
     rRect(xPart1,yy,PART_W,ROW_H,2,C_PART_BG);
-    txtC(label,xPart1,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    txtC(label,xPart1,yy,PART_W,ROW_H,C_PART_FC,9,false);
     rRect(xPart2,yy,PART_W,ROW_H,2,C_PART_BG);
-    txtC(label,xPart2,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    txtC(label,xPart2,yy,PART_W,ROW_H,C_PART_FC,9,false);
     rRect(xPart3,yy,PART_W,ROW_H,2,C_PART_BG);
-    txtC(label,xPart3,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    txtC(label,xPart3,yy,PART_W,ROW_H,C_PART_FC,9,false);
     rRect(xPart4,yy,PART_W,ROW_H,2,C_PART_BG);
-    txtC(label,xPart4,yy,PART_W,ROW_H,C_PART_FC,9,true);
+    txtC(label,xPart4,yy,PART_W,ROW_H,C_PART_FC,9,false);
 
     var preS=0,preD=0,luckS=0,luckD=0,postS=0,postD=0;
     for(var i=0;i<13;i++){

@@ -107,7 +107,7 @@ export function renderManualPage(){
   var _manualLnInfo=_getLiunianInfo();
   var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
   var _displayName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'未命名';
-  var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:900;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
+  var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
 
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];

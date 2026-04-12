@@ -46,17 +46,17 @@ export function renderDimPanel(el,dimIndex){
     {label:'運氣係數',rows:[[6,7,8]]},
     {label:'後天係數',rows:[[9,10,11,12]]}
   ];
-  var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 8px;font-size:14px;font-weight:700;line-height:1.2;text-align:center;transition:all 0.15s';
+  var cellStyle='display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1.5px solid #ddd6c8;background:transparent;padding:6px 8px;font-size:14px;font-weight:400;line-height:1.2;text-align:center;transition:all 0.15s';
   var activeStyle='background:#e8eff2;border-color:#7A9E7E;border-width:2px;color:#7A9E7E';
   groups.forEach(function(g){
     // 檢查這個 group 裡是否有超出 BETA 範圍的維度
     var groupHidden=g.rows.every(function(row){return row.every(function(di){return di>=BETA_VISIBLE_DIMS;});});
     if(groupHidden){
-      html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:#ccc;padding:8px 0 4px 10px">'+g.label+'</div>';
+      html+='<div style="font-size:14px;font-weight:400;letter-spacing:2px;color:#ccc;padding:8px 0 4px 10px">'+g.label+'</div>';
       html+='<div style="padding:8px 10px;font-size:13px;color:#ccc">建置中</div>';
       return;
     }
-    html+='<div style="font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px 10px">'+g.label+'</div>';
+    html+='<div style="font-size:14px;font-weight:400;letter-spacing:2px;color:var(--text-3);padding:8px 0 4px 10px">'+g.label+'</div>';
     g.rows.forEach(function(row){
       var cols=row.length;
       html+='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:4px;margin-bottom:4px">';
@@ -103,9 +103,9 @@ export function renderDimPanel(el,dimIndex){
   html+='<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">';
   html+='<table style="width:100%;border-collapse:separate;border-spacing:2px;font-size:14px">';
   html+='<thead><tr>'+
-    '<th style="text-align:left;padding:5px 4px 5px 10px;color:var(--text-3);font-weight:700"></th>'+
-    '<th style="text-align:center;padding:5px 4px;color:'+colLBg+';font-weight:700">'+colL+'</th>'+
-    '<th style="text-align:center;padding:5px 4px;color:'+colRBg+';font-weight:700">'+colR+'</th>'+
+    '<th style="text-align:left;padding:5px 4px 5px 10px;color:var(--text-3);font-weight:400"></th>'+
+    '<th style="text-align:center;padding:5px 4px;color:'+colLBg+';font-weight:400">'+colL+'</th>'+
+    '<th style="text-align:center;padding:5px 4px;color:'+colRBg+';font-weight:400">'+colR+'</th>'+
   '</tr></thead><tbody>';
   partOrder.forEach(function(pi,i){
     var v=data[useDim][pi];
@@ -114,18 +114,18 @@ export function renderDimPanel(el,dimIndex){
     if(v){var tp=v==='A'?d.aT:d.bT;isStatic=tp==='靜';isDynamic=tp==='動';}
 
     html+='<tr>';
-    html+='<td style="padding:4px 6px;font-weight:700;color:var(--text-2)">'+label+'</td>';
+    html+='<td style="padding:4px 6px;font-weight:400;color:var(--text-2)">'+label+'</td>';
 
     if(isStatic||isDynamic){
       var cellBg=isStatic?SBG:DBG;
       var cellLabel=isStatic?(d.aT==='靜'?d.a:d.b):(d.aT==='靜'?d.b:d.a);
       var goLeft=(isStatic&&colLType==='靜')||(isDynamic&&colLType==='動');
       if(goLeft){
-        html+='<td style="text-align:center;padding:4px 8px;background:'+cellBg+';color:white;font-weight:700;'+rc2+'">'+cellLabel+'</td>';
+        html+='<td style="text-align:center;padding:4px 8px;background:'+cellBg+';color:white;font-weight:400;'+rc2+'">'+cellLabel+'</td>';
         html+='<td style="text-align:center;padding:4px 8px;background:'+dimAlpha+';'+rc2+'"></td>';
       }else{
         html+='<td style="text-align:center;padding:4px 8px;background:'+dimAlpha+';'+rc2+'"></td>';
-        html+='<td style="text-align:center;padding:4px 8px;background:'+cellBg+';color:white;font-weight:700;'+rc2+'">'+cellLabel+'</td>';
+        html+='<td style="text-align:center;padding:4px 8px;background:'+cellBg+';color:white;font-weight:400;'+rc2+'">'+cellLabel+'</td>';
       }
     }else{
       html+='<td style="text-align:center;padding:4px 8px;'+rc2+'"></td>';
@@ -137,12 +137,12 @@ export function renderDimPanel(el,dimIndex){
   html+='</tbody></table>';
   // 整體結果
   if(res){
-    html+='<div style="margin-top:8px;padding:8px 12px;background:'+resBg+';color:white;border-radius:4px;display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:14px">'+
+    html+='<div style="margin-top:8px;padding:8px 12px;background:'+resBg+';color:white;border-radius:4px;display:flex;justify-content:space-between;align-items:center;font-weight:400;font-size:14px">'+
       '<span>'+res.type+'</span>'+
       '<span>係數 '+res.coeff.toFixed(1)+'</span>'+
     '</div>';
   }else{
-    html+='<div style="margin-top:8px;padding:8px 12px;background:#ccc;color:white;border-radius:4px;text-align:center;font-weight:900;font-size:14px">—</div>';
+    html+='<div style="margin-top:8px;padding:8px 12px;background:#ccc;color:white;border-radius:4px;text-align:center;font-weight:400;font-size:14px">—</div>';
   }
   html+='</div>';
 
@@ -164,7 +164,7 @@ export function cpRenderMain(){
   var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
 
   var html='<div style="padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-    '<div style="font-size:var(--cp-dim-title);font-weight:900;color:var(--text)">'+d.dn+' - '+d.view+'</div>'+
+    '<div style="font-size:var(--cp-dim-title);font-weight:400;color:var(--text)">'+d.dn+' - '+d.view+'</div>'+
     '<div style="font-size:var(--cp-dim-sub);color:var(--text-3);margin-top:4px">'+d.da+'（'+(d.da===d.a?d.aT:d.bT)+'）vs '+d.db+'（'+(d.db===d.a?d.aT:d.bT)+'）</div>'+
   '</div>';
 
@@ -218,7 +218,7 @@ export function cpRenderMain(){
 
   function statusRow(ok,label){
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--border)">'+
-      '<div style="width:24px;height:24px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:var(--cp-option-desc);font-weight:900;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
+      '<div style="width:24px;height:24px;border-radius:50%;background:'+(ok?'var(--static)':'#e8e8e8')+';color:'+(ok?'white':'#aaa')+';display:flex;align-items:center;justify-content:center;font-size:var(--cp-option-desc);font-weight:400;flex-shrink:0">'+(ok?'\u2713':'\u2717')+'</div>'+
       '<div style="font-size:var(--cp-question);color:'+(ok?'var(--text)':'var(--text-3)')+';flex:1">'+label+'</div>'+
     '</div>';
   }
@@ -266,7 +266,7 @@ export function cpRenderMain(){
     html+='<div id="cp-part-'+label+'" class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
       '<span style="min-width:5em">'+label+(hasGroups?' <span style="font-size:12px;color:var(--text-3);margin-left:4px">'+partArrow+'</span>':'')+'</span>'+
       '<span style="font-size:var(--cp-part-meta);color:var(--text-3);font-weight:400;margin-left:1em">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
-      '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:700;margin-left:auto">'+passLabel+'</span>'+
+      '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:400;margin-left:auto">'+passLabel+'</span>'+
     '</div>';
 
     // --- 合併左右配對項 ---
@@ -399,8 +399,8 @@ export function cpRenderMain(){
             out+='<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:2px">'+
               '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>';
             if(qi===0||allIds.length===1){
-              out+='<button onclick="cpToggleLR(\''+gKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExp?'var(--static)':'transparent')+';color:'+(isExp?'white':'var(--static)')+';letter-spacing:1px;white-space:nowrap">'+(isExp?'▲ 收合':'▶ 左右不同')+'</button>';
-              if(anyDiff&&!isExp)out+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>';
+              out+='<button onclick="cpToggleLR(\''+gKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:400;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExp?'var(--static)':'transparent')+';color:'+(isExp?'white':'var(--static)')+';letter-spacing:1px;white-space:nowrap">'+(isExp?'▲ 收合':'▶ 左右不同')+'</button>';
+              if(anyDiff&&!isExp)out+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:400">L≠R</span>';
             }
             out+='</div>';
 
@@ -458,7 +458,7 @@ export function cpRenderMain(){
 
         html+='<div onclick="cpToggleGroup(\''+groupId+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 8px;cursor:pointer;border-bottom:1px solid var(--border)">'+
           '<span style="font-size:12px;color:'+headerColor+'">'+arrow+'</span>'+
-          '<span style="font-size:var(--cp-question);color:'+(allOk?'var(--text)':'var(--text-3)')+';font-weight:700;flex:1">'+g.label+'</span>'+
+          '<span style="font-size:var(--cp-question);color:'+(allOk?'var(--text)':'var(--text-3)')+';font-weight:400;flex:1">'+g.label+'</span>'+
           scoreBadge+
         '</div>';
 
@@ -662,7 +662,7 @@ export function renderDimCondMain(){
         var gTot=g.items.length;
         var allOk=gOk===gTot;
         var gColor=allOk?'var(--static)':'var(--text-3)';
-        html+='<div style="font-size:13px;font-weight:700;color:'+gColor+';padding:4px 0 2px;margin-top:4px;border-bottom:1px solid var(--border)">'+
+        html+='<div style="font-size:13px;font-weight:400;color:'+gColor+';padding:4px 0 2px;margin-top:4px;border-bottom:1px solid var(--border)">'+
           g.label+' <span style="font-weight:400;font-size:12px">'+gOk+'/'+gTot+'</span></div>';
         g.items.forEach(function(item){html+=renderCondItem(item);});
       }else{
@@ -687,7 +687,7 @@ export function renderDimCondPage(){
     const partOrder2=[0,1,4,5,6,7,8,2,9,3,10,11,12];
     const partLabels2=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
     let rhtml='<div style="padding:12px 10px;overflow-y:auto;height:100%;box-sizing:border-box">';
-    rhtml+='<div style="font-size:13px;font-weight:900;letter-spacing:2px;color:var(--text-3);padding:0 4px 10px">'+d.dn+'\u3000各部位</div>';
+    rhtml+='<div style="font-size:13px;font-weight:400;letter-spacing:2px;color:var(--text-3);padding:0 4px 10px">'+d.dn+'\u3000各部位</div>';
     partOrder2.forEach(function(pi,i){
       var v=pi<=8?data[cur][pi]:null;
       var label=partLabels2[i];
@@ -696,14 +696,14 @@ export function renderDimCondPage(){
       else if(pi>=9){var _cr9=condResults[cur];if(_cr9&&_cr9[pi]){var _tp9=_cr9[pi].pass?d.aT:d.bT;bg=_tp9==='靜'?'var(--static)':'var(--active)';txt=_cr9[pi].pass?d.a:d.b;}}
       rhtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--border)">'+
         '<span style="font-size:15px;color:var(--text-2)">'+label+'</span>'+
-        '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:700">'+txt+'</span>'+
+        '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+bg+';color:white;font-weight:400">'+txt+'</span>'+
       '</div>';
     });
     var res=calcDim(data,cur);
     var resBg=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
     rhtml+='<div style="margin-top:12px;padding:10px;background:var(--sidebar);border-radius:8px;text-align:center">'+
       '<div style="font-size:11px;color:var(--text-3);margin-bottom:6px">整體</div>'+
-      '<div style="font-size:16px;font-weight:900;padding:4px 20px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
+      '<div style="font-size:16px;font-weight:400;padding:4px 20px;background:'+resBg+';color:white;border-radius:8px;display:inline-block">'+(res?res.type:'—')+'</div>'+
       '<div style="font-size:12px;color:var(--text-3);margin-top:6px">係數 '+(res?res.coeff.toFixed(1):'—')+'</div>'+
     '</div>';
     rhtml+='</div>';

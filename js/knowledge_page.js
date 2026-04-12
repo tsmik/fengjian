@@ -78,14 +78,14 @@ export function kSelect(i){
     html+='<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden'+(_isInternalK?';margin-left:24px':'')+'">'+
       '<div style="display:grid;grid-template-columns:200px 90px 1fr;align-items:center;padding:10px 16px;background:var(--sidebar)">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
-          '<span style="font-size:15px;font-weight:700;color:var(--text)">'+pLabel+'</span>'+
+          '<span style="font-size:15px;font-weight:400;color:var(--text)">'+pLabel+'</span>'+
           '<span style="font-size:12px;color:var(--text-3)">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
         '</div>'+
         '<div style="text-align:center">'+
-          '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:700">'+passLabel+'</span>'+
+          '<span style="font-size:13px;padding:3px 10px;border-radius:8px;background:'+passColor+';color:white;font-weight:400">'+passLabel+'</span>'+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:8px">'+
-          '<button onclick="'+_jumpJs+'" style="font-size:12px;color:white;cursor:pointer;border:none;background:#E8B000;padding:4px 12px;border-radius:4px;font-weight:700;font-family:inherit">前往修改 →</button>'+
+          '<button onclick="'+_jumpJs+'" style="font-size:12px;color:white;cursor:pointer;border:none;background:#E8B000;padding:4px 12px;border-radius:4px;font-weight:400;font-family:inherit">前往修改 →</button>'+
         '</div>'+
       '</div>';
 
@@ -216,7 +216,7 @@ export function kSelect(i){
           var descColor=allOk?'var(--text)':'var(--text-3)';
 
           html+='<div style="display:grid;grid-template-columns:200px 90px 1fr;align-items:center;gap:12px;padding:10px 16px;'+rowBorder+'">'+
-            '<div style="font-weight:700;color:'+gColor+'">'+g.label+'</div>'+
+            '<div style="font-weight:400;color:'+gColor+'">'+g.label+'</div>'+
             '<div>'+badgesHtml+'</div>'+
             '<div style="color:'+descColor+'">'+descLabel+'</div>'+
           '</div>';
@@ -246,7 +246,7 @@ export function kSelect(i){
   if(res){
     var resBg=res.type==='靜'?SBG:DBG;
     html+='<div class="k-coeff">'+
-      '整體結果：<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:'+resBg+';color:white;font-weight:700">'+
+      '整體結果：<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:'+resBg+';color:white;font-weight:400">'+
       res.type+'</span>'+
       '　'+d.a+' '+res.a+' : '+res.b+' '+d.b+
       '　係數 '+res.coeff.toFixed(2)+

@@ -28,7 +28,7 @@ export function updateObsProgress(){
 
 export function renderFaceMap(){
   const el=document.getElementById('face-map-col');
-  let html='<div style="padding:10px 8px 4px;font-size:12px;font-weight:900;letter-spacing:1px;color:var(--text-3);text-align:center">部位地圖</div>';
+  let html='<div style="padding:10px 8px 4px;font-size:12px;font-weight:400;letter-spacing:1px;color:var(--text-3);text-align:center">部位地圖</div>';
   html+='<div class="face-map">';
   FACE_MAP_PARTS.forEach(fp=>{
     const c=getPartCounts(fp.obsIdx);
@@ -50,7 +50,7 @@ export function renderFaceMap(){
   html+='<div style="padding:12px 14px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0;">';
   html+='<div style="font-size:11px;color:var(--text-3);letter-spacing:2px;margin-bottom:8px;">填寫進度</div>';
   html+='<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;"><div id="obs-prog-bar" style="height:100%;background:var(--static);border-radius:2px;width:0%;transition:width 0.3s;"></div></div>';
-  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:30px;color:var(--text);font-weight:900;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:var(--text-3);letter-spacing:1px;">0 / 124 題</div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;"><div id="obs-prog-pct" style="font-size:30px;color:var(--text);font-weight:400;font-family:monospace;">0%</div><div id="obs-prog-num" style="font-size:12px;color:var(--text-3);letter-spacing:1px;">0 / 124 題</div></div>';
   html+='</div>';
   el.innerHTML=html;
   updateObsProgress();

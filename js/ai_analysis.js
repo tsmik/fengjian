@@ -83,7 +83,7 @@ export async function generateAI() {
       text + '</div>';
 
   } catch (e) {
-    area.innerHTML = '<div style="padding:16px;color:#c03830;font-weight:700">評析失敗：' + e.message + '</div>';
+    area.innerHTML = '<div style="padding:16px;color:#c03830;font-weight:400">評析失敗：' + e.message + '</div>';
   }
 
   btn.disabled = false;

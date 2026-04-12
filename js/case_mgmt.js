@@ -32,7 +32,7 @@ export function renderCaseList(){
     var html='';
 
     html+='<div class="case-card is-self" onclick="loadCase(null)">';
-    html+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:500">（本人）</span></div>';
+    html+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:400">（本人）</span></div>';
     if(selfUpdated) html+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
     html+='</div>';
 
