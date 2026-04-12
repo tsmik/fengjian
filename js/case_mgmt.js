@@ -406,10 +406,29 @@ export async function exportAllCases(){
 
     if(results.length===0){alert('沒有可匯出的案例');return;}
 
+    // 組裝總表
+    var caseMap={};
+    results.forEach(function(r){
+      var key=r._caseId||'_self_';
+      if(!caseMap[key])caseMap[key]={name:r.name,manual:null,obs:null};
+      var dimCount=0;
+      for(var dn in r.matrix){if(r.matrix[dn].type!==null)dimCount++;}
+      var status=dimCount===13?'✅ 完整':'⚠️ '+dimCount+'/13 維度';
+      if(r._dataSource==='manual')caseMap[key].manual=status;
+      else caseMap[key].obs=status;
+    });
+    var summaryLines=['| 案例 | 手動 | 觀察 |','|------|------|------|'];
+    for(var sk in caseMap){
+      var s=caseMap[sk];
+      summaryLines.push('| '+s.name+' | '+(s.manual||'—')+' | '+(s.obs||'—')+' |');
+    }
+
     var exportData={
       exportedAt:new Date().toISOString(),
       exportedBy:userName,
       totalCases:results.length,
+      summary:summaryLines.join('\n'),
+      instruction:'收到此檔案時，請先顯示上方 summary 的案例總表，等使用者指定要分析哪個案例、用手動還是觀察資料，再開始分析。',
       note:'同一案例可能有兩筆（manual=手動輸入, obs=觀察題），以 _dataSource 區分',
       cases:results
     };
