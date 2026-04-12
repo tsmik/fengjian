@@ -208,7 +208,7 @@ export function cpRenderMain(){
       var hintHtml=hint?'<span style="font-size:var(--cp-option-desc);color:var(--text-3);margin-left:2px">'+hint+'</span>':'';
       var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:14px;color:var(--static);vertical-align:middle">'+(isSel?'✓':'')+'</span>';
       out+='<button data-qid="'+qidSafe+'" data-side="'+sideSafe+'" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-        ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+(isSel?'700':'400')+';white-space:normal;text-align:left;line-height:1.5">'+
+        ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-weight:'+(isSel?'700':'400')+';white-space:normal;text-align:left;line-height:1.5">'+
         box+v+hintHtml+
       '</button>';
     });
@@ -226,7 +226,7 @@ export function cpRenderMain(){
   var partOrder=[0,1,4,5,6,7,8,2,9,3,10,11,12];
   var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
 
-  html+='<div style="display:flex;justify-content:flex-end;padding:4px 0"><button onclick="cpToggleAllGroups('+cpCur+')" style="border:1px solid var(--border);background:transparent;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:\'Noto Serif TC\',serif;color:var(--text-3)">全部展開／收合</button></div>';
+  html+='<div style="display:flex;justify-content:flex-end;padding:4px 0"><button onclick="cpToggleAllGroups('+cpCur+')" style="border:1px solid var(--border);background:transparent;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-3)">全部展開／收合</button></div>';
 
   partOrder.forEach(function(pi,idx){
     var p=cr[pi];if(!p)return;
@@ -330,7 +330,7 @@ export function cpRenderMain(){
         var boxFill=isSel?'✓':(isHalf?'−':'');
         var box='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1.5px solid '+borderColor+';border-radius:2px;margin-right:6px;flex-shrink:0;font-size:14px;color:var(--static);vertical-align:middle">'+boxFill+'</span>';
         out+='<button data-qid="'+qidSafe+'" data-side="" data-val="'+vSafe+'" onclick="cpQuickChange(this)"'+
-          ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-family:\'Noto Serif TC\',serif;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
+          ' style="display:inline-flex;align-items:baseline;padding:4px 6px;border:none;background:transparent;color:'+color+';font-size:var(--cp-option);cursor:pointer;font-weight:'+fontWeight+';white-space:normal;text-align:left;line-height:1.5">'+
           box+v+halfTag+hintHtml+
         '</button>';
       });
@@ -399,7 +399,7 @@ export function cpRenderMain(){
             out+='<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:2px">'+
               '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0">'+q.text+'</div>';
             if(qi===0||allIds.length===1){
-              out+='<button onclick="cpToggleLR(\''+gKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExp?'var(--static)':'transparent')+';color:'+(isExp?'white':'var(--static)')+';font-family:\'Noto Serif TC\',serif;letter-spacing:1px;white-space:nowrap">'+(isExp?'▲ 收合':'▶ 左右不同')+'</button>';
+              out+='<button onclick="cpToggleLR(\''+gKey+'\')" style="font-size:var(--cp-option-desc);color:var(--static);font-weight:500;border:1px solid var(--static);border-radius:4px;padding:2px 8px;cursor:pointer;background:'+(isExp?'var(--static)':'transparent')+';color:'+(isExp?'white':'var(--static)')+';letter-spacing:1px;white-space:nowrap">'+(isExp?'▲ 收合':'▶ 左右不同')+'</button>';
               if(anyDiff&&!isExp)out+='<span style="font-size:var(--cp-option-desc);color:var(--active);font-weight:700">L≠R</span>';
             }
             out+='</div>';
