@@ -306,6 +306,15 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-card-del:hover{background:#fee;color:#c03830}
 .case-card-edit{position:absolute;top:12px;right:44px;width:28px;height:28px;border:none;background:transparent;color:#ccc;font-size:16px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .case-card-edit:hover{background:#eef6ff;color:#3a7abf}
+.case-group-section{margin-bottom:24px}
+.case-group-header{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:2px solid var(--border);margin-bottom:12px}
+.case-group-title{font-size:16px;font-weight:400;color:var(--text);letter-spacing:1px;flex:1}
+.case-group-title.ungrouped{color:var(--text-3);font-style:italic}
+.case-group-count{font-size:12px;color:#aaa;margin-left:4px}
+.case-group-move{width:28px;height:28px;border:none;background:transparent;color:#bbb;font-size:14px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.case-group-move:hover{background:var(--hover);color:var(--text)}
+.case-group-move:disabled{opacity:0.3;cursor:default}
+.case-group-move:disabled:hover{background:transparent;color:#bbb}
 #case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
 #case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}
@@ -397,6 +406,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <input id="cf-birthday" type="date">
     <label>觀察日期</label>
     <input id="cf-date" type="date">
+    <label>組別</label>
+    <input id="cf-group" placeholder="輸入或選擇組別（如：第一期）" maxlength="30" list="cf-group-list" autocomplete="off">
+    <datalist id="cf-group-list"></datalist>
     <label>備註</label>
     <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
     <div class="case-form-actions">

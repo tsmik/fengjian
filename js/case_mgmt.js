@@ -12,6 +12,7 @@ import { cpRender } from './cond_page.js';
 
 /* module-local state */
 let _editingCaseId = null;
+let _groupOrder = []; // 從 Firestore 讀取的組別排序
 
 /* ===== 助教模式：案例管理 ===== */
 export function showCasePage(){
@@ -29,34 +30,126 @@ export function renderCaseList(){
 
   db.collection('users').doc(currentUser.uid).get().then(function(selfDoc){
     var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
-    var html='';
+    // 讀取 groupOrder
+    if(selfDoc.exists&&Array.isArray(selfDoc.data().groupOrder)){
+      _groupOrder=selfDoc.data().groupOrder;
+    }else{
+      _groupOrder=[];
+    }
 
-    html+='<div class="case-card is-self" onclick="loadCase(null)">';
-    html+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:400">（本人）</span></div>';
-    if(selfUpdated) html+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
-    html+='</div>';
+    // 「本人」卡片 HTML
+    var selfHtml='<div class="case-card is-self" onclick="loadCase(null)">';
+    selfHtml+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:400">（本人）</span></div>';
+    if(selfUpdated) selfHtml+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
+    selfHtml+='</div>';
 
     db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
+      // 按組別分類
+      var grouped={}; // groupName -> [{id, data}]
+      var allGroups=new Set();
       snap.forEach(function(doc){
         var c=doc.data();
-        html+='<div class="case-card" onclick="loadCase(\''+doc.id+'\')">';
-        html+='<button class="case-card-edit" onclick="event.stopPropagation();editCase(\''+doc.id+'\')" title="編輯">✎</button>';
-        html+='<button class="case-card-del" onclick="event.stopPropagation();deleteCase(\''+doc.id+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
-        html+='<div class="case-card-name">'+(c.name||'未命名')+'</div>';
-        html+='<div class="case-card-meta">';
-        if(c.gender) html+='<span>'+c.gender+'</span>';
-        if(c.birthday) html+='<span>生日：'+c.birthday+'</span>';
-        if(c.date) html+='<span>日期：'+c.date+'</span>';
-        html+='</div>';
-        if(c.note) html+='<div class="case-card-meta" style="margin-top:4px;color:#999">'+_escHtml(c.note)+'</div>';
-        if(c.updatedAt) html+='<div class="case-card-date">更新：'+c.updatedAt.substring(0,10)+'</div>';
-        html+='</div>';
+        var g=c.group||'';
+        if(!grouped[g])grouped[g]=[];
+        grouped[g].push({id:doc.id, data:c});
+        if(g)allGroups.add(g);
       });
+
+      // 更新 datalist
+      var dl=document.getElementById('cf-group-list');
+      if(dl){
+        dl.innerHTML='';
+        _groupOrder.forEach(function(g){
+          if(g){var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);}
+        });
+        allGroups.forEach(function(g){
+          if(_groupOrder.indexOf(g)<0){
+            var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);
+          }
+        });
+      }
+
+      // 決定組別顯示順序
+      var orderedGroups=[];
+      _groupOrder.forEach(function(g){
+        if(grouped[g])orderedGroups.push(g);
+      });
+      allGroups.forEach(function(g){
+        if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);
+      });
+
+      var html='';
+      html+=selfHtml;
+
+      for(var oi=0;oi<orderedGroups.length;oi++){
+        var gName=orderedGroups[oi];
+        var cases=grouped[gName];
+        html+='<div class="case-group-section" style="grid-column:1/-1">';
+        html+='<div class="case-group-header">';
+        html+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
+        html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(oi===0?' disabled':'')+'>▲</button>';
+        html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(oi===orderedGroups.length-1?' disabled':'')+'>▼</button>';
+        html+='</div>';
+        html+='<div class="case-grid">';
+        cases.forEach(function(item){
+          html+=_buildCaseCardHtml(item.id, item.data);
+        });
+        html+='</div></div>';
+      }
+
+      if(grouped['']&&grouped[''].length>0){
+        html+='<div class="case-group-section" style="grid-column:1/-1">';
+        html+='<div class="case-group-header">';
+        html+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+grouped[''].length+'）</span></div>';
+        html+='</div>';
+        html+='<div class="case-grid">';
+        grouped[''].forEach(function(item){
+          html+=_buildCaseCardHtml(item.id, item.data);
+        });
+        html+='</div></div>';
+      }
+
       listEl.innerHTML=html;
     }).catch(function(e){
       console.log('載入案例失敗',e);
-      listEl.innerHTML=html+'<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
+      listEl.innerHTML=selfHtml+'<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
     });
+  });
+}
+
+function _buildCaseCardHtml(docId, c){
+  var html='';
+  html+='<div class="case-card" onclick="loadCase(\''+docId+'\')">';
+  html+='<button class="case-card-edit" onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
+  html+='<button class="case-card-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
+  html+='<div class="case-card-name">'+(c.name||'未命名')+'</div>';
+  html+='<div class="case-card-meta">';
+  if(c.gender) html+='<span>'+c.gender+'</span>';
+  if(c.birthday) html+='<span>生日：'+c.birthday+'</span>';
+  if(c.date) html+='<span>日期：'+c.date+'</span>';
+  html+='</div>';
+  if(c.note) html+='<div class="case-card-meta" style="margin-top:4px;color:#999">'+_escHtml(c.note)+'</div>';
+  if(c.updatedAt) html+='<div class="case-card-date">更新：'+c.updatedAt.substring(0,10)+'</div>';
+  html+='</div>';
+  return html;
+}
+
+export function moveGroup(groupName, direction){
+  var idx=_groupOrder.indexOf(groupName);
+  if(idx<0){
+    _groupOrder.push(groupName);
+    idx=_groupOrder.length-1;
+  }
+  var newIdx=direction==='up'?idx-1:idx+1;
+  if(newIdx<0||newIdx>=_groupOrder.length)return;
+  var tmp=_groupOrder[newIdx];
+  _groupOrder[newIdx]=_groupOrder[idx];
+  _groupOrder[idx]=tmp;
+  db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).then(function(){
+    renderCaseList();
+  }).catch(function(e){
+    console.log('排序儲存失敗',e);
+    renderCaseList();
   });
 }
 
@@ -99,6 +192,7 @@ export function showCaseForm(){
   document.getElementById('cf-birthday').value='';
   document.getElementById('cf-date').value=new Date().toISOString().substring(0,10);
   document.getElementById('cf-note').value='';
+  document.getElementById('cf-group').value='';
   document.getElementById('case-form-overlay').style.display='flex';
   setTimeout(function(){document.getElementById('cf-name').focus();},100);
 }
@@ -115,6 +209,7 @@ export function editCase(caseId){
     document.getElementById('cf-birthday').value=c.birthday||'';
     document.getElementById('cf-date').value=c.date||'';
     document.getElementById('cf-note').value=c.note||'';
+    document.getElementById('cf-group').value=c.group||'';
     document.getElementById('case-form-overlay').style.display='flex';
     setTimeout(function(){document.getElementById('cf-name').focus();},100);
   }).catch(function(e){
@@ -136,6 +231,7 @@ export function saveCaseForm(){
     birthday:document.getElementById('cf-birthday').value,
     date:document.getElementById('cf-date').value,
     note:document.getElementById('cf-note').value.trim(),
+    group:document.getElementById('cf-group').value.trim(),
     updatedAt:new Date().toISOString()
   };
   var saveBtn=document.querySelector('.case-form-save');
@@ -157,6 +253,11 @@ export function saveCaseForm(){
     closeCaseForm();
     saveBtn.innerText=origText;saveBtn.disabled=false;
     _editingCaseId=null;
+    var newGroup=fields.group;
+    if(newGroup && _groupOrder.indexOf(newGroup)<0){
+      _groupOrder.push(newGroup);
+      db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).catch(function(e){console.log('groupOrder更新失敗',e);});
+    }
     renderCaseList();
   }).catch(function(e){
     console.log('儲存失敗',e);
