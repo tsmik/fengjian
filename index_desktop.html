@@ -294,24 +294,27 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-add-btn:hover{opacity:0.85}
 .case-export-btn{height:36px;padding:0 18px;background:transparent;color:var(--text-3);border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-export-btn:hover{background:var(--hover);color:var(--text)}
-.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.case-card{background:white;border-radius:12px;padding:20px;cursor:pointer;transition:box-shadow 0.2s;border:2px solid transparent;position:relative}
-.case-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);border-color:var(--border)}
-.case-card.is-self{border-left:4px solid var(--static)}
-.case-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px}
-.case-card-meta{font-size:13px;color:var(--text-3);line-height:1.8}
-.case-card-meta span{margin-right:12px}
-.case-card-date{font-size:12px;color:#aaa;margin-top:8px}
-.case-card-del{position:absolute;top:12px;right:12px;width:28px;height:28px;border:none;background:transparent;color:#ccc;font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.case-card-del:hover{background:#fee;color:#c03830}
-.case-card-edit{position:absolute;top:12px;right:44px;width:28px;height:28px;border:none;background:transparent;color:#ccc;font-size:16px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.case-card-edit:hover{background:#eef6ff;color:#3a7abf}
-.case-group-section{margin-bottom:24px}
-.case-group-header{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:2px solid var(--border);margin-bottom:12px}
-.case-group-title{font-size:16px;font-weight:400;color:var(--text);letter-spacing:1px;flex:1}
+.case-list-table{width:100%;border-collapse:collapse}
+.case-row{cursor:pointer;transition:background 0.15s}
+.case-row:hover{background:rgba(0,0,0,0.03)}
+.case-row td{padding:7px 12px;font-size:14px;color:var(--text);border-bottom:1px solid #eee;white-space:nowrap}
+.case-row td:first-child{font-weight:400;padding-left:0}
+.case-row.is-self{background:rgba(122,158,126,0.06)}
+.case-row.is-self td{border-bottom:2px solid var(--static)}
+.case-row-name{min-width:80px}
+.case-row-gender{width:40px;color:var(--text-3)}
+.case-row-birthday{color:var(--text-3)}
+.case-row-note{color:#aaa;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.case-row-actions{width:60px;text-align:right;white-space:nowrap}
+.case-row-actions button{width:26px;height:26px;border:none;background:transparent;color:#ccc;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.case-row-actions button:hover{background:var(--hover);color:var(--text)}
+.case-row-actions .case-btn-del:hover{background:#fee;color:#c03830}
+.case-group-section{margin-bottom:20px}
+.case-group-header{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:0}
+.case-group-title{font-size:14px;font-weight:400;color:var(--text);letter-spacing:1px;flex:1}
 .case-group-title.ungrouped{color:var(--text-3);font-style:italic}
 .case-group-count{font-size:12px;color:#aaa;margin-left:4px}
-.case-group-move{width:28px;height:28px;border:none;background:transparent;color:#bbb;font-size:14px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.case-group-move{width:26px;height:26px;border:none;background:transparent;color:#bbb;font-size:12px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .case-group-move:hover{background:var(--hover);color:var(--text)}
 .case-group-move:disabled{opacity:0.3;cursor:default}
 .case-group-move:disabled:hover{background:transparent;color:#bbb}
@@ -391,7 +394,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
     <button class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">匯出全部案例</button>
   </div>
-  <div id="case-list" class="case-grid"></div>
+  <div id="case-list"></div>
 </div>
 
 <!-- Case Form Overlay -->

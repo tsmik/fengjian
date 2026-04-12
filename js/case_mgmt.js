@@ -37,11 +37,11 @@ export function renderCaseList(){
       _groupOrder=[];
     }
 
-    // 「本人」卡片 HTML
-    var selfHtml='<div class="case-card is-self" onclick="loadCase(null)">';
-    selfHtml+='<div class="case-card-name">'+userName+' <span style="font-size:12px;color:var(--static);font-weight:400">（本人）</span></div>';
-    if(selfUpdated) selfHtml+='<div class="case-card-date">更新：'+selfUpdated.substring(0,10)+'</div>';
-    selfHtml+='</div>';
+    // 「本人」行 HTML
+    var selfHtml='<table class="case-list-table"><tr class="case-row is-self" onclick="loadCase(null)">';
+    selfHtml+='<td class="case-row-name">'+userName+' <span style="font-size:12px;color:var(--static)">（本人）</span></td>';
+    selfHtml+='<td></td><td></td><td></td><td></td>';
+    selfHtml+='</tr></table>';
 
     db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
       // 按組別分類
@@ -90,11 +90,11 @@ export function renderCaseList(){
         html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(oi===0?' disabled':'')+'>▲</button>';
         html+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(oi===orderedGroups.length-1?' disabled':'')+'>▼</button>';
         html+='</div>';
-        html+='<div class="case-grid">';
+        html+='<table class="case-list-table">';
         cases.forEach(function(item){
-          html+=_buildCaseCardHtml(item.id, item.data);
+          html+=_buildCaseRowHtml(item.id, item.data);
         });
-        html+='</div></div>';
+        html+='</table></div>';
       }
 
       if(grouped['']&&grouped[''].length>0){
@@ -102,11 +102,11 @@ export function renderCaseList(){
         html+='<div class="case-group-header">';
         html+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+grouped[''].length+'）</span></div>';
         html+='</div>';
-        html+='<div class="case-grid">';
+        html+='<table class="case-list-table">';
         grouped[''].forEach(function(item){
-          html+=_buildCaseCardHtml(item.id, item.data);
+          html+=_buildCaseRowHtml(item.id, item.data);
         });
-        html+='</div></div>';
+        html+='</table></div>';
       }
 
       listEl.innerHTML=html;
@@ -117,20 +117,16 @@ export function renderCaseList(){
   });
 }
 
-function _buildCaseCardHtml(docId, c){
-  var html='';
-  html+='<div class="case-card" onclick="loadCase(\''+docId+'\')">';
-  html+='<button class="case-card-edit" onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
-  html+='<button class="case-card-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
-  html+='<div class="case-card-name">'+(c.name||'未命名')+'</div>';
-  html+='<div class="case-card-meta">';
-  if(c.gender) html+='<span>'+c.gender+'</span>';
-  if(c.birthday) html+='<span>生日：'+c.birthday+'</span>';
-  if(c.date) html+='<span>日期：'+c.date+'</span>';
-  html+='</div>';
-  if(c.note) html+='<div class="case-card-meta" style="margin-top:4px;color:#999">'+_escHtml(c.note)+'</div>';
-  if(c.updatedAt) html+='<div class="case-card-date">更新：'+c.updatedAt.substring(0,10)+'</div>';
-  html+='</div>';
+function _buildCaseRowHtml(docId, c){
+  var html='<tr class="case-row" onclick="loadCase(\''+docId+'\')">';
+  html+='<td class="case-row-name">'+(c.name||'未命名')+'</td>';
+  html+='<td class="case-row-gender">'+(c.gender||'')+'</td>';
+  html+='<td class="case-row-birthday">'+(c.birthday||'')+'</td>';
+  html+='<td class="case-row-note">'+(c.note?_escHtml(c.note):'')+'</td>';
+  html+='<td class="case-row-actions">';
+  html+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
+  html+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
+  html+='</td></tr>';
   return html;
 }
 
