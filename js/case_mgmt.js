@@ -313,15 +313,20 @@ export async function exportAllCases(){
   try{
     var results=[];
     var selfDoc=await db.collection('users').doc(currentUser.uid).get();
-    if(selfDoc.exists&&selfDoc.data().dataJson){
-      var selfExport=buildCaseExport(userName,selfDoc.data().gender,selfDoc.data().birthday,'',selfDoc.data().dataJson);
-      if(selfExport){selfExport._source='self';results.push(selfExport);}
+    if(selfDoc.exists){
+      var sd=selfDoc.data();
+      var selfJson=sd.manualDataJson||sd.dataJson;
+      if(selfJson){
+        var selfExport=buildCaseExport(userName,sd.gender,sd.birthday,'',selfJson);
+        if(selfExport){selfExport._source='self';results.push(selfExport);}
+      }
     }
     var snap=await db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get();
     snap.forEach(function(doc){
       var c=doc.data();
-      if(c.dataJson){
-        var caseExport=buildCaseExport(c.name,c.gender,c.birthday,c.date,c.dataJson);
+      var cJson=c.manualDataJson||c.dataJson;
+      if(cJson){
+        var caseExport=buildCaseExport(c.name,c.gender,c.birthday,c.date,cJson);
         if(caseExport){caseExport._caseId=doc.id;results.push(caseExport);}
       }
     });
