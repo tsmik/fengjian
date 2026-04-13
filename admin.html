@@ -1230,7 +1230,7 @@ function exportDimStandard(dimIdx){
 
   var dimName=DIM_NAMES[dimIdx];
 
-  // 建立題目查詢表：ref → {text, opts, part}
+  // 建立題目查詢表
   var qLookup={};
   Object.keys(questions).forEach(function(partName){
     var pd=questions[partName];
@@ -1251,14 +1251,11 @@ function exportDimStandard(dimIdx){
   PART_ORDER.forEach(function(partName){
     var pd=dim.parts[partName];
     if(!pd)return;
-    var conditions=[];
-    _flattenConditions(pd, conditions, qLookup, dim);
-    if(conditions.length===0)return;
+    var content=_nodeToMd(pd, 0, qLookup, dim);
+    if(!content.trim())return;
 
     md+='## '+partName+'\n\n';
-    conditions.forEach(function(c){
-      md+='- '+c+'\n';
-    });
+    md+=content;
     md+='\n';
   });
 
@@ -1271,9 +1268,12 @@ function exportDimStandard(dimIdx){
   URL.revokeObjectURL(url);
 }
 
-function _flattenConditions(node, results, qLookup, dim){
-  if(!node)return;
+function _nodeToMd(node, depth, qLookup, dim){
+  if(!node)return '';
+  var indent='  '.repeat(depth);
+  var md='';
 
+  // 葉節點：有 ref 的條件
   if(node.ref){
     var q=qLookup[node.ref];
     var qText=q?q.text:node.ref;
@@ -1291,8 +1291,9 @@ function _flattenConditions(node, results, qLookup, dim){
     var sideLabel=(side==='A')?dim.positive:dim.negative;
     var sideType=(side==='A')?dim.positiveType:dim.negativeType;
 
-    var line='**'+sideLabel+'（'+sideType+'）**：'+qText+' → '+matchLabels.join(' / ');
+    md+=indent+'- **'+sideLabel+'（'+sideType+'）**：'+qText+' → '+matchLabels.join(' / ');
 
+    // veto
     if(node.veto&&node.veto.length>0){
       node.veto.forEach(function(v){
         if(v.condition&&v.condition.ref){
@@ -1306,23 +1307,103 @@ function _flattenConditions(node, results, qLookup, dim){
               vLabels.push(vopt?vopt.label:vm);
             });
           }else{vLabels=vMatch;}
-          line+='（排除：'+vText+' = '+vLabels.join('/')+' 時不算）';
+          md+='（排除：'+vText+' = '+vLabels.join('/')+' → '+v.result+'）';
         }
       });
     }
-
-    results.push(line);
-    return;
+    md+='\n';
+    return md;
   }
 
+  // 純 veto 節點（沒有 ref 但有 veto）
+  if(node.veto&&!node.op&&!node.ref){
+    node.veto.forEach(function(v){
+      if(v.condition){
+        md+=indent+'- ⛔ VETO（'+v.result+'）：\n';
+        md+=_nodeToMd(v.condition, depth+1, qLookup, dim);
+      }
+    });
+    if(node.rule)md+=_nodeToMd(node.rule, depth, qLookup, dim);
+    return md;
+  }
+
+  // rule 包裝節點
+  if(node.rule&&!node.op){
+    return _nodeToMd(node.rule, depth, qLookup, dim);
+  }
+
+  // AND / OR / COUNT 複合節點
+  if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
+    var opLabel=node.op;
+    if(node.op==='COUNT')opLabel='至少 '+node.min+' 項符合';
+    md+=indent+'- 【'+opLabel+'】\n';
+    if(node.items&&Array.isArray(node.items)){
+      node.items.forEach(function(item){
+        md+=_nodeToMd(item, depth+1, qLookup, dim);
+      });
+    }
+    if(node.veto&&node.veto.length>0){
+      node.veto.forEach(function(v){
+        if(v.condition){
+          md+=indent+'  - ⛔ VETO（'+v.result+'）：\n';
+          md+=_nodeToMd(v.condition, depth+2, qLookup, dim);
+        }
+      });
+    }
+    return md;
+  }
+
+  // NOT 節點
+  if(node.op==='NOT'){
+    md+=indent+'- 【NOT】以下條件不可成立：\n';
+    if(node.item)md+=_nodeToMd(node.item, depth+1, qLookup, dim);
+    return md;
+  }
+
+  // LR 節點（左右耳/眉/眼等）
+  if(node.op==='LR'){
+    var mergeLabel=node.merge==='AND'?'左右都要符合':'左右任一符合';
+    md+=indent+'- 【LR '+mergeLabel+'】\n';
+    if(node.items&&Array.isArray(node.items)){
+      node.items.forEach(function(item){
+        md+=_nodeToMd(item, depth+1, qLookup, dim);
+      });
+    }
+    return md;
+  }
+
+  // each 節點
+  if(node.each){
+    return _nodeToMd(node.each, depth, qLookup, dim);
+  }
+
+  // group / 敘述分組
+  if(node.op==='group'){
+    if(node.label)md+=indent+'- 【'+node.label+'】\n';
+    if(node.items&&Array.isArray(node.items)){
+      node.items.forEach(function(item){
+        md+=_nodeToMd(item, depth+(node.label?1:0), qLookup, dim);
+      });
+    }
+    return md;
+  }
+
+  // partResult 引用
+  if(node.op==='partResult'){
+    var prSide=node.side||'A';
+    var prLabel=(prSide==='A')?dim.positive:dim.negative;
+    md+=indent+'- **'+prLabel+'**：引用 '+node.sourcePart+' 的判定結果\n';
+    return md;
+  }
+
+  // 未知節點，嘗試遍歷
   if(node.items&&Array.isArray(node.items)){
     node.items.forEach(function(item){
-      _flattenConditions(item, results, qLookup, dim);
+      md+=_nodeToMd(item, depth, qLookup, dim);
     });
   }
-  if(node.each){_flattenConditions(node.each, results, qLookup, dim);}
-  if(node.rule){_flattenConditions(node.rule, results, qLookup, dim);}
-  if(node.item){_flattenConditions(node.item, results, qLookup, dim);}
+
+  return md;
 }
 
 function saveAll(){
