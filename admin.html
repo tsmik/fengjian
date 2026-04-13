@@ -4,65 +4,65 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>人相兵法 — 管理介面</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f4ef;--sidebar:#e8dfc8;--hover:#ece5d4;--border:#d4c9b0;--nav:#1e2127;--text:#1c1c1c;--text-2:#3d3b39;--text-3:#716b60;--active:#c03830;--static:#7A9E7E;--dynamic:#C17A5A;--dark:#1e2127}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column}
-#top-bar{height:48px;background:var(--nav);display:flex;align-items:center;padding:0 20px;color:#e8e0d0;font-size:15px;font-weight:700;letter-spacing:3px;gap:16px}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;overflow:hidden;color:var(--text);display:flex;flex-direction:column}
+#top-bar{height:48px;background:var(--nav);display:flex;align-items:center;padding:0 20px;color:#e8e0d0;font-size:15px;font-weight:400;letter-spacing:3px;gap:16px}
 #top-bar .status{font-size:12px;font-weight:400;color:rgba(255,255,255,0.5);margin-left:auto}
-#top-bar button{height:32px;padding:0 16px;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
+#top-bar button{height:32px;padding:0 16px;border:none;border-radius:4px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .btn-save{background:var(--static);color:white}
 .btn-load{background:var(--dynamic);color:white}
 #tab-bar{display:flex;gap:0;background:var(--sidebar);border-bottom:1px solid var(--border)}
-.tab-btn{padding:10px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Serif TC',serif}
+.tab-btn{padding:10px 20px;cursor:pointer;font-size:14px;font-weight:400;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Sans TC',sans-serif}
 .tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--text);font-weight:700;border-bottom-color:var(--active);background:var(--bg)}
+.tab-btn.active{color:var(--text);font-weight:500;border-bottom-color:var(--active);background:var(--bg)}
 #main{flex:1;display:grid;grid-template-columns:200px 1fr;overflow:hidden}
 #sidebar{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0}
-.sb-item{padding:10px 14px;cursor:pointer;font-size:15px;font-weight:500;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
+.sb-item{padding:10px 14px;cursor:pointer;font-size:15px;font-weight:400;color:var(--text-2);border-left:3px solid transparent;transition:all 0.1s}
 .sb-item:hover{background:var(--hover)}
-.sb-item.active{background:white;border-left-color:var(--active);font-weight:700;color:var(--text)}
-.sb-cat{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-3);padding:12px 14px 4px}
+.sb-item.active{background:white;border-left-color:var(--active);font-weight:500;color:var(--text)}
+.sb-cat{font-size:13px;font-weight:400;letter-spacing:2px;color:var(--text-3);padding:12px 14px 4px}
 .sb-count{font-size:11px;color:var(--text-3);margin-left:4px}
 #editor{overflow-y:auto;padding:20px}
 .section-block{margin-bottom:16px;background:white;border-radius:8px;border:1px solid var(--border);overflow:hidden}
-.section-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.section-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-weight:400;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .section-hdr:hover{background:var(--hover)}
 .section-body{padding:12px 14px;display:none}
 .section-body.open{display:block}
 .q-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:14px}
 .q-row:hover{background:var(--hover)}
-.q-id{font-weight:700;color:var(--static);min-width:42px}
+.q-id{font-weight:400;color:var(--static);min-width:42px}
 .q-text{flex:1;color:var(--text-2)}
-.q-paired{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--dynamic);color:white;font-weight:700}
+.q-paired{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--dynamic);color:white;font-weight:400}
 .q-opts{font-size:11px;color:var(--text-3)}
 .q-actions{display:flex;gap:8px;opacity:0.6}
 .q-row:hover .q-actions{opacity:1}
-.q-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.q-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 .q-actions button:hover{background:var(--hover)}
 .q-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
 .q-dims{display:flex;gap:3px;flex-wrap:wrap;margin-left:4px}
-.q-dim-tag{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;color:white;white-space:nowrap}
+.q-dim-tag{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:400;color:white;white-space:nowrap}
 .edit-form{background:#faf8f5;border:1px solid var(--border);border-radius:6px;padding:12px;margin:6px 0}
 .edit-form .row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
 .edit-form label{font-size:13px;color:var(--text-3);min-width:50px}
-.edit-form input,.edit-form select{font-size:14px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif}
+.edit-form input,.edit-form select{font-size:14px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Sans TC',sans-serif}
 .edit-form input[type=text]{flex:1;min-width:150px}
 .opt-row{display:flex;gap:4px;align-items:center;margin:2px 0 2px 56px}
 .opt-row input{font-size:12px;padding:2px 4px}
 .opt-row button{font-size:11px;padding:1px 5px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer}
-.add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0;font-family:'Noto Serif TC',serif}
+.add-btn{font-size:12px;padding:3px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text-3);margin:6px 0;font-family:'Noto Sans TC',sans-serif}
 .add-btn:hover{background:var(--hover);border-color:var(--text-3)}
 /* Rule editor nodes */
 .node{margin:4px 0 4px 16px;padding:8px 12px;border-left:2px solid var(--border);font-size:14px;border-radius:4px;margin-bottom:2px}
-.node-op{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:700;color:white;background:var(--active);margin-right:6px;letter-spacing:1px}
-.node-ref{font-weight:700;color:var(--text)}
-.node-match{color:var(--static);font-weight:500}
+.node-op{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:400;color:white;background:var(--active);margin-right:6px;letter-spacing:1px}
+.node-ref{font-weight:400;color:var(--text)}
+.node-match{color:var(--static);font-weight:400}
 .node-meta{color:var(--text-3);font-size:13px;margin-left:8px}
 .node-actions{display:inline-flex;gap:8px;margin-left:8px;opacity:0.6}
 .node:hover .node-actions{opacity:1}
-.node-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif}
+.node-actions button{font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:white;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 .node-actions .del{color:var(--active);border-color:var(--active);background:#fff5f5;margin-left:8px}
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
@@ -71,39 +71,39 @@ body{background:var(--bg);font-family:'Noto Serif TC',serif;height:100vh;overflo
 .btn-undo:disabled{opacity:0.3;cursor:default}
 @keyframes pulse-save{0%,100%{opacity:1}50%{opacity:0.85}}
 #breadcrumb{height:28px;padding:0 20px;background:white;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3);display:flex;align-items:center;line-height:28px}
-.toast{position:fixed;top:60px;right:20px;padding:10px 20px;border-radius:6px;color:white;font-size:13px;font-weight:700;font-family:'Noto Serif TC',serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100}
+.toast{position:fixed;top:60px;right:20px;padding:10px 20px;border-radius:6px;color:white;font-size:13px;font-weight:400;font-family:'Noto Sans TC',sans-serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100}
 .toast.show{opacity:1}
 .toast-ok{background:#4a8a5a}
 .toast-err{background:#c03830}
 /* ===== Liunian Table ===== */
 #liunian-wrap{padding:20px;overflow:auto;height:100%}
 .ln-tabs{display:flex;gap:0;margin-bottom:16px}
-.ln-tab{padding:8px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Serif TC',serif}
+.ln-tab{padding:8px 20px;cursor:pointer;font-size:14px;font-weight:400;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Sans TC',sans-serif}
 .ln-tab:hover{color:var(--text)}
-.ln-tab.active{color:var(--text);font-weight:700;border-bottom-color:var(--dynamic)}
+.ln-tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--dynamic)}
 .ln-table{border-collapse:separate;border-spacing:0;font-size:13px;width:100%}
-.ln-table th{position:sticky;top:0;background:var(--nav);color:white;padding:8px 10px;font-weight:700;text-align:center;letter-spacing:1px;z-index:2;white-space:nowrap}
+.ln-table th{position:sticky;top:0;background:var(--nav);color:white;padding:8px 10px;font-weight:400;text-align:center;letter-spacing:1px;z-index:2;white-space:nowrap}
 .ln-table td{padding:6px 8px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);white-space:nowrap}
 .ln-table tr:hover td{background:var(--hover)}
-.ln-table td.mark-cell{font-weight:900;color:var(--active)}
-.ln-table td input{width:100%;border:none;border-bottom:1px solid transparent;background:transparent;font-size:13px;font-family:'Noto Serif TC',serif;text-align:center;padding:2px 0;outline:none}
+.ln-table td.mark-cell{font-weight:400;color:var(--active)}
+.ln-table td input{width:100%;border:none;border-bottom:1px solid transparent;background:transparent;font-size:13px;font-family:'Noto Sans TC',sans-serif;text-align:center;padding:2px 0;outline:none}
 .ln-table td input:focus{border-bottom-color:var(--active);background:#fff8f0}
-.ln-table td select{border:none;background:transparent;font-size:13px;font-family:'Noto Serif TC',serif;text-align:center;cursor:pointer;outline:none}
+.ln-table td select{border:none;background:transparent;font-size:13px;font-family:'Noto Sans TC',sans-serif;text-align:center;cursor:pointer;outline:none}
 .ln-table td select:focus{background:#fff8f0}
 .ln-table td .ln-cell{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .ln-table td .ln-cell input{flex:1;min-width:0}
 .ln-table td .ln-default{font-size:13px;background:#888;color:#fff;padding:1px 5px;border-radius:3px;white-space:nowrap;user-select:none}
-.ln-age{font-weight:900;color:var(--text);min-width:36px}
+.ln-age{font-weight:400;color:var(--text);min-width:36px}
 .ln-mark{min-width:30px}
-.ln-guan{background:#fff0e0;color:#c07030;font-weight:900}
-.ln-ai{background:#ffe8e8;color:#c03830;font-weight:900}
+.ln-guan{background:#fff0e0;color:#c07030;font-weight:400}
+.ln-ai{background:#ffe8e8;color:#c03830;font-weight:400}
 .ln-row-guan{background:#fffaf0}
 .ln-row-ai{background:#fff5f5}
 .ln-save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 20px;display:flex;gap:12px;align-items:center;z-index:3}
-.ln-save-bar button{height:36px;padding:0 20px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:1px}
+.ln-save-bar button{height:36px;padding:0 20px;border:none;border-radius:6px;font-size:14px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .ln-save-bar .ln-btn-save{background:var(--static);color:white}
 .ln-save-bar .ln-btn-reset{background:#eee;color:var(--text)}
-.ln-dirty{color:var(--active);font-weight:700;font-size:13px}
+.ln-dirty{color:var(--active);font-weight:400;font-size:13px}
 </style>
 </head>
 <body>
@@ -201,7 +201,7 @@ function updateBreadcrumb(){
     if(pn)parts.push(pn);
   }
   var html=parts.map(function(p,i){
-    if(i===parts.length-1)return '<span style="font-weight:700;color:var(--text)">'+p+'</span>';
+    if(i===parts.length-1)return '<span style="font-weight:400;color:var(--text)">'+p+'</span>';
     return '<span>'+p+'</span>';
   }).join(sep);
   el.innerHTML=html;
@@ -265,7 +265,7 @@ function renderRules(){
 
   var dim=rules[curDim];
   if(!dim){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無規則資料</div>';return;}
-  var eh=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px"><span style="font-size:18px;font-weight:900">${DIM_NAMES[curDim]}</span><button onclick="exportDimStandard(${curDim})" style="height:28px;padding:0 12px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:400;cursor:pointer;background:white;color:var(--text-3)">匯出此維度</button></div>`;
+  var eh=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px"><span style="font-size:18px;font-weight:400">${DIM_NAMES[curDim]}</span><button onclick="exportDimStandard(${curDim})" style="height:28px;padding:0 12px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:400;cursor:pointer;background:white;color:var(--text-3)">匯出此維度</button></div>`;
   eh+=`<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">${dim.category||''} · ${dim.positive}（${dim.positiveType}）vs ${dim.negative}（${dim.negativeType}）</div>`;
 
   PART_ORDER.forEach(pn=>{
@@ -295,7 +295,7 @@ function renderRules(){
         var mv=Array.isArray(node.match)?node.match:[node.match];
         var warnMap=PARTRESULT_WARN[rulePart]||{};
         var warnText=aqp&&warnMap[aqp]?'<div style="font-size:11px;color:#999;margin-bottom:6px">提醒：'+aqp+'通常以 partResult 引用，此處為'+rulePart+'特殊條件</div>':'';
-        var h='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
+        var h='<div class="edit-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">編輯新條件</div>'+warnText;
         h+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
         h+='<div class="row"><label>選項</label><select id="er-match" multiple size="4">'+matchOptsHtml(qmap,node.ref,mv)+'</select></div>';
         h+=advancedFieldsHtml(node.side,1);
@@ -438,7 +438,7 @@ function editRuleNode(path){
   var qmap=buildQmap();
   var rulePart=getRulePartFromPath(path);
   var allowedQParts=RULE_TO_QPARTS[rulePart]||Q_PART_NAMES;
-  var html='<div class="edit-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
+  var html='<div class="edit-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">編輯節點</div>';
   if(node.ref!==undefined){
     html+='<div class="row"><label>題目</label><select id="er-ref" onchange="erUpdateMatch()">'+buildRefSelectFiltered(node.ref,allowedQParts,node.ref)+'</select></div>';
     var mv=Array.isArray(node.match)?node.match:[node.match];
@@ -552,8 +552,8 @@ function wrapInGroup(path){
   }
 
   clearDynamicForms();
-  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
-  var h='<div class="edit-form" id="wrap-group-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">包入分組</div>';
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:400';
+  var h='<div class="edit-form" id="wrap-group-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">包入分組</div>';
   h+='<div style="display:flex;flex-direction:column;gap:6px">';
   existingGroups.forEach(function(g){
     h+='<button onclick="wrapIntoExistingGroup(\''+path+'\','+g.index+')" style="'+bs+';text-align:left">→ '+g.label+'</button>';
@@ -616,8 +616,8 @@ function addRuleItem(p,btnId){
   _lastAddBtnId=btnId;
   clearDynamicForms();
   // Build and insert type selection directly after the clicked button
-  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
-  var h='<div class="edit-form" id="type-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:400';
+  var h='<div class="edit-form" id="type-select-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
   h+='<button onclick="addNodeOfType(\'ref\')" style="'+bs+'">比對條件</button>';
   h+='<button onclick="addNodeOfType(\'AND\')" style="'+bs+'">AND</button>';
   h+='<button onclick="addNodeOfType(\'OR\')" style="'+bs+'">OR</button>';
@@ -641,8 +641,8 @@ function addNodeOfType(type){
     var allowedQParts=RULE_TO_QPARTS[rulePart]||['頭'];
     _pendingAddPath=p;
     if(allowedQParts.length>1){
-      var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500">${qp}</button>`).join(' ');
-      var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
+      var btns=allowedQParts.map(qp=>`<button onclick="finishAddWithPart('${qp}')" style="padding:6px 14px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:400">${qp}</button>`).join(' ');
+      var container='<div class="edit-form" id="part-select-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">選擇觀察部位</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div><div style="margin-top:6px"><button onclick="document.getElementById(\'part-select-form\').remove();_pendingAddPath=null" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px">取消</button></div></div>';
       var btn=document.getElementById(_lastAddBtnId);
       if(btn){var d=document.createElement('div');d.className='dynamic-edit-form';d.innerHTML=container;btn.after(d);}
     }else{
@@ -681,8 +681,8 @@ function addRootItem(partName){
   if(!currentRoot){
     // No rule yet — show type select to create first node
     _pendingRootPart=partName;
-    var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
-    var h='<div class="edit-form dynamic-edit-form" id="root-type-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+    var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:400';
+    var h='<div class="edit-form dynamic-edit-form" id="root-type-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">選擇節點類型</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
     h+='<button onclick="createRootNode(\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
     h+='<button onclick="createRootNode(\'AND\')" style="'+bs+'">都符合 AND</button>';
     h+='<button onclick="createRootNode(\'OR\')" style="'+bs+'">或 OR</button>';
@@ -731,8 +731,8 @@ function createRootNode(type){
 }
 
 function showRootWrapSelect(partName){
-  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
-  var h='<div class="edit-form dynamic-edit-form" id="root-wrap-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇容器類型（原有規則和新節點將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:400';
+  var h='<div class="edit-form dynamic-edit-form" id="root-wrap-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">選擇容器類型（原有規則和新節點將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'AND\')" style="'+bs+'">都符合 AND</button>';
   h+='<button onclick="wrapRootWithContainer(\''+partName+'\',\'OR\')" style="'+bs+'">或 OR</button>';
@@ -767,8 +767,8 @@ function addLrEachItem(lrPath,btnId){
     return;
   }
   // each is a single node — need to wrap in container first
-  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:13px;font-weight:500';
-  var h='<div class="edit-form dynamic-edit-form" id="lr-wrap-form"><div style="font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px">選擇容器類型（現有條件和新條件將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  var bs='padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:400';
+  var h='<div class="edit-form dynamic-edit-form" id="lr-wrap-form"><div style="font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:8px">選擇容器類型（現有條件和新條件將放入此容器）</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
   h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'COUNT\')" style="'+bs+'">計數 COUNT</button>';
   h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'AND\')" style="'+bs+'">都符合 AND</button>';
   h+='<button onclick="wrapLrEach(\''+lrPath+'\',\'OR\')" style="'+bs+'">或 OR</button>';
@@ -873,7 +873,7 @@ function renderQuestions(){
   var pd=questions[pn];
   if(!pd){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無資料</div>';return;}
 
-  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:16px">${pn}</div>`;
+  var eh=`<div style="font-size:18px;font-weight:400;margin-bottom:16px">${pn}</div>`;
   var refDimMap=buildRefDimMap();
 
   pd.sections.forEach((sec,si)=>{
