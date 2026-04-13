@@ -1273,6 +1273,12 @@ function _nodeToMd(node, depth, qLookup, dim){
   var indent='  '.repeat(depth);
   var md='';
 
+  // partResult 節點（直接引用其他部位的判定結果）
+  if(node.partResult!==undefined){
+    md+=indent+'- 引用 **'+node.partResult+'** 的判定結果\n';
+    return md;
+  }
+
   // 葉節點：有 ref 的條件
   if(node.ref){
     var q=qLookup[node.ref];
@@ -1287,11 +1293,21 @@ function _nodeToMd(node, depth, qLookup, dim){
     }else{
       matchLabels=matchArr;
     }
-    var side=node.side||'A';
-    var sideLabel=(side==='A')?dim.positive:dim.negative;
-    var sideType=(side==='A')?dim.positiveType:dim.negativeType;
+    // side 判斷：L/R 是 LR 裡的左右邊標記，不是 A/B
+    var side=node.side;
+    var sideLabel, sideType;
+    if(side==='L'||side==='R'){
+      sideLabel=dim.positive;
+      sideType=dim.positiveType;
+    }else if(side==='B'){
+      sideLabel=dim.negative;
+      sideType=dim.negativeType;
+    }else{
+      sideLabel=dim.positive;
+      sideType=dim.positiveType;
+    }
 
-    md+=indent+'- **'+sideLabel+'（'+sideType+'）**：'+qText+' → '+matchLabels.join(' / ');
+    var line=indent+'- **'+sideLabel+'（'+sideType+'）**：'+qText+' → '+matchLabels.join(' / ');
 
     // veto
     if(node.veto&&node.veto.length>0){
@@ -1307,16 +1323,16 @@ function _nodeToMd(node, depth, qLookup, dim){
               vLabels.push(vopt?vopt.label:vm);
             });
           }else{vLabels=vMatch;}
-          md+='（排除：'+vText+' = '+vLabels.join('/')+' → '+v.result+'）';
+          line+='（排除：'+vText+' = '+vLabels.join('/')+' → '+v.result+'）';
         }
       });
     }
-    md+='\n';
+    md=line+'\n';
     return md;
   }
 
-  // 純 veto 節點（沒有 ref 但有 veto）
-  if(node.veto&&!node.op&&!node.ref){
+  // 純 veto 節點（沒有 ref 也沒有 op，但有 veto）
+  if(node.veto&&!node.op&&!node.ref&&!node.partResult){
     node.veto.forEach(function(v){
       if(v.condition){
         md+=indent+'- ⛔ VETO（'+v.result+'）：\n';
@@ -1342,6 +1358,9 @@ function _nodeToMd(node, depth, qLookup, dim){
         md+=_nodeToMd(item, depth+1, qLookup, dim);
       });
     }
+    if(node.each){
+      md+=_nodeToMd(node.each, depth+1, qLookup, dim);
+    }
     if(node.veto&&node.veto.length>0){
       node.veto.forEach(function(v){
         if(v.condition){
@@ -1355,26 +1374,24 @@ function _nodeToMd(node, depth, qLookup, dim){
 
   // NOT 節點
   if(node.op==='NOT'){
-    md+=indent+'- 【NOT】以下條件不可成立：\n';
+    md+=indent+'- 【NOT 排除】\n';
     if(node.item)md+=_nodeToMd(node.item, depth+1, qLookup, dim);
     return md;
   }
 
-  // LR 節點（左右耳/眉/眼等）
+  // LR 節點
   if(node.op==='LR'){
-    var mergeLabel=node.merge==='AND'?'左右都要符合':'左右任一符合';
+    var mergeLabel=node.merge==='all'?'左右都要符合':'左右任一符合';
     md+=indent+'- 【LR '+mergeLabel+'】\n';
+    if(node.each){
+      md+=_nodeToMd(node.each, depth+1, qLookup, dim);
+    }
     if(node.items&&Array.isArray(node.items)){
       node.items.forEach(function(item){
         md+=_nodeToMd(item, depth+1, qLookup, dim);
       });
     }
     return md;
-  }
-
-  // each 節點
-  if(node.each){
-    return _nodeToMd(node.each, depth, qLookup, dim);
   }
 
   // group / 敘述分組
@@ -1388,15 +1405,12 @@ function _nodeToMd(node, depth, qLookup, dim){
     return md;
   }
 
-  // partResult 引用
-  if(node.op==='partResult'){
-    var prSide=node.side||'A';
-    var prLabel=(prSide==='A')?dim.positive:dim.negative;
-    md+=indent+'- **'+prLabel+'**：引用 '+node.sourcePart+' 的判定結果\n';
-    return md;
+  // each 節點（沒有 op 但有 each）
+  if(node.each&&!node.op){
+    return _nodeToMd(node.each, depth, qLookup, dim);
   }
 
-  // 未知節點，嘗試遍歷
+  // 未知節點 fallback
   if(node.items&&Array.isArray(node.items)){
     node.items.forEach(function(item){
       md+=_nodeToMd(item, depth, qLookup, dim);
