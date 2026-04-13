@@ -22,6 +22,13 @@ export function renderSensPage(){
               '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
   var _dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
                 '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+  var _colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
+  function _checkMark(di){
+    return '<span style="display:inline-block;width:16px;height:16px;background:'+_dimDeep[di]+';border-radius:3px;line-height:16px;text-align:center;color:#fff;font-size:11px;font-weight:400">\u2713</span>';
+  }
+  function _checkMarkFlip(di){
+    return '<span style="display:inline-block;width:16px;height:16px;background:'+_dimDeep[di]+';border-radius:3px;line-height:16px;text-align:center;color:#fff;font-size:11px;font-weight:400;outline:3px solid #E8B000;outline-offset:-1px">\u2713</span>';
+  }
 
   el.innerHTML='<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px;letter-spacing:2px">重要參數分析</div><div style="color:var(--text-3);font-size:13px">計算中...</div>';
 
@@ -520,7 +527,6 @@ export function renderSensPage(){
   var innateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
   var bossCoeffVal=avgCoeff(data, [0,1,2]);
   var mgrCoeffVal=avgCoeff(data, [3,4,5]);
-  var _SBG2='#7A9E7E',_DBG2='#C17A5A';
   var _matrixParts=PARTS;
   var _matrixDims=[0,1,2,3,4,5];
 
@@ -533,45 +539,64 @@ export function renderSensPage(){
       _bLabel='老闆 '+bossCoeffVal;
       _mLabel='主管 '+mgrCoeffVal;
     }
+    var rc='border-radius:3px';
     var mt='';
-    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
-    // 老闆/主管 badge 行
+    mt+='<table style="border-collapse:separate;border-spacing:1px;width:100%;font-size:11px">';
+    // R1: 老闆/主管 badge
     mt+='<tr><td></td>';
-    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:400;color:white;background:#8E4B50;border-radius:4px">'+_bLabel+'</td>';
-    mt+='<td colspan="3" style="text-align:center;padding:3px 4px;font-size:12px;font-weight:400;color:white;background:#8C6B4A;border-radius:4px">'+_mLabel+'</td></tr>';
-    // 維度名稱行
-    mt+='<tr><td style="padding:3px 4px"></td>';
-    _matrixDims.forEach(function(di,idx){
-      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+';'+borderR+'">'+DIMS[di].dn+'</td>';
+    mt+='<td colspan="6" style="text-align:center;padding:3px 4px;font-size:11px;font-weight:400;color:white;background:#8E4B50;'+rc+'">'+_bLabel+'</td>';
+    mt+='<td colspan="6" style="text-align:center;padding:3px 4px;font-size:11px;font-weight:400;color:white;background:#8C6B4A;'+rc+'">'+_mLabel+'</td></tr>';
+    // R2: 維度名 da/db
+    mt+='<tr><td></td>';
+    _matrixDims.forEach(function(di){
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].da+'</td>';
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].db+'</td>';
     });
     mt+='</tr>';
-    // 9 個部位行
+    // R3: 靜/動 標頭行
+    mt+='<tr><td></td>';
+    _matrixDims.forEach(function(di){
+      var lIsS=_colLIsS[di];
+      var lLabel=lIsS?'靜':'動';var rLabel=lIsS?'動':'靜';
+      var lColor=lIsS?'#000':'#980000';var rColor=lIsS?'#980000':'#000';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+lColor+';font-size:9px">'+lLabel+'</td>';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+rColor+';font-size:9px">'+rLabel+'</td>';
+    });
+    mt+='</tr>';
+    // R4~R12: 9 部位行
     _matrixParts.forEach(function(pn,pi){
-      if(pi===4){mt+='<tr><td colspan="7" style="height:4px"></td></tr>';}
+      if(pi===4){mt+='<tr><td colspan="13" style="height:3px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
-      _matrixDims.forEach(function(di,idx){
+      mt+='<td style="padding:3px 4px;font-size:12px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
+      _matrixDims.forEach(function(di){
         var val=useData[di][pi];
-        var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
-        var outline=isSimulation&&simFlips[di+'_'+pi]?'outline:3px solid #E8B000;outline-offset:-1px;':'';
+        var isFlip=isSimulation&&simFlips[di+'_'+pi];
         if(val===null){
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+';'+borderR+'"><div style="width:24px;height:24px;border-radius:3px;background:#E8E4DF;margin:auto"></div></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
         }else{
-          var label=val==='A'?DIMS[di].a:DIMS[di].b;
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+';'+borderR+'"><div style="width:24px;height:24px;border-radius:3px;background:'+_dimDeep[di]+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          var isS=(tp==='靜');
+          var goLeft=(isS&&_colLIsS[di])||(!isS&&!_colLIsS[di]);
+          var mark=isFlip?_checkMarkFlip(di):_checkMark(di);
+          if(goLeft){
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          }else{
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+          }
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:#4A4540">係數</td>';
-    _matrixDims.forEach(function(di,idx){
+    mt+='<tr><td style="padding:3px 4px;font-size:11px;font-weight:400;color:#4A4540">係數</td>';
+    _matrixDims.forEach(function(di){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
       var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
-      var borderR=(idx===2)?'border-right:1px solid #d4d4c8;':'';
-      mt+='<td style="text-align:center;padding:2px;'+borderR+'"><div style="font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+';border-radius:3px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td colspan="2" style="text-align:center;padding:2px"><div style="font-size:10px;font-weight:400;color:white;background:'+_dimDeep[di]+';'+rc+';padding:1px 3px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -593,7 +618,7 @@ export function renderSensPage(){
   html+='</div>';
 
   if(simData){
-    html+='<div style="flex:1;min-width:280px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="flex:1;min-width:280px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid #7A9E7E">';
     html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
     html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">先天 '+innateCoeffVal+' → <span style="color:var(--text);font-weight:400">'+simInnateCoeffVal+'</span></div>';
     html+=_buildMatrix(simData,true);
@@ -607,10 +632,10 @@ export function renderSensPage(){
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A"></span>維度色方塊 = 有值</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>有值</span>';
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#E8E4DF"></span>無資料</span>';
   if(simData){
-    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>調整格</span>';
   }
   html+='</div>';
 
@@ -631,38 +656,60 @@ export function renderSensPage(){
   var _luckMatrixDims=[6,7,8];
 
   function _buildLuckMatrix(useData,isSimulation){
+    var rc='border-radius:3px';
     var mt='';
-    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
-    // 維度名稱行
-    mt+='<tr><td style="padding:3px 4px"></td>';
+    mt+='<table style="border-collapse:separate;border-spacing:1px;width:100%;font-size:11px">';
+    // 維度名 da/db
+    mt+='<tr><td></td>';
     _luckMatrixDims.forEach(function(di){
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+'">'+DIMS[di].dn+'</td>';
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].da+'</td>';
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].db+'</td>';
+    });
+    mt+='</tr>';
+    // 靜/動 標頭
+    mt+='<tr><td></td>';
+    _luckMatrixDims.forEach(function(di){
+      var lIsS=_colLIsS[di];
+      var lLabel=lIsS?'靜':'動';var rLabel=lIsS?'動':'靜';
+      var lColor=lIsS?'#000':'#980000';var rColor=lIsS?'#980000':'#000';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+lColor+';font-size:9px">'+lLabel+'</td>';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+rColor+';font-size:9px">'+rLabel+'</td>';
     });
     mt+='</tr>';
     // 9 部位行
     PARTS.forEach(function(pn,pi){
-      if(pi===4){mt+='<tr><td colspan="4" style="height:4px"></td></tr>';}
+      if(pi===4){mt+='<tr><td colspan="7" style="height:3px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
+      mt+='<td style="padding:3px 4px;font-size:12px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
       _luckMatrixDims.forEach(function(di){
         var val=useData[di][pi];
-        var outline=isSimulation&&luckSimFlips[di+'_'+pi]?'outline:3px solid #E8B000;outline-offset:-1px;':'';
+        var isFlip=isSimulation&&luckSimFlips[di+'_'+pi];
         if(val===null){
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+'"><div style="width:24px;height:24px;border-radius:3px;background:#E8E4DF;margin:auto"></div></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
         }else{
-          var label=val==='A'?DIMS[di].a:DIMS[di].b;
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+'"><div style="width:24px;height:24px;border-radius:3px;background:'+_dimDeep[di]+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          var isS=(tp==='靜');
+          var goLeft=(isS&&_colLIsS[di])||(!isS&&!_colLIsS[di]);
+          var mark=isFlip?_checkMarkFlip(di):_checkMark(di);
+          if(goLeft){
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          }else{
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+          }
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:#4A4540">係數</td>';
+    mt+='<tr><td style="padding:3px 4px;font-size:11px;font-weight:400;color:#4A4540">係數</td>';
     _luckMatrixDims.forEach(function(di){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
       var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
-      mt+='<td style="text-align:center;padding:2px"><div style="font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+';border-radius:3px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td colspan="2" style="text-align:center;padding:2px"><div style="font-size:10px;font-weight:400;color:white;background:'+_dimDeep[di]+';'+rc+';padding:1px 3px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -705,7 +752,7 @@ export function renderSensPage(){
 
   // 右：調整後預估
   if(luckSimData){
-    html+='<div style="flex:1;min-width:180px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="flex:1;min-width:180px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid #7A9E7E">';
     html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
     html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">運氣 '+luckCoeffVal+' → <span style="color:var(--text);font-weight:400">'+luckSimCoeffVal+'</span></div>';
     html+=_buildLuckMatrix(luckSimData,true);
@@ -720,10 +767,10 @@ export function renderSensPage(){
 
   // 圖例
   html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A"></span>維度色方塊 = 有值</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>有值</span>';
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#E8E4DF"></span>無資料</span>';
   if(luckSimData){
-    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>調整格</span>';
   }
   html+='</div>';
 
@@ -748,38 +795,60 @@ export function renderSensPage(){
   var _postMatrixDims=[9,10,11,12];
 
   function _buildPostMatrix(useData,isSimulation){
+    var rc='border-radius:3px';
     var mt='';
-    mt+='<table style="border-collapse:collapse;width:100%;font-size:12px">';
-    // 維度名稱行
-    mt+='<tr><td style="padding:3px 4px"></td>';
+    mt+='<table style="border-collapse:separate;border-spacing:1px;width:100%;font-size:11px">';
+    // 維度名 da/db
+    mt+='<tr><td></td>';
     _postMatrixDims.forEach(function(di){
-      mt+='<td style="text-align:center;padding:3px 2px;font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+'">'+DIMS[di].dn+'</td>';
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].da+'</td>';
+      mt+='<td style="background:'+_dimDeep[di]+';padding:2px 3px;'+rc+';text-align:center;color:#fff;font-size:10px">'+DIMS[di].db+'</td>';
+    });
+    mt+='</tr>';
+    // 靜/動 標頭
+    mt+='<tr><td></td>';
+    _postMatrixDims.forEach(function(di){
+      var lIsS=_colLIsS[di];
+      var lLabel=lIsS?'靜':'動';var rLabel=lIsS?'動':'靜';
+      var lColor=lIsS?'#000':'#980000';var rColor=lIsS?'#980000':'#000';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+lColor+';font-size:9px">'+lLabel+'</td>';
+      mt+='<td style="background:'+_dimBg[di]+';padding:2px 3px;'+rc+';text-align:center;color:'+rColor+';font-size:9px">'+rLabel+'</td>';
     });
     mt+='</tr>';
     // 9 部位行
     PARTS.forEach(function(pn,pi){
-      if(pi===4){mt+='<tr><td colspan="5" style="height:4px"></td></tr>';}
+      if(pi===4){mt+='<tr><td colspan="9" style="height:3px"></td></tr>';}
       mt+='<tr>';
-      mt+='<td style="padding:4px 4px;font-size:13px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
+      mt+='<td style="padding:3px 4px;font-size:12px;font-weight:400;color:#4A4540;white-space:nowrap">'+pn+'</td>';
       _postMatrixDims.forEach(function(di){
         var val=useData[di][pi];
-        var outline=isSimulation&&postSimFlips[di+'_'+pi]?'outline:3px solid #E8B000;outline-offset:-1px;':'';
+        var isFlip=isSimulation&&postSimFlips[di+'_'+pi];
         if(val===null){
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+'"><div style="width:24px;height:24px;border-radius:3px;background:#E8E4DF;margin:auto"></div></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
         }else{
-          var label=val==='A'?DIMS[di].a:DIMS[di].b;
-          mt+='<td style="padding:2px;text-align:center;background:'+_dimBg[di]+'"><div style="width:24px;height:24px;border-radius:3px;background:'+_dimDeep[di]+';margin:auto;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:white;'+outline+'">'+label+'</div></td>';
+          var tp=val==='A'?DIMS[di].aT:DIMS[di].bT;
+          var isS=(tp==='靜');
+          var goLeft=(isS&&_colLIsS[di])||(!isS&&!_colLIsS[di]);
+          var mark=isFlip?_checkMarkFlip(di):_checkMark(di);
+          if(goLeft){
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+          }else{
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+'"></td>';
+            mt+='<td style="background:'+_dimBg[di]+';padding:2px;'+rc+';text-align:center">'+mark+'</td>';
+          }
         }
       });
       mt+='</tr>';
     });
     // 係數行
-    mt+='<tr><td style="padding:4px 4px 2px;font-size:12px;font-weight:400;color:#4A4540">係數</td>';
+    mt+='<tr><td style="padding:3px 4px;font-size:11px;font-weight:400;color:#4A4540">係數</td>';
     _postMatrixDims.forEach(function(di){
       var aCount=useData[di].filter(function(v){return v==='A';}).length;
       var bCount=useData[di].filter(function(v){return v==='B';}).length;
       var c=(aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0;
-      mt+='<td style="text-align:center;padding:2px"><div style="font-size:11px;font-weight:400;color:white;background:'+_dimDeep[di]+';border-radius:3px;padding:2px 4px">'+c.toFixed(2)+'</div></td>';
+      mt+='<td colspan="2" style="text-align:center;padding:2px"><div style="font-size:10px;font-weight:400;color:white;background:'+_dimDeep[di]+';'+rc+';padding:1px 3px">'+c.toFixed(2)+'</div></td>';
     });
     mt+='</tr>';
     mt+='</table>';
@@ -828,7 +897,7 @@ export function renderSensPage(){
       var bCount=postSimData[di].filter(function(v){return v==='B';}).length;
       postSimDimCoeffVals.push((aCount+bCount>0)?Math.min(aCount,bCount)/Math.max(aCount,bCount):0);
     });
-    html+='<div style="flex:1;min-width:220px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid '+_SBG2+'">';
+    html+='<div style="flex:1;min-width:220px;padding:16px;background:#f8faf8;border-radius:8px;border:1px solid #7A9E7E">';
     html+='<div style="font-size:14px;font-weight:400;color:var(--text);margin-bottom:4px;text-align:center">調整後預估</div>';
     html+='<div style="font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:10px;text-align:center">後天 '+postCoeffVal+' → <span style="color:var(--text);font-weight:400">'+postSimCoeffVal+'</span></div>';
     html+=_buildPostMatrix(postSimData,true);
@@ -843,10 +912,10 @@ export function renderSensPage(){
 
   // 圖例
   html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--text-3)">';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A"></span>維度色方塊 = 有值</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>有值</span>';
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#E8E4DF"></span>無資料</span>';
   if(postSimData){
-    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px"></span>調整格</span>';
+    html+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6B8C5A;outline:3px solid #E8B000;outline-offset:-1px;line-height:14px;text-align:center;color:#fff;font-size:9px">\u2713</span>調整格</span>';
   }
   html+='</div>';
 
