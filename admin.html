@@ -265,7 +265,7 @@ function renderRules(){
 
   var dim=rules[curDim];
   if(!dim){document.getElementById('editor').innerHTML='<div style="padding:20px;color:var(--text-3)">無規則資料</div>';return;}
-  var eh=`<div style="font-size:18px;font-weight:900;margin-bottom:4px">${DIM_NAMES[curDim]}</div>`;
+  var eh=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px"><span style="font-size:18px;font-weight:900">${DIM_NAMES[curDim]}</span><button onclick="exportDimStandard(${curDim})" style="height:28px;padding:0 12px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:400;cursor:pointer;background:white;color:var(--text-3)">匯出此維度</button></div>`;
   eh+=`<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">${dim.category||''} · ${dim.positive}（${dim.positiveType}）vs ${dim.negative}（${dim.negativeType}）</div>`;
 
   PART_ORDER.forEach(pn=>{
@@ -1224,6 +1224,107 @@ function buildDiffSummary(){
   }catch(e){lines.push('• 觀察問題：有修改（無法比較細節）');}
   return lines.join('\n');
 }
+function exportDimStandard(dimIdx){
+  var dim=rules[dimIdx];
+  if(!dim){alert('規則尚未載入');return;}
+
+  var dimName=DIM_NAMES[dimIdx];
+
+  // 建立題目查詢表：ref → {text, opts, part}
+  var qLookup={};
+  Object.keys(questions).forEach(function(partName){
+    var pd=questions[partName];
+    if(!pd||!pd.sections)return;
+    pd.sections.forEach(function(sec){
+      sec.qs.forEach(function(q){
+        qLookup[q.id]={text:q.text, opts:q.opts, part:partName, paired:q.paired||false};
+      });
+    });
+  });
+
+  var md='# '+dimName+' 評分條件\n';
+  md+='> 匯出時間：'+new Date().toISOString().substring(0,19)+'\n';
+  md+='> 分類：'+dim.category+'\n';
+  md+='> A 側：'+dim.positive+'（'+dim.positiveType+'） / B 側：'+dim.negative+'（'+dim.negativeType+'）\n\n';
+  md+='---\n\n';
+
+  PART_ORDER.forEach(function(partName){
+    var pd=dim.parts[partName];
+    if(!pd)return;
+    var conditions=[];
+    _flattenConditions(pd, conditions, qLookup, dim);
+    if(conditions.length===0)return;
+
+    md+='## '+partName+'\n\n';
+    conditions.forEach(function(c){
+      md+='- '+c+'\n';
+    });
+    md+='\n';
+  });
+
+  var blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download=dimName+'_評分條件.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function _flattenConditions(node, results, qLookup, dim){
+  if(!node)return;
+
+  if(node.ref){
+    var q=qLookup[node.ref];
+    var qText=q?q.text:node.ref;
+    var matchArr=Array.isArray(node.match)?node.match:[node.match];
+    var matchLabels=[];
+    if(q){
+      matchArr.forEach(function(m){
+        var opt=q.opts.find(function(o){return o.val===m;});
+        matchLabels.push(opt?opt.label:m);
+      });
+    }else{
+      matchLabels=matchArr;
+    }
+    var side=node.side||'A';
+    var sideLabel=(side==='A')?dim.positive:dim.negative;
+    var sideType=(side==='A')?dim.positiveType:dim.negativeType;
+
+    var line='**'+sideLabel+'（'+sideType+'）**：'+qText+' → '+matchLabels.join(' / ');
+
+    if(node.veto&&node.veto.length>0){
+      node.veto.forEach(function(v){
+        if(v.condition&&v.condition.ref){
+          var vq=qLookup[v.condition.ref];
+          var vText=vq?vq.text:v.condition.ref;
+          var vMatch=Array.isArray(v.condition.match)?v.condition.match:[v.condition.match];
+          var vLabels=[];
+          if(vq){
+            vMatch.forEach(function(vm){
+              var vopt=vq.opts.find(function(o){return o.val===vm;});
+              vLabels.push(vopt?vopt.label:vm);
+            });
+          }else{vLabels=vMatch;}
+          line+='（排除：'+vText+' = '+vLabels.join('/')+' 時不算）';
+        }
+      });
+    }
+
+    results.push(line);
+    return;
+  }
+
+  if(node.items&&Array.isArray(node.items)){
+    node.items.forEach(function(item){
+      _flattenConditions(item, results, qLookup, dim);
+    });
+  }
+  if(node.each){_flattenConditions(node.each, results, qLookup, dim);}
+  if(node.rule){_flattenConditions(node.rule, results, qLookup, dim);}
+  if(node.item){_flattenConditions(node.item, results, qLookup, dim);}
+}
+
 function saveAll(){
   if(_dirtyCount===0){showToast('沒有需要儲存的修改',true);return;}
   var diff=buildDiffSummary();
