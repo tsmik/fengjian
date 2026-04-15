@@ -489,7 +489,15 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
         </div>
       </div>
       <div class="mode-flow-arrow">→</div>
-      <!-- 分析工具 -->
+      <!-- 佔位（對齊上排報告欄） -->
+      <div class="mode-flow-col" style="visibility:hidden">
+        <div class="mode-btn is-report" style="pointer-events:none">
+          <h3>&nbsp;</h3>
+          <p>&nbsp;</p>
+        </div>
+      </div>
+      <div class="mode-flow-arrow" style="visibility:hidden">→</div>
+      <!-- 分析工具（對齊上排第三欄） -->
       <div class="mode-flow-col">
         <div class="mode-btn is-tool" id="mode-card-manual-sens" onclick="showManualSensPage()">
           <h3>重要參數分析</h3>
