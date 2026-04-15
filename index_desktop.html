@@ -61,14 +61,14 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .entry-deco{position:absolute;bottom:30px;font-size:12px;color:#ccc;letter-spacing:2px}
 
 /* ===== Mode Page ===== */
-#mode-page{position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:8500;display:none;align-items:center;justify-content:center}
-.mode-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:24px;max-width:960px;width:100%;padding:30px;align-items:start}
-.mode-section{display:flex;flex-direction:column;gap:12px}
-.mode-section-title{font-size:14px;font-weight:400;color:var(--text-3);letter-spacing:2px;padding-left:4px}
-.mode-section-cards{display:flex;flex-direction:column;gap:12px}
-.mode-card{background:white;border-radius:10px;padding:28px 24px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-top:4px solid #ccc}
-.mode-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px)}
-.mode-card h3{font-size:18px;font-weight:400;margin-bottom:6px;letter-spacing:2px}
+#mode-page{position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:8500;display:none;align-items:flex-start;justify-content:center;padding-top:40px}
+.mode-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:20px;max-width:1100px;width:100%;padding:0 30px;align-items:start}
+.mode-section{display:flex;flex-direction:column;gap:8px}
+.mode-section-title{font-size:13px;font-weight:400;color:var(--text-3);letter-spacing:2px;padding-left:2px;margin-bottom:2px}
+.mode-section-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.mode-card{background:white;border-radius:8px;padding:20px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-top:3px solid #ccc;min-height:100px;display:flex;flex-direction:column;justify-content:center}
+.mode-card:hover{box-shadow:0 3px 10px rgba(0,0,0,0.1);transform:translateY(-1px)}
+.mode-card h3{font-size:16px;font-weight:400;margin-bottom:6px;letter-spacing:1px}
 .mode-card p{font-size:13px;color:var(--text-3);line-height:1.6}
 
 /* ===== Face Map (Left Column) ===== */

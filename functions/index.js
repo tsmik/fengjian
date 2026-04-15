@@ -364,3 +364,228 @@ ${dimTable}
     }
   },
 );
+
+// ==================== getRules ====================
+
+const DIM_NAMES = ["形勢", "經緯", "方圓", "曲直", "收放", "緩急", "順逆", "分合", "真假", "攻守", "奇正", "虛實", "進退"];
+const PART_ORDER = ["頭", "上停", "耳", "眉", "眼", "鼻", "口", "顴", "人中", "地閣", "頤", "中停", "下停"];
+
+function nodeToMd(node, depth, qLookup, dim) {
+  if (!node) return "";
+  const indent = "  ".repeat(depth);
+  let md = "";
+
+  // partResult 節點
+  if (node.partResult !== undefined) {
+    md += indent + "- 引用 **" + node.partResult + "** 的判定結果\n";
+    return md;
+  }
+
+  // 葉節點：有 ref 的條件
+  if (node.ref) {
+    const q = qLookup[node.ref];
+    const qText = q ? q.text : node.ref;
+    const matchArr = Array.isArray(node.match) ? node.match : [node.match];
+    let matchLabels = [];
+    if (q) {
+      matchArr.forEach(function(m) {
+        const opt = q.opts.find(function(o) { return o.val === m; });
+        matchLabels.push(opt ? opt.label : m);
+      });
+    } else {
+      matchLabels = matchArr;
+    }
+    const side = node.side;
+    let sideLabel; let sideType;
+    if (side === "L" || side === "R") {
+      sideLabel = dim.positive;
+      sideType = dim.positiveType;
+    } else if (side === "B") {
+      sideLabel = dim.negative;
+      sideType = dim.negativeType;
+    } else {
+      sideLabel = dim.positive;
+      sideType = dim.positiveType;
+    }
+
+    let line = indent + "- **" + sideLabel + "（" + sideType + "）**：" + qText + " → " + matchLabels.join(" / ");
+
+    if (node.veto && node.veto.length > 0) {
+      node.veto.forEach(function(v) {
+        if (v.condition && v.condition.ref) {
+          const vq = qLookup[v.condition.ref];
+          const vText = vq ? vq.text : v.condition.ref;
+          const vMatch = Array.isArray(v.condition.match) ? v.condition.match : [v.condition.match];
+          let vLabels = [];
+          if (vq) {
+            vMatch.forEach(function(vm) {
+              const vopt = vq.opts.find(function(o) { return o.val === vm; });
+              vLabels.push(vopt ? vopt.label : vm);
+            });
+          } else { vLabels = vMatch; }
+          line += "（排除：" + vText + " = " + vLabels.join("/") + " → " + v.result + "）";
+        }
+      });
+    }
+    md = line + "\n";
+    return md;
+  }
+
+  // 純 veto 節點
+  if (node.veto && !node.op && !node.ref && !node.partResult) {
+    node.veto.forEach(function(v) {
+      if (v.condition) {
+        md += indent + "- ⛔ VETO（" + v.result + "）：\n";
+        md += nodeToMd(v.condition, depth + 1, qLookup, dim);
+      }
+    });
+    if (node.rule) md += nodeToMd(node.rule, depth, qLookup, dim);
+    return md;
+  }
+
+  // rule 包裝節點
+  if (node.rule && !node.op) {
+    return nodeToMd(node.rule, depth, qLookup, dim);
+  }
+
+  // AND / OR / COUNT 複合節點
+  if (node.op === "AND" || node.op === "OR" || node.op === "COUNT") {
+    let opLabel = node.op;
+    if (node.op === "COUNT") opLabel = "至少 " + node.min + " 項符合";
+    md += indent + "- 【" + opLabel + "】\n";
+    if (node.items && Array.isArray(node.items)) {
+      node.items.forEach(function(item) {
+        md += nodeToMd(item, depth + 1, qLookup, dim);
+      });
+    }
+    if (node.each) {
+      md += nodeToMd(node.each, depth + 1, qLookup, dim);
+    }
+    if (node.veto && node.veto.length > 0) {
+      node.veto.forEach(function(v) {
+        if (v.condition) {
+          md += indent + "  - ⛔ VETO（" + v.result + "）：\n";
+          md += nodeToMd(v.condition, depth + 2, qLookup, dim);
+        }
+      });
+    }
+    return md;
+  }
+
+  // NOT 節點
+  if (node.op === "NOT") {
+    md += indent + "- 【NOT 排除】\n";
+    if (node.item) md += nodeToMd(node.item, depth + 1, qLookup, dim);
+    return md;
+  }
+
+  // LR 節點
+  if (node.op === "LR") {
+    const mergeLabel = node.merge === "all" ? "左右都要符合" : "左右任一符合";
+    md += indent + "- 【LR " + mergeLabel + "】\n";
+    if (node.each) {
+      md += nodeToMd(node.each, depth + 1, qLookup, dim);
+    }
+    if (node.items && Array.isArray(node.items)) {
+      node.items.forEach(function(item) {
+        md += nodeToMd(item, depth + 1, qLookup, dim);
+      });
+    }
+    return md;
+  }
+
+  // group / 敘述分組
+  if (node.op === "group") {
+    if (node.label) md += indent + "- 【" + node.label + "】\n";
+    if (node.items && Array.isArray(node.items)) {
+      node.items.forEach(function(item) {
+        md += nodeToMd(item, depth + (node.label ? 1 : 0), qLookup, dim);
+      });
+    }
+    return md;
+  }
+
+  // each 節點（沒有 op 但有 each）
+  if (node.each && !node.op) {
+    return nodeToMd(node.each, depth, qLookup, dim);
+  }
+
+  // 未知節點 fallback
+  if (node.items && Array.isArray(node.items)) {
+    node.items.forEach(function(item) {
+      md += nodeToMd(item, depth, qLookup, dim);
+    });
+  }
+
+  return md;
+}
+
+exports.getRules = onRequest(
+  {
+    region: "us-central1",
+    invoker: "public",
+    cors: true,
+  },
+  async (req, res) => {
+    const dimIdx = parseInt(req.query.dim);
+    if (isNaN(dimIdx) || dimIdx < 0 || dimIdx > 12) {
+      res.status(400).send("Invalid dim parameter. Use 0-12.");
+      return;
+    }
+
+    const db = getFirestore();
+    const [rulesDoc, questionsDoc] = await Promise.all([
+      db.collection("settings").doc("rules").get(),
+      db.collection("settings").doc("questions").get(),
+    ]);
+
+    if (!rulesDoc.exists || !rulesDoc.data().rulesJson) {
+      res.status(500).send("Rules not found in Firestore");
+      return;
+    }
+
+    const rules = JSON.parse(rulesDoc.data().rulesJson);
+    const questions = questionsDoc.exists && questionsDoc.data().questionsJson
+      ? JSON.parse(questionsDoc.data().questionsJson)
+      : {};
+
+    const dim = rules[dimIdx];
+    if (!dim) {
+      res.status(404).send("Dimension not found");
+      return;
+    }
+
+    // 建 qLookup
+    const qLookup = {};
+    Object.keys(questions).forEach((partName) => {
+      const pd = questions[partName];
+      if (!pd || !pd.sections) return;
+      pd.sections.forEach((sec) => {
+        sec.qs.forEach((q) => {
+          qLookup[q.id] = {text: q.text, opts: q.opts, part: partName};
+        });
+      });
+    });
+
+    // 組 markdown
+    const dimName = DIM_NAMES[dimIdx];
+    let md = `# ${dimName} 評分條件\n`;
+    md += `> 匯出時間：${new Date().toISOString().substring(0, 19)}\n`;
+    md += `> 分類：${dim.category}\n`;
+    md += `> A 側：${dim.positive}（${dim.positiveType}） / B 側：${dim.negative}（${dim.negativeType}）\n\n`;
+    md += `---\n\n`;
+
+    PART_ORDER.forEach((partName) => {
+      const pd = dim.parts[partName];
+      if (!pd) return;
+      const content = nodeToMd(pd, 0, qLookup, dim);
+      if (!content.trim()) return;
+      md += `## ${partName}\n\n`;
+      md += content;
+      md += "\n";
+    });
+
+    res.set("Content-Type", "text/markdown; charset=utf-8");
+    res.send(md);
+  },
+);
