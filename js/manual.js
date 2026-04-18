@@ -56,7 +56,7 @@ export function manualClear(){
 export function manualImportObs(){
   if(!confirm('確定要將觀察評分資料帶入手動報告嗎？現有的手動資料會被覆蓋。'))return;
   initManualData();
-  for(var di=0;di<13;di++){
+  for(var di=0;di<BETA_VISIBLE_DIMS;di++){
     for(var pi=0;pi<9;pi++){
       manualData[di][pi]=data[di][pi]||null;
     }
@@ -69,8 +69,10 @@ export function manualImportObs(){
 export function manualSave(){
   if(!currentUser)return;
   initManualData();
+  var visibleDimIds=[];
+  for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
   var coeffs={};
-  for(var i=0;i<13;i++){
+  for(var i=0;i<BETA_VISIBLE_DIMS;i++){
     var res=calcDim(manualData,i);
     coeffs[DIMS[i].dn]=res?{type:res.type,coeff:res.coeff,a:res.a,b:res.b}:null;
   }
@@ -80,14 +82,14 @@ export function manualSave(){
   var savePromise=_getUserDocRef().set({
     manualDataJson:JSON.stringify(manualData),
     manualCoeffs:JSON.stringify(coeffs),
-    manualTotalCoeff:avgCoeff(manualData,[0,1,2,3,4,5,6,7,8,9,10,11,12]),
+    manualTotalCoeff:avgCoeff(manualData,visibleDimIds),
     manualUpdatedAt:new Date().toISOString()
   },{merge:true});
   // 歷史記錄（非關鍵，失敗不影響主儲存）
   db.collection('analyses').add({
     userName:userName,inputType:'manual',
     manualData:JSON.stringify(manualData),coefficients:JSON.stringify(coeffs),
-    totalCoeff:avgCoeff(manualData,[0,1,2,3,4,5,6,7,8,9,10,11,12]),
+    totalCoeff:avgCoeff(manualData,visibleDimIds),
     createdAt:new Date().toISOString()
   }).catch(function(e){console.log('analyses log失敗（不影響儲存）',e);});
   manualSaveLocal();
@@ -108,6 +110,16 @@ export function renderManualPage(){
   var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
   var _displayName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'未命名';
   var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
+
+  // === 可見維度計算 ===
+  var visiblePre = Math.min(6, BETA_VISIBLE_DIMS);
+  var visibleLuck = Math.max(0, Math.min(3, BETA_VISIBLE_DIMS - 6));
+  var visiblePost = Math.max(0, Math.min(4, BETA_VISIBLE_DIMS - 9));
+  var showLuck = visibleLuck > 0;
+  var showPost = visiblePost > 0;
+  var totalCols = 1 + visiblePre*2 + 3 + (showLuck ? 1 + visibleLuck*2 + 3 : 0) + (showPost ? 1 + visiblePost*2 + 3 : 0) + 3 + 1;
+  var visibleDimIds = [];
+  for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
 
   var partOrder=[0,1,2,3,4,5,6,7,8];
   var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
@@ -134,9 +146,12 @@ export function renderManualPage(){
   var rc='border-radius:3px';
 
   // 統計
-  var vTotal=avgCoeff(manualData,[0,1,2,3,4,5,6,7,8,9,10,11,12]);
-  var vPre=avgCoeff(manualData,[0,1,2,3,4,5]),vLuck=avgCoeff(manualData,[6,7,8]),vPost=avgCoeff(manualData,[9,10,11,12]);
-  var vLead=avgCoeff(manualData,[0,1,2]),vSub=avgCoeff(manualData,[3,4,5]);
+  var vTotal=(BETA_VISIBLE_DIMS>=13)?avgCoeff(manualData,visibleDimIds):null;
+  var vPre=(visiblePre>=6)?avgCoeff(manualData,[0,1,2,3,4,5]):null;
+  var vLuck=(visibleLuck>=3)?avgCoeff(manualData,[6,7,8]):null;
+  var vPost=(visiblePost>=4)?avgCoeff(manualData,[9,10,11,12]):null;
+  var vLead=(visiblePre>=3)?avgCoeff(manualData,[0,1,2]):null;
+  var vSub=(visiblePre>=6)?avgCoeff(manualData,[3,4,5]):null;
 
   function mCountSD(dimIds){
     var s=0,d=0;
@@ -149,8 +164,13 @@ export function renderManualPage(){
     });
     return{s:s,d:d};
   }
-  var sdAll=mCountSD([0,1,2,3,4,5,6,7,8,9,10,11,12]);
-  var sdPre=mCountSD([0,1,2,3,4,5]),sdLuck=mCountSD([6,7,8]),sdPost=mCountSD([9,10,11,12]);
+  var visiblePreIds=[];for(var vpi=0;vpi<visiblePre;vpi++) visiblePreIds.push(vpi);
+  var visibleLuckIds=[];for(var vli=6;vli<6+visibleLuck;vli++) visibleLuckIds.push(vli);
+  var visiblePostIds=[];for(var vpoi=9;vpoi<9+visiblePost;vpoi++) visiblePostIds.push(vpoi);
+  var sdAll=mCountSD(visibleDimIds);
+  var sdPre=mCountSD(visiblePreIds);
+  var sdLuck=mCountSD(visibleLuckIds);
+  var sdPost=mCountSD(visiblePostIds);
 
   var dimSCounts=[],dimDCounts=[];
   for(var di2=0;di2<13;di2++){
@@ -191,40 +211,48 @@ export function renderManualPage(){
 
   // --- R1: 流年（由外部 _manualLnHtml 處理）---
   if(_manualLnHtml){
-    t+='<tr><td colspan="43" style="padding:0 0 8px 0">'+_manualLnHtml+'</td></tr>';
+    t+='<tr><td colspan="'+totalCols+'" style="padding:0 0 8px 0">'+_manualLnHtml+'</td></tr>';
   }
 
   // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="15" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天指數</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="9" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣指數</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="11" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天指數</td>';
+  t+='<td colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天指數</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣指數</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+(visiblePost*2+3)+'" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天指數</td>';
+  }
   t+='<td colspan="4" style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R3: 維度名 + 動靜分析 + 總動靜分析 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  for(var i=0;i<6;i++){
+  for(var i=0;i<visiblePre;i++){
     t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
     t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
   }
   t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){
-    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
-    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+    }
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   }
-  t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){
-    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
-    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+    }
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   }
-  t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">總動靜分析</td>';
   t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
@@ -232,16 +260,20 @@ export function renderManualPage(){
   // --- R4: 維度描述 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  for(var i=0;i<6;i++){
+  for(var i=0;i<visiblePre;i++){
     t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
   }
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
   }
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){
-    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
   }
   t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
@@ -256,20 +288,24 @@ export function renderManualPage(){
     var fc=isS?'#000':'#980000';
     return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+'">'+label+'</td>';
   }
-  for(var i=0;i<6;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+  for(var i=0;i<visiblePre;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  }
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">動</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">靜</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
@@ -284,8 +320,8 @@ export function renderManualPage(){
 
     var preS=0,preD=0,luckS=0,luckD=0,postS=0,postD=0;
 
-    // 先天 6 維度
-    for(var i=0;i<6;i++){
+    // 先天 visiblePre 維度
+    for(var i=0;i<visiblePre;i++){
       var v=manualData[i][pi];
       if(v){
         var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
@@ -309,61 +345,61 @@ export function renderManualPage(){
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preS+'</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(preD,preS)+'</td>';
 
-    // 中部位欄
-    t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
-
-    // 運氣 3 維度
-    for(var i=6;i<9;i++){
-      var v=manualData[i][pi];
-      if(v){
-        var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
-        var isS=tp==='靜';
-        var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
-        if(goLeft){
-          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
-          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+    if(showLuck){
+      // 中部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      for(var i=6;i<6+visibleLuck;i++){
+        var v=manualData[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          }else{
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          }
+          if(isS)luckS++;else luckD++;
         }else{
           t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
-          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
-        }
-        if(isS)luckS++;else luckD++;
-      }else{
-        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
-        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
-      }
-    }
-    // 運氣動靜分析
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(luckD,luckS)+'</td>';
-
-    // 右部位欄
-    t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
-
-    // 後天 4 維度
-    for(var i=9;i<13;i++){
-      var v=manualData[i][pi];
-      if(v){
-        var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
-        var isS=tp==='靜';
-        var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
-        if(goLeft){
-          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
           t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+        }
+      }
+      // 運氣動靜分析
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(luckD,luckS)+'</td>';
+    }
+
+    if(showPost){
+      // 右部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      for(var i=9;i<9+visiblePost;i++){
+        var v=manualData[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          }else{
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          }
+          if(isS)postS++;else postD++;
         }else{
           t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
-          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
         }
-        if(isS)postS++;else postD++;
-      }else{
-        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
-        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
       }
+      // 後天動靜分析
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(postD,postS)+'</td>';
     }
-    // 後天動靜分析
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
-    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(postD,postS)+'</td>';
 
     // 總動靜分析
     var allS=preS+luckS+postS, allD=preD+luckD+postD;
@@ -378,7 +414,7 @@ export function renderManualPage(){
 
   partOrder.forEach(function(pi,idx){
     if(idx===4){
-      t+='<tr><td colspan="43" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
+      t+='<tr><td colspan="'+totalCols+'" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
     }
     renderPartRow(pi,idx);
   });
@@ -386,7 +422,7 @@ export function renderManualPage(){
   // --- R15: 統計行 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  for(var i=0;i<6;i++){
+  for(var i=0;i<visiblePre;i++){
     var sn=dimSCounts[i],dn=dimDCounts[i];
     var lv=colLIsS[i]?sn:dn;
     var rv=colLIsS[i]?dn:sn;
@@ -396,28 +432,32 @@ export function renderManualPage(){
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPre.d+'</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPre.s+'</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPre.d,sdPre.s)+'</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){
-    var sn=dimSCounts[i],dn=dimDCounts[i];
-    var lv=colLIsS[i]?sn:dn;
-    var rv=colLIsS[i]?dn:sn;
-    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
-    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.d+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.s+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdLuck.d,sdLuck.s)+'</td>';
   }
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.d+'</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.s+'</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdLuck.d,sdLuck.s)+'</td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){
-    var sn=dimSCounts[i],dn=dimDCounts[i];
-    var lv=colLIsS[i]?sn:dn;
-    var rv=colLIsS[i]?dn:sn;
-    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
-    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.d+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.s+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPost.d,sdPost.s)+'</td>';
   }
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.d+'</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.s+'</td>';
-  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPost.d,sdPost.s)+'</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.d+'</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.s+'</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(sdAll.d,sdAll.s)+'</td>';
@@ -427,7 +467,7 @@ export function renderManualPage(){
   // --- R16: 屬性行 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  for(var i=0;i<6;i++){
+  for(var i=0;i<visiblePre;i++){
     if(!dimComplete[i]){
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
     }else{
@@ -438,30 +478,34 @@ export function renderManualPage(){
     }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){
-    if(!dimComplete[i]){
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
-    }else{
-      var attr=dimAttr[i];
-      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var attr=dimAttr[i];
+        var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+        var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+      }
     }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){
-    if(!dimComplete[i]){
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
-    }else{
-      var attr=dimAttr[i];
-      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
-      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var attr=dimAttr[i];
+        var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+        var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+      }
     }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
@@ -469,7 +513,7 @@ export function renderManualPage(){
   // --- R17: 係數行 ---
   t+='<tr>';
   t+='<td style="padding:2px 4px"></td>';
-  for(var i=0;i<6;i++){
+  for(var i=0;i<visiblePre;i++){
     if(!dimComplete[i]){
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
     }else{
@@ -479,77 +523,114 @@ export function renderManualPage(){
     }
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=6;i<9;i++){
-    if(!dimComplete[i]){
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
-    }else{
-      var rcf=dimCoeffs[i];
-      var cv=rcf?rcf.coeff.toFixed(2):'';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var rcf=dimCoeffs[i];
+        var cv=rcf?rcf.coeff.toFixed(2):'';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+      }
     }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  for(var i=9;i<13;i++){
-    if(!dimComplete[i]){
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
-    }else{
-      var rcf=dimCoeffs[i];
-      var cv=rcf?rcf.coeff.toFixed(2):'';
-      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var rcf=dimCoeffs[i];
+        var cv=rcf?rcf.coeff.toFixed(2):'';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+      }
     }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R18: 老闆係數 + 主管係數 ---
-  t+='<tr>';
-  t+='<td style="padding:2px 4px"></td>';
-  var bossOk=groupComplete([0,1,2]);
-  t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(bossOk?vLead:INC)+'</td>';
-  var mgrOk=groupComplete([3,4,5]);
-  t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(mgrOk?vSub:INC)+'</td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="6" style="padding:2px 4px"></td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='<td colspan="8" style="padding:2px 4px"></td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='</tr>';
+  if(visiblePre>=3){
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    var bossOk=groupComplete([0,1,2]);
+    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(bossOk?vLead:INC)+'</td>';
+    if(visiblePre>=6){
+      var mgrOk=groupComplete([3,4,5]);
+      t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(mgrOk?vSub:INC)+'</td>';
+    }else if(visiblePre*2-6>0){
+      t+='<td colspan="'+(visiblePre*2-6)+'" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showLuck){
+      t+='<td style="padding:2px 4px"></td>';
+      t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    if(showPost){
+      t+='<td style="padding:2px 4px"></td>';
+      t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
 
   // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
-  t+='<tr>';
-  t+='<td style="padding:2px 4px"></td>';
-  var preOk=groupComplete([0,1,2,3,4,5]);
-  t+='<td colspan="12" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(preOk?vPre:INC)+'</td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  var luckOk=groupComplete([6,7,8]);
-  t+='<td colspan="6" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(luckOk?vLuck:INC)+'</td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  var postOk=groupComplete([9,10,11,12]);
-  t+='<td colspan="8" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(postOk?vPost:INC)+'</td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='</tr>';
+  if(visiblePre>=6||visibleLuck>=3||visiblePost>=4){
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    if(visiblePre>=6){
+      var preOk=groupComplete([0,1,2,3,4,5]);
+      t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(preOk?vPre:INC)+'</td>';
+    }else{
+      t+='<td colspan="'+visiblePre*2+'" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showLuck){
+      t+='<td style="padding:2px 4px"></td>';
+      if(visibleLuck>=3){
+        var luckOk=groupComplete([6,7,8]);
+        t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(luckOk?vLuck:INC)+'</td>';
+      }else{
+        t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
+      }
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    if(showPost){
+      t+='<td style="padding:2px 4px"></td>';
+      if(visiblePost>=4){
+        var postOk=groupComplete([9,10,11,12]);
+        t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(postOk?vPost:INC)+'</td>';
+      }else{
+        t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
+      }
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
 
   // --- R20: 總係數 ---
-  t+='<tr>';
-  t+='<td style="padding:2px 4px"></td>';
-  var allOk=groupComplete([0,1,2,3,4,5,6,7,8,9,10,11,12]);
-  t+='<td colspan="34" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
-  t+='</tr>';
+  if(BETA_VISIBLE_DIMS>=13){
+    var allOk=groupComplete(visibleDimIds);
+    var dataColSpan=visiblePre*2+(showLuck?1+visibleLuck*2:0)+(showPost?1+visiblePost*2:0);
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showLuck) t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
 
   t+='</table>';
   el.innerHTML=_manualTitleHtml+t;
