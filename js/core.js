@@ -188,7 +188,7 @@ export function setNavActive(tab) {
 
 const ALL_PAGES = ['entry-page','mode-page','app-body','report-overlay',
   'knowledge-overlay','cond-page','sens-page','manual-page',
-  'case-page','manual-sens-page'];
+  'case-page','manual-sens-page','manual-sens-v2-page'];
 
 export function showPage(pageId) {
   ALL_PAGES.forEach(id => {

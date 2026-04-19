@@ -19,6 +19,7 @@ import { showCondPage, cpGoto, cpQuickChange, cpToggleAllGroups, cpToggleGroup,
          dimGoto, showCondPopup, closeCondPopup, applyCondChange, CAT_STYLE } from './cond_page.js';
 import { showReport, closeReport, reportSave, exportPNG } from './report.js';
 import { showSensPage, renderSensPage, showManualSensPage, renderManualSensPage } from './sens_analysis.js';
+import { showManualSensV2Page, renderManualSensV2Page } from './manual_sens_v2.js';
 import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSave,
          renderManualPage, initManualData, exportManualPNG } from './manual.js';
 import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
@@ -277,6 +278,7 @@ window.showCondPage = showCondPage;
 window.showKnowledgePage = showKnowledgePage;
 window.showManualPage = showManualPage;
 window.showManualSensPage = showManualSensPage;
+window.showManualSensV2Page = showManualSensV2Page;
 window.showModePage = showModePage;
 window.showObsPage = showObsPage;
 window.showReport = showReport;
@@ -383,6 +385,7 @@ window.addEventListener('popstate', function(e){
       case 'sens': showSensPage(); break;
       case 'manual': showManualPage(); break;
       case 'manual-sens': showManualSensPage(); break;
+      case 'manual-sens-v2': showManualSensV2Page(); break;
       case 'case': showCasePage(); break;
     }
   } finally {

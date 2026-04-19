@@ -379,7 +379,8 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div class="nav-dropdown-btn" id="dd-manual-btn">手動輸入報告 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()" style="display:none">重要參數分析</div>
+      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()" style="display:none">重要參數分析（舊）</div>
+      <div class="nav-dropdown-item" id="nav-manual-sens-v2" onclick="showManualSensV2Page()">重要參數分析</div>
     </div>
   </div>
   <div class="nav-dropdown" id="dd-case">
@@ -499,8 +500,12 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       <div class="mode-flow-arrow" style="visibility:hidden">→</div>
       <!-- 分析工具（對齊上排第三欄） -->
       <div class="mode-flow-col">
-        <div class="mode-btn is-tool" id="mode-card-manual-sens" onclick="showManualSensPage()">
+        <div class="mode-btn is-tool" id="mode-card-manual-sens-v2" onclick="showManualSensV2Page()">
           <h3>重要參數分析</h3>
+          <p>老師邏輯診斷 + 翻轉建議</p>
+        </div>
+        <div class="mode-btn is-tool" id="mode-card-manual-sens" onclick="showManualSensPage()" style="display:none">
+          <h3>重要參數分析（舊）</h3>
           <p>模擬部位變動的影響</p>
         </div>
         <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('mode-card-manual-sens').style.display='none';</script>
@@ -599,6 +604,10 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- 手動敏感度分析頁 -->
 <div id="manual-sens-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5000;padding:20px;overflow-y:auto">
   <div id="manual-sens-content" style="max-width:900px;margin:0 auto"></div>
+</div>
+<!-- 手動版重要參數分析 v2 -->
+<div id="manual-sens-v2-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5100;padding:20px;overflow-y:auto">
+  <div id="manual-sens-v2-content" style="max-width:900px;margin:0 auto"></div>
 </div>
 <!-- 維度條件評分頁 -->
 <div id="cond-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:6000;flex-direction:column">
