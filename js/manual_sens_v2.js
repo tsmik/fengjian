@@ -13,17 +13,8 @@ var BLOCK_DEFS = [
   { key: 'post',    label: '後天',   dims: [9,10,11,12],    topN: 3, color: '#7B7082' }
 ];
 
-// 話術範本
-var BOSS_DIR_TABLE = [
-  { xingshi: '形', jingwei: '經', fangyuan: '方', text: '創業老闆方向 — 做事的人' },
-  { xingshi: '形', jingwei: '經', fangyuan: '圓', text: '創業老闆方向 — 做老闆的人（看圓）' },
-  { xingshi: '勢', jingwei: '緯', fangyuan: '圓', text: '做老闆辛苦（老師原話）' }
-];
-
-var MGR_DIR_TABLE = [
-  { quzhi: '直', shoufang: '收', huanji: '緩', text: '典型穩當主管' },
-  { quzhi: '曲', shoufang: null, huanji: null, text: '幕僚/幕僚長傾向（老師原話）' }
-];
+// C-2: 部位全名標籤
+var PART_FULL_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
 
 var BOSS_SHORTBOARD = [
   { dim: '形', text: '格局動能不足：方向有、核心有，但格局撐不開' },
@@ -38,6 +29,25 @@ var MGR_SHORTBOARD = [
 ];
 
 // ===== 2. 計算層 =====
+
+// A-1: 資料完整度檢查
+function checkBlockComplete(data, dimIndices) {
+  var total = dimIndices.length * 9;
+  var filled = 0;
+  dimIndices.forEach(function(di) {
+    for (var pi = 0; pi < 9; pi++) {
+      if (data[di][pi] === 'A' || data[di][pi] === 'B') filled++;
+    }
+  });
+  return { complete: filled === total, filled: filled, total: total };
+}
+
+function renderIncompleteMsg(blockLabel, chk) {
+  return '<div style="background:white;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:12px">' +
+    '<div style="font-size:14px;color:#E8B000;margin-bottom:6px">⚠ ' + blockLabel + ' 尚未填完（已填 ' + chk.filled + '/' + chk.total + ' 格）</div>' +
+    '<div style="font-size:13px;color:var(--text-3)">請先到「手動輸入兵法報告」填完整所有維度和部位，再回來此頁查看診斷。</div>' +
+    '</div>';
+}
 
 function getStaticCount(dataArr, dimIdx) {
   var d = DIMS[dimIdx];
@@ -63,6 +73,16 @@ function getDynamicCount(dataArr, dimIdx) {
   return count;
 }
 
+// A-3: 正確判斷動靜方向（基於靜側/動側數量比較）
+function getDimType(dataArr, dimIdx) {
+  var sc = getStaticCount(dataArr, dimIdx);
+  var dc = getDynamicCount(dataArr, dimIdx);
+  if (sc + dc === 0) return '—';
+  if (sc > dc) return '靜';
+  if (dc > sc) return '動';
+  return '均';
+}
+
 function calcBlockBalance(dataArr, dimIndices) {
   var pillars = [];
   dimIndices.forEach(function(di) {
@@ -75,54 +95,30 @@ function calcBlockBalance(dataArr, dimIndices) {
   return { pillars: pillars, max: mx, min: mn, gap: mx - mn };
 }
 
-function getDimDirection(dataArr, dimIdx) {
-  // Returns the dominant side label (static side attribute name)
-  var r = calcDim(dataArr, dimIdx);
-  if (!r) return null;
-  var d = DIMS[dimIdx];
-  // Return which side is dominant
-  if (r.a > r.b) return d.a; // A side dominant
-  if (r.b > r.a) return d.b; // B side dominant
-  return null; // equal
-}
-
 function calcBossDirection(dataArr) {
-  // 形勢: dim0, a=形(靜), b=勢(動). 形>勢 means static > dynamic
-  var xs = getDimDirection(dataArr, 0); // 形 or 勢
-  var jw = getDimDirection(dataArr, 1); // 經 or 緯
-  var fy = getDimDirection(dataArr, 2); // 圓(a,動) or 方(b,靜). da=方,db=圓
-
-  var xsDir = xs; // 形 or 勢
-  var jwDir = jw; // 經 or 緯
-  // 方圓: DIMS[2].a='圓',b='方', da='方',db='圓'
-  var fyDir = fy; // 圓 or 方
-
-  var checks = [
-    { label: DIMS[0].da + '>' + DIMS[0].db, ok: false },
-    { label: DIMS[1].da + '>' + DIMS[1].db, ok: false },
-    { label: DIMS[2].da + '>' + DIMS[2].db, ok: false }
-  ];
-
-  // 形>勢 means 靜side dominant for dim0. a=形(靜), so 形>勢 = a > b
   var r0 = calcDim(dataArr, 0);
   var r1 = calcDim(dataArr, 1);
   var r2 = calcDim(dataArr, 2);
 
-  // dim0: 形(a,靜)>勢(b,動) — "形>勢" display order is da>db = "形>勢"
-  // da=形=a so check a>b
-  checks[0].ok = r0 && r0.a > r0.b;
+  // dim0: 形(a,靜)>勢(b,動) — da=形=a so check a>b
+  var c0 = r0 && r0.a > r0.b;
   // dim1: 經(a,靜)>緯(b,動) — da=經=a so check a>b
-  checks[1].ok = r1 && r1.a > r1.b;
+  var c1 = r1 && r1.a > r1.b;
   // dim2: 方(b,靜)>圓(a,動) — da=方=b so check b>a
-  checks[2].ok = r2 && r2.b > r2.a;
+  var c2 = r2 && r2.b > r2.a;
+
+  var checks = [
+    { label: '形>勢', ok: !!c0 },
+    { label: '經>緯', ok: !!c1 },
+    { label: '方>圓', ok: !!c2 }
+  ];
 
   var text = '';
-  // Match against table
-  if (checks[0].ok && checks[1].ok && checks[2].ok) {
+  if (c0 && c1 && c2) {
     text = '創業老闆方向 — 做事的人';
-  } else if (checks[0].ok && checks[1].ok && !checks[2].ok) {
+  } else if (c0 && c1 && !c2) {
     text = '創業老闆方向 — 做老闆的人（看圓）';
-  } else if (!checks[0].ok && !checks[1].ok && !checks[2].ok) {
+  } else if (!c0 && !c1 && !c2) {
     text = '做老闆辛苦（老師原話）';
   } else {
     text = '方向不完全符合，看係數 0.80 是調整機會';
@@ -132,7 +128,6 @@ function calcBossDirection(dataArr) {
 }
 
 function calcBossPremise(dataArr) {
-  // 1+2=3: 形勢(dim0) + 經緯(dim1) = 方圓(dim2)
   var r0 = calcDim(dataArr, 0);
   var r1 = calcDim(dataArr, 1);
 
@@ -153,60 +148,52 @@ function calcBossPremise(dataArr) {
   return { xsOk: xsOk, jwOk: jwOk, text: text };
 }
 
+// B-1: 主管方向判讀修正
 function calcMgrDirection(dataArr) {
   var r3 = calcDim(dataArr, 3);
   var r4 = calcDim(dataArr, 4);
   var r5 = calcDim(dataArr, 5);
 
+  if (!r3 || !r4 || !r5) return { checks: [], text: '資料不完整' };
+
+  // dim3: 直(a,靜), 曲(b,動). 直>曲 = a>b
+  var qzOk = r3.a > r3.b;
+  // dim4: 收(a,靜), 放(b,動). 收>放 = a>b
+  var sfOk = r4.a > r4.b;
+  // dim5: 緩(a,靜), 急(b,動). 緩>急 = a>b
+  var hjOk = r5.a > r5.b;
+
   var checks = [
-    { label: DIMS[3].da + '>' + DIMS[3].db, ok: false },
-    { label: DIMS[4].da + '>' + DIMS[4].db, ok: false },
-    { label: DIMS[5].da + '>' + DIMS[5].db, ok: false }
+    { label: '直>曲', ok: qzOk },
+    { label: '收>放', ok: sfOk },
+    { label: '緩>急', ok: hjOk }
   ];
 
-  // dim3: 曲直 a=直(靜), b=曲(動), da=曲, db=直
-  // "直>曲" = a>b, but da=曲 so display is 曲>直 when b>a
-  // Actually: da='曲', db='直'. We want 直>曲 (靜>動)
-  // 直=a(靜), 曲=b(動). Check a>b for 直>曲
-  // But display: da=曲, db=直. So "曲>直" label means b>a (曲dominant).
-  // We need "直>曲" for 穩當主管: a>b
-  // Let me re-check: checks label is da>db
-  // dim3: da=曲, db=直. label = "曲>直". ok = b>a (曲=b dominant)? No, 曲=b(動).
-  // Wait: DIMS[3] = {a:"直",b:"曲",aT:"靜",bT:"動",da:"曲",db:"直"}
-  // So da="曲"=b, db="直"=a. "da>db" = "曲>直" means b>a.
-  // For 穩當主管 we need 直>曲 = a>b.
-  // So checks[0].ok should check if da side > db side...
-  // Actually the spec says 直>曲, 靜>動, 緩>急 for 穩當主管
-  // Let me just check static > dynamic for each dim
-
-  // 直>曲: 靜(直=a) > 動(曲=b) => a > b
-  var qzOk = r3 && r3.a > r3.b; // 直>曲
-  // 收>放: 靜(收=a) > 動(放=b) => a > b
-  var sfOk = r4 && r4.a > r4.b; // 收>放
-  // 緩>急: 靜(緩=a) > 動(急=b) => a > b
-  var hjOk = r5 && r5.a > r5.b; // 緩>急
-
-  checks[0] = { label: '直>曲', ok: qzOk };
-  checks[1] = { label: '收>放', ok: sfOk };
-  checks[2] = { label: '緩>急', ok: hjOk };
-
-  var text = '';
-  // 曲>直 means b>a for dim3 => qzOk is false and b>a
-  var quDominant = r3 && r3.b > r3.a; // 曲 dominant
-
-  if (qzOk && sfOk && hjOk) {
-    text = '典型穩當主管';
-  } else if (quDominant) {
-    text = '幕僚/幕僚長傾向（老師原話）';
-  } else {
-    text = '方向不完全符合，需細看各維度';
+  // 規則 1：全部曲沒有直（GS_15 §3 老師原話）
+  // 條件：曲直極偏曲（直=a 只有 0-1 個）
+  if (r3.a <= 1) {
+    return {
+      checks: checks,
+      text: '全部曲沒有直，幕僚/幕僚長概念（老師原話）'
+    };
   }
 
-  return { checks: checks, text: text };
+  // 規則 2：典型穩當主管
+  if (qzOk && sfOk && hjOk) {
+    return {
+      checks: checks,
+      text: '典型穩當主管 — 擔當、能耐、節奏一致'
+    };
+  }
+
+  // 規則 3：部分方向不符
+  return {
+    checks: checks,
+    text: '方向不完全符合，看係數 0.80 是調整機會'
+  };
 }
 
 function calcMgrPremise(dataArr) {
-  // 4+5=6: 曲直(dim3) + 收放(dim4) = 緩急(dim5)
   var r3 = calcDim(dataArr, 3);
   var r4 = calcDim(dataArr, 4);
 
@@ -232,7 +219,6 @@ function calcRoleIdentity(dataArr) {
   var mgrCoeff = parseFloat(avgCoeff(dataArr, [3,4,5]));
   var innateCoeff = parseFloat(avgCoeff(dataArr, [0,1,2,3,4,5]));
 
-  // 先天極低
   if (innateCoeff < 0.20) {
     return {
       boss: bossCoeff, mgr: mgrCoeff,
@@ -267,31 +253,22 @@ function calcRoleIdentity(dataArr) {
 }
 
 function calcResistanceEffect(dataArr) {
-  // 形勢阻力效應 (GS_14 §5 + AI評析跨維度 §8.5)
-  var r0 = calcDim(dataArr, 0); // 形勢
-  var r1 = calcDim(dataArr, 1); // 經緯
-  var r2 = calcDim(dataArr, 2); // 方圓
+  var r0 = calcDim(dataArr, 0);
+  var r1 = calcDim(dataArr, 1);
+  var r2 = calcDim(dataArr, 2);
 
   if (!r0 || !r1 || !r2) return false;
 
-  // 1. 形>勢
-  var c1 = r0.a > r0.b;
-  // 2. 經>緯
-  var c2 = r1.a > r1.b;
-  // 3. 經緯係數 ≥ 0.50
-  var c3 = r1.coeff >= 0.50;
-  // 4. 方圓係數 ≥ 0.50
-  var c4 = r2.coeff >= 0.50;
-  // 5. 形勢係數偏低 (= 0.13 or 0.29)
-  var xsCoeff = r0.coeff;
-  var c5 = (Math.abs(xsCoeff - 0.125) < 0.02) || (Math.abs(xsCoeff - 0.29) < 0.02);
-  // More precisely: coeff values from 1/8=0.125 or 2/7≈0.286
-  // Check if ≤ 0.30
-  c5 = xsCoeff <= 0.30;
+  var c1 = r0.a > r0.b;       // 形>勢
+  var c2 = r1.a > r1.b;       // 經>緯
+  var c3 = r1.coeff >= 0.50;  // 經緯係數 ≥ 0.50
+  var c4 = r2.coeff >= 0.50;  // 方圓係數 ≥ 0.50
+  var c5 = r0.coeff <= 0.30;  // 形勢係數偏低
 
   return c1 && c2 && c3 && c4 && c5;
 }
 
+// A-4: 加入 partIdx tie-break；回傳完整 allCandidates 供並列提示
 function calcFlipCandidates(dataArr, block) {
   var dimIndices = block.dims;
   var bal = calcBlockBalance(dataArr, dimIndices);
@@ -307,21 +284,20 @@ function calcFlipCandidates(dataArr, block) {
       if (curVal === null) continue;
       var targetVal = curVal === 'A' ? 'B' : 'A';
 
-      // Temporarily flip
       dataArr[dimIdx][pi] = targetVal;
       var bal1 = calcBlockBalance(dataArr, dimIndices);
       var D1 = bal1.gap;
       var C1 = parseFloat(avgCoeff(dataArr, dimIndices));
-      dataArr[dimIdx][pi] = curVal; // restore
+      dataArr[dimIdx][pi] = curVal;
 
-      var balImprove = D0 - D1; // positive = more balanced
-      var coeffChange = C1 - C0; // positive = higher
+      var balImprove = D0 - D1;
+      var coeffChange = C1 - C0;
 
       candidates.push({
         dimIdx: dimIdx,
         partIdx: pi,
         dimName: DIMS[dimIdx].dn,
-        partName: PARTS_SHORT[pi],
+        partName: PART_FULL_LABELS[pi],
         from: curVal,
         to: targetVal,
         balImprove: balImprove,
@@ -334,40 +310,43 @@ function calcFlipCandidates(dataArr, block) {
     }
   }
 
-  // Sort
+  // Sort with tie-break on partIdx (A-4)
   if (isBalanced) {
-    // Already balanced: sort by |coeffChange| desc, then balImprove desc
     candidates.sort(function(a, b) {
       var diffCoeff = Math.abs(b.coeffChange) - Math.abs(a.coeffChange);
       if (Math.abs(diffCoeff) > 0.0001) return diffCoeff;
-      return b.balImprove - a.balImprove;
+      var diffBal = b.balImprove - a.balImprove;
+      if (Math.abs(diffBal) > 0.0001) return diffBal;
+      return a.partIdx - b.partIdx;
     });
   } else {
-    // Not balanced: sort by balImprove desc, then coeffChange desc
     candidates.sort(function(a, b) {
-      if (a.balImprove !== b.balImprove) return b.balImprove - a.balImprove;
-      return b.coeffChange - a.coeffChange;
+      if (Math.abs(a.balImprove - b.balImprove) > 0.0001) return b.balImprove - a.balImprove;
+      if (Math.abs(a.coeffChange - b.coeffChange) > 0.0001) return b.coeffChange - a.coeffChange;
+      return a.partIdx - b.partIdx;
     });
   }
 
-  return candidates.slice(0, block.topN);
+  // Return top N + all candidates for tie detection
+  return { top: candidates.slice(0, block.topN), all: candidates };
 }
 
 // ===== 3. 渲染層 =====
 
-function renderBarChart(pillars, blockLabel) {
-  var maxVal = 9; // max possible static count
-  var h = '';
-  h += '<div style="display:flex;align-items:flex-end;gap:8px;height:80px;padding:8px 0">';
+// A-2: 橫向柱子圖（水平 bar chart）
+function renderBarChart(pillars, barColor) {
+  var maxVal = 9;
+  var h = '<div style="display:flex;flex-direction:column;gap:4px;padding:8px 0">';
   pillars.forEach(function(p) {
     var d = DIMS[p.dimIdx];
-    // Static side label: the 靜 side attribute name
     var staticLabel = d.aT === '靜' ? d.a : d.b;
     var pct = (p.staticCount / maxVal * 100);
-    h += '<div style="display:flex;flex-direction:column;align-items:center;flex:1">';
-    h += '<span style="font-size:11px;color:var(--text-3);margin-bottom:2px">' + p.staticCount + '</span>';
-    h += '<div style="width:100%;max-width:32px;height:' + Math.max(pct, 5) + '%;background:#7A9E7E;border-radius:3px 3px 0 0"></div>';
-    h += '<span style="font-size:10px;color:var(--text);margin-top:2px">' + staticLabel + '</span>';
+    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<span style="font-size:12px;color:var(--text);min-width:16px;text-align:right">' + staticLabel + '</span>';
+    h += '<div style="flex:1;height:14px;background:#eee;border-radius:3px;overflow:hidden">';
+    h += '<div style="width:' + Math.max(pct, 2) + '%;height:100%;background:' + barColor + ';border-radius:3px"></div>';
+    h += '</div>';
+    h += '<span style="font-size:12px;color:var(--text-3);min-width:16px">' + p.staticCount + '</span>';
     h += '</div>';
   });
   h += '</div>';
@@ -375,6 +354,10 @@ function renderBarChart(pillars, blockLabel) {
 }
 
 function renderBossCard(dataArr) {
+  // A-1: 完整度檢查
+  var chk = checkBlockComplete(dataArr, [0,1,2]);
+  if (!chk.complete) return renderIncompleteMsg('老闆（1.2.3）', chk);
+
   var bossCoeff = avgCoeff(dataArr, [0,1,2]);
   var sc = getStaticCount(dataArr, 0) + getStaticCount(dataArr, 1) + getStaticCount(dataArr, 2);
   var dc = getDynamicCount(dataArr, 0) + getDynamicCount(dataArr, 1) + getDynamicCount(dataArr, 2);
@@ -411,17 +394,16 @@ function renderBossCard(dataArr) {
   h += '<div style="font-size:13px;color:var(--text-2)">→ ' + premise.text + '</div>';
   h += '</div>';
 
-  // 均衡度
+  // A-2: 均衡度橫向柱子圖
   h += '<div style="margin-bottom:12px">';
   h += '<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:4px">均衡度（靜側柱子圖）：</div>';
-  h += renderBarChart(bal.pillars, '老闆');
+  h += renderBarChart(bal.pillars, '#8E4B50');
   h += '<div style="font-size:12px;color:var(--text-2);margin-top:4px">';
   h += '差距 ' + bal.gap + '  ';
   if (bal.gap <= 2) {
     h += '<span style="color:#7A9E7E">⚪ 均衡</span>';
   } else {
     h += '<span style="color:#E8B000">⚠ 需提醒短板</span>';
-    // Find shortboard
     var minVal = bal.min;
     var shortboards = bal.pillars.filter(function(p) { return p.staticCount === minVal; });
     shortboards.forEach(function(sb) {
@@ -449,6 +431,10 @@ function renderBossCard(dataArr) {
 }
 
 function renderManagerCard(dataArr) {
+  // A-1: 完整度檢查
+  var chk = checkBlockComplete(dataArr, [3,4,5]);
+  if (!chk.complete) return renderIncompleteMsg('主管（4.5.6）', chk);
+
   var mgrCoeff = avgCoeff(dataArr, [3,4,5]);
   var sc = getStaticCount(dataArr, 3) + getStaticCount(dataArr, 4) + getStaticCount(dataArr, 5);
   var dc = getDynamicCount(dataArr, 3) + getDynamicCount(dataArr, 4) + getDynamicCount(dataArr, 5);
@@ -466,11 +452,13 @@ function renderManagerCard(dataArr) {
   // 方向判讀
   h += '<div style="margin-bottom:12px">';
   h += '<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:4px">方向判讀：</div>';
-  h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">';
-  dir.checks.forEach(function(c) {
-    h += '<span style="font-size:12px;padding:2px 8px;border-radius:4px;background:' + (c.ok ? '#e8f5e9' : '#fce4ec') + ';color:' + (c.ok ? '#2e7d32' : '#c62828') + '">' + c.label + ' ' + (c.ok ? '✓' : '✗') + '</span>';
-  });
-  h += '</div>';
+  if (dir.checks.length > 0) {
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">';
+    dir.checks.forEach(function(c) {
+      h += '<span style="font-size:12px;padding:2px 8px;border-radius:4px;background:' + (c.ok ? '#e8f5e9' : '#fce4ec') + ';color:' + (c.ok ? '#2e7d32' : '#c62828') + '">' + c.label + ' ' + (c.ok ? '✓' : '✗') + '</span>';
+    });
+    h += '</div>';
+  }
   h += '<div style="font-size:13px;color:var(--text-2)">→ ' + dir.text + '</div>';
   h += '</div>';
 
@@ -484,10 +472,10 @@ function renderManagerCard(dataArr) {
   h += '<div style="font-size:13px;color:var(--text-2)">→ ' + premise.text + '</div>';
   h += '</div>';
 
-  // 均衡度
+  // A-2: 均衡度橫向柱子圖
   h += '<div style="margin-bottom:12px">';
   h += '<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:4px">均衡度（靜側柱子圖）：</div>';
-  h += renderBarChart(bal.pillars, '主管');
+  h += renderBarChart(bal.pillars, '#8C6B4A');
   h += '<div style="font-size:12px;color:var(--text-2);margin-top:4px">';
   h += '差距 ' + bal.gap + '  ';
   if (bal.gap <= 2) {
@@ -513,6 +501,15 @@ function renderManagerCard(dataArr) {
 }
 
 function renderRoleIdentity(dataArr) {
+  // A-1: 先天 6 維度完整度檢查
+  var chk = checkBlockComplete(dataArr, [0,1,2,3,4,5]);
+  if (!chk.complete) {
+    return '<div style="background:white;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:16px">' +
+      '<div style="font-size:15px;font-weight:400;color:var(--text);margin-bottom:8px">角色定位</div>' +
+      '<div style="font-size:13px;color:#E8B000">資料尚未填完，暫無法判定角色定位</div>' +
+      '</div>';
+  }
+
   var role = calcRoleIdentity(dataArr);
   var h = '<div style="background:white;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:16px">';
   h += '<div style="font-size:15px;font-weight:400;color:var(--text);margin-bottom:8px">角色定位</div>';
@@ -528,6 +525,10 @@ function renderRoleIdentity(dataArr) {
 }
 
 function renderLuckBlock(dataArr) {
+  // A-1: 完整度檢查
+  var chk = checkBlockComplete(dataArr, [6,7,8]);
+  if (!chk.complete) return renderIncompleteMsg('運氣（7.8.9）', chk);
+
   var luckCoeff = avgCoeff(dataArr, [6,7,8]);
   var sc = getStaticCount(dataArr, 6) + getStaticCount(dataArr, 7) + getStaticCount(dataArr, 8);
   var dc = getDynamicCount(dataArr, 6) + getDynamicCount(dataArr, 7) + getDynamicCount(dataArr, 8);
@@ -542,20 +543,31 @@ function renderLuckBlock(dataArr) {
   [6,7,8].forEach(function(di) {
     var r = calcDim(dataArr, di);
     var coeff = r ? r.coeff.toFixed(2) : '—';
-    var tp = r ? r.type : '—';
+    // A-3: 用靜側/動側數量比較判斷動靜
+    var tp = getDimType(dataArr, di);
+    // B-2: 動靜文字顏色
+    var tpColor = tp === '靜' ? '#7A9E7E' : (tp === '動' ? '#C17A5A' : 'var(--text-3)');
+
     var deepNote = '';
     if (di === 6) {
-      // 順逆方向判讀（GS_07）
+      // B-3: 順逆方向判讀（GS_07 §6）
       if (r) {
-        deepNote = r.type === '靜' ? '順勢而為' : '逆境奮鬥';
+        if (r.coeff >= 0.50) {
+          deepNote = '拉鋸，看部位分布';
+        } else if (tp === '靜') {
+          deepNote = '順境多，運氣相對順';
+        } else {
+          deepNote = '逆境多，提升運氣的關鍵在不要因個人想法錯失外部機會';
+        }
       }
     } else {
       deepNote = '深度分析待完成';
     }
+
     h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">';
     h += '<span style="font-weight:400;color:var(--text);min-width:40px">' + DIMS[di].dn + '：</span>';
     h += '<span style="font-size:13px;color:var(--text-2)">係數 ' + coeff + '，</span>';
-    h += '<span style="font-size:13px;color:' + (tp === '靜' ? '#7A9E7E' : '#C17A5A') + '">' + tp + '</span>';
+    h += '<span style="font-size:13px;color:' + tpColor + '">' + tp + '</span>';
     if (deepNote) {
       h += '<span style="font-size:12px;color:var(--text-3);margin-left:8px">（' + deepNote + '）</span>';
     }
@@ -567,6 +579,10 @@ function renderLuckBlock(dataArr) {
 }
 
 function renderPostBlock(dataArr) {
+  // A-1: 完整度檢查
+  var chk = checkBlockComplete(dataArr, [9,10,11,12]);
+  if (!chk.complete) return renderIncompleteMsg('後天（10.11.12.13）', chk);
+
   var postCoeff = avgCoeff(dataArr, [9,10,11,12]);
   var sc = getStaticCount(dataArr, 9) + getStaticCount(dataArr, 10) + getStaticCount(dataArr, 11) + getStaticCount(dataArr, 12);
   var dc = getDynamicCount(dataArr, 9) + getDynamicCount(dataArr, 10) + getDynamicCount(dataArr, 11) + getDynamicCount(dataArr, 12);
@@ -581,27 +597,27 @@ function renderPostBlock(dataArr) {
   [9,10,11,12].forEach(function(di) {
     var r = calcDim(dataArr, di);
     var coeff = r ? r.coeff.toFixed(2) : '—';
-    var tp = r ? r.type : '—';
+    // A-3: 用靜側/動側數量比較判斷動靜
+    var tp = getDimType(dataArr, di);
+    // B-2: 動靜文字顏色
+    var tpColor = tp === '靜' ? '#7A9E7E' : (tp === '動' ? '#C17A5A' : 'var(--text-3)');
     h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">';
     h += '<span style="font-weight:400;color:var(--text);min-width:40px">' + DIMS[di].dn + '：</span>';
     h += '<span style="font-size:13px;color:var(--text-2)">係數 ' + coeff + '，</span>';
-    h += '<span style="font-size:13px;color:' + (tp === '靜' ? '#7A9E7E' : '#C17A5A') + '">' + tp + '</span>';
+    h += '<span style="font-size:13px;color:' + tpColor + '">' + tp + '</span>';
     h += '</div>';
   });
 
-  // 攻守×奇正連動（v1 只做這一對）
-  var r9 = calcDim(dataArr, 9);  // 攻守
-  var r10 = calcDim(dataArr, 10); // 奇正
-  if (r9 && r10) {
+  // 攻守×奇正連動
+  var tp9 = getDimType(dataArr, 9);
+  var tp10 = getDimType(dataArr, 10);
+  if (tp9 !== '—' && tp10 !== '—') {
     h += '<div style="margin-top:12px;padding:10px 12px;background:#f5f5f0;border-radius:6px">';
     h += '<div style="font-size:13px;font-weight:400;color:var(--text);margin-bottom:6px">跨維度連動提示：</div>';
-    // 攻(動) ↔ 奇(動) 同為動側 → 順暢
-    // 攻(動) ↔ 正(靜) 動靜相反 → 有衝突
-    // If both are same type → 順暢, otherwise → 有衝突
-    if (r9.type === r10.type) {
-      h += '<div style="font-size:12px;color:#7A9E7E">攻守 ↔ 奇正 方向一致（' + r9.type + '），順暢</div>';
+    if (tp9 === tp10) {
+      h += '<div style="font-size:12px;color:#7A9E7E">攻守 ↔ 奇正 方向一致（' + tp9 + '），順暢</div>';
     } else {
-      h += '<div style="font-size:12px;color:#E8B000">攻守（' + r9.type + '）↔ 奇正（' + r10.type + '）方向不同，有衝突</div>';
+      h += '<div style="font-size:12px;color:#E8B000">攻守（' + tp9 + '）↔ 奇正（' + tp10 + '）方向不同，有衝突</div>';
     }
     h += '</div>';
   }
@@ -610,7 +626,8 @@ function renderPostBlock(dataArr) {
   return h;
 }
 
-function renderTopNList(candidates, blockLabel, blockColor) {
+// A-4: Top N 渲染含並列提示
+function renderTopNList(candidates, allCandidates, blockLabel, blockColor, topN) {
   if (candidates.length === 0) {
     return '<div style="padding:8px 12px;font-size:13px;color:var(--text-3)">無有效翻轉建議</div>';
   }
@@ -619,12 +636,9 @@ function renderTopNList(candidates, blockLabel, blockColor) {
   candidates.forEach(function(c, idx) {
     h += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
     h += '<span style="font-size:14px;font-weight:400;color:' + blockColor + ';min-width:24px">[' + (idx + 1) + ']</span>';
-
-    // 部位 × 維度 + 翻轉方向
     h += '<span style="padding:2px 8px;border-radius:4px;background:#f0ebe0;font-size:13px;color:var(--text)">' + c.partName + ' × ' + c.dimName + '</span>';
     h += '<span style="font-size:13px;font-weight:400;color:var(--text)">' + c.from + '→' + c.to + '</span>';
 
-    // 均衡改善
     if (c.balImprove > 0) {
       h += '<span style="font-size:12px;color:#2e7d32">均衡 ' + c.balBefore + '→' + c.balAfter + ' (改善+' + c.balImprove + ')</span>';
     } else if (c.balImprove === 0) {
@@ -633,7 +647,6 @@ function renderTopNList(candidates, blockLabel, blockColor) {
       h += '<span style="font-size:12px;color:var(--text-3)">均衡 ' + c.balBefore + '→' + c.balAfter + '</span>';
     }
 
-    // 係數改變
     if (Math.abs(c.coeffChange) < 0.005) {
       h += '<span style="font-size:12px;color:var(--text-3)">係數不變</span>';
     } else {
@@ -643,6 +656,24 @@ function renderTopNList(candidates, blockLabel, blockColor) {
 
     h += '</div>';
   });
+
+  // A-4: 並列提示
+  if (candidates.length > 0) {
+    var last = candidates[candidates.length - 1];
+    var tied = allCandidates.filter(function(c) {
+      return Math.abs(c.balImprove - last.balImprove) < 0.0001 &&
+             Math.abs(c.coeffChange - last.coeffChange) < 0.0001;
+    });
+    // Exclude those already shown
+    var shownKeys = {};
+    candidates.forEach(function(c) { shownKeys[c.dimIdx + '_' + c.partIdx] = true; });
+    var extraTied = tied.filter(function(c) { return !shownKeys[c.dimIdx + '_' + c.partIdx]; });
+    if (extraTied.length > 0) {
+      var tiedLabels = extraTied.map(function(c) { return c.partName + '×' + c.dimName; }).join(', ');
+      h += '<div style="font-size:11px;color:var(--text-3);padding:4px 12px">（另有 ' + extraTied.length + ' 筆相同效果：' + tiedLabels + '）</div>';
+    }
+  }
+
   return h;
 }
 
@@ -691,13 +722,36 @@ function renderBottomHalf(dataArr) {
   h += '<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:16px;letter-spacing:2px">格子翻轉建議</div>';
 
   BLOCK_DEFS.forEach(function(block) {
-    // Check if dims are visible
     var maxDim = Math.max.apply(null, block.dims);
     if (maxDim >= BETA_VISIBLE_DIMS) return;
 
+    // A-1: Top N 完整度檢查
+    var chkDims = block.dims;
+    // 先天 Top 3 = 老闆完整 AND 主管完整
+    if (block.key === 'innate') {
+      var chkBoss = checkBlockComplete(dataArr, [0,1,2]);
+      var chkMgr = checkBlockComplete(dataArr, [3,4,5]);
+      if (!chkBoss.complete || !chkMgr.complete) {
+        h += '<div style="margin-bottom:20px">';
+        h += '<div style="font-size:15px;font-weight:400;color:' + block.color + ';margin-bottom:8px">' + block.label + ' Top ' + block.topN + '</div>';
+        h += '<div style="padding:8px 12px;font-size:13px;color:#E8B000">⚠ 先天尚未填完，暫無翻轉建議</div>';
+        h += '</div>';
+        return;
+      }
+    } else {
+      var chk = checkBlockComplete(dataArr, chkDims);
+      if (!chk.complete) {
+        h += '<div style="margin-bottom:20px">';
+        h += '<div style="font-size:15px;font-weight:400;color:' + block.color + ';margin-bottom:8px">' + block.label + ' Top ' + block.topN + '</div>';
+        h += '<div style="padding:8px 12px;font-size:13px;color:#E8B000">⚠ ' + block.label + ' 尚未填完，暫無翻轉建議</div>';
+        h += '</div>';
+        return;
+      }
+    }
+
     var bal = calcBlockBalance(dataArr, block.dims);
     var coeff = avgCoeff(dataArr, block.dims);
-    var candidates = calcFlipCandidates(dataArr, block);
+    var result = calcFlipCandidates(dataArr, block);
 
     h += '<div style="margin-bottom:20px">';
     h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">';
@@ -710,7 +764,7 @@ function renderBottomHalf(dataArr) {
       h += '<span style="font-size:11px;color:#E8B000">⚠ 不均衡</span>';
     }
     h += '</div>';
-    h += renderTopNList(candidates, block.label, block.color);
+    h += renderTopNList(result.top, result.all, block.label, block.color, block.topN);
     h += '</div>';
   });
 
@@ -737,14 +791,27 @@ export function renderManualSensV2Page() {
     return;
   }
 
+  // A-1: 頁面總入口檢查 — 全空
+  var allNull = true;
+  for (var di = 0; di < manualData.length; di++) {
+    for (var pi = 0; pi < 9; pi++) {
+      if (manualData[di][pi] === 'A' || manualData[di][pi] === 'B') { allNull = false; break; }
+    }
+    if (!allNull) break;
+  }
+  if (allNull) {
+    el.innerHTML = '<div style="padding:40px 20px;text-align:center">' +
+      '<div style="font-size:16px;color:#E8B000;margin-bottom:12px">⚠ 手動輸入報告尚未填寫</div>' +
+      '<button onclick="showManualPage()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--border);background:white;color:var(--text);font-size:14px;cursor:pointer">前往手動輸入報告</button>' +
+      '</div>';
+    return;
+  }
+
   var html = '';
   html += '<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:4px;letter-spacing:2px">手動版重要參數分析</div>';
   html += '<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 × ' + BETA_VISIBLE_DIMS + ' 維度矩陣，依老師邏輯做方向判讀、因果前提、均衡度診斷，並列出格子翻轉建議</div>';
 
-  // 上半部：老師邏輯診斷
   html += renderTopHalf(manualData);
-
-  // 下半部：格子翻轉建議 Top N
   html += renderBottomHalf(manualData);
 
   el.innerHTML = html;
