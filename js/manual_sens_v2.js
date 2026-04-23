@@ -511,6 +511,72 @@ function renderSummary(adjustments, blockType, origSub, newSub) {
   return h;
 }
 
+function renderOverallSummary(dataArr) {
+  var ALL_DIMS = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+  var blocks = [
+    { type: 'innate', label: '先天', dims: DIMS_INNATE, visible: true },
+    { type: 'luck', label: '運氣', dims: DIMS_LUCK, visible: BETA_VISIBLE_DIMS >= 9 },
+    { type: 'acquired', label: '後天', dims: DIMS_ACQUIRED, visible: BETA_VISIBLE_DIMS >= 13 }
+  ];
+
+  var blockResults = {};
+  blocks.forEach(function(b) {
+    if (!b.visible) { blockResults[b.type] = { hasFlip: false, newData: null }; return; }
+    var chk = checkBlockComplete(dataArr, b.dims);
+    if (!chk.complete) { blockResults[b.type] = { hasFlip: false, newData: null }; return; }
+    var result = calcAdjustments(dataArr, b.type);
+    var actualFlips = result.adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; });
+    blockResults[b.type] = {
+      hasFlip: actualFlips.length > 0,
+      newData: result.newData,
+      origCoeff: avgCoeff(dataArr, b.dims),
+      newCoeff: avgCoeff(result.newData, b.dims)
+    };
+  });
+
+  var anyFlip = blockResults.innate.hasFlip || blockResults.luck.hasFlip || blockResults.acquired.hasFlip;
+  var boxStyle = 'background:#f5f5f0;border:1px solid #d4d4c8;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:15px;line-height:1.9;color:var(--text);font-weight:400';
+
+  if (!anyFlip) {
+    return '<div style="' + boxStyle + '">暫無係數調整建議</div>';
+  }
+
+  // 組整體 newData
+  var overallNewData = [];
+  for (var di = 0; di < dataArr.length; di++) overallNewData.push(dataArr[di].slice());
+  blocks.forEach(function(b) {
+    var br = blockResults[b.type];
+    if (br.hasFlip && br.newData) {
+      b.dims.forEach(function(d) { overallNewData[d] = br.newData[d].slice(); });
+    }
+  });
+  var origOverall = avgCoeff(dataArr, ALL_DIMS);
+  var newOverall = avgCoeff(overallNewData, ALL_DIMS);
+
+  function blockSegment(type, label) {
+    var br = blockResults[type];
+    if (!br.hasFlip) return null;
+    return label + '係數從 ' + br.origCoeff + ' \u2192 ' + br.newCoeff;
+  }
+
+  var line1Parts = [];
+  line1Parts.push('整體係數從 ' + origOverall + ' \u2192 ' + newOverall);
+  var innateSeg = blockSegment('innate', '先天');
+  if (innateSeg) line1Parts.push(innateSeg);
+
+  var line2Parts = [];
+  var luckSeg = blockSegment('luck', '運氣');
+  if (luckSeg) line2Parts.push(luckSeg);
+  var acquiredSeg = blockSegment('acquired', '後天');
+  if (acquiredSeg) line2Parts.push(acquiredSeg);
+
+  var html = '<div style="' + boxStyle + '">';
+  if (line1Parts.length > 0) html += '<div>' + line1Parts.join('\uFF1B') + '</div>';
+  if (line2Parts.length > 0) html += '<div>' + line2Parts.join('\uFF1B') + '</div>';
+  html += '</div>';
+  return html;
+}
+
 function renderBlock(dataArr, blockType) {
   var dimIndices, blockLabel, blockColor, subGroups;
   if (blockType === 'innate') {
@@ -657,6 +723,9 @@ export function renderManualSensV2Page() {
   var html = '';
   html += '<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:4px;letter-spacing:2px">手動版重要參數分析</div>';
   html += '<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 \u00D7 13 維度矩陣，找出調整方向建議</div>';
+
+  // 整體調整摘要
+  html += renderOverallSummary(manualData);
 
   // 先天區塊
   html += renderBlock(manualData, 'innate');
