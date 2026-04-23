@@ -141,34 +141,55 @@ function findPriorityParts(dataArr, blockType) {
 
 // ===== 5. 維度調整演算法 =====
 
-function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, adjustments, blockType) {
-  if ((dimFlipCount[dimIdx] || 0) >= 2) return false;
+// 依部位在該區塊所有維度的動靜總和，決定翻轉需求方向
+function getPartNeedDirection(dataArr, partIdx, blockType) {
+  var blockDims;
+  if (blockType === 'innate') blockDims = DIMS_INNATE;
+  else if (blockType === 'luck') blockDims = DIMS_LUCK;
+  else blockDims = DIMS_ACQUIRED;
+
+  var sc = 0, dc = 0;
+  blockDims.forEach(function(di) {
+    var val = dataArr[di][partIdx];
+    if (val === 'A' || val === 'B') {
+      if (isStaticValue(di, val)) sc++;
+      else dc++;
+    }
+  });
+  if (dc > sc) return 'toStatic';
+  if (sc > dc) return 'toDynamic';
+  return null; // 均衡，不應被 P1-P4 選中
+}
+
+// 統一翻轉邏輯（三個區塊共用）
+// 回傳調整物件或 null（不推入 adjustments，由呼叫端處理）
+function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, blockType, partNeedDirection) {
+  // 1. dimFlipCount 上限
+  if ((dimFlipCount[dimIdx] || 0) >= 2) return null;
 
   var val = workingData[dimIdx][partIdx];
-  if (val === null) return false;
+  if (val === null) return null;
 
+  // 2. 維度已均衡 → 不翻
   var sc = countStaticInDim(workingData, dimIdx);
   var dc = 9 - sc;
-  if (isReached(sc, dc)) return false;
+  if (Math.abs(sc - dc) <= 1) return null;
 
+  // 3. 該格已是需求方向 → 不翻
   var currentIsStatic = isStaticValue(dimIdx, val);
+  if (partNeedDirection === 'toStatic' && currentIsStatic) return null;
+  if (partNeedDirection === 'toDynamic' && !currentIsStatic) return null;
 
-  // 翻轉方向限制（依 blockType）
-  if (blockType === 'innate') {
-    // 先天：嚴格往均衡方向，部位必須在多數側
-    if (sc > dc && !currentIsStatic) return false; // 靜多→需翻靜為動，但此格是動
-    if (dc > sc && currentIsStatic) return false;   // 動多→需翻動為靜，但此格是靜
-  } else if (blockType === 'luck') {
-    // 運氣：嚴格只翻動為靜
-    if (currentIsStatic) return false; // 此格是靜 → 不能翻
-  }
-  // 後天：兩個方向都可翻，不做方向限制
+  // 4. 翻轉後維度會更失衡 → 不翻
+  var newSc = currentIsStatic ? sc - 1 : sc + 1;
+  var newDc = 9 - newSc;
+  if (Math.abs(newSc - newDc) > Math.abs(sc - dc)) return null;
 
+  // 5. 翻
   var newVal = val === 'A' ? 'B' : 'A';
   workingData[dimIdx][partIdx] = newVal;
   dimFlipCount[dimIdx] = (dimFlipCount[dimIdx] || 0) + 1;
-  adjustments.push({ dimIndex: dimIdx, partIndex: partIdx, from: val, to: newVal });
-  return true;
+  return { dimIndex: dimIdx, partIndex: partIdx, from: val, to: newVal };
 }
 
 // 中停連動規則：中停被翻轉時，連帶調整眉(5)/眼(6)/鼻(7) 之一
@@ -210,53 +231,65 @@ function handleZhongtingTrigger(workingData, blockType, dimIndex, adjustments, d
     return b.partIndex - a.partIndex;
   });
 
-  // Step D：在中停被觸發的維度翻轉這個部位
-  tryFlip(workingData, dimIndex, candidates[0].partIndex, dimFlipCount, adjustments, blockType);
+  // Step D：在中停被觸發的維度翻轉這個部位（用該部位自身的需求方向）
+  var targetPart = candidates[0].partIndex;
+  var targetDir = getPartNeedDirection(workingData, targetPart, blockType);
+  if (!targetDir) return;
+  var result = tryFlip(workingData, dimIndex, targetPart, dimFlipCount, blockType, targetDir);
+  if (result) adjustments.push(result);
+}
+
+// 輔助：tryFlip + push + 中停連動
+function flipAndLink(workingData, dimIdx, partIdx, dimFlipCount, adjustments, blockType, direction) {
+  var result = tryFlip(workingData, dimIdx, partIdx, dimFlipCount, blockType, direction);
+  if (result) {
+    adjustments.push(result);
+    if (partIdx === 2) handleZhongtingTrigger(workingData, blockType, dimIdx, adjustments, dimFlipCount);
+  }
+  return !!result;
 }
 
 function runBossRound(workingData, partIdx, adjustments, dimFlipCount) {
-  // 形勢（各自獨立判斷，不再有跨維度整輪跳過）
-  var f0 = tryFlip(workingData, 0, partIdx, dimFlipCount, adjustments, 'innate');
-  if (partIdx === 2 && f0) handleZhongtingTrigger(workingData, 'innate', 0, adjustments, dimFlipCount);
+  var dir = getPartNeedDirection(workingData, partIdx, 'innate');
+  if (!dir) return;
+  // 形勢
+  flipAndLink(workingData, 0, partIdx, dimFlipCount, adjustments, 'innate', dir);
   // 經緯
-  var f1 = tryFlip(workingData, 1, partIdx, dimFlipCount, adjustments, 'innate');
-  if (partIdx === 2 && f1) handleZhongtingTrigger(workingData, 'innate', 1, adjustments, dimFlipCount);
+  flipAndLink(workingData, 1, partIdx, dimFlipCount, adjustments, 'innate', dir);
   // 方圓：8:1 或 9:0 才調
   var sc2 = countStaticInDim(workingData, 2), dc2 = 9 - sc2;
   if (Math.abs(sc2 - dc2) >= 7) {
-    var f2 = tryFlip(workingData, 2, partIdx, dimFlipCount, adjustments, 'innate');
-    if (partIdx === 2 && f2) handleZhongtingTrigger(workingData, 'innate', 2, adjustments, dimFlipCount);
+    flipAndLink(workingData, 2, partIdx, dimFlipCount, adjustments, 'innate', dir);
   }
 }
 
 function runMgrRound(workingData, partIdx, adjustments, dimFlipCount) {
-  // 曲直（各自獨立判斷，不再有跨維度整輪跳過）
-  var f3 = tryFlip(workingData, 3, partIdx, dimFlipCount, adjustments, 'innate');
-  if (partIdx === 2 && f3) handleZhongtingTrigger(workingData, 'innate', 3, adjustments, dimFlipCount);
+  var dir = getPartNeedDirection(workingData, partIdx, 'innate');
+  if (!dir) return;
+  // 曲直
+  flipAndLink(workingData, 3, partIdx, dimFlipCount, adjustments, 'innate', dir);
   // 收放
-  var f4 = tryFlip(workingData, 4, partIdx, dimFlipCount, adjustments, 'innate');
-  if (partIdx === 2 && f4) handleZhongtingTrigger(workingData, 'innate', 4, adjustments, dimFlipCount);
+  flipAndLink(workingData, 4, partIdx, dimFlipCount, adjustments, 'innate', dir);
   // 緩急：8:1 或 9:0 才調
   var sc5 = countStaticInDim(workingData, 5), dc5 = 9 - sc5;
   if (Math.abs(sc5 - dc5) >= 7) {
-    var f5 = tryFlip(workingData, 5, partIdx, dimFlipCount, adjustments, 'innate');
-    if (partIdx === 2 && f5) handleZhongtingTrigger(workingData, 'innate', 5, adjustments, dimFlipCount);
+    flipAndLink(workingData, 5, partIdx, dimFlipCount, adjustments, 'innate', dir);
   }
 }
 
 function runLuckRound(workingData, partIdx, adjustments, dimFlipCount) {
-  // 順逆 → 分合 → 真假（三個一視同仁）
+  var dir = getPartNeedDirection(workingData, partIdx, 'luck');
+  if (!dir) return;
   DIMS_LUCK.forEach(function(di) {
-    var flipped = tryFlip(workingData, di, partIdx, dimFlipCount, adjustments, 'luck');
-    if (partIdx === 2 && flipped) handleZhongtingTrigger(workingData, 'luck', di, adjustments, dimFlipCount);
+    flipAndLink(workingData, di, partIdx, dimFlipCount, adjustments, 'luck', dir);
   });
 }
 
 function runAcquiredRound(workingData, partIdx, adjustments, dimFlipCount) {
-  // 攻守 → 奇正 → 虛實 → 進退（四個一視同仁）
+  var dir = getPartNeedDirection(workingData, partIdx, 'acquired');
+  if (!dir) return;
   DIMS_ACQUIRED.forEach(function(di) {
-    var flipped = tryFlip(workingData, di, partIdx, dimFlipCount, adjustments, 'acquired');
-    if (partIdx === 2 && flipped) handleZhongtingTrigger(workingData, 'acquired', di, adjustments, dimFlipCount);
+    flipAndLink(workingData, di, partIdx, dimFlipCount, adjustments, 'acquired', dir);
   });
 }
 
