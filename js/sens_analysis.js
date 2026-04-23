@@ -604,9 +604,13 @@ export function renderSensPage(){
   }
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
-  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
   html+='<span style="font-size:18px;font-weight:400;color:#8E4B50">先天係數分析</span>';
   html+='<span style="font-size:16px;font-weight:400;color:white;background:#8E4B50;padding:2px 12px;border-radius:6px">'+innateCoeffVal+'</span>';
+  if(simData){
+    html+='<span style="font-size:16px;color:var(--text-3)">\u2192</span>';
+    html+='<span style="font-size:16px;font-weight:400;color:white;background:#8E4B50;padding:2px 12px;border-radius:6px">'+simInnateCoeffVal+'</span>';
+  }
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
@@ -736,9 +740,13 @@ export function renderSensPage(){
   }
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
-  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
   html+='<span style="font-size:18px;font-weight:400;color:#4C6E78">運氣係數分析</span>';
   html+='<span style="font-size:16px;font-weight:400;color:white;background:#4C6E78;padding:2px 12px;border-radius:6px">'+luckCoeffVal+'</span>';
+  if(luckSimData){
+    html+='<span style="font-size:16px;color:var(--text-3)">\u2192</span>';
+    html+='<span style="font-size:16px;font-weight:400;color:white;background:#4C6E78;padding:2px 12px;border-radius:6px">'+luckSimCoeffVal+'</span>';
+  }
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
@@ -875,9 +883,13 @@ export function renderSensPage(){
   }
 
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
-  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
   html+='<span style="font-size:18px;font-weight:400;color:#7B7082">後天係數分析</span>';
   html+='<span style="font-size:16px;font-weight:400;color:white;background:#7B7082;padding:2px 12px;border-radius:6px">'+postCoeffVal+'</span>';
+  if(postSimData){
+    html+='<span style="font-size:16px;color:var(--text-3)">\u2192</span>';
+    html+='<span style="font-size:16px;font-weight:400;color:white;background:#7B7082;padding:2px 12px;border-radius:6px">'+postSimCoeffVal+'</span>';
+  }
   html+='</div>';
 
   html+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">';
@@ -948,7 +960,8 @@ export function renderSensPage(){
   html+='<div style="font-size:20px;font-weight:400;color:#ccc">'+lowSens.length+' <span style="font-size:13px;font-weight:400">/ '+allQs.length+'</span></div></div>';
   html+='</div>';
 
-  // --- 部位影響力排名 ---
+  // --- 部位影響力排名（隱藏 2026-04-23）---
+  /*
   html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)">部位影響力排名</div>';
   var partMax=partRank.length>0?partRank[0].total:1;
   partRank.forEach(function(p){
@@ -963,6 +976,7 @@ export function renderSensPage(){
     html+='</span>';
     html+='</div>';
   });
+  */
 
   // --- 關鍵觀察 — 按影響力排名順序展開 ---
   html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
