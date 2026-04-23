@@ -379,7 +379,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div class="nav-dropdown-btn" id="dd-manual-btn">手動輸入報告 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-manual" onclick="showManualPage()">手動輸入兵法報告</div>
-      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()" style="display:none">重要參數分析（舊）</div>
+      <div class="nav-dropdown-item" id="nav-manual-sens" onclick="showManualSensPage()" style="display:none !important">重要參數分析（舊）</div>
       <div class="nav-dropdown-item" id="nav-manual-sens-v2" onclick="showManualSensV2Page()">重要參數分析</div>
     </div>
   </div>
@@ -504,7 +504,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
           <h3>重要參數分析</h3>
           <p>老師邏輯診斷 + 翻轉建議</p>
         </div>
-        <div class="mode-btn is-tool" id="mode-card-manual-sens" onclick="showManualSensPage()" style="display:none">
+        <div class="mode-btn is-tool" id="mode-card-manual-sens" onclick="showManualSensPage()" style="display:none !important">
           <h3>重要參數分析（舊）</h3>
           <p>模擬部位變動的影響</p>
         </div>
