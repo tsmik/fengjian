@@ -33,7 +33,7 @@ export const OBS_GROUPS=[
 export const BETA_VISIBLE_DIMS=13;
 
 export function initBetaUI() {
-  if(BETA_VISIBLE_DIMS>=13){var _ms=document.getElementById('nav-manual-sens');if(_ms)_ms.style.display='';}
+  // 舊版 nav-manual-sens 已被 v2 取代，不再自動顯示
 }
 
 export const OBS_PARTS=[{name:'頭',groups:[0,1,2]},{name:'上停（額）',groups:[3]},{name:'耳',groups:[4]},{name:'眉',groups:[5,6,7]},{name:'眼',groups:[8]},{name:'鼻',groups:[9]},{name:'口',groups:[10,11]},{name:'顴骨',groups:[12]},{name:'人中',groups:[13]},{name:'地閣',groups:[14]},{name:'頤',groups:[15]}];
