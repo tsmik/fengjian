@@ -308,11 +308,43 @@ window.injectData = function(matrix) {
   console.log('injectData: 已注入 13×9 矩陣並儲存');
 };
 
+// 白名單檢查
+var ADMIN_UID = 'XT1Err9cmnNokgMQKUrGUj3ishG2';
+
+async function checkWhitelist(user) {
+  if (user.uid === ADMIN_UID) return true;
+  var email = (user.email || '').toLowerCase();
+  if (!email) return false;
+  try {
+    var snap = await db.collection('allowedUsers').doc(email).get();
+    return snap.exists;
+  } catch(e) {
+    console.log('白名單檢查失敗', e);
+    return false;
+  }
+}
+
+function showAccessDenied() {
+  document.body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px;font-family:\'Noto Sans TC\',sans-serif">' +
+    '<div style="font-size:22px;font-weight:400;color:#4A4540;margin-bottom:24px">帳號未通過授權</div>' +
+    '<button onclick="location.reload()" style="padding:10px 28px;border-radius:8px;border:1px solid #d4d4c8;background:white;color:#4A4540;font-size:15px;font-family:inherit;cursor:pointer">重新登入</button>' +
+    '</div>';
+}
+
 // Firebase Auth 狀態監聽
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     setCurrentUser(user);
     if (user.email) localStorage.setItem('last_login_email', user.email);
+
+    // 白名單檢查
+    var allowed = await checkWhitelist(user);
+    if (!allowed) {
+      await auth.signOut();
+      showAccessDenied();
+      return;
+    }
 
     // 儲存登入紀錄
     let loginHistory = [];
