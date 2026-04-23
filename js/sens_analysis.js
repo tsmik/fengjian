@@ -125,7 +125,7 @@ export function renderSensPage(){
   var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
   var LOW_THRESHOLD=0.0005;
   var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
-  var topN=Math.max(1,Math.ceil(nonZero.length*0.2));
+  var topN=Math.max(1,Math.ceil(nonZero.length*0.1));
   var HIGH_THRESHOLD=nonZero.length>0&&topN<nonZero.length?nonZero[topN-1].sensitivity:0;
 
   var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
@@ -1027,22 +1027,20 @@ export function renderSensPage(){
   // --- 關鍵觀察 — 按影響力排名順序展開 ---
   html+='<div style="font-size:16px;font-weight:400;color:var(--text);margin:24px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)">關鍵觀察 <span style="font-size:13px;font-weight:400;color:var(--active)">（'+highSens.length+'題）</span></div>';
 
+  html+='<div style="font-size:13px;color:var(--text-3);margin-bottom:12px;line-height:1.7">這裡列出各個面相部位中，每個部位最關鍵的觀察項目，這些項目如果變動，對總係數的提升或降低的影響將會最大。</div>';
+
   if(highSens.length===0){
     html+='<div style="padding:8px;font-size:14px;color:var(--text-3)">沒有高敏感度的題目</div>';
   }else{
     partRank.forEach(function(p){
       var items=highSens.filter(function(r){return r.part===p.part;});
-      if(items.length===0){
-        var allPartItems=sensResults.filter(function(r){return r.part===p.part;})
-          .sort(function(a,b){return b.sensitivity-a.sensitivity;});
-        if(allPartItems.length>0)items=[allPartItems[0]];
-      }
       if(items.length===0)return;
 
       var partInfo=partSens[p.part]||{highCount:0,count:0,dims:new Set()};
       html+='<div style="margin-bottom:14px">';
       html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">';
-      html+='<span style="font-size:15px;font-weight:400;color:var(--text)">'+p.part+'</span>';
+      var _displayPart=(p.part==='額')?'上停（額）':p.part;
+      html+='<span style="font-size:15px;font-weight:400;color:var(--text)">'+_displayPart+'</span>';
       html+='<span style="font-size:12px;color:var(--text-3)">'+partInfo.highCount+'關鍵 / '+partInfo.count+'題</span>';
       if(partInfo.dims&&partInfo.dims.size>0){
         html+='<span style="display:flex;gap:2px;flex-wrap:wrap">';
