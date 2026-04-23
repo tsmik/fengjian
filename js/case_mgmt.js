@@ -402,8 +402,8 @@ function buildExportFromData(name, gender, birthday, date, d){
       parts:parts,
       coeff:dimResult?dimResult.coeff.toFixed(2):null,
       type:dimResult?dimResult.type:null,
-      staticCount:dimResult?Math.min(dimResult.a,dimResult.b):0,
-      dynamicCount:dimResult?Math.max(dimResult.a,dimResult.b):0
+      staticCount:dimResult?(DIMS[di].aT==='靜'?dimResult.a:dimResult.b):0,
+      dynamicCount:dimResult?(DIMS[di].aT==='靜'?dimResult.b:dimResult.a):0
     };
   }
 
