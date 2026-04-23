@@ -34,6 +34,24 @@ export function renderSensPage(){
 
   setTimeout(function(){
 
+  // 完整度檢查工具
+  function _checkBlockComplete(dataArr, dimIndices){
+    var total=dimIndices.length*9;
+    var filled=0;
+    dimIndices.forEach(function(di){
+      for(var pi=0;pi<9;pi++){
+        if(dataArr[di][pi]==='A'||dataArr[di][pi]==='B') filled++;
+      }
+    });
+    return {complete:filled===total, filled:filled, total:total};
+  }
+  function _renderIncompleteMsg(blockLabel, chk){
+    return '<div style="margin-bottom:24px;padding:16px;background:white;border-radius:10px;border:1px solid var(--border)">'+
+      '<div style="font-size:14px;color:#E8B000;margin-bottom:6px">\u26A0 '+blockLabel+' 尚未填完（已填 '+chk.filled+'/'+chk.total+' 格）</div>'+
+      '<div style="font-size:13px;color:var(--text-3)">請先到「觀察題目」填完整所有題目，再回來此頁查看分析。</div>'+
+      '</div>';
+  }
+
   var origObs=JSON.parse(JSON.stringify(obsData));
   var origData=JSON.parse(JSON.stringify(data));
   var origOverride=JSON.parse(JSON.stringify(obsOverride));
@@ -603,6 +621,11 @@ export function renderSensPage(){
     return mt;
   }
 
+  // 先天完整度檢查
+  var _innateChk=_checkBlockComplete(data, [0,1,2,3,4,5]);
+  if(!_innateChk.complete){
+    html+=_renderIncompleteMsg('先天', _innateChk);
+  } else {
   html+='<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
   html+='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
   html+='<span style="font-size:18px;font-weight:400;color:#8E4B50">先天係數分析</span>';
@@ -648,6 +671,7 @@ export function renderSensPage(){
   html+=_innateAdviceList(innateTop5,innateTop5.length>0?innateTop5[0].score:1);
 
   html+='</div>'; // 關閉先天係數分析區塊
+  } // 關閉先天完整度檢查
 
   // 運氣區塊遮罩（測試版）
   if(BETA_VISIBLE_DIMS<9){
@@ -656,6 +680,13 @@ export function renderSensPage(){
     html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
+
+  // 運氣完整度檢查
+  var _luckChk=_checkBlockComplete(data, [6,7,8]);
+  if(!_luckChk.complete){
+    html+=_renderIncompleteMsg('運氣', _luckChk);
+  } else {
+
   // ===== 運氣係數分析區塊（矩陣版）=====
   var _luckMatrixDims=[6,7,8];
 
@@ -790,6 +821,7 @@ export function renderSensPage(){
   html+=_luckAdviceList(luckTop5,luckTop5.length>0?luckTop5[0].score:1);
 
   html+='</div>'; // 關閉運氣係數分析區塊
+  } // 關閉運氣完整度檢查
   } // 關閉運氣 BETA_VISIBLE_DIMS 判斷
 
   // 後天區塊遮罩（測試版）
@@ -799,6 +831,13 @@ export function renderSensPage(){
     html+='<div style="font-size:14px;color:#bbb">建置中</div>';
     html+='</div>';
   }else{
+
+  // 後天完整度檢查
+  var _postChk=_checkBlockComplete(data, [9,10,11,12]);
+  if(!_postChk.complete){
+    html+=_renderIncompleteMsg('後天', _postChk);
+  } else {
+
   // ===== 後天係數分析區塊（矩陣版）=====
   var _postMatrixDims=[9,10,11,12];
 
@@ -939,10 +978,17 @@ export function renderSensPage(){
   html+=_postAdviceList(postTop5,postTop5.length>0?postTop5[0].score:1);
 
   html+='</div>'; // 關閉後天係數分析區塊
+  } // 關閉後天完整度檢查
   } // 關閉後天 BETA_VISIBLE_DIMS 判斷
 
   // BETA 模式下隱藏基準統計和下方所有敏感度內容
   if(BETA_VISIBLE_DIMS>=13){
+
+  // 13 維度完整度檢查
+  var _allChk=_checkBlockComplete(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]);
+  if(!_allChk.complete){
+    html+=_renderIncompleteMsg('關鍵觀察', _allChk);
+  } else {
 
   // 分隔線
   html+='<div style="border-top:2px solid var(--border);margin:8px 0 20px"></div>';
@@ -1025,6 +1071,7 @@ export function renderSensPage(){
 
 
 
+  } // 關閉 13 維度完整度檢查
   } // 關閉 BETA_VISIBLE_DIMS>=13 判斷（基準統計和敏感度區段）
 
   el.innerHTML=html;
