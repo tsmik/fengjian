@@ -141,7 +141,7 @@ function findPriorityParts(dataArr, blockType) {
 
 // ===== 5. 維度調整演算法 =====
 
-function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, adjustments) {
+function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, adjustments, blockType) {
   if ((dimFlipCount[dimIdx] || 0) >= 2) return false;
 
   var val = workingData[dimIdx][partIdx];
@@ -152,9 +152,17 @@ function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, adjustments) {
   if (isReached(sc, dc)) return false;
 
   var currentIsStatic = isStaticValue(dimIdx, val);
-  // 只允許往均衡方向翻：部位必須在多數側
-  if (sc > dc && !currentIsStatic) return false; // 靜多→需翻靜為動，但此格是動
-  if (dc > sc && currentIsStatic) return false;   // 動多→需翻動為靜，但此格是靜
+
+  // 翻轉方向限制（依 blockType）
+  if (blockType === 'innate') {
+    // 先天：嚴格往均衡方向，部位必須在多數側
+    if (sc > dc && !currentIsStatic) return false; // 靜多→需翻靜為動，但此格是動
+    if (dc > sc && currentIsStatic) return false;   // 動多→需翻動為靜，但此格是靜
+  } else if (blockType === 'luck') {
+    // 運氣：嚴格只翻動為靜
+    if (currentIsStatic) return false; // 此格是靜 → 不能翻
+  }
+  // 後天：兩個方向都可翻，不做方向限制
 
   var newVal = val === 'A' ? 'B' : 'A';
   workingData[dimIdx][partIdx] = newVal;
@@ -163,51 +171,92 @@ function tryFlip(workingData, dimIdx, partIdx, dimFlipCount, adjustments) {
   return true;
 }
 
-function runBossRound(workingData, partIdx, adjustments, dimFlipCount) {
-  var sc0 = countStaticInDim(workingData, 0), dc0 = 9 - sc0;
-  var sc1 = countStaticInDim(workingData, 1), dc1 = 9 - sc1;
-  // 特例：形勢 AND 經緯 都達標 → 整輪跳過
-  if (isReached(sc0, dc0) && isReached(sc1, dc1)) return;
+// 中停連動規則：中停被翻轉時，連帶調整眉(5)/眼(6)/鼻(7) 之一
+function handleZhongtingTrigger(workingData, blockType, dimIndex, adjustments, dimFlipCount) {
+  var blockDims;
+  if (blockType === 'innate') blockDims = DIMS_INNATE;
+  else if (blockType === 'luck') blockDims = DIMS_LUCK;
+  else blockDims = DIMS_ACQUIRED;
 
-  // 形勢
-  tryFlip(workingData, 0, partIdx, dimFlipCount, adjustments);
+  // Step A：計算眉(5)、眼(6)、鼻(7) 在此指數所有維度的動靜總和
+  var stats = {};
+  [5, 6, 7].forEach(function(pi) {
+    var sc = 0, dc = 0;
+    blockDims.forEach(function(di) {
+      var val = workingData[di][pi];
+      if (val === 'A' || val === 'B') {
+        if (isStaticValue(di, val)) sc++;
+        else dc++;
+      }
+    });
+    stats[pi] = { static: sc, dynamic: dc };
+  });
+
+  // Step B：三個全部「靜 >= 動」→ 建議調顴
+  var allStaticDominant = [5, 6, 7].every(function(pi) {
+    return stats[pi].static >= stats[pi].dynamic;
+  });
+  if (allStaticDominant) {
+    adjustments.push({ type: 'guan_suggestion', blockType: blockType, dimIndex: dimIndex });
+    return;
+  }
+
+  // Step C：找差距最大的，平手依 鼻(7) > 眼(6) > 眉(5)
+  var candidates = [5, 6, 7].map(function(pi) {
+    return { partIndex: pi, diff: Math.abs(stats[pi].static - stats[pi].dynamic) };
+  });
+  candidates.sort(function(a, b) {
+    if (a.diff !== b.diff) return b.diff - a.diff;
+    return b.partIndex - a.partIndex;
+  });
+
+  // Step D：在中停被觸發的維度翻轉這個部位
+  tryFlip(workingData, dimIndex, candidates[0].partIndex, dimFlipCount, adjustments, blockType);
+}
+
+function runBossRound(workingData, partIdx, adjustments, dimFlipCount) {
+  // 形勢（各自獨立判斷，不再有跨維度整輪跳過）
+  var f0 = tryFlip(workingData, 0, partIdx, dimFlipCount, adjustments, 'innate');
+  if (partIdx === 2 && f0) handleZhongtingTrigger(workingData, 'innate', 0, adjustments, dimFlipCount);
   // 經緯
-  tryFlip(workingData, 1, partIdx, dimFlipCount, adjustments);
+  var f1 = tryFlip(workingData, 1, partIdx, dimFlipCount, adjustments, 'innate');
+  if (partIdx === 2 && f1) handleZhongtingTrigger(workingData, 'innate', 1, adjustments, dimFlipCount);
   // 方圓：8:1 或 9:0 才調
   var sc2 = countStaticInDim(workingData, 2), dc2 = 9 - sc2;
   if (Math.abs(sc2 - dc2) >= 7) {
-    tryFlip(workingData, 2, partIdx, dimFlipCount, adjustments);
+    var f2 = tryFlip(workingData, 2, partIdx, dimFlipCount, adjustments, 'innate');
+    if (partIdx === 2 && f2) handleZhongtingTrigger(workingData, 'innate', 2, adjustments, dimFlipCount);
   }
 }
 
 function runMgrRound(workingData, partIdx, adjustments, dimFlipCount) {
-  var sc3 = countStaticInDim(workingData, 3), dc3 = 9 - sc3;
-  var sc4 = countStaticInDim(workingData, 4), dc4 = 9 - sc4;
-  // 特例：曲直 AND 收放 都達標 → 整輪跳過
-  if (isReached(sc3, dc3) && isReached(sc4, dc4)) return;
-
-  // 曲直
-  tryFlip(workingData, 3, partIdx, dimFlipCount, adjustments);
+  // 曲直（各自獨立判斷，不再有跨維度整輪跳過）
+  var f3 = tryFlip(workingData, 3, partIdx, dimFlipCount, adjustments, 'innate');
+  if (partIdx === 2 && f3) handleZhongtingTrigger(workingData, 'innate', 3, adjustments, dimFlipCount);
   // 收放
-  tryFlip(workingData, 4, partIdx, dimFlipCount, adjustments);
+  var f4 = tryFlip(workingData, 4, partIdx, dimFlipCount, adjustments, 'innate');
+  if (partIdx === 2 && f4) handleZhongtingTrigger(workingData, 'innate', 4, adjustments, dimFlipCount);
   // 緩急：8:1 或 9:0 才調
   var sc5 = countStaticInDim(workingData, 5), dc5 = 9 - sc5;
   if (Math.abs(sc5 - dc5) >= 7) {
-    tryFlip(workingData, 5, partIdx, dimFlipCount, adjustments);
+    var f5 = tryFlip(workingData, 5, partIdx, dimFlipCount, adjustments, 'innate');
+    if (partIdx === 2 && f5) handleZhongtingTrigger(workingData, 'innate', 5, adjustments, dimFlipCount);
   }
 }
 
 function runLuckRound(workingData, partIdx, adjustments, dimFlipCount) {
-  // 順逆 → 真假 → 分合（三個一視同仁）
+  // 順逆 → 分合 → 真假（三個一視同仁）
   DIMS_LUCK.forEach(function(di) {
-    tryFlip(workingData, di, partIdx, dimFlipCount, adjustments);
+    var flipped = tryFlip(workingData, di, partIdx, dimFlipCount, adjustments, 'luck');
+    if (partIdx === 2 && flipped) handleZhongtingTrigger(workingData, 'luck', di, adjustments, dimFlipCount);
   });
 }
 
 function runAcquiredRound(workingData, partIdx, adjustments, dimFlipCount) {
   // 攻守 → 奇正 → 虛實 → 進退（四個一視同仁）
   DIMS_ACQUIRED.forEach(function(di) {
-    tryFlip(workingData, di, partIdx, dimFlipCount, adjustments);
+    var flipped = tryFlip(workingData, di, partIdx, dimFlipCount, adjustments, 'acquired');
+    if (partIdx === 2 && flipped) handleZhongtingTrigger(workingData, 'acquired', di, adjustments, dimFlipCount);
   });
 }
 
@@ -240,6 +289,7 @@ function calcAdjustments(dataArr, blockType) {
 function countByPart(adjustments, filterFn) {
   var counts = {};
   adjustments.forEach(function(adj) {
+    if (adj.type === 'guan_suggestion') return;
     if (filterFn && !filterFn(adj)) return;
     var name = PART_LABELS[adj.partIndex];
     counts[name] = (counts[name] || 0) + 1;
@@ -253,6 +303,7 @@ function countByPart(adjustments, filterFn) {
 function countByDim(adjustments, filterFn) {
   var counts = {};
   adjustments.forEach(function(adj) {
+    if (adj.type === 'guan_suggestion') return;
     if (filterFn && !filterFn(adj)) return;
     var name = DIMS[adj.dimIndex].dn;
     counts[name] = (counts[name] || 0) + 1;
@@ -351,7 +402,8 @@ function renderLegend(hasAdj) {
 }
 
 function renderSummary(adjustments, blockType) {
-  if (adjustments.length === 0) {
+  var actualFlips = adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; });
+  if (actualFlips.length === 0) {
     return '<div style="font-size:13px;color:var(--text-3);padding:8px 0">目前狀態已達均衡，無調整建議</div>';
   }
 
@@ -383,6 +435,13 @@ function renderSummary(adjustments, blockType) {
     h += '\u2022 ' + label + '：' + (topD[0] ? topD[0][0] + ' 調整最多' : '無') + '</div>';
   }
 
+  // 建議調顴
+  var hasGuan = adjustments.some(function(adj) { return adj.type === 'guan_suggestion'; });
+  if (hasGuan) {
+    h += '<div style="margin-top:6px;padding:6px 10px;background:#fff8e1;border-radius:5px;border:1px solid #ffe082;font-size:12px;color:#f57f17">';
+    h += '\u26A0 建議調顴（眉眼鼻靜多，無連動對象）</div>';
+  }
+
   h += '</div>';
   return h;
 }
@@ -412,9 +471,12 @@ function renderBlock(dataArr, blockType) {
   var adjustments = result.adjustments;
   var newData = result.newData;
 
-  // 建立翻轉集合
+  // 建立翻轉集合（排除 guan_suggestion）
   var flipSet = {};
-  adjustments.forEach(function(adj) { flipSet[adj.dimIndex + '_' + adj.partIndex] = true; });
+  adjustments.forEach(function(adj) {
+    if (adj.type === 'guan_suggestion') return;
+    flipSet[adj.dimIndex + '_' + adj.partIndex] = true;
+  });
 
   // 係數
   var origCoeff = avgCoeff(dataArr, dimIndices);
@@ -456,7 +518,8 @@ function renderBlock(dataArr, blockType) {
   h += '</div>';
 
   // 右矩陣
-  if (adjustments.length > 0) {
+  var actualFlipCount = adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; }).length;
+  if (actualFlipCount > 0) {
     var rightHdr = '<tr><td></td>';
     if (blockType === 'innate') {
       rightHdr += '<td colspan="6" style="text-align:center;padding:3px 4px;font-size:11px;font-weight:400;color:white;background:' + BLOCK_COLORS.boss + ';border-radius:3px">老闆 ' + origSub.boss + '\u2192' + newSub.boss + coeffArrow(origSub.boss, newSub.boss) + '</td>';
@@ -479,7 +542,7 @@ function renderBlock(dataArr, blockType) {
   }
 
   h += '</div>'; // 關閉雙矩陣容器
-  h += renderLegend(adjustments.length > 0);
+  h += renderLegend(actualFlipCount > 0);
   h += renderSummary(adjustments, blockType);
   h += '</div>'; // 關閉區塊容器
   return h;
