@@ -125,8 +125,9 @@ export function renderSensPage(){
   var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
   var LOW_THRESHOLD=0.0005;
   var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
-  var topN=Math.max(1,Math.ceil(nonZero.length*0.1));
-  var HIGH_THRESHOLD=nonZero.length>0&&topN<nonZero.length?nonZero[topN-1].sensitivity:0;
+  var TOP_N=10;
+  var topN=Math.min(TOP_N,nonZero.length);
+  var HIGH_THRESHOLD=nonZero.length>0&&topN<=nonZero.length?nonZero[topN-1].sensitivity:0;
 
   var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
   var midSens=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
@@ -138,7 +139,7 @@ export function renderSensPage(){
     if(!partSens[r.part])partSens[r.part]={total:0,count:0,highCount:0,dims:new Set()};
     partSens[r.part].total+=r.sensitivity;
     partSens[r.part].count++;
-    if(r.sensitivity>HIGH_THRESHOLD)partSens[r.part].highCount++;
+    if(r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD)partSens[r.part].highCount++;
     r.affectedDims.forEach(function(di){partSens[r.part].dims.add(di);});
   });
   var partRank=Object.keys(partSens).map(function(pn){
@@ -1052,8 +1053,7 @@ export function renderSensPage(){
       items.forEach(function(r){
         var isHigh=r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;
         html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:white;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;flex-wrap:wrap">';
-        html+='<span style="font-weight:400;color:var(--text-2);flex:1;font-size:14px">'+r.text+'</span>';
-        html+='<span style="font-size:12px;color:var(--text-3)">（'+r.curVal+'）</span>';
+        html+='<span style="font-weight:400;color:var(--text-2);flex:1;font-size:14px">'+r.text+'<span style="margin-left:8px">（'+r.curVal+'）</span></span>';
         html+=sensBar(r.sensitivity,globalMax);
         html+='<span style="font-size:12px;color:'+(isHigh?'var(--active)':'var(--text-3)')+';font-weight:400;min-width:44px;text-align:right">±'+r.sensitivity.toFixed(3)+'</span>';
         if(r.affectedDims.length>0){
