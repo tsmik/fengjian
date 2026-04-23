@@ -600,13 +600,15 @@ export function showReport(){
 
     // --- R20: 總係數 ---
     if(BETA_VISIBLE_DIMS>=13){
-      var dataColSpan=visiblePre*2+(showLuck?1+visibleLuck*2:0)+(showPost?1+visiblePost*2:0);
+      // bar 寬度：先天數據 + 先天動靜分析 + (部位 + 運氣數據 + 運氣動靜分析) + (部位 + 後天數據)
+      var dataColSpan = visiblePre*2
+                      + 3
+                      + (showLuck ? 1 + visibleLuck*2 + 3 : 0)
+                      + (showPost ? 1 + visiblePost*2 : 0);
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
       t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+vTotal+'</td>';
-      // fill remaining: pre analysis(3) + [luck analysis(3) if showLuck] + [post analysis(3) if showPost] + total(3) + rightmost(1)
-      t+='<td colspan="3" style="padding:2px 4px"></td>';
-      if(showLuck) t+='<td colspan="3" style="padding:2px 4px"></td>';
+      // bar 右緣到後天係數右緣後，剩下：後天動靜分析(3) + 總動靜分析(3) + 最右部位欄(1)
       if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
       t+='<td style="padding:2px 4px"></td>';
@@ -1171,7 +1173,10 @@ export function drawReportCanvas(srcData, opts){
 
   // --- R20: 總係數 ---
   if(showR20){
-    var totalCoeffW=preDataW+(showLuck?G+PART_W+G+luckDataW:0)+(showPost?G+PART_W+G+postDataW:0);
+    // bar 寬度：先天數據 + 先天動靜分析 + (gap + 部位 + gap + 運氣數據 + gap + 運氣動靜分析) + (gap + 部位 + gap + 後天數據)
+    var totalCoeffW = preDataW + G + preAnW
+                    + (showLuck ? G + PART_W + G + luckDataW + G + luckAnW : 0)
+                    + (showPost ? G + PART_W + G + postDataW : 0);
     rRect(xPreData,yR20,totalCoeffW,TOTAL_H,3,C_TOTAL);
     txtC('總係數 '+(isGroupOk(visibleDimIds)?vTotal:INC),xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,false);
   }
