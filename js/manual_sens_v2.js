@@ -317,34 +317,7 @@ function calcAdjustments(dataArr, blockType) {
   return { adjustments: adjustments, newData: workingData };
 }
 
-// ===== 7. 統計層 =====
-
-function countByPart(adjustments, filterFn) {
-  var counts = {};
-  adjustments.forEach(function(adj) {
-    if (adj.type === 'guan_suggestion') return;
-    if (filterFn && !filterFn(adj)) return;
-    var name = PART_LABELS[adj.partIndex];
-    counts[name] = (counts[name] || 0) + 1;
-  });
-  return Object.entries(counts).sort(function(a, b) {
-    if (b[1] !== a[1]) return b[1] - a[1];
-    return PART_LABELS.indexOf(a[0]) - PART_LABELS.indexOf(b[0]);
-  });
-}
-
-function countByDim(adjustments, filterFn) {
-  var counts = {};
-  adjustments.forEach(function(adj) {
-    if (adj.type === 'guan_suggestion') return;
-    if (filterFn && !filterFn(adj)) return;
-    var name = DIMS[adj.dimIndex].dn;
-    counts[name] = (counts[name] || 0) + 1;
-  });
-  return Object.entries(counts).sort(function(a, b) { return b[1] - a[1]; });
-}
-
-// ===== 8. 渲染層 =====
+// ===== 7. 渲染層 =====
 
 function _checkMark(di) {
   return '<span style="display:inline-block;width:16px;height:16px;background:' + _dimDeep[di] + ';border-radius:3px;line-height:16px;text-align:center;color:#fff;font-size:11px;font-weight:400">\u2713</span>';
@@ -434,48 +407,107 @@ function renderLegend(hasAdj) {
   return h;
 }
 
-function renderSummary(adjustments, blockType) {
+function renderSummary(adjustments, blockType, origSub, newSub) {
   var actualFlips = adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; });
-  if (actualFlips.length === 0) {
-    return '<div style="font-size:13px;color:var(--text-3);padding:8px 0">目前狀態已達均衡，無調整建議</div>';
-  }
-
-  var h = '<div style="font-size:13px;color:var(--text);padding:8px 0;line-height:2">';
-  var isBoss = function(adj) { return adj.dimIndex <= 2; };
-  var isMgr = function(adj) { return adj.dimIndex >= 3 && adj.dimIndex <= 5; };
-
-  if (blockType === 'innate') {
-    var topAll = countByPart(adjustments);
-    var topBoss = countByPart(adjustments, isBoss);
-    var topMgr = countByPart(adjustments, isMgr);
-    var dimBoss = countByDim(adjustments, isBoss);
-    var dimMgr = countByDim(adjustments, isMgr);
-
-    h += '<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-bottom:4px">整體：</div><div style="padding-left:12px">';
-    h += '\u2022 先天：' + (topAll[0] ? topAll[0][0] + ' 調整最多' : '無') + (topAll[1] ? '，其次 ' + topAll[1][0] : '') + '<br>';
-    h += '\u2022 老闆：' + (topBoss[0] ? topBoss[0][0] + ' 調整最多' : '無') + (topBoss[1] ? '，其次 ' + topBoss[1][0] : '') + '<br>';
-    h += '\u2022 主管：' + (topMgr[0] ? topMgr[0][0] + ' 調整最多' : '無') + (topMgr[1] ? '，其次 ' + topMgr[1][0] : '') + '</div>';
-    h += '<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-top:6px;margin-bottom:4px">維度：</div><div style="padding-left:12px">';
-    h += '\u2022 老闆：' + (dimBoss[0] ? dimBoss[0][0] + ' 調整最多' : '無') + '<br>';
-    h += '\u2022 主管：' + (dimMgr[0] ? dimMgr[0][0] + ' 調整最多' : '無') + '</div>';
-  } else {
-    var label = blockType === 'luck' ? '運氣' : '後天';
-    var topP = countByPart(adjustments);
-    var topD = countByDim(adjustments);
-    h += '<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-bottom:4px">整體：</div><div style="padding-left:12px">';
-    h += '\u2022 ' + label + '：' + (topP[0] ? topP[0][0] + ' 調整最多' : '無') + (topP[1] ? '，其次 ' + topP[1][0] : '') + '</div>';
-    h += '<div style="font-size:12px;font-weight:400;color:var(--text-2);margin-top:6px;margin-bottom:4px">維度：</div><div style="padding-left:12px">';
-    h += '\u2022 ' + label + '：' + (topD[0] ? topD[0][0] + ' 調整最多' : '無') + '</div>';
-  }
-
-  // 建議調顴
   var hasGuan = adjustments.some(function(adj) { return adj.type === 'guan_suggestion'; });
+  var label = blockType === 'innate' ? '先天' : (blockType === 'luck' ? '運氣' : '後天');
+
+  // 均衡狀態
+  if (actualFlips.length === 0) {
+    var html = '<div style="font-size:13px;color:var(--text);padding:8px 0;line-height:1.8">';
+    html += label + '係數接近均衡，若想進一步調整，可以往部位的細節思考。</div>';
+    if (hasGuan) {
+      html += '<div style="margin-top:6px;padding:6px 10px;background:#fff8e1;border-radius:5px;border:1px solid #ffe082;font-size:12px;color:#f57f17">';
+      html += '\u26A0 建議調顴（眉眼鼻靜多，無連動對象）</div>';
+    }
+    return html;
+  }
+
+  // 用「和」/「、」連接
+  function joinWithHe(arr) {
+    if (arr.length <= 1) return arr[0] || '';
+    if (arr.length === 2) return arr[0] + '和' + arr[1];
+    return arr.slice(0, -1).join('\u3001') + '和' + arr[arr.length - 1];
+  }
+
+  // Step 1：維度列表
+  var dimsToList = [];
+  if (blockType === 'innate') {
+    var bossCounts = {}, mgrCounts = {};
+    actualFlips.forEach(function(adj) {
+      if (adj.dimIndex <= 2) bossCounts[adj.dimIndex] = (bossCounts[adj.dimIndex] || 0) + 1;
+      else if (adj.dimIndex <= 5) mgrCounts[adj.dimIndex] = (mgrCounts[adj.dimIndex] || 0) + 1;
+    });
+    function topDim(counts) {
+      var entries = Object.entries(counts);
+      if (entries.length === 0) return null;
+      entries.sort(function(a, b) {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return parseInt(a[0]) - parseInt(b[0]);
+      });
+      return parseInt(entries[0][0]);
+    }
+    var bt = topDim(bossCounts), mt = topDim(mgrCounts);
+    if (bt !== null) dimsToList.push(DIMS[bt].dn);
+    if (mt !== null) dimsToList.push(DIMS[mt].dn);
+  } else {
+    var seen = {};
+    actualFlips.forEach(function(adj) {
+      if (!seen[adj.dimIndex]) { seen[adj.dimIndex] = true; dimsToList.push(DIMS[adj.dimIndex].dn); }
+    });
+  }
+
+  // Step 2：部位列表（依出現順序去重）
+  var partSeen = {};
+  var partsToList = [];
+  actualFlips.forEach(function(adj) {
+    if (!partSeen[adj.partIndex]) {
+      partSeen[adj.partIndex] = true;
+      partsToList.push(adj.partIndex);
+    }
+  });
+
+  // Step 3：每個部位的方向描述
+  function partDir(pi) {
+    var flips = actualFlips.filter(function(a) { return a.partIndex === pi; });
+    flips.sort(function(a, b) { return a.dimIndex - b.dimIndex; });
+    var dirs = flips.map(function(a) {
+      var fromL = a.from === 'A' ? DIMS[a.dimIndex].da : DIMS[a.dimIndex].db;
+      var toL = a.to === 'A' ? DIMS[a.dimIndex].da : DIMS[a.dimIndex].db;
+      return fromL + '往' + toL;
+    });
+    return PART_LABELS[pi] + '的' + dirs.join('\u3001');
+  }
+
+  // Step 4：子係數變動（僅先天）
+  function subChangeText() {
+    if (blockType !== 'innate' || !origSub || !newSub) return '';
+    var bO = parseFloat(origSub.boss), bN = parseFloat(newSub.boss);
+    var mO = parseFloat(origSub.mgr), mN = parseFloat(newSub.mgr);
+    var parts = [];
+    if (bN > bO + 0.001) parts.push('老闆指數提高，領導能量更均衡完整');
+    else if (bN < bO - 0.001) parts.push('老闆指數降低，領導能量略為收斂');
+    if (mN > mO + 0.001) parts.push('主管係數提高，管理更穩定完整');
+    else if (mN < mO - 0.001) parts.push('主管係數降低，管理張力略為收斂');
+    if (parts.length === 0) return '';
+    return parts.join('\uFF1B') + '\u3002';
+  }
+
+  // 組合
+  var partNames = partsToList.map(function(pi) { return PART_LABELS[pi]; });
+  var partDescs = partsToList.map(function(pi) { return partDir(pi); });
+
+  var text = '從' + joinWithHe(dimsToList) + '優先調整整體的' + label + '係數。';
+  text += '建議從' + joinWithHe(partNames) + '開始思考：';
+  text += partDescs.join('\uFF0C') + '\uFF0C這樣整體係數比較平衡。';
+  var sub = subChangeText();
+  if (sub) text += sub;
+
+  var h = '<div style="font-size:13px;color:var(--text);padding:8px 0;line-height:1.8">' + text + '</div>';
   if (hasGuan) {
     h += '<div style="margin-top:6px;padding:6px 10px;background:#fff8e1;border-radius:5px;border:1px solid #ffe082;font-size:12px;color:#f57f17">';
     h += '\u26A0 建議調顴（眉眼鼻靜多，無連動對象）</div>';
   }
-
-  h += '</div>';
   return h;
 }
 
@@ -520,14 +552,20 @@ function renderBlock(dataArr, blockType) {
     newSub[sg.key] = avgCoeff(newData, sg.dims);
   });
 
+  var actualFlipCount = adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; }).length;
+
   var minW = blockType === 'innate' ? '280' : '180';
   var h = '';
   h += '<div style="margin-bottom:24px;padding:16px;background:#f5f5f0;border-radius:10px;border:1px solid #d4d4c8">';
 
   // 標題
-  h += '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">';
+  h += '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
   h += '<span style="font-size:18px;font-weight:400;color:' + blockColor + '">' + blockLabel + '係數分析</span>';
   h += '<span style="font-size:16px;font-weight:400;color:white;background:' + blockColor + ';padding:2px 12px;border-radius:6px">' + origCoeff + '</span>';
+  if (actualFlipCount > 0) {
+    h += '<span style="font-size:16px;color:var(--text-3)">\u2192</span>';
+    h += '<span style="font-size:16px;font-weight:400;color:white;background:' + blockColor + ';padding:2px 12px;border-radius:6px">' + newCoeff + '</span>';
+  }
   h += '</div>';
 
   // 雙矩陣容器
@@ -551,7 +589,6 @@ function renderBlock(dataArr, blockType) {
   h += '</div>';
 
   // 右矩陣
-  var actualFlipCount = adjustments.filter(function(adj) { return adj.type !== 'guan_suggestion'; }).length;
   if (actualFlipCount > 0) {
     var rightHdr = '<tr><td></td>';
     if (blockType === 'innate') {
@@ -576,7 +613,7 @@ function renderBlock(dataArr, blockType) {
 
   h += '</div>'; // 關閉雙矩陣容器
   h += renderLegend(actualFlipCount > 0);
-  h += renderSummary(adjustments, blockType);
+  h += renderSummary(adjustments, blockType, origSub, newSub);
   h += '</div>'; // 關閉區塊容器
   return h;
 }
