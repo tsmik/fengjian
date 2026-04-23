@@ -30,7 +30,7 @@ export const OBS_GROUPS=[
 
 // 測試版模式：只顯示前 N 個維度（6=先天, 9=+運氣, 13=全部）
 // 網址加 ?dev=1 可看全部（開發用），正常網址依此數字控制
-export const BETA_VISIBLE_DIMS=(new URLSearchParams(window.location.search).get('dev')==='1')?13:7;
+export const BETA_VISIBLE_DIMS=13;
 
 export function initBetaUI() {
   if(BETA_VISIBLE_DIMS>=13){var _ms=document.getElementById('nav-manual-sens');if(_ms)_ms.style.display='';}
