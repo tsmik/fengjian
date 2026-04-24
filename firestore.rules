@@ -17,6 +17,11 @@ service cloud.firestore {
       }
     }
 
+    // mobileUsers 集合：手機版用，無 Auth，完全開放
+    match /mobileUsers/{name} {
+      allow read, write: if true;
+    }
+
     // analyses 集合：已登入使用者可寫
     match /analyses/{doc} {
       allow write: if request.auth != null;

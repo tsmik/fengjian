@@ -250,7 +250,7 @@ function save() {
   if (!userName) return;
   const btn = document.getElementById('save-btn');
   const payload = { dataJson: JSON.stringify(data), updatedAt: new Date().toISOString() };
-  db.collection('users').doc(userName).set(payload)
+  db.collection('mobileUsers').doc(userName).set(payload)
     .then(() => {
       if (btn) { btn.innerText = '已儲存 ✓'; btn.style.background = 'var(--static)'; setTimeout(() => { btn.innerText = '儲存'; btn.style.background = 'var(--dark)'; }, 2000); }
     })
@@ -358,7 +358,7 @@ function reportSave() {
   const btn = document.getElementById('report-save-btn');
   if (!userName) return;
   const payload = { dataJson: JSON.stringify(data), updatedAt: new Date().toISOString() };
-  db.collection('users').doc(userName).set(payload)
+  db.collection('mobileUsers').doc(userName).set(payload)
     .then(() => {
       btn.innerText = '已儲存 ✓';
       btn.style.color = 'var(--static)';
@@ -471,7 +471,7 @@ async function startApp() {
 
   // 每次都從雲端載入，確保資料是這個用戶的
   try {
-    const doc = await db.collection('users').doc(userName).get();
+    const doc = await db.collection('mobileUsers').doc(userName).get();
     if (doc.exists && doc.data().dataJson) {
       data = JSON.parse(doc.data().dataJson);
     } else if (doc.exists && doc.data().data) {
