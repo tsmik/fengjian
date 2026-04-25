@@ -130,11 +130,47 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="rules/all_questions.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const auth=firebase.auth();
+const ADMIN_UID='XT1Err9cmnNokgMQKUrGUj3ishG2';
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+function showLoginGate(message){
+  var mainContent=document.querySelectorAll('body > *:not(#auth-gate)');
+  mainContent.forEach(function(el){ if(el.id!=='auth-gate') el.style.display='none'; });
+  var gate=document.getElementById('auth-gate');
+  if(!gate){
+    gate=document.createElement('div');
+    gate.id='auth-gate';
+    gate.style.cssText='position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e8e4df;font-family:"Noto Sans TC",sans-serif;z-index:9999;padding:40px';
+    document.body.appendChild(gate);
+  }
+  gate.innerHTML='<div style="font-size:24px;font-weight:400;margin-bottom:24px">人相兵法 後台管理</div>'+
+    '<div style="font-size:15px;color:#a0a0a0;margin-bottom:32px">'+message+'</div>'+
+    '<button id="auth-btn" style="padding:12px 32px;border-radius:8px;border:1px solid #555;background:white;color:#1a1a1a;font-size:15px;font-family:inherit;cursor:pointer">'+
+    (auth.currentUser?'登出':'使用 Google 登入')+'</button>';
+  document.getElementById('auth-btn').onclick=function(){
+    if(auth.currentUser){
+      auth.signOut().then(function(){ location.reload(); });
+    } else {
+      var provider=new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(function(e){ alert('登入失敗：'+e.message); });
+    }
+  };
+}
+
+function hideLoginGate(){
+  var gate=document.getElementById('auth-gate');
+  if(gate) gate.remove();
+  var mainContent=document.querySelectorAll('body > *:not(#auth-gate)');
+  mainContent.forEach(function(el){ el.style.display=''; });
+}
+
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
 const DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
@@ -1777,7 +1813,7 @@ var LIUNIAN_DEFAULT_DATA={"男":[
 ]};
 
 // ==================== INIT ====================
-async function init(){
+async function loadAllData(){
   // Load rules
   try{
     var rdoc=await db.collection('settings').doc('rules').get();
@@ -1801,7 +1837,6 @@ async function init(){
     }
   }catch(e){console.log('[Questions] Firebase error',e);}
   if(Object.keys(questions).length===0){
-    // Fallback: use ALL_QUESTIONS_DEFAULT from all_questions.js
     if(typeof ALL_QUESTIONS_DEFAULT!=='undefined'){
       questions=JSON.parse(JSON.stringify(ALL_QUESTIONS_DEFAULT));
       console.log('[Questions] Local fallback (all_questions.js)');
@@ -1829,7 +1864,20 @@ async function init(){
   setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位，流年 '+(liunianData?liunianData['男'].length+liunianData['女'].length:0)+' 筆）');
 }
 
-init();
+showLoginGate('正在驗證身份...');
+
+auth.onAuthStateChanged(function(user){
+  if(!user){
+    showLoginGate('請先使用 Google 登入');
+    return;
+  }
+  if(user.uid !== ADMIN_UID){
+    showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
+    return;
+  }
+  hideLoginGate();
+  loadAllData();
+});
 </script>
 </body>
 </html>
