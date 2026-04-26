@@ -199,117 +199,164 @@ export function renderSensPage(){
   var mgrMinIdx=0;
   baseMgrCoeffs.forEach(function(c,i){if(c<baseMgrCoeffs[mgrMinIdx])mgrMinIdx=i;});
 
-  // 合併遍歷 allQs：先天整體最佳化（老闆＋主管同時計算）
-  var innateQResults=[];
+  // 貪婪累積選擇：5 輪 loop，每輪基於上一輪累積結果重新評估
+  var innateTop5=[];
+  var innateUsedIds={};
+  var innateCumObs=JSON.parse(JSON.stringify(origObs));
 
-  allQs.forEach(function(q){
-    var curVal=origObs[q.id]||'';
-    var bestTotal=0,bestBoss=0,bestMgr=0,bestOpt=null;
+  for(var _innRound=0;_innRound<5;_innRound++){
+    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+    recalcFromObs();
+    var roundCoeffs=[];
+    for(var _rc=0;_rc<13;_rc++){var _rcr=calcDim(data,_rc);roundCoeffs.push(_rcr?_rcr.coeff:0);}
+    // 本輪老闆基準（靜側達標分數 + 是否已達標）
+    var roundBossScores=[];
+    var roundBossReached=[];
+    BOSS_TARGETS.forEach(function(bt){
+      if(bt.target!==null){
+        var ss=_bossStaticScore(bt.di);
+        roundBossScores.push(ss);
+        roundBossReached.push(ss>=bt.target);
+      }else{
+        roundBossScores.push(roundCoeffs[bt.di]);
+        roundBossReached.push(false);
+      }
+    });
+    // 本輪主管基準
+    var roundMgrCoeffs=[];
+    MGR_DIMS.forEach(function(di){roundMgrCoeffs.push(roundCoeffs[di]);});
+    var roundMgrMinIdx=0;
+    roundMgrCoeffs.forEach(function(c,i){if(c<roundMgrCoeffs[roundMgrMinIdx])roundMgrMinIdx=i;});
 
-    q.opts.forEach(function(opt){
-      var v=typeof opt==='string'?opt:opt.v;
-      if(v===curVal)return;
-      setObsData(JSON.parse(JSON.stringify(origObs)));
-      obsData[q.id]=v;
-      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-      recalcFromObs();
+    var innateRoundBest=null;
+    var innateRoundBestScore=0;
 
-      // 老闆分數
-      var bScore=0;
-      BOSS_TARGETS.forEach(function(bt,idx){
-        if(baseBossReached[idx])return;
-        var improve;
-        if(bt.target!==null){
-          var newSS=_bossStaticScore(bt.di);
-          improve=newSS-baseBossScores[idx];
-          if(improve<=0)return;
-          if(newSS>bt.target)improve=Math.max(0,bt.target-baseBossScores[idx]);
-        }else{
-          var nr=calcDim(data, bt.di);var nc=nr?nr.coeff:0;
-          improve=nc-baseBossScores[idx];
-          if(improve<=0)return;
+    allQs.forEach(function(q){
+      if(innateUsedIds[q.id])return;
+      var curVal=innateCumObs[q.id]||'';
+      var bestTotal=0,bestBoss=0,bestMgr=0,bestOpt=null;
+
+      q.opts.forEach(function(opt){
+        var v=typeof opt==='string'?opt:opt.v;
+        if(v===curVal)return;
+        setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+        obsData[q.id]=v;
+        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+        recalcFromObs();
+
+        // 老闆分數
+        var bScore=0;
+        BOSS_TARGETS.forEach(function(bt,idx){
+          if(roundBossReached[idx])return;
+          var improve;
+          if(bt.target!==null){
+            var newSS=_bossStaticScore(bt.di);
+            improve=newSS-roundBossScores[idx];
+            if(improve<=0)return;
+            if(newSS>bt.target)improve=Math.max(0,bt.target-roundBossScores[idx]);
+          }else{
+            var nr=calcDim(data, bt.di);var nc=nr?nr.coeff:0;
+            improve=nc-roundBossScores[idx];
+            if(improve<=0)return;
+          }
+          bScore+=improve*bt.weight;
+        });
+
+        // 主管分數
+        var mImprovements=[];
+        MGR_DIMS.forEach(function(di,idx){
+          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+          mImprovements.push(Math.max(0,nc-roundMgrCoeffs[idx]));
+        });
+        var mAvg=mImprovements.reduce(function(s,v){return s+v;},0)/3;
+        var mWeak=mImprovements[roundMgrMinIdx];
+        var mScore=mAvg+mWeak*2;
+
+        // 跨維度連帶效應（相對於本輪起始狀態）
+        var innateCrossBonus=0;
+        [6,7,8,9,10,11,12].forEach(function(di){
+          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+          var improve=nc-roundCoeffs[di];
+          if(improve>0.001)innateCrossBonus+=improve;
+        });
+        var totalScore=bScore+mScore+innateCrossBonus*0.1;
+        if(totalScore>bestTotal){
+          bestTotal=totalScore;
+          bestBoss=bScore;
+          bestMgr=mScore;
+          bestOpt=v;
         }
-        bScore+=improve*bt.weight;
       });
 
-      // 主管分數
-      var mImprovements=[];
-      MGR_DIMS.forEach(function(di,idx){
-        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-        mImprovements.push(Math.max(0,nc-baseMgrCoeffs[idx]));
-      });
-      var mAvg=mImprovements.reduce(function(s,v){return s+v;},0)/3;
-      var mWeak=mImprovements[mgrMinIdx];
-      var mScore=mAvg+mWeak*2;
-
-      // 先天總分 + 跨維度連帶效應（運氣+後天的改善量作為 tiebreaker）
-      var innateCrossBonus=0;
-      [6,7,8,9,10,11,12].forEach(function(di){
-        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-        var improve=nc-baseCoeffs[di];
-        if(improve>0.001)innateCrossBonus+=improve;
-      });
-      var totalScore=bScore+mScore+innateCrossBonus*0.1;
-      if(totalScore>bestTotal){
-        bestTotal=totalScore;
-        bestBoss=bScore;
-        bestMgr=mScore;
-        bestOpt=v;
+      if(bestTotal>0 && bestTotal>innateRoundBestScore){
+        innateRoundBestScore=bestTotal;
+        innateRoundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bossScore:bestBoss,mgrScore:bestMgr,bestOpt:bestOpt,paired:q.paired};
       }
     });
 
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setData(JSON.parse(JSON.stringify(origData)));
+    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+    recalcFromObs();
 
-    if(bestTotal>0)innateQResults.push({
-      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
-      score:bestTotal,bossScore:bestBoss,mgrScore:bestMgr,bestOpt:bestOpt
-    });
-  });
+    if(!innateRoundBest)break;
 
-  // 還原
+    innateCumObs[innateRoundBest.id]=innateRoundBest.bestOpt;
+    if(innateRoundBest.paired){
+      innateCumObs[innateRoundBest.id+'_L']=innateRoundBest.bestOpt;
+      innateCumObs[innateRoundBest.id+'_R']=innateRoundBest.bestOpt;
+    }
+    innateUsedIds[innateRoundBest.id]=true;
+    innateTop5.push(innateRoundBest);
+  }
+
+  // 還原全域狀態
   setObsData(JSON.parse(JSON.stringify(origObs)));
   setObsOverride(JSON.parse(JSON.stringify(origOverride)));
   setData(JSON.parse(JSON.stringify(origData)));
   recalcFromObs();
 
-  innateQResults.sort(function(a,b){return b.score-a.score;});
-  var innateTop5=innateQResults.slice(0,5);
-
-  // ===== 模擬 Top5 全翻轉，計算調整後預估 =====
+  // ===== 模擬 Top5 全翻轉，並驗收：老闆 AND 主管都不下降 =====
   var simData=null, simCoeffs=[], simBossCoeffVal='', simMgrCoeffVal='', simInnateCoeffVal='';
-  var simFlips={}; // {di_pi: true} 標記哪些格子被翻轉
-  if(innateTop5.length>0){
+  var simFlips={};
+  var baseBossCoeffNum=parseFloat(avgCoeff(origData, [0,1,2]));
+  var baseMgrCoeffNum=parseFloat(avgCoeff(origData, [3,4,5]));
+  while(innateTop5.length>0){
     setObsData(JSON.parse(JSON.stringify(origObs)));
     innateTop5.forEach(function(r){
       obsData[r.id]=r.bestOpt;
-      allQs.forEach(function(q){
-        if(q.id===r.id && q.paired){
-          obsData[q.id+'_L']=r.bestOpt;
-          obsData[q.id+'_R']=r.bestOpt;
-        }
-      });
+      if(r.paired){
+        obsData[r.id+'_L']=r.bestOpt;
+        obsData[r.id+'_R']=r.bestOpt;
+      }
     });
     recalcFromObs();
-    simData=[];
-    for(var _sd=0;_sd<13;_sd++){simData.push(data[_sd].slice());}
-    simCoeffs=[];
-    for(var _sc=0;_sc<13;_sc++){var _r=calcDim(data, _sc);simCoeffs.push(_r?_r.coeff:0);}
-    simBossCoeffVal=avgCoeff(data, [0,1,2]);
-    simMgrCoeffVal=avgCoeff(data, [3,4,5]);
-    simInnateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
-    for(var _fd=0;_fd<6;_fd++){
-      for(var _fp=0;_fp<9;_fp++){
-        if(origData[_fd][_fp]!==simData[_fd][_fp]){
-          simFlips[_fd+'_'+_fp]=true;
+    var tryBossCoeff=parseFloat(avgCoeff(data, [0,1,2]));
+    var tryMgrCoeff=parseFloat(avgCoeff(data, [3,4,5]));
+    if(tryBossCoeff>=baseBossCoeffNum && tryMgrCoeff>=baseMgrCoeffNum && (tryBossCoeff>baseBossCoeffNum || tryMgrCoeff>baseMgrCoeffNum)){
+      // 通過：老闆和主管都不下降，且至少其中一個上升
+      simData=[];
+      for(var _sd=0;_sd<13;_sd++){simData.push(data[_sd].slice());}
+      simCoeffs=[];
+      for(var _sc=0;_sc<13;_sc++){var _r=calcDim(data, _sc);simCoeffs.push(_r?_r.coeff:0);}
+      simBossCoeffVal=tryBossCoeff.toFixed(2);
+      simMgrCoeffVal=tryMgrCoeff.toFixed(2);
+      simInnateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
+      for(var _fd=0;_fd<6;_fd++){
+        for(var _fp=0;_fp<9;_fp++){
+          if(origData[_fd][_fp]!==simData[_fd][_fp]){
+            simFlips[_fd+'_'+_fp]=true;
+          }
         }
       }
+      break;
+    }else{
+      innateTop5.pop();
     }
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-    setData(JSON.parse(JSON.stringify(origData)));
-    recalcFromObs();
   }
+  // 全域還原（無論通過與否）
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
 
   // ===== 運氣係數分析 =====
   var LUCK_DIMS=[6,7,8];
@@ -317,93 +364,118 @@ export function renderSensPage(){
   var luckCoeffVal=avgCoeff(data, LUCK_DIMS);
   var baseLuckCoeffNum=parseFloat(luckCoeffVal);
 
-  // 遍歷 allQs 計算運氣調整建議
-  var luckQResults=[];
-  allQs.forEach(function(q){
-    var curVal=origObs[q.id]||'';
-    var bestTotal=0,bestOpt=null;
+  // 貪婪累積選擇：5 輪 loop
+  var luckTop5=[];
+  var luckUsedIds={};
+  var luckCumObs=JSON.parse(JSON.stringify(origObs));
 
-    q.opts.forEach(function(opt){
-      var v=typeof opt==='string'?opt:opt.v;
-      if(v===curVal)return;
-      setObsData(JSON.parse(JSON.stringify(origObs)));
-      obsData[q.id]=v;
-      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-      recalcFromObs();
+  for(var _luRound=0;_luRound<5;_luRound++){
+    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+    recalcFromObs();
+    var roundLuckCoeffs=[];
+    for(var _lrc=0;_lrc<13;_lrc++){var _lrcr=calcDim(data,_lrc);roundLuckCoeffs.push(_lrcr?_lrcr.coeff:0);}
+    var roundBaseLuckCoeff=parseFloat(avgCoeff(data, LUCK_DIMS));
 
-      // 主分：群組大係數（方法B）提升量
-      var _lSumMin=0,_lSumMax=0;
-      LUCK_DIMS.forEach(function(di){
-        var nr=calcDim(data, di);if(nr){_lSumMin+=Math.min(nr.a,nr.b);_lSumMax+=Math.max(nr.a,nr.b);}
+    var luckRoundBest=null;
+    var luckRoundBestScore=0;
+
+    allQs.forEach(function(q){
+      if(luckUsedIds[q.id])return;
+      var curVal=luckCumObs[q.id]||'';
+      var bestTotal=0,bestOpt=null;
+
+      q.opts.forEach(function(opt){
+        var v=typeof opt==='string'?opt:opt.v;
+        if(v===curVal)return;
+        setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+        obsData[q.id]=v;
+        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+        recalcFromObs();
+
+        var _lSumMin=0,_lSumMax=0;
+        LUCK_DIMS.forEach(function(di){
+          var nr=calcDim(data, di);if(nr){_lSumMin+=Math.min(nr.a,nr.b);_lSumMax+=Math.max(nr.a,nr.b);}
+        });
+        var newLuckCoeff=_lSumMax>0?_lSumMin/_lSumMax:0;
+        var lMain=newLuckCoeff-roundBaseLuckCoeff;
+
+        // 跨維度連帶效應（相對於本輪起始狀態）
+        var crossBonus=0;
+        [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
+          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+          var improve=nc-roundLuckCoeffs[di];
+          if(improve>0.001)crossBonus+=improve;
+        });
+
+        if(lMain<=0)return;
+        var lScore=lMain+crossBonus*0.1;
+        if(lScore>bestTotal){
+          bestTotal=lScore;
+          bestOpt=v;
+        }
       });
-      var newLuckCoeff=_lSumMax>0?_lSumMin/_lSumMax:0;
-      var lMain=newLuckCoeff-baseLuckCoeffNum;
-      // 跨維度連帶效應：檢查其他 10 個維度的係數是否也提升
-      var crossBonus=0;
-      [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
-        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-        var improve=nc-baseCoeffs[di];
-        if(improve>0.001)crossBonus+=improve;
-      });
-      if(lMain<=0){/* 群組整體未改善，跳過 */}
-      else{
-      var lScore=lMain+crossBonus*0.1;
 
-      if(lScore>bestTotal){
-        bestTotal=lScore;
-        bestOpt=v;
+      if(bestTotal>0 && bestTotal>luckRoundBestScore){
+        luckRoundBestScore=bestTotal;
+        luckRoundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bestOpt:bestOpt,paired:q.paired};
       }
-      } // 關閉 lMain>0 的 else
     });
 
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setData(JSON.parse(JSON.stringify(origData)));
+    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+    recalcFromObs();
 
-    if(bestTotal>0)luckQResults.push({
-      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
-      score:bestTotal,bestOpt:bestOpt
-    });
-  });
+    if(!luckRoundBest)break;
 
-  // 還原
+    luckCumObs[luckRoundBest.id]=luckRoundBest.bestOpt;
+    if(luckRoundBest.paired){
+      luckCumObs[luckRoundBest.id+'_L']=luckRoundBest.bestOpt;
+      luckCumObs[luckRoundBest.id+'_R']=luckRoundBest.bestOpt;
+    }
+    luckUsedIds[luckRoundBest.id]=true;
+    luckTop5.push(luckRoundBest);
+  }
+
+  // 還原全域狀態
   setObsData(JSON.parse(JSON.stringify(origObs)));
   setObsOverride(JSON.parse(JSON.stringify(origOverride)));
   setData(JSON.parse(JSON.stringify(origData)));
   recalcFromObs();
 
-  luckQResults.sort(function(a,b){return b.score-a.score;});
-  var luckTop5=luckQResults.slice(0,5);
-
-  // 模擬運氣 Top5 全翻轉
+  // 模擬運氣 Top5 全翻轉，並驗收：若反而下降則從尾端回退
   var luckSimData=null, luckSimCoeffVal='';
   var luckSimFlips={};
-  if(luckTop5.length>0){
+  while(luckTop5.length>0){
     setObsData(JSON.parse(JSON.stringify(origObs)));
     luckTop5.forEach(function(r){
       obsData[r.id]=r.bestOpt;
-      allQs.forEach(function(q){
-        if(q.id===r.id && q.paired){
-          obsData[q.id+'_L']=r.bestOpt;
-          obsData[q.id+'_R']=r.bestOpt;
-        }
-      });
+      if(r.paired){
+        obsData[r.id+'_L']=r.bestOpt;
+        obsData[r.id+'_R']=r.bestOpt;
+      }
     });
     recalcFromObs();
-    luckSimData=[];
-    for(var _ld=0;_ld<13;_ld++){luckSimData.push(data[_ld].slice());}
-    luckSimCoeffVal=avgCoeff(data, LUCK_DIMS);
-    for(var _lfd=6;_lfd<9;_lfd++){
-      for(var _lfp=0;_lfp<9;_lfp++){
-        if(origData[_lfd][_lfp]!==luckSimData[_lfd][_lfp]){
-          luckSimFlips[_lfd+'_'+_lfp]=true;
+    var tryLuckCoeff=parseFloat(avgCoeff(data, LUCK_DIMS));
+    if(tryLuckCoeff>baseLuckCoeffNum){
+      luckSimData=[];
+      for(var _ld=0;_ld<13;_ld++){luckSimData.push(data[_ld].slice());}
+      luckSimCoeffVal=tryLuckCoeff.toFixed(2);
+      for(var _lfd=6;_lfd<9;_lfd++){
+        for(var _lfp=0;_lfp<9;_lfp++){
+          if(origData[_lfd][_lfp]!==luckSimData[_lfd][_lfp]){
+            luckSimFlips[_lfd+'_'+_lfp]=true;
+          }
         }
       }
+      break;
+    }else{
+      luckTop5.pop();
     }
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-    setData(JSON.parse(JSON.stringify(origData)));
-    recalcFromObs();
   }
+  // 全域還原（無論通過與否）
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
 
   // ===== 後天係數分析 =====
   var POST_DIMS=[9,10,11,12];
