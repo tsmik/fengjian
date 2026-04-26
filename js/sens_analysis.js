@@ -419,100 +419,135 @@ export function renderSensPage(){
     if(gap>postMaxGap){postMaxGap=gap;postMinIdx=i;}
   });
 
-  // 遍歷 allQs 計算後天調整建議
-  var postQResults=[];
-  allQs.forEach(function(q){
-    var curVal=origObs[q.id]||'';
-    var bestTotal=0,bestOpt=null;
+  // 貪婪累積選擇：5 輪 loop，每輪基於上一輪累積結果重新評估
+  var postTop5=[];
+  var postUsedIds={};
+  var postCumObs=JSON.parse(JSON.stringify(origObs));
 
-    q.opts.forEach(function(opt){
-      var v=typeof opt==='string'?opt:opt.v;
-      if(v===curVal)return;
-      setObsData(JSON.parse(JSON.stringify(origObs)));
-      obsData[q.id]=v;
-      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-      recalcFromObs();
+  for(var _round=0;_round<5;_round++){
+    setObsData(JSON.parse(JSON.stringify(postCumObs)));
+    recalcFromObs();
+    var roundBaseCoeffs=[];
+    for(var _rd=0;_rd<13;_rd++){var _rr=calcDim(data,_rd);roundBaseCoeffs.push(_rr?_rr.coeff:0);}
+    var roundBasePostCoeff=parseFloat(avgCoeff(data, POST_DIMS));
+    var roundBasePostCoeffs=[];
+    POST_DIMS.forEach(function(di){roundBasePostCoeffs.push(roundBaseCoeffs[di]);});
+    // 本輪短板（隨累積變化會更新）
+    var roundPostMinIdx=0;
+    var roundPostMaxGap=Math.abs(0.80-roundBasePostCoeffs[0]);
+    roundBasePostCoeffs.forEach(function(c,i){
+      var gap=Math.abs(0.80-c);
+      if(gap>roundPostMaxGap){roundPostMaxGap=gap;roundPostMinIdx=i;}
+    });
 
-      // 主分：群組大係數（方法B）的前後差值
-      var _pSumMin=0,_pSumMax=0;
-      POST_DIMS.forEach(function(di){
-        var nr=calcDim(data, di);if(nr){_pSumMin+=Math.min(nr.a,nr.b);_pSumMax+=Math.max(nr.a,nr.b);}
+    var roundBest=null;
+    var roundBestScore=0;
+
+    allQs.forEach(function(q){
+      if(postUsedIds[q.id])return;
+      var curVal=postCumObs[q.id]||'';
+      var bestTotal=0,bestOpt=null;
+
+      q.opts.forEach(function(opt){
+        var v=typeof opt==='string'?opt:opt.v;
+        if(v===curVal)return;
+        setObsData(JSON.parse(JSON.stringify(postCumObs)));
+        obsData[q.id]=v;
+        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+        recalcFromObs();
+
+        var _pSumMin=0,_pSumMax=0;
+        POST_DIMS.forEach(function(di){
+          var nr=calcDim(data, di);if(nr){_pSumMin+=Math.min(nr.a,nr.b);_pSumMax+=Math.max(nr.a,nr.b);}
+        });
+        var newPostCoeff=_pSumMax>0?_pSumMin/_pSumMax:0;
+        var pMain=newPostCoeff-roundBasePostCoeff;
+
+        // 短板加權（正負雙向）
+        var _pWeakNew=0;
+        var _pwr=calcDim(data, POST_DIMS[roundPostMinIdx]);
+        if(_pwr)_pWeakNew=_pwr.coeff;
+        var pWeakDelta=Math.abs(0.80-roundBasePostCoeffs[roundPostMinIdx])-Math.abs(0.80-_pWeakNew);
+        pMain+=pWeakDelta*0.5;
+
+        // 跨維度連帶效應（相對於本輪起始狀態）
+        var crossBonus=0;
+        [0,1,2,3,4,5,6,7,8].forEach(function(di){
+          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
+          var improve=nc-roundBaseCoeffs[di];
+          if(improve>0.001)crossBonus+=improve;
+        });
+
+        if(pMain<=0)return;
+        var pScore=pMain+crossBonus*0.1;
+        if(pScore>bestTotal){
+          bestTotal=pScore;
+          bestOpt=v;
+        }
       });
-      var newPostCoeff=_pSumMax>0?_pSumMin/_pSumMax:0;
-      var basePostCoeff=parseFloat(postCoeffVal);
-      var pMain=newPostCoeff-basePostCoeff;
-      // 短板 bonus：短板維度往 0.80 靠近的量
-      var _pWeakNew=0;
-      var _pwr=calcDim(data, POST_DIMS[postMinIdx]);
-      if(_pwr)_pWeakNew=_pwr.coeff;
-      var pWeakImprove=Math.abs(0.80-basePostCoeffs[postMinIdx])-Math.abs(0.80-_pWeakNew);
-      if(pWeakImprove>0)pMain+=pWeakImprove*0.5;
-      // 跨維度連帶效應
-      var crossBonus=0;
-      [0,1,2,3,4,5,6,7,8].forEach(function(di){
-        var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-        var improve=nc-baseCoeffs[di];
-        if(improve>0.001)crossBonus+=improve;
-      });
-      if(pMain<=0){/* 群組整體未改善，跳過 */}
-      else{
-      var pScore=pMain+crossBonus*0.1;
 
-      if(pScore>bestTotal){
-        bestTotal=pScore;
-        bestOpt=v;
+      if(bestTotal>0 && bestTotal>roundBestScore){
+        roundBestScore=bestTotal;
+        roundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bestOpt:bestOpt,paired:q.paired};
       }
-      } // 關閉 pMain>0 的 else
     });
 
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setData(JSON.parse(JSON.stringify(origData)));
+    setObsData(JSON.parse(JSON.stringify(postCumObs)));
+    recalcFromObs();
 
-    if(bestTotal>0)postQResults.push({
-      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',
-      score:bestTotal,bestOpt:bestOpt
-    });
-  });
+    if(!roundBest)break;
 
-  // 還原
+    postCumObs[roundBest.id]=roundBest.bestOpt;
+    if(roundBest.paired){
+      postCumObs[roundBest.id+'_L']=roundBest.bestOpt;
+      postCumObs[roundBest.id+'_R']=roundBest.bestOpt;
+    }
+    postUsedIds[roundBest.id]=true;
+    postTop5.push(roundBest);
+  }
+
+  // 還原全域狀態
   setObsData(JSON.parse(JSON.stringify(origObs)));
   setObsOverride(JSON.parse(JSON.stringify(origOverride)));
   setData(JSON.parse(JSON.stringify(origData)));
   recalcFromObs();
 
-  postQResults.sort(function(a,b){return b.score-a.score;});
-  var postTop5=postQResults.slice(0,5);
-
-  // 模擬後天 Top5 全翻轉
+  // 模擬後天 Top5 全翻轉，並驗收：若反而下降則從尾端回退
   var postSimData=null, postSimCoeffVal='';
   var postSimFlips={};
-  if(postTop5.length>0){
+  var basePostCoeffNum=parseFloat(postCoeffVal);
+  while(postTop5.length>0){
     setObsData(JSON.parse(JSON.stringify(origObs)));
     postTop5.forEach(function(r){
       obsData[r.id]=r.bestOpt;
-      allQs.forEach(function(q){
-        if(q.id===r.id && q.paired){
-          obsData[q.id+'_L']=r.bestOpt;
-          obsData[q.id+'_R']=r.bestOpt;
-        }
-      });
+      if(r.paired){
+        obsData[r.id+'_L']=r.bestOpt;
+        obsData[r.id+'_R']=r.bestOpt;
+      }
     });
     recalcFromObs();
-    postSimData=[];
-    for(var _pd=0;_pd<13;_pd++){postSimData.push(data[_pd].slice());}
-    postSimCoeffVal=avgCoeff(data, POST_DIMS);
-    for(var _pfd=9;_pfd<13;_pfd++){
-      for(var _pfp=0;_pfp<9;_pfp++){
-        if(origData[_pfd][_pfp]!==postSimData[_pfd][_pfp]){
-          postSimFlips[_pfd+'_'+_pfp]=true;
+    var trySimCoeff=parseFloat(avgCoeff(data, POST_DIMS));
+    if(trySimCoeff>basePostCoeffNum){
+      postSimData=[];
+      for(var _pd=0;_pd<13;_pd++){postSimData.push(data[_pd].slice());}
+      postSimCoeffVal=trySimCoeff.toFixed(2);
+      for(var _pfd=9;_pfd<13;_pfd++){
+        for(var _pfp=0;_pfp<9;_pfp++){
+          if(origData[_pfd][_pfp]!==postSimData[_pfd][_pfp]){
+            postSimFlips[_pfd+'_'+_pfp]=true;
+          }
         }
       }
+      break;
+    }else{
+      postTop5.pop();
     }
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-    setData(JSON.parse(JSON.stringify(origData)));
-    recalcFromObs();
   }
+  // 全域還原（無論通過與否）
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
 
   // 渲染輔助：先天建議列表（含老闆/主管標籤）
   function _innateAdviceList(items,maxScore){
