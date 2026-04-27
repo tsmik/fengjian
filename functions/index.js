@@ -589,3 +589,287 @@ exports.getRules = onRequest(
     res.send(md);
   },
 );
+
+// ==================== getStudentData ====================
+// D 類討論用：撈 admin 案例庫資料給 claude.ai
+// 對應前端 case_mgmt.js 的 exportAllCases()，回傳格式完全一致
+
+const ADMIN_UID = "XT1Err9cmnNokgMQKUrGUj3ishG2";
+const studentDataSecret = defineSecret("STUDENT_DATA_SECRET");
+
+const PARTS_LABELS = ["頭", "上停", "中停", "下停", "耳", "眉", "眼", "鼻", "口"];
+
+// 模擬 case_mgmt.js 的 buildExportFromData
+// 不依賴 core.js DIMS，而是用從 Firestore 讀來的 rules 重建
+function buildExportFromData(name, gender, birthday, date, d, rules) {
+  if (!d || !Array.isArray(d) || d.length !== 13) return null;
+  let hasAny = false;
+  for (let ci = 0; ci < 13 && !hasAny; ci++) {
+    for (let cj = 0; cj < 9 && !hasAny; cj++) {
+      if (d[ci][cj]) hasAny = true;
+    }
+  }
+  if (!hasAny) return null;
+
+  function cDim(i) {
+    const r = d[i];
+    const a = r.filter((v) => v === "A").length;
+    const b = r.filter((v) => v === "B").length;
+    if (a + b === 0) return null;
+    return {
+      a: a,
+      b: b,
+      coeff: Math.min(a, b) / Math.max(a, b),
+      type: a > b ? rules[i].positiveType : rules[i].negativeType,
+    };
+  }
+
+  function aCoeff(ids) {
+    let sumMin = 0;
+    let sumMax = 0;
+    ids.forEach((i) => {
+      const r = cDim(i);
+      if (r) {
+        sumMin += Math.min(r.a, r.b);
+        sumMax += Math.max(r.a, r.b);
+      }
+    });
+    return sumMax > 0 ? (sumMin / sumMax).toFixed(2) : "0.00";
+  }
+
+  const matrix = {};
+  for (let di = 0; di < 13; di++) {
+    const dimResult = cDim(di);
+    const parts = {};
+    for (let pi = 0; pi < 9; pi++) {
+      const v = d[di][pi];
+      if (v) {
+        const tp = v === "A" ? rules[di].positiveType : rules[di].negativeType;
+        const ch = v === "A" ? rules[di].positive : rules[di].negative;
+        parts[PARTS_LABELS[pi]] = ch + "(" + tp + ")";
+      } else {
+        parts[PARTS_LABELS[pi]] = null;
+      }
+    }
+    matrix[`${rules[di].positive}${rules[di].negative}`] = {
+      parts: parts,
+      coeff: dimResult ? dimResult.coeff.toFixed(2) : null,
+      type: dimResult ? dimResult.type : null,
+      staticCount: dimResult ? (rules[di].positiveType === "靜" ? dimResult.a : dimResult.b) : 0,
+      dynamicCount: dimResult ? (rules[di].positiveType === "靜" ? dimResult.b : dimResult.a) : 0,
+    };
+  }
+
+  return {
+    name: name || "未命名",
+    gender: gender || "",
+    birthday: birthday || "",
+    date: date || "",
+    coefficients: {
+      total: aCoeff([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+      innate: aCoeff([0, 1, 2, 3, 4, 5]),
+      luck: aCoeff([6, 7, 8]),
+      acquired: aCoeff([9, 10, 11, 12]),
+      boss: aCoeff([0, 1, 2]),
+      manager: aCoeff([3, 4, 5]),
+    },
+    matrix: matrix,
+    rawData: d,
+  };
+}
+
+function parseDataJson(jsonStr) {
+  if (!jsonStr) return null;
+  try {
+    const d = JSON.parse(jsonStr);
+    if (d && Array.isArray(d) && d.length === 13) return d;
+  } catch (e) {}
+  return null;
+}
+
+// 對一個 doc，收集 0-2 筆 export（manual + obs）
+// 注意：obs 部分簡化為「只有 dataJson 才算 obs」，不做 obsJson 重算
+function collectExports(docData, name, gender, birthday, date, caseId, isSelf, rules) {
+  const exports = [];
+
+  // 手動資料
+  const manualD = parseDataJson(docData.manualDataJson);
+  if (manualD) {
+    const ex = buildExportFromData(name, gender, birthday, date, manualD, rules);
+    if (ex) {
+      ex._dataSource = "manual";
+      if (isSelf) ex._source = "self";
+      if (caseId) ex._caseId = caseId;
+      exports.push(ex);
+    }
+  }
+
+  // 觀察資料（簡化：只用 dataJson，不重算 obsJson）
+  const obsD = parseDataJson(docData.dataJson);
+  if (obsD) {
+    const ex2 = buildExportFromData(name, gender, birthday, date, obsD, rules);
+    if (ex2) {
+      ex2._dataSource = "obs";
+      if (isSelf) ex2._source = "self";
+      if (caseId) ex2._caseId = caseId;
+      exports.push(ex2);
+    }
+  }
+
+  return exports;
+}
+
+exports.getStudentData = onRequest(
+  {
+    region: "us-central1",
+    invoker: "public",
+    cors: true,
+    secrets: [studentDataSecret],
+  },
+  async (req, res) => {
+    // 強制 CORS *（claude.ai web_fetch 不從 tsmik.github.io 發出）
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, X-API-Secret");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    try {
+      // 1. 驗 secret
+      const expectedSecret = studentDataSecret.value();
+      const providedSecret = req.query.secret || req.get("X-API-Secret");
+      if (!providedSecret || providedSecret !== expectedSecret) {
+        res.status(401).json({error: "unauthorized", message: "Invalid or missing secret"});
+        return;
+      }
+
+      // 2. 驗 source（v1 只支援 admin）
+      const source = req.query.source || "admin";
+      if (source !== "admin") {
+        res.status(400).json({
+          error: "unsupported_source",
+          message: "Only \"admin\" source supported in v1",
+          supported: ["admin"],
+        });
+        return;
+      }
+
+      // 3. 解析參數
+      const studentParam = req.query.student; // 學員姓名 / "all" / undefined
+      const listMode = req.query.list === "1";
+      const dataSourceFilter = req.query.dataSource; // "manual" / "obs" / undefined
+
+      const db = getFirestore();
+
+      // 4. 撈 rules（轉換邏輯需要）
+      const rulesDoc = await db.collection("settings").doc("rules").get();
+      if (!rulesDoc.exists || !rulesDoc.data().rulesJson) {
+        res.status(500).json({error: "rules_not_found", message: "Rules not in Firestore"});
+        return;
+      }
+      const rules = JSON.parse(rulesDoc.data().rulesJson);
+      if (!Array.isArray(rules) || rules.length !== 13) {
+        res.status(500).json({error: "invalid_rules", message: "Rules format invalid"});
+        return;
+      }
+
+      // 5. 撈 admin 自己的 doc + 所有 cases
+      const results = [];
+
+      // 5a. admin 本人資料
+      const selfDoc = await db.collection("users").doc(ADMIN_UID).get();
+      let adminName = "曾麥可"; // fallback
+      if (selfDoc.exists) {
+        const sd = selfDoc.data();
+        if (sd.displayName) adminName = sd.displayName;
+        const selfExports = collectExports(sd, adminName, sd.gender, sd.birthday, "", null, true, rules);
+        selfExports.forEach((e) => results.push(e));
+      }
+
+      // 5b. admin 底下所有案例
+      const snap = await db.collection("users").doc(ADMIN_UID).collection("cases").orderBy("createdAt", "desc").get();
+      snap.forEach((doc) => {
+        const c = doc.data();
+        const caseExports = collectExports(c, c.name, c.gender, c.birthday, c.date, doc.id, false, rules);
+        caseExports.forEach((e) => results.push(e));
+      });
+
+      if (results.length === 0) {
+        res.json({
+          error: "no_data",
+          message: "No exportable data in admin library",
+        });
+        return;
+      }
+
+      // 6. List 模式：只回姓名清單
+      if (listMode) {
+        const names = new Set();
+        results.forEach((r) => {
+          if (r.name) names.add(r.name);
+        });
+        res.json({
+          students: Array.from(names).sort(),
+          count: names.size,
+        });
+        return;
+      }
+
+      // 7. 過濾學員姓名
+      let filtered = results;
+      if (studentParam && studentParam !== "all") {
+        filtered = results.filter((r) => r.name === studentParam);
+        if (filtered.length === 0) {
+          const available = Array.from(new Set(results.map((r) => r.name))).sort();
+          res.json({
+            error: "student_not_found",
+            message: `Student "${studentParam}" not in admin library`,
+            available: available,
+          });
+          return;
+        }
+      }
+
+      // 8. 過濾 dataSource (manual/obs)
+      if (dataSourceFilter && (dataSourceFilter === "manual" || dataSourceFilter === "obs")) {
+        filtered = filtered.filter((r) => r._dataSource === dataSourceFilter);
+      }
+
+      // 9. 組裝 summary 表（仿 exportAllCases）
+      const caseMap = {};
+      filtered.forEach((r) => {
+        const key = r._caseId || "_self_";
+        if (!caseMap[key]) caseMap[key] = {name: r.name, manual: null, obs: null};
+        let dimCount = 0;
+        for (const dn in r.matrix) {
+          if (r.matrix[dn].type !== null) dimCount++;
+        }
+        const status = dimCount === 13 ? "✅ 完整" : "⚠️ " + dimCount + "/13 維度";
+        if (r._dataSource === "manual") caseMap[key].manual = status;
+        else caseMap[key].obs = status;
+      });
+      const summaryLines = ["| 案例 | 手動 | 觀察 |", "|------|------|------|"];
+      for (const sk in caseMap) {
+        const s = caseMap[sk];
+        summaryLines.push("| " + s.name + " | " + (s.manual || "—") + " | " + (s.obs || "—") + " |");
+      }
+
+      // 10. 回傳（格式跟 case_mgmt.js exportAllCases 一致）
+      res.json({
+        exportedAt: new Date().toISOString(),
+        exportedBy: adminName,
+        totalCases: filtered.length,
+        summary: summaryLines.join("\n"),
+        instruction: "收到此檔案時，請先顯示上方 summary 的案例總表，等使用者指定要分析哪個案例、用手動還是觀察資料，再開始分析。",
+        note: "同一案例可能有兩筆（manual=手動輸入, obs=觀察題），以 _dataSource 區分",
+        cases: filtered,
+      });
+    } catch (err) {
+      logger.error("getStudentData error", {error: err.message, stack: err.stack});
+      res.status(500).json({error: "internal_error", message: err.message});
+    }
+  },
+);
