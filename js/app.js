@@ -400,8 +400,8 @@ function showAccessDenied() {
 
 // Firebase Auth 狀態監聽
 auth.onAuthStateChanged(async (user) => {
-  // 老師模式跳過 Firebase Auth 流程
-  if (window.isTeacherMode) return;
+  // 老師模式跳過 Firebase Auth 流程（直接讀 URL 參數，不依賴 window.isTeacherMode 設定時序）
+  if (new URLSearchParams(window.location.search).get('role') === 'teacher') return;
 
   if (user) {
     setCurrentUser(user);
