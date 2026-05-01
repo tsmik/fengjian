@@ -360,6 +360,22 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   <script>if(new URLSearchParams(window.location.search).get('dev')!=='1')document.getElementById('api-key-row-container').style.display='none';</script>
   <div class="entry-deco">2026</div>
 </div>
+
+<!-- 老師通道登入畫面 -->
+<div id="teacher-login-page" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:40px;font-family:'Noto Sans TC',sans-serif">
+  <div style="text-align:center;margin-bottom:40px">
+    <div style="font-size:24px;font-weight:400;color:var(--text);letter-spacing:4px;margin-bottom:8px">風鑑學堂 人相兵法</div>
+    <div style="font-size:14px;color:var(--text-3);letter-spacing:2px">專屬通道</div>
+  </div>
+  <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:32px;width:100%;max-width:360px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+    <div style="font-size:14px;color:var(--text-2);margin-bottom:8px">請輸入密碼</div>
+    <input type="password" id="teacher-pwd" autocomplete="off" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;background:#faf8f4;outline:none" onfocus="this.style.borderColor='var(--active)'" onblur="this.style.borderColor='var(--border)'">
+    <div id="teacher-pwd-error" style="display:none;color:var(--accent);font-size:13px;margin-top:8px">密碼錯誤</div>
+    <button onclick="checkTeacherPassword()" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:8px;background:var(--nav);color:white;font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:2px">進 入</button>
+  </div>
+</div>
+<!-- 老師通道登入畫面結束 -->
+
 <div id="toast-notify" style="position:fixed;top:20px;right:20px;background:#7A9E7E;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:400;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none"></div>
 
 <!-- Top Nav Bar -->
