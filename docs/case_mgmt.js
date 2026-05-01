@@ -292,12 +292,6 @@ export function deleteCase(caseId,caseName){
 
 export function doLogout(){
   if(!confirm('確定要登出嗎？'))return;
-  // 老師模式：清除 localStorage 的密碼驗證紀錄
-  if(window.isTeacherMode){
-    localStorage.removeItem('teacher_verified_pwd');
-    location.reload();
-    return;
-  }
   auth.signOut().then(function(){
     setCurrentUser(null);
     setUserName('');
