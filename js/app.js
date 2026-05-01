@@ -357,7 +357,7 @@ function initTeacherSession(account) {
 }
 
 if (window.isTeacherMode) {
-  window.addEventListener('DOMContentLoaded', function() {
+  function _initTeacherEntry() {
     const savedPwd = localStorage.getItem('teacher_verified_pwd');
     const savedAccount = TEACHER_PASSWORDS[savedPwd];
     if (savedAccount) {
@@ -365,7 +365,12 @@ if (window.isTeacherMode) {
     } else {
       showTeacherLoginPage();
     }
-  });
+  }
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', _initTeacherEntry);
+  } else {
+    _initTeacherEntry();
+  }
 }
 // ============ 老師通道結束 ============
 
