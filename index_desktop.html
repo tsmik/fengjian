@@ -381,8 +381,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- Top Nav Bar -->
 <nav id="top-nav">
   <div class="nav-brand" onclick="showModePage()">風鑑學堂 人相兵法</div>
+  <div class="nav-tab" onclick="showModePage()" style="cursor:pointer">回首頁</div>
   <div class="nav-dropdown" id="dd-obs">
-    <div class="nav-dropdown-btn" id="dd-obs-btn">觀察面相評分 ▾</div>
+    <div class="nav-dropdown-btn" id="dd-obs-btn">觀察部位評分 ▾</div>
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-obs" onclick="showObsPage()">一次輸入各部位觀察</div>
       <div class="nav-dropdown-item" id="nav-cond" onclick="showCondPage()">13維度輸入觀察</div>
@@ -404,13 +405,12 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div class="nav-dropdown-menu">
       <div class="nav-dropdown-item" id="nav-profile" onmousedown="event.preventDefault();editName()">使用者資料</div>
       <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
-      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:4px 0"></div>
-      <div class="nav-dropdown-item" onmousedown="event.preventDefault();doLogout()" style="color:rgba(255,255,255,0.4)">登出</div>
     </div>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-name" id="nav-name"></div>
   <a href="admin.html" target="_blank" id="admin-link" style="display:none;color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
+  <div class="nav-tab" onclick="doLogout()" style="cursor:pointer;color:rgba(255,255,255,0.45)">登出</div>
 </nav>
 
 <!-- Case Management Page (TA only) -->
