@@ -13,8 +13,6 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 #top-bar .status{font-size:12px;font-weight:400;color:rgba(255,255,255,0.5);margin-left:auto}
 #top-bar button{height:32px;padding:0 16px;border:none;border-radius:4px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .btn-save{background:var(--static);color:white}
-.btn-save-draft{background:white;color:var(--text-2);border:1px solid var(--border) !important}
-.btn-save-draft:hover{background:var(--bg)}
 .btn-load{background:var(--dynamic);color:white}
 #tab-bar{display:flex;gap:0;background:var(--sidebar);border-bottom:1px solid var(--border)}
 .tab-btn{padding:10px 20px;cursor:pointer;font-size:14px;font-weight:400;color:var(--text-3);border-bottom:2px solid transparent;font-family:'Noto Sans TC',sans-serif}
@@ -112,7 +110,6 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 <div id="top-bar">
   <span>風鑑學堂 管理介面</span>
   <button class="btn-save" id="btn-save" onclick="saveAll()">儲存到 Firebase</button>
-  <button class="btn-save-draft" id="btn-save-draft" onclick="saveAsDraft()" title="另存目前 Tab 的修改為草稿，學員不會看到，可用 ?preview=1 預覽">另存為草稿</button>
   <button class="btn-undo" id="btn-undo" onclick="undo()" disabled>復原</button>
   <span class="status" id="status">載入中...</span>
 </div>
@@ -1492,55 +1489,6 @@ function saveAll(){
     btn.disabled=false;btn.style.opacity='1';
   });
 }
-function saveRulesAsDraft(){
-  // 清理規則裡的 null items（與 saveAll 一致）
-  function cleanNulls(node){
-    if(!node)return;
-    if(node.items){node.items=node.items.filter(function(it){return it!==null;});node.items.forEach(cleanNulls);}
-    if(node.each)cleanNulls(node.each);
-    if(node.rule)cleanNulls(node.rule);
-    if(node.item)cleanNulls(node.item);
-    if(node.veto)node.veto.forEach(function(v){if(v.condition)cleanNulls(v.condition);});
-    if(node.parts){Object.keys(node.parts).forEach(function(k){cleanNulls(node.parts[k]);});}
-  }
-  rules.forEach(function(dim){if(dim.parts){Object.keys(dim.parts).forEach(function(k){cleanNulls(dim.parts[k]);});}});
-  var btn=document.getElementById('btn-save-draft');
-  if(btn){btn.disabled=true;btn.style.opacity='0.6';}
-  setStatus('儲存草稿中...');
-  var ts=new Date().toISOString();
-  return db.collection('settings').doc('rules_draft').set({rulesJson:JSON.stringify(rules),updatedAt:ts}).then(function(){
-    showToast('✓ 規則已儲存為草稿。在新分頁打開 ?preview=1 預覽',true);
-    setStatus('草稿已儲存');
-  }).catch(function(e){
-    showToast('草稿儲存失敗：'+e.message,false);
-    setStatus('草稿儲存失敗');
-  }).finally(function(){
-    if(btn){btn.disabled=false;btn.style.opacity='1';}
-  });
-}
-
-function saveQuestionsAsDraft(){
-  var btn=document.getElementById('btn-save-draft');
-  if(btn){btn.disabled=true;btn.style.opacity='0.6';}
-  setStatus('儲存草稿中...');
-  var ts=new Date().toISOString();
-  return db.collection('settings').doc('questions_draft').set({questionsJson:JSON.stringify(questions),updatedAt:ts}).then(function(){
-    showToast('✓ 問題已儲存為草稿。在新分頁打開 ?preview=1 預覽',true);
-    setStatus('草稿已儲存');
-  }).catch(function(e){
-    showToast('草稿儲存失敗：'+e.message,false);
-    setStatus('草稿儲存失敗');
-  }).finally(function(){
-    if(btn){btn.disabled=false;btn.style.opacity='1';}
-  });
-}
-
-function saveAsDraft(){
-  if(activeTab==='rules'){saveRulesAsDraft();}
-  else if(activeTab==='questions'){saveQuestionsAsDraft();}
-  else{showToast('流年表不支援草稿模式',false);}
-}
-
 // Keyboard shortcuts
 document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}
@@ -1910,22 +1858,6 @@ async function loadAllData(){
     db.collection('settings').doc('liunian').set({liunianJson:JSON.stringify(liunianData),updatedAt:new Date().toISOString()}).catch(function(){});
   }
   _liunianSnapshot=JSON.stringify(liunianData);
-
-  // 自動初始化草稿（首次執行：複製正式版內容到 _draft）
-  try{
-    var rdraft=await db.collection('settings').doc('rules_draft').get();
-    if(!rdraft.exists){
-      await db.collection('settings').doc('rules_draft').set({rulesJson:JSON.stringify(rules),updatedAt:new Date().toISOString()});
-      console.log('[Rules Draft] 已初始化');
-    }
-  }catch(e){console.log('[Rules Draft] 初始化失敗',e);}
-  try{
-    var qdraft=await db.collection('settings').doc('questions_draft').get();
-    if(!qdraft.exists){
-      await db.collection('settings').doc('questions_draft').set({questionsJson:JSON.stringify(questions),updatedAt:new Date().toISOString()});
-      console.log('[Questions Draft] 已初始化');
-    }
-  }catch(e){console.log('[Questions Draft] 初始化失敗',e);}
 
   renderAll();
   takeSnapshot();

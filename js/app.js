@@ -93,15 +93,10 @@ async function googleLogin() {
 }
 
 async function initAfterLogin() {
-  const _isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
-  const _rulesDocId = _isPreview ? 'rules_draft' : 'rules';
-  const _questionsDocId = _isPreview ? 'questions_draft' : 'questions';
-  if (_isPreview) console.log('[預覽模式] 讀取草稿版本 rules_draft / questions_draft');
-
   /* ===== Step 1: 從 Firebase 載入規則 ===== */
   var _rulesLoaded = false;
   try{
-    const rulesDoc=await db.collection('settings').doc(_rulesDocId).get();
+    const rulesDoc=await db.collection('settings').doc('rules').get();
     if(rulesDoc.exists&&rulesDoc.data().rulesJson){
       try{
         const parsed=JSON.parse(rulesDoc.data().rulesJson);
@@ -134,7 +129,7 @@ async function initAfterLogin() {
   /* ===== Step 1.5: 從 Firebase 載入觀察問題 ===== */
   var _questionsLoaded = false;
   try{
-    const qDoc=await db.collection('settings').doc(_questionsDocId).get();
+    const qDoc=await db.collection('settings').doc('questions').get();
     if(qDoc.exists&&qDoc.data().questionsJson){
       try{
         const parsed=JSON.parse(qDoc.data().questionsJson);
@@ -201,9 +196,9 @@ async function initAfterLogin() {
     showModePage();
   }
 
-  // 監聽規則和問題變更（onSnapshot）— 預覽模式下監聽 _draft 版本
+  // 監聽規則和問題變更（onSnapshot）
   var _snapshotFirst={rules:true,questions:true};
-  db.collection('settings').doc(_rulesDocId).onSnapshot(function(doc){
+  db.collection('settings').doc('rules').onSnapshot(function(doc){
     if(_snapshotFirst.rules){_snapshotFirst.rules=false;return;}
     if(doc.exists&&doc.data().rulesJson){
       try{
@@ -216,7 +211,7 @@ async function initAfterLogin() {
       }catch(e){console.log('規則更新解析失敗',e);}
     }
   });
-  db.collection('settings').doc(_questionsDocId).onSnapshot(function(doc){
+  db.collection('settings').doc('questions').onSnapshot(function(doc){
     if(_snapshotFirst.questions){_snapshotFirst.questions=false;return;}
     if(doc.exists&&doc.data().questionsJson){
       try{
@@ -320,21 +315,6 @@ const TEACHER_PASSWORDS = {
 };
 
 window.isTeacherMode = (new URLSearchParams(window.location.search).get('role') === 'teacher');
-
-// ============ 預覽模式（?preview=1，讀取 _draft 版本） ============
-(function showPreviewBadgeIfNeeded(){
-  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
-  if (!isPreview) return;
-  function applyBadge(){
-    const badge = document.getElementById('preview-mode-badge');
-    if (badge) badge.style.display = 'inline-block';
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyBadge);
-  } else {
-    applyBadge();
-  }
-})();
 
 window.checkTeacherPassword = function() {
   const pwd = document.getElementById('teacher-pwd').value;
