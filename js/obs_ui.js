@@ -73,7 +73,8 @@ export function renderObsCenter(){
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
-      html+='<div class="obs-q-card"><div class="obs-q-top"><span class="obs-q-num2">'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+((valL||valR)?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+((valL||valR)?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
+      const isUnanswered=(val===undefined && valL===undefined && valR===undefined);
+      html+='<div class="obs-q-card'+(isUnanswered?' unanswered':'')+'"><div class="obs-q-top"><span class="obs-q-num2">'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+((valL||valR)?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+((valL||valR)?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
         const hint=(typeof opt==='object'&&opt.hint)?opt.hint:'';
