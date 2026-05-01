@@ -446,9 +446,9 @@ export function cpRenderMain(){
     html+='<div style="display:flex;flex-direction:column">';
     groups.forEach(function(g){
       if(g.label){
-        // group 摺疊顯示
-        var groupOk=g.items.filter(function(i){return i.ok;}).length;
-        var groupTotal=g.items.length;
+        // group 摺疊顯示（讀 wt 權重，例：h4 weight:2 → 計 2 分）
+        var groupOk=g.items.reduce(function(s,i){return s+(i.ok?(i.wt||1):0);},0);
+        var groupTotal=g.items.reduce(function(s,i){return s+(i.wt||1);},0);
         var allOk=groupOk===groupTotal;
         var groupId='grp_'+cpCur+'_'+pi+'_'+g.label.replace(/\s/g,'');
         var isGrpExp=!!_cpGroupExpanded[groupId];
@@ -658,8 +658,9 @@ export function renderDimCondMain(){
 
     dGroups.forEach(function(g){
       if(g.label){
-        var gOk=g.items.filter(function(i){return i.ok;}).length;
-        var gTot=g.items.length;
+        // 讀 wt 權重（例：h4 weight:2 → 計 2 分）
+        var gOk=g.items.reduce(function(s,i){return s+(i.ok?(i.wt||1):0);},0);
+        var gTot=g.items.reduce(function(s,i){return s+(i.wt||1);},0);
         var allOk=gOk===gTot;
         var gColor=allOk?'var(--static)':'var(--text-3)';
         html+='<div style="font-size:13px;font-weight:400;color:'+gColor+';padding:4px 0 2px;margin-top:4px;border-bottom:1px solid var(--border)">'+
