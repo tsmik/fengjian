@@ -308,6 +308,67 @@ window.injectData = function(matrix) {
   console.log('injectData: 已注入 13×9 矩陣並儲存');
 };
 
+// ============ 老師通道（URL ?role=teacher） ============
+const TEACHER_PASSWORDS = {
+  'fj2026':   { uid: 'teacher-shared',  name: '老師' },
+  'fj202602': { uid: 'teacher2-shared', name: '師母' }
+};
+
+window.isTeacherMode = (new URLSearchParams(window.location.search).get('role') === 'teacher');
+
+window.checkTeacherPassword = function() {
+  const pwd = document.getElementById('teacher-pwd').value;
+  const account = TEACHER_PASSWORDS[pwd];
+  if (account) {
+    localStorage.setItem('teacher_verified_pwd', pwd);
+    document.getElementById('teacher-login-page').style.display = 'none';
+    initTeacherSession(account);
+  } else {
+    document.getElementById('teacher-pwd-error').style.display = 'block';
+    document.getElementById('teacher-pwd').value = '';
+  }
+};
+
+function showTeacherLoginPage() {
+  document.getElementById('entry-page').style.display = 'none';
+  document.getElementById('teacher-login-page').style.display = 'flex';
+  setTimeout(() => {
+    const pwd = document.getElementById('teacher-pwd');
+    if (pwd) {
+      pwd.focus();
+      pwd.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') window.checkTeacherPassword();
+      });
+    }
+  }, 100);
+}
+
+function initTeacherSession(account) {
+  const fakeUser = {
+    uid: account.uid,
+    email: account.uid + '@local',
+    displayName: account.name
+  };
+  setCurrentUser(fakeUser);
+  setUserName(account.name);
+  setUserRole('student');
+  console.log('[老師通道] 已進入', account.name, '模式，UID =', account.uid);
+  initAfterLogin();
+}
+
+if (window.isTeacherMode) {
+  window.addEventListener('DOMContentLoaded', function() {
+    const savedPwd = localStorage.getItem('teacher_verified_pwd');
+    const savedAccount = TEACHER_PASSWORDS[savedPwd];
+    if (savedAccount) {
+      initTeacherSession(savedAccount);
+    } else {
+      showTeacherLoginPage();
+    }
+  });
+}
+// ============ 老師通道結束 ============
+
 // 白名單檢查
 var ADMIN_UID = 'XT1Err9cmnNokgMQKUrGUj3ishG2';
 
@@ -334,6 +395,9 @@ function showAccessDenied() {
 
 // Firebase Auth 狀態監聽
 auth.onAuthStateChanged(async (user) => {
+  // 老師模式跳過 Firebase Auth 流程
+  if (window.isTeacherMode) return;
+
   if (user) {
     setCurrentUser(user);
     if (user.email) localStorage.setItem('last_login_email', user.email);
