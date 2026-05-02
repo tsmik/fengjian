@@ -73,7 +73,7 @@ export function renderObsCenter(){
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
-      const isUnanswered=(val===undefined && valL===undefined && valR===undefined);
+      const isUnanswered=(val===undefined);
       html+='<div class="obs-q-card'+(isUnanswered?' unanswered':'')+'"><div class="obs-q-top"><span class="obs-q-num2">'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+((valL||valR)?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+((valL||valR)?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
@@ -108,7 +108,7 @@ export function selectOpt(id,isPaired,val,el){
   obsData[id]=val;
   if(isPaired){delete obsData[id+'_L'];delete obsData[id+'_R'];}
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
-  recalcFromObs();save();updateObsProgress();renderFaceMap();renderDimIndex();
+  recalcFromObs();save();updateObsProgress();_refreshObsUI();
   const qCard=el.closest('.obs-q-card');
   if(qCard){
     qCard.querySelectorAll('.obs-radio').forEach(r=>r.classList.remove('sel'));
@@ -123,6 +123,14 @@ export function selectOpt(id,isPaired,val,el){
 
 export function selectLROpt(id,side,val,el){
   obsData[id+'_'+side]=val;
+  // 同步主值：原本沒主值，且左右兩邊都有值時才寫主值
+  // 用於修正「直接從可分左右作答」造成主值 undefined、被算成未答的 bug
+  if(obsData[id]===undefined){
+    const _vL=obsData[id+'_L'],_vR=obsData[id+'_R'];
+    if(_vL!==undefined&&_vR!==undefined){
+      obsData[id]=(_vL===_vR)?_vL:_vL;  // 左右不同時以左為代表
+    }
+  }
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   const row=el.closest('.obs-lr-row');
   const partName=OBS_PART_NAMES[curObsPart],pd=OBS_PARTS_DATA[partName];
@@ -132,7 +140,7 @@ export function selectLROpt(id,side,val,el){
   const target=side==='L'?spans.slice(0,optCount):spans.slice(optCount);
   target.forEach(s=>{if(s.textContent.trim()===val)s.classList.add('selected');else s.classList.remove('selected');});
   syncUpperRadio(id);
-  recalcFromObs();save();updateObsProgress();renderDimIndex();
+  recalcFromObs();save();updateObsProgress();_refreshObsUI();
   requestAnimationFrame(()=>{
     if(pd){pd.sections.forEach(sec=>{sec.qs.forEach(q=>{
       if(!q.paired)return;

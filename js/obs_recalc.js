@@ -7,6 +7,27 @@ export function recalcFromObs(){
   const hasAny=Object.keys(obsData).length>0;
   if(!hasAny){for(let d=0;d<13;d++)data[d]=Array(9).fill(null);}
 
+  // ===== 修復舊資料：paired 題若有 _L/_R 但無主值，補回主值 =====
+  // 用於修正「直接從可分左右作答」造成主值 undefined 的歷史資料
+  var _repaired=false;
+  OBS_PART_NAMES.forEach(function(pn){
+    var pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    pd.sections.forEach(function(s){
+      s.qs.forEach(function(q){
+        if(!q.paired)return;
+        if(obsData[q.id]!==undefined)return;
+        var vL=obsData[q.id+'_L'],vR=obsData[q.id+'_R'];
+        if(vL!==undefined&&vR!==undefined){
+          obsData[q.id]=(vL===vR)?vL:vL;  // 左右不同時以左為代表
+          _repaired=true;
+        }
+      });
+    });
+  });
+  if(_repaired){
+    try{localStorage.setItem('obs_data_v1',JSON.stringify(obsData));}catch(e){}
+  }
+
   // ===== 規則引擎計算（取代舊邏輯的 data[][] 賦值）=====
   evaluateAll(obsData);
 
