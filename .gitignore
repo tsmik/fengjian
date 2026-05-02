@@ -70,3 +70,5 @@ node_modules/
 
 # Claude Code worktrees
 .claude/
+docs/
+archive/
