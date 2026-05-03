@@ -151,7 +151,10 @@ const firebaseConfig=getFirebaseConfig();
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
-const ADMIN_UID='XT1Err9cmnNokgMQKUrGUj3ishG2';
+const ADMIN_UIDS=[
+  'XT1Err9cmnNokgMQKUrGUj3ishG2',     // production admin
+  'ARGLfFp3HqbWMtN7CAoAxR4rHhm1'      // staging admin
+];
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 function showLoginGate(message){
@@ -1885,7 +1888,7 @@ auth.onAuthStateChanged(function(user){
     showLoginGate('請先使用 Google 登入');
     return;
   }
-  if(user.uid !== ADMIN_UID){
+  if(!ADMIN_UIDS.includes(user.uid)){
     showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
     return;
   }

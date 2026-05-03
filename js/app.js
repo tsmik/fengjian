@@ -375,10 +375,13 @@ if (window.isTeacherMode) {
 // ============ 老師通道結束 ============
 
 // 白名單檢查
-var ADMIN_UID = 'XT1Err9cmnNokgMQKUrGUj3ishG2';
+var ADMIN_UIDS = [
+  'XT1Err9cmnNokgMQKUrGUj3ishG2',     // production admin
+  'ARGLfFp3HqbWMtN7CAoAxR4rHhm1'      // staging admin
+];
 
 async function checkWhitelist(user) {
-  if (user.uid === ADMIN_UID) return true;
+  if (ADMIN_UIDS.includes(user.uid)) return true;
   var email = (user.email || '').toLowerCase();
   if (!email) return false;
   try {
