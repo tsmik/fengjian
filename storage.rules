@@ -1,8 +1,13 @@
 rules_version = '2';
+
+// 完全鎖死版本
+// 目前沒有任何功能使用 Firebase Storage
+// （photo_training 使用 Firestore base64 dataURL，不走 Storage）
+// 之後若有功能需要 Storage，再針對特定路徑開放
 service firebase.storage {
   match /b/{bucket}/o {
-    match /photo_training/{allPaths=**} {
-      allow read, write: if true;
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
