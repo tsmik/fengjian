@@ -468,6 +468,7 @@ function calcDataFromObs(obsJson, overrideJson){
 }
 
 // 對一個案例 doc，收集所有可匯出的資料（可能 0~2 筆）
+// v3.11：obs 那筆帶 _obsJson 和 _overrideJson 原始字串，給匯入時完整還原
 function collectExports(docData, name, gender, birthday, date, caseId, isSelf){
   var exports=[];
 
@@ -477,6 +478,7 @@ function collectExports(docData, name, gender, birthday, date, caseId, isSelf){
     var ex=buildExportFromData(name,gender,birthday,date,manualD);
     if(ex){
       ex._dataSource='manual';
+      ex._manualDataJson=docData.manualDataJson||null;
       if(isSelf){ex._source='self';}
       if(caseId){ex._caseId=caseId;}
       exports.push(ex);
@@ -492,6 +494,9 @@ function collectExports(docData, name, gender, birthday, date, caseId, isSelf){
     var ex2=buildExportFromData(name,gender,birthday,date,obsD);
     if(ex2){
       ex2._dataSource='obs';
+      ex2._dataJson=docData.dataJson||null;
+      ex2._obsJson=docData.obsJson||null;
+      ex2._overrideJson=docData.overrideJson||null;
       if(isSelf){ex2._source='self';}
       if(caseId){ex2._caseId=caseId;}
       exports.push(ex2);
@@ -552,6 +557,7 @@ export async function exportAllCases(){
       summary:summaryLines.join('\n'),
       instruction:'收到此檔案時，請先顯示上方 summary 的案例總表，等使用者指定要分析哪個案例、用手動還是觀察資料，再開始分析。',
       note:'同一案例可能有兩筆（manual=手動輸入, obs=觀察題），以 _dataSource 區分',
+      formatVersion:'v3.11',
       cases:results
     };
 
@@ -589,6 +595,7 @@ export async function exportSingleCase(caseId){
       exportedBy:userName,
       totalCases:results.length,
       instruction:'此檔案包含單一案例的評分資料，請直接開始分析。同一案例可能有兩筆（manual=手動輸入, obs=觀察題），以 _dataSource 區分。',
+      formatVersion:'v3.11',
       cases:results
     };
 
@@ -607,4 +614,226 @@ export async function exportSingleCase(caseId){
     console.error('匯出失敗',e);
     alert('匯出失敗：'+e.message);
   }
+}
+
+/* ===== 匯入功能（v3.11） ===== */
+
+// 同名衝突解決方式（每次匯入時清空，由使用者決定）
+let _conflictMode = null; // 'skip' | 'overwrite' | 'new' | 'ask'
+let _conflictApplyAll = false;
+
+// 由 case-page 上的「匯入」按鈕觸發
+export function triggerCaseImport(){
+  if(!currentUser){alert('請先登入');return;}
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='application/json,.json';
+  input.onchange=function(e){
+    var file=e.target.files[0];
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=async function(ev){
+      try{
+        var json=JSON.parse(ev.target.result);
+        await _doImport(json);
+      }catch(err){
+        console.error('匯入失敗',err);
+        alert('匯入失敗：'+err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+async function _doImport(json){
+  // 1. 格式版本檢查（v3.11：只吃新格式）
+  if(!json || !json.formatVersion || json.formatVersion!=='v3.11'){
+    alert('檔案格式不符。\n\n本系統 v3.11 起只支援新版匯出格式，請至 production 重新匯出最新格式的 JSON 後再匯入。\n\n（舊格式不再支援）');
+    return;
+  }
+  if(!Array.isArray(json.cases) || json.cases.length===0){
+    alert('檔案中沒有案例資料');
+    return;
+  }
+
+  // 2. 偵測本人資料
+  var hasSelf = json.cases.some(function(r){return r._source==='self';});
+  if(hasSelf){
+    var ok = confirm('即將覆蓋你在此環境的本人資料。\n\n覆蓋後原本的兵法填寫狀態會消失，無法復原。\n\n確定要繼續嗎？');
+    if(!ok){
+      // 從 cases 裡濾掉本人資料，只匯案例
+      json.cases = json.cases.filter(function(r){return r._source!=='self';});
+      if(json.cases.length===0){alert('已取消匯入');return;}
+    }
+  }
+
+  // 3. 讀取既有案例的 name 集合，準備衝突偵測
+  var existingNames={};
+  var snap=await db.collection('users').doc(currentUser.uid).collection('cases').get();
+  snap.forEach(function(doc){
+    var c=doc.data();
+    if(c.name){
+      if(!existingNames[c.name])existingNames[c.name]=[];
+      existingNames[c.name].push({id:doc.id,data:c});
+    }
+  });
+
+  // 4. 重置衝突解決狀態
+  _conflictMode=null;
+  _conflictApplyAll=false;
+
+  // 5. 案例分組：以 _caseId 把 manual + obs 兩筆合併成一個 case 寫入計畫
+  var plans={}; // key=_caseId or '_self_', value={name,gender,birthday,date,manualDataJson,dataJson,obsJson,overrideJson,isSelf}
+  json.cases.forEach(function(r){
+    var key=r._source==='self' ? '_self_' : (r._caseId||('_anon_'+Math.random()));
+    if(!plans[key]){
+      plans[key]={
+        name:r.name||'未命名',
+        gender:r.gender||'',
+        birthday:r.birthday||'',
+        date:r.date||'',
+        manualDataJson:null,
+        dataJson:null,
+        obsJson:null,
+        overrideJson:null,
+        isSelf:r._source==='self'
+      };
+    }
+    var p=plans[key];
+    if(r._dataSource==='manual'){
+      p.manualDataJson = r._manualDataJson || JSON.stringify(r.rawData);
+    }else if(r._dataSource==='obs'){
+      if(r._dataJson) p.dataJson = r._dataJson;
+      else if(r.rawData) p.dataJson = JSON.stringify(r.rawData);
+      if(r._obsJson) p.obsJson = r._obsJson;
+      if(r._overrideJson) p.overrideJson = r._overrideJson;
+    }
+  });
+
+  // 6. 逐一處理寫入
+  var stats={imported:0, skipped:0, overwritten:0, newCreated:0, selfOverwritten:0};
+  var planKeys=Object.keys(plans);
+  for(var i=0;i<planKeys.length;i++){
+    var k=planKeys[i];
+    var plan=plans[k];
+
+    if(plan.isSelf){
+      // 本人資料：直接覆蓋 users/{uid}
+      try{
+        var selfPayload={updatedAt:new Date().toISOString()};
+        if(plan.gender) selfPayload.gender=plan.gender;
+        if(plan.birthday) selfPayload.birthday=plan.birthday;
+        if(plan.manualDataJson) selfPayload.manualDataJson=plan.manualDataJson;
+        if(plan.dataJson) selfPayload.dataJson=plan.dataJson;
+        if(plan.obsJson) selfPayload.obsJson=plan.obsJson;
+        if(plan.overrideJson) selfPayload.overrideJson=plan.overrideJson;
+        await db.collection('users').doc(currentUser.uid).set(selfPayload,{merge:true});
+        stats.selfOverwritten++;
+      }catch(e){
+        console.error('本人資料覆蓋失敗',e);
+      }
+      continue;
+    }
+
+    // 案例：檢查同名衝突
+    var conflicts = existingNames[plan.name]||[];
+    var resolution = 'new'; // 預設新建
+
+    if(conflicts.length>0){
+      if(_conflictApplyAll && _conflictMode){
+        resolution = _conflictMode;
+      }else{
+        var choice = await _askConflict(plan.name);
+        if(choice==='cancel'){
+          stats.skipped += (planKeys.length - i);
+          break;
+        }
+        resolution = choice.mode;
+        if(choice.applyAll){
+          _conflictApplyAll = true;
+          _conflictMode = choice.mode;
+        }
+      }
+    }
+
+    if(resolution==='skip'){
+      stats.skipped++;
+      continue;
+    }
+
+    var docPayload={
+      name:plan.name,
+      gender:plan.gender,
+      birthday:plan.birthday,
+      date:plan.date,
+      updatedAt:new Date().toISOString()
+    };
+    if(plan.manualDataJson) docPayload.manualDataJson=plan.manualDataJson;
+    if(plan.dataJson) docPayload.dataJson=plan.dataJson;
+    if(plan.obsJson) docPayload.obsJson=plan.obsJson;
+    if(plan.overrideJson) docPayload.overrideJson=plan.overrideJson;
+
+    try{
+      if(resolution==='overwrite' && conflicts.length>0){
+        // 覆蓋第一筆同名 doc
+        var targetId = conflicts[0].id;
+        await db.collection('users').doc(currentUser.uid).collection('cases').doc(targetId).set(docPayload,{merge:true});
+        stats.overwritten++;
+      }else{
+        // 新建
+        docPayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection('users').doc(currentUser.uid).collection('cases').add(docPayload);
+        stats.newCreated++;
+      }
+      stats.imported++;
+    }catch(e){
+      console.error('寫入失敗',e);
+    }
+  }
+
+  // 7. 顯示結果
+  var msg='匯入完成：\n';
+  msg+='・新建案例：'+stats.newCreated+' 筆\n';
+  msg+='・覆蓋既有：'+stats.overwritten+' 筆\n';
+  msg+='・跳過：'+stats.skipped+' 筆\n';
+  if(stats.selfOverwritten>0) msg+='・本人資料：已覆蓋\n';
+  alert(msg);
+
+  // 8. 重新整理列表
+  renderCaseList();
+}
+
+// 同名衝突確認 dialog（returns Promise<{mode, applyAll} | 'cancel'>）
+function _askConflict(name){
+  return new Promise(function(resolve){
+    var html='';
+    html+='<div id="case-import-conflict-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center">';
+    html+='<div style="background:white;border-radius:10px;padding:24px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2)">';
+    html+='<h3 style="margin:0 0 12px;font-size:17px">案例「'+_escHtml(name)+'」已存在</h3>';
+    html+='<p style="margin:0 0 16px;font-size:14px;color:#555">請選擇處理方式：</p>';
+    html+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">';
+    html+='<button data-mode="skip" style="padding:10px 16px;border:1px solid #ddd;background:#f9f9f9;border-radius:6px;text-align:left;cursor:pointer;font-size:14px"><b>跳過</b><br><span style="font-size:12px;color:#888">保留既有，不匯入這筆</span></button>';
+    html+='<button data-mode="overwrite" style="padding:10px 16px;border:1px solid #ddd;background:#f9f9f9;border-radius:6px;text-align:left;cursor:pointer;font-size:14px"><b>覆蓋</b><br><span style="font-size:12px;color:#888">用匯入版蓋掉既有版（不可復原）</span></button>';
+    html+='<button data-mode="new" style="padding:10px 16px;border:1px solid #ddd;background:#f9f9f9;border-radius:6px;text-align:left;cursor:pointer;font-size:14px"><b>新建</b><br><span style="font-size:12px;color:#888">產生第二筆同名案例</span></button>';
+    html+='</div>';
+    html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#666;margin-bottom:16px"><input type="checkbox" id="case-import-apply-all"> 對之後同名衝突套用相同決定</label>';
+    html+='<div style="text-align:right"><button data-mode="cancel" style="padding:8px 16px;background:#fff;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#666">取消整批匯入</button></div>';
+    html+='</div></div>';
+
+    var div=document.createElement('div');
+    div.innerHTML=html;
+    document.body.appendChild(div.firstChild);
+    var modal=document.getElementById('case-import-conflict-modal');
+
+    modal.querySelectorAll('button[data-mode]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var mode=btn.getAttribute('data-mode');
+        var applyAll=document.getElementById('case-import-apply-all').checked;
+        document.body.removeChild(modal);
+        if(mode==='cancel') resolve('cancel');
+        else resolve({mode:mode, applyAll:applyAll});
+      });
+    });
+  });
 }

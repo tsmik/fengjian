@@ -111,8 +111,35 @@ body { background: var(--bg); font-family: 'Noto Serif TC', serif; margin: 0; di
 .legend { font-size: clamp(12px,1.5vw,16px); color: #aaa; margin-top: 10px; display: flex; justify-content: center; gap: clamp(12px,2vw,24px); font-weight: 900; }
 .btn-back { width: clamp(40%,45%,50%); height: clamp(45px,5vw,55px); background: transparent; color: var(--dark); border: 2px solid var(--dark); border-radius: 8px; font-size: clamp(15px,1.8vw,18px); font-weight: 900; margin: 15px 0 30px; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif TC', serif; }
 </style>
+<style>
+  /* staging banner（v3.11） */
+  #staging-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #E89B3A;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 28px;
+    z-index: 99998;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: none;
+  }
+  body.staging-mode {
+    padding-top: 28px !important;
+  }
+  body.staging-mode #staging-banner {
+    display: block;
+  }
+</style>
 </head>
 <body>
+<div id="staging-banner">⚠ STAGING 測試環境（不是 production）</div>
 
 <div id="entry-page">
   <div class="entry-logo">風鑑學堂</div>
@@ -1024,6 +1051,15 @@ async function exportBigTable() {
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
   btn.innerText='大表報告';btn.disabled=false;
 }
+</script>
+<script>
+  (function(){
+    var host = window.location.hostname;
+    if (host === 'staging.fengjian.pages.dev'
+        || /^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host) && host !== 'fengjian.pages.dev') {
+      document.body.classList.add('staging-mode');
+    }
+  })();
 </script>
 </body>
 </html>

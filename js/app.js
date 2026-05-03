@@ -24,7 +24,8 @@ import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSa
          renderManualPage, initManualData, exportManualPNG } from './manual.js';
 import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          closeCaseForm, saveCaseForm, deleteCase, doLogout, editName,
-         confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup } from './case_mgmt.js';
+         confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
+         triggerCaseImport } from './case_mgmt.js';
 import { kRender, kSelect, showKnowledgePage } from './knowledge_page.js';
 import { generateAI } from './ai_analysis.js';
 
@@ -258,6 +259,7 @@ window.editCase = editCase;
 window.editName = editName;
 window.exportAllCases = exportAllCases;
 window.exportSingleCase = exportSingleCase;
+window.triggerCaseImport = triggerCaseImport;
 window.moveGroup = moveGroup;
 window.exportPNG = exportPNG;
 window.generateAI = generateAI;

@@ -341,8 +341,35 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-form-save{background:var(--dark);color:white}
 .case-form-cancel{background:#eee;color:var(--text)}
 </style>
+<style>
+  /* staging banner（v3.11） */
+  #staging-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #E89B3A;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 28px;
+    z-index: 99998;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: none;
+  }
+  body.staging-mode {
+    padding-top: 28px !important;
+  }
+  body.staging-mode #staging-banner {
+    display: block;
+  }
+</style>
 </head>
 <body>
+<div id="staging-banner">⚠ STAGING 測試環境（不是 production）</div>
 
 <!-- Entry Page -->
 <div id="entry-page" style="display:none">
@@ -419,7 +446,8 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   <div class="case-header">
     <h2>案例管理</h2>
     <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
-    <button class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">匯出全部案例</button>
+    <button class="case-export-btn" onclick="triggerCaseImport()" style="margin-left:8px;">⬆ 匯入</button>
+    <button class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">⬇ 匯出全部</button>
   </div>
   <div id="case-list"></div>
 </div>
@@ -677,6 +705,13 @@ const firebaseConfig=getFirebaseConfig();
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
+// staging banner activation
+(function(){
+  var host=window.location.hostname;
+  if(host==='staging.fengjian.pages.dev'||(/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)&&host!=='fengjian.pages.dev')){
+    document.body.classList.add('staging-mode');
+  }
+})();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.log('persistence 設定失敗',e);});
 </script>
 <script type="module" src="./js/app.js"></script>

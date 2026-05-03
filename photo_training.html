@@ -957,8 +957,38 @@ input { font-family: 'Noto Serif TC', serif; }
   }
 }
 </style>
+<style>
+  /* staging banner（v3.11） */
+  #staging-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #E89B3A;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 28px;
+    z-index: 99998;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: none;
+  }
+  body.staging-mode {
+    padding-top: 28px !important;
+  }
+  body.staging-mode #staging-banner {
+    display: block;
+  }
+  body.staging-mode .top-nav {
+    top: 28px !important;
+  }
+</style>
 </head>
 <body>
+<div id="staging-banner">⚠ STAGING 測試環境（不是 production）</div>
 
 <!-- Top Nav -->
 <div class="top-nav">
@@ -1121,6 +1151,13 @@ function getFirebaseConfig() {
 }
 firebase.initializeApp(getFirebaseConfig());
 const db = firebase.firestore();
+// staging banner activation
+(function(){
+  var host=window.location.hostname;
+  if(host==='staging.fengjian.pages.dev'||(/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)&&host!=='fengjian.pages.dev')){
+    document.body.classList.add('staging-mode');
+  }
+})();
 db.enablePersistence({ synchronizeTabs: false }).catch(() => {});
 const COL = 'photo_training';
 

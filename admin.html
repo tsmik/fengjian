@@ -105,8 +105,35 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 .ln-save-bar .ln-btn-reset{background:#eee;color:var(--text)}
 .ln-dirty{color:var(--active);font-weight:400;font-size:13px}
 </style>
+<style>
+  /* staging banner（v3.11） */
+  #staging-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #E89B3A;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 28px;
+    z-index: 99998;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: none;
+  }
+  body.staging-mode {
+    padding-top: 28px !important;
+  }
+  body.staging-mode #staging-banner {
+    display: block;
+  }
+</style>
 </head>
 <body>
+<div id="staging-banner">⚠ STAGING 測試環境（不是 production）</div>
 <div id="top-bar">
   <span>風鑑學堂 管理介面</span>
   <button class="btn-save" id="btn-save" onclick="saveAll()">儲存到 Firebase</button>
@@ -151,6 +178,13 @@ const firebaseConfig=getFirebaseConfig();
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
+// staging banner activation
+(function(){
+  var host=window.location.hostname;
+  if(host==='staging.fengjian.pages.dev'||(/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)&&host!=='fengjian.pages.dev')){
+    document.body.classList.add('staging-mode');
+  }
+})();
 const ADMIN_UIDS=[
   'XT1Err9cmnNokgMQKUrGUj3ishG2',     // production admin
   'ARGLfFp3HqbWMtN7CAoAxR4rHhm1'      // staging admin
