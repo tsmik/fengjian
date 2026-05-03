@@ -5,7 +5,17 @@ import { DIMS, data, userName, calcDim, avgCoeff,
          BETA_VISIBLE_DIMS } from './core.js';
 import { calcXuSui } from './report.js';
 
-const CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/claudeAnalysis';
+// 環境感知：依當前網址自動切換 Cloud Function URL
+function getClaudeAnalysisUrl() {
+  const host = window.location.hostname;
+  // staging 環境（CF preview deployments）→ 未來部署 staging functions 後改這裡
+  if (host === 'staging.fengjian.pages.dev' || /^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)) {
+    // 暫時還是用 production functions（B 階段才會部署 staging functions）
+    return 'https://us-central1-renxiangbingfa.cloudfunctions.net/claudeAnalysis';
+  }
+  // production / 本機 / GitHub Pages → production functions
+  return 'https://us-central1-renxiangbingfa.cloudfunctions.net/claudeAnalysis';
+}
 
 // 組裝 dimData：每個維度的 _result, _coef, 加上 9 個部位的 A/B
 function buildDimData() {
@@ -65,7 +75,7 @@ export async function generateAI() {
   const coefficients = buildCoefficients();
 
   try {
-    const resp = await fetch(CF_URL, {
+    const resp = await fetch(getClaudeAnalysisUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, gender, age, dimData, coefficients })
