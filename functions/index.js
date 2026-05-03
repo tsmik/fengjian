@@ -8,6 +8,25 @@ if (getApps().length === 0) {
   initializeApp();
 }
 
+const ALLOWED_ORIGINS = [
+  "https://tsmik.github.io",
+  "https://fengjian.pages.dev",
+  "https://staging.fengjian.pages.dev",
+];
+
+function setCorsHeaders(req, res) {
+  const origin = req.get("Origin");
+  // 允許清單內的 origin，或允許 *.fengjian.pages.dev 子網域（給 CF preview 部署用）
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || /^https:\/\/[a-z0-9-]+\.fengjian\.pages\.dev$/.test(origin))) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // 預設 fallback 到 production 主網址
+    res.set("Access-Control-Allow-Origin", "https://tsmik.github.io");
+  }
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+}
+
 const claudeApiKey = defineSecret("CLAUDE_API_KEY");
 
 exports.claudeVision = onRequest(
@@ -19,9 +38,7 @@ exports.claudeVision = onRequest(
   },
   async (req, res) => {
     // CORS - must be before anything else
-    res.set("Access-Control-Allow-Origin", "https://tsmik.github.io");
-    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    setCorsHeaders(req, res);
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
@@ -182,9 +199,7 @@ exports.claudeAnalysis = onRequest(
   },
   async (req, res) => {
     // CORS
-    res.set("Access-Control-Allow-Origin", "https://tsmik.github.io");
-    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    setCorsHeaders(req, res);
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
