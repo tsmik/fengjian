@@ -1091,16 +1091,35 @@ if ('serviceWorker' in navigator) {
 }
 
 // ============================================================
-// Firebase Init
-// ============================================================
-firebase.initializeApp({
+// ===== Firebase Config: 環境感知 =====
+// staging.fengjian.pages.dev 或 *.fengjian.pages.dev 子網域 → staging Firebase
+// 其他（tsmik.github.io / fengjian.pages.dev / localhost）→ production Firebase
+const PROD_FIREBASE_CONFIG = {
   apiKey: "AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",
   authDomain: "renxiangbingfa.firebaseapp.com",
   projectId: "renxiangbingfa",
   storageBucket: "renxiangbingfa.firebasestorage.app",
   messagingSenderId: "912262878667",
   appId: "1:912262878667:web:cd7a74f1378221dbe3524e"
-});
+};
+const STAGING_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDSEQuEZ_5JhzcJ9olK6bk-t2UdsYU09dU",
+  authDomain: "renxiangbingfa-staging.firebaseapp.com",
+  projectId: "renxiangbingfa-staging",
+  storageBucket: "renxiangbingfa-staging.firebasestorage.app",
+  messagingSenderId: "8463681855",
+  appId: "1:8463681855:web:069ca7428c4015eaa0eb8a"
+};
+function getFirebaseConfig() {
+  const host = window.location.hostname;
+  if (host === 'staging.fengjian.pages.dev' || /^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)) {
+    console.log('[Firebase] Using STAGING config');
+    return STAGING_FIREBASE_CONFIG;
+  }
+  console.log('[Firebase] Using PRODUCTION config');
+  return PROD_FIREBASE_CONFIG;
+}
+firebase.initializeApp(getFirebaseConfig());
 const db = firebase.firestore();
 db.enablePersistence({ synchronizeTabs: false }).catch(() => {});
 const COL = 'photo_training';
