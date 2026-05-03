@@ -30,8 +30,8 @@ service cloud.firestore {
     // 白名單：登入使用者可讀，只有 admin 可寫
     match /allowedUsers/{email} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.uid == 'XT1Err9cmnNokgMQKUrGUj3ishG2';
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // photo_training：保持開放（訓練用）
