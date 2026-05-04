@@ -104,6 +104,7 @@ export function renderObsCenter(){
   if(partData)partData.sections.forEach(s=>s.qs.forEach(q=>{
     if(q.paired&&(obsData[q.id+'_L']!==undefined||obsData[q.id+'_R']!==undefined))syncUpperRadio(q.id);
   }));
+  if(window._refreshBadges)window._refreshBadges();
 }
 
 export function selectOpt(id,isPaired,val,el){

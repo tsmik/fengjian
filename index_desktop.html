@@ -806,6 +806,9 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     var seenLog = getSeenLog(window._badgeUid);
     seenLog['q_' + partName + '_' + qid] = new Date().toISOString();
     saveSeenLog(window._badgeUid, seenLog);
+    refreshEntryBadges(window._updateLog, seenLog);
+    refreshFaceMapBadges(window._updateLog, seenLog);
+    refreshCondBadges(window._updateLog, seenLog);
     refreshQuestionBadges(window._updateLog, seenLog);
   };
 
