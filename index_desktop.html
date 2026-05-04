@@ -774,6 +774,15 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     });
   }
 
+  function refreshQuestionBadges(updateLog, seenLog) {
+    document.querySelectorAll('.q-badge').forEach(function(badge) {
+      var part = badge.getAttribute('data-part');
+      var qid = badge.getAttribute('data-qid');
+      if (!part || !qid) return;
+      badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'q_' + part + '_' + qid));
+    });
+  }
+
   window._markPartSeen = function(partName) {
     if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
     var seenLog = getSeenLog(window._badgeUid);
@@ -792,6 +801,14 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     refreshCondBadges(window._updateLog, seenLog);
   };
 
+  window._markQuestionSeen = function(partName, qid) {
+    if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
+    var seenLog = getSeenLog(window._badgeUid);
+    seenLog['q_' + partName + '_' + qid] = new Date().toISOString();
+    saveSeenLog(window._badgeUid, seenLog);
+    refreshQuestionBadges(window._updateLog, seenLog);
+  };
+
   window._initUpdateBadges = function(fbDb, uid) {
     window._badgeDb = fbDb;
     window._badgeUid = uid;
@@ -801,6 +818,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
       refreshEntryBadges(updateLog, seenLog);
       refreshFaceMapBadges(updateLog, seenLog);
       refreshCondBadges(updateLog, seenLog);
+      refreshQuestionBadges(updateLog, seenLog);
     });
   };
 
@@ -810,6 +828,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     refreshEntryBadges(window._updateLog, seenLog);
     refreshFaceMapBadges(window._updateLog, seenLog);
     refreshCondBadges(window._updateLog, seenLog);
+    refreshQuestionBadges(window._updateLog, seenLog);
   };
 })();
 </script>

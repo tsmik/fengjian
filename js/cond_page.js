@@ -5,6 +5,17 @@ import { DIMS, data, condResults, obsData, OBS_PART_NAMES, OBS_PARTS_DATA, BETA_
 import { recalcFromObs } from './obs_recalc.js';
 import { evaluate } from './rule_engine.js';
 
+// 從 qid 反查 partName
+function _qidToPart(qid) {
+  return OBS_PART_NAMES.find(function(n) {
+    var pd = OBS_PARTS_DATA[n];
+    if (!pd || !pd.sections) return false;
+    return pd.sections.some(function(s) {
+      return s.qs.some(function(q) { return q.id === qid; });
+    });
+  });
+}
+
 /* ===== 維度條件評分頁 ===== */
 let cpCur=0,cpPartCur=0,_cpLrExpanded={},_cpGroupExpanded={};
 var CP_PART_ORDER=[0,1,4,5,6,7,8,2,9,3,10,11,12];
@@ -308,8 +319,10 @@ export function cpRenderMain(){
     function renderQRow(qid,q,side){
       var curVal=side?(obsData[qid+'_'+side]||obsData[qid]||''):obsData[qid]||'';
       var sideTag=side?'<span style="font-size:var(--cp-option-desc);padding:1px 6px;border-radius:6px;background:var(--sidebar);color:var(--text-3);margin-left:4px">'+(side==='L'?'左':'右')+'</span>':'';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;flex-wrap:wrap">'+
-        '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center">'+q.text+sideTag+'</div>'+
+      var qPart=_qidToPart(qid);
+      var badgeHtml=qPart?'<span class="update-badge q-badge" data-part="'+qPart+'" data-qid="'+qid+'" style="top:-2px;left:-10px;width:8px;height:8px"></span>':'';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:4px 8px;flex-wrap:wrap;position:relative">'+
+        '<div style="font-size:var(--cp-question);color:var(--text-2);min-width:80px;flex-shrink:0;display:flex;align-items:center;position:relative">'+badgeHtml+q.text+sideTag+'</div>'+
         renderOpts(q,qid,side||'',curVal)+
       '</div>';
     }
@@ -554,6 +567,8 @@ export function cpQuickChange(btn){
   }
   localStorage.setItem('obs_data_v1',JSON.stringify(obsData));
   recalcFromObs();save();
+  var qPart=_qidToPart(qid);
+  if(qPart && window._markQuestionSeen)window._markQuestionSeen(qPart, qid);
   cpRender();
 }
 
