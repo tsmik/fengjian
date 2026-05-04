@@ -821,7 +821,23 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
   window._markQuestionSeen = function(partName, qid) {
     if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
     var seenLog = getSeenLog(window._badgeUid);
-    seenLog['q_' + partName + '_' + qid] = new Date().toISOString();
+    var now = new Date().toISOString();
+    seenLog['q_' + partName + '_' + qid] = now;
+
+    // 檢查該部位下所有有更新的題目是否都看過了
+    // 如果是，把 part_部位 也 mark 為看過
+    var prefix = 'q_' + partName + '_';
+    var allSeen = true;
+    for (var k in window._updateLog) {
+      if (k.indexOf(prefix) === 0 && hasUpdate(window._updateLog, seenLog, k)) {
+        allSeen = false;
+        break;
+      }
+    }
+    if (allSeen && window._updateLog['part_' + partName]) {
+      seenLog['part_' + partName] = now;
+    }
+
     saveSeenLog(window._badgeUid, seenLog);
     refreshEntryBadges(window._updateLog, seenLog);
     refreshFaceMapBadges(window._updateLog, seenLog);
