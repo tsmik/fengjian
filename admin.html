@@ -1944,6 +1944,10 @@ async function loadAllData(){
   renderAll();
   takeSnapshot();
   setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位，流年 '+(liunianData?liunianData['男'].length+liunianData['女'].length:0)+' 筆）');
+  if(IS_STAGING){
+    var pb = document.getElementById('btn-publish');
+    if(pb) pb.style.display = 'inline-block';
+  }
 }
 
 showLoginGate('正在驗證身份...');
