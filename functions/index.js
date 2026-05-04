@@ -423,7 +423,7 @@ exports.publishToProduction = onRequest(
     }
 
     // 驗證：只允許 admin uid
-    const {callerUid} = req.body;
+    const {callerUid, dryRun} = req.body;
     if (!callerUid || !PUBLISH_ADMIN_UIDS.includes(callerUid)) {
       res.status(403).json({error: "Unauthorized"});
       return;
@@ -456,21 +456,9 @@ exports.publishToProduction = onRequest(
       }
       const questionsJson = stagingQuestionsDoc.data().questionsJson;
 
-      // 備份 production 現有資料
+      // 讀取 production 現有資料（用於比對）
       const prodRulesDoc = await prodDb.collection("settings").doc("rules").get();
       const prodQuestionsDoc = await prodDb.collection("settings").doc("questions").get();
-      if (prodRulesDoc.exists) {
-        await prodDb.collection("settings").doc("rules_backup").set({
-          ...prodRulesDoc.data(),
-          backedUpAt: now,
-        });
-      }
-      if (prodQuestionsDoc.exists) {
-        await prodDb.collection("settings").doc("questions_backup").set({
-          ...prodQuestionsDoc.data(),
-          backedUpAt: now,
-        });
-      }
 
       // 計算各部位/維度更新時間戳記
       const updateLog = {};
@@ -503,6 +491,35 @@ exports.publishToProduction = onRequest(
         }
       });
 
+      const changedParts = Q_PART_NAMES_PUB.filter((p) => updateLog["part_" + p]);
+      const changedDims = DIM_NAMES_PUB.filter((d) => updateLog["dim_" + d]);
+
+      // Dry run: 只回傳比對結果，不寫入
+      if (dryRun) {
+        res.json({
+          success: true,
+          dryRun: true,
+          changedParts,
+          changedDims,
+          message: `[DRY RUN] 變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}（尚未寫入）`,
+        });
+        return;
+      }
+
+      // 備份 production 現有資料
+      if (prodRulesDoc.exists) {
+        await prodDb.collection("settings").doc("rules_backup").set({
+          ...prodRulesDoc.data(),
+          backedUpAt: now,
+        });
+      }
+      if (prodQuestionsDoc.exists) {
+        await prodDb.collection("settings").doc("questions_backup").set({
+          ...prodQuestionsDoc.data(),
+          backedUpAt: now,
+        });
+      }
+
       // 寫入 production
       await prodDb.collection("settings").doc("rules").set({
         rulesJson,
@@ -521,9 +538,6 @@ exports.publishToProduction = onRequest(
       if (Object.keys(updateLog).length > 0) {
         await prodDb.collection("settings").doc("updateLog").set(updateLog, {merge: true});
       }
-
-      const changedParts = Q_PART_NAMES_PUB.filter((p) => updateLog["part_" + p]);
-      const changedDims = DIM_NAMES_PUB.filter((d) => updateLog["dim_" + d]);
 
       res.json({
         success: true,
