@@ -2007,16 +2007,29 @@ async function loadAllData(){
 showLoginGate('正在驗證身份...');
 
 auth.onAuthStateChanged(function(user){
+  console.log('[Auth] fired, user:', user ? user.uid : 'null');
   if(!user){
+    console.log('[Auth] no user, showing login gate');
     showLoginGate('請先使用 Google 登入');
     return;
   }
+  console.log('[Auth] user.uid:', user.uid, 'in ADMIN_UIDS:', ADMIN_UIDS.includes(user.uid));
   if(!ADMIN_UIDS.includes(user.uid)){
+    console.log('[Auth] not admin');
     showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
     return;
   }
+  console.log('[Auth] admin verified, calling hideLoginGate');
   hideLoginGate();
-  if(IS_STAGING){ var pb=document.getElementById('btn-publish'); if(pb) pb.style.display='inline-block'; }
+  console.log('[Auth] IS_STAGING:', IS_STAGING);
+  if(IS_STAGING){
+    var pb=document.getElementById('btn-publish');
+    console.log('[Auth] btn-publish element:', pb);
+    if(pb) {
+      pb.style.display='inline-block';
+      console.log('[Auth] set display to inline-block, current:', pb.style.display);
+    }
+  }
   initPublishBtn();
   loadAllData();
 });
