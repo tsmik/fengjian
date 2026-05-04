@@ -1946,10 +1946,26 @@ async function doPublish(){
     var user = auth.currentUser;
     if(!user) throw new Error('未登入');
 
+    // 從 staging Firebase（前端 db）讀取資料
+    if(desc) desc.textContent = '正在讀取 Staging 資料...';
+    var rulesDoc = await db.collection('settings').doc('rules').get();
+    if(!rulesDoc.exists || !rulesDoc.data().rulesJson) throw new Error('Staging 無 rules 資料');
+    var questionsDoc = await db.collection('settings').doc('questions').get();
+    if(!questionsDoc.exists || !questionsDoc.data().questionsJson) throw new Error('Staging 無 questions 資料');
+
+    var stagingRulesJson = rulesDoc.data().rulesJson;
+    var stagingQuestionsJson = questionsDoc.data().questionsJson;
+
+    if(desc) desc.textContent = dryRun ? '正在比對差異...' : '正在發布到 Production...';
     var resp = await fetch(PUBLISH_CF_URL, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({callerUid: user.uid, dryRun: dryRun})
+      body: JSON.stringify({
+        callerUid: user.uid,
+        dryRun: dryRun,
+        rulesJson: stagingRulesJson,
+        questionsJson: stagingQuestionsJson
+      })
     });
     var data = await resp.json();
 

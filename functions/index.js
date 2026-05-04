@@ -2,7 +2,7 @@ const {onRequest} = require("firebase-functions/https");
 const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const {getFirestore} = require("firebase-admin/firestore");
-const {initializeApp, getApps, getApp} = require("firebase-admin/app");
+const {initializeApp, getApps} = require("firebase-admin/app");
 
 if (getApps().length === 0) {
   initializeApp();
@@ -381,20 +381,8 @@ ${dimTable}
 );
 
 // ==================== publishToProduction ====================
-// 只在 staging 環境呼叫。把 staging settings/rules 和 settings/questions
-// 複製到 production Firestore，同時記錄各部位/維度更新時間戳記。
-
-const PROD_PROJECT_ID = "renxiangbingfa";
-const STAGING_PROJECT_ID = "renxiangbingfa-staging";
-
-function getProductionDb() {
-  try {
-    return getFirestore(getApp("prod"));
-  } catch (e) {
-    const prodApp = initializeApp({projectId: PROD_PROJECT_ID}, "prod");
-    return getFirestore(prodApp);
-  }
-}
+// 前端（staging admin.html）負責讀 staging Firestore，把 rulesJson/questionsJson 傳過來。
+// 這個 Cloud Function 跑在 production Firebase，只負責寫 production Firestore。
 
 const PUBLISH_ADMIN_UIDS = [
   "XT1Err9cmnNokgMQKUrGUj3ishG2", // production admin
@@ -422,41 +410,24 @@ exports.publishToProduction = onRequest(
       return;
     }
 
-    // 驗證：只允許 admin uid
-    const {callerUid, dryRun} = req.body;
+    // 從 request body 接收前端傳來的 staging 資料
+    const {callerUid, dryRun, rulesJson, questionsJson} = req.body;
+
     if (!callerUid || !PUBLISH_ADMIN_UIDS.includes(callerUid)) {
       res.status(403).json({error: "Unauthorized"});
       return;
     }
 
-    try {
-      const stagingApp = (() => {
-        try { return getApp("staging"); } catch (e) {
-          return initializeApp({projectId: STAGING_PROJECT_ID}, "staging");
-        }
-      })();
-      const stagingDb = getFirestore(stagingApp);
-      const prodDb = getProductionDb();
+    if (!rulesJson || !questionsJson) {
+      res.status(400).json({error: "rulesJson and questionsJson are required"});
+      return;
+    }
 
+    try {
+      const prodDb = getFirestore();
       const now = new Date().toISOString();
 
-      // 讀 staging rules
-      const stagingRulesDoc = await stagingDb.collection("settings").doc("rules").get();
-      if (!stagingRulesDoc.exists || !stagingRulesDoc.data().rulesJson) {
-        res.status(400).json({error: "Staging rules not found"});
-        return;
-      }
-      const rulesJson = stagingRulesDoc.data().rulesJson;
-
-      // 讀 staging questions
-      const stagingQuestionsDoc = await stagingDb.collection("settings").doc("questions").get();
-      if (!stagingQuestionsDoc.exists || !stagingQuestionsDoc.data().questionsJson) {
-        res.status(400).json({error: "Staging questions not found"});
-        return;
-      }
-      const questionsJson = stagingQuestionsDoc.data().questionsJson;
-
-      // 讀取 production 現有資料（用於比對）
+      // 讀取 production 現有資料（用於比對 + 備份）
       const prodRulesDoc = await prodDb.collection("settings").doc("rules").get();
       const prodQuestionsDoc = await prodDb.collection("settings").doc("questions").get();
 
