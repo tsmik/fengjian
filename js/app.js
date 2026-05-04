@@ -462,6 +462,10 @@ auth.onAuthStateChanged(async (user) => {
     }
 
     await initAfterLogin();
+    // 初始化紅點提示
+    if (window._initUpdateBadges && db && user) {
+      window._initUpdateBadges(db, user.uid);
+    }
   } else {
     setCurrentUser(null);
     document.getElementById('top-nav').style.display = 'none';
