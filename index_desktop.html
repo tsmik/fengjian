@@ -752,8 +752,16 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
   }
 
   function refreshEntryBadges(updateLog, seenLog) {
+    // 從部位觀察：任何 part_* 或 q_* 還有未看過更新 → 顯示
     var hasPartUpdate = Q_PART_NAMES.some(function(p){ return hasUpdate(updateLog, seenLog, 'part_' + p); });
+    if (!hasPartUpdate) {
+      for (var key in updateLog) {
+        if (key.indexOf('q_') === 0 && hasUpdate(updateLog, seenLog, key)) { hasPartUpdate = true; break; }
+      }
+    }
+    // 從維度觀察：任何 dim_* 還有未看過更新 → 顯示
     var hasDimUpdate = DIM_NAMES.some(function(d){ return hasUpdate(updateLog, seenLog, 'dim_' + d); });
+
     var obsEl = document.getElementById('badge-obs-entry');
     var condEl = document.getElementById('badge-cond-entry');
     if (obsEl) obsEl.classList.toggle('show', hasPartUpdate);
@@ -763,7 +771,16 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
   function refreshFaceMapBadges(updateLog, seenLog) {
     Q_PART_NAMES.forEach(function(part){
       var badge = document.getElementById('badge-part-' + part);
-      if (badge) badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'part_' + part));
+      if (!badge) return;
+      // part 自身有更新，或該部位下任何題目有更新沒看過 → 顯示紅點
+      var has = hasUpdate(updateLog, seenLog, 'part_' + part);
+      if (!has) {
+        var prefix = 'q_' + part + '_';
+        for (var key in updateLog) {
+          if (key.indexOf(prefix) === 0 && hasUpdate(updateLog, seenLog, key)) { has = true; break; }
+        }
+      }
+      badge.classList.toggle('show', has);
     });
   }
 
