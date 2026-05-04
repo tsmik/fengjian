@@ -42,6 +42,7 @@ export function renderFaceMap(){
     if(!isActive && !isComplete) extraStyle=';background:#FFF3CD;border-color:#E6C66B';
     html+='<div class="'+cls+'" style="grid-column:'+fp.col+';grid-row:'+fp.row+extraStyle+'" onclick="gotoObsPart('+fp.obsIdx+')">';
     const displayName=fp.name.replace('耳2','耳').replace('頤2','頤');
+    html+='<span class="update-badge" id="badge-part-'+displayName+'"></span>';
     html+='<span class="fc-name">'+displayName+'</span>';
     html+='<span class="fc-count">'+c.ck+'/'+c.tot+'</span>';
     html+='</div>';
@@ -54,6 +55,7 @@ export function renderFaceMap(){
   html+='</div>';
   el.innerHTML=html;
   updateObsProgress();
+  if(window._refreshBadges)window._refreshBadges();
 }
 
 export function renderObsCenter(){
@@ -254,7 +256,7 @@ export function renderDimIndex(){
   renderDimPanel(document.getElementById('dim-index-col'),cur);
 }
 
-export function gotoObsPart(i){setCurObsPart(i);renderFaceMap();renderObsCenter();renderDimIndex();}
+export function gotoObsPart(i){setCurObsPart(i);renderFaceMap();renderObsCenter();renderDimIndex();if(window._markPartSeen){const pn=OBS_PART_NAMES[i];if(pn)window._markPartSeen(pn);}}
 
 export function toggleDetailGroup(header){header.classList.toggle('collapsed');header.nextElementSibling.classList.toggle('hidden');}
 

@@ -23,11 +23,12 @@ export function cpHide(){
   document.getElementById('cond-page').style.display='none';
 }
 
-export function cpGoto(i){cpCur=i;setCur(i);cpRender();if(typeof window.renderDimIndex==='function')window.renderDimIndex();}
+export function cpGoto(i){cpCur=i;setCur(i);cpRender();if(typeof window.renderDimIndex==='function')window.renderDimIndex();if(window._markDimSeen&&DIMS[i])window._markDimSeen(DIMS[i].dn);}
 
 export function cpRender(){
   try{cpRenderRight();}catch(e){console.error('cpRenderRight:',e);}
   try{cpRenderMain();}catch(e){console.error('cpRenderMain:',e);document.getElementById('cp-main').innerHTML='<div style="color:red;padding:20px">'+e.message+'</div>';}
+  if(window._refreshBadges)window._refreshBadges();
 }
 
 export function renderDimPanel(el,dimIndex){
@@ -70,7 +71,8 @@ export function renderDimPanel(el,dimIndex){
         var isActive=di===useDim;
         var dimRes=calcDim(data,di);
         var chipColor=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
-        html+='<div onclick="cpGoto('+di+')" style="'+cellStyle+';'+(isActive?activeStyle:'color:var(--text-2)')+'">'+
+        html+='<div onclick="cpGoto('+di+')" style="'+cellStyle+';position:relative;'+(isActive?activeStyle:'color:var(--text-2)')+'">'+
+          '<span class="update-badge" id="badge-dim-'+dm.dn+'" style="top:-4px;right:-4px"></span>'+
           '<div>'+dm.dn+
           '<div style="height:3px;margin-top:4px;border-radius:1.5px;background:'+chipColor+'"></div>'+
           '</div></div>';
@@ -562,7 +564,7 @@ export function cpApplyChange(qid,side,val){
 export const CAT_STYLE={"先天指數":"background:#3a3530;color:#f7f4ef","運氣指數":"background:#3a4a50;color:#f7f4ef","後天指數":"background:#3a4a3a;color:#f7f4ef"};
 
 // ===== 新版維度條件評分頁 =====
-export function dimGoto(i){setCur(i);cpCur=i;renderDimCondPage();}
+export function dimGoto(i){setCur(i);cpCur=i;renderDimCondPage();if(window._markDimSeen&&DIMS[i])window._markDimSeen(DIMS[i].dn);}
 
 export function renderDimSidebar(){
   const el=document.getElementById('dim-sidebar-new');if(!el)return;
@@ -571,7 +573,8 @@ export function renderDimSidebar(){
     if(d.cat!==lastCat){html+='<div class="dim-sidebar-cat">'+d.cat+'</div>';lastCat=d.cat;}
     const res=calcDim(data,i);
     const chipColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
-    html+='<div class="dim-sidebar-new-item'+(i===cur?' active':'')+'" onclick="dimGoto('+i+')">'+
+    html+='<div class="dim-sidebar-new-item'+(i===cur?' active':'')+'" onclick="dimGoto('+i+')" style="position:relative">'+
+      '<span class="update-badge" id="badge-dim-'+d.dn+'" style="top:4px;left:4px"></span>'+
       '<span>'+d.dn+' - '+d.view+'</span>'+
       '<span class="dim-sidebar-chip" style="background:'+chipColor+'">'+(res?res.type:'未填')+'</span>'+
     '</div>';
@@ -681,6 +684,7 @@ export function renderDimCondMain(){
 export function renderDimCondPage(){
   renderDimSidebar();
   renderDimCondMain();
+  if(window._refreshBadges)window._refreshBadges();
   // 右欄：當前維度各部位結果
   const rc=document.getElementById('dim-right-col');
   if(rc){

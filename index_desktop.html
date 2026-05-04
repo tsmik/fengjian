@@ -94,6 +94,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .face-cell.active-part .fc-name{color:var(--static);font-weight:400}
 .face-progress{margin:10px 8px;height:6px;background:#e8e3dd;border-radius:3px;overflow:hidden}
 .face-progress-bar{height:100%;background:var(--static);border-radius:3px;transition:width 0.3s}
+/* ===== 新題目紅點提示 ===== */
+.update-badge{position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#c03830;border-radius:50%;border:2px solid white;pointer-events:none;z-index:10;display:none}
+.update-badge.show{display:block}
+.mode-btn{position:relative}
+.face-cell{position:relative}
+.obs-q-badge{position:absolute;top:4px;left:4px;width:8px;height:8px;background:#c03830;border-radius:50%;border:1.5px solid white;pointer-events:none;display:none}
+.obs-q-badge.show{display:block}
 
 /* ===== Center Column - Obs Questions ===== */
 .col-center{overflow-y:auto;padding:0;border-right:1px solid var(--border);min-width:0}
@@ -491,10 +498,12 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       <!-- 入口 -->
       <div class="mode-flow-col">
         <div class="mode-btn is-entry" onclick="showObsPage()">
+          <span class="update-badge" id="badge-obs-entry"></span>
           <h3>從部位觀察</h3>
           <p style="font-size:15px;font-weight:400;color:var(--text);line-height:1.5;letter-spacing:1px">頭、額、耳、眉、眼、鼻、口...</p>
         </div>
         <div class="mode-btn is-entry" onclick="showCondPage()" style="border-left-color:var(--static)">
+          <span class="update-badge" id="badge-cond-entry"></span>
           <h3>從維度觀察</h3>
           <p style="font-size:15px;font-weight:400;color:var(--text);line-height:1.5;letter-spacing:1px">形勢、經緯、方圓、曲直、收放...</p>
         </div>
@@ -715,5 +724,94 @@ const auth=firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.log('persistence 設定失敗',e);});
 </script>
 <script type="module" src="./js/app.js"></script>
+<script>
+// ===== 新題目紅點提示邏輯 =====
+(function(){
+  var Q_PART_NAMES = ['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+  var DIM_NAMES = ['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
+  var SEEN_KEY_PREFIX = 'rxbf_seen_';
+
+  function loadUpdateLog(fbDb) {
+    return fbDb.collection('settings').doc('updateLog').get()
+      .then(function(doc){ return doc.exists ? doc.data() : {}; })
+      .catch(function(){ return {}; });
+  }
+
+  function getSeenLog(uid) {
+    try { var r = localStorage.getItem(SEEN_KEY_PREFIX + uid); return r ? JSON.parse(r) : {}; } catch(e){ return {}; }
+  }
+
+  function saveSeenLog(uid, seenLog) {
+    try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(seenLog)); } catch(e){}
+  }
+
+  function hasUpdate(updateLog, seenLog, key) {
+    if (!updateLog[key]) return false;
+    if (!seenLog[key]) return true;
+    return new Date(updateLog[key]) > new Date(seenLog[key]);
+  }
+
+  function refreshEntryBadges(updateLog, seenLog) {
+    var hasPartUpdate = Q_PART_NAMES.some(function(p){ return hasUpdate(updateLog, seenLog, 'part_' + p); });
+    var hasDimUpdate = DIM_NAMES.some(function(d){ return hasUpdate(updateLog, seenLog, 'dim_' + d); });
+    var obsEl = document.getElementById('badge-obs-entry');
+    var condEl = document.getElementById('badge-cond-entry');
+    if (obsEl) obsEl.classList.toggle('show', hasPartUpdate);
+    if (condEl) condEl.classList.toggle('show', hasDimUpdate);
+  }
+
+  function refreshFaceMapBadges(updateLog, seenLog) {
+    Q_PART_NAMES.forEach(function(part){
+      var badge = document.getElementById('badge-part-' + part);
+      if (badge) badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'part_' + part));
+    });
+  }
+
+  function refreshCondBadges(updateLog, seenLog) {
+    DIM_NAMES.forEach(function(dim){
+      var badge = document.getElementById('badge-dim-' + dim);
+      if (badge) badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'dim_' + dim));
+    });
+  }
+
+  window._markPartSeen = function(partName) {
+    if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
+    var seenLog = getSeenLog(window._badgeUid);
+    seenLog['part_' + partName] = new Date().toISOString();
+    saveSeenLog(window._badgeUid, seenLog);
+    refreshEntryBadges(window._updateLog, seenLog);
+    refreshFaceMapBadges(window._updateLog, seenLog);
+  };
+
+  window._markDimSeen = function(dimName) {
+    if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
+    var seenLog = getSeenLog(window._badgeUid);
+    seenLog['dim_' + dimName] = new Date().toISOString();
+    saveSeenLog(window._badgeUid, seenLog);
+    refreshEntryBadges(window._updateLog, seenLog);
+    refreshCondBadges(window._updateLog, seenLog);
+  };
+
+  window._initUpdateBadges = function(fbDb, uid) {
+    window._badgeDb = fbDb;
+    window._badgeUid = uid;
+    loadUpdateLog(fbDb).then(function(updateLog){
+      window._updateLog = updateLog;
+      var seenLog = getSeenLog(uid);
+      refreshEntryBadges(updateLog, seenLog);
+      refreshFaceMapBadges(updateLog, seenLog);
+      refreshCondBadges(updateLog, seenLog);
+    });
+  };
+
+  window._refreshBadges = function() {
+    if (!window._updateLog || !window._badgeUid) return;
+    var seenLog = getSeenLog(window._badgeUid);
+    refreshEntryBadges(window._updateLog, seenLog);
+    refreshFaceMapBadges(window._updateLog, seenLog);
+    refreshCondBadges(window._updateLog, seenLog);
+  };
+})();
+</script>
 </body>
 </html>

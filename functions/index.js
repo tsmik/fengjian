@@ -380,6 +380,150 @@ ${dimTable}
   },
 );
 
+// ==================== publishToProduction ====================
+// 前端（staging admin.html）負責讀 staging Firestore，把 rulesJson/questionsJson 傳過來。
+// 這個 Cloud Function 跑在 production Firebase，只負責寫 production Firestore。
+
+const PUBLISH_ADMIN_UIDS = [
+  "XT1Err9cmnNokgMQKUrGUj3ishG2", // production admin
+  "ARGLfFp3HqbWMtN7CAoAxR4rHhm1", // staging admin
+];
+
+const Q_PART_NAMES_PUB = ["頭", "額", "耳", "眉", "眼", "鼻", "顴", "口", "人中", "地閣", "頤"];
+const DIM_NAMES_PUB = ["形勢", "經緯", "方圓", "曲直", "收放", "緩急", "順逆", "分合", "真假", "攻守", "奇正", "虛實", "進退"];
+
+exports.publishToProduction = onRequest(
+  {
+    region: "us-central1",
+    invoker: "public",
+    timeoutSeconds: 60,
+  },
+  async (req, res) => {
+    // CORS
+    setCorsHeaders(req, res);
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+    if (req.method !== "POST") {
+      res.status(405).json({error: "Method not allowed"});
+      return;
+    }
+
+    // 從 request body 接收前端傳來的 staging 資料
+    const {callerUid, dryRun, rulesJson, questionsJson} = req.body;
+
+    if (!callerUid || !PUBLISH_ADMIN_UIDS.includes(callerUid)) {
+      res.status(403).json({error: "Unauthorized"});
+      return;
+    }
+
+    if (!rulesJson || !questionsJson) {
+      res.status(400).json({error: "rulesJson and questionsJson are required"});
+      return;
+    }
+
+    try {
+      const prodDb = getFirestore();
+      const now = new Date().toISOString();
+
+      // 讀取 production 現有資料（用於比對 + 備份）
+      const prodRulesDoc = await prodDb.collection("settings").doc("rules").get();
+      const prodQuestionsDoc = await prodDb.collection("settings").doc("questions").get();
+
+      // 計算各部位/維度更新時間戳記
+      const updateLog = {};
+
+      // 比對 questions（部位層）
+      let stagingQuestions = {};
+      let prodQuestions = {};
+      try { stagingQuestions = JSON.parse(questionsJson); } catch (e) {}
+      try { prodQuestions = prodQuestionsDoc.exists && prodQuestionsDoc.data().questionsJson ? JSON.parse(prodQuestionsDoc.data().questionsJson) : {}; } catch (e) {}
+
+      Q_PART_NAMES_PUB.forEach((part) => {
+        const stagingPart = JSON.stringify(stagingQuestions[part] || {});
+        const prodPart = JSON.stringify(prodQuestions[part] || {});
+        if (stagingPart !== prodPart) {
+          updateLog["part_" + part] = now;
+        }
+      });
+
+      // 比對 rules（維度層）
+      let stagingRules = [];
+      let prodRules = [];
+      try { stagingRules = JSON.parse(rulesJson); } catch (e) {}
+      try { prodRules = prodRulesDoc.exists && prodRulesDoc.data().rulesJson ? JSON.parse(prodRulesDoc.data().rulesJson) : []; } catch (e) {}
+
+      DIM_NAMES_PUB.forEach((dim, i) => {
+        const stagingDim = JSON.stringify(stagingRules[i] || {});
+        const prodDim = JSON.stringify(prodRules[i] || {});
+        if (stagingDim !== prodDim) {
+          updateLog["dim_" + dim] = now;
+        }
+      });
+
+      const changedParts = Q_PART_NAMES_PUB.filter((p) => updateLog["part_" + p]);
+      const changedDims = DIM_NAMES_PUB.filter((d) => updateLog["dim_" + d]);
+
+      // Dry run: 只回傳比對結果，不寫入
+      if (dryRun) {
+        res.json({
+          success: true,
+          dryRun: true,
+          changedParts,
+          changedDims,
+          message: `[DRY RUN] 變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}（尚未寫入）`,
+        });
+        return;
+      }
+
+      // 備份 production 現有資料
+      if (prodRulesDoc.exists) {
+        await prodDb.collection("settings").doc("rules_backup").set({
+          ...prodRulesDoc.data(),
+          backedUpAt: now,
+        });
+      }
+      if (prodQuestionsDoc.exists) {
+        await prodDb.collection("settings").doc("questions_backup").set({
+          ...prodQuestionsDoc.data(),
+          backedUpAt: now,
+        });
+      }
+
+      // 寫入 production
+      await prodDb.collection("settings").doc("rules").set({
+        rulesJson,
+        updatedAt: now,
+        publishedFrom: "staging",
+        publishedBy: callerUid,
+      });
+      await prodDb.collection("settings").doc("questions").set({
+        questionsJson,
+        updatedAt: now,
+        publishedFrom: "staging",
+        publishedBy: callerUid,
+      });
+
+      // 寫入更新時間戳記（合併到現有的 updateLog）
+      if (Object.keys(updateLog).length > 0) {
+        await prodDb.collection("settings").doc("updateLog").set(updateLog, {merge: true});
+      }
+
+      res.json({
+        success: true,
+        publishedAt: now,
+        changedParts,
+        changedDims,
+        message: `發布成功。變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}`,
+      });
+    } catch (err) {
+      logger.error("publishToProduction error", {error: err.message, stack: err.stack});
+      res.status(500).json({error: err.message});
+    }
+  },
+);
+
 // ==================== getRules ====================
 
 const DIM_NAMES = ["形勢", "經緯", "方圓", "曲直", "收放", "緩急", "順逆", "分合", "真假", "攻守", "奇正", "虛實", "進退"];

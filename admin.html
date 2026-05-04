@@ -67,6 +67,19 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 .node-veto{border-left-color:var(--active)}
 .node-lr{border-left-color:#9E8A5A}
 .btn-save.dirty{background:#c03830;animation:pulse-save 1.5s ease-in-out infinite}
+.btn-publish{background:#7A5A90;color:white;display:none}
+.btn-publish:hover{opacity:0.9}
+.publish-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:none;align-items:center;justify-content:center}
+.publish-modal-overlay.show{display:flex}
+.publish-modal{background:white;border-radius:12px;padding:32px;max-width:480px;width:90%;font-family:'Noto Sans TC',sans-serif}
+.publish-modal h3{font-size:18px;font-weight:400;margin-bottom:12px;color:#1c1c1c}
+.publish-modal p{font-size:14px;color:#3d3b39;line-height:1.7;margin-bottom:20px}
+.publish-modal .warn{color:#c03830;font-weight:400;font-size:13px;background:#fff5f5;border:1px solid #f0c0c0;border-radius:6px;padding:10px 14px;margin-bottom:20px}
+.publish-modal-btns{display:flex;gap:12px;justify-content:flex-end}
+.publish-modal-btns button{height:36px;padding:0 20px;border:none;border-radius:6px;font-size:14px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.publish-cancel-btn{background:#eee;color:#333}
+.publish-confirm-btn{background:#7A5A90;color:white}
+.publish-confirm-btn:disabled{opacity:0.5;cursor:default}
 .btn-undo{background:var(--sidebar);color:var(--text-2);border:1px solid var(--border)}
 .btn-undo:disabled{opacity:0.3;cursor:default}
 @keyframes pulse-save{0%,100%{opacity:1}50%{opacity:0.85}}
@@ -138,6 +151,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
   <span>風鑑學堂 管理介面</span>
   <button class="btn-save" id="btn-save" onclick="saveAll()">儲存到 Firebase</button>
   <button class="btn-undo" id="btn-undo" onclick="undo()" disabled>復原</button>
+  <button class="btn-publish" id="btn-publish" onclick="showPublishModal()">🚀 發布到 Production</button>
   <span class="status" id="status">載入中...</span>
 </div>
 <div id="toast" class="toast"></div>
@@ -153,6 +167,24 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 <div id="main">
   <div id="sidebar"></div>
   <div id="editor"></div>
+</div>
+
+<!-- 發布 Modal -->
+<div class="publish-modal-overlay" id="publish-modal-overlay">
+  <div class="publish-modal">
+    <h3>🚀 發布到 Production</h3>
+    <p>即將把 <strong>Staging</strong> 的評分規則與觀察題目，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。</p>
+    <div class="warn">⚠️ Production 現有資料會被備份後覆蓋。學員下次重新整理頁面後，會使用新的規則與題目計算報告。學員自己填的觀察資料不受影響。</div>
+    <p id="publish-modal-desc" style="font-size:13px;color:#716b60"></p>
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="dry-run-checkbox" checked style="width:18px;height:18px;cursor:pointer" onchange="updatePublishBtnText()">
+      <label for="dry-run-checkbox" style="font-size:14px;cursor:pointer">乾跑模式（只預覽，不實際寫入 Production）</label>
+    </div>
+    <div class="publish-modal-btns">
+      <button class="publish-cancel-btn" onclick="hidePublishModal()">取消</button>
+      <button class="publish-confirm-btn" id="publish-confirm-btn" onclick="doPublish()">🔍 預覽變動（不實際發布）</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -219,7 +251,11 @@ function hideLoginGate(){
   var gate=document.getElementById('auth-gate');
   if(gate) gate.remove();
   var mainContent=document.querySelectorAll('body > *:not(#auth-gate)');
-  mainContent.forEach(function(el){ el.style.display=''; });
+  mainContent.forEach(function(el){
+    if(el.id === 'btn-publish') return; // 跳過發布按鈕，讓 initPublishBtn 控制
+    el.style.display='';
+  });
+  document.getElementById('liunian-page').style.display = 'none';
 }
 
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
@@ -1863,6 +1899,92 @@ var LIUNIAN_DEFAULT_DATA={"男":[
 {"age":99,"mark":"","name75":"亥","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""}
 ]};
 
+// ==================== 發布到 Production ====================
+var IS_STAGING = (function(){
+  var host = window.location.hostname;
+  return host === 'staging.fengjian.pages.dev' || (/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host) && host !== 'fengjian.pages.dev');
+})();
+
+var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
+
+function initPublishBtn(){
+  var btn = document.getElementById('btn-publish');
+  if(btn && IS_STAGING) btn.style.display = 'inline-block';
+}
+
+function showPublishModal(){
+  var overlay = document.getElementById('publish-modal-overlay');
+  var desc = document.getElementById('publish-modal-desc');
+  if(desc) desc.textContent = '發布後，Production 學員重新整理頁面即可看到最新題目與評分標準。';
+  var cb = document.getElementById('dry-run-checkbox');
+  if(cb) cb.checked = true;
+  updatePublishBtnText();
+  if(overlay) overlay.classList.add('show');
+}
+
+function hidePublishModal(){
+  var overlay = document.getElementById('publish-modal-overlay');
+  if(overlay) overlay.classList.remove('show');
+}
+
+function updatePublishBtnText(){
+  var btn = document.getElementById('publish-confirm-btn');
+  var cb = document.getElementById('dry-run-checkbox');
+  if(!btn) return;
+  var isDry = cb && cb.checked;
+  btn.textContent = isDry ? '🔍 預覽變動（不實際發布）' : '確認發布';
+}
+
+async function doPublish(){
+  var btn = document.getElementById('publish-confirm-btn');
+  var cb = document.getElementById('dry-run-checkbox');
+  var dryRun = cb && cb.checked;
+  if(btn) { btn.disabled = true; btn.textContent = dryRun ? '預覽中...' : '發布中...'; }
+  var desc = document.getElementById('publish-modal-desc');
+
+  try {
+    var user = auth.currentUser;
+    if(!user) throw new Error('未登入');
+
+    // 從 staging Firebase（前端 db）讀取資料
+    if(desc) desc.textContent = '正在讀取 Staging 資料...';
+    var rulesDoc = await db.collection('settings').doc('rules').get();
+    if(!rulesDoc.exists || !rulesDoc.data().rulesJson) throw new Error('Staging 無 rules 資料');
+    var questionsDoc = await db.collection('settings').doc('questions').get();
+    if(!questionsDoc.exists || !questionsDoc.data().questionsJson) throw new Error('Staging 無 questions 資料');
+
+    var stagingRulesJson = rulesDoc.data().rulesJson;
+    var stagingQuestionsJson = questionsDoc.data().questionsJson;
+
+    if(desc) desc.textContent = dryRun ? '正在比對差異...' : '正在發布到 Production...';
+    var resp = await fetch(PUBLISH_CF_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        callerUid: user.uid,
+        dryRun: dryRun,
+        rulesJson: stagingRulesJson,
+        questionsJson: stagingQuestionsJson
+      })
+    });
+    var data = await resp.json();
+
+    if(!resp.ok || !data.success) throw new Error(data.error || '發布失敗');
+
+    if(dryRun) {
+      if(desc) desc.textContent = data.message;
+    } else {
+      hidePublishModal();
+    }
+    showToast('✅ ' + data.message, true);
+  } catch(e) {
+    if(desc) desc.textContent = '❌ 錯誤：' + e.message;
+    showToast('發布失敗：' + e.message, false);
+  } finally {
+    if(btn) { btn.disabled = false; updatePublishBtnText(); }
+  }
+}
+
 // ==================== INIT ====================
 async function loadAllData(){
   // Load rules
@@ -1913,22 +2035,43 @@ async function loadAllData(){
   renderAll();
   takeSnapshot();
   setStatus('就緒（規則 '+rules.length+' 維度，問題 '+Object.keys(questions).length+' 部位，流年 '+(liunianData?liunianData['男'].length+liunianData['女'].length:0)+' 筆）');
+  if(IS_STAGING){
+    var pb = document.getElementById('btn-publish');
+    if(pb) pb.style.display = 'inline-block';
+  }
 }
 
 showLoginGate('正在驗證身份...');
 
 auth.onAuthStateChanged(function(user){
+  console.log('[Auth] fired, user:', user ? user.uid : 'null');
   if(!user){
+    console.log('[Auth] no user, showing login gate');
     showLoginGate('請先使用 Google 登入');
     return;
   }
+  console.log('[Auth] user.uid:', user.uid, 'in ADMIN_UIDS:', ADMIN_UIDS.includes(user.uid));
   if(!ADMIN_UIDS.includes(user.uid)){
+    console.log('[Auth] not admin');
     showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
     return;
   }
+  console.log('[Auth] admin verified, calling hideLoginGate');
   hideLoginGate();
+  console.log('[Auth] IS_STAGING:', IS_STAGING);
+  if(IS_STAGING){
+    var pb=document.getElementById('btn-publish');
+    console.log('[Auth] btn-publish element:', pb);
+    if(pb) {
+      pb.style.display='inline-block';
+      console.log('[Auth] set display to inline-block, current:', pb.style.display);
+    }
+  }
+  initPublishBtn();
   loadAllData();
 });
 </script>
 </body>
 </html>
+<!-- cache buster: 1777898047 -->
+<!-- v2 cache buster: 1777898431 -->
