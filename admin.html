@@ -1954,8 +1954,13 @@ var IS_STAGING = (function(){
 var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
 
 function initPublishBtn(){
+  console.log('[Publish] initPublishBtn called');
+  console.log('[Publish] IS_STAGING =', IS_STAGING);
+  console.log('[Publish] hostname =', window.location.hostname);
   var btn = document.getElementById('btn-publish');
+  console.log('[Publish] btn =', btn);
   if(btn && IS_STAGING) btn.style.display = '';
+  console.log('[Publish] btn.style.display =', btn ? btn.style.display : 'no btn');
 }
 
 function showPublishModal(){
