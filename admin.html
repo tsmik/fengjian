@@ -1894,6 +1894,59 @@ var LIUNIAN_DEFAULT_DATA={"男":[
 {"age":99,"mark":"","name75":"亥","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""}
 ]};
 
+// ==================== 發布到 Production ====================
+var IS_STAGING = (function(){
+  var host = window.location.hostname;
+  return host === 'staging.fengjian.pages.dev' || (/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host) && host !== 'fengjian.pages.dev');
+})();
+
+var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
+
+function initPublishBtn(){
+  var btn = document.getElementById('btn-publish');
+  if(btn && IS_STAGING) btn.style.display = 'inline-block';
+}
+
+function showPublishModal(){
+  var overlay = document.getElementById('publish-modal-overlay');
+  var desc = document.getElementById('publish-modal-desc');
+  if(desc) desc.textContent = '發布後，Production 學員重新整理頁面即可看到最新題目與評分標準。';
+  if(overlay) overlay.classList.add('show');
+}
+
+function hidePublishModal(){
+  var overlay = document.getElementById('publish-modal-overlay');
+  if(overlay) overlay.classList.remove('show');
+}
+
+async function doPublish(){
+  var btn = document.getElementById('publish-confirm-btn');
+  if(btn) { btn.disabled = true; btn.textContent = '發布中...'; }
+  var desc = document.getElementById('publish-modal-desc');
+
+  try {
+    var user = auth.currentUser;
+    if(!user) throw new Error('未登入');
+
+    var resp = await fetch(PUBLISH_CF_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({callerUid: user.uid})
+    });
+    var data = await resp.json();
+
+    if(!resp.ok || !data.success) throw new Error(data.error || '發布失敗');
+
+    hidePublishModal();
+    showToast('✅ ' + data.message, true);
+  } catch(e) {
+    if(desc) desc.textContent = '❌ 錯誤：' + e.message;
+    showToast('發布失敗：' + e.message, false);
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = '確認發布'; }
+  }
+}
+
 // ==================== INIT ====================
 async function loadAllData(){
   // Load rules
@@ -1951,59 +2004,6 @@ async function loadAllData(){
 }
 
 showLoginGate('正在驗證身份...');
-
-// ==================== 發布到 Production ====================
-var IS_STAGING = (function(){
-  var host = window.location.hostname;
-  return host === 'staging.fengjian.pages.dev' || (/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host) && host !== 'fengjian.pages.dev');
-})();
-
-var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
-
-function initPublishBtn(){
-  var btn = document.getElementById('btn-publish');
-  if(btn && IS_STAGING) btn.style.display = 'inline-block';
-}
-
-function showPublishModal(){
-  var overlay = document.getElementById('publish-modal-overlay');
-  var desc = document.getElementById('publish-modal-desc');
-  if(desc) desc.textContent = '發布後，Production 學員重新整理頁面即可看到最新題目與評分標準。';
-  if(overlay) overlay.classList.add('show');
-}
-
-function hidePublishModal(){
-  var overlay = document.getElementById('publish-modal-overlay');
-  if(overlay) overlay.classList.remove('show');
-}
-
-async function doPublish(){
-  var btn = document.getElementById('publish-confirm-btn');
-  if(btn) { btn.disabled = true; btn.textContent = '發布中...'; }
-  var desc = document.getElementById('publish-modal-desc');
-
-  try {
-    var user = auth.currentUser;
-    if(!user) throw new Error('未登入');
-
-    var resp = await fetch(PUBLISH_CF_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({callerUid: user.uid})
-    });
-    var data = await resp.json();
-
-    if(!resp.ok || !data.success) throw new Error(data.error || '發布失敗');
-
-    hidePublishModal();
-    showToast('✅ ' + data.message, true);
-  } catch(e) {
-    if(desc) desc.textContent = '❌ 錯誤：' + e.message;
-    showToast('發布失敗：' + e.message, false);
-  } finally {
-    if(btn) { btn.disabled = false; btn.textContent = '確認發布'; }
-  }
-}
 
 auth.onAuthStateChanged(function(user){
   if(!user){
