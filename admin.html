@@ -1945,20 +1945,6 @@ async function loadAllData(){
 
 showLoginGate('正在驗證身份...');
 
-auth.onAuthStateChanged(function(user){
-  if(!user){
-    showLoginGate('請先使用 Google 登入');
-    return;
-  }
-  if(!ADMIN_UIDS.includes(user.uid)){
-    showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
-    return;
-  }
-  hideLoginGate();
-  initPublishBtn();
-  loadAllData();
-});
-
 // ==================== 發布到 Production ====================
 var IS_STAGING = (function(){
   var host = window.location.hostname;
@@ -2011,6 +1997,20 @@ async function doPublish(){
     if(btn) { btn.disabled = false; btn.textContent = '確認發布'; }
   }
 }
+
+auth.onAuthStateChanged(function(user){
+  if(!user){
+    showLoginGate('請先使用 Google 登入');
+    return;
+  }
+  if(!ADMIN_UIDS.includes(user.uid)){
+    showLoginGate('您的帳號（'+(user.email||'')+'）無權限存取後台。');
+    return;
+  }
+  hideLoginGate();
+  initPublishBtn();
+  loadAllData();
+});
 </script>
 </body>
 </html>
