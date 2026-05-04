@@ -72,7 +72,7 @@ export function renderDimPanel(el,dimIndex){
         var dimRes=calcDim(data,di);
         var chipColor=dimRes?(dimRes.type==='靜'?SBG:DBG):'#ccc';
         html+='<div onclick="cpGoto('+di+')" style="'+cellStyle+';position:relative;'+(isActive?activeStyle:'color:var(--text-2)')+'">'+
-          '<span class="update-badge" id="badge-dim-'+dm.dn+'" style="top:-4px;right:-4px"></span>'+
+          '<span class="update-badge" id="badge-dim-'+dm.dn+'" style="top:-4px;right:-4px;width:10px;height:10px"></span>'+
           '<div>'+dm.dn+
           '<div style="height:3px;margin-top:4px;border-radius:1.5px;background:'+chipColor+'"></div>'+
           '</div></div>';
@@ -574,7 +574,7 @@ export function renderDimSidebar(){
     const res=calcDim(data,i);
     const chipColor=res?(res.type==='靜'?'var(--static)':'var(--active)'):'#ccc';
     html+='<div class="dim-sidebar-new-item'+(i===cur?' active':'')+'" onclick="dimGoto('+i+')" style="position:relative">'+
-      '<span class="update-badge" id="badge-dim-'+d.dn+'" style="top:4px;left:4px"></span>'+
+      '<span class="update-badge" id="badge-dim-'+d.dn+'" style="top:4px;left:4px;width:10px;height:10px"></span>'+
       '<span>'+d.dn+' - '+d.view+'</span>'+
       '<span class="dim-sidebar-chip" style="background:'+chipColor+'">'+(res?res.type:'未填')+'</span>'+
     '</div>';
