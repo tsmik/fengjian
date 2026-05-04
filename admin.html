@@ -1957,10 +1957,8 @@ var IS_STAGING = (function(){
 var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
 
 function initPublishBtn(){
-  setTimeout(function(){
-    var btn = document.getElementById('btn-publish');
-    if(btn && IS_STAGING) btn.style.display = 'inline-block';
-  }, 2000);
+  var btn = document.getElementById('btn-publish');
+  if(btn && IS_STAGING) btn.style.display = 'inline-block';
 }
 
 function showPublishModal(){
@@ -2013,6 +2011,7 @@ auth.onAuthStateChanged(function(user){
     return;
   }
   hideLoginGate();
+  if(IS_STAGING){ var pb=document.getElementById('btn-publish'); if(pb) pb.style.display='inline-block'; }
   initPublishBtn();
   loadAllData();
 });
