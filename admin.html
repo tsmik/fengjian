@@ -2017,5 +2017,16 @@ auth.onAuthStateChanged(function(user){
   loadAllData();
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('btn-publish');
+  if(btn) {
+    var host = window.location.hostname;
+    if(host === 'staging.fengjian.pages.dev' || (host !== 'fengjian.pages.dev' && host !== 'tsmik.github.io' && host !== 'localhost' && host.indexOf('fengjian') !== -1)) {
+      btn.style.display = 'inline-block';
+    }
+  }
+});
+</script>
 </body>
 </html>
