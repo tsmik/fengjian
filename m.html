@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f7f4ef">
 <title>人相兵法</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ===== 色票（沿用桌機版 + 手機版新增） ===== */
 :root{
@@ -50,6 +51,28 @@ body{
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
+/* ===== STAGING banner ===== */
+#m-staging-banner{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  height:24px;
+  padding:0 12px;
+  background:#e89c3c;
+  color:#fff;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:1px;
+  align-items:center;
+  justify-content:center;
+  z-index:200;
+  padding-top:var(--safe-top);
+  height:calc(24px + var(--safe-top));
+}
+body.m-staging-mode #m-staging-banner{display:flex}
+body.m-staging-mode .m-nav{top:calc(24px + var(--safe-top));padding-top:0}
+body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
+
 /* ===== 頂部 nav ===== */
 .m-nav{
   position:fixed;
@@ -73,9 +96,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .m-nav-user{
   font-size:13px;
-  color:rgba(255,255,255,0.7);
+  color:rgba(255,255,255,0.85);
   letter-spacing:1px;
+  cursor:pointer;
 }
+.m-nav-user.is-guest{color:rgba(255,255,255,0.5)}
 
 /* ===== 中間 main ===== */
 .m-main{
@@ -92,7 +117,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .m-tab-page.active{display:block}
 
-/* ===== 佔位內容（Step X 待實作） ===== */
 .m-placeholder{
   text-align:center;
   padding:60px 20px;
@@ -144,9 +168,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   transition:color 0.15s;
   position:relative;
 }
-.m-tab.active{
-  color:var(--active);
-}
+.m-tab.active{color:var(--active)}
 .m-tab-icon{
   width:22px;
   height:22px;
@@ -156,8 +178,141 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   justify-content:center;
   font-size:18px;
 }
-.m-tab.active .m-tab-icon{
-  transform:scale(1.05);
+.m-tab.active .m-tab-icon{transform:scale(1.05)}
+
+/* ===== 登入頁 ===== */
+.m-login{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:9000;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px 32px;
+  padding-top:calc(60px + var(--safe-top));
+  padding-bottom:calc(40px + var(--safe-bottom));
+}
+.m-login.active{display:flex}
+.m-login-logo{
+  font-size:36px;
+  font-weight:400;
+  letter-spacing:8px;
+  color:var(--text);
+  margin-bottom:8px;
+  text-align:center;
+}
+.m-login-sub{
+  font-size:18px;
+  font-weight:400;
+  letter-spacing:6px;
+  color:var(--text-2);
+  margin-bottom:60px;
+  text-align:center;
+}
+.m-login-hint{
+  font-size:13px;
+  color:var(--text-3);
+  letter-spacing:2px;
+  margin-bottom:24px;
+  text-align:center;
+}
+.m-login-btn{
+  width:100%;
+  max-width:340px;
+  height:56px;
+  background:#fff;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:16px;
+  letter-spacing:2px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.m-login-btn:active{
+  background:var(--hover);
+  transform:scale(0.98);
+}
+.m-login-btn svg{flex-shrink:0}
+.m-login-loading{
+  margin-top:24px;
+  font-size:13px;
+  color:var(--text-3);
+  letter-spacing:2px;
+  display:none;
+}
+.m-login.is-loading .m-login-btn{opacity:0.5;pointer-events:none}
+.m-login.is-loading .m-login-loading{display:block}
+
+/* ===== 拒絕頁 ===== */
+.m-denied{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:9100;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px;
+  text-align:center;
+}
+.m-denied.active{display:flex}
+.m-denied-title{
+  font-size:20px;
+  font-weight:400;
+  letter-spacing:3px;
+  color:var(--text);
+  margin-bottom:16px;
+}
+.m-denied-desc{
+  font-size:14px;
+  color:var(--text-3);
+  line-height:1.8;
+  margin-bottom:32px;
+  letter-spacing:1px;
+}
+.m-denied-btn{
+  padding:12px 32px;
+  background:var(--dark);
+  color:#fff;
+  border-radius:8px;
+  font-size:14px;
+  letter-spacing:2px;
+}
+
+/* ===== 全域載入遮罩 ===== */
+.m-loading{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:9500;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+}
+.m-loading.is-hidden{display:none}
+.m-loading-spinner{
+  width:32px;
+  height:32px;
+  border:3px solid var(--border);
+  border-top-color:var(--active);
+  border-radius:50%;
+  animation:m-spin 0.8s linear infinite;
+}
+@keyframes m-spin{to{transform:rotate(360deg)}}
+.m-loading-text{
+  font-size:13px;
+  color:var(--text-3);
+  letter-spacing:2px;
 }
 
 /* ===== 寬度警告（≥768 看到 m.html 時顯示）===== */
@@ -198,29 +353,57 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 @media (min-width:768px){
   .m-width-warn{display:flex}
-  .m-nav,.m-main,.m-tabbar{display:none}
+  .m-nav,.m-main,.m-tabbar,.m-login,.m-denied,.m-loading,#m-staging-banner{display:none !important}
 }
 </style>
 </head>
 <body>
 
-<!-- 寬度警告（桌機誤入時提示） -->
+<!-- 寬度警告（桌機誤入） -->
 <div class="m-width-warn">
   <h2>人相兵法</h2>
   <p>此為手機版頁面<br>桌機請使用桌機版</p>
   <a href="index_desktop.html">前往桌機版</a>
 </div>
 
-<!-- 頂部 nav -->
-<header class="m-nav">
+<!-- STAGING banner -->
+<div id="m-staging-banner">⚠ STAGING 測試環境</div>
+
+<!-- 全域載入遮罩（初始顯示，等 Firebase 處理完才隱藏） -->
+<div class="m-loading" id="m-loading">
+  <div class="m-loading-spinner"></div>
+  <div class="m-loading-text">載入中</div>
+</div>
+
+<!-- 登入頁 -->
+<div class="m-login" id="m-login">
+  <div class="m-login-logo">風鑑學堂</div>
+  <div class="m-login-sub">人相兵法</div>
+  <div class="m-login-hint">使用 Google 帳號登入</div>
+  <button class="m-login-btn" id="m-login-btn">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    使用 Google 登入
+  </button>
+  <div class="m-login-loading">登入中，請稍候...</div>
+</div>
+
+<!-- 拒絕頁（白名單未通過） -->
+<div class="m-denied" id="m-denied">
+  <div class="m-denied-title">帳號未通過授權</div>
+  <div class="m-denied-desc">
+    您的 Google 帳號不在學員名單內<br>
+    如需開通請聯繫管理員
+  </div>
+  <button class="m-denied-btn" onclick="location.reload()">重新登入</button>
+</div>
+
+<!-- 主介面（登入後才顯示） -->
+<header class="m-nav" id="m-nav" style="display:none">
   <div class="m-nav-title">人相兵法</div>
-  <div class="m-nav-user" id="m-nav-user">未登入</div>
+  <div class="m-nav-user is-guest" id="m-nav-user">未登入</div>
 </header>
 
-<!-- 中間 main -->
-<main class="m-main">
-
-  <!-- Tab 1：首頁 -->
+<main class="m-main" id="m-main" style="display:none">
   <section class="m-tab-page active" id="m-page-home">
     <div class="m-placeholder">
       <div class="m-placeholder-title">首頁</div>
@@ -231,7 +414,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     </div>
   </section>
 
-  <!-- Tab 2：輸入 -->
   <section class="m-tab-page" id="m-page-input">
     <div class="m-placeholder">
       <div class="m-placeholder-title">輸入</div>
@@ -243,7 +425,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     </div>
   </section>
 
-  <!-- Tab 3：報告 -->
   <section class="m-tab-page" id="m-page-report">
     <div class="m-placeholder">
       <div class="m-placeholder-title">報告</div>
@@ -253,11 +434,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <div class="m-placeholder-step">Step 7-8 待實作</div>
     </div>
   </section>
-
 </main>
 
-<!-- 底部 3 tab bar -->
-<nav class="m-tabbar">
+<nav class="m-tabbar" id="m-tabbar" style="display:none">
   <button class="m-tab active" data-tab="home">
     <span class="m-tab-icon">⌂</span>
     <span>首頁</span>
@@ -272,27 +451,217 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </button>
 </nav>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
-/* ===== Tab 切換 ===== */
+/* ============================================================
+   Firebase 設定（沿用桌機版邏輯）
+   ============================================================ */
+const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
+const STAGING_FIREBASE_CONFIG={apiKey:"AIzaSyDSEQuEZ_5JhzcJ9olK6bk-t2UdsYU09dU",authDomain:"renxiangbingfa-staging.firebaseapp.com",projectId:"renxiangbingfa-staging",storageBucket:"renxiangbingfa-staging.firebasestorage.app",messagingSenderId:"8463681855",appId:"1:8463681855:web:069ca7428c4015eaa0eb8a"};
+
+function getFirebaseConfig(){
+  const host=window.location.hostname;
+  if(host==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)){
+    console.log('[Firebase] Using STAGING config');
+    return STAGING_FIREBASE_CONFIG;
+  }
+  console.log('[Firebase] Using PRODUCTION config');
+  return PROD_FIREBASE_CONFIG;
+}
+
+const firebaseConfig=getFirebaseConfig();
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const auth=firebase.auth();
+
+// STAGING banner activation
 (function(){
-  var tabs=document.querySelectorAll('.m-tab');
-  var pages={
+  var host=window.location.hostname;
+  if(host==='staging.fengjian.pages.dev'||(/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)&&host!=='fengjian.pages.dev')){
+    document.body.classList.add('m-staging-mode');
+  }
+})();
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.log('persistence 設定失敗',e);});
+
+/* ============================================================
+   白名單檢查（沿用桌機版）
+   ============================================================ */
+const ADMIN_UIDS=[
+  'XT1Err9cmnNokgMQKUrGUj3ishG2',     // production admin
+  'ARGLfFp3HqbWMtN7CAoAxR4rHhm1'      // staging admin
+];
+
+async function checkWhitelist(user){
+  if(ADMIN_UIDS.includes(user.uid)) return true;
+  const email=(user.email||'').toLowerCase();
+  if(!email) return false;
+  try{
+    const snap=await db.collection('allowedUsers').doc(email).get();
+    return snap.exists;
+  }catch(e){
+    console.log('白名單檢查失敗',e);
+    return false;
+  }
+}
+
+/* ============================================================
+   UI 切換
+   ============================================================ */
+const elLoading=document.getElementById('m-loading');
+const elLogin=document.getElementById('m-login');
+const elDenied=document.getElementById('m-denied');
+const elNav=document.getElementById('m-nav');
+const elMain=document.getElementById('m-main');
+const elTabbar=document.getElementById('m-tabbar');
+const elNavUser=document.getElementById('m-nav-user');
+
+function showLoading(){
+  elLoading.classList.remove('is-hidden');
+  elLogin.classList.remove('active');
+  elDenied.classList.remove('active');
+  elNav.style.display='none';
+  elMain.style.display='none';
+  elTabbar.style.display='none';
+}
+
+function showLogin(){
+  elLoading.classList.add('is-hidden');
+  elLogin.classList.add('active');
+  elDenied.classList.remove('active');
+  elNav.style.display='none';
+  elMain.style.display='none';
+  elTabbar.style.display='none';
+}
+
+function showDenied(){
+  elLoading.classList.add('is-hidden');
+  elLogin.classList.remove('active');
+  elDenied.classList.add('active');
+  elNav.style.display='none';
+  elMain.style.display='none';
+  elTabbar.style.display='none';
+}
+
+function showApp(displayName){
+  elLoading.classList.add('is-hidden');
+  elLogin.classList.remove('active');
+  elDenied.classList.remove('active');
+  elNav.style.display='flex';
+  elMain.style.display='block';
+  elTabbar.style.display='flex';
+  if(displayName){
+    elNavUser.textContent=displayName;
+    elNavUser.classList.remove('is-guest');
+  }
+}
+
+/* ============================================================
+   Google 登入按鈕（手機用 Redirect）
+   ============================================================ */
+document.getElementById('m-login-btn').addEventListener('click',async function(){
+  elLogin.classList.add('is-loading');
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithRedirect(provider);
+    // signInWithRedirect 不會在這裡返回，會跳到 Google 頁面
+  }catch(e){
+    console.error('登入失敗',e);
+    elLogin.classList.remove('is-loading');
+    alert('登入失敗：'+(e.message||e));
+  }
+});
+
+/* ============================================================
+   處理 Redirect 返回 + 監聽登入狀態
+   ============================================================ */
+(async function(){
+  // 先處理 Redirect 返回（如果是從 Google 登入頁跳回來）
+  try{
+    await auth.getRedirectResult();
+  }catch(e){
+    console.error('Redirect 結果處理失敗',e);
+  }
+})();
+
+auth.onAuthStateChanged(async function(user){
+  if(user){
+    // 已登入：檢查白名單
+    showLoading();
+    try{
+      const allowed=await checkWhitelist(user);
+      if(!allowed){
+        await auth.signOut();
+        showDenied();
+        return;
+      }
+
+      // 讀取 / 建立 user document
+      let displayName=user.displayName||(user.email||'').split('@')[0];
+      try{
+        const userDoc=await db.collection('users').doc(user.uid).get();
+        if(userDoc.exists){
+          displayName=userDoc.data().displayName||displayName;
+        }else{
+          // 首次登入，建立 user document
+          await db.collection('users').doc(user.uid).set({
+            displayName:user.displayName||'',
+            email:user.email||'',
+            role:'student',
+            createdAt:new Date().toISOString()
+          });
+        }
+      }catch(e){
+        console.log('讀取 user document 失敗',e);
+      }
+
+      showApp(displayName);
+    }catch(e){
+      console.error('登入後處理失敗',e);
+      showDenied();
+    }
+  }else{
+    // 未登入：顯示登入頁
+    showLogin();
+  }
+});
+
+/* ============================================================
+   Tab 切換
+   ============================================================ */
+(function(){
+  const tabs=document.querySelectorAll('.m-tab');
+  const pages={
     home:document.getElementById('m-page-home'),
     input:document.getElementById('m-page-input'),
     report:document.getElementById('m-page-report')
   };
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
-      var key=btn.dataset.tab;
+      const key=btn.dataset.tab;
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       Object.keys(pages).forEach(function(k){
         pages[k].classList.toggle('active',k===key);
       });
-      // 切 tab 時把 main 滾到頂
       document.querySelector('.m-main').scrollTop=0;
     });
   });
 })();
+
+/* ============================================================
+   頂部姓名點擊登出（簡單版，未來可改下拉選單）
+   ============================================================ */
+elNavUser.addEventListener('click',async function(){
+  if(elNavUser.classList.contains('is-guest')) return;
+  if(confirm('要登出嗎？')){
+    await auth.signOut();
+    location.reload();
+  }
+});
 </script>
 
 </body>
