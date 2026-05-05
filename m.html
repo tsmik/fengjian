@@ -355,9 +355,82 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
   .m-width-warn{display:flex}
   .m-nav,.m-main,.m-tabbar,.m-login,.m-denied,.m-loading,#m-staging-banner{display:none !important}
 }
+
+/* ===== Debug 面板（暫時用） ===== */
+.m-debug-toggle{
+  position:fixed;
+  top:calc(8px + var(--safe-top));
+  right:8px;
+  width:32px;
+  height:32px;
+  background:rgba(192,56,48,0.9);
+  color:#fff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  z-index:99999;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  cursor:pointer;
+}
+.m-debug-panel{
+  position:fixed;
+  top:calc(48px + var(--safe-top));
+  right:8px;
+  left:8px;
+  bottom:8px;
+  background:rgba(0,0,0,0.92);
+  color:#0f0;
+  font-family:'Courier New',monospace;
+  font-size:11px;
+  line-height:1.4;
+  padding:12px;
+  border-radius:8px;
+  overflow-y:auto;
+  z-index:99998;
+  display:none;
+  -webkit-overflow-scrolling:touch;
+}
+.m-debug-panel.active{display:block}
+.m-debug-line{
+  margin-bottom:4px;
+  word-break:break-all;
+}
+.m-debug-line.error{color:#ff6b6b}
+.m-debug-line.warn{color:#ffd93d}
+.m-debug-line.info{color:#6bcfff}
+.m-debug-line .ts{color:#888;margin-right:4px}
+.m-debug-clear{
+  position:fixed;
+  top:calc(8px + var(--safe-top));
+  right:48px;
+  height:32px;
+  padding:0 12px;
+  background:rgba(0,0,0,0.7);
+  color:#fff;
+  border-radius:16px;
+  font-size:11px;
+  z-index:99999;
+  display:none;
+  cursor:pointer;
+}
+body.m-debug-on .m-debug-clear{display:block}
+
+/* 桌機誤入警告頁時藏 debug 面板（避免穿透到警告畫面） */
+@media (min-width:768px){
+  .m-debug-toggle,
+  .m-debug-panel,
+  .m-debug-clear{display:none !important}
+}
 </style>
 </head>
 <body>
+
+<!-- Debug 面板（暫時用） -->
+<div class="m-debug-toggle" id="m-debug-toggle">🐛</div>
+<button class="m-debug-clear" id="m-debug-clear">清空</button>
+<div class="m-debug-panel" id="m-debug-panel"></div>
 
 <!-- 寬度警告（桌機誤入） -->
 <div class="m-width-warn">
@@ -457,6 +530,70 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
+/* ============================================================
+   Debug 面板（攔截 console + window.onerror）
+   ============================================================ */
+(function(){
+  const panel=document.getElementById('m-debug-panel');
+  const toggle=document.getElementById('m-debug-toggle');
+  const clearBtn=document.getElementById('m-debug-clear');
+
+  function addLine(level,args){
+    const line=document.createElement('div');
+    line.className='m-debug-line '+level;
+    const ts=new Date().toTimeString().substr(0,8);
+    const tsSpan=document.createElement('span');
+    tsSpan.className='ts';
+    tsSpan.textContent=ts;
+    line.appendChild(tsSpan);
+    const msg=Array.from(args).map(function(a){
+      if(a===null) return 'null';
+      if(a===undefined) return 'undefined';
+      if(typeof a==='object'){
+        try{return JSON.stringify(a,null,2)}catch(e){return String(a)}
+      }
+      return String(a);
+    }).join(' ');
+    line.appendChild(document.createTextNode(msg));
+    panel.appendChild(line);
+    panel.scrollTop=panel.scrollHeight;
+  }
+
+  // 攔截 console
+  const origLog=console.log;
+  const origErr=console.error;
+  const origWarn=console.warn;
+  const origInfo=console.info;
+  console.log=function(){addLine('info',arguments);origLog.apply(console,arguments)};
+  console.error=function(){addLine('error',arguments);origErr.apply(console,arguments)};
+  console.warn=function(){addLine('warn',arguments);origWarn.apply(console,arguments)};
+  console.info=function(){addLine('info',arguments);origInfo.apply(console,arguments)};
+
+  // 攔截全域錯誤
+  window.addEventListener('error',function(ev){
+    addLine('error',['[ERROR]',ev.message,'at',ev.filename+':'+ev.lineno]);
+  });
+  window.addEventListener('unhandledrejection',function(ev){
+    addLine('error',['[UNHANDLED]',ev.reason&&ev.reason.message?ev.reason.message:String(ev.reason)]);
+  });
+
+  // 點擊圖示開關面板
+  toggle.addEventListener('click',function(){
+    panel.classList.toggle('active');
+    document.body.classList.toggle('m-debug-on');
+  });
+
+  // 清空按鈕
+  clearBtn.addEventListener('click',function(){
+    panel.innerHTML='';
+  });
+
+  // 顯示初始狀態
+  console.log('[Debug] 面板就緒');
+  console.log('[Debug] hostname =',window.location.hostname);
+  console.log('[Debug] href =',window.location.href);
+})();
+
 /* ============================================================
    Firebase 設定（沿用桌機版邏輯）
    ============================================================ */
