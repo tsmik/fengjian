@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f7f4ef">
+<title>人相兵法</title>
+<style>
+/* ===== 色票（沿用桌機版 + 手機版新增） ===== */
+:root{
+  --bg:#f7f4ef;
+  --sidebar:#e8dfc8;
+  --hover:#ece5d4;
+  --border:#d4c9b0;
+  --nav:#1e2127;
+  --text:#1c1c1c;
+  --text-2:#3d3b39;
+  --text-3:#716b60;
+  --dark:#1e2127;
+  --active:#C17A5A;
+  --static:#7A9E7E;
+  --accent:#c03830;
+  --gold:#9a7c4a;
+  --warn:#d4a017;
+  --zebra:#f0ebe0;
+  --pre-bg:#f0e8d8;
+  --pre-fc:#8a6a3a;
+  --luck-bg:#dce8e4;
+  --luck-fc:#3a6a5a;
+  --post-bg:#e4e8dc;
+  --post-fc:#4a6a3a;
+
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+
+  --nav-h:48px;
+  --tab-h:56px;
+}
+
+/* ===== 全域 reset ===== */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  font-family:'Noto Sans TC','PingFang TC','Heiti TC',sans-serif;
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ===== 頂部 nav ===== */
+.m-nav{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:calc(var(--nav-h) + var(--safe-top));
+  padding-top:var(--safe-top);
+  background:var(--nav);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-left:16px;
+  padding-right:16px;
+  z-index:100;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.m-nav-title{
+  font-size:16px;
+  font-weight:400;
+  letter-spacing:2px;
+}
+.m-nav-user{
+  font-size:13px;
+  color:rgba(255,255,255,0.7);
+  letter-spacing:1px;
+}
+
+/* ===== 中間 main ===== */
+.m-main{
+  position:fixed;
+  top:calc(var(--nav-h) + var(--safe-top));
+  bottom:calc(var(--tab-h) + var(--safe-bottom));
+  left:0;right:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.m-tab-page{
+  display:none;
+  padding:20px 16px;
+}
+.m-tab-page.active{display:block}
+
+/* ===== 佔位內容（Step X 待實作） ===== */
+.m-placeholder{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--text-3);
+}
+.m-placeholder-title{
+  font-size:18px;
+  color:var(--text);
+  margin-bottom:12px;
+  letter-spacing:2px;
+}
+.m-placeholder-desc{
+  font-size:13px;
+  line-height:1.8;
+  color:var(--text-3);
+}
+.m-placeholder-step{
+  display:inline-block;
+  margin-top:16px;
+  padding:4px 12px;
+  background:var(--hover);
+  border:1px solid var(--border);
+  border-radius:12px;
+  font-size:11px;
+  color:var(--text-3);
+  letter-spacing:1px;
+}
+
+/* ===== 底部 3 tab bar ===== */
+.m-tabbar{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:#fff;
+  border-top:1px solid var(--border);
+  display:flex;
+  z-index:100;
+}
+.m-tab{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:var(--text-3);
+  font-size:11px;
+  letter-spacing:1px;
+  transition:color 0.15s;
+  position:relative;
+}
+.m-tab.active{
+  color:var(--active);
+}
+.m-tab-icon{
+  width:22px;
+  height:22px;
+  margin-bottom:3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
+.m-tab.active .m-tab-icon{
+  transform:scale(1.05);
+}
+
+/* ===== 寬度警告（≥768 看到 m.html 時顯示）===== */
+.m-width-warn{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:9999;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px;
+  text-align:center;
+}
+.m-width-warn h2{
+  font-size:20px;
+  font-weight:400;
+  letter-spacing:3px;
+  margin-bottom:16px;
+  color:var(--text);
+}
+.m-width-warn p{
+  font-size:14px;
+  color:var(--text-3);
+  line-height:1.8;
+  margin-bottom:24px;
+}
+.m-width-warn a{
+  display:inline-block;
+  padding:12px 28px;
+  background:var(--dark);
+  color:#fff;
+  text-decoration:none;
+  border-radius:8px;
+  letter-spacing:2px;
+  font-size:14px;
+}
+@media (min-width:768px){
+  .m-width-warn{display:flex}
+  .m-nav,.m-main,.m-tabbar{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- 寬度警告（桌機誤入時提示） -->
+<div class="m-width-warn">
+  <h2>人相兵法</h2>
+  <p>此為手機版頁面<br>桌機請使用桌機版</p>
+  <a href="index_desktop.html">前往桌機版</a>
+</div>
+
+<!-- 頂部 nav -->
+<header class="m-nav">
+  <div class="m-nav-title">人相兵法</div>
+  <div class="m-nav-user" id="m-nav-user">未登入</div>
+</header>
+
+<!-- 中間 main -->
+<main class="m-main">
+
+  <!-- Tab 1：首頁 -->
+  <section class="m-tab-page active" id="m-page-home">
+    <div class="m-placeholder">
+      <div class="m-placeholder-title">首頁</div>
+      <div class="m-placeholder-desc">
+        儀表板：學員姓名 / 進度 / 上次做到哪 / 快速入口
+      </div>
+      <div class="m-placeholder-step">Step 3 待實作</div>
+    </div>
+  </section>
+
+  <!-- Tab 2：輸入 -->
+  <section class="m-tab-page" id="m-page-input">
+    <div class="m-placeholder">
+      <div class="m-placeholder-title">輸入</div>
+      <div class="m-placeholder-desc">
+        觀察路徑（部位視角 / 維度視角）<br>
+        手動路徑（13 維度 × 9 部位動靜直填）
+      </div>
+      <div class="m-placeholder-step">Step 4-6 待實作</div>
+    </div>
+  </section>
+
+  <!-- Tab 3：報告 -->
+  <section class="m-tab-page" id="m-page-report">
+    <div class="m-placeholder">
+      <div class="m-placeholder-title">報告</div>
+      <div class="m-placeholder-desc">
+        頂端摘要 + 流年標籤 + 9×13 矩陣 + 動作按鈕
+      </div>
+      <div class="m-placeholder-step">Step 7-8 待實作</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 底部 3 tab bar -->
+<nav class="m-tabbar">
+  <button class="m-tab active" data-tab="home">
+    <span class="m-tab-icon">⌂</span>
+    <span>首頁</span>
+  </button>
+  <button class="m-tab" data-tab="input">
+    <span class="m-tab-icon">✎</span>
+    <span>輸入</span>
+  </button>
+  <button class="m-tab" data-tab="report">
+    <span class="m-tab-icon">▦</span>
+    <span>報告</span>
+  </button>
+</nav>
+
+<script>
+/* ===== Tab 切換 ===== */
+(function(){
+  var tabs=document.querySelectorAll('.m-tab');
+  var pages={
+    home:document.getElementById('m-page-home'),
+    input:document.getElementById('m-page-input'),
+    report:document.getElementById('m-page-report')
+  };
+  tabs.forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var key=btn.dataset.tab;
+      tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
+      Object.keys(pages).forEach(function(k){
+        pages[k].classList.toggle('active',k===key);
+      });
+      // 切 tab 時把 main 滾到頂
+      document.querySelector('.m-main').scrollTop=0;
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

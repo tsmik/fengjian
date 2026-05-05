@@ -9,6 +9,16 @@
 <meta property="og:description" content="2026">
 <meta property="og:type" content="website">
 <title>風鑑學堂 人相兵法 v2</title>
+<script>
+/* 入口分流：寬度 < 768px 自動重導 m.html */
+(function(){
+  if(window.innerWidth<768){
+    var qs=window.location.search||'';
+    var hash=window.location.hash||'';
+    window.location.replace('m.html'+qs+hash);
+  }
+})();
+</script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
