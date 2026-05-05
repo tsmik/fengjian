@@ -235,6 +235,11 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
   cursor:pointer;
   transition:all 0.15s;
 }
+.m-login-btn[disabled]{
+  opacity:0.5;
+  pointer-events:none;
+  cursor:not-allowed;
+}
 .m-login-btn:active{
   background:var(--hover);
   transform:scale(0.98);
@@ -453,7 +458,7 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-login-logo">風鑑學堂</div>
   <div class="m-login-sub">人相兵法</div>
   <div class="m-login-hint">使用 Google 帳號登入</div>
-  <button class="m-login-btn" id="m-login-btn">
+  <button class="m-login-btn" id="m-login-btn" disabled>
     <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
     使用 Google 登入
   </button>
@@ -623,8 +628,6 @@ const auth=firebase.auth();
   }
 })();
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.log('persistence 設定失敗',e);});
-
 /* ============================================================
    白名單檢查（沿用桌機版）
    ============================================================ */
@@ -714,58 +717,91 @@ document.getElementById('m-login-btn').addEventListener('click',async function()
 });
 
 /* ============================================================
-   處理 Redirect 返回 + 監聽登入狀態
+   登入流程：先 await setPersistence，再啟動 redirect 處理 + auth 監聽
    ============================================================ */
-(async function(){
-  // 先處理 Redirect 返回（如果是從 Google 登入頁跳回來）
+async function initAuth(){
+  console.log('[Auth] initAuth 開始');
+
+  // Step 1：等 setPersistence 完成（修 race condition 關鍵）
   try{
-    await auth.getRedirectResult();
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    console.log('[Auth] setPersistence(LOCAL) 完成');
   }catch(e){
-    console.error('Redirect 結果處理失敗',e);
+    console.error('[Auth] setPersistence 失敗',e&&e.message?e.message:e);
+    // 失敗也繼續，讓 SDK 用預設 persistence
   }
-})();
 
-auth.onAuthStateChanged(async function(user){
-  if(user){
-    // 已登入：檢查白名單
-    showLoading();
-    try{
-      const allowed=await checkWhitelist(user);
-      if(!allowed){
-        await auth.signOut();
-        showDenied();
-        return;
-      }
-
-      // 讀取 / 建立 user document
-      let displayName=user.displayName||(user.email||'').split('@')[0];
-      try{
-        const userDoc=await db.collection('users').doc(user.uid).get();
-        if(userDoc.exists){
-          displayName=userDoc.data().displayName||displayName;
-        }else{
-          // 首次登入，建立 user document
-          await db.collection('users').doc(user.uid).set({
-            displayName:user.displayName||'',
-            email:user.email||'',
-            role:'student',
-            createdAt:new Date().toISOString()
-          });
-        }
-      }catch(e){
-        console.log('讀取 user document 失敗',e);
-      }
-
-      showApp(displayName);
-    }catch(e){
-      console.error('登入後處理失敗',e);
-      showDenied();
+  // Step 2：處理 Redirect 返回結果（從 Google 跳回時必須）
+  try{
+    console.log('[Auth] 開始處理 getRedirectResult');
+    const result=await auth.getRedirectResult();
+    if(result&&result.user){
+      console.log('[Auth] getRedirectResult 拿到 user：',result.user.email||result.user.uid);
+    }else{
+      console.log('[Auth] getRedirectResult 沒有 user（不是 redirect 返回，或已處理過）');
     }
-  }else{
-    // 未登入：顯示登入頁
-    showLogin();
+  }catch(e){
+    console.error('[Auth] getRedirectResult 失敗',e&&e.code,e&&e.message?e.message:e);
   }
-});
+
+  // Step 3：啟動 onAuthStateChanged 監聽
+  console.log('[Auth] 啟動 onAuthStateChanged');
+  auth.onAuthStateChanged(async function(user){
+    console.log('[Auth] onAuthStateChanged 觸發，user =',user?(user.email||user.uid):'null');
+
+    if(user){
+      // 已登入：檢查白名單
+      showLoading();
+      try{
+        console.log('[Auth] 開始檢查白名單');
+        const allowed=await checkWhitelist(user);
+        console.log('[Auth] 白名單檢查結果：',allowed);
+
+        if(!allowed){
+          console.log('[Auth] 白名單未通過，登出並顯示拒絕頁');
+          await auth.signOut();
+          showDenied();
+          return;
+        }
+
+        // 讀取 / 建立 user document
+        let displayName=user.displayName||(user.email||'').split('@')[0];
+        try{
+          const userDoc=await db.collection('users').doc(user.uid).get();
+          if(userDoc.exists){
+            displayName=userDoc.data().displayName||displayName;
+            console.log('[Auth] 讀到既有 user document，displayName =',displayName);
+          }else{
+            console.log('[Auth] user document 不存在，建立中');
+            await db.collection('users').doc(user.uid).set({
+              displayName:user.displayName||'',
+              email:user.email||'',
+              role:'student',
+              createdAt:new Date().toISOString()
+            });
+            console.log('[Auth] user document 建立完成');
+          }
+        }catch(e){
+          console.error('[Auth] 讀取/建立 user document 失敗',e&&e.message?e.message:e);
+        }
+
+        console.log('[Auth] 呼叫 showApp，displayName =',displayName);
+        showApp(displayName);
+      }catch(e){
+        console.error('[Auth] 登入後處理失敗',e&&e.message?e.message:e);
+        showDenied();
+      }
+    }else{
+      // 未登入：顯示登入頁，並啟用登入按鈕
+      console.log('[Auth] 未登入，顯示登入頁，啟用登入按鈕');
+      showLogin();
+      const btn=document.getElementById('m-login-btn');
+      if(btn) btn.disabled=false;
+    }
+  });
+}
+
+initAuth();
 
 /* ============================================================
    Tab 切換
