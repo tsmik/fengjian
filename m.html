@@ -701,16 +701,18 @@ function showApp(displayName){
 }
 
 /* ============================================================
-   Google 登入按鈕（手機用 Redirect）
+   Google 登入按鈕（手機用 Popup）
    ============================================================ */
 document.getElementById('m-login-btn').addEventListener('click',async function(){
   elLogin.classList.add('is-loading');
   try{
     const provider=new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithRedirect(provider);
-    // signInWithRedirect 不會在這裡返回，會跳到 Google 頁面
+    console.log('[Auth] 開始 signInWithPopup');
+    const result=await auth.signInWithPopup(provider);
+    console.log('[Auth] signInWithPopup 成功，user =',result.user.email||result.user.uid);
+    // popup 成功後 onAuthStateChanged 會自動觸發
   }catch(e){
-    console.error('登入失敗',e);
+    console.error('[Auth] signInWithPopup 失敗',e&&e.code,e&&e.message?e.message:e);
     elLogin.classList.remove('is-loading');
     alert('登入失敗：'+(e.message||e));
   }
@@ -731,20 +733,7 @@ async function initAuth(){
     // 失敗也繼續，讓 SDK 用預設 persistence
   }
 
-  // Step 2：處理 Redirect 返回結果（從 Google 跳回時必須）
-  try{
-    console.log('[Auth] 開始處理 getRedirectResult');
-    const result=await auth.getRedirectResult();
-    if(result&&result.user){
-      console.log('[Auth] getRedirectResult 拿到 user：',result.user.email||result.user.uid);
-    }else{
-      console.log('[Auth] getRedirectResult 沒有 user（不是 redirect 返回，或已處理過）');
-    }
-  }catch(e){
-    console.error('[Auth] getRedirectResult 失敗',e&&e.code,e&&e.message?e.message:e);
-  }
-
-  // Step 3：啟動 onAuthStateChanged 監聽
+  // Step 2：啟動 onAuthStateChanged 監聽（popup 成功後會觸發）
   console.log('[Auth] 啟動 onAuthStateChanged');
   auth.onAuthStateChanged(async function(user){
     console.log('[Auth] onAuthStateChanged 觸發，user =',user?(user.email||user.uid):'null');
