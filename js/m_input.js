@@ -359,6 +359,7 @@ function bindEvents() {
   _root.querySelectorAll('.m-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       _submode = btn.dataset.submode;
+      try { localStorage.setItem('m_input_submode', _submode); } catch (e) {}
       render();
     });
   });
@@ -415,6 +416,14 @@ function bindEvents() {
 // ---------- 對外 ----------
 export function mountInput(rootEl) {
   _root = rootEl;
+
+  // 恢復上次子模式（重整或重新進 input 時保留 部位/維度/手動 選擇）
+  try {
+    const savedSub = localStorage.getItem('m_input_submode');
+    if (savedSub === 'part' || savedSub === 'dim' || savedSub === 'manual') {
+      _submode = savedSub;
+    }
+  } catch (e) {}
 
   // Baseline 來自 m_main.js 在登入時已抓進 window.__userData 的資料，不重抓
   const ud = window.__userData || {};
