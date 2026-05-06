@@ -56,6 +56,7 @@ let _expandedKey = null;
 let _splitOpen = {};
 let _pairedSide = {};
 let _dimExpanded = null;  // 維度視角當前展開的維度 idx（null = 未展開）
+let _dimPartCollapsed = {};  // {di: Set<pi>} 各維度被收合的部位群組
 
 // ---------- localStorage ----------
 function loadDraft() {
@@ -311,7 +312,57 @@ function renderPlaceholder(name) {
   return `<div class="m-placeholder">${escapeHtml(name)}：即將推出</div>`;
 }
 
-// ---------- 維度視角（C1：tile + panel 殼 + 部位 header）----------
+// ---------- 維度視角狀態 LS persist ----------
+function loadDimState() {
+  try {
+    const e = localStorage.getItem('m_input_dim_expanded');
+    if (e != null && e !== 'null') {
+      const di = parseInt(e, 10);
+      if (di >= 0 && di < 13) _dimExpanded = di;
+    }
+  } catch (e) {}
+  _dimPartCollapsed = {};
+  try {
+    const c = localStorage.getItem('m_input_dim_part_collapsed');
+    if (c) {
+      const parsed = JSON.parse(c);
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(parsed).forEach(k => {
+          const arr = parsed[k];
+          if (Array.isArray(arr)) _dimPartCollapsed[k] = new Set(arr);
+        });
+      }
+    }
+  } catch (e) {}
+}
+function saveDimExpanded() {
+  try { localStorage.setItem('m_input_dim_expanded', _dimExpanded == null ? 'null' : String(_dimExpanded)); } catch (e) {}
+}
+function saveDimPartCollapsed() {
+  try {
+    const obj = {};
+    Object.keys(_dimPartCollapsed).forEach(k => {
+      obj[k] = Array.from(_dimPartCollapsed[k] || []);
+    });
+    localStorage.setItem('m_input_dim_part_collapsed', JSON.stringify(obj));
+  } catch (e) {}
+}
+function isPartCollapsed(di, pi) {
+  const s = _dimPartCollapsed[di];
+  return !!(s && s.has(pi));
+}
+function togglePartCollapsed(di, pi) {
+  let s = _dimPartCollapsed[di];
+  if (!s) { s = new Set(); _dimPartCollapsed[di] = s; }
+  if (s.has(pi)) s.delete(pi); else s.add(pi);
+  saveDimPartCollapsed();
+}
+function setAllPartsCollapsed(di, collapsed) {
+  _dimPartCollapsed[di] = collapsed ? new Set(DIM_PART_ORDER) : new Set();
+  saveDimPartCollapsed();
+}
+
+// ---------- 維度視角（C1-C3：tile + panel + 部位群組可收合 + condItems body）----------
 function _collectRefsFromNode(node, out) {
   if (!node) return;
   if (node.ref !== undefined) { out.add(node.ref); return; }
@@ -375,27 +426,60 @@ function renderDimPanel(di) {
   const head = `
     <div class="m-dim-panel-head">
       <span class="m-dim-title">${escapeHtml(dm.dn)}<span class="m-dim-view"> · ${escapeHtml(dm.view || '')}</span></span>
+      <span class="m-dim-actions">
+        <button class="m-dim-action-btn" data-dim-action="expand-all" data-dim="${di}">全部展開</button>
+        <button class="m-dim-action-btn" data-dim-action="collapse-all" data-dim="${di}">全部收合</button>
+      </span>
     </div>
   `;
-  const groups = DIM_PART_ORDER.map((pi, i) => renderDimPartHeader(di, pi, DIM_PART_LABELS[i])).join('');
+  const groups = DIM_PART_ORDER.map((pi, i) => renderDimPartBlock(di, pi, DIM_PART_LABELS[i])).join('');
   return `<div class="m-panel m-dim-panel" data-dim="${di}">${head}${groups}</div>`;
 }
 
-function renderDimPartHeader(di, pi, label) {
+function renderDimPartBlock(di, pi, label) {
   const cr = (condResults[di] && condResults[di][pi]) || null;
   const score = cr ? (cr.score || 0) : 0;
   const max = cr ? (cr.max || 0) : 0;
   const threshold = cr ? (cr.threshold || '') : '無規則';
   const noRule = !cr || cr.threshold === '無規則' || max === 0;
+  const collapsed = isPartCollapsed(di, pi);
+  const items = cr && Array.isArray(cr.items) ? cr.items : [];
+  const chevron = collapsed ? '▶' : '▼';
+  const body = collapsed ? '' : renderDimPartBody(items, noRule);
   return `
     <div class="m-dim-part-block ${noRule ? 'm-dim-part-norule' : ''}" data-part-idx="${pi}">
-      <div class="m-dim-part-header">
+      <div class="m-dim-part-header" data-dim="${di}" data-pi="${pi}">
+        <span class="m-dim-part-chevron">${chevron}</span>
         <span class="m-dim-part-name">${escapeHtml(label)}</span>
         <span class="m-dim-part-meta">
           ${noRule ? '' : `<span class="m-dim-part-score">${score}/${max}</span>`}
           <span class="m-dim-part-threshold">${escapeHtml(threshold)}</span>
         </span>
       </div>
+      ${body}
+    </div>
+  `;
+}
+
+function renderDimPartBody(items, noRule) {
+  if (noRule) return `<div class="m-dim-part-body m-dim-empty">（此部位對該維度無規則）</div>`;
+  if (!items || items.length === 0) return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
+  return `<div class="m-dim-part-body">${items.map(renderCondItem).join('')}</div>`;
+}
+
+function renderCondItem(item) {
+  const ok = !!item.ok;
+  const mark = ok ? '✓' : '✗';
+  const markCls = ok ? 'ok' : 'ng';
+  const side = item.side ? `<span class="m-dim-cond-side">${item.side === 'L' ? '左' : '右'}</span>` : '';
+  const ids = Array.isArray(item.ids) ? item.ids : [];
+  const unanswered = ids.length > 0 && ids.some(qid => !isQidAnswered(qid));
+  const todoCls = unanswered ? ' m-dim-cond-todo' : '';
+  return `
+    <div class="m-dim-cond-item${todoCls}">
+      <span class="m-dim-cond-mark ${markCls}">${mark}</span>
+      <span class="m-dim-cond-label">${escapeHtml(item.label || '(空)')}</span>
+      ${side}
     </div>
   `;
 }
@@ -597,6 +681,28 @@ function bindEvents() {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
       _dimExpanded = (_dimExpanded === di) ? null : di;
+      saveDimExpanded();
+      render();
+    });
+  });
+
+  // 維度部位群組 header：點切換收合（每組獨立）
+  _root.querySelectorAll('.m-dim-part-header').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = parseInt(el.dataset.dim, 10);
+      const pi = parseInt(el.dataset.pi, 10);
+      togglePartCollapsed(di, pi);
+      render();
+    });
+  });
+
+  // 全部展開 / 全部收合：作用於當前 panel 的所有部位群組
+  _root.querySelectorAll('.m-dim-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = parseInt(btn.dataset.dim, 10);
+      setAllPartsCollapsed(di, btn.dataset.dimAction === 'collapse-all');
       render();
     });
   });
@@ -619,6 +725,9 @@ export async function mountInput(rootEl) {
       _submode = savedSub;
     }
   } catch (e) {}
+
+  // 維度視角的展開狀態（哪維度展開、各部位群組收合）
+  loadDimState();
 
   // Baseline 來自 m_main.js 在登入時已抓進 window.__userData 的資料，不重抓
   const ud = window.__userData || {};
