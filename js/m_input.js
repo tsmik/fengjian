@@ -1,17 +1,20 @@
 // ============================================================
 // js/m_input.js
 // 職責：手機版輸入 tab — 三子模式切換（部位/維度/手動）+ 部位視角答題
-// 依賴：js/core.js (OBS_PARTS_DATA_DEFAULT, setObsData)
+// 依賴：js/core.js (OBS_PARTS_DATA_DEFAULT, setObsData)、js/m_main.js (auth — 用於 LS key 加 UID 後綴)
 // 被誰用：js/m_main.js（tab 切換到 input 時呼叫 mountInput）
 // 4b 第一段：segmented control + 部位視角答題（沿用 4a）
-// 4b 第二段 Phase 1（本段）：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
+// 4b 第二段 Phase 1：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
+// 4b 第二段 Phase 1.5（本段修補）：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
 // 4b 第二段待辦：Phase 2 答題轉黃、Phase 3 儲存按鈕（含 Firestore 寫入 / recalcFromObs / 同步 __userData）、Phase 4 攔截離開
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
+//   - 兩個 google 帳號交替登入同一台裝置：應各自看到自己的資料（不互相污染）
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
 import { OBS_PARTS_DATA_DEFAULT, setObsData } from './core.js';
+import { auth } from './m_main.js';
 
 const SUBMODES = [
   { key: 'part', label: '部位' },
@@ -23,7 +26,11 @@ const SUBMODES = [
 const PART_ROW_1 = ['頭', '額', '耳', '眉', '眼', '鼻'];
 const PART_ROW_2 = ['口', '顴', '人中', '地閣', '頤'];
 
-const LS_KEY = 'm_input_obs_draft';
+// LS key 帶 UID 後綴：每個 google 帳號在同一裝置上各有獨立草稿
+function getLsKey() {
+  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  return 'm_input_obs_draft_' + uid;
+}
 
 let _root = null;
 let _submode = 'part';
@@ -36,12 +43,12 @@ let _pairedSide = {};
 // ---------- localStorage ----------
 function loadDraft() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(getLsKey());
     _draft = raw ? JSON.parse(raw) : {};
   } catch (e) { _draft = {}; }
 }
 function saveDraft() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(_draft)); } catch (e) {}
+  try { localStorage.setItem(getLsKey(), JSON.stringify(_draft)); } catch (e) {}
 }
 
 // ---------- 狀態色塊（共用 m.html 的 #m-save-status）----------
@@ -300,7 +307,7 @@ export function mountInput(rootEl) {
   // 比對 LS 草稿
   let hasLocalDraft = false;
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(getLsKey());
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
