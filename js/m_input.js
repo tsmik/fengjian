@@ -203,15 +203,13 @@ async function handleSaveClick() {
     const obsJsonStr = JSON.stringify(draftCopy);
     const dataJsonStr = JSON.stringify(coreData);
 
-    // 寫 Firestore（debug：印 project + uid 前 6 + 大小，確認寫到哪裡）
+    // 寫 Firestore
     const userRef = doc(db, 'users', uid);
-    debugLog('[m_input]', '儲存 → users/' + uid.slice(0, 6) + '... obsJson=' + obsJsonStr.length + 'B dataJson=' + dataJsonStr.length + 'B project=' + (db.app && db.app.options && db.app.options.projectId));
     await setDoc(userRef, {
       obsJson: obsJsonStr,
       dataJson: dataJsonStr,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
-    debugLog('[m_input]', '寫入完成 ' + new Date().toTimeString().slice(0, 8));
 
     // 同步 window.__userData（避免下次 mountInput 看到舊 baseline）
     if (!window.__userData) window.__userData = {};
@@ -299,6 +297,7 @@ function renderPlaceholder(name) {
 function renderPartMode() {
   const row1 = PART_ROW_1.map(k => renderPartTile(k)).join('');
   const row2 = PART_ROW_2.map(k => renderPartTile(k)).join('');
+  const eraser = `<div class="m-eraser-slot"><button class="m-eraser-btn" data-action="erase-all" aria-label="清空所有觀察資料" title="清空所有觀察資料">清空</button></div>`;
   const panel = _expandedKey ? `
     <div class="m-panel" data-panel="${escapeHtml(_expandedKey)}">
       ${renderSections(_expandedKey)}
@@ -306,7 +305,7 @@ function renderPartMode() {
   ` : '';
   return `
     <div class="m-input-row m-input-row-6">${row1}</div>
-    <div class="m-input-row m-input-row-5">${row2}</div>
+    <div class="m-input-row m-input-row-5">${row2}${eraser}</div>
     ${panel}
   `;
 }
@@ -355,8 +354,9 @@ function renderOptions(qid, curVal, opts) {
 }
 
 function renderSingleQuestion(q) {
+  const todoCls = isAnswered(q) ? '' : ' m-q-todo';
   return `
-    <div class="m-q">
+    <div class="m-q${todoCls}">
       <div class="m-q-text">${escapeHtml(q.text || q.id)}</div>
       <div class="m-q-opts">${renderOptions(q.id, _draft[q.id], q.opts)}</div>
     </div>
@@ -370,9 +370,10 @@ function renderPairedQuestion(q) {
   if (diffStatus === 'half') hintTag = `<span class="m-q-tag m-q-tag-warn">左右不同 未填完</span>`;
   else if (diffStatus === 'diff') hintTag = `<span class="m-q-tag">左右不同</span>`;
 
+  const _todoCls = isAnswered(q) ? '' : ' m-q-todo';
   if (!isOpen) {
     return `
-      <div class="m-q m-q-paired">
+      <div class="m-q m-q-paired${_todoCls}">
         <div class="m-q-head">
           <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
           <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左/右</button>
@@ -387,7 +388,7 @@ function renderPairedQuestion(q) {
   const lDone = _draft[q.id + '_L'] != null ? '●' : '○';
   const rDone = _draft[q.id + '_R'] != null ? '●' : '○';
   return `
-    <div class="m-q m-q-paired m-q-paired-open">
+    <div class="m-q m-q-paired m-q-paired-open${_todoCls}">
       <div class="m-q-head">
         <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
         <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左/右</button>
@@ -424,7 +425,7 @@ function bindEvents() {
     });
   });
 
-  // 答題
+  // 答題（toggle：點已選的選項再點一次 → 取消選取）
   _root.querySelectorAll('.m-opt').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -432,10 +433,19 @@ function bindEvents() {
       const val = btn.dataset.val;
       if (qid.endsWith('__sync')) {
         const realId = qid.slice(0, -6);
-        _draft[realId + '_L'] = val;
-        _draft[realId + '_R'] = val;
+        if (_draft[realId + '_L'] === val && _draft[realId + '_R'] === val) {
+          delete _draft[realId + '_L'];
+          delete _draft[realId + '_R'];
+        } else {
+          _draft[realId + '_L'] = val;
+          _draft[realId + '_R'] = val;
+        }
       } else {
-        _draft[qid] = val;
+        if (_draft[qid] === val) {
+          delete _draft[qid];
+        } else {
+          _draft[qid] = val;
+        }
       }
       saveDraft();
       setSaveStatus('dirty');
@@ -459,6 +469,18 @@ function bindEvents() {
       e.stopPropagation();
       const pid = btn.dataset.pairId;
       _pairedSide[pid] = btn.dataset.side;
+      render();
+    });
+  });
+
+  // 橡皮擦：清空全部觀察資料（只動 _draft + LS + 轉黃，按儲存才寫 Firestore）
+  _root.querySelectorAll('.m-eraser-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm('清空所有觀察資料？\n部位與維度的答題會一起清掉。\n按下方「儲存」後才會真正寫入。')) return;
+      _draft = {};
+      saveDraft();
+      setSaveStatus('dirty');
       render();
     });
   });
