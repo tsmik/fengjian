@@ -8,40 +8,66 @@
 
 import { auth, db, debugLog } from "./m_main.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { OBS_PARTS_DATA } from "./core.js";
 
 // 13 維度名稱（順序對應 obs / 9×13 矩陣 index 0-12）
 const DIM_NAMES_M=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 
-// 從 9×13 矩陣計算進度
-function calcMatrixProgress(matrix){
-  if(!matrix||!Array.isArray(matrix)) return {dim:0,q:0};
-  let dimCount=0,qCount=0;
-  for(let i=0;i<13;i++){
-    if(!matrix[i]) continue;
-    let filled=0;
-    for(let j=0;j<9;j++){
-      if(matrix[i][j]==='A'||matrix[i][j]==='B'){filled++;qCount++;}
-    }
-    if(filled===9) dimCount++;
-  }
-  return {dim:dimCount,q:qCount};
-}
-
-// 從 window.__userData 重算進度條 DOM（給 m_input.js 儲存後呼叫）
-export function updateHomeProgress(){
+// 計算進度：dim 看 9×13 矩陣（哪些維度全 9 cell 填滿）；q 看 obsData + OBS_PARTS_DATA 實際答題數
+function calcProgress(){
   const ud=window.__userData||{};
+  let obs={};
+  if(ud.obsJson){
+    try{obs=JSON.parse(ud.obsJson)||{};}catch(e){obs={};}
+  }
   let matrix=null;
   if(ud.dataJson){
     try{matrix=JSON.parse(ud.dataJson);}catch(e){debugLog('[Home]','dataJson parse 失敗',e&&e.message);}
   }else if(ud.matrix){
     matrix=ud.matrix;
   }
-  const prog=calcMatrixProgress(matrix);
+  // 維度數：matrix 中全 9 cell 填的維度
+  let dimCount=0;
+  if(matrix&&Array.isArray(matrix)){
+    for(let i=0;i<13;i++){
+      if(!matrix[i]) continue;
+      let filled=0;
+      for(let j=0;j<9;j++){
+        if(matrix[i][j]==='A'||matrix[i][j]==='B') filled++;
+      }
+      if(filled===9) dimCount++;
+    }
+  }
+  // 答題數 / 總題數：從 OBS_PARTS_DATA 跟 obsData 算
+  // paired 題：兩側都答完才算 1（Mike's Q B）；非 paired：obs[q.id] 有值就算 1
+  let answered=0,total=0;
+  for(const partKey of Object.keys(OBS_PARTS_DATA)){
+    const part=OBS_PARTS_DATA[partKey];
+    if(!part||!Array.isArray(part.sections)) continue;
+    for(const section of part.sections){
+      for(const q of (section.qs||[])){
+        total++;
+        if(q.paired){
+          if(obs[q.id+'_L']!==undefined&&obs[q.id+'_R']!==undefined) answered++;
+        }else{
+          if(obs[q.id]!==undefined) answered++;
+        }
+      }
+    }
+  }
+  return {dim:dimCount, answered, total};
+}
+
+// 從 window.__userData + OBS_PARTS_DATA 重算進度條 DOM（給 m_input.js 儲存後呼叫）
+export function updateHomeProgress(){
+  const prog=calcProgress();
   const elDim=document.getElementById('m-home-prog-dim');
   const elQ=document.getElementById('m-home-prog-q');
+  const elQTotal=document.getElementById('m-home-prog-q-total');
   const elFill=document.getElementById('m-home-prog-fill');
   if(elDim) elDim.textContent=prog.dim;
-  if(elQ) elQ.textContent=prog.q;
+  if(elQ) elQ.textContent=prog.answered;
+  if(elQTotal) elQTotal.textContent=prog.total;
   if(elFill) elFill.style.width=(prog.dim/13*100)+'%';
 }
 

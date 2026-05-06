@@ -1,7 +1,7 @@
 // ============================================================
 // js/m_input.js
 // 職責：手機版輸入 tab — 三子模式切換（部位/維度/手動）+ 部位視角答題
-// 依賴：js/core.js (OBS_PARTS_DATA_DEFAULT, setObsData)、js/m_main.js (auth — 用於 LS key 加 UID 後綴)
+// 依賴：js/core.js (OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames)、js/m_main.js (auth — 用於 LS key 加 UID 後綴)
 // 被誰用：js/m_main.js（tab 切換到 input 時呼叫 mountInput）
 // 4b 第一段：segmented control + 部位視角答題（沿用 4a）
 // 4b 第二段 Phase 1：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
@@ -10,7 +10,8 @@
 // 4b 第二段 Phase 3（本段）：儲存按鈕完整邏輯（寫 Firestore obsJson + dataJson、呼叫 recalcFromObs、同步 window.__userData、清 LS、首頁進度條更新）
 // 4b 第二段 Phase 3.5：lazy 載 DIM_RULES（settings/rules）給 recalcFromObs 用；錯誤訊息改用 debugLog（手機 debug 面板可見）
 // 4b 第二段 Phase 4：dirty 狀態下攔截離開（tab 切由 m_main.js confirm、登出由 m_main.js confirm、重整/關 app/關 tab 由 beforeunload 原生對話框）
-// 4b 第二段 Phase 4.5（本段）：「確定離開」後捨棄 LS 草稿，下次回 input 看到 Firestore baseline；提供 discardDraft() export
+// 4b 第二段 Phase 4.5：「確定離開」後捨棄 LS 草稿，下次回 input 看到 Firestore baseline；提供 discardDraft() export
+// 4b 第二段 Phase 3.6（本段）：lazy 載 questions（settings/questions），讓手機題目跟桌機同步（admin 改題目兩邊都看到）；mountInput 改 async + 第一次載入顯示 placeholder
 // 4b 第二段：完成
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
@@ -18,7 +19,7 @@
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA_DEFAULT, setObsData, setDimRules, data as coreData } from './core.js';
+import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData } from './core.js';
 import { auth, db, debugLog } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
@@ -132,6 +133,56 @@ async function ensureDimRulesLoaded() {
   throw new Error('rules load failed');
 }
 
+// ---------- 題目載入（lazy，第一次 mountInput 才載；render 依賴 OBS_PARTS_DATA）----------
+const QUESTIONS_CACHE_KEY = 'rxbf_questions_cache';
+let _questionsLoaded = false;
+let _questionsPromise = null;
+export async function ensureQuestionsLoaded() {
+  if (_questionsLoaded) return;
+  if (_questionsPromise) return _questionsPromise;
+  _questionsPromise = (async () => {
+    // 先試 Firestore
+    try {
+      const ref = doc(db, 'settings', 'questions');
+      const snap = await getDoc(ref);
+      if (snap.exists() && snap.data().questionsJson) {
+        const parsed = JSON.parse(snap.data().questionsJson);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          setObsPartsData(parsed);
+          setObsPartNames(Object.keys(parsed));
+          try { localStorage.setItem(QUESTIONS_CACHE_KEY, snap.data().questionsJson); } catch (e) {}
+          _questionsLoaded = true;
+          debugLog('[m_input]', '題目從 Firestore 載入');
+          return;
+        }
+      }
+      debugLog('[m_input]', 'Firestore 題目格式異常或不存在');
+    } catch (e) {
+      debugLog('[m_input]', 'Firestore 題目讀取失敗', e && e.message);
+    }
+    // fallback LS 快取
+    try {
+      const cached = localStorage.getItem(QUESTIONS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          setObsPartsData(parsed);
+          setObsPartNames(Object.keys(parsed));
+          _questionsLoaded = true;
+          debugLog('[m_input]', '題目從 LS 快取載入');
+          return;
+        }
+      }
+    } catch (e) {
+      debugLog('[m_input]', 'LS 題目快取讀取失敗', e && e.message);
+    }
+    // fallback：用 core.js 內建（OBS_PARTS_DATA 預設已是 OBS_PARTS_DATA_DEFAULT 的深拷貝）
+    _questionsLoaded = true;
+    debugLog('[m_input]', '題目使用內建（無 Firestore + 無 LS 快取）');
+  })();
+  return _questionsPromise;
+}
+
 // ---------- 儲存（Phase 3）----------
 let _isSaving = false;
 async function handleSaveClick() {
@@ -181,9 +232,9 @@ async function handleSaveClick() {
   }
 }
 
-// ---------- 取題目 ----------
+// ---------- 取題目（讀 OBS_PARTS_DATA：被 ensureQuestionsLoaded 載入後的版本，內建為 fallback）----------
 function getSections(key) {
-  const data = OBS_PARTS_DATA_DEFAULT[key];
+  const data = OBS_PARTS_DATA[key];
   if (!data || !Array.isArray(data.sections)) return [];
   return data.sections;
 }
@@ -414,8 +465,14 @@ function bindEvents() {
 }
 
 // ---------- 對外 ----------
-export function mountInput(rootEl) {
+export async function mountInput(rootEl) {
   _root = rootEl;
+
+  // 第一次載入題目時顯示 placeholder（後續 mount 已快取，瞬間出現）
+  if (!_questionsLoaded) {
+    _root.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;">載入題目中…</div>';
+  }
+  await ensureQuestionsLoaded();
 
   // 恢復上次子模式（重整或重新進 input 時保留 部位/維度/手動 選擇）
   try {

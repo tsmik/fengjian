@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
-import { mountInput, unmountInput, getSaveStatus, discardDraft } from "./m_input.js";
+import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -172,6 +172,9 @@ async function initAuth(){
         }catch(e){
           debugLog('[Auth]','讀取/建立 user document 失敗',e&&e.message?e.message:e);
         }
+        // 先載 questions（讓首頁進度條可以用實際題目總數）
+        try { await ensureQuestionsLoaded(); }
+        catch(e){ debugLog('[Auth]','ensureQuestionsLoaded 失敗',e&&e.message?e.message:e); }
         debugLog('[Auth]','呼叫 showApp，displayName =',displayName);
         showApp(displayName);
       }catch(e){
