@@ -433,17 +433,17 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 /* ===== Debug 面板（暫時用） ===== */
 .m-debug-toggle{
   position:fixed;
-  top:calc(8px + var(--safe-top));
-  right:8px;
-  width:32px;
-  height:32px;
+  bottom:calc(72px + var(--safe-bottom));  /* 在 tabbar 上方一點點，避開 nav-user 登出區 */
+  left:8px;
+  width:44px;
+  height:44px;
   background:rgba(192,56,48,0.9);
   color:#fff;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:16px;
+  font-size:20px;
   z-index:99999;
   box-shadow:0 2px 8px rgba(0,0,0,0.3);
   cursor:pointer;
