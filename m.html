@@ -117,6 +117,31 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 }
 .m-tab-page.active{display:block}
 
+/* ===== 首頁 ===== */
+.m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
+.m-home-hello{font-size:20px;font-weight:600;color:#3a3228;padding:4px 4px 0}
+.m-home-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.m-home-card-title{font-size:13px;color:#888;margin-bottom:10px;font-weight:500}
+.m-home-progress-main{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.m-home-progress-bar{flex:1;height:10px;background:#f0ebe5;border-radius:5px;overflow:hidden}
+.m-home-progress-fill{height:100%;background:linear-gradient(90deg,#d4b896,#8fae7c);border-radius:5px;transition:width 0.4s}
+.m-home-progress-text{font-size:14px;font-weight:600;color:#3a3228;white-space:nowrap}
+.m-home-progress-sub{font-size:12px;color:#888;text-align:right}
+.m-home-resume-name{font-size:16px;color:#3a3228;margin-bottom:10px}
+.m-home-resume-btn{width:100%;padding:10px;background:#8fae7c;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.m-home-resume-btn:active{background:#7a9968}
+.m-home-quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-home-qbtn{padding:18px 8px;background:#fff;border:1px solid #e0d8cc;border-radius:12px;font-size:14px;color:#3a3228;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.m-home-qbtn:active{background:#f5efe6}
+.m-home-profile-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.m-home-profile-row:last-of-type{margin-bottom:0}
+.m-home-profile-row label{width:80px;font-size:13px;color:#666;flex-shrink:0}
+.m-home-profile-row input,.m-home-profile-row select{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff;font-family:inherit}
+.m-home-profile-status{font-size:12px;color:#888;margin-top:8px;min-height:16px}
+.m-home-profile-status.is-saving{color:#c89540}
+.m-home-profile-status.is-saved{color:#5a8a4a}
+.m-home-profile-status.is-error{color:#b04545}
+
 .m-placeholder{
   text-align:center;
   padding:60px 20px;
@@ -483,14 +508,55 @@ body.m-debug-on .m-debug-clear{display:block}
 
 <main class="m-main" id="m-main" style="display:none">
   <section class="m-tab-page active" id="m-page-home">
-    <div class="m-placeholder">
-      <div class="m-placeholder-title">首頁</div>
-      <div class="m-placeholder-desc">
-        儀表板：學員姓名 / 進度 / 上次做到哪 / 快速入口
+  <div class="m-home">
+    <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>
+
+    <div class="m-home-card m-home-progress">
+      <div class="m-home-card-title">進度</div>
+      <div class="m-home-progress-main">
+        <div class="m-home-progress-bar"><div class="m-home-progress-fill" id="m-home-prog-fill"></div></div>
+        <div class="m-home-progress-text"><span id="m-home-prog-dim">0</span>/13 維度</div>
       </div>
-      <div class="m-placeholder-step">Step 3 待實作</div>
+      <div class="m-home-progress-sub"><span id="m-home-prog-q">0</span>/117 題</div>
     </div>
-  </section>
+
+    <div class="m-home-card m-home-resume" id="m-home-resume" style="display:none">
+      <div class="m-home-card-title">上次做到</div>
+      <div class="m-home-resume-name" id="m-home-resume-name">—</div>
+      <button class="m-home-resume-btn" id="m-home-resume-btn">繼續</button>
+    </div>
+
+    <div class="m-home-card-title">快速入口</div>
+    <div class="m-home-quick">
+      <button class="m-home-qbtn" data-quick="part">部位視角</button>
+      <button class="m-home-qbtn" data-quick="dim">維度視角</button>
+      <button class="m-home-qbtn" data-quick="manual">手動輸入</button>
+      <button class="m-home-qbtn" data-quick="report">看報告</button>
+    </div>
+
+    <div class="m-home-card m-home-profile">
+      <div class="m-home-card-title">基本資料</div>
+      <div class="m-home-profile-row">
+        <label>姓名</label>
+        <input type="text" id="m-home-profile-name" placeholder="未填寫">
+      </div>
+      <div class="m-home-profile-row">
+        <label>出生年月日</label>
+        <input type="date" id="m-home-profile-birthday">
+      </div>
+      <div class="m-home-profile-row">
+        <label>性別</label>
+        <select id="m-home-profile-gender">
+          <option value="">未填寫</option>
+          <option value="M">男</option>
+          <option value="F">女</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="m-home-profile-status" id="m-home-profile-status"></div>
+    </div>
+  </div>
+</section>
 
   <section class="m-tab-page" id="m-page-input">
     <div class="m-placeholder">
@@ -698,6 +764,7 @@ function showApp(displayName){
     elNavUser.textContent=displayName;
     elNavUser.classList.remove('is-guest');
   }
+  initHome(displayName);
 }
 
 /* ============================================================
@@ -758,9 +825,12 @@ async function initAuth(){
         try{
           const userDoc=await db.collection('users').doc(user.uid).get();
           if(userDoc.exists){
-            displayName=userDoc.data().displayName||displayName;
+            const ud=userDoc.data();
+            displayName=ud.displayName||displayName;
+            window.__userData=ud;
             console.log('[Auth] 讀到既有 user document，displayName =',displayName);
           }else{
+            window.__userData={};
             console.log('[Auth] user document 不存在，建立中');
             await db.collection('users').doc(user.uid).set({
               displayName:user.displayName||'',
@@ -768,6 +838,7 @@ async function initAuth(){
               role:'student',
               createdAt:new Date().toISOString()
             });
+            window.__userData={displayName:user.displayName||'',email:user.email||'',role:'student'};
             console.log('[Auth] user document 建立完成');
           }
         }catch(e){
@@ -791,6 +862,112 @@ async function initAuth(){
 }
 
 initAuth();
+
+/* ============================================================
+   首頁邏輯
+   ============================================================ */
+function calcMatrixProgress(matrix){
+  // matrix: 13 維度 × 9 部位，'A'/'B'/null
+  if(!matrix||!Array.isArray(matrix)) return {dim:0,q:0};
+  let dimCount=0,qCount=0;
+  for(let i=0;i<13;i++){
+    if(!matrix[i]) continue;
+    let filled=0;
+    for(let j=0;j<9;j++){
+      if(matrix[i][j]==='A'||matrix[i][j]==='B'){filled++;qCount++}
+    }
+    if(filled===9) dimCount++;
+  }
+  return {dim:dimCount,q:qCount};
+}
+
+const DIM_NAMES_M=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
+
+function initHome(displayName){
+  // 1. Hi 列
+  document.getElementById('m-home-name').textContent=displayName||'—';
+
+  // 2. 進度
+  const ud=window.__userData||{};
+  const matrix=ud.matrix||null;
+  const prog=calcMatrixProgress(matrix);
+  document.getElementById('m-home-prog-dim').textContent=prog.dim;
+  document.getElementById('m-home-prog-q').textContent=prog.q;
+  document.getElementById('m-home-prog-fill').style.width=(prog.dim/13*100)+'%';
+
+  // 3. 上次做到
+  const resume=document.getElementById('m-home-resume');
+  if(ud.lastUpdatedDim!=null&&ud.lastUpdatedDim>=0&&ud.lastUpdatedDim<13){
+    document.getElementById('m-home-resume-name').textContent=DIM_NAMES_M[ud.lastUpdatedDim]+' 維度';
+    resume.style.display='block';
+    document.getElementById('m-home-resume-btn').onclick=function(){
+      // 跳到輸入 tab
+      document.querySelector('.m-tab[data-tab="input"]').click();
+    };
+  }else{
+    resume.style.display='none';
+  }
+
+  // 4. 快速入口
+  document.querySelectorAll('.m-home-qbtn').forEach(function(btn){
+    btn.onclick=function(){
+      const k=btn.dataset.quick;
+      if(k==='report'){
+        document.querySelector('.m-tab[data-tab="report"]').click();
+      }else{
+        // part / dim / manual：先跳到輸入 tab，Step 4-6 實作後再做深層導向
+        document.querySelector('.m-tab[data-tab="input"]').click();
+      }
+    };
+  });
+
+  // 5. 基本資料
+  const elName=document.getElementById('m-home-profile-name');
+  const elBday=document.getElementById('m-home-profile-birthday');
+  const elGender=document.getElementById('m-home-profile-gender');
+  const elStatus=document.getElementById('m-home-profile-status');
+  elName.value=ud.displayName||'';
+  elBday.value=ud.birthday||'';
+  elGender.value=ud.gender||'';
+
+  // debounce 儲存
+  let saveTimer=null;
+  function scheduleSave(){
+    elStatus.textContent='儲存中…';
+    elStatus.className='m-home-profile-status is-saving';
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(saveProfile,800);
+  }
+  async function saveProfile(){
+    try{
+      const uid=auth.currentUser&&auth.currentUser.uid;
+      if(!uid) return;
+      const data={
+        displayName:elName.value.trim(),
+        birthday:elBday.value||'',
+        gender:elGender.value||'',
+        profileUpdatedAt:new Date().toISOString()
+      };
+      await db.collection('users').doc(uid).set(data,{merge:true});
+      window.__userData=Object.assign(window.__userData||{},data);
+      // 同步上方 Hi 列
+      if(data.displayName){
+        document.getElementById('m-home-name').textContent=data.displayName;
+        if(elNavUser) elNavUser.textContent=data.displayName;
+      }
+      elStatus.textContent='已儲存';
+      elStatus.className='m-home-profile-status is-saved';
+      setTimeout(function(){if(elStatus.textContent==='已儲存') elStatus.textContent=''},1500);
+    }catch(e){
+      console.error('[Profile] 儲存失敗',e);
+      elStatus.textContent='儲存失敗';
+      elStatus.className='m-home-profile-status is-error';
+    }
+  }
+  elName.addEventListener('input',scheduleSave);
+  elBday.addEventListener('change',scheduleSave);
+  elGender.addEventListener('change',scheduleSave);
+}
 
 /* ============================================================
    Tab 切換
