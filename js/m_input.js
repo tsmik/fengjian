@@ -8,8 +8,9 @@
 // 4b 第二段 Phase 1.5：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
 // 4b 第二段 Phase 2：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
 // 4b 第二段 Phase 3（本段）：儲存按鈕完整邏輯（寫 Firestore obsJson + dataJson、呼叫 recalcFromObs、同步 window.__userData、清 LS、首頁進度條更新）
-// 4b 第二段 Phase 3.5（本段修補）：lazy 載 DIM_RULES（settings/rules）給 recalcFromObs 用；錯誤訊息改用 debugLog（手機 debug 面板可見）
-// 4b 第二段待辦：Phase 4 攔截離開
+// 4b 第二段 Phase 3.5：lazy 載 DIM_RULES（settings/rules）給 recalcFromObs 用；錯誤訊息改用 debugLog（手機 debug 面板可見）
+// 4b 第二段 Phase 4（本段）：dirty 狀態下攔截離開（tab 切由 m_main.js confirm、登出由 m_main.js confirm、重整/關 app/關 tab 由 beforeunload 原生對話框）
+// 4b 第二段：完成
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
 //   - 兩個 google 帳號交替登入同一台裝置：應各自看到自己的資料（不互相污染）
@@ -58,7 +59,9 @@ function saveDraft() {
 }
 
 // ---------- 狀態色塊（共用 m.html 的 #m-save-status）----------
+let _currentSaveStatus = 'saved';
 function setSaveStatus(state) {
+  _currentSaveStatus = state;
   const el = document.getElementById('m-save-status');
   if (!el) return;
   el.classList.remove('m-save-status-saved', 'm-save-status-dirty', 'm-save-status-saving', 'm-save-status-error');
@@ -67,6 +70,18 @@ function setSaveStatus(state) {
   else if (state === 'saving') { el.classList.add('m-save-status-saving');  el.textContent = '儲存中…'; }
   else if (state === 'error')  { el.classList.add('m-save-status-error');   el.textContent = '失敗'; }
 }
+
+// 給 m_main.js 查詢目前狀態（攔截離開時用）
+export function getSaveStatus() { return _currentSaveStatus; }
+
+// 重整 / 關 app / 關 tab：dirty 時觸發瀏覽器原生確認對話框
+window.addEventListener('beforeunload', function(e) {
+  if (_currentSaveStatus === 'dirty') {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
 
 // ---------- 規則載入（lazy，第一次儲存才載；recalcFromObs 依賴 DIM_RULES）----------
 const RULES_CACHE_KEY = 'rxbf_rules_cache';

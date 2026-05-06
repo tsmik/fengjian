@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
-import { mountInput, unmountInput } from "./m_input.js";
+import { mountInput, unmountInput, getSaveStatus } from "./m_input.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -190,6 +190,12 @@ initAuth();
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
       const key=btn.dataset.tab;
+      // 攔截：目前在 input tab + dirty + 切到非 input tab → 確認
+      const inputTabBtn = document.querySelector('.m-tab[data-tab="input"]');
+      const isOnInputNow = inputTabBtn && inputTabBtn.classList.contains('active');
+      if (isOnInputNow && key !== 'input' && getSaveStatus() === 'dirty') {
+        if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
+      }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       Object.keys(pages).forEach(function(k){
         pages[k].classList.toggle('active',k===key);
@@ -212,7 +218,10 @@ initAuth();
 // ===== 頂部姓名點擊登出 =====
 elNavUser.addEventListener('click',async function(){
   if(elNavUser.classList.contains('is-guest')) return;
-  if(confirm('要登出嗎？')){
+  const msg = (getSaveStatus() === 'dirty')
+    ? '你還有未儲存的答題，仍要登出嗎？'
+    : '要登出嗎？';
+  if(confirm(msg)){
     await signOut(auth);
     location.reload();
   }
