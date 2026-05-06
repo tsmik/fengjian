@@ -129,13 +129,15 @@ async function handleSaveClick() {
     const obsJsonStr = JSON.stringify(draftCopy);
     const dataJsonStr = JSON.stringify(coreData);
 
-    // 寫 Firestore
+    // 寫 Firestore（debug：印 project + uid 前 6 + 大小，確認寫到哪裡）
     const userRef = doc(db, 'users', uid);
+    debugLog('[m_input]', '儲存 → users/' + uid.slice(0, 6) + '... obsJson=' + obsJsonStr.length + 'B dataJson=' + dataJsonStr.length + 'B project=' + (db.app && db.app.options && db.app.options.projectId));
     await setDoc(userRef, {
       obsJson: obsJsonStr,
       dataJson: dataJsonStr,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
+    debugLog('[m_input]', '寫入完成 ' + new Date().toTimeString().slice(0, 8));
 
     // 同步 window.__userData（避免下次 mountInput 看到舊 baseline）
     if (!window.__userData) window.__userData = {};
