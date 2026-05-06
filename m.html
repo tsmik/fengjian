@@ -497,6 +497,49 @@ body.m-debug-on .m-debug-clear{display:block}
   .m-debug-panel,
   .m-debug-clear{display:none !important}
 }
+
+/* ===== 4b 第一段：儲存按鈕 + 狀態色塊（對齊既有色票）===== */
+.m-save-zone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.m-save-zone.is-hidden { display: none; }
+.m-save-zone + .m-nav-user { margin-left: 8px; }
+
+/* 狀態色塊：背景對應 header 深色，文字色塊樣式 */
+.m-save-status {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.m-save-status-saved   { background: #5a8a4a; color: #fff; }              /* 綠：已儲存（對齊 .is-saved 色）*/
+.m-save-status-dirty   { background: var(--warn); color: #4a3a00; }       /* 黃：未儲存（用 --warn）*/
+.m-save-status-saving  { background: #c89540; color: #fff; }              /* 橘：儲存中（對齊 .is-saving 色）*/
+.m-save-status-error   { background: var(--accent); color: #fff; }        /* 紅：失敗（用 --accent）*/
+
+/* 儲存按鈕：對齊 .m-home-resume-btn 主按鈕綠 */
+.m-save-btn {
+  font-size: 13px;
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #8fae7c;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.m-save-btn:active { background: #7a9968; }
+.m-save-btn:disabled {
+  background: #4a4f55;
+  color: rgba(255,255,255,0.4);
+  cursor: not-allowed;
+}
+
 </style>
 </head>
 <body>
@@ -547,6 +590,10 @@ body.m-debug-on .m-debug-clear{display:block}
 <!-- 主介面（登入後才顯示） -->
 <header class="m-nav" id="m-nav" style="display:none">
   <div class="m-nav-title">人相兵法</div>
+  <div class="m-save-zone is-hidden" id="m-save-zone">
+    <span class="m-save-status m-save-status-saved" id="m-save-status">已儲存</span>
+    <button class="m-save-btn" id="m-save-btn" type="button">儲存</button>
+  </div>
   <div class="m-nav-user is-guest" id="m-nav-user">未登入</div>
 </header>
 

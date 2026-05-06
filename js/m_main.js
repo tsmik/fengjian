@@ -195,6 +195,11 @@ initAuth();
         pages[k].classList.toggle('active',k===key);
       });
       elMain.scrollTop=0;
+      // 切換時顯示/隱藏儲存區（只在 input tab 顯示）
+      const saveZone = document.getElementById('m-save-zone');
+      if(saveZone){
+        saveZone.classList.toggle('is-hidden', key !== 'input');
+      }
       if(key==='input'){
         mountInput(pages.input);
       }else{
