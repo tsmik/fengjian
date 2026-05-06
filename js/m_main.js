@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
-import { mountInput, unmountInput, getSaveStatus } from "./m_input.js";
+import { mountInput, unmountInput, getSaveStatus, discardDraft } from "./m_input.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -82,6 +82,14 @@ function showApp(displayName){
   elNavUser.textContent=displayName||'—';
   elNavUser.classList.remove('is-guest');
   initHome(displayName);
+  // 恢復上次 tab（重整後留在原頁，而非預設首頁）
+  try {
+    const lastTab = localStorage.getItem('m_active_tab');
+    if (lastTab && lastTab !== 'home') {
+      const restoreBtn = document.querySelector('.m-tab[data-tab="' + lastTab + '"]');
+      if (restoreBtn) restoreBtn.click();
+    }
+  } catch (e) {}
 }
 
 // 初始顯示 loading（防 race）
@@ -195,6 +203,7 @@ initAuth();
       const isOnInputNow = inputTabBtn && inputTabBtn.classList.contains('active');
       if (isOnInputNow && key !== 'input' && getSaveStatus() === 'dirty') {
         if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
+        discardDraft();  // 確定離開 → 捨棄 LS 草稿，下次回 input 顯示 baseline
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       Object.keys(pages).forEach(function(k){
@@ -206,6 +215,8 @@ initAuth();
       if(saveZone){
         saveZone.classList.toggle('is-hidden', key !== 'input');
       }
+      // 記住目前 tab，重整時恢復
+      try { localStorage.setItem('m_active_tab', key); } catch (e) {}
       if(key==='input'){
         mountInput(pages.input);
       }else{
@@ -218,10 +229,10 @@ initAuth();
 // ===== 頂部姓名點擊登出 =====
 elNavUser.addEventListener('click',async function(){
   if(elNavUser.classList.contains('is-guest')) return;
-  const msg = (getSaveStatus() === 'dirty')
-    ? '你還有未儲存的答題，仍要登出嗎？'
-    : '要登出嗎？';
+  const isDirty = getSaveStatus() === 'dirty';
+  const msg = isDirty ? '你還有未儲存的答題，仍要登出嗎？' : '要登出嗎？';
   if(confirm(msg)){
+    if (isDirty) discardDraft();  // 確定登出 → 捨棄 LS 草稿
     await signOut(auth);
     location.reload();
   }

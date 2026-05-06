@@ -9,7 +9,8 @@
 // 4b 第二段 Phase 2：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
 // 4b 第二段 Phase 3（本段）：儲存按鈕完整邏輯（寫 Firestore obsJson + dataJson、呼叫 recalcFromObs、同步 window.__userData、清 LS、首頁進度條更新）
 // 4b 第二段 Phase 3.5：lazy 載 DIM_RULES（settings/rules）給 recalcFromObs 用；錯誤訊息改用 debugLog（手機 debug 面板可見）
-// 4b 第二段 Phase 4（本段）：dirty 狀態下攔截離開（tab 切由 m_main.js confirm、登出由 m_main.js confirm、重整/關 app/關 tab 由 beforeunload 原生對話框）
+// 4b 第二段 Phase 4：dirty 狀態下攔截離開（tab 切由 m_main.js confirm、登出由 m_main.js confirm、重整/關 app/關 tab 由 beforeunload 原生對話框）
+// 4b 第二段 Phase 4.5（本段）：「確定離開」後捨棄 LS 草稿，下次回 input 看到 Firestore baseline；提供 discardDraft() export
 // 4b 第二段：完成
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
@@ -73,6 +74,13 @@ function setSaveStatus(state) {
 
 // 給 m_main.js 查詢目前狀態（攔截離開時用）
 export function getSaveStatus() { return _currentSaveStatus; }
+
+// 捨棄 dirty 草稿、回到 Firestore baseline（m_main.js 在「確定離開」/登出 時呼叫）
+export function discardDraft() {
+  try { localStorage.removeItem(getLsKey()); } catch (e) {}
+  _draft = JSON.parse(JSON.stringify(_firestoreBaseline));
+  setSaveStatus('saved');
+}
 
 // 重整 / 關 app / 關 tab：dirty 時觸發瀏覽器原生確認對話框
 window.addEventListener('beforeunload', function(e) {
