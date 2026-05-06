@@ -98,8 +98,9 @@ export function initHome(displayName){
       const k=btn.dataset.quick;
       if(k==='report'){
         document.querySelector('.m-tab[data-tab="report"]').click();
-      }else{
-        // part / dim / manual：先跳到輸入 tab，Step 4-6 實作後再做深層導向
+      }else if(k==='part'||k==='dim'||k==='manual'){
+        // 寫進 LS，mountInput 會讀回切到對應子模式
+        try{ localStorage.setItem('m_input_submode', k); }catch(e){}
         document.querySelector('.m-tab[data-tab="input"]').click();
       }
     };
