@@ -27,11 +27,8 @@ function calcMatrixProgress(matrix){
   return {dim:dimCount,q:qCount};
 }
 
-export function initHome(displayName){
-  // 1. Hi 列
-  document.getElementById('m-home-name').textContent=displayName||'—';
-
-  // 2. 進度
+// 從 window.__userData 重算進度條 DOM（給 m_input.js 儲存後呼叫）
+export function updateHomeProgress(){
   const ud=window.__userData||{};
   let matrix=null;
   if(ud.dataJson){
@@ -40,9 +37,22 @@ export function initHome(displayName){
     matrix=ud.matrix;
   }
   const prog=calcMatrixProgress(matrix);
-  document.getElementById('m-home-prog-dim').textContent=prog.dim;
-  document.getElementById('m-home-prog-q').textContent=prog.q;
-  document.getElementById('m-home-prog-fill').style.width=(prog.dim/13*100)+'%';
+  const elDim=document.getElementById('m-home-prog-dim');
+  const elQ=document.getElementById('m-home-prog-q');
+  const elFill=document.getElementById('m-home-prog-fill');
+  if(elDim) elDim.textContent=prog.dim;
+  if(elQ) elQ.textContent=prog.q;
+  if(elFill) elFill.style.width=(prog.dim/13*100)+'%';
+}
+
+export function initHome(displayName){
+  // 1. Hi 列
+  document.getElementById('m-home-name').textContent=displayName||'—';
+
+  // 2. 進度
+  updateHomeProgress();
+
+  const ud=window.__userData||{};
 
   // 3. 上次做到
   const resume=document.getElementById('m-home-resume');

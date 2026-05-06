@@ -6,16 +6,20 @@
 // 4b 第一段：segmented control + 部位視角答題（沿用 4a）
 // 4b 第二段 Phase 1：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
 // 4b 第二段 Phase 1.5：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
-// 4b 第二段 Phase 2（本段）：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
-// 4b 第二段待辦：Phase 3 儲存按鈕（含 Firestore 寫入 / recalcFromObs / 同步 __userData）、Phase 4 攔截離開
+// 4b 第二段 Phase 2：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
+// 4b 第二段 Phase 3（本段）：儲存按鈕完整邏輯（寫 Firestore obsJson + dataJson、呼叫 recalcFromObs、同步 window.__userData、清 LS、首頁進度條更新）
+// 4b 第二段待辦：Phase 4 攔截離開
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
 //   - 兩個 google 帳號交替登入同一台裝置：應各自看到自己的資料（不互相污染）
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA_DEFAULT, setObsData } from './core.js';
-import { auth } from './m_main.js';
+import { OBS_PARTS_DATA_DEFAULT, setObsData, data as coreData } from './core.js';
+import { auth, db } from './m_main.js';
+import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { recalcFromObs } from './obs_recalc.js';
+import { updateHomeProgress } from './m_home.js';
 
 const SUBMODES = [
   { key: 'part', label: '部位' },
@@ -53,13 +57,58 @@ function saveDraft() {
 }
 
 // ---------- 狀態色塊（共用 m.html 的 #m-save-status）----------
-// Phase 1 只用到 saved / dirty。saving / error 留到 Phase 3 儲存流程加。
 function setSaveStatus(state) {
   const el = document.getElementById('m-save-status');
   if (!el) return;
   el.classList.remove('m-save-status-saved', 'm-save-status-dirty', 'm-save-status-saving', 'm-save-status-error');
-  if (state === 'saved')      { el.classList.add('m-save-status-saved'); el.textContent = '已儲存'; }
-  else if (state === 'dirty') { el.classList.add('m-save-status-dirty'); el.textContent = '未儲存'; }
+  if (state === 'saved')       { el.classList.add('m-save-status-saved');   el.textContent = '已儲存'; }
+  else if (state === 'dirty')  { el.classList.add('m-save-status-dirty');   el.textContent = '未儲存'; }
+  else if (state === 'saving') { el.classList.add('m-save-status-saving');  el.textContent = '儲存中…'; }
+  else if (state === 'error')  { el.classList.add('m-save-status-error');   el.textContent = '失敗'; }
+}
+
+// ---------- 儲存（Phase 3）----------
+let _isSaving = false;
+async function handleSaveClick() {
+  if (_isSaving) return;  // 並發 lock：防雙擊
+  _isSaving = true;
+  setSaveStatus('saving');
+  try {
+    const uid = auth.currentUser && auth.currentUser.uid;
+    if (!uid) throw new Error('no auth user');
+
+    // 把草稿同步進 core.js obsData，再呼叫 recalcFromObs 算出 9×13 矩陣
+    const draftCopy = JSON.parse(JSON.stringify(_draft));
+    setObsData(draftCopy);
+    recalcFromObs();
+    const obsJsonStr = JSON.stringify(draftCopy);
+    const dataJsonStr = JSON.stringify(coreData);
+
+    // 寫 Firestore
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, {
+      obsJson: obsJsonStr,
+      dataJson: dataJsonStr,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    // 同步 window.__userData（避免下次 mountInput 看到舊 baseline）
+    if (!window.__userData) window.__userData = {};
+    window.__userData.obsJson = obsJsonStr;
+    window.__userData.dataJson = dataJsonStr;
+
+    // 清 LS 草稿、更新內部 baseline、狀態回綠、首頁進度條
+    try { localStorage.removeItem(getLsKey()); } catch (e) {}
+    _firestoreBaseline = JSON.parse(JSON.stringify(draftCopy));
+    setSaveStatus('saved');
+    updateHomeProgress();
+  } catch (e) {
+    // 失敗：紅色「失敗」，不清 LS、不更新 __userData，使用者可重試
+    if (typeof console !== 'undefined') console.warn('[m_input] 儲存失敗', e);
+    setSaveStatus('error');
+  } finally {
+    _isSaving = false;
+  }
 }
 
 // ---------- 取題目 ----------
@@ -323,6 +372,11 @@ export function mountInput(rootEl) {
   }
 
   setSaveStatus(hasLocalDraft ? 'dirty' : 'saved');
+
+  // 綁儲存按鈕（每次 mount 用 .onclick 覆寫，避免累積 listener）
+  const saveBtn = document.getElementById('m-save-btn');
+  if (saveBtn) saveBtn.onclick = handleSaveClick;
+
   render();
 }
 
