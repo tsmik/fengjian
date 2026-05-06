@@ -57,6 +57,7 @@ let _splitOpen = {};
 let _pairedSide = {};
 let _dimExpanded = null;  // 維度視角當前展開的維度 idx（null = 未展開）
 let _dimPartCollapsed = {};  // {di: Set<pi>} 各維度被收合的部位群組
+let _dimCondExpanded = {};  // {`${di}_${pi}_${idx}`: true} condItem 展開選項
 
 // ---------- localStorage ----------
 function loadDraft() {
@@ -392,6 +393,30 @@ function dimProgress(di) {
   return { done, total: refs.size };
 }
 
+// 從 OBS_PARTS_DATA 找題目定義（給 condItem 答題介面用）
+function _findQById(qid) {
+  const parts = Object.keys(OBS_PARTS_DATA);
+  for (const pn of parts) {
+    const pd = OBS_PARTS_DATA[pn];
+    if (!pd || !Array.isArray(pd.sections)) continue;
+    for (const s of pd.sections) {
+      for (const q of (s.qs || [])) {
+        if (q.id === qid) return q;
+      }
+    }
+  }
+  return null;
+}
+
+// _draft 變化後立即 sync 進 obsData + recalc，讓 condResults 反映最新狀態
+// 失敗 graceful（DIM_RULES 可能未載；condResults 將維持上次計算）
+function _syncRecalc() {
+  try {
+    setObsData(JSON.parse(JSON.stringify(_draft)));
+    recalcFromObs();
+  } catch (e) {}
+}
+
 function renderDimMode() {
   const row1 = DIM_ROW_1_IDX.map(di => renderDimTile(di)).join('');
   const row2 = DIM_ROW_2_IDX.map(di => renderDimTile(di)).join('');
@@ -445,7 +470,7 @@ function renderDimPartBlock(di, pi, label) {
   const collapsed = isPartCollapsed(di, pi);
   const items = cr && Array.isArray(cr.items) ? cr.items : [];
   const chevron = collapsed ? '▶' : '▼';
-  const body = collapsed ? '' : renderDimPartBody(items, noRule);
+  const body = collapsed ? '' : renderDimPartBody(items, noRule, di, pi);
   return `
     <div class="m-dim-part-block ${noRule ? 'm-dim-part-norule' : ''}" data-part-idx="${pi}">
       <div class="m-dim-part-header" data-dim="${di}" data-pi="${pi}">
@@ -461,25 +486,53 @@ function renderDimPartBlock(di, pi, label) {
   `;
 }
 
-function renderDimPartBody(items, noRule) {
+function renderDimPartBody(items, noRule, di, pi) {
   if (noRule) return `<div class="m-dim-part-body m-dim-empty">（此部位對該維度無規則）</div>`;
   if (!items || items.length === 0) return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
-  return `<div class="m-dim-part-body">${items.map(renderCondItem).join('')}</div>`;
+  return `<div class="m-dim-part-body">${items.map((it, idx) => renderCondItem(it, di, pi, idx)).join('')}</div>`;
 }
 
-function renderCondItem(item) {
+function renderCondItem(item, di, pi, idx) {
   const ok = !!item.ok;
   const mark = ok ? '✓' : '✗';
   const markCls = ok ? 'ok' : 'ng';
-  const side = item.side ? `<span class="m-dim-cond-side">${item.side === 'L' ? '左' : '右'}</span>` : '';
+  const sideTag = item.side ? `<span class="m-dim-cond-side">${item.side === 'L' ? '左' : '右'}</span>` : '';
   const ids = Array.isArray(item.ids) ? item.ids : [];
   const unanswered = ids.length > 0 && ids.some(qid => !isQidAnswered(qid));
   const todoCls = unanswered ? ' m-dim-cond-todo' : '';
+  const isLeaf = ids.length === 1;  // 單一 ref 才可點開答題；複合條件純展示
+  const itemKey = `${di}_${pi}_${idx}`;
+  const expanded = isLeaf && !!_dimCondExpanded[itemKey];
+  const clickableCls = isLeaf ? ' m-dim-cond-clickable' : '';
+  const expandedCls = expanded ? ' m-dim-cond-expanded' : '';
+
+  let opts = '';
+  if (expanded) {
+    const qid = ids[0];
+    const side = item.side || '';
+    const draftKey = side ? `${qid}_${side}` : qid;
+    const q = _findQById(qid);
+    if (q && Array.isArray(q.opts)) {
+      const curVal = _draft[draftKey];
+      opts = '<div class="m-dim-cond-opts">' +
+        q.opts.map(o => {
+          const v = typeof o === 'string' ? o : o.v;
+          const hint = (typeof o === 'object' && o && o.hint) ? o.hint : '';
+          const sel = curVal === v ? ' m-dim-cond-opt-selected' : '';
+          return `<button class="m-dim-cond-opt${sel}" data-qid="${escapeHtml(qid)}" data-side="${escapeHtml(side)}" data-val="${escapeHtml(v)}"><span class="m-dim-cond-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-dim-cond-opt-hint">${escapeHtml(hint)}</span>` : ''}</button>`;
+        }).join('') +
+        '</div>';
+    }
+  }
+
   return `
-    <div class="m-dim-cond-item${todoCls}">
-      <span class="m-dim-cond-mark ${markCls}">${mark}</span>
-      <span class="m-dim-cond-label">${escapeHtml(item.label || '(空)')}</span>
-      ${side}
+    <div class="m-dim-cond-row">
+      <div class="m-dim-cond-item${todoCls}${clickableCls}${expandedCls}" data-cond-key="${itemKey}">
+        <span class="m-dim-cond-mark ${markCls}">${mark}</span>
+        <span class="m-dim-cond-label">${escapeHtml(item.label || '(空)')}</span>
+        ${sideTag}
+      </div>
+      ${opts}
     </div>
   `;
 }
@@ -639,6 +692,7 @@ function bindEvents() {
       }
       saveDraft();
       setSaveStatus('dirty');
+      _syncRecalc();
       render();
     });
   });
@@ -671,6 +725,7 @@ function bindEvents() {
       _draft = {};
       saveDraft();
       setSaveStatus('dirty');
+      _syncRecalc();
       render();
     });
   });
@@ -703,6 +758,37 @@ function bindEvents() {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
       setAllPartsCollapsed(di, btn.dataset.dimAction === 'collapse-all');
+      render();
+    });
+  });
+
+  // 維度 condItem（葉子）點擊：展開/收合 inline 選項
+  _root.querySelectorAll('.m-dim-cond-clickable').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = el.dataset.condKey;
+      if (!key) return;
+      _dimCondExpanded[key] = !_dimCondExpanded[key];
+      render();
+    });
+  });
+
+  // 維度視角選項按鈕：toggle 答題 + 即時 recalc + 轉黃；共用 _draft 跟部位視角
+  _root.querySelectorAll('.m-dim-cond-opt').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const qid = btn.dataset.qid;
+      const side = btn.dataset.side || '';
+      const val = btn.dataset.val;
+      const draftKey = side ? `${qid}_${side}` : qid;
+      if (_draft[draftKey] === val) {
+        delete _draft[draftKey];
+      } else {
+        _draft[draftKey] = val;
+      }
+      saveDraft();
+      setSaveStatus('dirty');
+      _syncRecalc();
       render();
     });
   });
