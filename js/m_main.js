@@ -218,6 +218,22 @@ elNavUser.addEventListener('click',async function(){
   }
 });
 
+// ===== Debug 面板：toggle / clear 按鈕 =====
+const _debugToggle = document.getElementById('m-debug-toggle');
+const _debugPanel = document.getElementById('m-debug-panel');
+const _debugClear = document.getElementById('m-debug-clear');
+if (_debugToggle && _debugPanel) {
+  _debugToggle.addEventListener('click', function(){
+    _debugPanel.classList.toggle('active');
+    document.body.classList.toggle('m-debug-on');
+  });
+}
+if (_debugClear && _debugPanel) {
+  _debugClear.addEventListener('click', function(){
+    _debugPanel.innerHTML = '';
+  });
+}
+
 // ===== Debug 面板：開機初始 log =====
 debugLog('[Debug]','面板就緒');
 debugLog('[Debug]','hostname =',window.location.hostname);
