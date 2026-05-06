@@ -1,20 +1,17 @@
 // ============================================================
 // js/m_input.js
 // 職責：手機版輸入 tab — 三子模式切換（部位/維度/手動）+ 部位視角答題
-// 依賴：js/core.js (OBS_PARTS_DATA_DEFAULT)
+// 依賴：js/core.js (OBS_PARTS_DATA_DEFAULT, setObsData)
 // 被誰用：js/m_main.js（tab 切換到 input 時呼叫 mountInput）
-// 4b 第一段範圍：
-//   - segmented control 子模式切換（部位/維度/手動）
-//   - 部位視角沿用 4a 完整功能
-//   - 維度/手動顯示 placeholder
-//   - 不串 Firestore、不接 recalcFromObs、不攔截離開
-// 4b 第二段待辦：串 Firestore、recalcFromObs、攔截離開、儲存按鈕邏輯
+// 4b 第一段：segmented control + 部位視角答題（沿用 4a）
+// 4b 第二段 Phase 1（本段）：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
+// 4b 第二段待辦：Phase 2 答題轉黃、Phase 3 儲存按鈕（含 Firestore 寫入 / recalcFromObs / 同步 __userData）、Phase 4 攔截離開
 // Retest 範圍：
-//   - 手機 m.html input tab：子模式切換、部位答題沿用 4a
+//   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA_DEFAULT } from './core.js';
+import { OBS_PARTS_DATA_DEFAULT, setObsData } from './core.js';
 
 const SUBMODES = [
   { key: 'part', label: '部位' },
@@ -31,6 +28,7 @@ const LS_KEY = 'm_input_obs_draft';
 let _root = null;
 let _submode = 'part';
 let _draft = {};
+let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
 let _pairedSide = {};
@@ -44,6 +42,16 @@ function loadDraft() {
 }
 function saveDraft() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(_draft)); } catch (e) {}
+}
+
+// ---------- 狀態色塊（共用 m.html 的 #m-save-status）----------
+// Phase 1 只用到 saved / dirty。saving / error 留到 Phase 3 儲存流程加。
+function setSaveStatus(state) {
+  const el = document.getElementById('m-save-status');
+  if (!el) return;
+  el.classList.remove('m-save-status-saved', 'm-save-status-dirty', 'm-save-status-saving', 'm-save-status-error');
+  if (state === 'saved')      { el.classList.add('m-save-status-saved'); el.textContent = '已儲存'; }
+  else if (state === 'dirty') { el.classList.add('m-save-status-dirty'); el.textContent = '未儲存'; }
 }
 
 // ---------- 取題目 ----------
@@ -279,7 +287,33 @@ function bindEvents() {
 // ---------- 對外 ----------
 export function mountInput(rootEl) {
   _root = rootEl;
-  loadDraft();
+
+  // Baseline 來自 m_main.js 在登入時已抓進 window.__userData 的資料，不重抓
+  const ud = window.__userData || {};
+  let firestoreObs = {};
+  if (ud.obsJson) {
+    try { firestoreObs = JSON.parse(ud.obsJson) || {}; } catch (e) { firestoreObs = {}; }
+  }
+  _firestoreBaseline = firestoreObs;
+  setObsData(JSON.parse(JSON.stringify(firestoreObs)));
+
+  // 比對 LS 草稿
+  let hasLocalDraft = false;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+        _draft = parsed;
+        hasLocalDraft = true;
+      }
+    }
+  } catch (e) {}
+  if (!hasLocalDraft) {
+    _draft = JSON.parse(JSON.stringify(firestoreObs));
+  }
+
+  setSaveStatus(hasLocalDraft ? 'dirty' : 'saved');
   render();
 }
 
