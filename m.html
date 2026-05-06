@@ -171,6 +171,13 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 }
 
 /* ===== 輸入 tab ===== */
+/* ===== segmented control ===== */
+.m-segmented{display:flex;gap:0;margin:10px 10px 0;border-radius:10px;overflow:hidden;border:1.5px solid #d0c8be;background:#ede8e0}
+.m-seg-btn{flex:1;padding:9px 4px;background:transparent;border:none;font-size:14px;color:#7a6e64;cursor:pointer;font-family:inherit}
+.m-seg-btn:not(:last-child){border-right:1px solid #d0c8be}
+.m-seg-active{background:#fff;color:#3a3228;font-weight:600}
+.m-submode-content{padding-bottom:8px}
+/* ===== 輸入 tile rows ===== */
 .m-input-row{padding:10px 10px 0;display:flex;gap:6px}
 .m-input-row-6 .m-tile{flex:1}
 .m-input-row-5 .m-tile{flex:1}
