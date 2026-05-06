@@ -19,7 +19,7 @@
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData } from './core.js';
+import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults } from './core.js';
 import { auth, db, debugLog } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
@@ -35,6 +35,13 @@ const SUBMODES = [
 const PART_ROW_1 = ['頭', '額', '耳', '眉', '眼', '鼻'];
 const PART_ROW_2 = ['口', '顴', '人中', '地閣', '頤'];
 
+// 維度視角：13 維度排兩排 6+7（DIMS 順序）
+const DIM_ROW_1_IDX = [0, 1, 2, 3, 4, 5];        // 形勢 經緯 方圓 曲直 收放 緩急
+const DIM_ROW_2_IDX = [6, 7, 8, 9, 10, 11, 12];  // 順逆 分合 真假 攻守 奇正 虛實 進退
+// 維度視角的 13 部位順序（沿用桌機 cond_page CP_PART_ORDER / CP_PART_LABELS）
+const DIM_PART_ORDER  = [0, 1, 4, 5, 6, 7, 8, 2, 9, 3, 10, 11, 12];
+const DIM_PART_LABELS = ['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
+
 // LS key 帶 UID 後綴：每個 google 帳號在同一裝置上各有獨立草稿
 function getLsKey() {
   const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
@@ -48,6 +55,7 @@ let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
 let _pairedSide = {};
+let _dimExpanded = null;  // 維度視角當前展開的維度 idx（null = 未展開）
 
 // ---------- localStorage ----------
 function loadDraft() {
@@ -282,7 +290,7 @@ function render() {
   const seg = renderSegmented();
   let content = '';
   if (_submode === 'part') content = renderPartMode();
-  else if (_submode === 'dim') content = renderPlaceholder('維度視角');
+  else if (_submode === 'dim') content = renderDimMode();
   else if (_submode === 'manual') content = renderPlaceholder('手動輸入');
   _root.innerHTML = `
     <div class="m-segmented">${seg}</div>
@@ -301,6 +309,95 @@ function renderSegmented() {
 
 function renderPlaceholder(name) {
   return `<div class="m-placeholder">${escapeHtml(name)}：即將推出</div>`;
+}
+
+// ---------- 維度視角（C1：tile + panel 殼 + 部位 header）----------
+function _collectRefsFromNode(node, out) {
+  if (!node) return;
+  if (node.ref !== undefined) { out.add(node.ref); return; }
+  if (node.partResult !== undefined) return;
+  if (node.items) node.items.forEach(it => _collectRefsFromNode(it, out));
+  if (node.item) _collectRefsFromNode(node.item, out);
+  if (node.each) _collectRefsFromNode(node.each, out);
+  if (node.rule) _collectRefsFromNode(node.rule, out);
+}
+function collectDimRefs(di) {
+  const refs = new Set();
+  const dim = DIM_RULES && DIM_RULES[di];
+  if (!dim || !dim.parts) return refs;
+  Object.keys(dim.parts).forEach(pn => _collectRefsFromNode(dim.parts[pn], refs));
+  return refs;
+}
+function isQidAnswered(qid) {
+  // single：_draft[qid] 有值；paired：_L 或 _R 有值（即視為涉及到該題）
+  if (_draft[qid] != null) return true;
+  if (_draft[qid + '_L'] != null || _draft[qid + '_R'] != null) return true;
+  return false;
+}
+function dimProgress(di) {
+  const refs = collectDimRefs(di);
+  let done = 0;
+  refs.forEach(qid => { if (isQidAnswered(qid)) done++; });
+  return { done, total: refs.size };
+}
+
+function renderDimMode() {
+  const row1 = DIM_ROW_1_IDX.map(di => renderDimTile(di)).join('');
+  const row2 = DIM_ROW_2_IDX.map(di => renderDimTile(di)).join('');
+  const panel = (_dimExpanded != null) ? renderDimPanel(_dimExpanded) : '';
+  return `
+    <div class="m-input-row m-dim-row m-dim-row-6">${row1}</div>
+    <div class="m-input-row m-dim-row m-dim-row-7">${row2}</div>
+    ${panel}
+  `;
+}
+
+function renderDimTile(di) {
+  const dm = DIMS[di];
+  if (!dm) return '';
+  const isOpen = _dimExpanded === di;
+  const prog = dimProgress(di);
+  const badge = prog.total > 0 ? (prog.done + '/' + prog.total) : '';
+  const statusClass = prog.total > 0 && prog.done === prog.total
+    ? 'm-tile-full'
+    : (prog.done > 0 ? 'm-tile-partial' : '');
+  return `
+    <button class="m-tile m-dim-tile ${statusClass} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
+      <span class="m-tile-label">${escapeHtml(dm.dn)}</span>
+      ${badge ? `<span class="m-tile-badge">${escapeHtml(badge)}</span>` : ''}
+    </button>
+  `;
+}
+
+function renderDimPanel(di) {
+  const dm = DIMS[di];
+  if (!dm) return '';
+  const head = `
+    <div class="m-dim-panel-head">
+      <span class="m-dim-title">${escapeHtml(dm.dn)}<span class="m-dim-view"> · ${escapeHtml(dm.view || '')}</span></span>
+    </div>
+  `;
+  const groups = DIM_PART_ORDER.map((pi, i) => renderDimPartHeader(di, pi, DIM_PART_LABELS[i])).join('');
+  return `<div class="m-panel m-dim-panel" data-dim="${di}">${head}${groups}</div>`;
+}
+
+function renderDimPartHeader(di, pi, label) {
+  const cr = (condResults[di] && condResults[di][pi]) || null;
+  const score = cr ? (cr.score || 0) : 0;
+  const max = cr ? (cr.max || 0) : 0;
+  const threshold = cr ? (cr.threshold || '') : '無規則';
+  const noRule = !cr || cr.threshold === '無規則' || max === 0;
+  return `
+    <div class="m-dim-part-block ${noRule ? 'm-dim-part-norule' : ''}" data-part-idx="${pi}">
+      <div class="m-dim-part-header">
+        <span class="m-dim-part-name">${escapeHtml(label)}</span>
+        <span class="m-dim-part-meta">
+          ${noRule ? '' : `<span class="m-dim-part-score">${score}/${max}</span>`}
+          <span class="m-dim-part-threshold">${escapeHtml(threshold)}</span>
+        </span>
+      </div>
+    </div>
+  `;
 }
 
 function renderPartMode() {
@@ -493,6 +590,16 @@ function bindEvents() {
       render();
     });
   });
+
+  // 維度 tile：點切換展開（同 idx 再點收合，互斥單選）
+  _root.querySelectorAll('.m-dim-tile').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = parseInt(btn.dataset.dim, 10);
+      _dimExpanded = (_dimExpanded === di) ? null : di;
+      render();
+    });
+  });
 }
 
 // ---------- 對外 ----------
@@ -536,6 +643,16 @@ export async function mountInput(rootEl) {
   } catch (e) {}
   if (!hasLocalDraft) {
     _draft = JSON.parse(JSON.stringify(firestoreObs));
+  }
+
+  // 維度視角需要 condResults：載 DIM_RULES + 用當前 _draft（含草稿）算一次
+  // 失敗不影響部位視角；DIM panel 顯示「無規則」/「0/0」是可接受退化
+  try {
+    await ensureDimRulesLoaded();
+    setObsData(JSON.parse(JSON.stringify(_draft)));
+    recalcFromObs();
+  } catch (e) {
+    debugLog('[m_input]', '維度視角初始化失敗（可忽略）', e && e.message);
   }
 
   setSaveStatus(hasLocalDraft ? 'dirty' : 'saved');
