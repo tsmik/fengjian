@@ -17,6 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
+import { mountInput, unmountInput } from "./m_input.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -194,6 +195,11 @@ initAuth();
         pages[k].classList.toggle('active',k===key);
       });
       elMain.scrollTop=0;
+      if(key==='input'){
+        mountInput(pages.input);
+      }else{
+        unmountInput();
+      }
     });
   });
 })();
