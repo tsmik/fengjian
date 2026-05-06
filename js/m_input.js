@@ -5,8 +5,9 @@
 // 被誰用：js/m_main.js（tab 切換到 input 時呼叫 mountInput）
 // 4b 第一段：segmented control + 部位視角答題（沿用 4a）
 // 4b 第二段 Phase 1：mountInput 用 window.__userData.obsJson（登入時 m_main.js 已抓的）當 baseline，比對 LS 草稿決定狀態色塊
-// 4b 第二段 Phase 1.5（本段修補）：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
-// 4b 第二段待辦：Phase 2 答題轉黃、Phase 3 儲存按鈕（含 Firestore 寫入 / recalcFromObs / 同步 __userData）、Phase 4 攔截離開
+// 4b 第二段 Phase 1.5：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
+// 4b 第二段 Phase 2（本段）：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
+// 4b 第二段待辦：Phase 3 儲存按鈕（含 Firestore 寫入 / recalcFromObs / 同步 __userData）、Phase 4 攔截離開
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
 //   - 兩個 google 帳號交替登入同一台裝置：應各自看到自己的資料（不互相污染）
@@ -266,6 +267,7 @@ function bindEvents() {
         _draft[qid] = val;
       }
       saveDraft();
+      setSaveStatus('dirty');
       render();
     });
   });
