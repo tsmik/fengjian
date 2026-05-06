@@ -8,6 +8,7 @@
 // 4b 第二段 Phase 1.5：LS key 加 UID 後綴，避免不同帳號在同台裝置共用草稿
 // 4b 第二段 Phase 2：答題事件即時 setSaveStatus('dirty')，不需切 tab 才看到黃
 // 4b 第二段 Phase 3（本段）：儲存按鈕完整邏輯（寫 Firestore obsJson + dataJson、呼叫 recalcFromObs、同步 window.__userData、清 LS、首頁進度條更新）
+// 4b 第二段 Phase 3.5（本段修補）：lazy 載 DIM_RULES（settings/rules）給 recalcFromObs 用；錯誤訊息改用 debugLog（手機 debug 面板可見）
 // 4b 第二段待辦：Phase 4 攔截離開
 // Retest 範圍：
 //   - 手機 m.html input tab：子模式切換、部位答題沿用 4a；切到 input tab 時應立即顯示 Firestore 既有資料
@@ -15,9 +16,9 @@
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA_DEFAULT, setObsData, data as coreData } from './core.js';
-import { auth, db } from './m_main.js';
-import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { OBS_PARTS_DATA_DEFAULT, setObsData, setDimRules, data as coreData } from './core.js';
+import { auth, db, debugLog } from './m_main.js';
+import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
 
@@ -67,6 +68,47 @@ function setSaveStatus(state) {
   else if (state === 'error')  { el.classList.add('m-save-status-error');   el.textContent = '失敗'; }
 }
 
+// ---------- 規則載入（lazy，第一次儲存才載；recalcFromObs 依賴 DIM_RULES）----------
+const RULES_CACHE_KEY = 'rxbf_rules_cache';
+let _dimRulesLoaded = false;
+async function ensureDimRulesLoaded() {
+  if (_dimRulesLoaded) return;
+  // 先試 Firestore
+  try {
+    const rulesRef = doc(db, 'settings', 'rules');
+    const rulesSnap = await getDoc(rulesRef);
+    if (rulesSnap.exists() && rulesSnap.data().rulesJson) {
+      const parsed = JSON.parse(rulesSnap.data().rulesJson);
+      if (Array.isArray(parsed) && parsed.length === 13 && parsed[0] && parsed[0].parts) {
+        setDimRules(parsed);
+        try { localStorage.setItem(RULES_CACHE_KEY, rulesSnap.data().rulesJson); } catch (e) {}
+        _dimRulesLoaded = true;
+        debugLog('[m_input]', '規則從 Firestore 載入');
+        return;
+      }
+    }
+    debugLog('[m_input]', 'Firestore 規則格式異常或不存在');
+  } catch (e) {
+    debugLog('[m_input]', 'Firestore 規則讀取失敗', e && e.message);
+  }
+  // fallback LS 快取
+  try {
+    const cached = localStorage.getItem(RULES_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length === 13 && parsed[0] && parsed[0].parts) {
+        setDimRules(parsed);
+        _dimRulesLoaded = true;
+        debugLog('[m_input]', '規則從 LS 快取載入');
+        return;
+      }
+    }
+  } catch (e) {
+    debugLog('[m_input]', 'LS 快取讀取失敗', e && e.message);
+  }
+  throw new Error('rules load failed');
+}
+
 // ---------- 儲存（Phase 3）----------
 let _isSaving = false;
 async function handleSaveClick() {
@@ -76,6 +118,9 @@ async function handleSaveClick() {
   try {
     const uid = auth.currentUser && auth.currentUser.uid;
     if (!uid) throw new Error('no auth user');
+
+    // 確保 DIM_RULES 載入（recalcFromObs 依賴）
+    await ensureDimRulesLoaded();
 
     // 把草稿同步進 core.js obsData，再呼叫 recalcFromObs 算出 9×13 矩陣
     const draftCopy = JSON.parse(JSON.stringify(_draft));
@@ -104,7 +149,7 @@ async function handleSaveClick() {
     updateHomeProgress();
   } catch (e) {
     // 失敗：紅色「失敗」，不清 LS、不更新 __userData，使用者可重試
-    if (typeof console !== 'undefined') console.warn('[m_input] 儲存失敗', e);
+    debugLog('[m_input]', '儲存失敗', e && e.message ? e.message : e);
     setSaveStatus('error');
   } finally {
     _isSaving = false;
