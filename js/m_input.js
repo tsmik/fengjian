@@ -19,7 +19,7 @@
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults } from './core.js';
+import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
 import { auth, db, debugLog } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
@@ -38,9 +38,9 @@ const PART_ROW_2 = ['口', '顴', '人中', '地閣', '頤'];
 // 維度視角：13 維度排兩排 6+7（DIMS 順序）
 const DIM_ROW_1_IDX = [0, 1, 2, 3, 4, 5];        // 形勢 經緯 方圓 曲直 收放 緩急
 const DIM_ROW_2_IDX = [6, 7, 8, 9, 10, 11, 12];  // 順逆 分合 真假 攻守 奇正 虛實 進退
-// 維度視角的 13 部位順序（沿用桌機 cond_page CP_PART_ORDER / CP_PART_LABELS）
-const DIM_PART_ORDER  = [0, 1, 4, 5, 6, 7, 8, 2, 9, 3, 10, 11, 12];
-const DIM_PART_LABELS = ['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
+// 維度視角的 13 部位順序（Mike 自訂排版：row1 頭/上停/耳/眉/眼/鼻；row2 口/顴/人中/地閣/頤/中停/下停）
+const DIM_PART_ORDER  = [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 2, 3];
+const DIM_PART_LABELS = ['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
 
 // LS key 帶 UID 後綴：每個 google 帳號在同一裝置上各有獨立草稿
 function getLsKey() {
@@ -369,8 +369,19 @@ function isPartExpanded(di, pi) {
 }
 function togglePartExpanded(di, pi) {
   // 互斥單選：點同 pi 收合（清掉 key），點別的部位切換
-  if (_dimPartExpanded[di] === pi) delete _dimPartExpanded[di];
-  else _dimPartExpanded[di] = pi;
+  if (_dimPartExpanded[di] === pi) {
+    delete _dimPartExpanded[di];
+  } else {
+    _dimPartExpanded[di] = pi;
+    // 首次展開時 init：所有 group 預設全部收合（已有狀態則保留）
+    const key = _groupKey(di, pi);
+    if (!_dimGroupCollapsed[key]) {
+      const groups = _collectDimPartGroups(di, pi);
+      const labels = groups.map(g => g.label).filter(Boolean);
+      _dimGroupCollapsed[key] = new Set(labels);
+      saveDimGroupCollapsed();
+    }
+  }
   saveDimPartExpanded();
 }
 function _groupKey(di, pi) { return di + '_' + pi; }
@@ -476,14 +487,11 @@ function renderDimTile(di) {
   if (!dm) return '';
   const isOpen = _dimExpanded === di;
   const prog = dimProgress(di);
-  const badge = prog.total > 0 ? (prog.done + '/' + prog.total) : '';
-  const statusClass = prog.total > 0 && prog.done === prog.total
-    ? 'm-tile-full'
-    : (prog.done > 0 ? 'm-tile-partial' : '');
+  // 顏色表示答題狀態（取代進度數字）：未答完 → 淡黃 m-dim-tile-todo；答完 → 白底
+  const todoCls = (prog.total > 0 && prog.done < prog.total) ? 'm-dim-tile-todo' : '';
   return `
-    <button class="m-tile m-dim-tile ${statusClass} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
+    <button class="m-tile m-dim-tile ${todoCls} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
       <span class="m-tile-label">${escapeHtml(dm.dn)}</span>
-      ${badge ? `<span class="m-tile-badge">${escapeHtml(badge)}</span>` : ''}
     </button>
   `;
 }
@@ -491,12 +499,30 @@ function renderDimTile(di) {
 function renderDimPanel(di) {
   const dm = DIMS[di];
   if (!dm) return '';
-  // 維度大標題（清楚顯示當前維度）
+  // 維度大標題（左：維度名 + 觀點；右：進度 N/M 或結果字）
+  const prog = dimProgress(di);
+  const completed = prog.total > 0 && prog.done === prog.total;
+  let progDisplay = '';
+  if (completed) {
+    const r = calcDim(coreData, di);
+    if (r) {
+      let resultChar = '';
+      if (r.a > r.b) resultChar = dm.a;
+      else if (r.b > r.a) resultChar = dm.b;
+      else resultChar = '－';
+      progDisplay = `<span class="m-dim-title-result">${escapeHtml(resultChar)}</span>`;
+    } else {
+      progDisplay = `<span class="m-dim-title-progress">${prog.done}/${prog.total}</span>`;
+    }
+  } else if (prog.total > 0) {
+    progDisplay = `<span class="m-dim-title-progress">${prog.done}/${prog.total}</span>`;
+  }
   const head = `
     <div class="m-dim-panel-head">
-      <span class="m-dim-title-current">正在看</span>
       <span class="m-dim-title-name">${escapeHtml(dm.dn)}</span>
       <span class="m-dim-title-view">${escapeHtml(dm.view || '')}</span>
+      <span class="m-dim-title-spacer"></span>
+      ${progDisplay}
     </div>
   `;
   // 部位 tile 兩排 6+7（13 個，沿用維度規則部位順序）
@@ -572,13 +598,17 @@ function _collectDimPartGroups(di, pi) {
   items.forEach(it => {
     const gl = it.groupLabel || null;
     if (!cur || cur.label !== gl) {
-      cur = { label: gl, qids: [], qidSet: new Set() };
+      cur = { label: gl, qids: [], qidSet: new Set(), partResults: [] };
       groups.push(cur);
     }
-    if (Array.isArray(it.ids)) {
+    const hasIds = Array.isArray(it.ids) && it.ids.length > 0;
+    if (hasIds) {
       it.ids.forEach(qid => {
         if (!cur.qidSet.has(qid)) { cur.qidSet.add(qid); cur.qids.push(qid); }
       });
+    } else {
+      // partResult 引用（中停/下停常見）— ids 為空，純結論列示
+      cur.partResults.push(it);
     }
   });
   return groups;
@@ -591,10 +621,26 @@ function renderDimPartBody(di, pi, dimPartName) {
   return `<div class="m-dim-part-body">${groups.map(g => {
     const collapsed = g.label ? isGroupCollapsed(di, pi, g.label) : false;
     const chevron = g.label ? (collapsed ? '▶' : '▼') : '';
-    const qsHtml = collapsed ? '' : g.qids.map(qid => {
-      const q = _findQById(qid);
-      return q ? renderQuestion(q) : '';
-    }).filter(Boolean).join('');
+    let bodyHtml = '';
+    if (!collapsed) {
+      // 一般題目（refs 還原）
+      const qsHtml = g.qids.map(qid => {
+        const q = _findQById(qid);
+        return q ? renderQuestion(q) : '';
+      }).filter(Boolean).join('');
+      // partResult 結論行（中停/下停常見：「左頭達標」之類，純展示不可答）
+      const prHtml = g.partResults.map(it => {
+        const okCls = it.ok ? 'ok' : 'ng';
+        const mark = it.ok ? '✓' : '✗';
+        return `
+          <div class="m-dim-result-item ${okCls}">
+            <span class="m-dim-result-mark ${okCls}">${mark}</span>
+            <span class="m-dim-result-label">${escapeHtml(it.label || '(空)')}</span>
+          </div>
+        `;
+      }).join('');
+      bodyHtml = qsHtml + prHtml;
+    }
     return `
       <div class="m-dim-group">
         ${g.label ? `
@@ -603,7 +649,7 @@ function renderDimPartBody(di, pi, dimPartName) {
             <span class="m-dim-group-label">${escapeHtml(g.label)}</span>
           </div>
         ` : ''}
-        <div class="m-dim-group-body" ${collapsed ? 'style="display:none"' : ''}>${qsHtml}</div>
+        <div class="m-dim-group-body" ${collapsed ? 'style="display:none"' : ''}>${bodyHtml}</div>
       </div>
     `;
   }).join('')}</div>`;

@@ -223,14 +223,19 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 .m-dim-row{padding:10px 10px 0;display:flex;gap:6px}
 .m-dim-row-6 .m-dim-tile{flex:1}
 .m-dim-row-7 .m-dim-tile{flex:1}
+/* 維度 tile 縮短上下；用顏色表答題狀態（取代進度數字） */
+.m-dim-tile{padding:8px 4px;min-height:42px}
 .m-dim-tile .m-tile-label{font-size:13px}
-.m-dim-tile .m-tile-badge{font-size:11px}
+.m-dim-tile-todo{background:#fff8d5}
+.m-dim-tile-todo.m-tile-open{background:#fff5b8}
 .m-dim-panel{padding:12px 10px}
-/* 維度大標題：清楚顯示當前維度 */
-.m-dim-panel-head{display:flex;align-items:baseline;gap:10px;padding:4px 4px 12px;border-bottom:1px solid #d4c9b0;margin-bottom:12px;flex-wrap:wrap}
-.m-dim-title-current{font-size:11px;color:#716b60;letter-spacing:1px}
-.m-dim-title-name{font-size:20px;font-weight:700;color:#3d3b39;letter-spacing:2px}
-.m-dim-title-view{font-size:13px;color:#7A9E7E;font-weight:400}
+/* 維度大標題：左維度名 + 觀點；右進度 N/M 或結果字 */
+.m-dim-panel-head{display:flex;align-items:baseline;gap:8px;padding:4px 4px 12px;border-bottom:1px solid #d4c9b0;margin-bottom:12px}
+.m-dim-title-name{font-size:20px;font-weight:700;color:#3d3b39;letter-spacing:2px;flex-shrink:0}
+.m-dim-title-view{font-size:13px;color:#7A9E7E;font-weight:400;flex-shrink:0}
+.m-dim-title-spacer{flex:1}
+.m-dim-title-progress{font-size:13px;color:#716b60;font-weight:600;flex-shrink:0}
+.m-dim-title-result{font-size:20px;font-weight:700;color:#7A9E7E;flex-shrink:0;letter-spacing:2px}
 /* 部位 tile 兩排 6+7（比維度 tile 略小：少 padding） */
 .m-dim-part-row{padding:6px 0 0;display:flex;gap:6px}
 .m-dim-part-row:first-of-type{padding-top:0}
@@ -257,6 +262,14 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 .m-dim-group-chevron{flex-shrink:0;font-size:10px;color:#716b60;width:12px;text-align:center;line-height:1}
 .m-dim-group-label{font-weight:600;font-size:13px;color:#716b60}
 .m-dim-group-body{padding:8px 0 4px}
+/* partResult 結論行（中停/下停常見：「左頭達標」之類純展示，不可答） */
+.m-dim-result-item{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#3d3b39;border-bottom:1px solid #f5efe6}
+.m-dim-result-item:last-child{border-bottom:none}
+.m-dim-result-mark{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.m-dim-result-mark.ok{background:#7A9E7E;color:white}
+.m-dim-result-mark.ng{background:#f0f0f0;color:#bbb;border:1px solid #ddd}
+.m-dim-result-item.ok .m-dim-result-label{color:#3d3b39}
+.m-dim-result-item.ng .m-dim-result-label{color:#999}
 /* paired 結論 chip：左右一致用綠（沿用既有 m-q-tag）；不同用「左X 右Y」金黃 chip */
 .m-q-tag-diff{font-size:12px;color:#C17A5A;background:#fdf0eb;border:1px solid #C17A5A;border-radius:10px;padding:2px 10px;font-weight:500}
 /* paired 題 open：兩欄並排（左欄 / 右欄各自選項上下列出，無 hint） */
