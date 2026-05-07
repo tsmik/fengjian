@@ -18,9 +18,11 @@
 //   - 桌機 staging manualDataJson 互通（兩端資料同步）
 // ============================================================
 
-import { DIMS } from './core.js';
+import { DIMS, setObsData, setUserName } from './core.js';
 import { auth, db, debugLog } from './m_main.js';
-import { setSaveStatus } from './m_input.js';
+import { setSaveStatus, ensureDimRulesLoaded } from './m_input.js';
+import { recalcFromObs } from './obs_recalc.js';
+import { drawReportCanvas } from './report.js';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_SUBTAB = 'm_report_subtab';
@@ -152,6 +154,45 @@ export function discardReportDraft() {
   setSaveStatus('saved');
 }
 
+async function exportReportPng() {
+  const btn = document.getElementById('m-report-png-btn');
+  if (!btn || btn.disabled) return;
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '產生中…';
+  await new Promise(r => setTimeout(r, 50)); // 讓 UI 先 repaint
+  try {
+    // 確保 DIM_RULES 載入（recalcFromObs 依賴）
+    await ensureDimRulesLoaded();
+    // 設定 userName，drawReportCanvas 會顯示在 PNG 上
+    if (window.__userData && window.__userData.displayName) {
+      setUserName(window.__userData.displayName);
+    }
+    // 從 Firestore baseline (window.__userData.obsJson) 還原 obsData，再 recalc 出 data
+    if (window.__userData && window.__userData.obsJson) {
+      try {
+        const obs = JSON.parse(window.__userData.obsJson);
+        setObsData(obs);
+      } catch (e) {
+        debugLog('[m_report]', 'obsJson parse 失敗', e && e.message);
+      }
+    }
+    recalcFromObs();
+    // 產生 canvas → blob → 新 tab 開（手機原生圖片 viewer 支援拖曳/放大縮小）
+    const canvas = drawReportCanvas();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    if (!blob) throw new Error('canvas.toBlob 失敗');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch (e) {
+    debugLog('[m_report]', 'PNG 產生失敗', e && e.message ? e.message : e);
+    alert('產生失敗：' + (e && e.message ? e.message : e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
 async function handleReportSave() {
   if (_isSavingManual) return;
   _isSavingManual = true;
@@ -204,18 +245,16 @@ function _renderContent() {
   const el = _container.querySelector('#m-report-content');
   if (!el) return;
   if (_subtab === 'auto') {
-    // 偵測 staging vs production，連到對應桌機版報告
-    const host = window.location.hostname;
-    const isStaging = host === 'staging.fengjian.pages.dev' || /^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host);
-    const reportUrl = isStaging ? 'index_desktop.html' : 'index.html';
     el.innerHTML = `
       <div class="m-report-link-wrap">
         <div class="m-report-link-title">詳盡兵法報告</div>
-        <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年 / AI 評析</div>
-        <a href="${reportUrl}" target="_blank" class="m-report-link-btn">開啟詳盡報告</a>
-        <div class="m-report-link-tip">建議手機橫移閱讀</div>
+        <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年</div>
+        <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（PNG）</button>
+        <div class="m-report-link-tip">產生後在新分頁開啟，可拖曳放大縮小</div>
       </div>
     `;
+    const pngBtn = el.querySelector('#m-report-png-btn');
+    if (pngBtn) pngBtn.onclick = exportReportPng;
   } else {
     el.innerHTML = _renderManualInput();
     _bindManualEvents();
