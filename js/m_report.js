@@ -326,9 +326,13 @@ async function exportReportPng() {
     const ud = window.__userData || {};
     const displayName = ud.displayName || '報告';
     setUserName(displayName);
-    if (ud.gender) setUserGender(ud.gender);
+    // 既有 user 可能有 'M'/'F' 舊資料（之前 select value 用 M/F），轉換成桌機流年表 key '男'/'女'
+    let _gender = ud.gender || '';
+    if (_gender === 'M') _gender = '男';
+    else if (_gender === 'F') _gender = '女';
+    if (_gender) setUserGender(_gender);
     if (ud.birthday) setUserBirthday(ud.birthday);
-    debugLog('[m_report]', 'PNG 流年 trace - gender:', ud.gender || '(空)', 'birthday:', ud.birthday || '(空)', 'lnLoaded:', _liunianLoaded);
+    debugLog('[m_report]', 'PNG 流年 trace - gender:', _gender || '(空)', '(原始:', ud.gender || '空', ') birthday:', ud.birthday || '(空)', 'lnLoaded:', _liunianLoaded);
     const _lnTrace = _getLiunianInfo();
     debugLog('[m_report]', '_getLiunianInfo() =', _lnTrace ? ('xusui=' + _lnTrace.xusui + ', mark=' + (_lnTrace.mark || '無')) : 'null（不會畫流年）');
     if (window.__userData && window.__userData.obsJson) {

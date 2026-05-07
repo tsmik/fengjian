@@ -115,7 +115,12 @@ export function initHome(displayName){
 
   elName.value=ud.displayName||'';
   elBday.value=ud.birthday||'';
-  elGender.value=ud.gender||'';
+  // gender 既有資料 'M'/'F' 自動 migrate 到中文（select option value 已改中文）
+  let _initGender = ud.gender || '';
+  let _genderMigrated = false;
+  if (_initGender === 'M') { _initGender = '男'; _genderMigrated = true; }
+  else if (_initGender === 'F') { _initGender = '女'; _genderMigrated = true; }
+  elGender.value = _initGender;
 
   // debounce 儲存
   let saveTimer=null;
@@ -154,4 +159,6 @@ export function initHome(displayName){
   elName.addEventListener('input',scheduleSave);
   elBday.addEventListener('change',scheduleSave);
   elGender.addEventListener('change',scheduleSave);
+  // 若 gender 是舊 M/F 格式，背景自動寫回 Firestore 為中文（一次性 migration）
+  if (_genderMigrated) scheduleSave();
 }
