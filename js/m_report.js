@@ -249,31 +249,44 @@ function _renderClearAllRow() {
 }
 
 function _renderManualOverview() {
-  // 9 列（部位）× 13 欄（維度）矩陣 — 對齊桌機兵法報告版型
-  // 第一列：角落 + 13 維度名
-  // 接下來 9 列：部位名 + 13 個 cell（顯示對應的字 a/b 或空）
-  let cells = `<div class="m-manual-cell is-corner"></div>`;
+  // 9 列（部位）× 13 欄（維度）矩陣 — 沿用桌機兵法報告版型 + 跨維度分組 header
+  //   先天指數 = 形勢 經緯 方圓 曲直 收放 緩急 (di 0~5)
+  //     ├ 老闆指數 = 形勢 經緯 方圓 (di 0~2)
+  //     └ 主管指數 = 曲直 收放 緩急 (di 3~5)
+  //   運氣指數 = 順逆 分合 真假 (di 6~8)
+  //   後天指數 = 攻守 奇正 虛實 進退 (di 9~12)
+  // grid: 14 欄（部位欄 + 13 維度）× 12 列（3 header + 9 部位）
+  let html = '';
+  // R1: 角落 + 大分組
+  html += `<div class="m-manual-cell is-corner" style="grid-row:1;grid-column:1"></div>`;
+  html += `<div class="m-manual-grp m-manual-grp-pre" style="grid-row:1;grid-column:2/span 6">先天指數</div>`;
+  html += `<div class="m-manual-grp m-manual-grp-luck" style="grid-row:1;grid-column:8/span 3">運氣指數</div>`;
+  html += `<div class="m-manual-grp m-manual-grp-post" style="grid-row:1;grid-column:11/span 4">後天指數</div>`;
+  // R2: 角落 + 子分組（老闆/主管），運氣/後天區留空
+  html += `<div class="m-manual-cell is-corner" style="grid-row:2;grid-column:1"></div>`;
+  html += `<div class="m-manual-subgrp m-manual-subgrp-boss" style="grid-row:2;grid-column:2/span 3">老闆指數</div>`;
+  html += `<div class="m-manual-subgrp m-manual-subgrp-mgr" style="grid-row:2;grid-column:5/span 3">主管指數</div>`;
+  html += `<div class="m-manual-spacer" style="grid-row:2;grid-column:8/span 7"></div>`;
+  // R3: 角落 + 13 維度名
+  html += `<div class="m-manual-cell is-corner" style="grid-row:3;grid-column:1"></div>`;
   for (let di = 0; di < 13; di++) {
-    cells += `<div class="m-manual-cell is-col-header">${DIMS[di].dn}</div>`;
+    html += `<div class="m-manual-cell is-col-header" style="grid-row:3;grid-column:${di + 2}">${DIMS[di].dn}</div>`;
   }
+  // R4~R12: 9 部位 × 13 cell
   for (let pi = 0; pi < 9; pi++) {
-    cells += `<div class="m-manual-cell is-row-header">${PART_LABELS[pi]}</div>`;
+    const row = pi + 4;
+    html += `<div class="m-manual-cell is-row-header" style="grid-row:${row};grid-column:1">${PART_LABELS[pi]}</div>`;
     for (let di = 0; di < 13; di++) {
       const v = _manualDraft[di][pi];
       let txt = '—', cls = 'is-empty';
-      if (v === 'A') {
-        txt = DIMS[di].a;
-        cls = DIMS[di].aT === '靜' ? 'is-jing' : 'is-dong';
-      } else if (v === 'B') {
-        txt = DIMS[di].b;
-        cls = DIMS[di].bT === '靜' ? 'is-jing' : 'is-dong';
-      }
-      cells += `<div class="m-manual-cell ${cls}">${txt}</div>`;
+      if (v === 'A') { txt = DIMS[di].a; cls = DIMS[di].aT === '靜' ? 'is-jing' : 'is-dong'; }
+      else if (v === 'B') { txt = DIMS[di].b; cls = DIMS[di].bT === '靜' ? 'is-jing' : 'is-dong'; }
+      html += `<div class="m-manual-cell ${cls}" style="grid-row:${row};grid-column:${di + 2}">${txt}</div>`;
     }
   }
   return `
     <div class="m-manual-overview-wrap">
-      <div class="m-manual-overview-grid">${cells}</div>
+      <div class="m-manual-overview-grid">${html}</div>
     </div>
   `;
 }
