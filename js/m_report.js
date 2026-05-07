@@ -313,12 +313,11 @@ function _openPngOverlay(blob, filename) {
   overlay.classList.add('is-open');
 }
 
-async function exportReportPng() {
-  const btn = document.getElementById('m-report-png-btn');
-  if (!btn || btn.disabled) return;
-  const oldText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '產生中…';
+// 共用 PNG 生成 helper：自動報告 + 手動報告共用
+async function _generatePng({ srcData, drawOpts, filenameSuffix, btn }) {
+  if (btn && btn.disabled) return;
+  const oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '產生中…'; }
   await new Promise(r => setTimeout(r, 50));
   try {
     await ensureDimRulesLoaded();
@@ -326,36 +325,49 @@ async function exportReportPng() {
     const ud = window.__userData || {};
     const displayName = ud.displayName || '報告';
     setUserName(displayName);
-    // 既有 user 可能有 'M'/'F' 舊資料（之前 select value 用 M/F），轉換成桌機流年表 key '男'/'女'
+    // 既有 user 可能有 'M'/'F' 舊資料 → 轉成桌機流年表 key '男'/'女'
     let _gender = ud.gender || '';
     if (_gender === 'M') _gender = '男';
     else if (_gender === 'F') _gender = '女';
     if (_gender) setUserGender(_gender);
     if (ud.birthday) setUserBirthday(ud.birthday);
-    debugLog('[m_report]', 'PNG 流年 trace - gender:', _gender || '(空)', '(原始:', ud.gender || '空', ') birthday:', ud.birthday || '(空)', 'lnLoaded:', _liunianLoaded);
-    const _lnTrace = _getLiunianInfo();
-    debugLog('[m_report]', '_getLiunianInfo() =', _lnTrace ? ('xusui=' + _lnTrace.xusui + ', mark=' + (_lnTrace.mark || '無')) : 'null（不會畫流年）');
-    if (window.__userData && window.__userData.obsJson) {
-      try {
-        const obs = JSON.parse(window.__userData.obsJson);
-        setObsData(obs);
-      } catch (e) {
-        debugLog('[m_report]', 'obsJson parse 失敗', e && e.message);
+    // 自動報告需要 recalc 出 data；手動報告直接傳 _manualDraft 不需 recalc
+    if (!srcData) {
+      if (ud.obsJson) {
+        try { setObsData(JSON.parse(ud.obsJson)); }
+        catch (e) { debugLog('[m_report]', 'obsJson parse 失敗', e && e.message); }
       }
+      recalcFromObs();
     }
-    recalcFromObs();
-    const canvas = drawReportCanvas();
+    const canvas = drawReportCanvas(srcData, drawOpts);
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) throw new Error('canvas.toBlob 失敗');
-    const filename = '人相兵法_' + displayName + '.png';
+    const filename = '人相兵法' + (filenameSuffix || '') + '_' + displayName + '.png';
     _openPngOverlay(blob, filename);
   } catch (e) {
     debugLog('[m_report]', 'PNG 產生失敗', e && e.message ? e.message : e);
     alert('產生失敗：' + (e && e.message ? e.message : e));
   } finally {
-    btn.disabled = false;
-    btn.textContent = oldText;
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
   }
+}
+
+async function exportReportPng() {
+  await _generatePng({
+    srcData: undefined,
+    drawOpts: undefined,
+    filenameSuffix: '_自動',
+    btn: document.getElementById('m-report-png-btn')
+  });
+}
+
+async function exportManualReportPng(btn) {
+  await _generatePng({
+    srcData: _manualDraft,
+    drawOpts: { checkComplete: true },
+    filenameSuffix: '_手動',
+    btn: btn
+  });
 }
 
 async function handleReportSave() {
@@ -437,7 +449,7 @@ function _renderManualInput() {
   `;
   let body;
   if (_manualView === 'overview') {
-    body = `${_renderManualOverview()}${_renderClearAllRow()}`;
+    body = `${_renderManualOverview()}${_renderManualPngRow()}${_renderClearAllRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
@@ -453,6 +465,15 @@ function _renderClearAllRow() {
   return `
     <div class="m-manual-clear-row">
       <button class="m-manual-clear-btn m-manual-clear-btn-all" data-mclear-all="1">清除全部填答</button>
+    </div>
+  `;
+}
+
+function _renderManualPngRow() {
+  return `
+    <div class="m-report-link-wrap" style="padding:20px 16px 8px">
+      <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版 PNG）</button>
+      <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
 }
@@ -576,6 +597,12 @@ function _bindManualEvents() {
       _manualView = btn.dataset.mview;
       try { localStorage.setItem(LS_VIEW, _manualView); } catch (e) {}
       _renderContent();
+    });
+  });
+  // 產生手動版詳盡報告 PNG
+  _container.querySelectorAll('[data-mpng]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      exportManualReportPng(btn);
     });
   });
   // 清除全部填答
