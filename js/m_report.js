@@ -154,6 +154,119 @@ export function discardReportDraft() {
   setSaveStatus('saved');
 }
 
+// ===== PNG 全螢幕 overlay：點按鈕後直接顯示 PNG，可 pinch zoom + drag + 分享 =====
+let _currentPngBlob = null;
+let _currentPngFilename = '';
+let _pngOverlayInitialized = false;
+
+function _initPngOverlay() {
+  if (_pngOverlayInitialized) return;
+  _pngOverlayInitialized = true;
+  const overlay = document.getElementById('m-png-overlay');
+  const img = document.getElementById('m-png-img');
+  const closeBtn = document.getElementById('m-png-close');
+  const shareBtn = document.getElementById('m-png-share');
+  if (!overlay || !img || !closeBtn || !shareBtn) return;
+
+  // pinch zoom + drag state
+  let scale = 1, tx = 0, ty = 0;
+  let startDist = 0, startScale = 1;
+  let startTouchX = 0, startTouchY = 0, startTX = 0, startTY = 0;
+  let lastTap = 0;
+
+  function apply() { img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
+  function reset() { scale = 1; tx = 0; ty = 0; apply(); }
+
+  img.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      const [a, b] = e.touches;
+      startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      startScale = scale;
+    } else if (e.touches.length === 1) {
+      startTouchX = e.touches[0].clientX;
+      startTouchY = e.touches[0].clientY;
+      startTX = tx; startTY = ty;
+    }
+  }, { passive: false });
+
+  img.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const [a, b] = e.touches;
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      scale = Math.max(0.5, Math.min(8, startScale * (dist / startDist)));
+      apply();
+    } else if (e.touches.length === 1 && scale > 1) {
+      tx = startTX + (e.touches[0].clientX - startTouchX);
+      ty = startTY + (e.touches[0].clientY - startTouchY);
+      apply();
+    }
+  }, { passive: false });
+
+  img.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (e.touches.length === 0 && now - lastTap < 300) reset();
+    lastTap = now;
+  });
+
+  // 將 reset 綁到 overlay open 時呼叫
+  overlay._reset = reset;
+
+  closeBtn.addEventListener('click', () => {
+    overlay.classList.remove('is-open');
+    if (img.src && img.src.startsWith('blob:')) {
+      try { URL.revokeObjectURL(img.src); } catch (e) {}
+    }
+    img.src = '';
+    _currentPngBlob = null;
+    _currentPngFilename = '';
+    reset();
+  });
+
+  shareBtn.addEventListener('click', async () => {
+    if (!_currentPngBlob) return;
+    const file = new File([_currentPngBlob], _currentPngFilename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: '人相兵法報告' });
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          debugLog('[m_report]', 'share 失敗，fallback 下載', e && e.message);
+          _fallbackDownloadBlob(_currentPngBlob, _currentPngFilename);
+        }
+      }
+    } else {
+      _fallbackDownloadBlob(_currentPngBlob, _currentPngFilename);
+    }
+  });
+}
+
+function _fallbackDownloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function _openPngOverlay(blob, filename) {
+  _initPngOverlay();
+  const overlay = document.getElementById('m-png-overlay');
+  const img = document.getElementById('m-png-img');
+  if (!overlay || !img) return;
+  if (overlay._reset) overlay._reset();
+  if (img.src && img.src.startsWith('blob:')) {
+    try { URL.revokeObjectURL(img.src); } catch (e) {}
+  }
+  _currentPngBlob = blob;
+  _currentPngFilename = filename;
+  img.src = URL.createObjectURL(blob);
+  overlay.classList.add('is-open');
+}
+
 async function exportReportPng() {
   const btn = document.getElementById('m-report-png-btn');
   if (!btn || btn.disabled) return;
@@ -162,12 +275,9 @@ async function exportReportPng() {
   btn.textContent = '產生中…';
   await new Promise(r => setTimeout(r, 50));
   try {
-    // 確保 DIM_RULES 載入（recalcFromObs 依賴）
     await ensureDimRulesLoaded();
-    // 設定 userName，drawReportCanvas 會顯示在 PNG 上
     const displayName = (window.__userData && window.__userData.displayName) || '報告';
     setUserName(displayName);
-    // 從 Firestore baseline (window.__userData.obsJson) 還原 obsData，再 recalc 出 data
     if (window.__userData && window.__userData.obsJson) {
       try {
         const obs = JSON.parse(window.__userData.obsJson);
@@ -177,34 +287,11 @@ async function exportReportPng() {
       }
     }
     recalcFromObs();
-    // 產生 canvas → blob → 優先 navigator.share（iOS 體驗最佳）；失敗 fallback 下載
     const canvas = drawReportCanvas();
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) throw new Error('canvas.toBlob 失敗');
     const filename = '人相兵法_' + displayName + '.png';
-    const file = new File([blob], filename, { type: 'image/png' });
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    let shared = false;
-    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: '人相兵法報告', text: displayName + ' 的人相兵法報告' });
-        shared = true;
-      } catch (e) {
-        if (e.name === 'AbortError') { shared = true; } // 使用者取消，不 fallback 下載
-        else { debugLog('[m_report]', 'navigator.share 失敗', e && e.message); }
-      }
-    }
-    if (!shared) {
-      // fallback：用 anchor download（手機下載到相簿/下載資料夾，user 在原生圖片 viewer 看可放大縮小）
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }
+    _openPngOverlay(blob, filename);
   } catch (e) {
     debugLog('[m_report]', 'PNG 產生失敗', e && e.message ? e.message : e);
     alert('產生失敗：' + (e && e.message ? e.message : e));

@@ -302,6 +302,17 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-report-link-btn{display:inline-block;padding:14px 36px;background:#C17A5A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:2px;box-shadow:0 2px 6px rgba(193,122,90,0.3);font-family:inherit;border:none;cursor:pointer}
 .m-report-link-btn:active{background:#a76040}
 .m-report-link-tip{font-size:12px;color:#a89e92;margin-top:4px;letter-spacing:1px}
+
+/* ===== PNG 全螢幕 overlay（pinch zoom + drag）===== */
+.m-png-overlay{display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column;align-items:stretch;justify-content:stretch}
+.m-png-overlay.is-open{display:flex}
+.m-png-close{position:absolute;top:calc(16px + var(--safe-top));right:16px;width:42px;height:42px;background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:50%;font-size:18px;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;-webkit-tap-highlight-color:transparent}
+.m-png-close:active{background:rgba(255,255,255,0.32)}
+.m-png-share{position:absolute;top:calc(16px + var(--safe-top));left:16px;padding:9px 18px;background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:10px;font-size:13px;font-family:inherit;letter-spacing:1px;cursor:pointer;z-index:1;-webkit-tap-highlight-color:transparent}
+.m-png-share:active{background:rgba(255,255,255,0.32)}
+.m-png-canvas{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none}
+.m-png-canvas img{max-width:100%;max-height:100%;transform-origin:center center;will-change:transform;-webkit-user-drag:none;pointer-events:auto}
+.m-png-hint{position:absolute;bottom:calc(16px + var(--safe-bottom));left:0;right:0;text-align:center;color:rgba(255,255,255,0.55);font-size:11px;letter-spacing:1px;pointer-events:none}
 .m-manual-cell{padding:6px 2px;text-align:center;font-size:12px;border-radius:3px;background:#fff;border:1px solid #e0d8cc;color:#3a3228;display:flex;align-items:center;justify-content:center;min-height:28px}
 .m-manual-cell.is-corner{background:#e8dfc8;color:#3d3b39}
 .m-manual-cell.is-col-header{background:#e8dfc8;color:#3d3b39;font-weight:600;font-size:11px;letter-spacing:1px}
@@ -783,6 +794,16 @@ body.m-debug-on .m-debug-clear{display:block}
     <!-- 由 js/m_report.js mountReport 渲染 -->
   </section>
 </main>
+
+<!-- ===== PNG 全螢幕檢視 overlay（手動報告詳盡 PNG 顯示）===== -->
+<div class="m-png-overlay" id="m-png-overlay">
+  <button class="m-png-close" id="m-png-close" aria-label="關閉">✕</button>
+  <button class="m-png-share" id="m-png-share">分享 / 儲存</button>
+  <div class="m-png-canvas" id="m-png-canvas">
+    <img id="m-png-img" alt="詳盡兵法報告">
+  </div>
+  <div class="m-png-hint">雙指縮放 / 雙擊重置</div>
+</div>
 
 <nav class="m-tabbar" id="m-tabbar" style="display:none">
   <button class="m-tab active" data-tab="home">
