@@ -22,7 +22,7 @@ import { DIMS, setObsData, setUserName, setUserGender, setUserBirthday, setLiuni
 import { auth, db, debugLog } from './m_main.js';
 import { setSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
-import { drawReportCanvas } from './report.js';
+import { drawReportCanvas, _getLiunianInfo } from './report.js';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_SUBTAB = 'm_report_subtab';
@@ -266,14 +266,22 @@ async function _ensureLiunianLoaded() {
   try {
     const ref = doc(db, 'settings', 'liunian');
     const snap = await getDoc(ref);
-    if (snap.exists() && snap.data().liunianJson) {
-      const parsed = JSON.parse(snap.data().liunianJson);
-      if (parsed && parsed['男'] && parsed['女']) {
-        setLiunianTable(parsed);
-        _liunianLoaded = true;
-        debugLog('[m_report]', '流年表載入 ✓');
-      }
+    if (!snap.exists()) {
+      debugLog('[m_report]', '流年表 doc 不存在 (settings/liunian)');
+      return;
     }
+    if (!snap.data().liunianJson) {
+      debugLog('[m_report]', '流年表 doc 存在但 liunianJson 欄位為空');
+      return;
+    }
+    const parsed = JSON.parse(snap.data().liunianJson);
+    if (!parsed || !parsed['男'] || !parsed['女']) {
+      debugLog('[m_report]', '流年表格式異常（缺男/女）');
+      return;
+    }
+    setLiunianTable(parsed);
+    _liunianLoaded = true;
+    debugLog('[m_report]', '流年表載入 ✓');
   } catch (e) {
     debugLog('[m_report]', '流年表載入失敗', e && e.message);
   }
@@ -320,6 +328,9 @@ async function exportReportPng() {
     setUserName(displayName);
     if (ud.gender) setUserGender(ud.gender);
     if (ud.birthday) setUserBirthday(ud.birthday);
+    debugLog('[m_report]', 'PNG 流年 trace - gender:', ud.gender || '(空)', 'birthday:', ud.birthday || '(空)', 'lnLoaded:', _liunianLoaded);
+    const _lnTrace = _getLiunianInfo();
+    debugLog('[m_report]', '_getLiunianInfo() =', _lnTrace ? ('xusui=' + _lnTrace.xusui + ', mark=' + (_lnTrace.mark || '無')) : 'null（不會畫流年）');
     if (window.__userData && window.__userData.obsJson) {
       try {
         const obs = JSON.parse(window.__userData.obsJson);
