@@ -160,14 +160,13 @@ async function exportReportPng() {
   const oldText = btn.textContent;
   btn.disabled = true;
   btn.textContent = '產生中…';
-  await new Promise(r => setTimeout(r, 50)); // 讓 UI 先 repaint
+  await new Promise(r => setTimeout(r, 50));
   try {
     // 確保 DIM_RULES 載入（recalcFromObs 依賴）
     await ensureDimRulesLoaded();
     // 設定 userName，drawReportCanvas 會顯示在 PNG 上
-    if (window.__userData && window.__userData.displayName) {
-      setUserName(window.__userData.displayName);
-    }
+    const displayName = (window.__userData && window.__userData.displayName) || '報告';
+    setUserName(displayName);
     // 從 Firestore baseline (window.__userData.obsJson) 還原 obsData，再 recalc 出 data
     if (window.__userData && window.__userData.obsJson) {
       try {
@@ -178,12 +177,34 @@ async function exportReportPng() {
       }
     }
     recalcFromObs();
-    // 產生 canvas → blob → 新 tab 開（手機原生圖片 viewer 支援拖曳/放大縮小）
+    // 產生 canvas → blob → 優先 navigator.share（iOS 體驗最佳）；失敗 fallback 下載
     const canvas = drawReportCanvas();
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) throw new Error('canvas.toBlob 失敗');
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    const filename = '人相兵法_' + displayName + '.png';
+    const file = new File([blob], filename, { type: 'image/png' });
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let shared = false;
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: '人相兵法報告', text: displayName + ' 的人相兵法報告' });
+        shared = true;
+      } catch (e) {
+        if (e.name === 'AbortError') { shared = true; } // 使用者取消，不 fallback 下載
+        else { debugLog('[m_report]', 'navigator.share 失敗', e && e.message); }
+      }
+    }
+    if (!shared) {
+      // fallback：用 anchor download（手機下載到相簿/下載資料夾，user 在原生圖片 viewer 看可放大縮小）
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
   } catch (e) {
     debugLog('[m_report]', 'PNG 產生失敗', e && e.message ? e.message : e);
     alert('產生失敗：' + (e && e.message ? e.message : e));
