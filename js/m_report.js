@@ -339,7 +339,10 @@ async function _generatePng({ srcData, drawOpts, filenameSuffix, btn }) {
       }
       recalcFromObs();
     }
-    const canvas = drawReportCanvas(srcData, drawOpts);
+    // scale=3 提高解析度（手機投影到大螢幕用）；自動分支也加 checkComplete 跟桌機 exportPNG 一致
+    const finalOpts = Object.assign({ scale: 3 }, drawOpts || {});
+    if (!srcData && finalOpts.checkComplete === undefined) finalOpts.checkComplete = true;
+    const canvas = drawReportCanvas(srcData, finalOpts);
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) throw new Error('canvas.toBlob 失敗');
     const filename = '人相兵法' + (filenameSuffix || '') + '_' + displayName + '.png';

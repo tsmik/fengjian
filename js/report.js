@@ -635,7 +635,7 @@ export async function exportPNG(){
   btn.innerText='產生中...';btn.disabled=true;
   await new Promise(function(r){setTimeout(r,50);});
   try{
-    var canvas=drawReportCanvas();
+    var canvas=drawReportCanvas(undefined,{checkComplete:true});
     var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     var _expName=_currentCaseName||userName||'報告';
     var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
@@ -659,7 +659,7 @@ export function fallbackDownload(canvas){
 export function drawReportCanvas(srcData, opts){
   if(!srcData) srcData=data;
   if(!opts) opts={};
-  var SC=2;
+  var SC=opts.scale||2;
   var SBG='#7A9E7E', DBG='#C17A5A';
 
   // === 可見維度計算 ===
