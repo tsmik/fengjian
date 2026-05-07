@@ -18,12 +18,12 @@
 //   - 桌機 staging manualDataJson 互通（兩端資料同步）
 // ============================================================
 
-import { DIMS, setObsData, setUserName } from './core.js';
+import { DIMS, setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable } from './core.js';
 import { auth, db, debugLog } from './m_main.js';
 import { setSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas } from './report.js';
-import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_SUBTAB = 'm_report_subtab';
 const LS_DIM_IDX = 'm_manual_dim_idx';
@@ -259,6 +259,26 @@ function _initPngOverlay() {
   });
 }
 
+// 流年表 lazy load（從 settings/liunian Firestore doc）— 沿用桌機 app.js step 1.8 邏輯
+let _liunianLoaded = false;
+async function _ensureLiunianLoaded() {
+  if (_liunianLoaded) return;
+  try {
+    const ref = doc(db, 'settings', 'liunian');
+    const snap = await getDoc(ref);
+    if (snap.exists() && snap.data().liunianJson) {
+      const parsed = JSON.parse(snap.data().liunianJson);
+      if (parsed && parsed['男'] && parsed['女']) {
+        setLiunianTable(parsed);
+        _liunianLoaded = true;
+        debugLog('[m_report]', '流年表載入 ✓');
+      }
+    }
+  } catch (e) {
+    debugLog('[m_report]', '流年表載入失敗', e && e.message);
+  }
+}
+
 function _fallbackDownloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -294,8 +314,12 @@ async function exportReportPng() {
   await new Promise(r => setTimeout(r, 50));
   try {
     await ensureDimRulesLoaded();
-    const displayName = (window.__userData && window.__userData.displayName) || '報告';
+    await _ensureLiunianLoaded();
+    const ud = window.__userData || {};
+    const displayName = ud.displayName || '報告';
     setUserName(displayName);
+    if (ud.gender) setUserGender(ud.gender);
+    if (ud.birthday) setUserBirthday(ud.birthday);
     if (window.__userData && window.__userData.obsJson) {
       try {
         const obs = JSON.parse(window.__userData.obsJson);
