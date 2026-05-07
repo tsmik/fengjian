@@ -25,9 +25,11 @@ import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase
 
 const LS_SUBTAB = 'm_report_subtab';
 const LS_DIM_IDX = 'm_manual_dim_idx';
+const LS_VIEW = 'm_manual_view';
 
 let _container = null;
 let _subtab = 'auto'; // 'auto' | 'manual'
+let _manualView = 'input'; // 'input' | 'overview'
 let _manualDraft = null; // 13×9 array, 每格 'A' | 'B' | null
 let _firestoreBaseline = null; // Firestore 已存的 manualDataJson 解析結果（用於 discard 還原）
 let _manualDimIdx = null; // 0~12 or null
@@ -114,6 +116,10 @@ export function mountReport(container) {
       const n = parseInt(savedDim, 10);
       if (!isNaN(n) && n >= 0 && n < 13) _manualDimIdx = n;
     }
+  } catch (e) {}
+  try {
+    const savedView = localStorage.getItem(LS_VIEW);
+    if (savedView === 'input' || savedView === 'overview') _manualView = savedView;
   } catch (e) {}
   _loadManualDraft();
   _render();
@@ -212,10 +218,59 @@ function _renderContent() {
 }
 
 function _renderManualInput() {
+  const viewToggle = `
+    <div class="m-manual-view-bar">
+      <div class="m-segmented" role="tablist">
+        <button class="m-seg-btn ${_manualView === 'input' ? 'm-seg-active' : ''}" data-mview="input">輸入</button>
+        <button class="m-seg-btn ${_manualView === 'overview' ? 'm-seg-active' : ''}" data-mview="overview">總覽</button>
+      </div>
+    </div>
+  `;
+  if (_manualView === 'overview') {
+    return `${viewToggle}${_renderManualOverview()}${_renderClearAllRow()}`;
+  }
   return `
+    ${viewToggle}
     ${_renderDimRow(DIM_ROW_1_IDX, 6)}
     ${_renderDimRow(DIM_ROW_2_IDX, 7)}
     ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
+    ${_renderClearAllRow()}
+  `;
+}
+
+function _renderClearAllRow() {
+  return `
+    <div class="m-manual-clear-row">
+      <button class="m-manual-clear-btn m-manual-clear-btn-all" data-mclear-all="1">清除全部填答</button>
+    </div>
+  `;
+}
+
+function _renderManualOverview() {
+  // 13 列 × 9 欄矩陣（角落 + 9 部位 header + 13 維度名）
+  let cells = `<div class="m-manual-cell is-corner"></div>`;
+  PART_LABELS.forEach(p => {
+    cells += `<div class="m-manual-cell is-col-header">${p}</div>`;
+  });
+  for (let di = 0; di < 13; di++) {
+    cells += `<div class="m-manual-cell is-row-header">${DIMS[di].dn}</div>`;
+    for (let pi = 0; pi < 9; pi++) {
+      const v = _manualDraft[di][pi];
+      let txt = '—', cls = 'is-empty';
+      if (v === 'A') {
+        txt = DIMS[di].aT;
+        cls = DIMS[di].aT === '靜' ? 'is-jing' : 'is-dong';
+      } else if (v === 'B') {
+        txt = DIMS[di].bT;
+        cls = DIMS[di].bT === '靜' ? 'is-jing' : 'is-dong';
+      }
+      cells += `<div class="m-manual-cell ${cls}">${txt}</div>`;
+    }
+  }
+  return `
+    <div class="m-manual-overview-wrap">
+      <div class="m-manual-overview-grid">${cells}</div>
+    </div>
   `;
 }
 
@@ -281,6 +336,23 @@ function _renderPartRow(di, partIdxList, n) {
 }
 
 function _bindManualEvents() {
+  // 視圖切換 toggle
+  _container.querySelectorAll('[data-mview]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _manualView = btn.dataset.mview;
+      try { localStorage.setItem(LS_VIEW, _manualView); } catch (e) {}
+      _renderContent();
+    });
+  });
+  // 清除全部填答
+  _container.querySelectorAll('[data-mclear-all]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('確定清除全部 13 維度 × 9 部位的填答嗎？')) return;
+      _manualDraft = _newEmptyMatrix();
+      _markDirty();
+      _render();
+    });
+  });
   // 維度 tile 點擊（互斥展開）
   _container.querySelectorAll('[data-mdim]').forEach(btn => {
     btn.addEventListener('click', () => {
