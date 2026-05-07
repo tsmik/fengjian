@@ -16,7 +16,7 @@ export function getPartCounts(obsIdx){
 export function updateObsProgress(){
   let answered=0;
   OBS_PART_NAMES.forEach(pn=>{const pd=OBS_PARTS_DATA[pn];if(!pd)return;pd.sections.forEach(sec=>{sec.qs.forEach(q=>{if(obsData[q.id]!==undefined)answered++;});});});
-  const total=124;
+  const total=OBS_PART_NAMES.reduce((s,pn)=>s+(OBS_PARTS_DATA[pn]?.total||0),0);
   const pct=Math.min(100,Math.round(answered/total*100));
   const bar=document.getElementById('obs-prog-bar');
   const pctEl=document.getElementById('obs-prog-pct');
