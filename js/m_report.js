@@ -169,8 +169,9 @@ function _initPngOverlay() {
   if (!overlay || !img || !closeBtn || !shareBtn) return;
 
   // pinch zoom + drag state
-  let scale = 1, tx = 0, ty = 0;
-  let startDist = 0, startScale = 1;
+  // 縮放用 inline width（瀏覽器從原始 PNG 重採樣，不糊）；位移用 transform translate（不 rasterize）
+  let tx = 0, ty = 0;
+  let startDist = 0, startWidth = 0;
   let startTouchX = 0, startTouchY = 0, startTX = 0, startTY = 0;
   // 雙擊偵測：只認「單指短按 tap」，避免 pinch / drag 鬆手被誤判
   let touchStartTime = 0;
@@ -178,8 +179,15 @@ function _initPngOverlay() {
   let didMove = false;
   let lastTapTime = 0;
 
-  function apply() { img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
-  function reset() { scale = 1; tx = 0; ty = 0; apply(); }
+  function apply() { img.style.transform = `translate(${tx}px, ${ty}px)`; }
+  function reset() {
+    tx = 0; ty = 0;
+    img.style.maxWidth = '';
+    img.style.maxHeight = '';
+    img.style.width = '';
+    img.style.height = '';
+    img.style.transform = '';
+  }
 
   img.addEventListener('touchstart', e => {
     touchStartTime = Date.now();
@@ -188,7 +196,7 @@ function _initPngOverlay() {
     if (e.touches.length === 2) {
       const [a, b] = e.touches;
       startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-      startScale = scale;
+      startWidth = img.getBoundingClientRect().width;
     } else if (e.touches.length === 1) {
       startTouchX = e.touches[0].clientX;
       startTouchY = e.touches[0].clientY;
@@ -202,12 +210,21 @@ function _initPngOverlay() {
     if (e.touches.length === 2) {
       const [a, b] = e.touches;
       const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-      scale = Math.max(0.5, Math.min(8, startScale * (dist / startDist)));
-      apply();
-    } else if (e.touches.length === 1 && scale > 1) {
-      tx = startTX + (e.touches[0].clientX - startTouchX);
-      ty = startTY + (e.touches[0].clientY - startTouchY);
-      apply();
+      const ratio = dist / startDist;
+      const naturalW = img.naturalWidth || 4000;
+      const newWidth = Math.max(60, Math.min(naturalW * 2, startWidth * ratio));
+      img.style.maxWidth = 'none';
+      img.style.maxHeight = 'none';
+      img.style.width = newWidth + 'px';
+      img.style.height = 'auto';
+    } else if (e.touches.length === 1) {
+      const canvasW = img.parentElement ? img.parentElement.clientWidth : 0;
+      const imgW = img.getBoundingClientRect().width;
+      if (imgW > canvasW + 5) {
+        tx = startTX + (e.touches[0].clientX - startTouchX);
+        ty = startTY + (e.touches[0].clientY - startTouchY);
+        apply();
+      }
     }
   }, { passive: false });
 
