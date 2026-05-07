@@ -222,20 +222,22 @@ function _renderManualInput() {
     <div class="m-manual-view-bar">
       <div class="m-segmented" role="tablist">
         <button class="m-seg-btn ${_manualView === 'input' ? 'm-seg-active' : ''}" data-mview="input">輸入</button>
-        <button class="m-seg-btn ${_manualView === 'overview' ? 'm-seg-active' : ''}" data-mview="overview">總覽</button>
+        <button class="m-seg-btn ${_manualView === 'overview' ? 'm-seg-active' : ''}" data-mview="overview">手動兵法報告</button>
       </div>
     </div>
   `;
+  let body;
   if (_manualView === 'overview') {
-    return `${viewToggle}${_renderManualOverview()}${_renderClearAllRow()}`;
+    body = `${_renderManualOverview()}${_renderClearAllRow()}`;
+  } else {
+    body = `
+      ${_renderDimRow(DIM_ROW_1_IDX, 6)}
+      ${_renderDimRow(DIM_ROW_2_IDX, 7)}
+      ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
+      ${_renderClearAllRow()}
+    `;
   }
-  return `
-    ${viewToggle}
-    ${_renderDimRow(DIM_ROW_1_IDX, 6)}
-    ${_renderDimRow(DIM_ROW_2_IDX, 7)}
-    ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
-    ${_renderClearAllRow()}
-  `;
+  return `<div class="m-manual-card">${viewToggle}${body}</div>`;
 }
 
 function _renderClearAllRow() {
@@ -295,6 +297,10 @@ function _renderDimRow(dimIdxList, n) {
 function _renderDimPanel(di) {
   const dim = DIMS[di];
   const answered = _countAnswered(di);
+  let rows = '';
+  for (let pi = 0; pi < 9; pi++) {
+    rows += _renderManualRow(di, pi);
+  }
   return `
     <div class="m-panel m-dim-panel">
       <div class="m-dim-panel-head">
@@ -303,8 +309,7 @@ function _renderDimPanel(di) {
         <span class="m-dim-title-spacer"></span>
         <span class="m-dim-title-progress">${answered}/9</span>
       </div>
-      ${_renderPartRow(di, PART_ROW_1, 5)}
-      ${_renderPartRow(di, PART_ROW_2, 4)}
+      <div class="m-manual-rows">${rows}</div>
       <div class="m-manual-clear-row">
         <button class="m-manual-clear-btn" data-mclear="${di}">清空本維度</button>
       </div>
@@ -312,27 +317,32 @@ function _renderDimPanel(di) {
   `;
 }
 
-function _renderPartRow(di, partIdxList, n) {
+function _renderManualRow(di, pi) {
   const dim = DIMS[di];
-  const tiles = partIdxList.map(pi => {
-    const v = _manualDraft[di][pi];
-    let txt = '—';
-    let cls = '';
-    if (v === 'A') {
-      txt = dim.aT;
-      cls = dim.aT === '靜' ? 'is-jing' : 'is-dong';
-    } else if (v === 'B') {
-      txt = dim.bT;
-      cls = dim.bT === '靜' ? 'is-jing' : 'is-dong';
-    }
-    return `
-      <button class="m-manual-part-tile ${cls}" data-mdi="${di}" data-mpi="${pi}">
-        <span class="m-manual-part-name">${PART_LABELS[pi]}</span>
-        <span class="m-manual-part-val">${txt}</span>
-      </button>
-    `;
-  }).join('');
-  return `<div class="m-manual-part-row m-manual-part-row-${n}">${tiles}</div>`;
+  const v = _manualDraft[di][pi];
+  // 推算每個按鈕對應的 raw value（A/B 跟動/靜的 mapping 依維度而異）
+  const aIsJing = dim.aT === '靜';
+  const jingVal = aIsJing ? 'A' : 'B';
+  const dongVal = aIsJing ? 'B' : 'A';
+  const isJing = v === jingVal;
+  const isDong = v === dongVal;
+  const isEmpty = v === null;
+  // 結果欄文字（例「形 | 靜」「勢 | 動」）
+  let resultText = '—';
+  let resultCls = '';
+  if (v === 'A') { resultText = `${dim.a} | ${dim.aT}`; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
+  else if (v === 'B') { resultText = `${dim.b} | ${dim.bT}`; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
+  return `
+    <div class="m-manual-row">
+      <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
+      <div class="m-manual-row-switch">
+        <button class="m-manual-sw m-manual-sw-jing ${isJing ? 'is-active' : ''}" data-msw="${di}_${pi}_${jingVal}">靜</button>
+        <button class="m-manual-sw m-manual-sw-empty ${isEmpty ? 'is-active' : ''}" data-msw="${di}_${pi}_">—</button>
+        <button class="m-manual-sw m-manual-sw-dong ${isDong ? 'is-active' : ''}" data-msw="${di}_${pi}_${dongVal}">動</button>
+      </div>
+      <div class="m-manual-row-result ${resultCls}">${resultText}</div>
+    </div>
+  `;
 }
 
 function _bindManualEvents() {
@@ -364,17 +374,14 @@ function _bindManualEvents() {
       _renderContent();
     });
   });
-  // 部位 tile 三態 toggle
-  _container.querySelectorAll('[data-mdi][data-mpi]').forEach(btn => {
+  // 部位 switch 三段（靜 / — / 動）
+  _container.querySelectorAll('[data-msw]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const di = parseInt(btn.dataset.mdi, 10);
-      const pi = parseInt(btn.dataset.mpi, 10);
-      const cur = _manualDraft[di][pi];
-      let next;
-      if (cur === null) next = 'A';
-      else if (cur === 'A') next = 'B';
-      else next = null;
-      _manualDraft[di][pi] = next;
+      const parts = btn.dataset.msw.split('_'); // "di_pi_val" — val 可能空字串
+      const di = parseInt(parts[0], 10);
+      const pi = parseInt(parts[1], 10);
+      const val = parts[2] || null; // '' → null（清空）；'A'/'B' → 該值
+      _manualDraft[di][pi] = val === 'A' || val === 'B' ? val : null;
       _markDirty();
       _renderContent();
     });

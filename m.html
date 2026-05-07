@@ -51,27 +51,9 @@ body{
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
-/* ===== STAGING banner ===== */
-#m-staging-banner{
-  display:none;
-  position:fixed;
-  top:0;left:0;right:0;
-  height:24px;
-  padding:0 12px;
-  background:#e89c3c;
-  color:#fff;
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:1px;
-  align-items:center;
-  justify-content:center;
-  z-index:200;
-  padding-top:var(--safe-top);
-  height:calc(24px + var(--safe-top));
-}
-body.m-staging-mode #m-staging-banner{display:flex}
-body.m-staging-mode .m-nav{top:calc(24px + var(--safe-top));padding-top:0}
-body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
+/* ===== STAGING 識別：banner 取消，改用 nav title 橘色 ===== */
+#m-staging-banner{display:none !important}
+body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 頂部 nav ===== */
 .m-nav{
@@ -310,6 +292,29 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 .m-manual-cell.is-jing{background:#dfeadb;border-color:#7A9E7E;color:#5a7e5a;font-weight:700}
 .m-manual-cell.is-dong{background:#f4dccd;border-color:#C17A5A;color:#a76040;font-weight:700}
 .m-manual-cell.is-empty{color:#ccc}
+
+/* ===== 手動報告 card 容器（視覺連動感）===== */
+.m-manual-card{margin:10px 10px 0;background:#fff;border:1px solid #e8e0d4;border-radius:14px;padding:8px 4px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.m-manual-card .m-manual-view-bar{padding:4px 8px 4px}
+.m-manual-card .m-dim-row{padding:8px 8px 0}
+.m-manual-card .m-panel{margin:8px 4px 0;background:#fafaf8;border:1px solid #e8e0d4;border-radius:10px;padding:12px 10px}
+.m-manual-card .m-manual-overview-wrap{padding:8px 4px 0}
+.m-manual-card .m-manual-clear-row{padding:14px 8px 0}
+
+/* ===== 維度展開新 UI：左部位 / 中 switch / 右結果（取代舊 part tile）===== */
+.m-manual-rows{margin-top:4px}
+.m-manual-row{display:grid;grid-template-columns:42px 1fr 78px;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid #f0ebe0}
+.m-manual-row:last-child{border-bottom:none}
+.m-manual-row-part{font-weight:600;color:#3d3b39;text-align:center;font-size:13px}
+.m-manual-row-switch{display:grid;grid-template-columns:1fr 1fr 1fr;border:1.5px solid #d0c8be;border-radius:8px;overflow:hidden;background:#ede8e0}
+.m-manual-sw{padding:8px 2px;background:transparent;border:none;font-family:inherit;font-size:13px;color:#7a6e64;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+.m-manual-sw:not(:last-child){border-right:1px solid #d0c8be}
+.m-manual-sw-empty.is-active{background:#fff;color:#a89e92;font-weight:600}
+.m-manual-sw-jing.is-active{background:#7A9E7E;color:#fff;font-weight:700}
+.m-manual-sw-dong.is-active{background:#C17A5A;color:#fff;font-weight:700}
+.m-manual-row-result{font-size:13px;color:#bbb;text-align:center;letter-spacing:2px;font-family:inherit;font-weight:500}
+.m-manual-row-result.is-jing{color:#5a7e5a;font-weight:700}
+.m-manual-row-result.is-dong{color:#a76040;font-weight:700}
 
 /* ===== 底部 3 tab bar ===== */
 .m-tabbar{

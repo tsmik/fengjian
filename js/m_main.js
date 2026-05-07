@@ -55,13 +55,11 @@ const db=getFirestore(app);
 // 暴露給其他 module 用
 export { auth, db, debugLog };
 
-// ===== STAGING banner =====
+// ===== STAGING 識別：banner 取消，改用 nav title 橘色 =====
 (function(){
   const host=window.location.hostname;
   if(host==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)){
-    const banner=document.getElementById('m-staging-banner');
-    if(banner) banner.style.display='block';
-    document.body.style.paddingTop='32px';
+    document.body.classList.add('m-staging-mode');
   }
 })();
 
