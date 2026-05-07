@@ -249,21 +249,23 @@ function _renderClearAllRow() {
 }
 
 function _renderManualOverview() {
-  // 13 列 × 9 欄矩陣（角落 + 9 部位 header + 13 維度名）
+  // 9 列（部位）× 13 欄（維度）矩陣 — 對齊桌機兵法報告版型
+  // 第一列：角落 + 13 維度名
+  // 接下來 9 列：部位名 + 13 個 cell（顯示對應的字 a/b 或空）
   let cells = `<div class="m-manual-cell is-corner"></div>`;
-  PART_LABELS.forEach(p => {
-    cells += `<div class="m-manual-cell is-col-header">${p}</div>`;
-  });
   for (let di = 0; di < 13; di++) {
-    cells += `<div class="m-manual-cell is-row-header">${DIMS[di].dn}</div>`;
-    for (let pi = 0; pi < 9; pi++) {
+    cells += `<div class="m-manual-cell is-col-header">${DIMS[di].dn}</div>`;
+  }
+  for (let pi = 0; pi < 9; pi++) {
+    cells += `<div class="m-manual-cell is-row-header">${PART_LABELS[pi]}</div>`;
+    for (let di = 0; di < 13; di++) {
       const v = _manualDraft[di][pi];
       let txt = '—', cls = 'is-empty';
       if (v === 'A') {
-        txt = DIMS[di].aT;
+        txt = DIMS[di].a;
         cls = DIMS[di].aT === '靜' ? 'is-jing' : 'is-dong';
       } else if (v === 'B') {
-        txt = DIMS[di].bT;
+        txt = DIMS[di].b;
         cls = DIMS[di].bT === '靜' ? 'is-jing' : 'is-dong';
       }
       cells += `<div class="m-manual-cell ${cls}">${txt}</div>`;
@@ -327,11 +329,11 @@ function _renderManualRow(di, pi) {
   const isJing = v === jingVal;
   const isDong = v === dongVal;
   const isEmpty = v === null;
-  // 結果欄文字（例「形 | 靜」「勢 | 動」）
+  // 結果欄：只顯示字 + 底色色塊（靜=綠底 / 動=橘紅底 / 未答=灰底「—」）
   let resultText = '—';
   let resultCls = '';
-  if (v === 'A') { resultText = `${dim.a} | ${dim.aT}`; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
-  else if (v === 'B') { resultText = `${dim.b} | ${dim.bT}`; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
+  if (v === 'A') { resultText = dim.a; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
+  else if (v === 'B') { resultText = dim.b; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
   return `
     <div class="m-manual-row">
       <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
