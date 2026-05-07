@@ -1,6 +1,6 @@
 // ============================================================
 // js/m_input.js
-// 職責：手機版輸入 tab — 三子模式切換（部位/維度/手動）+ 部位視角答題
+// 職責：手機版輸入 tab — 三子模式切換（部位/維度/產生報告）+ 部位視角答題
 // 依賴：js/core.js (OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames)、js/m_main.js (auth — 用於 LS key 加 UID 後綴)
 // 被誰用：js/m_main.js（tab 切換到 input 時呼叫 mountInput）
 // 4b 第一段：segmented control + 部位視角答題（沿用 4a）
@@ -28,7 +28,7 @@ import { updateHomeProgress } from './m_home.js';
 const SUBMODES = [
   { key: 'part', label: '部位' },
   { key: 'dim',  label: '維度' },
-  { key: 'manual', label: '手動' },
+  { key: 'report', label: '產生報告' },
 ];
 
 // 6+5 異形排列
@@ -293,7 +293,6 @@ function render() {
   let content = '';
   if (_submode === 'part') content = renderPartMode();
   else if (_submode === 'dim') content = renderDimMode();
-  else if (_submode === 'manual') content = renderPlaceholder('手動輸入');
   _root.innerHTML = `
     <div class="m-segmented">${seg}</div>
     <div class="m-submode-content">${content}</div>
@@ -797,7 +796,15 @@ function bindEvents() {
   // 子模式切換
   _root.querySelectorAll('.m-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      _submode = btn.dataset.submode;
+      const key = btn.dataset.submode;
+      if (key === 'report') {
+        // 「產生報告」按鈕 → 強制跳到報告分頁的自動報告子分頁
+        try { localStorage.setItem('m_report_subtab', 'auto'); } catch (e) {}
+        const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
+        if (reportTabBtn) reportTabBtn.click();
+        return;
+      }
+      _submode = key;
       try { localStorage.setItem('m_input_submode', _submode); } catch (e) {}
       render();
     });
@@ -937,12 +944,13 @@ export async function mountInput(rootEl) {
   }
   await ensureQuestionsLoaded();
 
-  // 恢復上次子模式（重整或重新進 input 時保留 部位/維度/手動 選擇）
+  // 恢復上次子模式（重整或重新進 input 時保留 部位/維度 選擇）
   try {
     const savedSub = localStorage.getItem('m_input_submode');
-    if (savedSub === 'part' || savedSub === 'dim' || savedSub === 'manual') {
+    if (savedSub === 'part' || savedSub === 'dim') {
       _submode = savedSub;
     }
+    // 舊 LS 殘留 'manual'（已改成「產生報告」非 submode）→ 忽略，保持預設 'part'
   } catch (e) {}
 
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
