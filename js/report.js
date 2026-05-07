@@ -525,7 +525,7 @@ export function showReport(){
     t+='<td style="padding:2px 4px"></td>';
     for(var i=0;i<visiblePre;i++){
       var rcf=dimCoeffs[i];
-      var cv=rcf?rcf.coeff.toFixed(2):'';
+      var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -533,7 +533,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=6;i<6+visibleLuck;i++){
         var rcf=dimCoeffs[i];
-        var cv=rcf?rcf.coeff.toFixed(2):'';
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -542,7 +542,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=9;i<9+visiblePost;i++){
         var rcf=dimCoeffs[i];
-        var cv=rcf?rcf.coeff.toFixed(2):'';
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
