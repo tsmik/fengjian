@@ -225,28 +225,47 @@ body.m-staging-mode .m-main{top:calc(var(--nav-h) + 24px + var(--safe-top))}
 .m-dim-row-7 .m-dim-tile{flex:1}
 .m-dim-tile .m-tile-label{font-size:13px}
 .m-dim-tile .m-tile-badge{font-size:11px}
-.m-dim-panel{padding:12px}
-.m-dim-panel-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px;border-bottom:1px solid #d4c9b0;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.m-dim-panel{padding:12px 10px}
+/* 維度大標題：清楚顯示當前維度 */
+.m-dim-panel-head{display:flex;align-items:baseline;gap:10px;padding:4px 4px 12px;border-bottom:1px solid #d4c9b0;margin-bottom:12px;flex-wrap:wrap}
+.m-dim-title-current{font-size:11px;color:#716b60;letter-spacing:1px}
+.m-dim-title-name{font-size:20px;font-weight:700;color:#3d3b39;letter-spacing:2px}
+.m-dim-title-view{font-size:13px;color:#7A9E7E;font-weight:400}
+/* 部位 tile 兩排 6+7（比維度 tile 略小：少 padding） */
+.m-dim-part-row{padding:6px 0 0;display:flex;gap:6px}
+.m-dim-part-row:first-of-type{padding-top:0}
+.m-dim-part-row-6 .m-dim-part-tile{flex:1}
+.m-dim-part-row-7 .m-dim-part-tile{flex:1}
+.m-dim-part-tile{padding:8px 4px;min-height:46px}
+.m-dim-part-tile .m-tile-label{font-size:13px}
+.m-dim-part-tile .m-tile-badge{font-size:10px}
+.m-dim-part-tile-norule{opacity:0.5}
+/* 部位 tile 展開後內容 */
+.m-dim-part-content{margin-top:10px;background:#fafaf8;border:1px solid #d4c9b0;border-radius:6px;overflow:hidden}
+.m-dim-part-content-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#e8dfc8;border-bottom:1px solid #d4c9b0;gap:8px}
+.m-dim-part-content-title{font-weight:700;color:#3d3b39;font-size:14px}
 .m-dim-actions{display:flex;gap:6px;flex-shrink:0}
-.m-dim-action-btn{padding:4px 10px;background:transparent;border:1px solid #d4c9b0;border-radius:6px;font-size:11px;color:#716b60;cursor:pointer;font-family:inherit}
+.m-dim-action-btn{padding:4px 10px;background:#fff;border:1px solid #d4c9b0;border-radius:6px;font-size:11px;color:#716b60;cursor:pointer;font-family:inherit}
 .m-dim-action-btn:active{background:#ede8e0}
-.m-dim-title{font-size:15px;font-weight:600;color:#3d3b39}
-.m-dim-view{font-weight:400;color:#716b60;font-size:13px}
-.m-dim-part-block{background:#fafaf8;border:1px solid #d4c9b0;border-radius:6px;margin-bottom:6px;overflow:hidden}
-.m-dim-part-block:last-child{margin-bottom:0}
-.m-dim-part-header{display:flex;align-items:center;justify-content:flex-start;padding:9px 12px;background:#e8dfc8;font-size:13px;gap:8px;cursor:pointer}
-.m-dim-part-chevron{flex-shrink:0;font-size:10px;color:#716b60;width:12px;text-align:center;line-height:1}
-.m-dim-part-name{font-weight:600;color:#3d3b39;font-size:14px;flex-shrink:0}
-.m-dim-part-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:#716b60;flex:1;justify-content:flex-end;text-align:right}
-.m-dim-part-score{font-weight:600;color:#7A9E7E;flex-shrink:0}
-.m-dim-part-threshold{color:#716b60;font-size:11px}
-.m-dim-part-norule .m-dim-part-header{background:#f5f0e8}
-.m-dim-part-norule .m-dim-part-name{color:#b0a89c}
-.m-dim-part-norule .m-dim-part-threshold{color:#b0a89c}
-/* dim_part body：reuse 部位視角的 .m-section / .m-q / .m-opt 樣式（含 paired toggle） */
-.m-dim-part-body{background:#fff;border-top:1px solid #ede8e0}
-.m-dim-part-body-q{padding:10px 14px}
-.m-dim-empty{padding:10px 14px;font-size:12px;color:#aaa;font-style:italic}
+.m-dim-part-content.m-dim-empty{padding:14px;color:#aaa;font-style:italic;font-size:13px;text-align:center}
+/* 群組 sections：每群可獨立收合 */
+.m-dim-part-body{background:#fff;padding:8px 10px}
+.m-dim-empty{padding:14px;font-size:12px;color:#aaa;font-style:italic;text-align:center}
+.m-dim-group{margin-bottom:8px}
+.m-dim-group:last-child{margin-bottom:0}
+.m-dim-group-header{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;border-bottom:1px solid #ede8e0}
+.m-dim-group-chevron{flex-shrink:0;font-size:10px;color:#716b60;width:12px;text-align:center;line-height:1}
+.m-dim-group-label{font-weight:600;font-size:13px;color:#716b60}
+.m-dim-group-body{padding:8px 0 4px}
+/* paired 結論 chip：左右一致用綠（沿用既有 m-q-tag）；不同用「左X 右Y」金黃 chip */
+.m-q-tag-diff{font-size:12px;color:#C17A5A;background:#fdf0eb;border:1px solid #C17A5A;border-radius:10px;padding:2px 10px;font-weight:500}
+/* paired 題 open：兩欄並排（左欄 / 右欄各自選項上下列出，無 hint） */
+.m-q-paired-cols{display:flex;gap:8px;margin-top:4px}
+.m-q-paired-col{flex:1;background:#fafaf8;border:1px solid #ede8e0;border-radius:6px;padding:6px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.m-q-paired-col-head{font-size:12px;color:#716b60;font-weight:600;text-align:center;padding:2px 0 4px;border-bottom:1px solid #ede8e0}
+.m-q-paired-col-opts{display:flex;flex-direction:column;gap:4px}
+.m-opt-col{padding:7px 8px;font-size:13px;align-items:center}
+.m-opt-col .m-opt-v{font-size:13px;text-align:center;width:100%}
 
 /* ===== 底部 3 tab bar ===== */
 .m-tabbar{

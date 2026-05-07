@@ -56,7 +56,8 @@ let _expandedKey = null;
 let _splitOpen = {};
 let _pairedSide = {};
 let _dimExpanded = null;  // 維度視角當前展開的維度 idx（null = 未展開）
-let _dimPartCollapsed = {};  // {di: Set<pi>} 各維度被收合的部位群組
+let _dimPartExpanded = {};  // {di: pi} 各維度當前展開的部位 tile（互斥單選；缺 key 表示沒展開）
+let _dimGroupCollapsed = {};  // {`${di}_${pi}`: Set<groupLabel>} 各 (維度,部位) 下被收合的群組
 
 // ---------- localStorage ----------
 function loadDraft() {
@@ -321,15 +322,28 @@ function loadDimState() {
       if (di >= 0 && di < 13) _dimExpanded = di;
     }
   } catch (e) {}
-  _dimPartCollapsed = {};
+  _dimPartExpanded = {};
   try {
-    const c = localStorage.getItem('m_input_dim_part_collapsed');
-    if (c) {
-      const parsed = JSON.parse(c);
+    const p = localStorage.getItem('m_input_dim_part_expanded');
+    if (p) {
+      const parsed = JSON.parse(p);
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(parsed).forEach(k => {
+          const v = parsed[k];
+          if (typeof v === 'number') _dimPartExpanded[k] = v;
+        });
+      }
+    }
+  } catch (e) {}
+  _dimGroupCollapsed = {};
+  try {
+    const g = localStorage.getItem('m_input_dim_group_collapsed');
+    if (g) {
+      const parsed = JSON.parse(g);
       if (parsed && typeof parsed === 'object') {
         Object.keys(parsed).forEach(k => {
           const arr = parsed[k];
-          if (Array.isArray(arr)) _dimPartCollapsed[k] = new Set(arr);
+          if (Array.isArray(arr)) _dimGroupCollapsed[k] = new Set(arr);
         });
       }
     }
@@ -338,28 +352,44 @@ function loadDimState() {
 function saveDimExpanded() {
   try { localStorage.setItem('m_input_dim_expanded', _dimExpanded == null ? 'null' : String(_dimExpanded)); } catch (e) {}
 }
-function saveDimPartCollapsed() {
+function saveDimPartExpanded() {
+  try { localStorage.setItem('m_input_dim_part_expanded', JSON.stringify(_dimPartExpanded)); } catch (e) {}
+}
+function saveDimGroupCollapsed() {
   try {
     const obj = {};
-    Object.keys(_dimPartCollapsed).forEach(k => {
-      obj[k] = Array.from(_dimPartCollapsed[k] || []);
+    Object.keys(_dimGroupCollapsed).forEach(k => {
+      obj[k] = Array.from(_dimGroupCollapsed[k] || []);
     });
-    localStorage.setItem('m_input_dim_part_collapsed', JSON.stringify(obj));
+    localStorage.setItem('m_input_dim_group_collapsed', JSON.stringify(obj));
   } catch (e) {}
 }
-function isPartCollapsed(di, pi) {
-  const s = _dimPartCollapsed[di];
-  return !!(s && s.has(pi));
+function isPartExpanded(di, pi) {
+  return _dimPartExpanded[di] === pi;
 }
-function togglePartCollapsed(di, pi) {
-  let s = _dimPartCollapsed[di];
-  if (!s) { s = new Set(); _dimPartCollapsed[di] = s; }
-  if (s.has(pi)) s.delete(pi); else s.add(pi);
-  saveDimPartCollapsed();
+function togglePartExpanded(di, pi) {
+  // 互斥單選：點同 pi 收合（清掉 key），點別的部位切換
+  if (_dimPartExpanded[di] === pi) delete _dimPartExpanded[di];
+  else _dimPartExpanded[di] = pi;
+  saveDimPartExpanded();
 }
-function setAllPartsCollapsed(di, collapsed) {
-  _dimPartCollapsed[di] = collapsed ? new Set(DIM_PART_ORDER) : new Set();
-  saveDimPartCollapsed();
+function _groupKey(di, pi) { return di + '_' + pi; }
+function isGroupCollapsed(di, pi, groupLabel) {
+  const key = _groupKey(di, pi);
+  const s = _dimGroupCollapsed[key];
+  return !!(s && s.has(groupLabel));
+}
+function toggleGroupCollapsed(di, pi, groupLabel) {
+  const key = _groupKey(di, pi);
+  let s = _dimGroupCollapsed[key];
+  if (!s) { s = new Set(); _dimGroupCollapsed[key] = s; }
+  if (s.has(groupLabel)) s.delete(groupLabel); else s.add(groupLabel);
+  saveDimGroupCollapsed();
+}
+function setAllGroupsCollapsed(di, pi, groupLabels, collapsed) {
+  const key = _groupKey(di, pi);
+  _dimGroupCollapsed[key] = collapsed ? new Set(groupLabels.filter(Boolean)) : new Set();
+  saveDimGroupCollapsed();
 }
 
 // ---------- 維度視角（C1-C3：tile + panel + 部位群組可收合 + condItems body）----------
@@ -387,6 +417,20 @@ function isQidAnswered(qid) {
 }
 function dimProgress(di) {
   const refs = collectDimRefs(di);
+  let done = 0;
+  refs.forEach(qid => { if (isQidAnswered(qid)) done++; });
+  return { done, total: refs.size };
+}
+// 部位 tile 進度：該維度下該部位涉及的 ref qid 已答數
+function dimPartProgress(di, pi) {
+  const dim = DIM_RULES && DIM_RULES[di];
+  const dimPartName = (() => {
+    const idx = DIM_PART_ORDER.indexOf(pi);
+    return idx >= 0 ? DIM_PART_LABELS[idx] : null;
+  })();
+  if (!dim || !dim.parts || !dimPartName || !dim.parts[dimPartName]) return { done: 0, total: 0 };
+  const refs = new Set();
+  _collectRefsFromNode(dim.parts[dimPartName], refs);
   let done = 0;
   refs.forEach(qid => { if (isQidAnswered(qid)) done++; });
   return { done, total: refs.size };
@@ -447,58 +491,82 @@ function renderDimTile(di) {
 function renderDimPanel(di) {
   const dm = DIMS[di];
   if (!dm) return '';
+  // 維度大標題（清楚顯示當前維度）
   const head = `
     <div class="m-dim-panel-head">
-      <span class="m-dim-title">${escapeHtml(dm.dn)}<span class="m-dim-view"> · ${escapeHtml(dm.view || '')}</span></span>
-      <span class="m-dim-actions">
-        <button class="m-dim-action-btn" data-dim-action="expand-all" data-dim="${di}">全部展開</button>
-        <button class="m-dim-action-btn" data-dim-action="collapse-all" data-dim="${di}">全部收合</button>
-      </span>
+      <span class="m-dim-title-current">正在看</span>
+      <span class="m-dim-title-name">${escapeHtml(dm.dn)}</span>
+      <span class="m-dim-title-view">${escapeHtml(dm.view || '')}</span>
     </div>
   `;
-  const groups = DIM_PART_ORDER.map((pi, i) => renderDimPartBlock(di, pi, DIM_PART_LABELS[i])).join('');
-  return `<div class="m-panel m-dim-panel" data-dim="${di}">${head}${groups}</div>`;
-}
-
-function renderDimPartBlock(di, pi, label) {
-  const cr = (condResults[di] && condResults[di][pi]) || null;
-  const score = cr ? (cr.score || 0) : 0;
-  const max = cr ? (cr.max || 0) : 0;
-  const threshold = cr ? (cr.threshold || '') : '無規則';
-  const noRule = !cr || cr.threshold === '無規則' || max === 0;
-  const collapsed = isPartCollapsed(di, pi);
-  const chevron = collapsed ? '▶' : '▼';
-  const body = collapsed ? '' : (noRule
-    ? `<div class="m-dim-part-body m-dim-empty">（此部位對該維度無規則）</div>`
-    : renderDimPartBody(di, pi, label));
+  // 部位 tile 兩排 6+7（13 個，沿用維度規則部位順序）
+  const PART_ROW1_COUNT = 6;
+  const partTilesRow1 = DIM_PART_ORDER.slice(0, PART_ROW1_COUNT)
+    .map((pi, i) => renderDimPartTile(di, pi, DIM_PART_LABELS[i])).join('');
+  const partTilesRow2 = DIM_PART_ORDER.slice(PART_ROW1_COUNT)
+    .map((pi, i) => renderDimPartTile(di, pi, DIM_PART_LABELS[PART_ROW1_COUNT + i])).join('');
+  // 當前展開的部位 tile body（互斥單選）
+  const expandedPi = _dimPartExpanded[di];
+  const partContent = (expandedPi != null)
+    ? renderDimPartContent(di, expandedPi, DIM_PART_LABELS[DIM_PART_ORDER.indexOf(expandedPi)])
+    : '';
   return `
-    <div class="m-dim-part-block ${noRule ? 'm-dim-part-norule' : ''}" data-part-idx="${pi}">
-      <div class="m-dim-part-header" data-dim="${di}" data-pi="${pi}">
-        <span class="m-dim-part-chevron">${chevron}</span>
-        <span class="m-dim-part-name">${escapeHtml(label)}</span>
-        <span class="m-dim-part-meta">
-          ${noRule ? '' : `<span class="m-dim-part-score">${score}/${max}</span>`}
-          <span class="m-dim-part-threshold">${escapeHtml(threshold)}</span>
-        </span>
-      </div>
-      ${body}
+    <div class="m-panel m-dim-panel" data-dim="${di}">
+      ${head}
+      <div class="m-input-row m-dim-part-row m-dim-part-row-6">${partTilesRow1}</div>
+      <div class="m-input-row m-dim-part-row m-dim-part-row-7">${partTilesRow2}</div>
+      ${partContent}
     </div>
   `;
 }
 
-// dim_part 的 body：對齊桌機 dim cond view 的 groupLabel 分層
-//   Lv2 = condItem.groupLabel（admin 規則的群組名，例「頂骨龜背/圓」）
-//   Lv3 = renderQuestion（該 group 涉及題目去重後渲染，paired 用整題 sync/split toggle 不拆 L/R）
-function renderDimPartBody(di, pi, dimPartName) {
+function renderDimPartTile(di, pi, label) {
+  const cr = (condResults[di] && condResults[di][pi]) || null;
+  const noRule = !cr || cr.threshold === '無規則' || (cr.max || 0) === 0;
+  const isOpen = isPartExpanded(di, pi);
+  const prog = dimPartProgress(di, pi);
+  const badge = prog.total > 0 ? (prog.done + '/' + prog.total) : '';
+  const statusClass = prog.total > 0 && prog.done === prog.total
+    ? 'm-tile-full'
+    : (prog.done > 0 ? 'm-tile-partial' : '');
+  return `
+    <button class="m-tile m-dim-part-tile ${statusClass} ${isOpen ? 'm-tile-open' : ''} ${noRule ? 'm-dim-part-tile-norule' : ''}" data-dim="${di}" data-pi="${pi}">
+      <span class="m-tile-label">${escapeHtml(label)}</span>
+      ${badge ? `<span class="m-tile-badge">${escapeHtml(badge)}</span>` : ''}
+    </button>
+  `;
+}
+
+// 部位 tile 展開後的內容：頂部「全部展開/全部收合」按鈕 + groupLabel sections（每 section 可獨立收合）
+function renderDimPartContent(di, pi, label) {
   const cr = condResults[di] && condResults[di][pi];
   if (!cr || cr.threshold === '無規則') {
-    return `<div class="m-dim-part-body m-dim-empty">（此部位對該維度無規則）</div>`;
+    return `<div class="m-dim-part-content m-dim-empty">（此部位對該維度無規則）</div>`;
   }
   const items = Array.isArray(cr.items) ? cr.items : [];
   if (items.length === 0) {
-    return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
+    return `<div class="m-dim-part-content m-dim-empty">（無條件項）</div>`;
   }
-  // 按 groupLabel 分組（保留 condItems 出現順序；連續同 groupLabel 合併）
+  return `
+    <div class="m-dim-part-content" data-dim="${di}" data-pi="${pi}">
+      <div class="m-dim-part-content-head">
+        <span class="m-dim-part-content-title">${escapeHtml(label)}</span>
+        <span class="m-dim-actions">
+          <button class="m-dim-action-btn" data-dim-action="group-expand-all" data-dim="${di}" data-pi="${pi}">全部展開</button>
+          <button class="m-dim-action-btn" data-dim-action="group-collapse-all" data-dim="${di}" data-pi="${pi}">全部收合</button>
+        </span>
+      </div>
+      ${renderDimPartBody(di, pi, label)}
+    </div>
+  `;
+}
+
+// dim_part 的 body：按 condItem.groupLabel 分組，每 group 可獨立收合
+//   Lv2 = groupLabel（admin 規則群組名，例「頂骨龜背/圓」）+ ▼/▶ chevron
+//   Lv3 = renderQuestion（該 group 涉及題目去重後渲染，paired 用整題 sync/split toggle）
+function _collectDimPartGroups(di, pi) {
+  const cr = condResults[di] && condResults[di][pi];
+  const items = (cr && Array.isArray(cr.items)) ? cr.items : [];
   const groups = [];
   let cur = null;
   items.forEach(it => {
@@ -513,15 +581,29 @@ function renderDimPartBody(di, pi, dimPartName) {
       });
     }
   });
-  return `<div class="m-dim-part-body m-dim-part-body-q">${groups.map(g => {
-    const qsHtml = g.qids.map(qid => {
+  return groups;
+}
+function renderDimPartBody(di, pi, dimPartName) {
+  const groups = _collectDimPartGroups(di, pi);
+  if (groups.length === 0) {
+    return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
+  }
+  return `<div class="m-dim-part-body">${groups.map(g => {
+    const collapsed = g.label ? isGroupCollapsed(di, pi, g.label) : false;
+    const chevron = g.label ? (collapsed ? '▶' : '▼') : '';
+    const qsHtml = collapsed ? '' : g.qids.map(qid => {
       const q = _findQById(qid);
       return q ? renderQuestion(q) : '';
     }).filter(Boolean).join('');
     return `
-      <div class="m-section">
-        ${g.label ? `<div class="m-section-label">${escapeHtml(g.label)}</div>` : ''}
-        ${qsHtml}
+      <div class="m-dim-group">
+        ${g.label ? `
+          <div class="m-dim-group-header" data-dim="${di}" data-pi="${pi}" data-group-label="${escapeHtml(g.label)}">
+            <span class="m-dim-group-chevron">${chevron}</span>
+            <span class="m-dim-group-label">${escapeHtml(g.label)}</span>
+          </div>
+        ` : ''}
+        <div class="m-dim-group-body" ${collapsed ? 'style="display:none"' : ''}>${qsHtml}</div>
       </div>
     `;
   }).join('')}</div>`;
@@ -596,42 +678,68 @@ function renderSingleQuestion(q) {
   `;
 }
 
+// 結論 chip：兩邊都答 + 一致 → 「左右一致」綠 chip；不同 → 「左X 右Y」chip
+//                         一邊答另邊未答 → 「左X」或「右X」+「未答」灰 chip；都未答 → 不顯示
+function _pairedConclusionChip(qid) {
+  const vL = _draft[qid + '_L'];
+  const vR = _draft[qid + '_R'];
+  if (vL == null && vR == null) return '';
+  if (vL != null && vR != null) {
+    if (vL === vR) return `<span class="m-q-tag">左右一致</span>`;
+    return `<span class="m-q-tag m-q-tag-diff">左${escapeHtml(vL)}　右${escapeHtml(vR)}</span>`;
+  }
+  if (vL != null) return `<span class="m-q-tag m-q-tag-warn">左${escapeHtml(vL)}　右未答</span>`;
+  return `<span class="m-q-tag m-q-tag-warn">左未答　右${escapeHtml(vR)}</span>`;
+}
+// 兩欄選項按鈕（每欄上下列出，無 hint）
+function _renderPairedColumnOpts(qid, side, opts) {
+  const draftKey = qid + '_' + side;
+  const curVal = _draft[draftKey];
+  return (opts || []).map(o => {
+    const v = typeof o === 'string' ? o : o.v;
+    const sel = curVal === v ? 'm-opt-selected' : '';
+    return `
+      <button class="m-opt m-opt-col ${sel}" data-qid="${escapeHtml(draftKey)}" data-val="${escapeHtml(v)}">
+        <span class="m-opt-v">${escapeHtml(v)}</span>
+      </button>
+    `;
+  }).join('');
+}
 function renderPairedQuestion(q) {
   const isOpen = !!_splitOpen[q.id];
-  const diffStatus = pairedDiffStatus(q.id);
-  let hintTag = '';
-  if (diffStatus === 'half') hintTag = `<span class="m-q-tag m-q-tag-warn">左右不同 未填完</span>`;
-  else if (diffStatus === 'diff') hintTag = `<span class="m-q-tag">左右不同</span>`;
-
   const _todoCls = isAnswered(q) ? '' : ' m-q-todo';
+  const chip = _pairedConclusionChip(q.id);
   if (!isOpen) {
+    // closed：sync 單排選項保留快速答題（直接點同步答 _L _R）+ 結論 chip
     return `
       <div class="m-q m-q-paired${_todoCls}">
         <div class="m-q-head">
           <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
           <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左/右</button>
-          ${hintTag}
+          ${chip}
         </div>
         <div class="m-q-opts">${renderOptions(q.id + '__sync', _draft[q.id + '_L'], q.opts)}</div>
       </div>
     `;
   }
-  const side = _pairedSide[q.id] || 'L';
-  const curId = q.id + '_' + side;
-  const lDone = _draft[q.id + '_L'] != null ? '●' : '○';
-  const rDone = _draft[q.id + '_R'] != null ? '●' : '○';
+  // open：兩欄並排，每欄選項上下列出（無 hint）
   return `
     <div class="m-q m-q-paired m-q-paired-open${_todoCls}">
       <div class="m-q-head">
         <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
         <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左/右</button>
-        ${hintTag}
+        ${chip}
       </div>
-      <div class="m-q-side-toggle">
-        <button class="m-side ${side === 'L' ? 'm-side-active' : ''}" data-pair-id="${escapeHtml(q.id)}" data-side="L">${lDone} 左</button>
-        <button class="m-side ${side === 'R' ? 'm-side-active' : ''}" data-pair-id="${escapeHtml(q.id)}" data-side="R">${rDone} 右</button>
+      <div class="m-q-paired-cols">
+        <div class="m-q-paired-col">
+          <div class="m-q-paired-col-head">左</div>
+          <div class="m-q-paired-col-opts">${_renderPairedColumnOpts(q.id, 'L', q.opts)}</div>
+        </div>
+        <div class="m-q-paired-col">
+          <div class="m-q-paired-col-head">右</div>
+          <div class="m-q-paired-col-opts">${_renderPairedColumnOpts(q.id, 'R', q.opts)}</div>
+        </div>
       </div>
-      <div class="m-q-opts">${renderOptions(curId, _draft[curId], q.opts)}</div>
     </div>
   `;
 }
@@ -731,29 +839,46 @@ function bindEvents() {
     });
   });
 
-  // 維度部位群組 header：點切換收合（每組獨立）
-  _root.querySelectorAll('.m-dim-part-header').forEach(el => {
+  // 維度視角部位 tile：點切換展開（互斥單選；同 pi 再點收合，點別的部位切換）
+  _root.querySelectorAll('.m-dim-part-tile').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = parseInt(btn.dataset.dim, 10);
+      const pi = parseInt(btn.dataset.pi, 10);
+      togglePartExpanded(di, pi);
+      render();
+    });
+  });
+
+  // 群組 header：點切換該群組收合
+  _root.querySelectorAll('.m-dim-group-header').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(el.dataset.dim, 10);
       const pi = parseInt(el.dataset.pi, 10);
-      togglePartCollapsed(di, pi);
+      const gl = el.dataset.groupLabel;
+      if (!gl) return;
+      toggleGroupCollapsed(di, pi, gl);
       render();
     });
   });
 
-  // 全部展開 / 全部收合：作用於當前 panel 的所有部位群組
+  // 「全部展開 / 全部收合」：作用於當前展開部位的所有 groups
   _root.querySelectorAll('.m-dim-action-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
-      setAllPartsCollapsed(di, btn.dataset.dimAction === 'collapse-all');
+      const pi = parseInt(btn.dataset.pi, 10);
+      const action = btn.dataset.dimAction;
+      const groups = _collectDimPartGroups(di, pi);
+      const labels = groups.map(g => g.label).filter(Boolean);
+      setAllGroupsCollapsed(di, pi, labels, action === 'group-collapse-all');
       render();
     });
   });
 
-  // 維度視角的題目跟選項共用部位視角的 .m-opt / .m-paired-toggle / .m-side handler
-  // （renderDimPartBody reuse renderQuestion，產出的 DOM 樣式跟部位視角一致）
+  // 維度視角的題目跟選項共用部位視角的 .m-opt / .m-paired-toggle handler
+  // paired open 兩欄並排不用 .m-side（每欄直接點選項，handler reuse .m-opt）
 }
 
 // ---------- 對外 ----------
