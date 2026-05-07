@@ -235,9 +235,9 @@ function _bindManualEvents() {
     btn.addEventListener('click', () => {
       const di = parseInt(btn.dataset.mclear, 10);
       if (!confirm(`確定清空維度「${DIMS[di].dn}」9 個部位的填答嗎？`)) return;
-      for (let pi = 0; pi < 9; pi++) _manualDraft[di][pi] = null;
+      _manualDraft[di] = Array(9).fill(null);
       _saveManualDraft();
-      _renderContent();
+      _render(); // 整個 report panel 重 paint（保險，避免 stale render）
     });
   });
 }
