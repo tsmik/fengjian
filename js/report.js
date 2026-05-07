@@ -186,6 +186,18 @@ export function showReport(){
       dimCoeffs.push(calcDim(data,dc2));
     }
 
+    // 未填完判斷（沿用 drawReportCanvas checkComplete 邏輯）：data[di][pi] 內若有 null cell 該維度算未填完
+    var dimComplete=[];
+    for(var dcc=0;dcc<13;dcc++){
+      var ok=true;
+      for(var pcc=0;pcc<9;pcc++){
+        if(data[dcc][pcc]===null||data[dcc][pcc]===undefined){ok=false;break;}
+      }
+      dimComplete.push(ok);
+    }
+    function isGroupOk(ids){return ids.every(function(i){return dimComplete[i];});}
+    var INC='未填完';
+
     // 13 維度的屬性（動 or 靜）
     var dimAttr=[];
     for(var da2=0;da2<13;da2++){
@@ -543,9 +555,9 @@ export function showReport(){
     if(visiblePre>=3){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+vLead+'</td>';
+      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(isGroupOk([0,1,2])?vLead:INC)+'</td>';
       if(visiblePre>=6){
-        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+vSub+'</td>';
+        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(isGroupOk([3,4,5])?vSub:INC)+'</td>';
       }else if(visiblePre*2-6>0){
         t+='<td colspan="'+(visiblePre*2-6)+'" style="padding:2px 4px"></td>';
       }
@@ -570,7 +582,7 @@ export function showReport(){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
       if(visiblePre>=6){
-        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+vPre+'</td>';
+        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(isGroupOk([0,1,2,3,4,5])?vPre:INC)+'</td>';
       }else{
         t+='<td colspan="'+visiblePre*2+'" style="padding:2px 4px"></td>';
       }
@@ -578,7 +590,7 @@ export function showReport(){
       if(showLuck){
         t+='<td style="padding:2px 4px"></td>';
         if(visibleLuck>=3){
-          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+vLuck+'</td>';
+          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(isGroupOk([6,7,8])?vLuck:INC)+'</td>';
         }else{
           t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
         }
@@ -587,7 +599,7 @@ export function showReport(){
       if(showPost){
         t+='<td style="padding:2px 4px"></td>';
         if(visiblePost>=4){
-          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+vPost+'</td>';
+          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(isGroupOk([9,10,11,12])?vPost:INC)+'</td>';
         }else{
           t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
         }
@@ -607,7 +619,7 @@ export function showReport(){
                       + (showPost ? 1 + visiblePost*2 : 0);
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+vTotal+'</td>';
+      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(isGroupOk(visibleDimIds)?vTotal:INC)+'</td>';
       // bar 右緣到後天係數右緣後，剩下：後天動靜分析(3) + 總動靜分析(3) + 最右部位欄(1)
       if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
