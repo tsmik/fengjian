@@ -204,11 +204,16 @@ function _renderContent() {
   const el = _container.querySelector('#m-report-content');
   if (!el) return;
   if (_subtab === 'auto') {
+    // 偵測 staging vs production，連到對應桌機版報告
+    const host = window.location.hostname;
+    const isStaging = host === 'staging.fengjian.pages.dev' || /^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host);
+    const reportUrl = isStaging ? 'index_desktop.html' : 'index.html';
     el.innerHTML = `
-      <div class="m-placeholder">
-        <div class="m-placeholder-title">自動報告</div>
-        <div class="m-placeholder-desc">依據觀察資料生成<br>包含 13 維度結果 / 動靜分析 / 流年</div>
-        <div class="m-placeholder-step">階段 2 實作</div>
+      <div class="m-report-link-wrap">
+        <div class="m-report-link-title">詳盡兵法報告</div>
+        <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年 / AI 評析</div>
+        <a href="${reportUrl}" target="_blank" class="m-report-link-btn">開啟詳盡報告</a>
+        <div class="m-report-link-tip">建議手機橫移閱讀</div>
       </div>
     `;
   } else {
