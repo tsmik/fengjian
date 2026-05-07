@@ -18,7 +18,7 @@ import {
 
 import { initHome } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
-import { mountReport, unmountReport } from "./m_report.js";
+import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -202,22 +202,27 @@ initAuth();
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
       const key=btn.dataset.tab;
-      // 攔截：目前在 input tab + dirty + 切到非 input tab → 確認
+      // 攔截：input ↔ report 視為「同一工作區」不 confirm；切到 home 才 confirm
       const inputTabBtn = document.querySelector('.m-tab[data-tab="input"]');
-      const isOnInputNow = inputTabBtn && inputTabBtn.classList.contains('active');
-      if (isOnInputNow && key !== 'input' && getSaveStatus() === 'dirty') {
+      const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
+      const isOnInput = inputTabBtn && inputTabBtn.classList.contains('active');
+      const isOnReport = reportTabBtn && reportTabBtn.classList.contains('active');
+      const isCurrentWork = isOnInput || isOnReport;
+      const isTargetWork = key === 'input' || key === 'report';
+      if (isCurrentWork && !isTargetWork && getSaveStatus() === 'dirty') {
         if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
-        discardDraft();  // 確定離開 → 捨棄 LS 草稿，下次回 input 顯示 baseline
+        if (isOnInput) discardDraft();
+        else if (isOnReport) discardReportDraft();
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       Object.keys(pages).forEach(function(k){
         pages[k].classList.toggle('active',k===key);
       });
       elMain.scrollTop=0;
-      // 切換時顯示/隱藏儲存區（只在 input tab 顯示）
+      // 切換時顯示/隱藏儲存區（input + report 顯示，home 隱藏）
       const saveZone = document.getElementById('m-save-zone');
       if(saveZone){
-        saveZone.classList.toggle('is-hidden', key !== 'input');
+        saveZone.classList.toggle('is-hidden', key === 'home');
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
@@ -241,7 +246,11 @@ elNavUser.addEventListener('click',async function(){
   const isDirty = getSaveStatus() === 'dirty';
   const msg = isDirty ? '你還有未儲存的答題，仍要登出嗎？' : '要登出嗎？';
   if(confirm(msg)){
-    if (isDirty) discardDraft();  // 確定登出 → 捨棄 LS 草稿
+    // 確定登出 → 兩邊草稿都捨棄（內部各自判斷有無 LS）
+    if (isDirty) {
+      try { discardDraft(); } catch (e) {}
+      try { discardReportDraft(); } catch (e) {}
+    }
     await signOut(auth);
     location.reload();
   }

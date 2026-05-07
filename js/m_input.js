@@ -86,6 +86,9 @@ function setSaveStatus(state) {
 // 給 m_main.js 查詢目前狀態（攔截離開時用）
 export function getSaveStatus() { return _currentSaveStatus; }
 
+// 給 m_report.js 共用 dirty UI（同個 m-save-status element）
+export { setSaveStatus };
+
 // 捨棄 dirty 草稿、回到 Firestore baseline（m_main.js 在「確定離開」/登出 時呼叫）
 export function discardDraft() {
   try { localStorage.removeItem(getLsKey()); } catch (e) {}
