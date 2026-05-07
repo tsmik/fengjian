@@ -392,6 +392,21 @@ function dimProgress(di) {
   return { done, total: refs.size };
 }
 
+// 從 OBS_PARTS_DATA 找題目定義（給維度視角還原 condItem 為整題用）
+function _findQById(qid) {
+  const parts = Object.keys(OBS_PARTS_DATA);
+  for (const pn of parts) {
+    const pd = OBS_PARTS_DATA[pn];
+    if (!pd || !Array.isArray(pd.sections)) continue;
+    for (const s of pd.sections) {
+      for (const q of (s.qs || [])) {
+        if (q.id === qid) return q;
+      }
+    }
+  }
+  return null;
+}
+
 // _draft 變化後立即 sync 進 obsData + recalc，讓 condResults 反映最新狀態
 // 失敗 graceful（DIM_RULES 可能未載；condResults 將維持上次計算）
 function _syncRecalc() {
@@ -471,40 +486,45 @@ function renderDimPartBlock(di, pi, label) {
   `;
 }
 
-// dim_part 的 body：對齊 admin section 分層
-//   Lv2 = OBS_PARTS_DATA 的 section.label（例：「頂骨龜背/圓」）
-//   Lv3 = renderQuestion（reuse 部位視角整題，含 paired 左/右 sync/split 模式）
+// dim_part 的 body：對齊桌機 dim cond view 的 groupLabel 分層
+//   Lv2 = condItem.groupLabel（admin 規則的群組名，例「頂骨龜背/圓」）
+//   Lv3 = renderQuestion（該 group 涉及題目去重後渲染，paired 用整題 sync/split toggle 不拆 L/R）
 function renderDimPartBody(di, pi, dimPartName) {
-  const dimRule = DIM_RULES && DIM_RULES[di];
-  if (!dimRule || !dimRule.parts || !dimRule.parts[dimPartName]) {
+  const cr = condResults[di] && condResults[di][pi];
+  if (!cr || cr.threshold === '無規則') {
     return `<div class="m-dim-part-body m-dim-empty">（此部位對該維度無規則）</div>`;
   }
-  const refs = new Set();
-  _collectRefsFromNode(dimRule.parts[dimPartName], refs);
-  if (refs.size === 0) {
+  const items = Array.isArray(cr.items) ? cr.items : [];
+  if (items.length === 0) {
     return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
   }
-  // 反查 OBS_PARTS_DATA，按 part 順序 + section 順序組織涉及的 q
-  const sectionGroups = [];
-  Object.keys(OBS_PARTS_DATA).forEach(partName => {
-    const pd = OBS_PARTS_DATA[partName];
-    if (!pd || !Array.isArray(pd.sections)) return;
-    pd.sections.forEach(s => {
-      const matchedQs = (s.qs || []).filter(q => refs.has(q.id));
-      if (matchedQs.length > 0) {
-        sectionGroups.push({ partName, label: s.label || '', qs: matchedQs });
-      }
-    });
+  // 按 groupLabel 分組（保留 condItems 出現順序；連續同 groupLabel 合併）
+  const groups = [];
+  let cur = null;
+  items.forEach(it => {
+    const gl = it.groupLabel || null;
+    if (!cur || cur.label !== gl) {
+      cur = { label: gl, qids: [], qidSet: new Set() };
+      groups.push(cur);
+    }
+    if (Array.isArray(it.ids)) {
+      it.ids.forEach(qid => {
+        if (!cur.qidSet.has(qid)) { cur.qidSet.add(qid); cur.qids.push(qid); }
+      });
+    }
   });
-  if (sectionGroups.length === 0) {
-    return `<div class="m-dim-part-body m-dim-empty">（找不到對應題目）</div>`;
-  }
-  return `<div class="m-dim-part-body m-dim-part-body-q">${sectionGroups.map(g => `
-    <div class="m-section">
-      ${g.label ? `<div class="m-section-label">${escapeHtml(g.label)}</div>` : ''}
-      ${g.qs.map(q => renderQuestion(q)).join('')}
-    </div>
-  `).join('')}</div>`;
+  return `<div class="m-dim-part-body m-dim-part-body-q">${groups.map(g => {
+    const qsHtml = g.qids.map(qid => {
+      const q = _findQById(qid);
+      return q ? renderQuestion(q) : '';
+    }).filter(Boolean).join('');
+    return `
+      <div class="m-section">
+        ${g.label ? `<div class="m-section-label">${escapeHtml(g.label)}</div>` : ''}
+        ${qsHtml}
+      </div>
+    `;
+  }).join('')}</div>`;
 }
 
 function renderPartMode() {
