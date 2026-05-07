@@ -172,12 +172,19 @@ function _initPngOverlay() {
   let scale = 1, tx = 0, ty = 0;
   let startDist = 0, startScale = 1;
   let startTouchX = 0, startTouchY = 0, startTX = 0, startTY = 0;
-  let lastTap = 0;
+  // 雙擊偵測：只認「單指短按 tap」，避免 pinch / drag 鬆手被誤判
+  let touchStartTime = 0;
+  let touchStartCount = 0;
+  let didMove = false;
+  let lastTapTime = 0;
 
   function apply() { img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
   function reset() { scale = 1; tx = 0; ty = 0; apply(); }
 
   img.addEventListener('touchstart', e => {
+    touchStartTime = Date.now();
+    touchStartCount = e.touches.length;
+    didMove = false;
     if (e.touches.length === 2) {
       const [a, b] = e.touches;
       startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
@@ -191,6 +198,7 @@ function _initPngOverlay() {
 
   img.addEventListener('touchmove', e => {
     e.preventDefault();
+    didMove = true;
     if (e.touches.length === 2) {
       const [a, b] = e.touches;
       const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
@@ -204,9 +212,19 @@ function _initPngOverlay() {
   }, { passive: false });
 
   img.addEventListener('touchend', e => {
-    const now = Date.now();
-    if (e.touches.length === 0 && now - lastTap < 300) reset();
-    lastTap = now;
+    // 雙擊重置條件：本次操作必須是「單指 + 短按 + 沒移動」才算 tap
+    const isQuickTap = touchStartCount === 1 && e.touches.length === 0 && !didMove && (Date.now() - touchStartTime < 200);
+    if (isQuickTap) {
+      const now = Date.now();
+      if (lastTapTime > 0 && now - lastTapTime < 300) {
+        reset();
+        lastTapTime = 0; // 雙擊完成清 state
+      } else {
+        lastTapTime = now;
+      }
+    } else {
+      lastTapTime = 0; // 非 tap（pinch / drag 鬆手）→ 清雙擊 state
+    }
   });
 
   // 將 reset 綁到 overlay open 時呼叫
