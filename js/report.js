@@ -525,7 +525,7 @@ export function showReport(){
     t+='<td style="padding:2px 4px"></td>';
     for(var i=0;i<visiblePre;i++){
       var rcf=dimCoeffs[i];
-      var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
+      var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -533,7 +533,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=6;i<6+visibleLuck;i++){
         var rcf=dimCoeffs[i];
-        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -542,7 +542,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=9;i<9+visiblePost;i++){
         var rcf=dimCoeffs[i];
-        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):INC;
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -555,9 +555,9 @@ export function showReport(){
     if(visiblePre>=3){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(isGroupOk([0,1,2])?vLead:INC)+'</td>';
+      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(isGroupOk([0,1,2])?vLead:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       if(visiblePre>=6){
-        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(isGroupOk([3,4,5])?vSub:INC)+'</td>';
+        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(isGroupOk([3,4,5])?vSub:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       }else if(visiblePre*2-6>0){
         t+='<td colspan="'+(visiblePre*2-6)+'" style="padding:2px 4px"></td>';
       }
@@ -582,7 +582,7 @@ export function showReport(){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
       if(visiblePre>=6){
-        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(isGroupOk([0,1,2,3,4,5])?vPre:INC)+'</td>';
+        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(isGroupOk([0,1,2,3,4,5])?vPre:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       }else{
         t+='<td colspan="'+visiblePre*2+'" style="padding:2px 4px"></td>';
       }
@@ -590,7 +590,7 @@ export function showReport(){
       if(showLuck){
         t+='<td style="padding:2px 4px"></td>';
         if(visibleLuck>=3){
-          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(isGroupOk([6,7,8])?vLuck:INC)+'</td>';
+          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(isGroupOk([6,7,8])?vLuck:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
         }else{
           t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
         }
@@ -599,7 +599,7 @@ export function showReport(){
       if(showPost){
         t+='<td style="padding:2px 4px"></td>';
         if(visiblePost>=4){
-          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(isGroupOk([9,10,11,12])?vPost:INC)+'</td>';
+          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(isGroupOk([9,10,11,12])?vPost:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
         }else{
           t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
         }
@@ -619,7 +619,7 @@ export function showReport(){
                       + (showPost ? 1 + visiblePost*2 : 0);
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(isGroupOk(visibleDimIds)?vTotal:INC)+'</td>';
+      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(isGroupOk(visibleDimIds)?vTotal:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       // bar 右緣到後天係數右緣後，剩下：後天動靜分析(3) + 總動靜分析(3) + 最右部位欄(1)
       if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
