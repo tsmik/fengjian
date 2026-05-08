@@ -23,6 +23,7 @@ import { auth, db, debugLog } from './m_main.js';
 import { setSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo } from './report.js';
+import { renderManualSens, renderAutoSens } from './m_sens.js';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_SUBTAB = 'm_report_subtab';
@@ -36,6 +37,10 @@ let _manualDraft = null; // 13×9 array, 每格 'A' | 'B' | null
 let _firestoreBaseline = null; // Firestore 已存的 manualDataJson 解析結果（用於 discard 還原）
 let _manualDimIdx = null; // 0~12 or null
 let _isSavingManual = false;
+
+// 重要參數分析 view（覆蓋 report content；不持久化，每次進報告分頁從 'report' 開始）
+let _view = 'report';     // 'report' | 'sens'
+let _sensType = null;     // 'auto' | 'manual'（_view === 'sens' 時有效）
 
 const SUBTABS = [
   { key: 'auto',   label: '自動報告' },
@@ -135,6 +140,9 @@ export function mountReport(container) {
 export function unmountReport() {
   if (_container) _container.innerHTML = '';
   _container = null;
+  // 重設分析 view 狀態：下次再進報告分頁從 report view 開始
+  _view = 'report';
+  _sensType = null;
   // saveBtn.onclick 不主動清；下次 mountInput 會自己覆蓋
 }
 
@@ -420,6 +428,10 @@ async function handleReportSave() {
 
 function _render() {
   if (!_container) return;
+  if (_view === 'sens') { _renderSensView(); return; }
+  // 回 report view：恢復 saveZone（若被 sens view 隱藏過）
+  const saveZone = document.getElementById('m-save-zone');
+  if (saveZone) saveZone.classList.remove('is-hidden');
   _container.innerHTML = `
     <div class="m-segmented" role="tablist">
       ${SUBTABS.map(t => `
@@ -438,6 +450,40 @@ function _render() {
   _renderContent();
 }
 
+// ===== 重要參數分析 view =====
+
+function _enterSens(type) {
+  _view = 'sens';
+  _sensType = type;
+  _render();
+  // 切到頂
+  const main = document.querySelector('.m-main');
+  if (main) main.scrollTop = 0;
+}
+
+function _exitSens() {
+  _view = 'report';
+  _sensType = null;
+  _render();
+}
+
+function _renderSensView() {
+  const title = _sensType === 'auto' ? '自動 重要參數分析' : '手動 重要參數分析';
+  const body = _sensType === 'auto' ? renderAutoSens() : renderManualSens(_manualDraft);
+  _container.innerHTML = `
+    <div class="m-sens-header">
+      <button class="m-sens-back" type="button">← 返回</button>
+      <span class="m-sens-header-title">${title}</span>
+    </div>
+    <div class="m-sens-body">${body}</div>
+  `;
+  const backBtn = _container.querySelector('.m-sens-back');
+  if (backBtn) backBtn.addEventListener('click', _exitSens);
+  // 分析頁純檢視，隱藏儲存按鈕
+  const saveZone = document.getElementById('m-save-zone');
+  if (saveZone) saveZone.classList.add('is-hidden');
+}
+
 function _renderContent() {
   const el = _container.querySelector('#m-report-content');
   if (!el) return;
@@ -448,10 +494,13 @@ function _renderContent() {
         <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年</div>
         <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（PNG）</button>
         <div class="m-report-link-tip">產生後在新分頁開啟，可拖曳放大縮小</div>
+        <button class="m-sens-entry-btn" data-msens-entry="auto" type="button">📊 看重要參數分析</button>
       </div>
     `;
     const pngBtn = el.querySelector('#m-report-png-btn');
     if (pngBtn) pngBtn.onclick = exportReportPng;
+    const sensBtn = el.querySelector('[data-msens-entry="auto"]');
+    if (sensBtn) sensBtn.addEventListener('click', () => _enterSens('auto'));
   } else {
     el.innerHTML = _renderManualInput();
     _bindManualEvents();
@@ -494,6 +543,7 @@ function _renderManualPngRow() {
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版 PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
+      <button class="m-sens-entry-btn" data-msens-entry="manual" type="button">📊 看重要參數分析</button>
     </div>
   `;
 }
@@ -624,6 +674,10 @@ function _bindManualEvents() {
     btn.addEventListener('click', () => {
       exportManualReportPng(btn);
     });
+  });
+  // 進入手動版重要參數分析
+  _container.querySelectorAll('[data-msens-entry="manual"]').forEach(btn => {
+    btn.addEventListener('click', () => _enterSens('manual'));
   });
   // 清除全部填答
   _container.querySelectorAll('[data-mclear-all]').forEach(btn => {

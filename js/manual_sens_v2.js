@@ -28,7 +28,7 @@ var _colLIsS = DIMS.map(function(d) { var dt = (d.da === d.a) ? d.aT : d.bT; ret
 
 // ===== 2. 完整度檢查（沿用 v1） =====
 
-function checkBlockComplete(data, dimIndices) {
+export function checkBlockComplete(data, dimIndices) {
   var total = dimIndices.length * 9;
   var filled = 0;
   dimIndices.forEach(function(di) {
@@ -83,7 +83,7 @@ function sortByPriority(parts) {
   return parts;
 }
 
-function findPriorityParts(dataArr, blockType) {
+export function findPriorityParts(dataArr, blockType) {
   var dimIndices, totalDims;
   if (blockType === 'innate') { dimIndices = DIMS_INNATE; totalDims = 6; }
   else if (blockType === 'luck') { dimIndices = DIMS_LUCK; totalDims = 3; }
@@ -295,7 +295,7 @@ function runAcquiredRound(workingData, partIdx, adjustments, dimFlipCount) {
 
 // ===== 6. 主流程 =====
 
-function calcAdjustments(dataArr, blockType) {
+export function calcAdjustments(dataArr, blockType) {
   var workingData = [];
   for (var i = 0; i < dataArr.length; i++) workingData.push(dataArr[i].slice());
 
@@ -326,7 +326,7 @@ function _checkMarkGold(di) {
   return '<span style="display:inline-block;width:16px;height:16px;background:' + _dimDeep[di] + ';border-radius:3px;line-height:16px;text-align:center;color:#fff;font-size:11px;font-weight:400;outline:3px solid #E8B000;outline-offset:-1px">\u2713</span>';
 }
 
-function buildMatrix(useData, dimIndices, isAdjusted, flipSet, headerHtml) {
+export function buildMatrix(useData, dimIndices, isAdjusted, flipSet, headerHtml) {
   var rc = 'border-radius:3px';
   var mt = '<table style="border-collapse:separate;border-spacing:1px;width:100%;font-size:11px">';
 
