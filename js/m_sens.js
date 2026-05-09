@@ -56,6 +56,17 @@ function _calcBlockCoeffRaw(dataArr, dims) {
 }
 
 function _runAutoSensCalc() {
+  // obsData 為空時，先從 window.__userData.obsJson 載 baseline 再 recalc
+  // （首次進分析頁、還沒點過「產生詳盡報告」時 obsData 是空；跟 PNG 生成同一邏輯）
+  if (!obsData || Object.keys(obsData).length === 0) {
+    const ud = (typeof window !== 'undefined') ? (window.__userData || {}) : {};
+    if (ud.obsJson) {
+      try { setObsData(JSON.parse(ud.obsJson)); }
+      catch (e) {}
+      recalcFromObs();
+    }
+  }
+  // 載完仍為空 → 真的沒填觀察題
   if (!obsData || Object.keys(obsData).length === 0) return null;
 
   // 暫存原始 state
