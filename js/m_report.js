@@ -41,6 +41,7 @@ let _isSavingManual = false;
 // 重要參數分析 view（覆蓋 report content；不持久化，每次進報告分頁從 'report' 開始）
 let _view = 'report';     // 'report' | 'sens'
 let _sensType = null;     // 'auto' | 'manual'（_view === 'sens' 時有效）
+let _isLoadingSens = false; // 自動版需先載 DIM_RULES + obsData baseline 才能跑 simulate
 
 const SUBTABS = [
   { key: 'auto',   label: '自動報告' },
@@ -143,6 +144,7 @@ export function unmountReport() {
   // 重設分析 view 狀態：下次再進報告分頁從 report view 開始
   _view = 'report';
   _sensType = null;
+  _isLoadingSens = false;
   // saveBtn.onclick 不主動清；下次 mountInput 會自己覆蓋
 }
 
@@ -452,24 +454,45 @@ function _render() {
 
 // ===== 重要參數分析 view =====
 
-function _enterSens(type) {
+async function _enterSens(type) {
   _view = 'sens';
   _sensType = type;
+  _isLoadingSens = (type === 'auto'); // 自動版要先載 DIM_RULES + obsData
   _render();
-  // 切到頂
   const main = document.querySelector('.m-main');
   if (main) main.scrollTop = 0;
+
+  if (type === 'auto') {
+    try { await ensureDimRulesLoaded(); }
+    catch (e) { debugLog('[m_report]', 'ensureDimRulesLoaded 失敗', e && e.message); }
+    // 載 obsData baseline（從 Firestore document）+ recalc 出 data
+    const ud = window.__userData || {};
+    if (ud.obsJson) {
+      try { setObsData(JSON.parse(ud.obsJson)); }
+      catch (e) { debugLog('[m_report]', 'obsJson parse 失敗', e && e.message); }
+    }
+    recalcFromObs();
+    _isLoadingSens = false;
+    // 期間 user 可能已切離 sens view → 不再重 render
+    if (_view === 'sens' && _sensType === 'auto') _render();
+  }
 }
 
 function _exitSens() {
   _view = 'report';
   _sensType = null;
+  _isLoadingSens = false;
   _render();
 }
 
 function _renderSensView() {
   const title = _sensType === 'auto' ? '自動 重要參數分析' : '手動 重要參數分析';
-  const body = _sensType === 'auto' ? renderAutoSens() : renderManualSens(_manualDraft);
+  let body;
+  if (_isLoadingSens) {
+    body = '<div class="m-sens-empty">計算中…<br><span style="font-size:11px;color:#a89e92">首次進入需載入規則並逐題模擬翻轉，約需 2-5 秒</span></div>';
+  } else {
+    body = _sensType === 'auto' ? renderAutoSens() : renderManualSens(_manualDraft);
+  }
   _container.innerHTML = `
     <div class="m-sens-header">
       <button class="m-sens-back" type="button">← 返回</button>
