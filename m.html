@@ -113,12 +113,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-resume-btn{width:100%;padding:10px;background:#8fae7c;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
 .m-home-resume-btn:active{background:#7a9968}
 .m-home-quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.m-home-qbtn{padding:18px 8px;background:#fff;border:1px solid #e0d8cc;border-radius:12px;font-size:14px;color:#3a3228;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.m-home-qbtn{padding:14px 10px;background:#fff;border:1px solid #e0d8cc;border-radius:12px;color:#3a3228;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;font-family:inherit}
 .m-home-qbtn:active{background:#f5efe6}
-.m-home-profile-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.m-home-qbtn-title{font-size:14px;font-weight:500;color:#3a3228}
+.m-home-qbtn-sub{font-size:11px;color:#888;line-height:1.4;letter-spacing:0.5px}
+.m-home-profile-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:10px}
 .m-home-profile-row:last-of-type{margin-bottom:0}
-.m-home-profile-row label{font-size:12px;color:#888;font-weight:500}
-.m-home-profile-row input,.m-home-profile-row select{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff;font-family:inherit}
+.m-home-profile-row label{font-size:13px;color:#5a5048;font-weight:500;width:80px;flex-shrink:0}
+.m-home-profile-row input,.m-home-profile-row select{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;min-width:0}
 .m-home-profile-status{font-size:12px;color:#888;margin-top:8px;min-height:16px}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
@@ -813,10 +815,21 @@ body.m-debug-on .m-debug-clear{display:block}
 
     <div class="m-home-card-title">快速入口</div>
     <div class="m-home-quick">
-      <button class="m-home-qbtn" data-quick="part">部位視角</button>
-      <button class="m-home-qbtn" data-quick="dim">維度視角</button>
-      <button class="m-home-qbtn" data-quick="manual">手動輸入</button>
-      <button class="m-home-qbtn" data-quick="report">看報告</button>
+      <button class="m-home-qbtn" data-quick="part">
+        <span class="m-home-qbtn-title">部位視角</span>
+        <span class="m-home-qbtn-sub">依頭、上停、耳、眉、眼…</span>
+      </button>
+      <button class="m-home-qbtn" data-quick="dim">
+        <span class="m-home-qbtn-title">維度視角</span>
+        <span class="m-home-qbtn-sub">依形勢、經緯、方圓、曲直…</span>
+      </button>
+      <button class="m-home-qbtn" data-quick="manual">
+        <span class="m-home-qbtn-title">手動輸入</span>
+        <span class="m-home-qbtn-sub">手動輸入形勢、經緯、方圓…</span>
+      </button>
+      <button class="m-home-qbtn" data-quick="report">
+        <span class="m-home-qbtn-title">看報告</span>
+      </button>
     </div>
 
     <div class="m-home-card m-home-profile">
