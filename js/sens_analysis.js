@@ -94,49 +94,14 @@ export function renderSensPage(){
   // patch 8: 5 輪貪婪累積抽到 module-level export function（桌機跟手機共用）
   var innateTop5 = runInnateAccumulate(allQs, origObs, origData, origOverride);
 
-  // ===== 模擬 Top5 全翻轉，並驗收：老闆 AND 主管都不下降 =====
-  var simData=null, simCoeffs=[], simBossCoeffVal='', simMgrCoeffVal='', simInnateCoeffVal='';
-  var simFlips={};
-  var baseBossCoeffNum=parseFloat(avgCoeff(origData, [0,1,2]));
-  var baseMgrCoeffNum=parseFloat(avgCoeff(origData, [3,4,5]));
-  while(innateTop5.length>0){
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    innateTop5.forEach(function(r){
-      obsData[r.id]=r.bestOpt;
-      if(r.paired){
-        obsData[r.id+'_L']=r.bestOpt;
-        obsData[r.id+'_R']=r.bestOpt;
-      }
-    });
-    recalcFromObs();
-    var tryBossCoeff=parseFloat(avgCoeff(data, [0,1,2]));
-    var tryMgrCoeff=parseFloat(avgCoeff(data, [3,4,5]));
-    if(tryBossCoeff>=baseBossCoeffNum && tryMgrCoeff>=baseMgrCoeffNum && (tryBossCoeff>baseBossCoeffNum || tryMgrCoeff>baseMgrCoeffNum)){
-      // 通過：老闆和主管都不下降，且至少其中一個上升
-      simData=[];
-      for(var _sd=0;_sd<13;_sd++){simData.push(data[_sd].slice());}
-      simCoeffs=[];
-      for(var _sc=0;_sc<13;_sc++){var _r=calcDim(data, _sc);simCoeffs.push(_r?_r.coeff:0);}
-      simBossCoeffVal=tryBossCoeff.toFixed(2);
-      simMgrCoeffVal=tryMgrCoeff.toFixed(2);
-      simInnateCoeffVal=avgCoeff(data, [0,1,2,3,4,5]);
-      for(var _fd=0;_fd<6;_fd++){
-        for(var _fp=0;_fp<9;_fp++){
-          if(origData[_fd][_fp]!==simData[_fd][_fp]){
-            simFlips[_fd+'_'+_fp]=true;
-          }
-        }
-      }
-      break;
-    }else{
-      innateTop5.pop();
-    }
-  }
-  // 全域還原（無論通過與否）
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  // patch 10: 先天 Top5 驗收抽到 module-level（桌機跟手機共用）
+  var _iv = runInnateVerify(innateTop5, origObs, origData, origOverride);
+  var simData = _iv.simData;
+  var simCoeffs = _iv.simCoeffs;
+  var simFlips = _iv.simFlips;
+  var simBossCoeffVal = _iv.simBossCoeffVal;
+  var simMgrCoeffVal = _iv.simMgrCoeffVal;
+  var simInnateCoeffVal = _iv.simInnateCoeffVal;
 
   // ===== 運氣係數分析 =====
   // patch 9: LUCK_DIMS / 5 輪累積抽到 module-level（桌機跟手機共用）
@@ -145,41 +110,11 @@ export function renderSensPage(){
   var baseLuckCoeffNum=parseFloat(luckCoeffVal);
   var luckTop5 = runLuckAccumulate(allQs, origObs, origData, origOverride);
 
-  // 模擬運氣 Top5 全翻轉，並驗收：若反而下降則從尾端回退
-  var luckSimData=null, luckSimCoeffVal='';
-  var luckSimFlips={};
-  while(luckTop5.length>0){
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    luckTop5.forEach(function(r){
-      obsData[r.id]=r.bestOpt;
-      if(r.paired){
-        obsData[r.id+'_L']=r.bestOpt;
-        obsData[r.id+'_R']=r.bestOpt;
-      }
-    });
-    recalcFromObs();
-    var tryLuckCoeff=parseFloat(avgCoeff(data, LUCK_DIMS));
-    if(tryLuckCoeff>baseLuckCoeffNum){
-      luckSimData=[];
-      for(var _ld=0;_ld<13;_ld++){luckSimData.push(data[_ld].slice());}
-      luckSimCoeffVal=tryLuckCoeff.toFixed(2);
-      for(var _lfd=6;_lfd<9;_lfd++){
-        for(var _lfp=0;_lfp<9;_lfp++){
-          if(origData[_lfd][_lfp]!==luckSimData[_lfd][_lfp]){
-            luckSimFlips[_lfd+'_'+_lfp]=true;
-          }
-        }
-      }
-      break;
-    }else{
-      luckTop5.pop();
-    }
-  }
-  // 全域還原（無論通過與否）
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  // patch 10: 運氣 Top5 驗收抽到 module-level
+  var _lv = runLuckVerify(luckTop5, origObs, origData, origOverride);
+  var luckSimData = _lv.luckSimData;
+  var luckSimCoeffVal = _lv.luckSimCoeffVal;
+  var luckSimFlips = _lv.luckSimFlips;
 
   // ===== 後天係數分析 =====
   // patch 9: POST_DIMS / POST_NAMES / 5 輪累積抽到 module-level（桌機跟手機共用）
@@ -195,42 +130,11 @@ export function renderSensPage(){
   });
   var postTop5 = runPostAccumulate(allQs, origObs, origData, origOverride);
 
-  // 模擬後天 Top5 全翻轉，並驗收：若反而下降則從尾端回退
-  var postSimData=null, postSimCoeffVal='';
-  var postSimFlips={};
-  var basePostCoeffNum=parseFloat(postCoeffVal);
-  while(postTop5.length>0){
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    postTop5.forEach(function(r){
-      obsData[r.id]=r.bestOpt;
-      if(r.paired){
-        obsData[r.id+'_L']=r.bestOpt;
-        obsData[r.id+'_R']=r.bestOpt;
-      }
-    });
-    recalcFromObs();
-    var trySimCoeff=parseFloat(avgCoeff(data, POST_DIMS));
-    if(trySimCoeff>basePostCoeffNum){
-      postSimData=[];
-      for(var _pd=0;_pd<13;_pd++){postSimData.push(data[_pd].slice());}
-      postSimCoeffVal=trySimCoeff.toFixed(2);
-      for(var _pfd=9;_pfd<13;_pfd++){
-        for(var _pfp=0;_pfp<9;_pfp++){
-          if(origData[_pfd][_pfp]!==postSimData[_pfd][_pfp]){
-            postSimFlips[_pfd+'_'+_pfp]=true;
-          }
-        }
-      }
-      break;
-    }else{
-      postTop5.pop();
-    }
-  }
-  // 全域還原（無論通過與否）
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  // patch 10: 後天 Top5 驗收抽到 module-level
+  var _pv = runPostVerify(postTop5, origObs, origData, origOverride);
+  var postSimData = _pv.postSimData;
+  var postSimCoeffVal = _pv.postSimCoeffVal;
+  var postSimFlips = _pv.postSimFlips;
 
   // 渲染輔助：先天建議列表（含老闆/主管標籤）
   function _innateAdviceList(items,maxScore){
@@ -1403,4 +1307,150 @@ export function runPostAccumulate(allQs, origObs, origData, origOverride) {
   recalcFromObs();
 
   return postTop5;
+}
+
+// ===== Top5 全翻轉驗收 simulate（patch 10 抽出）=====
+//
+// 驗收邏輯：把 top5 的 bestOpt 全部套到 obsData → recalc → 看大係數是否提升
+// - innate：老闆 AND 主管都不下降，且至少一個上升（雙條件）
+// - luck / post：大係數要嚴格上升
+// 不通過 → top5.pop() 回退 → 重試
+// 結束時 top5 已 mutate（變成「驗收通過的版本」）
+// 結束時 obsData/data/obsOverride 已還原
+
+export function runInnateVerify(innateTop5, origObs, origData, origOverride) {
+  var simData = null, simCoeffs = [], simBossCoeffVal = '', simMgrCoeffVal = '', simInnateCoeffVal = '';
+  var simFlips = {};
+  var baseBossCoeffNum = parseFloat(avgCoeff(origData, [0, 1, 2]));
+  var baseMgrCoeffNum = parseFloat(avgCoeff(origData, [3, 4, 5]));
+
+  while (innateTop5.length > 0) {
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    innateTop5.forEach(function(r) {
+      obsData[r.id] = r.bestOpt;
+      if (r.paired) {
+        obsData[r.id + '_L'] = r.bestOpt;
+        obsData[r.id + '_R'] = r.bestOpt;
+      }
+    });
+    recalcFromObs();
+    var tryBossCoeff = parseFloat(avgCoeff(data, [0, 1, 2]));
+    var tryMgrCoeff = parseFloat(avgCoeff(data, [3, 4, 5]));
+    if (tryBossCoeff >= baseBossCoeffNum && tryMgrCoeff >= baseMgrCoeffNum && (tryBossCoeff > baseBossCoeffNum || tryMgrCoeff > baseMgrCoeffNum)) {
+      simData = [];
+      for (var _sd = 0; _sd < 13; _sd++) { simData.push(data[_sd].slice()); }
+      simCoeffs = [];
+      for (var _sc = 0; _sc < 13; _sc++) { var _r = calcDim(data, _sc); simCoeffs.push(_r ? _r.coeff : 0); }
+      simBossCoeffVal = tryBossCoeff.toFixed(2);
+      simMgrCoeffVal = tryMgrCoeff.toFixed(2);
+      simInnateCoeffVal = avgCoeff(data, [0, 1, 2, 3, 4, 5]);
+      for (var _fd = 0; _fd < 6; _fd++) {
+        for (var _fp = 0; _fp < 9; _fp++) {
+          if (origData[_fd][_fp] !== simData[_fd][_fp]) {
+            simFlips[_fd + '_' + _fp] = true;
+          }
+        }
+      }
+      break;
+    } else {
+      innateTop5.pop();
+    }
+  }
+
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return {
+    simData: simData, simCoeffs: simCoeffs, simFlips: simFlips,
+    simBossCoeffVal: simBossCoeffVal, simMgrCoeffVal: simMgrCoeffVal,
+    simInnateCoeffVal: simInnateCoeffVal
+  };
+}
+
+export function runLuckVerify(luckTop5, origObs, origData, origOverride) {
+  var luckSimData = null, luckSimCoeffVal = '';
+  var luckSimFlips = {};
+  var baseLuckCoeffNum = parseFloat(avgCoeff(origData, LUCK_DIMS));
+
+  while (luckTop5.length > 0) {
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    luckTop5.forEach(function(r) {
+      obsData[r.id] = r.bestOpt;
+      if (r.paired) {
+        obsData[r.id + '_L'] = r.bestOpt;
+        obsData[r.id + '_R'] = r.bestOpt;
+      }
+    });
+    recalcFromObs();
+    var tryLuckCoeff = parseFloat(avgCoeff(data, LUCK_DIMS));
+    if (tryLuckCoeff > baseLuckCoeffNum) {
+      luckSimData = [];
+      for (var _ld = 0; _ld < 13; _ld++) { luckSimData.push(data[_ld].slice()); }
+      luckSimCoeffVal = tryLuckCoeff.toFixed(2);
+      for (var _lfd = 6; _lfd < 9; _lfd++) {
+        for (var _lfp = 0; _lfp < 9; _lfp++) {
+          if (origData[_lfd][_lfp] !== luckSimData[_lfd][_lfp]) {
+            luckSimFlips[_lfd + '_' + _lfp] = true;
+          }
+        }
+      }
+      break;
+    } else {
+      luckTop5.pop();
+    }
+  }
+
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return {
+    luckSimData: luckSimData, luckSimCoeffVal: luckSimCoeffVal, luckSimFlips: luckSimFlips
+  };
+}
+
+export function runPostVerify(postTop5, origObs, origData, origOverride) {
+  var postSimData = null, postSimCoeffVal = '';
+  var postSimFlips = {};
+  var basePostCoeffNum = parseFloat(avgCoeff(origData, POST_DIMS));
+
+  while (postTop5.length > 0) {
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    postTop5.forEach(function(r) {
+      obsData[r.id] = r.bestOpt;
+      if (r.paired) {
+        obsData[r.id + '_L'] = r.bestOpt;
+        obsData[r.id + '_R'] = r.bestOpt;
+      }
+    });
+    recalcFromObs();
+    var trySimCoeff = parseFloat(avgCoeff(data, POST_DIMS));
+    if (trySimCoeff > basePostCoeffNum) {
+      postSimData = [];
+      for (var _pd = 0; _pd < 13; _pd++) { postSimData.push(data[_pd].slice()); }
+      postSimCoeffVal = trySimCoeff.toFixed(2);
+      for (var _pfd = 9; _pfd < 13; _pfd++) {
+        for (var _pfp = 0; _pfp < 9; _pfp++) {
+          if (origData[_pfd][_pfp] !== postSimData[_pfd][_pfp]) {
+            postSimFlips[_pfd + '_' + _pfp] = true;
+          }
+        }
+      }
+      break;
+    } else {
+      postTop5.pop();
+    }
+  }
+
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return {
+    postSimData: postSimData, postSimCoeffVal: postSimCoeffVal, postSimFlips: postSimFlips
+  };
 }
