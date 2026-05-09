@@ -52,100 +52,23 @@ export function renderSensPage(){
       '</div>';
   }
 
-  var origObs=JSON.parse(JSON.stringify(obsData));
-  var origData=JSON.parse(JSON.stringify(data));
-  var origOverride=JSON.parse(JSON.stringify(obsOverride));
-
-  // 收集所有題目
-  var allQs=[];
-  OBS_PART_NAMES.forEach(function(pn){
-    var pd=OBS_PARTS_DATA[pn];if(!pd)return;
-    pd.sections.forEach(function(sec){sec.qs.forEach(function(q){
-      allQs.push({id:q.id,text:q.text,paired:!!q.paired,opts:q.opts,part:pn});
-    });});
-  });
-
-  // 基準
-  var baseCoeffs=[];
-  for(var di=0;di<13;di++){var r=calcDim(data, di);baseCoeffs.push(r?r.coeff:0);}
-  var baseTotalCoeff=parseFloat(avgCoeff(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]));
-  var baseTypes=[];
-  for(var di=0;di<13;di++){var r2=calcDim(data, di);baseTypes.push(r2?r2.type:null);}
-
-  // 對每題計算敏感度
-  var sensResults=[];
-  allQs.forEach(function(q){
-    var curVal=origObs[q.id]||'';
-    var maxAbsDelta=0;
-    var bestUpDelta=0;
-    var bestDownDelta=0;
-    var affectedDims=new Set();
-    var flipDims=new Set();
-
-    q.opts.forEach(function(opt){
-      var v=typeof opt==='string'?opt:opt.v;
-      if(v===curVal)return;
-      setObsData(JSON.parse(JSON.stringify(origObs)));
-      obsData[q.id]=v;
-      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-      recalcFromObs();
-      var newCoeffs=[],newTypes=[];
-      for(var di=0;di<13;di++){
-        var r=calcDim(data, di);var nc=r?r.coeff:0;
-        newCoeffs.push(nc);newTypes.push(r?r.type:null);
-        if(Math.abs(nc-baseCoeffs[di])>0.001)affectedDims.add(di);
-        if(baseTypes[di]==='動'&&(r?r.type:null)==='靜')flipDims.add(di);
-      }
-      var _sMin=0,_sMax=0;for(var _di2=0;_di2<13;_di2++){var _r3=calcDim(data, _di2);if(_r3){_sMin+=Math.min(_r3.a,_r3.b);_sMax+=Math.max(_r3.a,_r3.b);}}var newTotal=_sMax>0?_sMin/_sMax:0;
-      var totalDelta=newTotal-baseTotalCoeff;
-      var absDelta=Math.abs(totalDelta);
-      if(absDelta>maxAbsDelta)maxAbsDelta=absDelta;
-      if(totalDelta>bestUpDelta)bestUpDelta=totalDelta;
-      if(totalDelta<bestDownDelta)bestDownDelta=totalDelta;
-    });
-
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setData(JSON.parse(JSON.stringify(origData)));
-
-    sensResults.push({
-      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',paired:q.paired,
-      sensitivity:maxAbsDelta,bestUp:bestUpDelta,bestDown:bestDownDelta,
-      affectedDims:Array.from(affectedDims).sort(function(a,b){return a-b;}),
-      flipDims:Array.from(flipDims).sort(function(a,b){return a-b;})
-    });
-  });
-
-  // 最終還原
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
-
-  // 按敏感度降序排列，用相對排名分類
-  var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
-  var LOW_THRESHOLD=0.0005;
-  var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
-  var TOP_N=10;
-  var topN=Math.min(TOP_N,nonZero.length);
-  var HIGH_THRESHOLD=nonZero.length>0&&topN<=nonZero.length?nonZero[topN-1].sensitivity:0;
-
-  var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
-  var midSens=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
-  var lowSens=sorted.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
-
-  // 部位彙整
-  var partSens={};
-  sensResults.forEach(function(r){
-    if(!partSens[r.part])partSens[r.part]={total:0,count:0,highCount:0,dims:new Set()};
-    partSens[r.part].total+=r.sensitivity;
-    partSens[r.part].count++;
-    if(r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD)partSens[r.part].highCount++;
-    r.affectedDims.forEach(function(di){partSens[r.part].dims.add(di);});
-  });
-  var partRank=Object.keys(partSens).map(function(pn){
-    return {part:pn,total:partSens[pn].total,count:partSens[pn].count,
-      highCount:partSens[pn].highCount,dims:Array.from(partSens[pn].dims).sort(function(a,b){return a-b;})};
-  }).sort(function(a,b){return b.total-a.total;});
+  // patch 6: 第一輪 simulate + partRank 抽到 module-level export function（桌機跟手機共用）
+  var _r1 = runFirstRoundSensitivity();
+  var origObs = _r1.origObs;
+  var origData = _r1.origData;
+  var origOverride = _r1.origOverride;
+  var allQs = _r1.allQs;
+  var baseCoeffs = _r1.baseCoeffs;
+  var baseTotalCoeff = _r1.baseTotalCoeff;
+  var baseTypes = _r1.baseTypes;
+  var sensResults = _r1.sensResults;
+  var highSens = _r1.highSens;
+  var midSens = _r1.midSens;
+  var lowSens = _r1.lowSens;
+  var partRank = _r1.partRank;
+  var partSens = _r1.partSens;
+  var HIGH_THRESHOLD = _r1.HIGH_THRESHOLD;
+  var LOW_THRESHOLD = _r1.LOW_THRESHOLD;
 
   // 輔助
   function dimTag(di){
@@ -1320,4 +1243,116 @@ export function renderManualSensPage(){
   html+='</div>';
 
   el.innerHTML=html;
+}
+
+// ===== 第一輪敏感度計算（patch 6 抽出，桌機跟手機共用）=====
+// 對每題試翻轉每個 opt → 算「全 13 維 total coeff」delta
+// 收集 sensitivity / bestUp / bestDown / affectedDims / flipDims
+// 整理 highSens/midSens/lowSens + partRank + partSens
+// 結束時 obsData/data/obsOverride 已還原（caller 看到的 state 跟進來時一樣）
+export function runFirstRoundSensitivity() {
+  var origObs=JSON.parse(JSON.stringify(obsData));
+  var origData=JSON.parse(JSON.stringify(data));
+  var origOverride=JSON.parse(JSON.stringify(obsOverride));
+
+  // 收集所有題目
+  var allQs=[];
+  OBS_PART_NAMES.forEach(function(pn){
+    var pd=OBS_PARTS_DATA[pn];if(!pd)return;
+    pd.sections.forEach(function(sec){sec.qs.forEach(function(q){
+      allQs.push({id:q.id,text:q.text,paired:!!q.paired,opts:q.opts,part:pn});
+    });});
+  });
+
+  // 基準
+  var baseCoeffs=[];
+  for(var di=0;di<13;di++){var r=calcDim(data, di);baseCoeffs.push(r?r.coeff:0);}
+  var baseTotalCoeff=parseFloat(avgCoeff(data, [0,1,2,3,4,5,6,7,8,9,10,11,12]));
+  var baseTypes=[];
+  for(var di=0;di<13;di++){var r2=calcDim(data, di);baseTypes.push(r2?r2.type:null);}
+
+  // 對每題計算敏感度
+  var sensResults=[];
+  allQs.forEach(function(q){
+    var curVal=origObs[q.id]||'';
+    var maxAbsDelta=0;
+    var bestUpDelta=0;
+    var bestDownDelta=0;
+    var affectedDims=new Set();
+    var flipDims=new Set();
+
+    q.opts.forEach(function(opt){
+      var v=typeof opt==='string'?opt:opt.v;
+      if(v===curVal)return;
+      setObsData(JSON.parse(JSON.stringify(origObs)));
+      obsData[q.id]=v;
+      if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
+      recalcFromObs();
+      var newCoeffs=[],newTypes=[];
+      for(var di=0;di<13;di++){
+        var r=calcDim(data, di);var nc=r?r.coeff:0;
+        newCoeffs.push(nc);newTypes.push(r?r.type:null);
+        if(Math.abs(nc-baseCoeffs[di])>0.001)affectedDims.add(di);
+        if(baseTypes[di]==='動'&&(r?r.type:null)==='靜')flipDims.add(di);
+      }
+      var _sMin=0,_sMax=0;for(var _di2=0;_di2<13;_di2++){var _r3=calcDim(data, _di2);if(_r3){_sMin+=Math.min(_r3.a,_r3.b);_sMax+=Math.max(_r3.a,_r3.b);}}var newTotal=_sMax>0?_sMin/_sMax:0;
+      var totalDelta=newTotal-baseTotalCoeff;
+      var absDelta=Math.abs(totalDelta);
+      if(absDelta>maxAbsDelta)maxAbsDelta=absDelta;
+      if(totalDelta>bestUpDelta)bestUpDelta=totalDelta;
+      if(totalDelta<bestDownDelta)bestDownDelta=totalDelta;
+    });
+
+    setObsData(JSON.parse(JSON.stringify(origObs)));
+    setData(JSON.parse(JSON.stringify(origData)));
+
+    sensResults.push({
+      id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',paired:q.paired,
+      sensitivity:maxAbsDelta,bestUp:bestUpDelta,bestDown:bestDownDelta,
+      affectedDims:Array.from(affectedDims).sort(function(a,b){return a-b;}),
+      flipDims:Array.from(flipDims).sort(function(a,b){return a-b;})
+    });
+  });
+
+  // 最終還原
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  // 按敏感度降序排列，用相對排名分類
+  var sorted=sensResults.slice().sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var LOW_THRESHOLD=0.0005;
+  var nonZero=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD;});
+  var TOP_N=10;
+  var topN=Math.min(TOP_N,nonZero.length);
+  var HIGH_THRESHOLD=nonZero.length>0&&topN<=nonZero.length?nonZero[topN-1].sensitivity:0;
+
+  var highSens=sorted.filter(function(r){return r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var midSens=sorted.filter(function(r){return r.sensitivity>=LOW_THRESHOLD&&r.sensitivity<HIGH_THRESHOLD;}).sort(function(a,b){return b.sensitivity-a.sensitivity;});
+  var lowSens=sorted.filter(function(r){return r.sensitivity<LOW_THRESHOLD;});
+
+  // 部位彙整
+  var partSens={};
+  sensResults.forEach(function(r){
+    if(!partSens[r.part])partSens[r.part]={total:0,count:0,highCount:0,dims:new Set()};
+    partSens[r.part].total+=r.sensitivity;
+    partSens[r.part].count++;
+    if(r.sensitivity>=HIGH_THRESHOLD&&r.sensitivity>=LOW_THRESHOLD)partSens[r.part].highCount++;
+    r.affectedDims.forEach(function(di){partSens[r.part].dims.add(di);});
+  });
+  var partRank=Object.keys(partSens).map(function(pn){
+    return {part:pn,total:partSens[pn].total,count:partSens[pn].count,
+      highCount:partSens[pn].highCount,dims:Array.from(partSens[pn].dims).sort(function(a,b){return a-b;})};
+  }).sort(function(a,b){return b.total-a.total;});
+
+  return {
+    origObs: origObs, origData: origData, origOverride: origOverride,
+    allQs: allQs,
+    baseCoeffs: baseCoeffs, baseTotalCoeff: baseTotalCoeff, baseTypes: baseTypes,
+    sensResults: sensResults,
+    highSens: highSens, midSens: midSens, lowSens: lowSens,
+    partRank: partRank, partSens: partSens,
+    HIGH_THRESHOLD: HIGH_THRESHOLD, LOW_THRESHOLD: LOW_THRESHOLD
+  };
 }
