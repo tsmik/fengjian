@@ -83,44 +83,13 @@ export function renderSensPage(){
   var globalMax=highSens.length>0?highSens[0].sensitivity:0.01;
 
   // ===== 老闆/主管係數分析 =====
-
-  // 老闆目標定義
-  var BOSS_TARGETS=[
-    {di:1, name:'經緯', target:6/9, weight:3, targetLabel:'靜 ≥ 6:3'},
-    {di:0, name:'形勢', target:5/9, weight:2, targetLabel:'靜 ≥ 5:4'},
-    {di:2, name:'方圓', target:null, weight:1, targetLabel:'隨之提升'}
-  ];
-
-  function _bossStaticScore(di){
-    var r=calcDim(data, di);if(!r)return 0;
-    var d=DIMS[di];
-    // 靜側計數比例：靜count / 9
-    var staticCount=d.aT==='靜'?r.a:r.b;
-    return staticCount/9;
-  }
-
-  var baseBossScores=[];
-  var baseBossReached=[];
-  BOSS_TARGETS.forEach(function(bt){
-    if(bt.target!==null){
-      var ss=_bossStaticScore(bt.di);
-      baseBossScores.push(ss);
-      var r=calcDim(data, bt.di);
-      var ss=_bossStaticScore(bt.di);
-      baseBossReached.push(ss>=bt.target);
-    }else{
-      baseBossScores.push(baseCoeffs[bt.di]);
-      baseBossReached.push(false);
-    }
-  });
-
-  // 主管基準
-  var MGR_DIMS=[3,4,5];
-  var MGR_NAMES=['曲直','收放','緩急'];
-  var baseMgrCoeffs=[];
-  MGR_DIMS.forEach(function(di){baseMgrCoeffs.push(baseCoeffs[di]);});
-  var mgrMinIdx=0;
-  baseMgrCoeffs.forEach(function(c,i){if(c<baseMgrCoeffs[mgrMinIdx])mgrMinIdx=i;});
+  // patch 7: BOSS_TARGETS / MGR_DIMS / MGR_NAMES / _bossStaticScore 抽到 module-level
+  //          baseline 計算抽成 runBossMgrBaseline()（桌機跟手機共用）
+  var _bm = runBossMgrBaseline(baseCoeffs);
+  var baseBossScores = _bm.baseBossScores;
+  var baseBossReached = _bm.baseBossReached;
+  var baseMgrCoeffs = _bm.baseMgrCoeffs;
+  var mgrMinIdx = _bm.mgrMinIdx;
 
   // 貪婪累積選擇：5 輪 loop，每輪基於上一輪累積結果重新評估
   var innateTop5=[];
@@ -1354,5 +1323,53 @@ export function runFirstRoundSensitivity() {
     highSens: highSens, midSens: midSens, lowSens: lowSens,
     partRank: partRank, partSens: partSens,
     HIGH_THRESHOLD: HIGH_THRESHOLD, LOW_THRESHOLD: LOW_THRESHOLD
+  };
+}
+
+// ===== 老闆/主管常數 + baseline（patch 7 抽出，桌機跟手機共用）=====
+
+export const BOSS_TARGETS = [
+  {di:1, name:'經緯', target:6/9, weight:3, targetLabel:'靜 ≥ 6:3'},
+  {di:0, name:'形勢', target:5/9, weight:2, targetLabel:'靜 ≥ 5:4'},
+  {di:2, name:'方圓', target:null, weight:1, targetLabel:'隨之提升'}
+];
+
+export const MGR_DIMS = [3, 4, 5];
+export const MGR_NAMES = ['曲直', '收放', '緩急'];
+
+// 老闆靜側評分：靜count / 9（依當前 module-level data）
+export function _bossStaticScore(di) {
+  var r = calcDim(data, di);
+  if (!r) return 0;
+  var d = DIMS[di];
+  var staticCount = d.aT === '靜' ? r.a : r.b;
+  return staticCount / 9;
+}
+
+// 計算老闆/主管 baseline（吃 baseCoeffs 陣列；依當前 module-level data 算 _bossStaticScore）
+export function runBossMgrBaseline(baseCoeffs) {
+  var baseBossScores = [];
+  var baseBossReached = [];
+  BOSS_TARGETS.forEach(function(bt) {
+    if (bt.target !== null) {
+      var ss = _bossStaticScore(bt.di);
+      baseBossScores.push(ss);
+      baseBossReached.push(ss >= bt.target);
+    } else {
+      baseBossScores.push(baseCoeffs[bt.di]);
+      baseBossReached.push(false);
+    }
+  });
+
+  var baseMgrCoeffs = [];
+  MGR_DIMS.forEach(function(di) { baseMgrCoeffs.push(baseCoeffs[di]); });
+  var mgrMinIdx = 0;
+  baseMgrCoeffs.forEach(function(c, i) { if (c < baseMgrCoeffs[mgrMinIdx]) mgrMinIdx = i; });
+
+  return {
+    baseBossScores: baseBossScores,
+    baseBossReached: baseBossReached,
+    baseMgrCoeffs: baseMgrCoeffs,
+    mgrMinIdx: mgrMinIdx
   };
 }
