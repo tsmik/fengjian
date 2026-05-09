@@ -1,28 +1,24 @@
 // ============================================================
-// 手機版重要參數分析（patch 2 範圍：手動版三區塊摘要 + 自動版 placeholder）
-// 職責：摘要式渲染（大係數 + Top 3 部位 + 一行建議）
-//       完整矩陣展開留待 patch 5 實作
-// 依賴：
-//   - js/core.js (DIMS, avgCoeff, BETA_VISIBLE_DIMS)
-//   - js/manual_sens_v2.js (calcAdjustments / findPriorityParts / checkBlockComplete)
+// 手機版重要參數分析
+// 自動版：reuse 桌機 sens_analysis.js 8 個演算法 export function（patch 6-10 抽出）
+//         產出 Top 5 題目 list + → 預估值（跟桌機完全一致）
+// 手動版：reuse manual_sens_v2.js calcAdjustments / checkBlockComplete / buildMatrix
+//         產出三區塊摘要 + 「看完整矩陣」展開
 // 被用：m_report.js（renderManualSens / renderAutoSens）
-// retest 範圍：
-//   - 三區塊（先天/運氣/後天）大係數值正確（跟桌機 manual-sens-v2-page 對得上）
-//   - Top 3 部位排序正確（依翻轉次數 desc，同分依 partIdx asc）
-//   - 未填完顯示「尚未填完 X/N」提示
-//   - 均衡狀態（actualFlips=0）顯示「已均衡」訊息
-//   - 顴建議（hasGuan）顯示警告
-//   - 自動版顯示 placeholder（建置中）
 // ============================================================
 
 import {
   DIMS, avgCoeff, BETA_VISIBLE_DIMS,
-  obsData, data, obsOverride,
-  setObsData, setData, setObsOverride,
-  calcDim, OBS_PART_NAMES, OBS_PARTS_DATA
+  obsData, setObsData
 } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { calcAdjustments, checkBlockComplete, buildMatrix } from './manual_sens_v2.js';
+import {
+  runFirstRoundSensitivity, runBossMgrBaseline,
+  runInnateAccumulate, runLuckAccumulate, runPostAccumulate,
+  runInnateVerify, runLuckVerify, runPostVerify,
+  LUCK_DIMS, POST_DIMS
+} from './sens_analysis.js';
 
 const PART_LABELS = ['頭', '上停', '中停', '下停', '耳', '眉', '眼', '鼻', '口'];
 
@@ -32,32 +28,17 @@ const BLOCKS = [
   { type: 'acquired', label: '後天', dims: [9,10,11,12],  color: '#7B7082', visible: BETA_VISIBLE_DIMS >= 13 }
 ];
 
-// ===== 自動版（精簡 simulate，不 reuse 桌機 sens_analysis.js）=====
-//
-// 邏輯：對每題試翻轉 → 看「先天/運氣/後天」三 block 的大係數 delta → 取最大
-//       依部位加總 sensitivity → 排序得 Top 部位
-// 跟桌機差異：桌機有多輪累積 simulate 算「→ 預估值」，手機精簡版不算。
-//             所以手機自動版只顯示「目前係數」，沒有「→ 變化」。
+// ===== 自動版（reuse 桌機 sens_analysis.js 演算法，跟桌機完全一致）=====
 
-const AUTO_BLOCKS = [
+const AUTO_BLOCKS_INFO = [
   { key: 'innate', label: '先天', color: '#8E4B50', dims: [0,1,2,3,4,5], visible: true },
-  { key: 'luck',   label: '運氣', color: '#4C6E78', dims: [6,7,8],       visible: BETA_VISIBLE_DIMS >= 9 },
-  { key: 'post',   label: '後天', color: '#7B7082', dims: [9,10,11,12],  visible: BETA_VISIBLE_DIMS >= 13 }
+  { key: 'luck',   label: '運氣', color: '#4C6E78', dims: LUCK_DIMS,     visible: BETA_VISIBLE_DIMS >= 9 },
+  { key: 'post',   label: '後天', color: '#7B7082', dims: POST_DIMS,     visible: BETA_VISIBLE_DIMS >= 13 }
 ];
 
-function _calcBlockCoeffRaw(dataArr, dims) {
-  // 跟桌機 sens_analysis.js line 99 的 _sMin/_sMax 邏輯一致（ratio 法）
-  let mn = 0, mx = 0;
-  dims.forEach(di => {
-    const r = calcDim(dataArr, di);
-    if (r) { mn += Math.min(r.a, r.b); mx += Math.max(r.a, r.b); }
-  });
-  return mx > 0 ? mn / mx : 0;
-}
-
-function _runAutoSensCalc() {
-  // obsData 為空時，先從 window.__userData.obsJson 載 baseline 再 recalc
-  // （首次進分析頁、還沒點過「產生詳盡報告」時 obsData 是空；跟 PNG 生成同一邏輯）
+// 跑桌機完整 simulate pipeline（跟桌機 renderSensPage 同一條路）
+function _runFullSensSim() {
+  // obsData 為空時補載 baseline（防禦；通常 m_report.js _enterSens 已處理）
   if (!obsData || Object.keys(obsData).length === 0) {
     const ud = (typeof window !== 'undefined') ? (window.__userData || {}) : {};
     if (ud.obsJson) {
@@ -66,168 +47,118 @@ function _runAutoSensCalc() {
       recalcFromObs();
     }
   }
-  // 載完仍為空 → 真的沒填觀察題
   if (!obsData || Object.keys(obsData).length === 0) return null;
 
-  // 暫存原始 state
-  const origObs = JSON.parse(JSON.stringify(obsData));
-  const origData = JSON.parse(JSON.stringify(data));
-  const origOverride = JSON.parse(JSON.stringify(obsOverride));
+  const r1 = runFirstRoundSensitivity();
+  if (!r1.allQs || r1.allQs.length === 0) return null;
+  runBossMgrBaseline(r1.baseCoeffs);
 
-  // 收集所有題目
-  const allQs = [];
-  OBS_PART_NAMES.forEach(pn => {
-    const pd = OBS_PARTS_DATA[pn];
-    if (!pd) return;
-    pd.sections.forEach(sec => {
-      sec.qs.forEach(q => {
-        allQs.push({ id: q.id, paired: !!q.paired, opts: q.opts, part: pn });
-      });
-    });
-  });
-  if (allQs.length === 0) return null;
+  const innateTop5 = runInnateAccumulate(r1.allQs, r1.origObs, r1.origData, r1.origOverride);
+  const iv = runInnateVerify(innateTop5, r1.origObs, r1.origData, r1.origOverride);
 
-  // 基準大係數（per block，ratio 法）
-  const baseBlockCoeff = {};
-  AUTO_BLOCKS.forEach(b => {
-    baseBlockCoeff[b.key] = _calcBlockCoeffRaw(data, b.dims);
-  });
+  const luckTop5 = runLuckAccumulate(r1.allQs, r1.origObs, r1.origData, r1.origOverride);
+  const lv = runLuckVerify(luckTop5, r1.origObs, r1.origData, r1.origOverride);
 
-  // 對每題試翻轉 → 收集 per-block sensitivity
-  const sensResults = []; // { id, part, sens: {innate, luck, post} }
-  allQs.forEach(q => {
-    const curVal = origObs[q.id] || '';
-    const maxSens = { innate: 0, luck: 0, post: 0 };
-
-    q.opts.forEach(opt => {
-      const v = typeof opt === 'string' ? opt : opt.v;
-      if (v === curVal) return;
-
-      // 套翻轉版 obsData（直接 mutate live binding 的 obj prop）
-      setObsData(JSON.parse(JSON.stringify(origObs)));
-      obsData[q.id] = v;
-      if (q.paired) { obsData[q.id + '_L'] = v; obsData[q.id + '_R'] = v; }
-      recalcFromObs();
-
-      AUTO_BLOCKS.forEach(b => {
-        const newC = _calcBlockCoeffRaw(data, b.dims);
-        const d = Math.abs(newC - baseBlockCoeff[b.key]);
-        if (d > maxSens[b.key]) maxSens[b.key] = d;
-      });
-    });
-
-    // 每題後立即還原 obsData/data
-    setObsData(JSON.parse(JSON.stringify(origObs)));
-    setData(JSON.parse(JSON.stringify(origData)));
-
-    sensResults.push({ id: q.id, part: q.part, sens: maxSens });
-  });
-
-  // 最終還原：caller 看到的 state 跟進來時一樣
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
-
-  function rankParts(blockKey) {
-    const partTotal = {};
-    sensResults.forEach(r => {
-      partTotal[r.part] = (partTotal[r.part] || 0) + r.sens[blockKey];
-    });
-    return Object.entries(partTotal)
-      .map(([part, total]) => ({ part, total }))
-      .filter(x => x.total > 0.0001)
-      .sort((a, b) => b.total - a.total);
-  }
+  const postTop5 = runPostAccumulate(r1.allQs, r1.origObs, r1.origData, r1.origOverride);
+  const pv = runPostVerify(postTop5, r1.origObs, r1.origData, r1.origOverride);
 
   return {
-    coeffs: {
-      innate: avgCoeff(data, [0,1,2,3,4,5]),
-      luck:   avgCoeff(data, [6,7,8]),
-      post:   avgCoeff(data, [9,10,11,12])
-    },
-    subCoeffs: {
-      boss: avgCoeff(data, [0,1,2]),
-      mgr:  avgCoeff(data, [3,4,5])
-    },
-    partRanks: {
-      innate: rankParts('innate'),
-      luck:   rankParts('luck'),
-      post:   rankParts('post')
-    }
+    bossCoeff:   avgCoeff(r1.origData, [0,1,2]),
+    mgrCoeff:    avgCoeff(r1.origData, [3,4,5]),
+    innateCoeff: avgCoeff(r1.origData, [0,1,2,3,4,5]),
+    luckCoeff:   avgCoeff(r1.origData, LUCK_DIMS),
+    postCoeff:   avgCoeff(r1.origData, POST_DIMS),
+    innateTop5: innateTop5,
+    luckTop5:   luckTop5,
+    postTop5:   postTop5,
+    simBossCoeffVal:   iv.simBossCoeffVal,
+    simMgrCoeffVal:    iv.simMgrCoeffVal,
+    simInnateCoeffVal: iv.simInnateCoeffVal,
+    luckSimCoeffVal:   lv.luckSimCoeffVal,
+    postSimCoeffVal:   pv.postSimCoeffVal
   };
 }
 
-function _renderAutoBlock(result, block) {
-  if (!block.visible) {
+// 仿桌機 _innateAdviceList 渲染單個題目 list item（先天才有老闆/主管 tag）
+function _renderTop5Item(r, idx, maxScore, blockKey) {
+  const pct = maxScore > 0 ? Math.min(r.score / maxScore * 100, 100) : 0;
+  let tags = '';
+  if (blockKey === 'innate') {
+    if (r.bossScore > 0.001) tags += `<span class="m-sens-q-tag m-sens-q-tag-boss">老闆↑</span>`;
+    if (r.mgrScore > 0.001) tags += `<span class="m-sens-q-tag m-sens-q-tag-mgr">主管↑</span>`;
+  }
+  return `
+    <div class="m-sens-q-item">
+      <div class="m-sens-q-row1">
+        <span class="m-sens-q-rank">${idx + 1}</span>
+        <span class="m-sens-q-part">${r.part}</span>
+        <span class="m-sens-q-vals">${r.curVal} → ${r.bestOpt}</span>
+        ${tags}
+        <span class="m-sens-q-score">+${r.score.toFixed(3)}</span>
+      </div>
+      <div class="m-sens-q-text">${r.text}</div>
+      <div class="m-sens-q-bar"><div class="m-sens-q-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+  `;
+}
+
+function _renderAutoBlock(blockInfo, top5, origCoeff, simCoeffVal, subInfo) {
+  if (!blockInfo.visible) {
     return `
       <div class="m-sens-block m-sens-block-disabled">
-        <div class="m-sens-block-title" style="color:#bbb">${block.label}係數分析</div>
+        <div class="m-sens-block-title" style="color:#bbb">${blockInfo.label}係數分析</div>
         <div class="m-sens-incomplete">建置中</div>
       </div>
     `;
   }
 
-  const coeff = result.coeffs[block.key];
-  const top3 = result.partRanks[block.key].slice(0, 3);
+  const hasSim = !!simCoeffVal;
+  const maxScore = top5.length > 0 ? top5[0].score : 1;
 
-  let subInfo = '';
-  if (block.key === 'innate') {
-    subInfo = `
-      <div class="m-sens-sub">
-        <span class="m-sens-sub-item"><b>老闆</b> ${result.subCoeffs.boss}</span>
-        <span class="m-sens-sub-item"><b>主管</b> ${result.subCoeffs.mgr}</span>
-      </div>
-    `;
-  }
-
-  let topListHtml = '';
-  if (top3.length > 0) {
-    topListHtml = '<div class="m-sens-top-label">重要部位</div><div class="m-sens-top-list">';
-    top3.forEach((p, idx) => {
-      topListHtml += `
-        <div class="m-sens-top-item">
-          <span class="m-sens-top-rank">${idx + 1}</span>
-          <span class="m-sens-top-part">${p.part}</span>
-          <span class="m-sens-top-count">敏感度 ${p.total.toFixed(3)}</span>
-        </div>
-      `;
-    });
-    topListHtml += '</div>';
-  }
-
-  let advice;
-  if (top3.length === 0) {
-    advice = `<div class="m-sens-advice">${block.label}係數對觀察答題不敏感（無關鍵調整建議）</div>`;
+  let listHtml;
+  if (top5.length === 0) {
+    listHtml = `<div class="m-sens-q-empty">目前配置下無有效調整建議</div>`;
   } else {
-    const partsToFix = top3.map(p => p.part).join('、');
-    advice = `<div class="m-sens-advice">${block.label}係數最敏感的部位：<b>${partsToFix}</b><br><span class="m-sens-advice-dim">調整這些部位的觀察答題會最影響${block.label}係數</span></div>`;
+    listHtml = '<div class="m-sens-q-list">';
+    top5.forEach((r, idx) => {
+      listHtml += _renderTop5Item(r, idx, maxScore, blockInfo.key);
+    });
+    listHtml += '</div>';
   }
 
   return `
     <div class="m-sens-block">
       <div class="m-sens-block-header">
-        <span class="m-sens-block-title" style="color:${block.color}">${block.label}係數</span>
-        <span class="m-sens-coeff" style="background:${block.color}">${coeff}</span>
+        <span class="m-sens-block-title" style="color:${blockInfo.color}">${blockInfo.label}係數</span>
+        <span class="m-sens-coeff" style="background:${blockInfo.color}">${origCoeff}</span>
+        ${hasSim ? `<span class="m-sens-arrow">→</span><span class="m-sens-coeff" style="background:${blockInfo.color}">${simCoeffVal}</span>` : ''}
       </div>
-      ${subInfo}
-      ${topListHtml}
-      ${advice}
+      ${subInfo || ''}
+      <div class="m-sens-top-label">如果有變化，就會影響${blockInfo.label}係數的重要部位</div>
+      ${listHtml}
     </div>
   `;
 }
 
 export function renderAutoSens() {
-  const result = _runAutoSensCalc();
+  const result = _runFullSensSim();
   if (!result) {
     return `<div class="m-sens-empty">請先在「輸入」分頁填寫觀察題</div>`;
   }
 
   let html = '';
-  html += `<div class="m-sens-subtitle">基於觀察答題逐題模擬翻轉，找出最影響各區係數的部位<br><span style="color:#a89e92;font-size:11px">註：精簡版不顯示「調整後預估值」</span></div>`;
-  AUTO_BLOCKS.forEach(b => {
-    html += _renderAutoBlock(result, b);
-  });
+  html += `<div class="m-sens-subtitle">基於觀察答題逐題模擬翻轉 + 5 輪貪婪累積，演算法跟桌機一致</div>`;
+
+  // 先天區塊（含老闆/主管子係數）
+  const innateSubInfo = `
+    <div class="m-sens-sub">
+      <span class="m-sens-sub-item"><b>老闆</b> ${result.bossCoeff}${result.simBossCoeffVal ? ' → <b>' + result.simBossCoeffVal + '</b>' : ''}</span>
+      <span class="m-sens-sub-item"><b>主管</b> ${result.mgrCoeff}${result.simMgrCoeffVal ? ' → <b>' + result.simMgrCoeffVal + '</b>' : ''}</span>
+    </div>
+  `;
+  html += _renderAutoBlock(AUTO_BLOCKS_INFO[0], result.innateTop5, result.innateCoeff, result.simInnateCoeffVal, innateSubInfo);
+  html += _renderAutoBlock(AUTO_BLOCKS_INFO[1], result.luckTop5,   result.luckCoeff,   result.luckSimCoeffVal,   '');
+  html += _renderAutoBlock(AUTO_BLOCKS_INFO[2], result.postTop5,   result.postCoeff,   result.postSimCoeffVal,   '');
   return html;
 }
 
@@ -332,7 +263,6 @@ function _renderManualBlock(matrix, block) {
   if (actualFlips.length === 0) {
     advice = `<div class="m-sens-advice">${block.label}係數已接近均衡，無顯著調整建議。</div>`;
   } else {
-    // 取維度（依出現順序去重，最多 3 個）
     const dimSeen = {};
     const dimsToFix = [];
     actualFlips.forEach(a => {
@@ -340,10 +270,10 @@ function _renderManualBlock(matrix, block) {
     });
     const partsToFix = top3.map(([pi]) => PART_LABELS[parseInt(pi)]);
     const dimText = dimsToFix.slice(0, 3).join('、') + (dimsToFix.length > 3 ? ' 等' : '');
-    advice = `<div class="m-sens-advice">建議從 <b>${partsToFix.join('、')}</b> 開始思考${block.label}係數調整<br><span class="m-sens-advice-dim">涉及維度：${dimText}</span></div>`;
+    advice = `<div class="m-sens-advice">建議從 <b>${partsToFix.join('、')}</b> 開始思考${block.label}係數調整<br><span class="m-sens-advice-dim">涉及維度:${dimText}</span></div>`;
   }
 
-  // 顴建議（眉眼鼻靜多，無連動對象）
+  // 顴建議
   let guanWarn = '';
   if (hasGuan) {
     guanWarn = `<div class="m-sens-guan">⚠ 建議調顴（眉眼鼻靜多，無連動對象）</div>`;
@@ -372,7 +302,6 @@ function _renderManualBlock(matrix, block) {
     </details>
   `;
 
-  // 組合
   return `
     <div class="m-sens-block">
       <div class="m-sens-block-header">
