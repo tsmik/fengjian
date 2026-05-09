@@ -709,8 +709,11 @@ function renderOptions(qid, curVal, opts) {
     const sel = curVal === v ? 'm-opt-selected' : '';
     return `
       <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}">
-        <span class="m-opt-v">${escapeHtml(v)}</span>
-        ${hint ? `<span class="m-opt-hint">${escapeHtml(hint)}</span>` : ''}
+        <span class="m-opt-row">
+          <span class="m-opt-v">${escapeHtml(v)}</span>
+          ${hint ? `<span class="m-opt-hint-icon" data-hint-toggle="1" aria-label="說明">ⓘ</span>` : ''}
+        </span>
+        ${hint ? `<span class="m-opt-hint is-hidden">${escapeHtml(hint)}</span>` : ''}
       </button>
     `;
   }).join('');
@@ -822,9 +825,23 @@ function bindEvents() {
     });
   });
 
+  // hint ⓘ 圖示：點開/收合該選項的 hint 文字（不觸發答題）
+  _root.querySelectorAll('.m-opt-hint-icon').forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const btn = icon.closest('.m-opt');
+      if (!btn) return;
+      const hint = btn.querySelector('.m-opt-hint');
+      if (hint) hint.classList.toggle('is-hidden');
+    });
+  });
+
   // 答題（toggle：點已選的選項再點一次 → 取消選取）
   _root.querySelectorAll('.m-opt').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      // 點 ⓘ 圖示不算答題（hint icon 自己 stopPropagation 已擋；雙重保險）
+      if (e.target.closest('[data-hint-toggle]')) return;
       e.stopPropagation();
       const qid = btn.dataset.qid;
       const val = btn.dataset.val;
