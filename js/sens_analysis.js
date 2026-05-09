@@ -139,87 +139,11 @@ export function renderSensPage(){
   recalcFromObs();
 
   // ===== 運氣係數分析 =====
-  var LUCK_DIMS=[6,7,8];
-  var LUCK_NAMES=['順逆','分合','真假'];
+  // patch 9: LUCK_DIMS / 5 輪累積抽到 module-level（桌機跟手機共用）
+  var LUCK_NAMES=['順逆','分合','真假']; // dead code 保留不擴大改動範圍
   var luckCoeffVal=avgCoeff(data, LUCK_DIMS);
   var baseLuckCoeffNum=parseFloat(luckCoeffVal);
-
-  // 貪婪累積選擇：5 輪 loop
-  var luckTop5=[];
-  var luckUsedIds={};
-  var luckCumObs=JSON.parse(JSON.stringify(origObs));
-
-  for(var _luRound=0;_luRound<5;_luRound++){
-    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
-    recalcFromObs();
-    var roundLuckCoeffs=[];
-    for(var _lrc=0;_lrc<13;_lrc++){var _lrcr=calcDim(data,_lrc);roundLuckCoeffs.push(_lrcr?_lrcr.coeff:0);}
-    var roundBaseLuckCoeff=parseFloat(avgCoeff(data, LUCK_DIMS));
-
-    var luckRoundBest=null;
-    var luckRoundBestScore=0;
-
-    allQs.forEach(function(q){
-      if(luckUsedIds[q.id])return;
-      var curVal=luckCumObs[q.id]||'';
-      var bestTotal=0,bestOpt=null;
-
-      q.opts.forEach(function(opt){
-        var v=typeof opt==='string'?opt:opt.v;
-        if(v===curVal)return;
-        setObsData(JSON.parse(JSON.stringify(luckCumObs)));
-        obsData[q.id]=v;
-        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-        recalcFromObs();
-
-        var _lSumMin=0,_lSumMax=0;
-        LUCK_DIMS.forEach(function(di){
-          var nr=calcDim(data, di);if(nr){_lSumMin+=Math.min(nr.a,nr.b);_lSumMax+=Math.max(nr.a,nr.b);}
-        });
-        var newLuckCoeff=_lSumMax>0?_lSumMin/_lSumMax:0;
-        var lMain=newLuckCoeff-roundBaseLuckCoeff;
-
-        // 跨維度連帶效應（相對於本輪起始狀態）
-        var crossBonus=0;
-        [0,1,2,3,4,5,9,10,11,12].forEach(function(di){
-          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-          var improve=nc-roundLuckCoeffs[di];
-          if(improve>0.001)crossBonus+=improve;
-        });
-
-        if(lMain<=0)return;
-        var lScore=lMain+crossBonus*0.1;
-        if(lScore>bestTotal){
-          bestTotal=lScore;
-          bestOpt=v;
-        }
-      });
-
-      if(bestTotal>0 && bestTotal>luckRoundBestScore){
-        luckRoundBestScore=bestTotal;
-        luckRoundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bestOpt:bestOpt,paired:q.paired};
-      }
-    });
-
-    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
-    recalcFromObs();
-
-    if(!luckRoundBest)break;
-
-    luckCumObs[luckRoundBest.id]=luckRoundBest.bestOpt;
-    if(luckRoundBest.paired){
-      luckCumObs[luckRoundBest.id+'_L']=luckRoundBest.bestOpt;
-      luckCumObs[luckRoundBest.id+'_R']=luckRoundBest.bestOpt;
-    }
-    luckUsedIds[luckRoundBest.id]=true;
-    luckTop5.push(luckRoundBest);
-  }
-
-  // 還原全域狀態
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  var luckTop5 = runLuckAccumulate(allQs, origObs, origData, origOverride);
 
   // 模擬運氣 Top5 全翻轉，並驗收：若反而下降則從尾端回退
   var luckSimData=null, luckSimCoeffVal='';
@@ -258,111 +182,18 @@ export function renderSensPage(){
   recalcFromObs();
 
   // ===== 後天係數分析 =====
-  var POST_DIMS=[9,10,11,12];
-  var POST_NAMES=['攻守','奇正','虛實','進退'];
+  // patch 9: POST_DIMS / POST_NAMES / 5 輪累積抽到 module-level（桌機跟手機共用）
   var postCoeffVal=avgCoeff(data, POST_DIMS);
   var basePostCoeffs=[];
   POST_DIMS.forEach(function(di){basePostCoeffs.push(baseCoeffs[di]);});
-  // 找短板（離 0.80 最遠的）
+  // 找短板（離 0.80 最遠的）— render 用
   var postMinIdx=0;
   var postMaxGap=Math.abs(0.80-basePostCoeffs[0]);
   basePostCoeffs.forEach(function(c,i){
     var gap=Math.abs(0.80-c);
     if(gap>postMaxGap){postMaxGap=gap;postMinIdx=i;}
   });
-
-  // 貪婪累積選擇：5 輪 loop，每輪基於上一輪累積結果重新評估
-  var postTop5=[];
-  var postUsedIds={};
-  var postCumObs=JSON.parse(JSON.stringify(origObs));
-
-  for(var _round=0;_round<5;_round++){
-    setObsData(JSON.parse(JSON.stringify(postCumObs)));
-    recalcFromObs();
-    var roundBaseCoeffs=[];
-    for(var _rd=0;_rd<13;_rd++){var _rr=calcDim(data,_rd);roundBaseCoeffs.push(_rr?_rr.coeff:0);}
-    var roundBasePostCoeff=parseFloat(avgCoeff(data, POST_DIMS));
-    var roundBasePostCoeffs=[];
-    POST_DIMS.forEach(function(di){roundBasePostCoeffs.push(roundBaseCoeffs[di]);});
-    // 本輪短板（隨累積變化會更新）
-    var roundPostMinIdx=0;
-    var roundPostMaxGap=Math.abs(0.80-roundBasePostCoeffs[0]);
-    roundBasePostCoeffs.forEach(function(c,i){
-      var gap=Math.abs(0.80-c);
-      if(gap>roundPostMaxGap){roundPostMaxGap=gap;roundPostMinIdx=i;}
-    });
-
-    var roundBest=null;
-    var roundBestScore=0;
-
-    allQs.forEach(function(q){
-      if(postUsedIds[q.id])return;
-      var curVal=postCumObs[q.id]||'';
-      var bestTotal=0,bestOpt=null;
-
-      q.opts.forEach(function(opt){
-        var v=typeof opt==='string'?opt:opt.v;
-        if(v===curVal)return;
-        setObsData(JSON.parse(JSON.stringify(postCumObs)));
-        obsData[q.id]=v;
-        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-        recalcFromObs();
-
-        var _pSumMin=0,_pSumMax=0;
-        POST_DIMS.forEach(function(di){
-          var nr=calcDim(data, di);if(nr){_pSumMin+=Math.min(nr.a,nr.b);_pSumMax+=Math.max(nr.a,nr.b);}
-        });
-        var newPostCoeff=_pSumMax>0?_pSumMin/_pSumMax:0;
-        var pMain=newPostCoeff-roundBasePostCoeff;
-
-        // 短板加權（正負雙向）
-        var _pWeakNew=0;
-        var _pwr=calcDim(data, POST_DIMS[roundPostMinIdx]);
-        if(_pwr)_pWeakNew=_pwr.coeff;
-        var pWeakDelta=Math.abs(0.80-roundBasePostCoeffs[roundPostMinIdx])-Math.abs(0.80-_pWeakNew);
-        pMain+=pWeakDelta*0.5;
-
-        // 跨維度連帶效應（相對於本輪起始狀態）
-        var crossBonus=0;
-        [0,1,2,3,4,5,6,7,8].forEach(function(di){
-          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-          var improve=nc-roundBaseCoeffs[di];
-          if(improve>0.001)crossBonus+=improve;
-        });
-
-        if(pMain<=0)return;
-        var pScore=pMain+crossBonus*0.1;
-        if(pScore>bestTotal){
-          bestTotal=pScore;
-          bestOpt=v;
-        }
-      });
-
-      if(bestTotal>0 && bestTotal>roundBestScore){
-        roundBestScore=bestTotal;
-        roundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bestOpt:bestOpt,paired:q.paired};
-      }
-    });
-
-    setObsData(JSON.parse(JSON.stringify(postCumObs)));
-    recalcFromObs();
-
-    if(!roundBest)break;
-
-    postCumObs[roundBest.id]=roundBest.bestOpt;
-    if(roundBest.paired){
-      postCumObs[roundBest.id+'_L']=roundBest.bestOpt;
-      postCumObs[roundBest.id+'_R']=roundBest.bestOpt;
-    }
-    postUsedIds[roundBest.id]=true;
-    postTop5.push(roundBest);
-  }
-
-  // 還原全域狀態
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  var postTop5 = runPostAccumulate(allQs, origObs, origData, origOverride);
 
   // 模擬後天 Top5 全翻轉，並驗收：若反而下降則從尾端回退
   var postSimData=null, postSimCoeffVal='';
@@ -1388,4 +1219,188 @@ export function runInnateAccumulate(allQs, origObs, origData, origOverride) {
   recalcFromObs();
 
   return innateTop5;
+}
+
+// ===== 運氣 / 後天常數 + 累積（patch 9 抽出）=====
+
+export const LUCK_DIMS = [6, 7, 8];
+export const POST_DIMS = [9, 10, 11, 12];
+export const POST_NAMES = ['攻守', '奇正', '虛實', '進退'];
+
+// 運氣 5 輪貪婪累積：依「運氣大係數提升」+ 跨維度連帶 bonus 取本輪最佳題
+export function runLuckAccumulate(allQs, origObs, origData, origOverride) {
+  var luckTop5 = [];
+  var luckUsedIds = {};
+  var luckCumObs = JSON.parse(JSON.stringify(origObs));
+
+  for (var _luRound = 0; _luRound < 5; _luRound++) {
+    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+    recalcFromObs();
+    var roundLuckCoeffs = [];
+    for (var _lrc = 0; _lrc < 13; _lrc++) { var _lrcr = calcDim(data, _lrc); roundLuckCoeffs.push(_lrcr ? _lrcr.coeff : 0); }
+    var roundBaseLuckCoeff = parseFloat(avgCoeff(data, LUCK_DIMS));
+
+    var luckRoundBest = null;
+    var luckRoundBestScore = 0;
+
+    allQs.forEach(function(q) {
+      if (luckUsedIds[q.id]) return;
+      var curVal = luckCumObs[q.id] || '';
+      var bestTotal = 0, bestOpt = null;
+
+      q.opts.forEach(function(opt) {
+        var v = typeof opt === 'string' ? opt : opt.v;
+        if (v === curVal) return;
+        setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+        obsData[q.id] = v;
+        if (q.paired) { obsData[q.id + '_L'] = v; obsData[q.id + '_R'] = v; }
+        recalcFromObs();
+
+        var _lSumMin = 0, _lSumMax = 0;
+        LUCK_DIMS.forEach(function(di) {
+          var nr = calcDim(data, di); if (nr) { _lSumMin += Math.min(nr.a, nr.b); _lSumMax += Math.max(nr.a, nr.b); }
+        });
+        var newLuckCoeff = _lSumMax > 0 ? _lSumMin / _lSumMax : 0;
+        var lMain = newLuckCoeff - roundBaseLuckCoeff;
+
+        // 跨維度連帶效應
+        var crossBonus = 0;
+        [0, 1, 2, 3, 4, 5, 9, 10, 11, 12].forEach(function(di) {
+          var nr = calcDim(data, di); var nc = nr ? nr.coeff : 0;
+          var improve = nc - roundLuckCoeffs[di];
+          if (improve > 0.001) crossBonus += improve;
+        });
+
+        if (lMain <= 0) return;
+        var lScore = lMain + crossBonus * 0.1;
+        if (lScore > bestTotal) {
+          bestTotal = lScore;
+          bestOpt = v;
+        }
+      });
+
+      if (bestTotal > 0 && bestTotal > luckRoundBestScore) {
+        luckRoundBestScore = bestTotal;
+        luckRoundBest = { id: q.id, text: q.text, part: q.part, curVal: curVal || '未填', score: bestTotal, bestOpt: bestOpt, paired: q.paired };
+      }
+    });
+
+    setObsData(JSON.parse(JSON.stringify(luckCumObs)));
+    recalcFromObs();
+
+    if (!luckRoundBest) break;
+
+    luckCumObs[luckRoundBest.id] = luckRoundBest.bestOpt;
+    if (luckRoundBest.paired) {
+      luckCumObs[luckRoundBest.id + '_L'] = luckRoundBest.bestOpt;
+      luckCumObs[luckRoundBest.id + '_R'] = luckRoundBest.bestOpt;
+    }
+    luckUsedIds[luckRoundBest.id] = true;
+    luckTop5.push(luckRoundBest);
+  }
+
+  // 還原全域狀態
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return luckTop5;
+}
+
+// 後天 5 輪貪婪累積：依「後天大係數提升 + 短板（離 0.80 最遠）加權」+ 跨維度連帶 bonus 取本輪最佳題
+export function runPostAccumulate(allQs, origObs, origData, origOverride) {
+  var postTop5 = [];
+  var postUsedIds = {};
+  var postCumObs = JSON.parse(JSON.stringify(origObs));
+
+  for (var _round = 0; _round < 5; _round++) {
+    setObsData(JSON.parse(JSON.stringify(postCumObs)));
+    recalcFromObs();
+    var roundBaseCoeffs = [];
+    for (var _rd = 0; _rd < 13; _rd++) { var _rr = calcDim(data, _rd); roundBaseCoeffs.push(_rr ? _rr.coeff : 0); }
+    var roundBasePostCoeff = parseFloat(avgCoeff(data, POST_DIMS));
+    var roundBasePostCoeffs = [];
+    POST_DIMS.forEach(function(di) { roundBasePostCoeffs.push(roundBaseCoeffs[di]); });
+    // 本輪短板
+    var roundPostMinIdx = 0;
+    var roundPostMaxGap = Math.abs(0.80 - roundBasePostCoeffs[0]);
+    roundBasePostCoeffs.forEach(function(c, i) {
+      var gap = Math.abs(0.80 - c);
+      if (gap > roundPostMaxGap) { roundPostMaxGap = gap; roundPostMinIdx = i; }
+    });
+
+    var roundBest = null;
+    var roundBestScore = 0;
+
+    allQs.forEach(function(q) {
+      if (postUsedIds[q.id]) return;
+      var curVal = postCumObs[q.id] || '';
+      var bestTotal = 0, bestOpt = null;
+
+      q.opts.forEach(function(opt) {
+        var v = typeof opt === 'string' ? opt : opt.v;
+        if (v === curVal) return;
+        setObsData(JSON.parse(JSON.stringify(postCumObs)));
+        obsData[q.id] = v;
+        if (q.paired) { obsData[q.id + '_L'] = v; obsData[q.id + '_R'] = v; }
+        recalcFromObs();
+
+        var _pSumMin = 0, _pSumMax = 0;
+        POST_DIMS.forEach(function(di) {
+          var nr = calcDim(data, di); if (nr) { _pSumMin += Math.min(nr.a, nr.b); _pSumMax += Math.max(nr.a, nr.b); }
+        });
+        var newPostCoeff = _pSumMax > 0 ? _pSumMin / _pSumMax : 0;
+        var pMain = newPostCoeff - roundBasePostCoeff;
+
+        // 短板加權
+        var _pWeakNew = 0;
+        var _pwr = calcDim(data, POST_DIMS[roundPostMinIdx]);
+        if (_pwr) _pWeakNew = _pwr.coeff;
+        var pWeakDelta = Math.abs(0.80 - roundBasePostCoeffs[roundPostMinIdx]) - Math.abs(0.80 - _pWeakNew);
+        pMain += pWeakDelta * 0.5;
+
+        // 跨維度連帶效應
+        var crossBonus = 0;
+        [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(function(di) {
+          var nr = calcDim(data, di); var nc = nr ? nr.coeff : 0;
+          var improve = nc - roundBaseCoeffs[di];
+          if (improve > 0.001) crossBonus += improve;
+        });
+
+        if (pMain <= 0) return;
+        var pScore = pMain + crossBonus * 0.1;
+        if (pScore > bestTotal) {
+          bestTotal = pScore;
+          bestOpt = v;
+        }
+      });
+
+      if (bestTotal > 0 && bestTotal > roundBestScore) {
+        roundBestScore = bestTotal;
+        roundBest = { id: q.id, text: q.text, part: q.part, curVal: curVal || '未填', score: bestTotal, bestOpt: bestOpt, paired: q.paired };
+      }
+    });
+
+    setObsData(JSON.parse(JSON.stringify(postCumObs)));
+    recalcFromObs();
+
+    if (!roundBest) break;
+
+    postCumObs[roundBest.id] = roundBest.bestOpt;
+    if (roundBest.paired) {
+      postCumObs[roundBest.id + '_L'] = roundBest.bestOpt;
+      postCumObs[roundBest.id + '_R'] = roundBest.bestOpt;
+    }
+    postUsedIds[roundBest.id] = true;
+    postTop5.push(roundBest);
+  }
+
+  // 還原全域狀態
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return postTop5;
 }
