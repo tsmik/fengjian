@@ -91,120 +91,8 @@ export function renderSensPage(){
   var baseMgrCoeffs = _bm.baseMgrCoeffs;
   var mgrMinIdx = _bm.mgrMinIdx;
 
-  // 貪婪累積選擇：5 輪 loop，每輪基於上一輪累積結果重新評估
-  var innateTop5=[];
-  var innateUsedIds={};
-  var innateCumObs=JSON.parse(JSON.stringify(origObs));
-
-  for(var _innRound=0;_innRound<5;_innRound++){
-    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
-    recalcFromObs();
-    var roundCoeffs=[];
-    for(var _rc=0;_rc<13;_rc++){var _rcr=calcDim(data,_rc);roundCoeffs.push(_rcr?_rcr.coeff:0);}
-    // 本輪老闆基準（靜側達標分數 + 是否已達標）
-    var roundBossScores=[];
-    var roundBossReached=[];
-    BOSS_TARGETS.forEach(function(bt){
-      if(bt.target!==null){
-        var ss=_bossStaticScore(bt.di);
-        roundBossScores.push(ss);
-        roundBossReached.push(ss>=bt.target);
-      }else{
-        roundBossScores.push(roundCoeffs[bt.di]);
-        roundBossReached.push(false);
-      }
-    });
-    // 本輪主管基準
-    var roundMgrCoeffs=[];
-    MGR_DIMS.forEach(function(di){roundMgrCoeffs.push(roundCoeffs[di]);});
-    var roundMgrMinIdx=0;
-    roundMgrCoeffs.forEach(function(c,i){if(c<roundMgrCoeffs[roundMgrMinIdx])roundMgrMinIdx=i;});
-
-    var innateRoundBest=null;
-    var innateRoundBestScore=0;
-
-    allQs.forEach(function(q){
-      if(innateUsedIds[q.id])return;
-      var curVal=innateCumObs[q.id]||'';
-      var bestTotal=0,bestBoss=0,bestMgr=0,bestOpt=null;
-
-      q.opts.forEach(function(opt){
-        var v=typeof opt==='string'?opt:opt.v;
-        if(v===curVal)return;
-        setObsData(JSON.parse(JSON.stringify(innateCumObs)));
-        obsData[q.id]=v;
-        if(q.paired){obsData[q.id+'_L']=v;obsData[q.id+'_R']=v;}
-        recalcFromObs();
-
-        // 老闆分數
-        var bScore=0;
-        BOSS_TARGETS.forEach(function(bt,idx){
-          if(roundBossReached[idx])return;
-          var improve;
-          if(bt.target!==null){
-            var newSS=_bossStaticScore(bt.di);
-            improve=newSS-roundBossScores[idx];
-            if(improve<=0)return;
-            if(newSS>bt.target)improve=Math.max(0,bt.target-roundBossScores[idx]);
-          }else{
-            var nr=calcDim(data, bt.di);var nc=nr?nr.coeff:0;
-            improve=nc-roundBossScores[idx];
-            if(improve<=0)return;
-          }
-          bScore+=improve*bt.weight;
-        });
-
-        // 主管分數
-        var mImprovements=[];
-        MGR_DIMS.forEach(function(di,idx){
-          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-          mImprovements.push(Math.max(0,nc-roundMgrCoeffs[idx]));
-        });
-        var mAvg=mImprovements.reduce(function(s,v){return s+v;},0)/3;
-        var mWeak=mImprovements[roundMgrMinIdx];
-        var mScore=mAvg+mWeak*2;
-
-        // 跨維度連帶效應（相對於本輪起始狀態）
-        var innateCrossBonus=0;
-        [6,7,8,9,10,11,12].forEach(function(di){
-          var nr=calcDim(data, di);var nc=nr?nr.coeff:0;
-          var improve=nc-roundCoeffs[di];
-          if(improve>0.001)innateCrossBonus+=improve;
-        });
-        var totalScore=bScore+mScore+innateCrossBonus*0.1;
-        if(totalScore>bestTotal){
-          bestTotal=totalScore;
-          bestBoss=bScore;
-          bestMgr=mScore;
-          bestOpt=v;
-        }
-      });
-
-      if(bestTotal>0 && bestTotal>innateRoundBestScore){
-        innateRoundBestScore=bestTotal;
-        innateRoundBest={id:q.id,text:q.text,part:q.part,curVal:curVal||'未填',score:bestTotal,bossScore:bestBoss,mgrScore:bestMgr,bestOpt:bestOpt,paired:q.paired};
-      }
-    });
-
-    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
-    recalcFromObs();
-
-    if(!innateRoundBest)break;
-
-    innateCumObs[innateRoundBest.id]=innateRoundBest.bestOpt;
-    if(innateRoundBest.paired){
-      innateCumObs[innateRoundBest.id+'_L']=innateRoundBest.bestOpt;
-      innateCumObs[innateRoundBest.id+'_R']=innateRoundBest.bestOpt;
-    }
-    innateUsedIds[innateRoundBest.id]=true;
-    innateTop5.push(innateRoundBest);
-  }
-
-  // 還原全域狀態
-  setObsData(JSON.parse(JSON.stringify(origObs)));
-  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
-  setData(JSON.parse(JSON.stringify(origData)));
-  recalcFromObs();
+  // patch 8: 5 輪貪婪累積抽到 module-level export function（桌機跟手機共用）
+  var innateTop5 = runInnateAccumulate(allQs, origObs, origData, origOverride);
 
   // ===== 模擬 Top5 全翻轉，並驗收：老闆 AND 主管都不下降 =====
   var simData=null, simCoeffs=[], simBossCoeffVal='', simMgrCoeffVal='', simInnateCoeffVal='';
@@ -1372,4 +1260,132 @@ export function runBossMgrBaseline(baseCoeffs) {
     baseMgrCoeffs: baseMgrCoeffs,
     mgrMinIdx: mgrMinIdx
   };
+}
+
+// ===== 先天 5 輪貪婪累積（patch 8 抽出，桌機跟手機共用）=====
+//
+// 每輪基於上一輪累積結果（innateCumObs）對所有題試翻轉，
+// 計算 bScore（老闆改善分數）+ mScore（主管改善分數）+ innateCrossBonus（運氣後天連帶 0.1 倍）
+// 取本輪最高分那一題、加進 innateCumObs，下一輪繼續，最多 5 輪
+// 結束時還原 obsData/data/obsOverride（caller 看到的 state 跟進來時一樣）
+//
+// 依賴：BOSS_TARGETS / MGR_DIMS / _bossStaticScore（module-level）
+export function runInnateAccumulate(allQs, origObs, origData, origOverride) {
+  var innateTop5 = [];
+  var innateUsedIds = {};
+  var innateCumObs = JSON.parse(JSON.stringify(origObs));
+
+  for (var _innRound = 0; _innRound < 5; _innRound++) {
+    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+    recalcFromObs();
+    var roundCoeffs = [];
+    for (var _rc = 0; _rc < 13; _rc++) { var _rcr = calcDim(data, _rc); roundCoeffs.push(_rcr ? _rcr.coeff : 0); }
+
+    // 本輪老闆基準
+    var roundBossScores = [];
+    var roundBossReached = [];
+    BOSS_TARGETS.forEach(function(bt) {
+      if (bt.target !== null) {
+        var ss = _bossStaticScore(bt.di);
+        roundBossScores.push(ss);
+        roundBossReached.push(ss >= bt.target);
+      } else {
+        roundBossScores.push(roundCoeffs[bt.di]);
+        roundBossReached.push(false);
+      }
+    });
+
+    // 本輪主管基準
+    var roundMgrCoeffs = [];
+    MGR_DIMS.forEach(function(di) { roundMgrCoeffs.push(roundCoeffs[di]); });
+    var roundMgrMinIdx = 0;
+    roundMgrCoeffs.forEach(function(c, i) { if (c < roundMgrCoeffs[roundMgrMinIdx]) roundMgrMinIdx = i; });
+
+    var innateRoundBest = null;
+    var innateRoundBestScore = 0;
+
+    allQs.forEach(function(q) {
+      if (innateUsedIds[q.id]) return;
+      var curVal = innateCumObs[q.id] || '';
+      var bestTotal = 0, bestBoss = 0, bestMgr = 0, bestOpt = null;
+
+      q.opts.forEach(function(opt) {
+        var v = typeof opt === 'string' ? opt : opt.v;
+        if (v === curVal) return;
+        setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+        obsData[q.id] = v;
+        if (q.paired) { obsData[q.id + '_L'] = v; obsData[q.id + '_R'] = v; }
+        recalcFromObs();
+
+        // 老闆分數
+        var bScore = 0;
+        BOSS_TARGETS.forEach(function(bt, idx) {
+          if (roundBossReached[idx]) return;
+          var improve;
+          if (bt.target !== null) {
+            var newSS = _bossStaticScore(bt.di);
+            improve = newSS - roundBossScores[idx];
+            if (improve <= 0) return;
+            if (newSS > bt.target) improve = Math.max(0, bt.target - roundBossScores[idx]);
+          } else {
+            var nr = calcDim(data, bt.di); var nc = nr ? nr.coeff : 0;
+            improve = nc - roundBossScores[idx];
+            if (improve <= 0) return;
+          }
+          bScore += improve * bt.weight;
+        });
+
+        // 主管分數
+        var mImprovements = [];
+        MGR_DIMS.forEach(function(di, idx) {
+          var nr = calcDim(data, di); var nc = nr ? nr.coeff : 0;
+          mImprovements.push(Math.max(0, nc - roundMgrCoeffs[idx]));
+        });
+        var mAvg = mImprovements.reduce(function(s, v) { return s + v; }, 0) / 3;
+        var mWeak = mImprovements[roundMgrMinIdx];
+        var mScore = mAvg + mWeak * 2;
+
+        // 跨維度連帶效應（相對於本輪起始狀態）
+        var innateCrossBonus = 0;
+        [6, 7, 8, 9, 10, 11, 12].forEach(function(di) {
+          var nr = calcDim(data, di); var nc = nr ? nr.coeff : 0;
+          var improve = nc - roundCoeffs[di];
+          if (improve > 0.001) innateCrossBonus += improve;
+        });
+        var totalScore = bScore + mScore + innateCrossBonus * 0.1;
+        if (totalScore > bestTotal) {
+          bestTotal = totalScore;
+          bestBoss = bScore;
+          bestMgr = mScore;
+          bestOpt = v;
+        }
+      });
+
+      if (bestTotal > 0 && bestTotal > innateRoundBestScore) {
+        innateRoundBestScore = bestTotal;
+        innateRoundBest = { id: q.id, text: q.text, part: q.part, curVal: curVal || '未填', score: bestTotal, bossScore: bestBoss, mgrScore: bestMgr, bestOpt: bestOpt, paired: q.paired };
+      }
+    });
+
+    setObsData(JSON.parse(JSON.stringify(innateCumObs)));
+    recalcFromObs();
+
+    if (!innateRoundBest) break;
+
+    innateCumObs[innateRoundBest.id] = innateRoundBest.bestOpt;
+    if (innateRoundBest.paired) {
+      innateCumObs[innateRoundBest.id + '_L'] = innateRoundBest.bestOpt;
+      innateCumObs[innateRoundBest.id + '_R'] = innateRoundBest.bestOpt;
+    }
+    innateUsedIds[innateRoundBest.id] = true;
+    innateTop5.push(innateRoundBest);
+  }
+
+  // 還原全域狀態
+  setObsData(JSON.parse(JSON.stringify(origObs)));
+  setObsOverride(JSON.parse(JSON.stringify(origOverride)));
+  setData(JSON.parse(JSON.stringify(origData)));
+  recalcFromObs();
+
+  return innateTop5;
 }
