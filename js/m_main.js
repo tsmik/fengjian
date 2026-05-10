@@ -19,6 +19,7 @@ import {
 import { initHome } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
+import { mountManual, unmountManual } from "./m_manual.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -195,18 +196,21 @@ initAuth();
   const pages={
     home:document.getElementById('m-page-home'),
     input:document.getElementById('m-page-input'),
+    manual:document.getElementById('m-page-manual'),
     report:document.getElementById('m-page-report')
   };
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
       const key=btn.dataset.tab;
-      // 攔截：input ↔ report 視為「同一工作區」不 confirm；切到 home 才 confirm
+      // 攔截：input ↔ manual ↔ report 視為「同一工作區」不 confirm；切到 home 才 confirm
       const inputTabBtn = document.querySelector('.m-tab[data-tab="input"]');
       const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
+      const manualTabBtn = document.querySelector('.m-tab[data-tab="manual"]');
       const isOnInput = inputTabBtn && inputTabBtn.classList.contains('active');
       const isOnReport = reportTabBtn && reportTabBtn.classList.contains('active');
-      const isCurrentWork = isOnInput || isOnReport;
-      const isTargetWork = key === 'input' || key === 'report';
+      const isOnManual = manualTabBtn && manualTabBtn.classList.contains('active');
+      const isCurrentWork = isOnInput || isOnReport || isOnManual;
+      const isTargetWork = key === 'input' || key === 'report' || key === 'manual';
       if (isCurrentWork && !isTargetWork && getSaveStatus() === 'dirty') {
         if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
         if (isOnInput) discardDraft();
@@ -227,12 +231,19 @@ initAuth();
       if(key==='input'){
         mountInput(pages.input);
         unmountReport();
+        unmountManual();
       } else if(key==='report'){
         unmountInput();
         mountReport(pages.report);
+        unmountManual();
+      } else if(key==='manual'){
+        unmountInput();
+        unmountReport();
+        mountManual(pages.manual);
       } else {
         unmountInput();
         unmountReport();
+        unmountManual();
       }
     });
   });
