@@ -53,8 +53,8 @@ let _root = null;
 let _view = 'quiz';      // 'quiz' | 'report' — 上層 segmented
 let _quizMode = 'part';  // 'part' | 'dim'   — 答題 view 內部視角切換
 let _draft = {};
-let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline 的 JSON fingerprint，用於判斷 firestore 是否變過
-let _firstSyncCheck = true;            // 本次 app 載入第一次 mountInput？(cross-session LS vs firestore 對比只在第一次做)
+let _draftInitialized = false;          // 本次 app 載入是否已初始化 _draft（從 firestore 設過）
+let _baselineFingerprintAtMount = '';   // mount 時 firestore baseline 的 JSON fingerprint，用於判斷 firestore 是否變過
 let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
@@ -1027,14 +1027,14 @@ export async function mountInput(rootEl) {
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
   loadDimState();
 
-  // Baseline 用既有 window.__userData 快取（先 render，背景再 refresh）
-  const hasLocalDraft = _loadBaselineFromUserData();
+  // v1.7 階段 A 簡化：mount 時不讀 LS，永遠用 firestore baseline 當 _draft（last-write-wins by Firestore）
+  // same-session 切 tab 用既有 _draft（保留 user 答題編輯，不 reset）
+  // cross-session（重整）→ module reload → _draftInitialized=false → 重新從 firestore 初始化
+  _loadBaselineFromUserData();
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
   debugLog('[Sync]', 'mount: baseline keys=', Object.keys(_firestoreBaseline).length,
            'baseline len=', _baselineFingerprintAtMount.length,
-           'draft keys=', Object.keys(_draft).length,
-           'draft len=', JSON.stringify(_draft).length,
-           'hasLS=', hasLocalDraft);
+           'draft initialized=', _draftInitialized);
 
   // 維度視角需要 condResults：載 DIM_RULES + 用當前 _draft（含草稿）算一次
   // 失敗不影響部位視角；DIM panel 顯示「無規則」/「0/0」是可接受退化
@@ -1046,7 +1046,9 @@ export async function mountInput(rootEl) {
     debugLog('[m_input]', '維度視角初始化失敗（可忽略）', e && e.message);
   }
 
-  setSaveStatus(hasLocalDraft ? 'dirty' : 'saved');
+  // _draft 永遠 = firestoreBaseline（剛 mount 時），mount 時必為 saved 狀態
+  // user 開始答題後 _markDirty 才轉 dirty
+  setSaveStatus('saved');
 
   // 綁儲存按鈕（每次 mount 用 .onclick 覆寫，避免累積 listener）
   const saveBtn = document.getElementById('m-save-btn');
@@ -1055,11 +1057,7 @@ export async function mountInput(rootEl) {
   render();
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 兩個情境都要強制以 firestore 為主：
-  //   (1) mount 後 firestore 又變了（其他裝置寫過）
-  //   (2) 本次 app 載入「第一次」mount，且 LS draft 跟 firestore baseline 不同
-  //       → 表示 LS 是 cross-session 殘留（其他裝置已寫進 firestore）
-  //   same-session 切 tab 不會清 LS（保留 user 答題編輯）
+  // mount 後 firestore 變了（其他裝置寫過）→ 強制以 firestore 為主
   refreshUserData().then((ok) => {
     if (!_root || !ok) return;
     const ud = window.__userData || {};
@@ -1068,18 +1066,11 @@ export async function mountInput(rootEl) {
       try { newBaseline = JSON.parse(ud.obsJson) || {}; } catch (e) {}
     }
     const newFingerprint = JSON.stringify(newBaseline);
-    const draftFingerprint = JSON.stringify(_draft);
     const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
-    const lsDifferentFromFirestore = draftFingerprint !== newFingerprint;
-    const shouldOverride = firestoreChanged || (_firstSyncCheck && lsDifferentFromFirestore);
     debugLog('[Sync]', 'after refresh: firestoreChanged=', firestoreChanged,
-             'lsDiff=', lsDifferentFromFirestore,
-             'firstCheck=', _firstSyncCheck,
-             'override=', shouldOverride,
              'newBase len=', newFingerprint.length);
-    _firstSyncCheck = false;
-    if (!shouldOverride) return;
-    // 強制以 firestore 為主，丟 LS draft
+    if (!firestoreChanged) return;
+    // firestore 變了 → 強制以 firestore 為主
     _firestoreBaseline = newBaseline;
     _draft = JSON.parse(JSON.stringify(newBaseline));
     _baselineFingerprintAtMount = newFingerprint;
@@ -1089,13 +1080,13 @@ export async function mountInput(rootEl) {
       recalcFromObs();
     } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_input：以 firestore 為主，已覆蓋本地 LS draft',
-             firestoreChanged ? '(firestore 變過)' : '(LS 跨 session 殘留)');
+    debugLog('[Sync]', 'm_input：firestore 較新，已覆蓋');
     render();
   });
 }
 
-// 從 window.__userData 載入 baseline + LS draft，回傳 hasLocalDraft
+// 從 window.__userData 載入 baseline；first mount of session 也初始化 _draft = baseline
+// 不再讀 LS draft（避免 cross-device sync 衝突，以 firestore 為唯一 source of truth）
 function _loadBaselineFromUserData() {
   const ud = window.__userData || {};
   let firestoreObs = {};
@@ -1104,32 +1095,12 @@ function _loadBaselineFromUserData() {
   }
   _firestoreBaseline = firestoreObs;
   setObsData(JSON.parse(JSON.stringify(firestoreObs)));
-
-  let hasLocalDraft = false;
-  try {
-    const raw = localStorage.getItem(getLsKey());
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-        _draft = parsed;
-        hasLocalDraft = true;
-      }
-    }
-  } catch (e) {}
-  if (!hasLocalDraft) {
+  if (!_draftInitialized) {
     _draft = JSON.parse(JSON.stringify(firestoreObs));
+    _draftInitialized = true;
+    // 順便清 LS 殘留（避免 user 看 dev tools 看到舊資料困惑）
+    try { localStorage.removeItem(getLsKey()); } catch (e) {}
   }
-  return hasLocalDraft;
-}
-
-// 純檢查 LS 是否有非空 draft（不改 _draft / _firestoreBaseline）
-function _hasLocalDraftCheck() {
-  try {
-    const raw = localStorage.getItem(getLsKey());
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0;
-  } catch (e) { return false; }
 }
 
 export function unmountInput() {

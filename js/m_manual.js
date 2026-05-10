@@ -44,7 +44,7 @@ let _firestoreBaseline = null;
 let _manualDimIdx = null;
 let _isSavingManual = false;
 let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline JSON fingerprint
-let _firstSyncCheck = true;            // 本次 app 載入第一次 mountManual？
+let _draftInitialized = false;         // 本次 app 載入是否已初始化 _manualDraft（從 firestore）
 
 const PART_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
 const DIM_ROW_1_IDX = [0, 1, 2, 3, 4, 5];
@@ -73,16 +73,16 @@ function _initBaseline() {
   _firestoreBaseline = baseline;
 }
 
+// v1.7 階段 A：mount 不讀 LS，永遠用 firestore baseline 當 _manualDraft
+// same-session 切 tab 用既有 _manualDraft；cross-session（重整）→ 重新初始化
 function _loadManualDraft() {
   _initBaseline();
-  _manualDraft = JSON.parse(JSON.stringify(_firestoreBaseline));
-  try {
-    const s = localStorage.getItem(_getLsKey());
-    if (s) {
-      const arr = JSON.parse(s);
-      if (Array.isArray(arr) && arr.length === 13) _manualDraft = arr;
-    }
-  } catch (e) {}
+  if (!_draftInitialized) {
+    _manualDraft = JSON.parse(JSON.stringify(_firestoreBaseline));
+    _draftInitialized = true;
+    // 清 LS 殘留
+    try { localStorage.removeItem(_getLsKey()); } catch (e) {}
+  }
 }
 
 function _hasLocalDraft() {
@@ -122,17 +122,14 @@ export function mountManual(container) {
   _loadManualDraft();
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
   _render();
-  setSaveStatus(_hasLocalDraft() ? 'dirty' : 'saved');
+  // mount 時必為 saved（_draft = firestore baseline，無 LS 殘留）；user 改才轉 dirty
+  setSaveStatus('saved');
   // 綁儲存按鈕（覆蓋 m_input.js 的綁定）
   const saveBtn = document.getElementById('m-save-btn');
   if (saveBtn) saveBtn.onclick = handleManualSave;
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 兩個情境都要強制以 firestore 為主：
-  //   (1) mount 後 firestore 又變了（其他裝置寫過）
-  //   (2) 本次 app 載入「第一次」mount，且 LS draft 跟 firestore baseline 不同
-  //       → 表示 LS 是 cross-session 殘留
-  //   same-session 切 tab 不會清 LS（保留 user 答題編輯）
+  // mount 後 firestore 變了 → 強制以 firestore 為主
   refreshUserData().then((ok) => {
     if (!_container || !ok) return;
     const ud = window.__userData || {};
@@ -145,19 +142,13 @@ export function mountManual(container) {
     } catch (e) {}
     if (!newBaseline) newBaseline = _newEmptyMatrix();
     const newFingerprint = JSON.stringify(newBaseline);
-    const draftFingerprint = JSON.stringify(_manualDraft);
-    const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
-    const lsDifferentFromFirestore = draftFingerprint !== newFingerprint;
-    const shouldOverride = firestoreChanged || (_firstSyncCheck && lsDifferentFromFirestore);
-    _firstSyncCheck = false;
-    if (!shouldOverride) return;
+    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
     _firestoreBaseline = newBaseline;
     _manualDraft = JSON.parse(JSON.stringify(newBaseline));
     _baselineFingerprintAtMount = newFingerprint;
     try { localStorage.removeItem(_getLsKey()); } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_manual：以 firestore 為主，已覆蓋本地 LS draft',
-             firestoreChanged ? '(firestore 變過)' : '(LS 跨 session 殘留)');
+    debugLog('[Sync]', 'm_manual：firestore 較新，已覆蓋');
     _render();
   });
 }
