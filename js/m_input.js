@@ -24,7 +24,7 @@ import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
-import { mountReport, unmountReport } from './m_report.js';
+import { mountAutoView, unmountAutoView } from './m_report.js';
 
 // v1.7 階段 3：上層 segmented [答題 | 報告]，答題 view 內部 part/dim 視角切換
 const SUBMODES = [
@@ -331,14 +331,14 @@ function renderReportView() {
   // 報告 view：保留上層 segmented（答題 / 報告），下方 mount m_report.js（auto only）
   const seg = renderSegmented();
   // 切過來前先 unmount 舊的（保險）
-  unmountReport();
+  unmountAutoView();
   _root.innerHTML = `
     <div class="m-segmented">${seg}</div>
     <div class="m-submode-content"><div id="m-input-report-mount"></div></div>
   `;
   bindEvents();
   const reportContainer = _root.querySelector('#m-input-report-mount');
-  if (reportContainer) mountReport(reportContainer);
+  if (reportContainer) mountAutoView(reportContainer);
 }
 
 function renderSegmented() {
@@ -854,7 +854,7 @@ function bindEvents() {
       const key = btn.dataset.submode;
       if (_view === key) return;
       // 從 report 切回 quiz 時，主動 unmount m_report（清掉 _container 引用）
-      if (_view === 'report' && key === 'quiz') unmountReport();
+      if (_view === 'report' && key === 'quiz') unmountAutoView();
       _view = key;
       try { localStorage.setItem('m_input_view', _view); } catch (e) {}
       render();
@@ -1126,6 +1126,6 @@ function _loadBaselineFromUserData() {
 
 export function unmountInput() {
   // 若 input tab 內 mount 了 m_report（報告 view），切走時連帶 unmount，避免 _container 殘留
-  unmountReport();
+  unmountAutoView();
   _root = null;
 }

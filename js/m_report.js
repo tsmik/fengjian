@@ -27,6 +27,7 @@ import { renderAutoSens } from './m_sens.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 let _container = null;
+let _isListMode = false;     // mountReport 進「報告 tab」是 list 模式；mountAutoView 進「input 報告 view」是 auto 模式
 
 // 重要參數分析 view（覆蓋 report content；不持久化，每次進報告分頁從 'report' 開始）
 let _view = 'report';      // 'report' | 'sens'
@@ -34,21 +35,80 @@ let _isLoadingSens = false; // 自動版需先載 DIM_RULES + obsData baseline �
 
 // ===== mount / unmount =====
 
+// 報告 tab（純看，兩份報告卡片）— v1.7 階段 4
 export function mountReport(container) {
   _container = container;
-  _render();
+  _isListMode = true;
+  _renderList();
 }
 
 export function unmountReport() {
   if (_container) _container.innerHTML = '';
   _container = null;
-  // 重設分析 view 狀態：下次再進報告分頁從 report view 開始
+  _isListMode = false;
+  _view = 'report';
+  _isLoadingSens = false;
+}
+
+// 自動報告 view（給 m_input.js 內部報告 view mount 用）
+export function mountAutoView(container) {
+  _container = container;
+  _isListMode = false;
+  _view = 'report';
+  _isLoadingSens = false;
+  _render();
+}
+
+export function unmountAutoView() {
+  if (_container && !_isListMode) {
+    _container.innerHTML = '';
+    _container = null;
+  }
   _view = 'report';
   _isLoadingSens = false;
 }
 
 // 自動報告無 draft，保留介面相容（m_main.js confirm 流程仍會呼叫）
 export function discardReportDraft() {}
+
+// 報告 tab list mode：兩份報告卡片，點擊跳對應 tab 的報告 view
+function _renderList() {
+  if (!_container) return;
+  _container.innerHTML = `
+    <div class="m-report-list">
+      <div class="m-report-card" data-report-card="auto">
+        <div class="m-report-card-icon">📊</div>
+        <div class="m-report-card-meta">
+          <div class="m-report-card-title">自動報告</div>
+          <div class="m-report-card-desc">依觀察答題自動推算 13 維度 · 詳盡 PNG · 重要參數分析</div>
+        </div>
+        <div class="m-report-card-arrow">›</div>
+      </div>
+      <div class="m-report-card" data-report-card="manual">
+        <div class="m-report-card-icon">📋</div>
+        <div class="m-report-card-meta">
+          <div class="m-report-card-title">手動兵法報告</div>
+          <div class="m-report-card-desc">手動輸入 13 維度動靜 · 詳盡 PNG · 重要參數分析</div>
+        </div>
+        <div class="m-report-card-arrow">›</div>
+      </div>
+    </div>
+  `;
+  const autoCard = _container.querySelector('[data-report-card="auto"]');
+  if (autoCard) autoCard.addEventListener('click', () => {
+    // 跳到「部位觀察」tab 的「報告」view
+    try { localStorage.setItem('m_input_view', 'report'); } catch (e) {}
+    const btn = document.querySelector('.m-tab[data-tab="input"]');
+    if (btn) btn.click();
+  });
+  const manualCard = _container.querySelector('[data-report-card="manual"]');
+  if (manualCard) manualCard.addEventListener('click', () => {
+    // 跳到「手動輸入」tab 的「手動兵法報告」view
+    try { localStorage.setItem('m_manual_view', 'overview'); } catch (e) {}
+    const btn = document.querySelector('.m-tab[data-tab="manual"]');
+    if (btn) btn.click();
+  });
+}
 
 // ===== PNG 全螢幕 overlay：點按鈕後直接顯示 PNG，可 pinch zoom + drag + 分享 =====
 
