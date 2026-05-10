@@ -1,45 +1,26 @@
 // ============================================================
-// 手機版首頁 tab 邏輯
-// 負責：Hi 列、進度條（13 維度+117 題）、上次做到、4 個快速入口、基本資料表單（debounce 儲存）
+// 手機版首頁 tab 邏輯（v1.7 階段 5：兩大按鈕 + 個人資料）
+// 負責：Hi 列、兩大按鈕（部位觀察評分 / 手動輸入報告）的進度條 + 點擊跳對應 tab、基本資料表單
 // 依賴：m_main.js 的 auth, db, debugLog
 // 被用：m_main.js 的 showApp() 會呼叫 initHome()
-// retest 範圍：Hi 列名字、進度顯示、快速入口切 tab、基本資料填寫＋儲存＋reload 還在
+// retest 範圍：
+//   - Hi 列名字
+//   - 兩大按鈕進度數字（觀察 N/M 題、手動 N/13 維度）+ 進度條 fill
+//   - 點兩大按鈕跳對應 tab
+//   - 基本資料填寫＋儲存＋reload 還在
 // ============================================================
 
 import { auth, db, debugLog } from "./m_main.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA } from "./core.js";
 
-// 13 維度名稱（順序對應 obs / 9×13 矩陣 index 0-12）
-const DIM_NAMES_M=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
-
-// 計算進度：dim 看 9×13 矩陣（哪些維度全 9 cell 填滿）；q 看 obsData + OBS_PARTS_DATA 實際答題數
-function calcProgress(){
+// 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數
+function calcObsProgress(){
   const ud=window.__userData||{};
   let obs={};
   if(ud.obsJson){
     try{obs=JSON.parse(ud.obsJson)||{};}catch(e){obs={};}
   }
-  let matrix=null;
-  if(ud.dataJson){
-    try{matrix=JSON.parse(ud.dataJson);}catch(e){debugLog('[Home]','dataJson parse 失敗',e&&e.message);}
-  }else if(ud.matrix){
-    matrix=ud.matrix;
-  }
-  // 維度數：matrix 中全 9 cell 填的維度
-  let dimCount=0;
-  if(matrix&&Array.isArray(matrix)){
-    for(let i=0;i<13;i++){
-      if(!matrix[i]) continue;
-      let filled=0;
-      for(let j=0;j<9;j++){
-        if(matrix[i][j]==='A'||matrix[i][j]==='B') filled++;
-      }
-      if(filled===9) dimCount++;
-    }
-  }
-  // 答題數 / 總題數：從 OBS_PARTS_DATA 跟 obsData 算
-  // paired 題：兩側都答完才算 1（Mike's Q B）；非 paired：obs[q.id] 有值就算 1
   let answered=0,total=0;
   for(const partKey of Object.keys(OBS_PARTS_DATA)){
     const part=OBS_PARTS_DATA[partKey];
@@ -56,58 +37,72 @@ function calcProgress(){
       }
     }
   }
-  return {dim:dimCount, answered, total};
+  return {answered, total};
 }
 
-// 從 window.__userData + OBS_PARTS_DATA 重算進度條 DOM（給 m_input.js 儲存後呼叫）
+// 手動輸入維度進度：manualDataJson 13×9 array 中已填滿 9 cell 的維度數
+function calcManualDimProgress(){
+  const ud=window.__userData||{};
+  if(!ud.manualDataJson) return 0;
+  let arr;
+  try{arr=JSON.parse(ud.manualDataJson);}catch(e){return 0;}
+  if(!Array.isArray(arr)||arr.length!==13) return 0;
+  let count=0;
+  for(let i=0;i<13;i++){
+    if(!Array.isArray(arr[i])||arr[i].length!==9) continue;
+    let filled=0;
+    for(let j=0;j<9;j++){
+      if(arr[i][j]==='A'||arr[i][j]==='B') filled++;
+    }
+    if(filled===9) count++;
+  }
+  return count;
+}
+
+// 從 window.__userData + OBS_PARTS_DATA 重算兩大按鈕進度（給 m_input.js / m_manual.js 儲存後呼叫）
 export function updateHomeProgress(){
-  const prog=calcProgress();
-  const elDim=document.getElementById('m-home-prog-dim');
-  const elQ=document.getElementById('m-home-prog-q');
-  const elQTotal=document.getElementById('m-home-prog-q-total');
-  const elFill=document.getElementById('m-home-prog-fill');
-  if(elDim) elDim.textContent=prog.dim;
-  if(elQ) elQ.textContent=prog.answered;
-  if(elQTotal) elQTotal.textContent=prog.total;
-  if(elFill) elFill.style.width=(prog.dim/13*100)+'%';
+  const obs=calcObsProgress();
+  const elObsFill=document.getElementById('m-home-obs-fill');
+  const elObsQ=document.getElementById('m-home-obs-q');
+  const elObsQTotal=document.getElementById('m-home-obs-q-total');
+  if(elObsQ) elObsQ.textContent=obs.answered;
+  if(elObsQTotal) elObsQTotal.textContent=obs.total;
+  if(elObsFill) elObsFill.style.width=(obs.total>0 ? obs.answered/obs.total*100 : 0)+'%';
+
+  const manualDim=calcManualDimProgress();
+  const elManualFill=document.getElementById('m-home-manual-fill');
+  const elManualDim=document.getElementById('m-home-manual-dim');
+  if(elManualDim) elManualDim.textContent=manualDim;
+  if(elManualFill) elManualFill.style.width=(manualDim/13*100)+'%';
 }
 
 export function initHome(displayName){
   // 1. Hi 列
   document.getElementById('m-home-name').textContent=displayName||'—';
 
-  // 2. 進度
+  // 2. 兩大按鈕進度
   updateHomeProgress();
 
-  const ud=window.__userData||{};
-
-  // 3. 上次做到
-  const resume=document.getElementById('m-home-resume');
-  if(ud.lastUpdatedDim!=null&&ud.lastUpdatedDim>=0&&ud.lastUpdatedDim<13){
-    document.getElementById('m-home-resume-name').textContent=DIM_NAMES_M[ud.lastUpdatedDim]+' 維度';
-    resume.style.display='block';
-    document.getElementById('m-home-resume-btn').onclick=function(){
-      document.querySelector('.m-tab[data-tab="input"]').click();
-    };
-  }else{
-    resume.style.display='none';
-  }
-
-  // 4. 快速入口
-  document.querySelectorAll('.m-home-qbtn').forEach(function(btn){
+  // 3. 兩大按鈕點擊：跳對應 tab + 設好預設 view
+  document.querySelectorAll('[data-go]').forEach(function(btn){
     btn.onclick=function(){
-      const k=btn.dataset.quick;
-      if(k==='report'){
-        document.querySelector('.m-tab[data-tab="report"]').click();
-      }else if(k==='part'||k==='dim'||k==='manual'){
-        // 寫進 LS，mountInput 會讀回切到對應子模式
-        try{ localStorage.setItem('m_input_submode', k); }catch(e){}
-        document.querySelector('.m-tab[data-tab="input"]').click();
+      const target=btn.dataset.go;
+      if(target==='obs'){
+        // 部位觀察 tab → 答題 view
+        try{ localStorage.setItem('m_input_view','quiz'); }catch(e){}
+        const tabBtn=document.querySelector('.m-tab[data-tab="input"]');
+        if(tabBtn) tabBtn.click();
+      }else if(target==='manual'){
+        // 手動輸入 tab → 輸入 view
+        try{ localStorage.setItem('m_manual_view','input'); }catch(e){}
+        const tabBtn=document.querySelector('.m-tab[data-tab="manual"]');
+        if(tabBtn) tabBtn.click();
       }
     };
   });
 
-  // 5. 基本資料
+  // 4. 基本資料（沿用 row 排版 + debounce 儲存）
+  const ud=window.__userData||{};
   const elName=document.getElementById('m-home-profile-name');
   const elBday=document.getElementById('m-home-profile-birthday');
   const elGender=document.getElementById('m-home-profile-gender');
@@ -116,14 +111,13 @@ export function initHome(displayName){
 
   elName.value=ud.displayName||'';
   elBday.value=ud.birthday||'';
-  // gender 既有資料 'M'/'F' 自動 migrate 到中文（select option value 已改中文）
-  let _initGender = ud.gender || '';
-  let _genderMigrated = false;
-  if (_initGender === 'M') { _initGender = '男'; _genderMigrated = true; }
-  else if (_initGender === 'F') { _initGender = '女'; _genderMigrated = true; }
-  elGender.value = _initGender;
+  // gender 既有資料 'M'/'F' 自動 migrate 到中文
+  let _initGender=ud.gender||'';
+  let _genderMigrated=false;
+  if(_initGender==='M'){_initGender='男';_genderMigrated=true;}
+  else if(_initGender==='F'){_initGender='女';_genderMigrated=true;}
+  elGender.value=_initGender;
 
-  // debounce 儲存
   let saveTimer=null;
   function scheduleSave(){
     elStatus.textContent='儲存中…';
@@ -160,6 +154,5 @@ export function initHome(displayName){
   elName.addEventListener('input',scheduleSave);
   elBday.addEventListener('change',scheduleSave);
   elGender.addEventListener('change',scheduleSave);
-  // 若 gender 是舊 M/F 格式，背景自動寫回 Firestore 為中文（一次性 migration）
-  if (_genderMigrated) scheduleSave();
+  if(_genderMigrated) scheduleSave();
 }

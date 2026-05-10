@@ -125,6 +125,15 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
 .m-home-profile-status.is-error{color:#b04545}
+/* 首頁兩大按鈕（v1.7 階段 5）*/
+.m-home-bigbtn{display:block;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 18px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.m-home-bigbtn:active{background:#f5efe6}
+.m-home-bigbtn-title{font-size:18px;font-weight:600;color:#3a3228;margin-bottom:6px;letter-spacing:1px}
+.m-home-bigbtn-sub{font-size:12px;color:#7a6e64;margin-bottom:14px;line-height:1.6}
+.m-home-bigbtn-progress{display:flex;align-items:center;gap:10px}
+.m-home-bigbtn-bar{flex:1;height:8px;background:#f0ebe5;border-radius:4px;overflow:hidden}
+.m-home-bigbtn-fill{height:100%;background:linear-gradient(90deg,#d4b896,#8fae7c);border-radius:4px;transition:width 0.4s}
+.m-home-bigbtn-text{font-size:12px;color:#5a5048;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 
 .m-placeholder{
   text-align:center;
@@ -812,39 +821,23 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-home">
     <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>
 
-    <div class="m-home-card m-home-progress">
-      <div class="m-home-card-title">進度</div>
-      <div class="m-home-progress-main">
-        <div class="m-home-progress-bar"><div class="m-home-progress-fill" id="m-home-prog-fill"></div></div>
-        <div class="m-home-progress-text"><span id="m-home-prog-dim">0</span>/13 維度</div>
+    <button class="m-home-bigbtn" data-go="obs">
+      <div class="m-home-bigbtn-title">部位觀察評分</div>
+      <div class="m-home-bigbtn-sub">頭、額、耳、眉、眼、鼻、口、顴、人中、地閣、頤</div>
+      <div class="m-home-bigbtn-progress">
+        <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
+        <div class="m-home-bigbtn-text"><span id="m-home-obs-q">0</span>/<span id="m-home-obs-q-total">0</span> 題</div>
       </div>
-      <div class="m-home-progress-sub"><span id="m-home-prog-q">0</span>/<span id="m-home-prog-q-total">0</span> 題</div>
-    </div>
+    </button>
 
-    <div class="m-home-card m-home-resume" id="m-home-resume" style="display:none">
-      <div class="m-home-card-title">上次做到</div>
-      <div class="m-home-resume-name" id="m-home-resume-name">—</div>
-      <button class="m-home-resume-btn" id="m-home-resume-btn">繼續</button>
-    </div>
-
-    <div class="m-home-card-title">快速入口</div>
-    <div class="m-home-quick">
-      <button class="m-home-qbtn" data-quick="part">
-        <span class="m-home-qbtn-title">部位視角</span>
-        <span class="m-home-qbtn-sub">依頭、上停、耳、眉、眼…</span>
-      </button>
-      <button class="m-home-qbtn" data-quick="dim">
-        <span class="m-home-qbtn-title">維度視角</span>
-        <span class="m-home-qbtn-sub">依形勢、經緯、方圓、曲直…</span>
-      </button>
-      <button class="m-home-qbtn" data-quick="manual">
-        <span class="m-home-qbtn-title">手動輸入</span>
-        <span class="m-home-qbtn-sub">手動輸入形勢、經緯、方圓…</span>
-      </button>
-      <button class="m-home-qbtn" data-quick="report">
-        <span class="m-home-qbtn-title">看報告</span>
-      </button>
-    </div>
+    <button class="m-home-bigbtn" data-go="manual">
+      <div class="m-home-bigbtn-title">手動輸入報告</div>
+      <div class="m-home-bigbtn-sub">形勢、經緯、方圓、曲直、收放、緩急、順逆、分合、真假、攻守、奇正、虛實、進退</div>
+      <div class="m-home-bigbtn-progress">
+        <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
+        <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>
+      </div>
+    </button>
 
     <div class="m-home-card m-home-profile">
       <div class="m-home-card-title">基本資料</div>

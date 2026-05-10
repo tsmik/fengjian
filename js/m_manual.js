@@ -29,6 +29,7 @@
 import { DIMS } from './core.js';
 import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
+import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -197,6 +198,8 @@ async function handleManualSave() {
     try { localStorage.removeItem(_getLsKey()); } catch (e) {}
     _firestoreBaseline = JSON.parse(JSON.stringify(_manualDraft));
     setSaveStatus('saved');
+    // 同步首頁手動進度（13 維度 fill 數字）
+    try { updateHomeProgress(); } catch (e) {}
   } catch (e) {
     debugLog('[m_manual]', '手動報告儲存失敗', e && e.message ? e.message : e);
     setSaveStatus('error');
