@@ -153,15 +153,37 @@ export function _getUserDocRef() {
   return db.collection('users').doc(uid);
 }
 
+// v1.7 階段 A：debounce 從 1500 → 300（盡快寫入 firestore，減少 cross-device race）
+// 額外加 visibilitychange listener：切走桌機 tab 時立即 flush，user 跳手機看不到 stale 風險
 let _saveTimer = null;
+function _flushSaveNow() {
+  if (!currentUser) return;
+  if (!_saveTimer) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = null;
+  _getUserDocRef().set({
+    dataJson: JSON.stringify(data),
+    obsJson: JSON.stringify(obsData),
+    overrideJson: JSON.stringify(obsOverride),
+    updatedAt: new Date().toISOString()
+  }, { merge: true }).catch(function(e) { console.log('雲端儲存失敗（flush）', e); });
+}
 export function save() {
   if (!currentUser) return;
   localStorage.setItem('obs_data_v1', JSON.stringify(obsData));
   localStorage.setItem('obs_override_v1', JSON.stringify(obsOverride));
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() {
+    _saveTimer = null;
     _getUserDocRef().set({ dataJson: JSON.stringify(data), obsJson: JSON.stringify(obsData), overrideJson: JSON.stringify(obsOverride), updatedAt: new Date().toISOString() }, { merge: true }).catch(function(e) { console.log('雲端儲存失敗', e); });
-  }, 1500);
+  }, 300);
+}
+// 切走 tab / 關閉視窗 → 立即 flush 還沒寫的資料
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') _flushSaveNow();
+  });
+  window.addEventListener('pagehide', _flushSaveNow);
 }
 
 export function _showToast(msg) {
