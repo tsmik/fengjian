@@ -19,7 +19,7 @@ import {
 import { initHome } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
-import { mountManual, unmountManual } from "./m_manual.js";
+import { mountManual, unmountManual, getManualDirty, discardManualDraft } from "./m_manual.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -202,29 +202,42 @@ initAuth();
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
       const key=btn.dataset.tab;
-      // 攔截：input ↔ report 為觀察工作區（內部切換不 confirm）
-      // manual 是獨立工作區（從 input/report 切 manual 視同離開，要 confirm）
-      // 未來 manual 有自己的 draft 時，會在此加 manual dirty 檢查
+      // 兩個工作區獨立 confirm：
+      //   觀察工作區 = input ↔ report（內部切換不 confirm）
+      //   手動工作區 = manual（獨立）
+      // 從觀察工作區離開（input/report → manual/home）→ if input dirty 才 confirm
+      // 從手動工作區離開（manual → input/report/home）→ if manual dirty 才 confirm
       const inputTabBtn = document.querySelector('.m-tab[data-tab="input"]');
       const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
+      const manualTabBtn = document.querySelector('.m-tab[data-tab="manual"]');
       const isOnInput = inputTabBtn && inputTabBtn.classList.contains('active');
       const isOnReport = reportTabBtn && reportTabBtn.classList.contains('active');
-      const isCurrentWork = isOnInput || isOnReport;
-      const isTargetWork = key === 'input' || key === 'report';
-      if (isCurrentWork && !isTargetWork && getSaveStatus() === 'dirty') {
+      const isOnManual = manualTabBtn && manualTabBtn.classList.contains('active');
+
+      // 觀察工作區離開判斷
+      const isOnObsWork = isOnInput || isOnReport;
+      const isTargetObsWork = key === 'input' || key === 'report';
+      if (isOnObsWork && !isTargetObsWork && getSaveStatus() === 'dirty') {
         if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
         if (isOnInput) discardDraft();
         else if (isOnReport) discardReportDraft();
+      }
+      // 手動工作區離開判斷
+      if (isOnManual && key !== 'manual' && getManualDirty()) {
+        if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return;
+        discardManualDraft();
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       Object.keys(pages).forEach(function(k){
         pages[k].classList.toggle('active',k===key);
       });
       elMain.scrollTop=0;
-      // 切換時顯示/隱藏儲存區（input + report 顯示，home 隱藏）
+      // 切換時顯示/隱藏儲存區
+      // - input / manual：有輸入有儲存 → 顯示
+      // - home / report：無儲存（report 變純看自動報告）→ 隱藏
       const saveZone = document.getElementById('m-save-zone');
       if(saveZone){
-        saveZone.classList.toggle('is-hidden', key === 'home');
+        saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report');
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
@@ -259,6 +272,7 @@ elNavUser.addEventListener('click',async function(){
     if (isDirty) {
       try { discardDraft(); } catch (e) {}
       try { discardReportDraft(); } catch (e) {}
+      try { discardManualDraft(); } catch (e) {}
     }
     await signOut(auth);
     location.reload();
