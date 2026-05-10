@@ -1057,30 +1057,32 @@ export async function mountInput(rootEl) {
   render();
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // mount 後 firestore 變了（其他裝置寫過）→ 強制以 firestore 為主
+  // 改用 saveStatus 判斷：user 沒在編輯（不是 dirty/saving）→ 無條件用 firestore 覆蓋
+  // 不再依賴 fingerprint 比對（JSON.stringify round-trip 對 obsJson 有失真風險）
   refreshUserData().then((ok) => {
     if (!_root || !ok) return;
+    const status = getSaveStatus();
+    if (status === 'dirty' || status === 'saving') {
+      debugLog('[Sync]', 'm_input：skip override (user editing)');
+      return;
+    }
     const ud = window.__userData || {};
     let newBaseline = {};
     if (ud.obsJson) {
       try { newBaseline = JSON.parse(ud.obsJson) || {}; } catch (e) {}
     }
-    const newFingerprint = JSON.stringify(newBaseline);
-    const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
-    debugLog('[Sync]', 'after refresh: firestoreChanged=', firestoreChanged,
-             'newBase len=', newFingerprint.length);
-    if (!firestoreChanged) return;
-    // firestore 變了 → 強制以 firestore 為主
+    // 強制以 firestore 為主
     _firestoreBaseline = newBaseline;
     _draft = JSON.parse(JSON.stringify(newBaseline));
-    _baselineFingerprintAtMount = newFingerprint;
+    _baselineFingerprintAtMount = JSON.stringify(newBaseline);
     try { localStorage.removeItem(getLsKey()); } catch (e) {}
     try {
       setObsData(JSON.parse(JSON.stringify(_draft)));
       recalcFromObs();
     } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_input：firestore 較新，已覆蓋');
+    debugLog('[Sync]', 'm_input：force override with firestore, baseline keys=',
+             Object.keys(newBaseline).length);
     render();
   });
 }

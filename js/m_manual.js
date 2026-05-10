@@ -28,7 +28,7 @@
 
 import { DIMS } from './core.js';
 import { auth, db, debugLog, refreshUserData } from './m_main.js';
-import { setSaveStatus } from './m_input.js';
+import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -129,9 +129,14 @@ export function mountManual(container) {
   if (saveBtn) saveBtn.onclick = handleManualSave;
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // mount 後 firestore 變了 → 強制以 firestore 為主
+  // 改用 saveStatus 判斷：user 沒在編輯 → 無條件用 firestore 覆蓋
   refreshUserData().then((ok) => {
     if (!_container || !ok) return;
+    const status = getSaveStatus();
+    if (status === 'dirty' || status === 'saving') {
+      debugLog('[Sync]', 'm_manual：skip override (user editing)');
+      return;
+    }
     const ud = window.__userData || {};
     let newBaseline = null;
     try {
@@ -141,14 +146,12 @@ export function mountManual(container) {
       }
     } catch (e) {}
     if (!newBaseline) newBaseline = _newEmptyMatrix();
-    const newFingerprint = JSON.stringify(newBaseline);
-    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
     _firestoreBaseline = newBaseline;
     _manualDraft = JSON.parse(JSON.stringify(newBaseline));
-    _baselineFingerprintAtMount = newFingerprint;
+    _baselineFingerprintAtMount = JSON.stringify(newBaseline);
     try { localStorage.removeItem(_getLsKey()); } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_manual：firestore 較新，已覆蓋');
+    debugLog('[Sync]', 'm_manual：force override with firestore');
     _render();
   });
 }
