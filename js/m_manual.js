@@ -44,6 +44,7 @@ let _firestoreBaseline = null;
 let _manualDimIdx = null;
 let _isSavingManual = false;
 let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline JSON fingerprint
+let _firstSyncCheck = true;            // 本次 app 載入第一次 mountManual？
 
 const PART_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
 const DIM_ROW_1_IDX = [0, 1, 2, 3, 4, 5];
@@ -127,8 +128,11 @@ export function mountManual(container) {
   if (saveBtn) saveBtn.onclick = handleManualSave;
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 邏輯：只要 firestore baseline 跟 mount 開始時不同（其他裝置動過）
-  //       → 強制以 firestore 為主，丟 LS draft（last-write-wins by Firestore）
+  // 兩個情境都要強制以 firestore 為主：
+  //   (1) mount 後 firestore 又變了（其他裝置寫過）
+  //   (2) 本次 app 載入「第一次」mount，且 LS draft 跟 firestore baseline 不同
+  //       → 表示 LS 是 cross-session 殘留
+  //   same-session 切 tab 不會清 LS（保留 user 答題編輯）
   refreshUserData().then((ok) => {
     if (!_container || !ok) return;
     const ud = window.__userData || {};
@@ -141,14 +145,19 @@ export function mountManual(container) {
     } catch (e) {}
     if (!newBaseline) newBaseline = _newEmptyMatrix();
     const newFingerprint = JSON.stringify(newBaseline);
-    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
-    // firestore 變了 → 強制以 firestore 為主
+    const draftFingerprint = JSON.stringify(_manualDraft);
+    const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
+    const lsDifferentFromFirestore = draftFingerprint !== newFingerprint;
+    const shouldOverride = firestoreChanged || (_firstSyncCheck && lsDifferentFromFirestore);
+    _firstSyncCheck = false;
+    if (!shouldOverride) return;
     _firestoreBaseline = newBaseline;
     _manualDraft = JSON.parse(JSON.stringify(newBaseline));
     _baselineFingerprintAtMount = newFingerprint;
     try { localStorage.removeItem(_getLsKey()); } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_manual：firestore 較新，已覆蓋本地 LS draft');
+    debugLog('[Sync]', 'm_manual：以 firestore 為主，已覆蓋本地 LS draft',
+             firestoreChanged ? '(firestore 變過)' : '(LS 跨 session 殘留)');
     _render();
   });
 }

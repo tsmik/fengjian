@@ -54,6 +54,7 @@ let _view = 'quiz';      // 'quiz' | 'report' — 上層 segmented
 let _quizMode = 'part';  // 'part' | 'dim'   — 答題 view 內部視角切換
 let _draft = {};
 let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline 的 JSON fingerprint，用於判斷 firestore 是否變過
+let _firstSyncCheck = true;            // 本次 app 載入第一次 mountInput？(cross-session LS vs firestore 對比只在第一次做)
 let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
@@ -1049,8 +1050,11 @@ export async function mountInput(rootEl) {
   render();
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 邏輯：只要 firestore baseline 跟 mount 開始時不同（其他裝置動過）
-  //       → 強制以 firestore 為主，丟 LS draft（last-write-wins by Firestore）
+  // 兩個情境都要強制以 firestore 為主：
+  //   (1) mount 後 firestore 又變了（其他裝置寫過）
+  //   (2) 本次 app 載入「第一次」mount，且 LS draft 跟 firestore baseline 不同
+  //       → 表示 LS 是 cross-session 殘留（其他裝置已寫進 firestore）
+  //   same-session 切 tab 不會清 LS（保留 user 答題編輯）
   refreshUserData().then((ok) => {
     if (!_root || !ok) return;
     const ud = window.__userData || {};
@@ -1059,8 +1063,13 @@ export async function mountInput(rootEl) {
       try { newBaseline = JSON.parse(ud.obsJson) || {}; } catch (e) {}
     }
     const newFingerprint = JSON.stringify(newBaseline);
-    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
-    // firestore 變了（其他裝置寫過）→ 強制以 firestore 為主
+    const draftFingerprint = JSON.stringify(_draft);
+    const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
+    const lsDifferentFromFirestore = draftFingerprint !== newFingerprint;
+    const shouldOverride = firestoreChanged || (_firstSyncCheck && lsDifferentFromFirestore);
+    _firstSyncCheck = false;
+    if (!shouldOverride) return;
+    // 強制以 firestore 為主，丟 LS draft
     _firestoreBaseline = newBaseline;
     _draft = JSON.parse(JSON.stringify(newBaseline));
     _baselineFingerprintAtMount = newFingerprint;
@@ -1070,7 +1079,8 @@ export async function mountInput(rootEl) {
       recalcFromObs();
     } catch (e) {}
     setSaveStatus('saved');
-    debugLog('[Sync]', 'm_input：firestore 較新，已覆蓋本地 LS draft');
+    debugLog('[Sync]', 'm_input：以 firestore 為主，已覆蓋本地 LS draft',
+             firestoreChanged ? '(firestore 變過)' : '(LS 跨 session 殘留)');
     render();
   });
 }
