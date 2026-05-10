@@ -53,6 +53,7 @@ let _root = null;
 let _view = 'quiz';      // 'quiz' | 'report' — 上層 segmented
 let _quizMode = 'part';  // 'part' | 'dim'   — 答題 view 內部視角切換
 let _draft = {};
+let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline 的 JSON fingerprint，用於判斷 firestore 是否變過
 let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
@@ -1027,6 +1028,7 @@ export async function mountInput(rootEl) {
 
   // Baseline 用既有 window.__userData 快取（先 render，背景再 refresh）
   const hasLocalDraft = _loadBaselineFromUserData();
+  _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
 
   // 維度視角需要 condResults：載 DIM_RULES + 用當前 _draft（含草稿）算一次
   // 失敗不影響部位視角；DIM panel 顯示「無規則」/「0/0」是可接受退化
@@ -1047,15 +1049,28 @@ export async function mountInput(rootEl) {
   render();
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 完成後若無 LS draft（user 沒未存的編輯）→ 用最新 baseline 重 render
+  // 邏輯：只要 firestore baseline 跟 mount 開始時不同（其他裝置動過）
+  //       → 強制以 firestore 為主，丟 LS draft（last-write-wins by Firestore）
   refreshUserData().then((ok) => {
     if (!_root || !ok) return;
-    if (_hasLocalDraftCheck()) return; // 有 LS draft 不覆蓋 user 編輯
-    _loadBaselineFromUserData();
+    const ud = window.__userData || {};
+    let newBaseline = {};
+    if (ud.obsJson) {
+      try { newBaseline = JSON.parse(ud.obsJson) || {}; } catch (e) {}
+    }
+    const newFingerprint = JSON.stringify(newBaseline);
+    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
+    // firestore 變了（其他裝置寫過）→ 強制以 firestore 為主
+    _firestoreBaseline = newBaseline;
+    _draft = JSON.parse(JSON.stringify(newBaseline));
+    _baselineFingerprintAtMount = newFingerprint;
+    try { localStorage.removeItem(getLsKey()); } catch (e) {}
     try {
       setObsData(JSON.parse(JSON.stringify(_draft)));
       recalcFromObs();
     } catch (e) {}
+    setSaveStatus('saved');
+    debugLog('[Sync]', 'm_input：firestore 較新，已覆蓋本地 LS draft');
     render();
   });
 }

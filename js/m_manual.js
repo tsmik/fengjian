@@ -43,6 +43,7 @@ let _manualDraft = null;
 let _firestoreBaseline = null;
 let _manualDimIdx = null;
 let _isSavingManual = false;
+let _baselineFingerprintAtMount = ''; // mount 時 firestore baseline JSON fingerprint
 
 const PART_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
 const DIM_ROW_1_IDX = [0, 1, 2, 3, 4, 5];
@@ -118,6 +119,7 @@ export function mountManual(container) {
     if (savedView === 'input' || savedView === 'overview') _manualSubview = savedView;
   } catch (e) {}
   _loadManualDraft();
+  _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
   _render();
   setSaveStatus(_hasLocalDraft() ? 'dirty' : 'saved');
   // 綁儲存按鈕（覆蓋 m_input.js 的綁定）
@@ -125,11 +127,28 @@ export function mountManual(container) {
   if (saveBtn) saveBtn.onclick = handleManualSave;
 
   // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
-  // 完成後若無 LS draft（user 沒未存的編輯）→ 用最新 baseline 重 render
+  // 邏輯：只要 firestore baseline 跟 mount 開始時不同（其他裝置動過）
+  //       → 強制以 firestore 為主，丟 LS draft（last-write-wins by Firestore）
   refreshUserData().then((ok) => {
     if (!_container || !ok) return;
-    if (_hasLocalDraft()) return; // 保留 user 未存編輯
-    _loadManualDraft();
+    const ud = window.__userData || {};
+    let newBaseline = null;
+    try {
+      if (ud.manualDataJson) {
+        const arr = JSON.parse(ud.manualDataJson);
+        if (Array.isArray(arr) && arr.length === 13) newBaseline = arr;
+      }
+    } catch (e) {}
+    if (!newBaseline) newBaseline = _newEmptyMatrix();
+    const newFingerprint = JSON.stringify(newBaseline);
+    if (newFingerprint === _baselineFingerprintAtMount) return; // firestore 沒變
+    // firestore 變了 → 強制以 firestore 為主
+    _firestoreBaseline = newBaseline;
+    _manualDraft = JSON.parse(JSON.stringify(newBaseline));
+    _baselineFingerprintAtMount = newFingerprint;
+    try { localStorage.removeItem(_getLsKey()); } catch (e) {}
+    setSaveStatus('saved');
+    debugLog('[Sync]', 'm_manual：firestore 較新，已覆蓋本地 LS draft');
     _render();
   });
 }
