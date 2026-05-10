@@ -13,7 +13,7 @@ import {
   setPersistence, browserLocalPersistence, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, collection
+  getFirestore, doc, getDoc, getDocFromServer, setDoc, collection
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
@@ -58,16 +58,20 @@ export { auth, db, debugLog };
 
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
 // v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
+// 用 getDocFromServer 強制從 server 拿（避免 firebase SDK 預設 cache 拿到舊資料）
 // 失敗回 false（呼叫方自行 fallback 用既有 window.__userData）
 export async function refreshUserData() {
   try {
     const user = auth.currentUser;
     if (!user) return false;
     const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
+    const userSnap = await getDocFromServer(userRef);
     if (!userSnap.exists()) return false;
-    window.__userData = userSnap.data();
-    debugLog('[Sync]', 'refreshUserData ✓');
+    const ud = userSnap.data();
+    window.__userData = ud;
+    debugLog('[Sync]', 'refreshed ✓ obsJson:', (ud.obsJson || '').length,
+             'manualDataJson:', (ud.manualDataJson || '').length,
+             'updatedAt:', ud.updatedAt || 'none');
     return true;
   } catch (e) {
     debugLog('[Sync]', 'refreshUserData 失敗', e && e.message ? e.message : e);
