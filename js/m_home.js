@@ -48,7 +48,8 @@ function calcProgress(){
       for(const q of (section.qs||[])){
         total++;
         if(q.paired){
-          if(obs[q.id+'_L']!==undefined&&obs[q.id+'_R']!==undefined) answered++;
+          // 兼容桌機（主值）+ 手機（_L/_R）兩種儲存格式
+          if(obs[q.id]!==undefined || (obs[q.id+'_L']!==undefined&&obs[q.id+'_R']!==undefined)) answered++;
         }else{
           if(obs[q.id]!==undefined) answered++;
         }

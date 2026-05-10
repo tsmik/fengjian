@@ -266,7 +266,13 @@ function getAllQuestions(key) {
   return getSections(key).flatMap(s => s.qs || []);
 }
 function isAnswered(q) {
-  if (q.paired) return _draft[q.id + '_L'] != null && _draft[q.id + '_R'] != null;
+  if (q.paired) {
+    // paired 題兩種已答模式（兼容桌機 + 手機）：
+    //   桌機選「不分左右」→ 寫主值 q.id，刪 _L/_R
+    //   手機改 paired toggle → 寫 _L/_R，刪主值
+    // 兼容：主值有值 OR _L+_R 都有值 都算已答
+    return _draft[q.id] != null || (_draft[q.id + '_L'] != null && _draft[q.id + '_R'] != null);
+  }
   return _draft[q.id] != null;
 }
 function pairedDiffStatus(qid) {
