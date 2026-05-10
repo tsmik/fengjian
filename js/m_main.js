@@ -202,15 +202,15 @@ initAuth();
   tabs.forEach(function(btn){
     btn.addEventListener('click',function(){
       const key=btn.dataset.tab;
-      // 攔截：input ↔ manual ↔ report 視為「同一工作區」不 confirm；切到 home 才 confirm
+      // 攔截：input ↔ report 為觀察工作區（內部切換不 confirm）
+      // manual 是獨立工作區（從 input/report 切 manual 視同離開，要 confirm）
+      // 未來 manual 有自己的 draft 時，會在此加 manual dirty 檢查
       const inputTabBtn = document.querySelector('.m-tab[data-tab="input"]');
       const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
-      const manualTabBtn = document.querySelector('.m-tab[data-tab="manual"]');
       const isOnInput = inputTabBtn && inputTabBtn.classList.contains('active');
       const isOnReport = reportTabBtn && reportTabBtn.classList.contains('active');
-      const isOnManual = manualTabBtn && manualTabBtn.classList.contains('active');
-      const isCurrentWork = isOnInput || isOnReport || isOnManual;
-      const isTargetWork = key === 'input' || key === 'report' || key === 'manual';
+      const isCurrentWork = isOnInput || isOnReport;
+      const isTargetWork = key === 'input' || key === 'report';
       if (isCurrentWork && !isTargetWork && getSaveStatus() === 'dirty') {
         if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return;
         if (isOnInput) discardDraft();
