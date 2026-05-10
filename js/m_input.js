@@ -1030,6 +1030,11 @@ export async function mountInput(rootEl) {
   // Baseline 用既有 window.__userData 快取（先 render，背景再 refresh）
   const hasLocalDraft = _loadBaselineFromUserData();
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
+  debugLog('[Sync]', 'mount: baseline keys=', Object.keys(_firestoreBaseline).length,
+           'baseline len=', _baselineFingerprintAtMount.length,
+           'draft keys=', Object.keys(_draft).length,
+           'draft len=', JSON.stringify(_draft).length,
+           'hasLS=', hasLocalDraft);
 
   // 維度視角需要 condResults：載 DIM_RULES + 用當前 _draft（含草稿）算一次
   // 失敗不影響部位視角；DIM panel 顯示「無規則」/「0/0」是可接受退化
@@ -1067,6 +1072,11 @@ export async function mountInput(rootEl) {
     const firestoreChanged = newFingerprint !== _baselineFingerprintAtMount;
     const lsDifferentFromFirestore = draftFingerprint !== newFingerprint;
     const shouldOverride = firestoreChanged || (_firstSyncCheck && lsDifferentFromFirestore);
+    debugLog('[Sync]', 'after refresh: firestoreChanged=', firestoreChanged,
+             'lsDiff=', lsDifferentFromFirestore,
+             'firstCheck=', _firstSyncCheck,
+             'override=', shouldOverride,
+             'newBase len=', newFingerprint.length);
     _firstSyncCheck = false;
     if (!shouldOverride) return;
     // 強制以 firestore 為主，丟 LS draft
