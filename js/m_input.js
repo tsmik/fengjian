@@ -215,13 +215,17 @@ async function handleSaveClick() {
 
     // 把草稿同步進 core.js obsData，再呼叫 recalcFromObs 算出 9×13 矩陣
     const draftCopy = JSON.parse(JSON.stringify(_draft));
-    // Sanitize：清掉所有 paired 題的主值 q.id，讓 recalcFromObs 根據 _L/_R 重新填。
-    // 防止 toggle 取消 _L/_R 後主值殘留（桌機讀 obsData[q.id] 會誤顯為 selected）。
+    // Sanitize：只刪「同時有 _L/_R + 主值」的 paired 題（手機格式 + 殘留主值）。
+    // 桌機選「不分左右」只寫主值不寫 _L/_R → 保留主值（cross-device 兼容）。
     Object.keys(OBS_PARTS_DATA).forEach(pn => {
       const pd = OBS_PARTS_DATA[pn];
       if (!pd || !Array.isArray(pd.sections)) return;
       pd.sections.forEach(s => {
-        (s.qs || []).forEach(q => { if (q.paired) delete draftCopy[q.id]; });
+        (s.qs || []).forEach(q => {
+          if (!q.paired) return;
+          const hasLR = draftCopy[q.id + '_L'] != null || draftCopy[q.id + '_R'] != null;
+          if (hasLR) delete draftCopy[q.id];
+        });
       });
     });
     setObsData(draftCopy);
