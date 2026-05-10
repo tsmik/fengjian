@@ -897,12 +897,21 @@ function bindEvents() {
       const val = btn.dataset.val;
       if (qid.endsWith('__sync')) {
         const realId = qid.slice(0, -6);
-        if (_draft[realId + '_L'] === val && _draft[realId + '_R'] === val) {
+        // 判「目前是否選中」：手機格式 _L=_R=val OR 桌機格式 主值=val
+        const lEq = _draft[realId + '_L'] === val;
+        const rEq = _draft[realId + '_R'] === val;
+        const mainEq = _draft[realId] === val;
+        const isSelected = (lEq && rEq) || (mainEq && _draft[realId + '_L'] == null && _draft[realId + '_R'] == null);
+        if (isSelected) {
+          // 取消：三個都清（兼容桌機主值殘留）
           delete _draft[realId + '_L'];
           delete _draft[realId + '_R'];
+          delete _draft[realId];
         } else {
+          // 選新答案：寫 _L/_R，清主值（避免桌機主值 stale）
           _draft[realId + '_L'] = val;
           _draft[realId + '_R'] = val;
+          delete _draft[realId];
         }
       } else {
         if (_draft[qid] === val) {
