@@ -173,7 +173,8 @@ async function initAfterLogin() {
 
   /* ===== Step 2: 載入使用者資料 ===== */
   const uid = currentUser.uid;
-  try{const doc=await db.collection('users').doc(uid).get();
+  // v1.7 階段 A：強制從 server 拿，避免 IndexedDB cache 拿到舊版（手機端寫入桌機看不到）
+  try{const doc=await db.collection('users').doc(uid).get({source:'server'});
     if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else if(doc.exists&&doc.data().data)setData(doc.data().data);else setData(emptyData());
     if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
     if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});

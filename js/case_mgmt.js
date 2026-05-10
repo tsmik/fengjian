@@ -171,7 +171,8 @@ export function loadCase(caseId){
   if(caseId===null){
     setCurrentCaseId(null);
     setCurrentCaseName(userName);
-    db.collection('users').doc(currentUser.uid).get().then(function(doc){
+    // v1.7 階段 A：強制 server 拿，避免 cache stale
+    db.collection('users').doc(currentUser.uid).get({source:'server'}).then(function(doc){
       if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else setData(emptyData());
       if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
       if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});
