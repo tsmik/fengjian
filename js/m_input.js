@@ -24,11 +24,12 @@ import { auth, db, debugLog } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
+import { mountReport, unmountReport } from './m_report.js';
 
+// v1.7 階段 3：上層 segmented [答題 | 報告]，答題 view 內部 part/dim 視角切換
 const SUBMODES = [
-  { key: 'part', label: '部位' },
-  { key: 'dim',  label: '維度' },
-  { key: 'report', label: '產生報告' },
+  { key: 'quiz',   label: '答題' },
+  { key: 'report', label: '報告' },
 ];
 
 // 6+5 異形排列
@@ -49,7 +50,8 @@ function getLsKey() {
 }
 
 let _root = null;
-let _submode = 'part';
+let _view = 'quiz';      // 'quiz' | 'report' — 上層 segmented
+let _quizMode = 'part';  // 'part' | 'dim'   — 答題 view 內部視角切換
 let _draft = {};
 let _firestoreBaseline = {};
 let _expandedKey = null;
@@ -292,23 +294,58 @@ function escapeHtml(s) {
 
 function render() {
   if (!_root) return;
+  if (_view === 'report') {
+    renderReportView();
+  } else {
+    renderQuizView();
+  }
+}
+
+function renderQuizView() {
   const seg = renderSegmented();
+  const viewBar = renderQuizViewBar();
   let content = '';
-  if (_submode === 'part') content = renderPartMode();
-  else if (_submode === 'dim') content = renderDimMode();
+  if (_quizMode === 'part') content = renderPartMode();
+  else if (_quizMode === 'dim') content = renderDimMode();
   _root.innerHTML = `
     <div class="m-segmented">${seg}</div>
+    ${viewBar}
     <div class="m-submode-content">${content}</div>
   `;
   bindEvents();
 }
 
+function renderReportView() {
+  // 報告 view：保留上層 segmented（答題 / 報告），下方 mount m_report.js（auto only）
+  const seg = renderSegmented();
+  // 切過來前先 unmount 舊的（保險）
+  unmountReport();
+  _root.innerHTML = `
+    <div class="m-segmented">${seg}</div>
+    <div class="m-submode-content"><div id="m-input-report-mount"></div></div>
+  `;
+  bindEvents();
+  const reportContainer = _root.querySelector('#m-input-report-mount');
+  if (reportContainer) mountReport(reportContainer);
+}
+
 function renderSegmented() {
   return SUBMODES.map(m => `
-    <button class="m-seg-btn ${_submode === m.key ? 'm-seg-active' : ''}" data-submode="${m.key}">
+    <button class="m-seg-btn ${_view === m.key ? 'm-seg-active' : ''}" data-submode="${m.key}">
       ${escapeHtml(m.label)}
     </button>
   `).join('');
+}
+
+function renderQuizViewBar() {
+  const currentLabel = _quizMode === 'part' ? '部位視角' : '維度視角';
+  const otherLabel = _quizMode === 'part' ? '維度視角' : '部位視角';
+  return `
+    <div class="m-quiz-view-bar">
+      <span class="m-quiz-view-current">${escapeHtml(currentLabel)}</span>
+      <button class="m-quiz-view-switch" data-quiz-switch>⇄ 切換${escapeHtml(otherLabel)}</button>
+    </div>
+  `;
 }
 
 function renderPlaceholder(name) {
@@ -799,19 +836,24 @@ function renderPairedQuestion(q) {
 function bindEvents() {
   if (!_root) return;
 
-  // 子模式切換
+  // 上層 segmented：答題 / 報告 切換
   _root.querySelectorAll('.m-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.submode;
-      if (key === 'report') {
-        // 「產生報告」按鈕 → 強制跳到報告分頁的自動報告子分頁
-        try { localStorage.setItem('m_report_subtab', 'auto'); } catch (e) {}
-        const reportTabBtn = document.querySelector('.m-tab[data-tab="report"]');
-        if (reportTabBtn) reportTabBtn.click();
-        return;
-      }
-      _submode = key;
-      try { localStorage.setItem('m_input_submode', _submode); } catch (e) {}
+      if (_view === key) return;
+      // 從 report 切回 quiz 時，主動 unmount m_report（清掉 _container 引用）
+      if (_view === 'report' && key === 'quiz') unmountReport();
+      _view = key;
+      try { localStorage.setItem('m_input_view', _view); } catch (e) {}
+      render();
+    });
+  });
+
+  // 答題 view 內：視角切換（部位 ↔ 維度）
+  _root.querySelectorAll('[data-quiz-switch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _quizMode = (_quizMode === 'part') ? 'dim' : 'part';
+      try { localStorage.setItem('m_input_submode', _quizMode); } catch (e) {}
       render();
     });
   });
@@ -964,13 +1006,20 @@ export async function mountInput(rootEl) {
   }
   await ensureQuestionsLoaded();
 
-  // 恢復上次子模式（重整或重新進 input 時保留 部位/維度 選擇）
+  // 恢復上次 _view（v1.7 階段 3 新增：答題 / 報告）
+  try {
+    const savedView = localStorage.getItem('m_input_view');
+    if (savedView === 'quiz' || savedView === 'report') {
+      _view = savedView;
+    }
+  } catch (e) {}
+  // 恢復上次答題視角（沿用 m_input_submode key — 升級前 user 的 part/dim 自動還原）
   try {
     const savedSub = localStorage.getItem('m_input_submode');
     if (savedSub === 'part' || savedSub === 'dim') {
-      _submode = savedSub;
+      _quizMode = savedSub;
     }
-    // 舊 LS 殘留 'manual'（已改成「產生報告」非 submode）→ 忽略，保持預設 'part'
+    // 舊 LS 殘留 'manual' / 'report' → 忽略，保持預設 'part'
   } catch (e) {}
 
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
@@ -1021,5 +1070,7 @@ export async function mountInput(rootEl) {
 }
 
 export function unmountInput() {
+  // 若 input tab 內 mount 了 m_report（報告 view），切走時連帶 unmount，避免 _container 殘留
+  unmountReport();
   _root = null;
 }

@@ -241,14 +241,16 @@ initAuth();
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
+      // v1.7 階段 3：先 unmount 對方再 mount 自己
+      // （m_input 內部會在報告 view mount m_report；mount 順序錯了會被外層 unmount 蓋掉）
       if(key==='input'){
-        mountInput(pages.input);
         unmountReport();
         unmountManual();
+        mountInput(pages.input);
       } else if(key==='report'){
         unmountInput();
-        mountReport(pages.report);
         unmountManual();
+        mountReport(pages.report);
       } else if(key==='manual'){
         unmountInput();
         unmountReport();
