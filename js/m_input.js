@@ -814,7 +814,7 @@ function renderPairedQuestion(q) {
           <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左/右</button>
           ${chip}
         </div>
-        <div class="m-q-opts">${renderOptions(q.id + '__sync', _draft[q.id + '_L'], q.opts)}</div>
+        <div class="m-q-opts">${renderOptions(q.id + '__sync', _draft[q.id + '_L'] != null ? _draft[q.id + '_L'] : _draft[q.id], q.opts)}</div>
       </div>
     `;
   }
