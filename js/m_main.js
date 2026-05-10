@@ -56,6 +56,25 @@ const db=getFirestore(app);
 // 暴露給其他 module 用
 export { auth, db, debugLog };
 
+// ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
+// v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
+// 失敗回 false（呼叫方自行 fallback 用既有 window.__userData）
+export async function refreshUserData() {
+  try {
+    const user = auth.currentUser;
+    if (!user) return false;
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return false;
+    window.__userData = userSnap.data();
+    debugLog('[Sync]', 'refreshUserData ✓');
+    return true;
+  } catch (e) {
+    debugLog('[Sync]', 'refreshUserData 失敗', e && e.message ? e.message : e);
+    return false;
+  }
+}
+
 // ===== STAGING 識別：banner 取消，改用 nav title 橘色 =====
 (function(){
   const host=window.location.hostname;

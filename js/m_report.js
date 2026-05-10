@@ -19,7 +19,7 @@
 // ============================================================
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable } from './core.js';
-import { db, debugLog } from './m_main.js';
+import { db, debugLog, refreshUserData } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas } from './report.js';
@@ -237,6 +237,8 @@ export async function generatePng({ srcData, drawOpts, filenameSuffix, btn }) {
   try {
     await ensureDimRulesLoaded();
     await _ensureLiunianLoaded();
+    // v1.7 階段 A：auto PNG 用最新 obsJson（cross-device sync）
+    if (!srcData) await refreshUserData();
     const ud = window.__userData || {};
     const displayName = ud.displayName || '報告';
     setUserName(displayName);
@@ -310,6 +312,8 @@ async function _enterSens() {
 
   try { await ensureDimRulesLoaded(); }
   catch (e) { debugLog('[m_report]', 'ensureDimRulesLoaded 失敗', e && e.message); }
+  // v1.7 階段 A：sens 計算用最新 obsJson（cross-device sync）
+  await refreshUserData();
   // 載 obsData baseline（從 Firestore document）+ recalc 出 data
   const ud = window.__userData || {};
   if (ud.obsJson) {

@@ -27,7 +27,7 @@
 // ============================================================
 
 import { DIMS } from './core.js';
-import { auth, db, debugLog } from './m_main.js';
+import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { setSaveStatus } from './m_input.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
@@ -123,6 +123,15 @@ export function mountManual(container) {
   // 綁儲存按鈕（覆蓋 m_input.js 的綁定）
   const saveBtn = document.getElementById('m-save-btn');
   if (saveBtn) saveBtn.onclick = handleManualSave;
+
+  // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
+  // 完成後若無 LS draft（user 沒未存的編輯）→ 用最新 baseline 重 render
+  refreshUserData().then((ok) => {
+    if (!_container || !ok) return;
+    if (_hasLocalDraft()) return; // 保留 user 未存編輯
+    _loadManualDraft();
+    _render();
+  });
 }
 
 export function unmountManual() {

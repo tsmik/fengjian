@@ -20,7 +20,7 @@
 // ============================================================
 
 import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
-import { auth, db, debugLog } from './m_main.js';
+import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
@@ -1025,30 +1025,8 @@ export async function mountInput(rootEl) {
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
   loadDimState();
 
-  // Baseline 來自 m_main.js 在登入時已抓進 window.__userData 的資料，不重抓
-  const ud = window.__userData || {};
-  let firestoreObs = {};
-  if (ud.obsJson) {
-    try { firestoreObs = JSON.parse(ud.obsJson) || {}; } catch (e) { firestoreObs = {}; }
-  }
-  _firestoreBaseline = firestoreObs;
-  setObsData(JSON.parse(JSON.stringify(firestoreObs)));
-
-  // 比對 LS 草稿
-  let hasLocalDraft = false;
-  try {
-    const raw = localStorage.getItem(getLsKey());
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-        _draft = parsed;
-        hasLocalDraft = true;
-      }
-    }
-  } catch (e) {}
-  if (!hasLocalDraft) {
-    _draft = JSON.parse(JSON.stringify(firestoreObs));
-  }
+  // Baseline 用既有 window.__userData 快取（先 render，背景再 refresh）
+  const hasLocalDraft = _loadBaselineFromUserData();
 
   // 維度視角需要 condResults：載 DIM_RULES + 用當前 _draft（含草稿）算一次
   // 失敗不影響部位視角；DIM panel 顯示「無規則」/「0/0」是可接受退化
@@ -1067,6 +1045,56 @@ export async function mountInput(rootEl) {
   if (saveBtn) saveBtn.onclick = handleSaveClick;
 
   render();
+
+  // v1.7 階段 A：背景 refresh firestore user doc（cross-device sync）
+  // 完成後若無 LS draft（user 沒未存的編輯）→ 用最新 baseline 重 render
+  refreshUserData().then((ok) => {
+    if (!_root || !ok) return;
+    if (_hasLocalDraftCheck()) return; // 有 LS draft 不覆蓋 user 編輯
+    _loadBaselineFromUserData();
+    try {
+      setObsData(JSON.parse(JSON.stringify(_draft)));
+      recalcFromObs();
+    } catch (e) {}
+    render();
+  });
+}
+
+// 從 window.__userData 載入 baseline + LS draft，回傳 hasLocalDraft
+function _loadBaselineFromUserData() {
+  const ud = window.__userData || {};
+  let firestoreObs = {};
+  if (ud.obsJson) {
+    try { firestoreObs = JSON.parse(ud.obsJson) || {}; } catch (e) { firestoreObs = {}; }
+  }
+  _firestoreBaseline = firestoreObs;
+  setObsData(JSON.parse(JSON.stringify(firestoreObs)));
+
+  let hasLocalDraft = false;
+  try {
+    const raw = localStorage.getItem(getLsKey());
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+        _draft = parsed;
+        hasLocalDraft = true;
+      }
+    }
+  } catch (e) {}
+  if (!hasLocalDraft) {
+    _draft = JSON.parse(JSON.stringify(firestoreObs));
+  }
+  return hasLocalDraft;
+}
+
+// 純檢查 LS 是否有非空 draft（不改 _draft / _firestoreBaseline）
+function _hasLocalDraftCheck() {
+  try {
+    const raw = localStorage.getItem(getLsKey());
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0;
+  } catch (e) { return false; }
 }
 
 export function unmountInput() {
