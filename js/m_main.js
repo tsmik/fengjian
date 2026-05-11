@@ -264,12 +264,6 @@ initAuth();
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
-      // 動態更新頂部 nav title（讓 user 清晰知道在哪 tab）
-      const navTitle = document.getElementById('m-nav-title');
-      if (navTitle) {
-        const titles = { home: '人相兵法', input: '部位觀察', manual: '手動輸入', report: '報告' };
-        navTitle.textContent = titles[key] || '人相兵法';
-      }
       // v1.7 階段 3：先 unmount 對方再 mount 自己
       // （m_input 內部會在報告 view mount m_report；mount 順序錯了會被外層 unmount 蓋掉）
       if(key==='input'){

@@ -443,20 +443,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   position:relative;
 }
 .m-tab.active{color:var(--active);font-weight:600}
-/* active tab 上方 4px 主色 indicator bar */
-.m-tab::before{
+/* active tab 圓角 pill 底色（v1.7 階段 7+）*/
+.m-tab::after{
   content:'';
   position:absolute;
-  top:0;
-  left:50%;
-  transform:translateX(-50%);
-  width:0;
-  height:3px;
-  background:var(--active);
-  border-radius:0 0 2px 2px;
-  transition:width 0.18s;
+  top:6px;
+  bottom:6px;
+  left:8px;
+  right:8px;
+  background:transparent;
+  border-radius:14px;
+  transition:background 0.18s;
+  z-index:-1;
 }
-.m-tab.active::before{width:28px}
+.m-tab.active::after{background:rgba(193,122,90,0.15)}
 .m-tab-icon{
   width:22px;
   height:22px;
