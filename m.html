@@ -711,7 +711,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-nav,.m-main,.m-tabbar,.m-login,.m-denied,.m-loading,#m-staging-banner{display:none !important}
 }
 
-/* ===== Debug 面板（暫時用） ===== */
+/* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
+.m-debug-toggle,
+.m-debug-panel,
+.m-debug-clear{display:none !important}
+
+/* （原 debug CSS 保留無害；上方 !important 已強制隱藏）*/
 .m-debug-toggle{
   position:fixed;
   bottom:calc(72px + var(--safe-bottom));  /* 在 tabbar 上方一點點，避開 nav-user 登出區 */
