@@ -98,8 +98,15 @@ function _renderList() {
           <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
         </div>
       </button>
+      <div id="m-liunian-mount" class="m-liunian-placeholder">流年載入中…</div>
     </div>
   `;
+  // v1.7 階段 14：報告 tab 下方 async load 流年參考
+  renderLiunianBlock().then(html => {
+    if (!_container || !_isListMode) return;
+    const slot = _container.querySelector('#m-liunian-mount');
+    if (slot) slot.outerHTML = html;
+  });
   const autoCard = _container.querySelector('[data-report-card="auto"]');
   if (autoCard) autoCard.addEventListener('click', () => {
     // 跳到「部位觀察」tab 的「報告」view（once LS：mount 讀後立刻清，不破壞「點 tab bar 強制 reset 部位」邏輯）
@@ -337,8 +344,8 @@ export async function generatePng({ srcData, drawOpts, filenameSuffix, btn }) {
   }
 }
 
-// v1.7 階段 13：流年參考 block（部位觀察報告 + 手動輸入報告共用）
-// 需 await ensureLiunianLoaded + setUserGender / setUserBirthday
+// v1.7 階段 14：流年參考 block（報告 tab 兩大按鈕下方使用）
+// 排版：3 行 grid（2 + 3 + 3 cell），總寬跟按鈕一致
 export async function renderLiunianBlock() {
   try { await _ensureLiunianLoaded(); }
   catch (e) { debugLog('[m_report]', 'ensureLiunian 失敗', e && e.message); }
@@ -350,12 +357,28 @@ export async function renderLiunianBlock() {
   if (ud.birthday) setUserBirthday(ud.birthday);
   const info = _getLiunianInfo();
   if (!info) {
-    return `<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">需填出生年月日 + 性別才能顯示</div></div>`;
+    return `<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">需在首頁填出生年月日 + 性別才能顯示</div></div>`;
   }
+  const ln = info.ln;
+  const cell = (label, value) => `<div class="m-liunian-cell"><span class="m-liunian-cell-label">${label}</span><span class="m-liunian-cell-value">${value || '—'}</span></div>`;
+  const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
   return `
     <div class="m-liunian-section">
       <div class="m-liunian-title">流年參考${buildLiunianTitleHtml(info)}</div>
-      <div class="m-liunian-body">${buildLiunianTableHtml(info)}</div>
+      <div class="m-liunian-row m-liunian-row-2">
+        ${cell('七十五', v75)}
+        ${cell('九執', ln.jiuzhi)}
+      </div>
+      <div class="m-liunian-row m-liunian-row-3">
+        ${cell('業務', ln.yewu)}
+        ${cell('親族', ln.qinzu)}
+        ${cell('子女', ln.zinv)}
+      </div>
+      <div class="m-liunian-row m-liunian-row-3">
+        ${cell('耳鼻', ln.erbei)}
+        ${cell('五官', ln.wuguan)}
+        ${cell('三停', ln.santing)}
+      </div>
     </div>
   `;
 }
@@ -375,22 +398,16 @@ function _render() {
   if (!_container) return;
   if (_view === 'sens') { _renderSensView(); return; }
   // v1.7 階段 11：報告 view 比照手動輸入，加 5 段小結卡（用 obs 推算的 data 矩陣）
+  // v1.7 階段 14：流年參考搬到報告 tab 兩大按鈕下方，這裡不再顯示
   _container.innerHTML = `
     ${renderCoeffSummary(data)}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
-    <div id="m-liunian-mount" class="m-liunian-placeholder">流年載入中…</div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
   if (pngBtn) pngBtn.onclick = exportReportPng;
-  // v1.7 階段 13：async load 流年參考
-  renderLiunianBlock().then(html => {
-    if (!_container) return;
-    const slot = _container.querySelector('#m-liunian-mount');
-    if (slot) slot.outerHTML = html;
-  });
 }
 
 // ===== 重要參數分析 view（自動版）=====

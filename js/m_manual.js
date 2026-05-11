@@ -30,7 +30,7 @@ import { DIMS, avgCoeff, calcDim } from './core.js';
 import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
-import { generatePng, renderLiunianBlock } from './m_report.js';
+import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -239,14 +239,6 @@ function _render() {
   if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens');
   _container.innerHTML = _renderManualInput();
   _bindEvents();
-  // v1.7 階段 13：overview view async load 流年參考
-  if (_manualSubview === 'overview') {
-    renderLiunianBlock().then(html => {
-      if (!_container || _manualSubview !== 'overview') return;
-      const slot = _container.querySelector('#m-liunian-mount');
-      if (slot) slot.outerHTML = html;
-    });
-  }
 }
 
 function _renderManualInput() {
@@ -260,8 +252,8 @@ function _renderManualInput() {
   if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    // v1.7 階段 11+13：報告 view = 小結卡 + PNG 按鈕 + 流年參考 placeholder（async 補上）
-    body = `${_renderCoeffSummary()}${_renderManualPngRow()}<div id="m-liunian-mount" class="m-liunian-placeholder">流年載入中…</div>`;
+    // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
+    body = `${_renderCoeffSummary()}${_renderManualPngRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
