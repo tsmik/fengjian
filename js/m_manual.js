@@ -251,7 +251,8 @@ function _renderManualInput() {
       ${_renderClearAllRow()}
     `;
   }
-  return `<div class="m-manual-card">${viewToggle}${body}</div>`;
+  // v1.7 階段 6+：拿掉 m-manual-card 白框（跟部位觀察視覺一致）
+  return `${viewToggle}${body}`;
 }
 
 function _renderClearAllRow() {
