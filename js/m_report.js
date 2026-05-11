@@ -357,13 +357,10 @@ function _render() {
       <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年</div>
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（PNG）</button>
       <div class="m-report-link-tip">產生後在新分頁開啟，可拖曳放大縮小</div>
-      <button class="m-sens-entry-btn" data-msens-entry="auto" type="button">📊 看重要參數分析</button>
     </div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
   if (pngBtn) pngBtn.onclick = exportReportPng;
-  const sensBtn = _container.querySelector('[data-msens-entry="auto"]');
-  if (sensBtn) sensBtn.addEventListener('click', _enterSens);
 }
 
 // ===== 重要參數分析 view（自動版）=====
@@ -404,13 +401,6 @@ function _renderSensView() {
   } else {
     body = renderAutoSens();
   }
-  _container.innerHTML = `
-    <div class="m-sens-header">
-      <button class="m-sens-back" type="button">← 返回</button>
-      <span class="m-sens-header-title">自動 重要參數分析</span>
-    </div>
-    <div class="m-sens-body">${body}</div>
-  `;
-  const backBtn = _container.querySelector('.m-sens-back');
-  if (backBtn) backBtn.addEventListener('click', _exitSens);
+  // 拿掉 sens header（含返回按鈕）：sens 已是 segmented 第三 tab，user 用 segmented 切回去
+  _container.innerHTML = `<div class="m-sens-body">${body}</div>`;
 }
