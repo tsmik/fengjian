@@ -23,7 +23,7 @@ import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
-import { drawReportCanvas } from './report.js';
+import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
 import { renderAutoSens } from './m_sens.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -337,6 +337,29 @@ export async function generatePng({ srcData, drawOpts, filenameSuffix, btn }) {
   }
 }
 
+// v1.7 階段 13：流年參考 block（部位觀察報告 + 手動輸入報告共用）
+// 需 await ensureLiunianLoaded + setUserGender / setUserBirthday
+export async function renderLiunianBlock() {
+  try { await _ensureLiunianLoaded(); }
+  catch (e) { debugLog('[m_report]', 'ensureLiunian 失敗', e && e.message); }
+  const ud = window.__userData || {};
+  let _gender = ud.gender || '';
+  if (_gender === 'M') _gender = '男';
+  else if (_gender === 'F') _gender = '女';
+  if (_gender) setUserGender(_gender);
+  if (ud.birthday) setUserBirthday(ud.birthday);
+  const info = _getLiunianInfo();
+  if (!info) {
+    return `<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">需填出生年月日 + 性別才能顯示</div></div>`;
+  }
+  return `
+    <div class="m-liunian-section">
+      <div class="m-liunian-title">流年參考${buildLiunianTitleHtml(info)}</div>
+      <div class="m-liunian-body">${buildLiunianTableHtml(info)}</div>
+    </div>
+  `;
+}
+
 async function exportReportPng() {
   await generatePng({
     srcData: undefined,
@@ -358,9 +381,16 @@ function _render() {
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
+    <div id="m-liunian-mount" class="m-liunian-placeholder">流年載入中…</div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
   if (pngBtn) pngBtn.onclick = exportReportPng;
+  // v1.7 階段 13：async load 流年參考
+  renderLiunianBlock().then(html => {
+    if (!_container) return;
+    const slot = _container.querySelector('#m-liunian-mount');
+    if (slot) slot.outerHTML = html;
+  });
 }
 
 // ===== 重要參數分析 view（自動版）=====
