@@ -1033,21 +1033,10 @@ export async function mountInput(rootEl) {
   }
   await ensureQuestionsLoaded();
 
-  // 恢復上次 _view（v1.7 階段 3 新增：答題 / 報告）
-  try {
-    const savedView = localStorage.getItem('m_input_view');
-    if (savedView === 'quiz' || savedView === 'report') {
-      _view = savedView;
-    }
-  } catch (e) {}
-  // 恢復上次答題視角（沿用 m_input_submode key — 升級前 user 的 part/dim 自動還原）
-  try {
-    const savedSub = localStorage.getItem('m_input_submode');
-    if (savedSub === 'part' || savedSub === 'dim') {
-      _quizMode = savedSub;
-    }
-    // 舊 LS 殘留 'manual' / 'report' → 忽略，保持預設 'part'
-  } catch (e) {}
+  // v1.7 階段 8：每次進部位觀察 tab 強制回到「答題 + 部位視角」（不讀 LS）
+  // segmented 內切換仍寫 LS，但下次 mount 仍 reset
+  _view = 'quiz';
+  _quizMode = 'part';
 
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
   loadDimState();

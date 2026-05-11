@@ -108,17 +108,17 @@ function _countAnswered(di) {
 
 export function mountManual(container) {
   _container = container;
-  // 讀 LS state
+  // v1.7 階段 8：每次進手動輸入 tab 強制回到「輸入」view（不讀 LS）
+  // segmented 內切換仍寫 LS，但下次 mount 仍 reset
+  _manualSubview = 'input';
+  _view = 'main';
+  // 維度 tile 展開狀態仍從 LS 讀（user 上次展開哪個維度）
   try {
     const savedDim = localStorage.getItem(LS_DIM_IDX);
     if (savedDim !== null && savedDim !== 'null') {
       const n = parseInt(savedDim, 10);
       if (!isNaN(n) && n >= 0 && n < 13) _manualDimIdx = n;
     }
-  } catch (e) {}
-  try {
-    const savedView = localStorage.getItem(LS_VIEW);
-    if (savedView === 'input' || savedView === 'overview') _manualSubview = savedView;
   } catch (e) {}
   _loadManualDraft();
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
