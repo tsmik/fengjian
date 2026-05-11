@@ -105,7 +105,7 @@ function _renderTop5Item(r, idx, maxScore, blockKey) {
 function _renderAutoBlock(blockInfo, top5, origCoeff, simCoeffVal, subInfo) {
   if (!blockInfo.visible) {
     return `
-      <div class="m-sens-block m-sens-block-disabled">
+      <div class="m-sens-block m-sens-block-disabled m-grp-block-${blockInfo.key}">
         <div class="m-sens-block-title" style="color:#bbb">${blockInfo.label}係數分析</div>
         <div class="m-sens-incomplete">建置中</div>
       </div>
@@ -127,7 +127,7 @@ function _renderAutoBlock(blockInfo, top5, origCoeff, simCoeffVal, subInfo) {
   }
 
   return `
-    <div class="m-sens-block">
+    <div class="m-sens-block m-grp-block-${blockInfo.key}">
       <div class="m-sens-block-header">
         <span class="m-sens-block-title" style="color:${blockInfo.color}">${blockInfo.label}係數</span>
         <span class="m-sens-coeff" style="background:${blockInfo.color}">${origCoeff}</span>
@@ -194,7 +194,7 @@ function _renderManualBlock(matrix, block) {
   // 未填完
   if (!chk.complete) {
     return `
-      <div class="m-sens-block m-sens-block-incomplete">
+      <div class="m-sens-block m-sens-block-incomplete m-grp-block-${block.type}">
         <div class="m-sens-block-header">
           <span class="m-sens-block-title" style="color:${block.color}">${block.label}係數</span>
         </div>
@@ -303,7 +303,7 @@ function _renderManualBlock(matrix, block) {
   `;
 
   return `
-    <div class="m-sens-block">
+    <div class="m-sens-block m-grp-block-${block.type}">
       <div class="m-sens-block-header">
         <span class="m-sens-block-title" style="color:${block.color}">${block.label}係數</span>
         <span class="m-sens-coeff" style="background:${block.color}">${origCoeff}</span>
