@@ -484,15 +484,16 @@ function _renderManualRow(di, pi) {
   let resultCls = '';
   if (v === 'A') { resultText = dim.a; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
   else if (v === 'B') { resultText = dim.b; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
+  // v1.7 階段 11+：row 結構 [part | result | switch]（result 移到 part 右側）
   return `
     <div class="m-manual-row">
       <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
+      <div class="m-manual-row-result ${resultCls}">${resultText}</div>
       <div class="m-manual-row-switch">
         <button class="m-manual-sw m-manual-sw-jing ${isJing ? 'is-active' : ''}" data-msw="${di}_${pi}_${jingVal}">靜</button>
         <button class="m-manual-sw m-manual-sw-empty ${isEmpty ? 'is-active' : ''}" data-msw="${di}_${pi}_">—</button>
         <button class="m-manual-sw m-manual-sw-dong ${isDong ? 'is-active' : ''}" data-msw="${di}_${pi}_${dongVal}">動</button>
       </div>
-      <div class="m-manual-row-result ${resultCls}">${resultText}</div>
     </div>
   `;
 }

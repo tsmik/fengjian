@@ -189,7 +189,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-seg-active{background:#fff;color:#3a3228;font-weight:600}
 .m-submode-content{padding-bottom:8px}
 /* v1.7 階段 11：頁面頂端說明 hint */
-.m-page-hint{font-size:13px;color:#7a6e64;padding:12px 14px 4px;letter-spacing:1px;line-height:1.5}
+.m-page-hint{font-size:15px;font-weight:700;color:#3a3228;padding:14px 14px 4px;letter-spacing:1px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 答題 view 內視角切換 row（v1.7 階段 3）*/
 .m-quiz-view-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin:8px 10px 0;background:#fff;border:1px solid #e0d8cc;border-radius:10px}
 .m-quiz-view-current{font-size:13px;color:#3a3228;font-weight:500;letter-spacing:1px}
@@ -351,9 +351,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 詳盡報告連結按鈕（自動報告子分頁）===== */
 .m-report-link-wrap{display:flex;flex-direction:column;align-items:center;padding:32px 20px;gap:16px}
-/* PNG 預覽縮圖（mockup SVG）*/
-.m-png-preview{width:100%;max-width:280px;margin:0 auto}
-.m-png-preview svg{width:100%;display:block;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.08);border:1px solid #e0d8cc}
+/* PNG 預覽縮圖（mockup SVG）— 放在按鈕內，小尺寸 */
+.m-png-preview{width:48px;flex:0 0 48px}
+.m-png-preview svg{width:100%;display:block;border-radius:3px;border:1px solid rgba(255,255,255,0.4)}
+.m-report-link-btn{display:inline-flex;align-items:center;gap:12px}
 .m-report-link-title{font-size:18px;color:#3a3228;letter-spacing:2px;font-weight:500}
 .m-report-link-desc{font-size:13px;color:#7a6e64;line-height:1.8;text-align:center}
 .m-report-link-btn{display:inline-block;padding:14px 36px;background:#C17A5A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:2px;box-shadow:0 2px 6px rgba(193,122,90,0.3);font-family:inherit;border:none;cursor:pointer}
@@ -429,7 +430,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 維度展開新 UI：左部位 / 中 switch / 右結果（取代舊 part tile）===== */
 .m-manual-rows{margin-top:4px}
-.m-manual-row{display:grid;grid-template-columns:42px 1fr 78px;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid #f0ebe0}
+.m-manual-row{display:grid;grid-template-columns:36px 56px 1fr;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid #f0ebe0}
 .m-manual-row:last-child{border-bottom:none}
 .m-manual-row-part{font-weight:600;color:#3d3b39;text-align:center;font-size:13px}
 .m-manual-row-switch{display:grid;grid-template-columns:1fr 1fr 1fr;border:1.5px solid #d0c8be;border-radius:8px;overflow:hidden;background:#ede8e0}
@@ -439,7 +440,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-sw-jing.is-active{background:#7A9E7E;color:#fff;font-weight:700}
 .m-manual-sw-dong.is-active{background:#C17A5A;color:#fff;font-weight:700}
 /* 結果欄改用色塊：靜=綠底白字 / 動=橘紅底白字 / 未答=灰底「—」 */
-.m-manual-row-result{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:30px;padding:0 12px;border-radius:6px;font-size:14px;font-weight:700;color:#bbb;background:#f0ebe0;letter-spacing:1px;font-family:inherit;justify-self:center}
+.m-manual-row-result{display:inline-flex;align-items:center;justify-content:center;width:100%;height:30px;border-radius:6px;font-size:14px;font-weight:700;color:#bbb;background:#f0ebe0;letter-spacing:1px;font-family:inherit}
 .m-manual-row-result.is-jing{background:#7A9E7E;color:#fff}
 .m-manual-row-result.is-dong{background:#C17A5A;color:#fff}
 
