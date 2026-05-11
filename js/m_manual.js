@@ -332,7 +332,13 @@ function _renderManualOverview() {
       let txt = '—', cls = 'is-empty';
       if (v === 'A') { txt = DIMS[di].a; cls = DIMS[di].aT === '靜' ? 'is-jing' : 'is-dong'; }
       else if (v === 'B') { txt = DIMS[di].b; cls = DIMS[di].bT === '靜' ? 'is-jing' : 'is-dong'; }
-      html += `<div class="m-manual-cell ${cls}" style="grid-row:${row};grid-column:${di + 2}">${txt}</div>`;
+      // 群組 tint（強色 is-jing/is-dong CSS :not 自動排除）
+      let grpCls = '';
+      if (di <= 2) grpCls = 'm-grp-cell-boss';
+      else if (di <= 5) grpCls = 'm-grp-cell-mgr';
+      else if (di <= 8) grpCls = 'm-grp-cell-luck';
+      else grpCls = 'm-grp-cell-post';
+      html += `<div class="m-manual-cell ${grpCls} ${cls}" style="grid-row:${row};grid-column:${di + 2}">${txt}</div>`;
     }
   }
   return `

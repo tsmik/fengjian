@@ -49,6 +49,11 @@
   --grp-luck-bg:  #e0e8ec;
   --grp-post-bg:  #e8e3ec;
   --grp-total-bg: #d4d4d6;
+  /* 更淡的 tint（給矩陣 cell 大面積整欄底色用）*/
+  --grp-boss-tint: #f6e8ea;
+  --grp-mgr-tint:  #f5ebd9;
+  --grp-luck-tint: #edf2f5;
+  --grp-post-tint: #f1eaf1;
 }
 
 /* ===== 全域 reset ===== */
@@ -371,6 +376,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-cell.is-jing{background:#dfeadb;border-color:#7A9E7E;color:#5a7e5a;font-weight:700}
 .m-manual-cell.is-dong{background:#f4dccd;border-color:#C17A5A;color:#a76040;font-weight:700}
 .m-manual-cell.is-empty{color:#ccc}
+/* 矩陣 cell 群組底色（is-jing/is-dong 強色蓋過；is-empty 顯示淡群組 tint）*/
+.m-manual-cell.m-grp-cell-boss:not(.is-jing):not(.is-dong){background:var(--grp-boss-tint)}
+.m-manual-cell.m-grp-cell-mgr:not(.is-jing):not(.is-dong){background:var(--grp-mgr-tint)}
+.m-manual-cell.m-grp-cell-luck:not(.is-jing):not(.is-dong){background:var(--grp-luck-tint)}
+.m-manual-cell.m-grp-cell-post:not(.is-jing):not(.is-dong){background:var(--grp-post-tint)}
 /* 手動報告小結卡（總/先天/老闆/主管/運氣/後天 係數）*/
 .m-manual-coeff-summary{display:flex;flex-direction:column;gap:6px;padding:14px 10px 0}
 .m-manual-coeff-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;font-size:14px;color:#fff;font-weight:600}
