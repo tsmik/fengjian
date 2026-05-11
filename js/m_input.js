@@ -321,6 +321,7 @@ function renderQuizView() {
   if (_quizMode === 'part') content = renderPartMode();
   else if (_quizMode === 'dim') content = renderDimMode();
   _root.innerHTML = `
+    <div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>
     <div class="m-segmented">${seg}</div>
     ${viewBar}
     <div class="m-submode-content">${content}</div>
@@ -333,6 +334,7 @@ function renderAutoView(initView) {
   const seg = renderSegmented();
   unmountAutoView();
   _root.innerHTML = `
+    <div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>
     <div class="m-segmented">${seg}</div>
     <div class="m-submode-content"><div id="m-input-report-mount"></div></div>
   `;

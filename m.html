@@ -188,6 +188,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-seg-btn:not(:last-child){border-right:1px solid #d0c8be}
 .m-seg-active{background:#fff;color:#3a3228;font-weight:600}
 .m-submode-content{padding-bottom:8px}
+/* v1.7 階段 11：頁面頂端說明 hint */
+.m-page-hint{font-size:13px;color:#7a6e64;padding:12px 14px 4px;letter-spacing:1px;line-height:1.5}
 /* 答題 view 內視角切換 row（v1.7 階段 3）*/
 .m-quiz-view-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin:8px 10px 0;background:#fff;border:1px solid #e0d8cc;border-radius:10px}
 .m-quiz-view-current{font-size:13px;color:#3a3228;font-weight:500;letter-spacing:1px}
@@ -904,7 +906,7 @@ body.m-debug-on .m-debug-clear{display:block}
 
     <button class="m-home-bigbtn" data-go="obs">
       <div class="m-home-bigbtn-title">部位觀察評分</div>
-      <div class="m-home-bigbtn-sub">頭、額、耳、眉、眼、鼻、口、顴、人中、地閣、頤</div>
+      <div class="m-home-bigbtn-sub">輸入11部位 頭、額、耳、眉…觀察特徵，自動計算動/靜，產生報告</div>
       <div class="m-home-bigbtn-progress">
         <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
         <div class="m-home-bigbtn-text"><span id="m-home-obs-q">0</span>/<span id="m-home-obs-q-total">0</span> 題</div>
@@ -913,7 +915,7 @@ body.m-debug-on .m-debug-clear{display:block}
 
     <button class="m-home-bigbtn" data-go="manual">
       <div class="m-home-bigbtn-title">手動輸入報告</div>
-      <div class="m-home-bigbtn-sub">形勢、經緯、方圓、曲直、收放、緩急、順逆、分合、真假、攻守、奇正、虛實、進退</div>
+      <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
       <div class="m-home-bigbtn-progress">
         <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
         <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>

@@ -239,13 +239,14 @@ function _renderManualInput() {
   const seg = SUBMODES.map(t =>
     `<button class="m-seg-btn ${_manualSubview === t.key ? 'm-seg-active' : ''}" data-mview="${t.key}">${t.label}</button>`
   ).join('');
-  const viewToggle = `<div class="m-manual-view-bar"><div class="m-segmented" role="tablist">${seg}</div></div>`;
+  // v1.7 階段 11：頁面頂端 hint + segmented（拿掉 m-manual-view-bar wrapper，跟部位觀察 segmented 寬度一致）
+  const viewToggle = `<div class="m-page-hint">直接輸入13維度的動/靜，產生報告</div><div class="m-segmented" role="tablist">${seg}</div>`;
   let body;
   if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    // v1.7 階段 9+：拿掉 9×13 矩陣，只保留小結卡 + PNG 按鈕 + 清除
-    body = `${_renderCoeffSummary()}${_renderManualPngRow()}${_renderClearAllRow()}`;
+    // v1.7 階段 11：報告 view 只有小結卡 + PNG 按鈕（清除全部在輸入 view 才有）
+    body = `${_renderCoeffSummary()}${_renderManualPngRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
@@ -446,9 +447,6 @@ function _renderDimPanel(di) {
         <span class="m-dim-title-progress">${answered}/9</span>
       </div>
       <div class="m-manual-rows">${rows}</div>
-      <div class="m-manual-clear-row">
-        <button class="m-manual-clear-btn" data-mclear="${di}">清空本維度</button>
-      </div>
     </div>
   `;
 }
