@@ -25,6 +25,7 @@ import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
 import { mountAutoView, unmountAutoView } from './m_report.js';
+import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, markQuestionSeen, onBadgeRefresh } from './m_badge.js';
 
 // v1.7 階段 8：上層 segmented [部位 | 報告 | 參數分析]；部位內部 part/dim 視角切換
 const SUBMODES = [
@@ -515,6 +516,21 @@ function _findQById(qid) {
   return null;
 }
 
+// v1.7 階段 16：找 qid 對應的 part name（給紅點 mark seen 用）
+function _findPartByQid(qid) {
+  const parts = Object.keys(OBS_PARTS_DATA);
+  for (const pn of parts) {
+    const pd = OBS_PARTS_DATA[pn];
+    if (!pd || !Array.isArray(pd.sections)) continue;
+    for (const s of pd.sections) {
+      for (const q of (s.qs || [])) {
+        if (q.id === qid) return pn;
+      }
+    }
+  }
+  return null;
+}
+
 // _draft 變化後立即 sync 進 obsData + recalc，讓 condResults 反映最新狀態
 // 失敗 graceful（DIM_RULES 可能未載；condResults 將維持上次計算）
 function _syncRecalc() {
@@ -548,8 +564,11 @@ function renderDimTile(di) {
   else if (di <= 5) grpCls = 'm-grp-tile-mgr';
   else if (di <= 8) grpCls = 'm-grp-tile-luck';
   else grpCls = 'm-grp-tile-post';
+  // v1.7 階段 16：admin 改規則 → 紅點
+  const dot = hasDimUpdate(dm.dn) ? '<span class="m-update-dot"></span>' : '';
   return `
     <button class="m-tile m-dim-tile ${grpCls} ${todoCls} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
+      ${dot}
       <span class="m-tile-label">${escapeHtml(dm.dn)}</span>
     </button>
   `;
@@ -736,8 +755,11 @@ function renderPartTile(key) {
   const statusClass = `m-tile-${prog.status}`;
   const badge = prog.status === 'full' ? '✓'
               : prog.status === 'partial' ? `${prog.done}/${prog.total}` : '';
+  // v1.7 階段 16：admin 更新題目 → 顯示紅點（user 點開部位 mark seen 後消失）
+  const dot = hasPartUpdate(key) ? '<span class="m-update-dot"></span>' : '';
   return `
     <button class="m-tile ${statusClass} ${isOpen ? 'm-tile-open' : ''}" data-key="${escapeHtml(key)}">
+      ${dot}
       <span class="m-tile-label">${escapeHtml(key)}</span>
       ${badge ? `<span class="m-tile-badge">${escapeHtml(badge)}</span>` : ''}
     </button>
@@ -882,7 +904,11 @@ function bindEvents() {
   _root.querySelectorAll('.m-tile').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.key;
-      _expandedKey = (_expandedKey === key) ? null : key;
+      if (!key) return; // dim tile 由下方 .m-dim-tile handler 處理
+      const wasOpen = _expandedKey === key;
+      _expandedKey = wasOpen ? null : key;
+      // v1.7 階段 16：點開部位 → mark seen
+      if (!wasOpen) markPartSeen(key);
       render();
     });
   });
@@ -932,6 +958,10 @@ function bindEvents() {
           _draft[qid] = val;
         }
       }
+      // v1.7 階段 16：答題 → mark question seen（從 qid 反推 partName）
+      const baseId = qid.endsWith('__sync') ? qid.slice(0, -6) : qid.replace(/_(L|R)$/, '');
+      const partName = _findPartByQid(baseId);
+      if (partName) markQuestionSeen(partName, baseId);
       saveDraft();
       setSaveStatus('dirty');
       _syncRecalc();
@@ -977,8 +1007,11 @@ function bindEvents() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
-      _dimExpanded = (_dimExpanded === di) ? null : di;
+      const wasOpen = _dimExpanded === di;
+      _dimExpanded = wasOpen ? null : di;
       saveDimExpanded();
+      // v1.7 階段 16：點開維度 → mark seen
+      if (!wasOpen && DIMS[di]) markDimSeen(DIMS[di].dn);
       render();
     });
   });

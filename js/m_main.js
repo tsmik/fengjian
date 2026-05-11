@@ -20,6 +20,7 @@ import { initHome } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft } from "./m_manual.js";
+import { initBadges } from "./m_badge.js";
 
 // ===== Firebase config =====
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
@@ -199,6 +200,9 @@ async function initAuth(){
         // 先載 questions（讓首頁進度條可以用實際題目總數）
         try { await ensureQuestionsLoaded(); }
         catch(e){ debugLog('[Auth]','ensureQuestionsLoaded 失敗',e&&e.message?e.message:e); }
+        // 載入紅點 updateLog + seenLog（v1.7 階段 16）
+        try { await initBadges(); }
+        catch(e){ debugLog('[Auth]','initBadges 失敗',e&&e.message?e.message:e); }
         debugLog('[Auth]','呼叫 showApp，displayName =',displayName);
         showApp(displayName);
       }catch(e){
