@@ -88,13 +88,9 @@ export function hasDimUpdate(dimName) {
 // ===== mark seen =====
 
 export function markPartSeen(partName) {
-  const now = new Date().toISOString();
-  _seenLog['part_' + partName] = now;
-  // 該 part 下所有 q 也一併標
-  const prefix = 'q_' + partName + '_';
-  for (const key in _updateLog) {
-    if (key.indexOf(prefix) === 0) _seenLog[key] = now;
-  }
+  // 同桌機 _markPartSeen：只 mark part_X，不 cascade 該 part 下的 q_X_*
+  // q 要 user 點選項才 mark seen（讓題目紅點 user 必須答到才消）
+  _seenLog['part_' + partName] = new Date().toISOString();
   _saveSeen();
   _notifyRefresh();
 }
