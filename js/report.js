@@ -186,6 +186,18 @@ export function showReport(){
       dimCoeffs.push(calcDim(data,dc2));
     }
 
+    // 未填完判斷（沿用 drawReportCanvas checkComplete 邏輯）：data[di][pi] 內若有 null cell 該維度算未填完
+    var dimComplete=[];
+    for(var dcc=0;dcc<13;dcc++){
+      var ok=true;
+      for(var pcc=0;pcc<9;pcc++){
+        if(data[dcc][pcc]===null||data[dcc][pcc]===undefined){ok=false;break;}
+      }
+      dimComplete.push(ok);
+    }
+    function isGroupOk(ids){return ids.every(function(i){return dimComplete[i];});}
+    var INC='未填完';
+
     // 13 維度的屬性（動 or 靜）
     var dimAttr=[];
     for(var da2=0;da2<13;da2++){
@@ -513,7 +525,7 @@ export function showReport(){
     t+='<td style="padding:2px 4px"></td>';
     for(var i=0;i<visiblePre;i++){
       var rcf=dimCoeffs[i];
-      var cv=rcf?rcf.coeff.toFixed(2):'';
+      var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -521,7 +533,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=6;i<6+visibleLuck;i++){
         var rcf=dimCoeffs[i];
-        var cv=rcf?rcf.coeff.toFixed(2):'';
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -530,7 +542,7 @@ export function showReport(){
       t+='<td style="padding:2px 4px"></td>';
       for(var i=9;i<9+visiblePost;i++){
         var rcf=dimCoeffs[i];
-        var cv=rcf?rcf.coeff.toFixed(2):'';
+        var cv=dimComplete[i]?(rcf?rcf.coeff.toFixed(2):''):'<span style="color:#999">'+INC+'</span>';
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px;font-weight:400">'+cv+'</td>';
       }
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -543,9 +555,9 @@ export function showReport(){
     if(visiblePre>=3){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+vLead+'</td>';
+      t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(isGroupOk([0,1,2])?vLead:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       if(visiblePre>=6){
-        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+vSub+'</td>';
+        t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(isGroupOk([3,4,5])?vSub:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       }else if(visiblePre*2-6>0){
         t+='<td colspan="'+(visiblePre*2-6)+'" style="padding:2px 4px"></td>';
       }
@@ -570,7 +582,7 @@ export function showReport(){
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
       if(visiblePre>=6){
-        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+vPre+'</td>';
+        t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(isGroupOk([0,1,2,3,4,5])?vPre:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       }else{
         t+='<td colspan="'+visiblePre*2+'" style="padding:2px 4px"></td>';
       }
@@ -578,7 +590,7 @@ export function showReport(){
       if(showLuck){
         t+='<td style="padding:2px 4px"></td>';
         if(visibleLuck>=3){
-          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+vLuck+'</td>';
+          t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(isGroupOk([6,7,8])?vLuck:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
         }else{
           t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
         }
@@ -587,7 +599,7 @@ export function showReport(){
       if(showPost){
         t+='<td style="padding:2px 4px"></td>';
         if(visiblePost>=4){
-          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+vPost+'</td>';
+          t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(isGroupOk([9,10,11,12])?vPost:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
         }else{
           t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
         }
@@ -607,7 +619,7 @@ export function showReport(){
                       + (showPost ? 1 + visiblePost*2 : 0);
       t+='<tr>';
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+vTotal+'</td>';
+      t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(isGroupOk(visibleDimIds)?vTotal:'<span style="color:#ccc">'+INC+'</span>')+'</td>';
       // bar 右緣到後天係數右緣後，剩下：後天動靜分析(3) + 總動靜分析(3) + 最右部位欄(1)
       if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -635,7 +647,7 @@ export async function exportPNG(){
   btn.innerText='產生中...';btn.disabled=true;
   await new Promise(function(r){setTimeout(r,50);});
   try{
-    var canvas=drawReportCanvas();
+    var canvas=drawReportCanvas(undefined,{checkComplete:true});
     var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     var _expName=_currentCaseName||userName||'報告';
     var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
@@ -659,7 +671,7 @@ export function fallbackDownload(canvas){
 export function drawReportCanvas(srcData, opts){
   if(!srcData) srcData=data;
   if(!opts) opts={};
-  var SC=2;
+  var SC=opts.scale||2;
   var SBG='#7A9E7E', DBG='#C17A5A';
 
   // === 可見維度計算 ===

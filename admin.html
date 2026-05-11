@@ -172,9 +172,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 <!-- 發布 Modal -->
 <div class="publish-modal-overlay" id="publish-modal-overlay">
   <div class="publish-modal">
-    <h3>🚀 發布到 Production</h3>
-    <p>即將把 <strong>Staging</strong> 的評分規則與觀察題目，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。</p>
-    <div class="warn">⚠️ Production 現有資料會被備份後覆蓋。學員下次重新整理頁面後，會使用新的規則與題目計算報告。學員自己填的觀察資料不受影響。</div>
+    <h3 id="publish-modal-title">🚀 發布到 Production</h3>
+    <p id="publish-modal-body">即將把 <strong>Staging</strong> 的評分規則與觀察題目，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。</p>
+    <div class="warn" id="publish-modal-warn">⚠️ Production 現有資料會被備份後覆蓋。學員下次重新整理頁面後，會使用新的規則與題目計算報告。學員自己填的觀察資料不受影響。</div>
     <p id="publish-modal-desc" style="font-size:13px;color:#716b60"></p>
     <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="dry-run-checkbox" checked style="width:18px;height:18px;cursor:pointer" onchange="updatePublishBtnText()">
@@ -1543,10 +1543,11 @@ function _nodeToMd(node, depth, qLookup, dim){
   return md;
 }
 
-function saveAll(){
+async function saveAll(){
   if(_dirtyCount===0){showToast('沒有需要儲存的修改',true);return;}
   var diff=buildDiffSummary();
   if(diff&&!confirm('即將儲存以下修改：\n\n'+diff+'\n\n確定儲存？'))return;
+
   // 清理規則裡的 null items
   function cleanNulls(node){
     if(!node)return;
@@ -1558,23 +1559,68 @@ function saveAll(){
     if(node.parts){Object.keys(node.parts).forEach(function(k){cleanNulls(node.parts[k]);});}
   }
   rules.forEach(function(dim){if(dim.parts){Object.keys(dim.parts).forEach(function(k){cleanNulls(dim.parts[k]);});}});
+
   var btn=document.getElementById('btn-save');
   btn.disabled=true;btn.style.opacity='0.6';
   setStatus('儲存中...');
   var ts=new Date().toISOString();
-  Promise.all([
-    db.collection('settings').doc('rules').set({rulesJson:JSON.stringify(rules),updatedAt:ts}),
-    db.collection('settings').doc('questions').set({questionsJson:JSON.stringify(questions),updatedAt:ts})
-  ]).then(function(){
+
+  try {
+    // === Staging 專用：先讀 Firestore 現有版本當 baseline，用於 updateLog diff ===
+    var baselineRulesJson = null;
+    var baselineQuestionsJson = null;
+    if(IS_STAGING){
+      try {
+        var oldRulesDoc = await db.collection('settings').doc('rules').get();
+        var oldQuestionsDoc = await db.collection('settings').doc('questions').get();
+        if(oldRulesDoc.exists && oldRulesDoc.data().rulesJson) baselineRulesJson = oldRulesDoc.data().rulesJson;
+        if(oldQuestionsDoc.exists && oldQuestionsDoc.data().questionsJson) baselineQuestionsJson = oldQuestionsDoc.data().questionsJson;
+      } catch(e) {
+        console.warn('[saveAll] 讀取 baseline 失敗，updateLog 將不更新:', e);
+      }
+    }
+
+    var newRulesJson = JSON.stringify(rules);
+    var newQuestionsJson = JSON.stringify(questions);
+
+    // === 寫入 rules + questions（兩個環境都做）===
+    await Promise.all([
+      db.collection('settings').doc('rules').set({rulesJson: newRulesJson, updatedAt: ts}),
+      db.collection('settings').doc('questions').set({questionsJson: newQuestionsJson, updatedAt: ts})
+    ]);
+
+    // === Staging 專用：比對 baseline 跟新版，寫 updateLog ===
+    if(IS_STAGING && baselineRulesJson !== null && baselineQuestionsJson !== null){
+      try {
+        var diffResult = computeUpdateLog(newRulesJson, newQuestionsJson, baselineRulesJson, baselineQuestionsJson);
+        if(Object.keys(diffResult.updateLog).length > 0){
+          await db.collection('settings').doc('updateLog').set(diffResult.updateLog, {merge: true});
+          var summary = '紅點通知：' +
+            (diffResult.changedParts.length ? '部位' + diffResult.changedParts.length + '個 ' : '') +
+            (diffResult.changedDims.length ? '維度' + diffResult.changedDims.length + '個 ' : '') +
+            (diffResult.changedQs.length ? '題目' + diffResult.changedQs.length + '題' : '');
+          console.log('[saveAll] updateLog 已寫入：', diffResult);
+          showToast('✅ 已儲存 + ' + summary, true);
+        } else {
+          showToast('✅ 已儲存（無紅點變動）', true);
+        }
+      } catch(e) {
+        console.error('[saveAll] 寫入 updateLog 失敗:', e);
+        showToast('儲存成功，但 updateLog 寫入失敗：' + e.message, false);
+      }
+    } else {
+      showToast('規則 + 問題已儲存 ✓', true);
+    }
+
     takeSnapshot();
-    showToast('規則 + 問題已儲存 ✓',true);
     setStatus('已儲存');
-  }).catch(function(e){
-    showToast('儲存失敗：'+e.message,false);
+  } catch(e) {
+    showToast('儲存失敗：' + e.message, false);
     setStatus('儲存失敗');
-  }).finally(function(){
-    btn.disabled=false;btn.style.opacity='1';
-  });
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
 }
 // Keyboard shortcuts
 document.addEventListener('keydown',function(e){
@@ -1899,23 +1945,38 @@ var LIUNIAN_DEFAULT_DATA={"男":[
 {"age":99,"mark":"","name75":"亥","area75":"","jiuzhi":"左耳","yewu":"","qinzu":"","zinv":"","erbei":"","wuguan":"","santing":""}
 ]};
 
-// ==================== 發布到 Production ====================
+// ==================== 發布功能（Staging + Production） ====================
 var IS_STAGING = (function(){
   var host = window.location.hostname;
   return host === 'staging.fengjian.pages.dev' || (/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host) && host !== 'fengjian.pages.dev');
 })();
 
 var PUBLISH_CF_URL = 'https://us-central1-renxiangbingfa.cloudfunctions.net/publishToProduction';
+var _publishTarget = 'production'; // 'staging' or 'production'
+
+var Q_PART_NAMES_LOCAL = ['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
+var DIM_NAMES_LOCAL = ['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
 
 function initPublishBtn(){
   var btn = document.getElementById('btn-publish');
   if(btn && IS_STAGING) btn.style.display = 'inline-block';
 }
 
-function showPublishModal(){
+function showPublishModal(target){
+  _publishTarget = target || 'production';
   var overlay = document.getElementById('publish-modal-overlay');
+  var title = document.getElementById('publish-modal-title');
+  var body = document.getElementById('publish-modal-body');
+  var warn = document.getElementById('publish-modal-warn');
   var desc = document.getElementById('publish-modal-desc');
-  if(desc) desc.textContent = '發布後，Production 學員重新整理頁面即可看到最新題目與評分標準。';
+  var dryLabel = document.querySelector('label[for="dry-run-checkbox"]');
+
+  if(title) title.textContent = '🚀 發布到 Production';
+  if(body) body.innerHTML = '即將把 <strong>Staging</strong> 的評分規則與觀察題目，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。';
+  if(warn) warn.textContent = '⚠️ Production 現有資料會被備份後覆蓋。學員下次重新整理頁面後，會使用新的規則與題目計算報告。學員自己填的觀察資料不受影響。';
+  if(desc) desc.textContent = '';
+  if(dryLabel) dryLabel.textContent = '乾跑模式（只預覽，不實際寫入 Production）';
+
   var cb = document.getElementById('dry-run-checkbox');
   if(cb) cb.checked = true;
   updatePublishBtnText();
@@ -1932,10 +1993,63 @@ function updatePublishBtnText(){
   var cb = document.getElementById('dry-run-checkbox');
   if(!btn) return;
   var isDry = cb && cb.checked;
-  btn.textContent = isDry ? '🔍 預覽變動（不實際發布）' : '確認發布';
+  btn.textContent = isDry ? '🔍 預覽變動（不實際發布）' : '確認發布到 Production';
 }
 
-async function doPublish(){
+function doPublish(){
+  return doProductionPublish();
+}
+
+// ---- 三層 diff 共用邏輯 ----
+function computeUpdateLog(newRulesJson, newQuestionsJson, oldRulesJson, oldQuestionsJson){
+  var now = new Date().toISOString();
+  var updateLog = {};
+
+  var newQuestions = {}, oldQuestions = {};
+  try { newQuestions = JSON.parse(newQuestionsJson); } catch(e){}
+  try { oldQuestions = oldQuestionsJson ? JSON.parse(oldQuestionsJson) : {}; } catch(e){}
+
+  Q_PART_NAMES_LOCAL.forEach(function(part){
+    var sp = JSON.stringify(newQuestions[part] || {});
+    var pp = JSON.stringify(oldQuestions[part] || {});
+    if(sp !== pp){
+      updateLog['part_' + part] = now;
+      // 題目層級 diff
+      var sQ = newQuestions[part] || {}, pQ = oldQuestions[part] || {};
+      var sSections = sQ.sections || [], pSections = pQ.sections || [];
+      var prodQMap = {};
+      pSections.forEach(function(sec){ (sec.qs||[]).forEach(function(q){ if(q&&q.id) prodQMap[q.id]=q; }); });
+      sSections.forEach(function(sec){ (sec.qs||[]).forEach(function(sq){
+        if(!sq||!sq.id) return;
+        var pq = prodQMap[sq.id];
+        if(!pq){
+          updateLog['q_' + part + '_' + sq.id] = now;
+        } else if(sq.text !== pq.text || JSON.stringify(sq.opts||[]) !== JSON.stringify(pq.opts||[])){
+          updateLog['q_' + part + '_' + sq.id] = now;
+        }
+      }); });
+    }
+  });
+
+  var newRules = [], oldRules = [];
+  try { newRules = JSON.parse(newRulesJson); } catch(e){}
+  try { oldRules = oldRulesJson ? JSON.parse(oldRulesJson) : []; } catch(e){}
+
+  DIM_NAMES_LOCAL.forEach(function(dim, i){
+    var sd = JSON.stringify(newRules[i] || {});
+    var pd = JSON.stringify(oldRules[i] || {});
+    if(sd !== pd) updateLog['dim_' + dim] = now;
+  });
+
+  var changedParts = Q_PART_NAMES_LOCAL.filter(function(p){ return updateLog['part_'+p]; });
+  var changedDims = DIM_NAMES_LOCAL.filter(function(d){ return updateLog['dim_'+d]; });
+  var changedQs = Object.keys(updateLog).filter(function(k){ return k.indexOf('q_')===0; });
+
+  return { updateLog: updateLog, changedParts: changedParts, changedDims: changedDims, changedQs: changedQs, now: now };
+}
+
+// ---- 發布到 Production（透過 Cloud Function） ----
+async function doProductionPublish(){
   var btn = document.getElementById('publish-confirm-btn');
   var cb = document.getElementById('dry-run-checkbox');
   var dryRun = cb && cb.checked;
@@ -1946,7 +2060,6 @@ async function doPublish(){
     var user = auth.currentUser;
     if(!user) throw new Error('未登入');
 
-    // 從 staging Firebase（前端 db）讀取資料
     if(desc) desc.textContent = '正在讀取 Staging 資料...';
     var rulesDoc = await db.collection('settings').doc('rules').get();
     if(!rulesDoc.exists || !rulesDoc.data().rulesJson) throw new Error('Staging 無 rules 資料');
@@ -2059,14 +2172,6 @@ auth.onAuthStateChanged(function(user){
   console.log('[Auth] admin verified, calling hideLoginGate');
   hideLoginGate();
   console.log('[Auth] IS_STAGING:', IS_STAGING);
-  if(IS_STAGING){
-    var pb=document.getElementById('btn-publish');
-    console.log('[Auth] btn-publish element:', pb);
-    if(pb) {
-      pb.style.display='inline-block';
-      console.log('[Auth] set display to inline-block, current:', pb.style.display);
-    }
-  }
   initPublishBtn();
   loadAllData();
 });

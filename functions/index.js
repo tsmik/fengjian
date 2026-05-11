@@ -445,6 +445,35 @@ exports.publishToProduction = onRequest(
         const prodPart = JSON.stringify(prodQuestions[part] || {});
         if (stagingPart !== prodPart) {
           updateLog["part_" + part] = now;
+
+          // 題目層級 diff：對該部位的每題逐一比對
+          const sQ = stagingQuestions[part] || {};
+          const pQ = prodQuestions[part] || {};
+          const sSections = sQ.sections || [];
+          const pSections = pQ.sections || [];
+
+          // 建立 production 該部位的 qid → q 對照
+          const prodQMap = {};
+          pSections.forEach((sec) => {
+            (sec.qs || []).forEach((q) => {
+              if (q && q.id) prodQMap[q.id] = q;
+            });
+          });
+
+          // 遍歷 staging 題目
+          sSections.forEach((sec) => {
+            (sec.qs || []).forEach((sq) => {
+              if (!sq || !sq.id) return;
+              const pq = prodQMap[sq.id];
+              if (!pq) {
+                // 新增題目
+                updateLog["q_" + part + "_" + sq.id] = now;
+              } else if (sq.text !== pq.text || JSON.stringify(sq.opts || []) !== JSON.stringify(pq.opts || [])) {
+                // 文字或選項改了
+                updateLog["q_" + part + "_" + sq.id] = now;
+              }
+            });
+          });
         }
       });
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD 20260324-020000 -->
+<!-- BUILD 20260505-100000 -->
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -9,6 +9,16 @@
 <meta property="og:description" content="2026">
 <meta property="og:type" content="website">
 <title>風鑑學堂 人相兵法 v2</title>
+<script>
+/* 入口分流：寬度 < 768px 自動重導 m.html */
+(function(){
+  if(window.innerWidth<768){
+    var qs=window.location.search||'';
+    var hash=window.location.hash||'';
+    window.location.replace('m.html'+qs+hash);
+  }
+})();
+</script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -36,6 +46,16 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .nav-dropdown-item.active{color:white;font-weight:400}
 .nav-spacer{flex:1}
 .nav-name{color:#e8d8c0;font-size:15px;font-weight:400;padding:0 14px;white-space:nowrap;letter-spacing:1px}
+/* v1.7 階段 15：桌機儲存按鈕 + 狀態色塊 */
+.nav-save-zone{display:flex;align-items:center;gap:8px;margin-right:12px}
+.nav-save-status{font-size:13px;padding:5px 14px;border-radius:8px;font-weight:600;white-space:nowrap}
+.nav-save-status-saved{background:#5a8a4a;color:#fff}
+.nav-save-status-dirty{background:#d4a017;color:#4a3a00}
+.nav-save-status-saving{background:#c89540;color:#fff}
+.nav-save-status-error{background:#c03830;color:#fff}
+.nav-save-btn{font-size:13px;padding:5px 14px;border-radius:8px;border:none;background:#8fae7c;color:#fff;font-weight:600;cursor:pointer;font-family:inherit}
+.nav-save-btn:hover{background:#7a9968}
+.nav-save-btn:disabled{background:#4a4f55;color:rgba(255,255,255,0.4);cursor:not-allowed}
 .nav-report{height:32px;padding:0 16px;background:var(--active);color:white;border:none;border-radius:4px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:1px;white-space:nowrap}
 .nav-report:hover{opacity:0.9}
 
@@ -443,6 +463,10 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     </div>
   </div>
   <div class="nav-spacer"></div>
+  <div class="nav-save-zone" id="nav-save-zone" style="display:none">
+    <span class="nav-save-status nav-save-status-saved" id="nav-save-status">已儲存</span>
+    <button class="nav-save-btn" id="nav-save-btn" type="button">儲存</button>
+  </div>
   <div class="nav-name" id="nav-name"></div>
   <a href="admin.html" target="_blank" id="admin-link" style="display:none;color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
   <div class="nav-tab" onclick="doLogout()" style="cursor:pointer;color:rgba(255,255,255,0.45)">登出</div>
@@ -741,8 +765,25 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     try { var r = localStorage.getItem(SEEN_KEY_PREFIX + uid); return r ? JSON.parse(r) : {}; } catch(e){ return {}; }
   }
 
+  var _saveCloudTimer = null;
   function saveSeenLog(uid, seenLog) {
     try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(seenLog)); } catch(e){}
+    // v1.7 階段 16+：debounce 1 秒寫 firestore（跨裝置同步）
+    clearTimeout(_saveCloudTimer);
+    _saveCloudTimer = setTimeout(function(){ _flushSeenToCloud(uid, seenLog); }, 1000);
+  }
+  function _flushSeenToCloud(uid, seenLog) {
+    if (!window._badgeDb || !uid) return;
+    window._badgeDb.collection('users').doc(uid).set({ badgeSeen: seenLog }, { merge: true })
+      .catch(function(e){ console.log('badgeSeen 寫雲端失敗', e); });
+  }
+  function _mergeSeen(local, remote) {
+    var result = {};
+    for (var k in local) result[k] = local[k];
+    for (var k2 in remote) {
+      if (!result[k2] || new Date(remote[k2]) > new Date(result[k2])) result[k2] = remote[k2];
+    }
+    return result;
   }
 
   function hasUpdate(updateLog, seenLog, key) {
@@ -752,8 +793,16 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
   }
 
   function refreshEntryBadges(updateLog, seenLog) {
+    // 從部位觀察：任何 part_* 或 q_* 還有未看過更新 → 顯示
     var hasPartUpdate = Q_PART_NAMES.some(function(p){ return hasUpdate(updateLog, seenLog, 'part_' + p); });
+    if (!hasPartUpdate) {
+      for (var key in updateLog) {
+        if (key.indexOf('q_') === 0 && hasUpdate(updateLog, seenLog, key)) { hasPartUpdate = true; break; }
+      }
+    }
+    // 從維度觀察：任何 dim_* 還有未看過更新 → 顯示
     var hasDimUpdate = DIM_NAMES.some(function(d){ return hasUpdate(updateLog, seenLog, 'dim_' + d); });
+
     var obsEl = document.getElementById('badge-obs-entry');
     var condEl = document.getElementById('badge-cond-entry');
     if (obsEl) obsEl.classList.toggle('show', hasPartUpdate);
@@ -763,7 +812,16 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
   function refreshFaceMapBadges(updateLog, seenLog) {
     Q_PART_NAMES.forEach(function(part){
       var badge = document.getElementById('badge-part-' + part);
-      if (badge) badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'part_' + part));
+      if (!badge) return;
+      // part 自身有更新，或該部位下任何題目有更新沒看過 → 顯示紅點
+      var has = hasUpdate(updateLog, seenLog, 'part_' + part);
+      if (!has) {
+        var prefix = 'q_' + part + '_';
+        for (var key in updateLog) {
+          if (key.indexOf(prefix) === 0 && hasUpdate(updateLog, seenLog, key)) { has = true; break; }
+        }
+      }
+      badge.classList.toggle('show', has);
     });
   }
 
@@ -771,6 +829,15 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     DIM_NAMES.forEach(function(dim){
       var badge = document.getElementById('badge-dim-' + dim);
       if (badge) badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'dim_' + dim));
+    });
+  }
+
+  function refreshQuestionBadges(updateLog, seenLog) {
+    document.querySelectorAll('.q-badge').forEach(function(badge) {
+      var part = badge.getAttribute('data-part');
+      var qid = badge.getAttribute('data-qid');
+      if (!part || !qid) return;
+      badge.classList.toggle('show', hasUpdate(updateLog, seenLog, 'q_' + part + '_' + qid));
     });
   }
 
@@ -792,15 +859,56 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     refreshCondBadges(window._updateLog, seenLog);
   };
 
+  window._markQuestionSeen = function(partName, qid) {
+    if (!window._badgeDb || !window._badgeUid || !window._updateLog) return;
+    var seenLog = getSeenLog(window._badgeUid);
+    var now = new Date().toISOString();
+    seenLog['q_' + partName + '_' + qid] = now;
+
+    // 檢查該部位下所有有更新的題目是否都看過了
+    // 如果是，把 part_部位 也 mark 為看過
+    var prefix = 'q_' + partName + '_';
+    var allSeen = true;
+    for (var k in window._updateLog) {
+      if (k.indexOf(prefix) === 0 && hasUpdate(window._updateLog, seenLog, k)) {
+        allSeen = false;
+        break;
+      }
+    }
+    if (allSeen && window._updateLog['part_' + partName]) {
+      seenLog['part_' + partName] = now;
+    }
+
+    saveSeenLog(window._badgeUid, seenLog);
+    refreshEntryBadges(window._updateLog, seenLog);
+    refreshFaceMapBadges(window._updateLog, seenLog);
+    refreshCondBadges(window._updateLog, seenLog);
+    refreshQuestionBadges(window._updateLog, seenLog);
+  };
+
   window._initUpdateBadges = function(fbDb, uid) {
     window._badgeDb = fbDb;
     window._badgeUid = uid;
     loadUpdateLog(fbDb).then(function(updateLog){
       window._updateLog = updateLog;
       var seenLog = getSeenLog(uid);
+      // 先用 LS render 一次（快）
       refreshEntryBadges(updateLog, seenLog);
       refreshFaceMapBadges(updateLog, seenLog);
       refreshCondBadges(updateLog, seenLog);
+      refreshQuestionBadges(updateLog, seenLog);
+      // v1.7 階段 16+：async fetch cloud badgeSeen 並 merge 重 render
+      fbDb.collection('users').doc(uid).get().then(function(doc){
+        if (doc.exists && doc.data().badgeSeen) {
+          var cloudSeen = doc.data().badgeSeen || {};
+          var merged = _mergeSeen(seenLog, cloudSeen);
+          try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(merged)); } catch(e){}
+          refreshEntryBadges(updateLog, merged);
+          refreshFaceMapBadges(updateLog, merged);
+          refreshCondBadges(updateLog, merged);
+          refreshQuestionBadges(updateLog, merged);
+        }
+      }).catch(function(e){ console.log('badgeSeen 載入失敗', e); });
     });
   };
 
@@ -810,6 +918,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     refreshEntryBadges(window._updateLog, seenLog);
     refreshFaceMapBadges(window._updateLog, seenLog);
     refreshCondBadges(window._updateLog, seenLog);
+    refreshQuestionBadges(window._updateLog, seenLog);
   };
 })();
 </script>
