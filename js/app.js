@@ -6,7 +6,7 @@ import { DIMS, data, obsData, obsOverride, setData, setObsData, setObsOverride,
          DIM_RULES, setDimRules, _rulesSource, setRulesSource,
          OBS_PARTS_DATA, setObsPartsData, OBS_PART_NAMES, setObsPartNames,
          _questionsSource, setQuestionsSource, setLiunianTable,
-         emptyData, setNavActive, showPage, save, _showToast,
+         emptyData, setNavActive, showPage, save, _showToast, setSaveStatusCallback, flushSaveNow,
          BETA_VISIBLE_DIMS, calcDim, initBetaUI, condResults, setManualData,
          currentUser, setCurrentUser, userRole, setUserRole } from './core.js';
 
@@ -405,6 +405,25 @@ function showAccessDenied() {
 }
 
 // Firebase Auth 狀態監聽
+// v1.7 階段 15：桌機儲存按鈕 + 狀態色塊 binding
+(function setupSaveStatusUI(){
+  const elZone = document.getElementById('nav-save-zone');
+  const elStatus = document.getElementById('nav-save-status');
+  const elBtn = document.getElementById('nav-save-btn');
+  if (!elZone || !elStatus || !elBtn) return;
+  setSaveStatusCallback(function(state){
+    elZone.style.display = 'flex';
+    elStatus.classList.remove('nav-save-status-saved','nav-save-status-dirty','nav-save-status-saving','nav-save-status-error');
+    if (state === 'saved')       { elStatus.classList.add('nav-save-status-saved');  elStatus.textContent = '已儲存'; elBtn.disabled = true; }
+    else if (state === 'dirty')  { elStatus.classList.add('nav-save-status-dirty');  elStatus.textContent = '未儲存'; elBtn.disabled = false; }
+    else if (state === 'saving') { elStatus.classList.add('nav-save-status-saving'); elStatus.textContent = '儲存中'; elBtn.disabled = true; }
+    else if (state === 'error')  { elStatus.classList.add('nav-save-status-error');  elStatus.textContent = '失敗';   elBtn.disabled = false; }
+  });
+  elBtn.addEventListener('click', function(){ flushSaveNow(); });
+  elBtn.disabled = true; // 預設 saved，按鈕 disabled 直到 dirty
+  elZone.style.display = 'flex'; // 預設顯示（user 登入後 nav 露出就看得到）
+})();
+
 auth.onAuthStateChanged(async (user) => {
   // 老師模式跳過 Firebase Auth 流程（直接讀 URL 參數，不依賴 window.isTeacherMode 設定時序）
   if (new URLSearchParams(window.location.search).get('role') === 'teacher') return;

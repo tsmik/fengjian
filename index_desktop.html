@@ -46,6 +46,16 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .nav-dropdown-item.active{color:white;font-weight:400}
 .nav-spacer{flex:1}
 .nav-name{color:#e8d8c0;font-size:15px;font-weight:400;padding:0 14px;white-space:nowrap;letter-spacing:1px}
+/* v1.7 階段 15：桌機儲存按鈕 + 狀態色塊 */
+.nav-save-zone{display:flex;align-items:center;gap:8px;margin-right:12px}
+.nav-save-status{font-size:13px;padding:5px 14px;border-radius:8px;font-weight:600;white-space:nowrap}
+.nav-save-status-saved{background:#5a8a4a;color:#fff}
+.nav-save-status-dirty{background:#d4a017;color:#4a3a00}
+.nav-save-status-saving{background:#c89540;color:#fff}
+.nav-save-status-error{background:#c03830;color:#fff}
+.nav-save-btn{font-size:13px;padding:5px 14px;border-radius:8px;border:none;background:#8fae7c;color:#fff;font-weight:600;cursor:pointer;font-family:inherit}
+.nav-save-btn:hover{background:#7a9968}
+.nav-save-btn:disabled{background:#4a4f55;color:rgba(255,255,255,0.4);cursor:not-allowed}
 .nav-report{height:32px;padding:0 16px;background:var(--active);color:white;border:none;border-radius:4px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:1px;white-space:nowrap}
 .nav-report:hover{opacity:0.9}
 
@@ -453,6 +463,10 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     </div>
   </div>
   <div class="nav-spacer"></div>
+  <div class="nav-save-zone" id="nav-save-zone" style="display:none">
+    <span class="nav-save-status nav-save-status-saved" id="nav-save-status">已儲存</span>
+    <button class="nav-save-btn" id="nav-save-btn" type="button">儲存</button>
+  </div>
   <div class="nav-name" id="nav-name"></div>
   <a href="admin.html" target="_blank" id="admin-link" style="display:none;color:rgba(255,255,255,0.3);font-size:12px;text-decoration:none;padding:0 10px;white-space:nowrap">⚙ 管理後台</a>
   <div class="nav-tab" onclick="doLogout()" style="cursor:pointer;color:rgba(255,255,255,0.45)">登出</div>

@@ -154,36 +154,48 @@ export function _getUserDocRef() {
 }
 
 // v1.7 階段 A：debounce 從 1500 → 300（盡快寫入 firestore，減少 cross-device race）
-// 額外加 visibilitychange listener：切走桌機 tab 時立即 flush，user 跳手機看不到 stale 風險
+// 額外加 visibilitychange listener：切走桌機 tab 時立即 flush
+// v1.7 階段 15：暴露 save status callback 給 UI（桌機儲存按鈕 / 狀態色塊用）
 let _saveTimer = null;
-function _flushSaveNow() {
-  if (!currentUser) return;
-  if (!_saveTimer) return;
-  clearTimeout(_saveTimer);
-  _saveTimer = null;
+let _saveStatusCallback = null;
+export function setSaveStatusCallback(fn) { _saveStatusCallback = fn; }
+function _setStatus(s) { if (_saveStatusCallback) try { _saveStatusCallback(s); } catch (e) {} }
+function _doSetDoc() {
+  _setStatus('saving');
   _getUserDocRef().set({
     dataJson: JSON.stringify(data),
     obsJson: JSON.stringify(obsData),
     overrideJson: JSON.stringify(obsOverride),
     updatedAt: new Date().toISOString()
-  }, { merge: true }).catch(function(e) { console.log('雲端儲存失敗（flush）', e); });
+  }, { merge: true }).then(function() { _setStatus('saved'); }).catch(function(e) {
+    console.log('雲端儲存失敗', e);
+    _setStatus('error');
+  });
+}
+export function flushSaveNow() {
+  if (!currentUser) return;
+  if (!_saveTimer) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = null;
+  _doSetDoc();
 }
 export function save() {
   if (!currentUser) return;
   localStorage.setItem('obs_data_v1', JSON.stringify(obsData));
   localStorage.setItem('obs_override_v1', JSON.stringify(obsOverride));
+  _setStatus('dirty');
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() {
     _saveTimer = null;
-    _getUserDocRef().set({ dataJson: JSON.stringify(data), obsJson: JSON.stringify(obsData), overrideJson: JSON.stringify(obsOverride), updatedAt: new Date().toISOString() }, { merge: true }).catch(function(e) { console.log('雲端儲存失敗', e); });
+    _doSetDoc();
   }, 300);
 }
 // 切走 tab / 關閉視窗 → 立即 flush 還沒寫的資料
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') _flushSaveNow();
+    if (document.visibilityState === 'hidden') flushSaveNow();
   });
-  window.addEventListener('pagehide', _flushSaveNow);
+  window.addEventListener('pagehide', flushSaveNow);
 }
 
 export function _showToast(msg) {
