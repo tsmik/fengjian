@@ -38,8 +38,15 @@ const LS_DIM_IDX = 'm_manual_dim_idx';
 const LS_VIEW = 'm_manual_view';
 
 let _container = null;
-let _view = 'main';            // 'main' | 'sens' — 內部 view（sens 覆蓋整頁）
-let _manualSubview = 'input';  // 'input' | 'overview' — 內部 segmented
+// v1.7 階段 8：拿掉 _view，純用 _manualSubview，segmented 三個 tab
+let _manualSubview = 'input';  // 'input' | 'overview' | 'sens'
+
+// v1.7 階段 8：手動輸入 tab 上方 segmented 三個 tab
+const SUBMODES = [
+  { key: 'input',    label: '輸入' },
+  { key: 'overview', label: '報告' },
+  { key: 'sens',     label: '參數分析' },
+];
 let _manualDraft = null;
 let _firestoreBaseline = null;
 let _manualDimIdx = null;
@@ -111,7 +118,6 @@ export function mountManual(container) {
   // v1.7 階段 8：每次進手動輸入 tab 強制回到「輸入」view（不讀 LS）
   // segmented 內切換仍寫 LS，但下次 mount 仍 reset
   _manualSubview = 'input';
-  _view = 'main';
   // 維度 tile 展開狀態仍從 LS 讀（user 上次展開哪個維度）
   try {
     const savedDim = localStorage.getItem(LS_DIM_IDX);
@@ -160,8 +166,6 @@ export function mountManual(container) {
 export function unmountManual() {
   if (_container) _container.innerHTML = '';
   _container = null;
-  // 重設 sens view 狀態：下次進手動 tab 從 main view 開始
-  _view = 'main';
 }
 
 export function getManualDirty() {
@@ -223,25 +227,23 @@ async function exportManualPng(btn) {
 
 function _render() {
   if (!_container) return;
-  if (_view === 'sens') { _renderSensView(); return; }
-  // 回 main view：恢復 saveZone（若 sens view 隱藏過）
+  // sens view 隱藏儲存按鈕（純看不寫）；其他 view 顯示
   const saveZone = document.getElementById('m-save-zone');
-  if (saveZone) saveZone.classList.remove('is-hidden');
+  if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens');
   _container.innerHTML = _renderManualInput();
   _bindEvents();
 }
 
 function _renderManualInput() {
-  const viewToggle = `
-    <div class="m-manual-view-bar">
-      <div class="m-segmented" role="tablist">
-        <button class="m-seg-btn ${_manualSubview === 'input' ? 'm-seg-active' : ''}" data-mview="input">輸入</button>
-        <button class="m-seg-btn ${_manualSubview === 'overview' ? 'm-seg-active' : ''}" data-mview="overview">手動兵法報告</button>
-      </div>
-    </div>
-  `;
+  // v1.7 階段 8：上方 segmented 三個 tab（輸入 / 報告 / 參數分析）
+  const seg = SUBMODES.map(t =>
+    `<button class="m-seg-btn ${_manualSubview === t.key ? 'm-seg-active' : ''}" data-mview="${t.key}">${t.label}</button>`
+  ).join('');
+  const viewToggle = `<div class="m-manual-view-bar"><div class="m-segmented" role="tablist">${seg}</div></div>`;
   let body;
-  if (_manualSubview === 'overview') {
+  if (_manualSubview === 'sens') {
+    body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
+  } else if (_manualSubview === 'overview') {
     body = `${_renderManualOverview()}${_renderCoeffSummary()}${_renderManualPngRow()}${_renderClearAllRow()}`;
   } else {
     body = `
@@ -251,7 +253,6 @@ function _renderManualInput() {
       ${_renderClearAllRow()}
     `;
   }
-  // v1.7 階段 6+：拿掉 m-manual-card 白框（跟部位觀察視覺一致）
   return `${viewToggle}${body}`;
 }
 
@@ -295,11 +296,11 @@ function _renderCoeffSummary() {
 }
 
 function _renderManualPngRow() {
+  // v1.7 階段 8：拿掉「📊 看重要參數分析」按鈕（segmented 第三個 tab 取代）
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版 PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
-      <button class="m-sens-entry-btn" data-msens-entry="manual" type="button">📊 看重要參數分析</button>
     </div>
   `;
 }
@@ -432,9 +433,6 @@ function _bindEvents() {
   _container.querySelectorAll('[data-mpng]').forEach(btn => {
     btn.addEventListener('click', () => exportManualPng(btn));
   });
-  _container.querySelectorAll('[data-msens-entry="manual"]').forEach(btn => {
-    btn.addEventListener('click', () => _enterSens());
-  });
   _container.querySelectorAll('[data-mclear-all]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (!confirm('確定清除全部 13 維度 × 9 部位的填答嗎？')) return;
@@ -475,31 +473,6 @@ function _bindEvents() {
   });
 }
 
-// ===== 重要參數分析 view（手動版）=====
-
-function _enterSens() {
-  _view = 'sens';
-  _render();
-  const main = document.querySelector('.m-main');
-  if (main) main.scrollTop = 0;
-}
-
-function _exitSens() {
-  _view = 'main';
-  _render();
-}
-
-function _renderSensView() {
-  _container.innerHTML = `
-    <div class="m-sens-header">
-      <button class="m-sens-back" type="button">← 返回</button>
-      <span class="m-sens-header-title">手動 重要參數分析</span>
-    </div>
-    <div class="m-sens-body">${renderManualSens(_manualDraft)}</div>
-  `;
-  const backBtn = _container.querySelector('.m-sens-back');
-  if (backBtn) backBtn.addEventListener('click', _exitSens);
-  // 分析頁純檢視，隱藏儲存按鈕
-  const saveZone = document.getElementById('m-save-zone');
-  if (saveZone) saveZone.classList.add('is-hidden');
+// v1.7 階段 8：拿掉 _enterSens / _exitSens / _renderSensView
+// 重要參數分析改成 segmented 第三個 tab（_manualSubview === 'sens'）內部 render
 }

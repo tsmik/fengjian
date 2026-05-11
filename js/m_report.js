@@ -51,12 +51,17 @@ export function unmountReport() {
 }
 
 // 自動報告 view（給 m_input.js 內部報告 view mount 用）
-export function mountAutoView(container) {
+// initView: 'report'（預設）顯示 PNG/sens 入口；'sens' 直接進重要參數分析
+export function mountAutoView(container, initView = 'report') {
   _container = container;
   _isListMode = false;
-  _view = 'report';
   _isLoadingSens = false;
-  _render();
+  if (initView === 'sens') {
+    _enterSens();
+  } else {
+    _view = 'report';
+    _render();
+  }
 }
 
 export function unmountAutoView() {

@@ -26,10 +26,11 @@ import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
 import { mountAutoView, unmountAutoView } from './m_report.js';
 
-// v1.7 階段 3：上層 segmented [答題 | 報告]，答題 view 內部 part/dim 視角切換
+// v1.7 階段 8：上層 segmented [部位 | 報告 | 參數分析]；部位內部 part/dim 視角切換
 const SUBMODES = [
-  { key: 'quiz',   label: '答題' },
+  { key: 'quiz',   label: '部位' },
   { key: 'report', label: '報告' },
+  { key: 'sens',   label: '參數分析' },
 ];
 
 // 6+5 異形排列
@@ -306,8 +307,8 @@ function escapeHtml(s) {
 
 function render() {
   if (!_root) return;
-  if (_view === 'report') {
-    renderReportView();
+  if (_view === 'report' || _view === 'sens') {
+    renderAutoView(_view);
   } else {
     renderQuizView();
   }
@@ -327,18 +328,17 @@ function renderQuizView() {
   bindEvents();
 }
 
-function renderReportView() {
-  // 報告 view：保留上層 segmented（答題 / 報告），下方 mount m_report.js（auto only）
+function renderAutoView(initView) {
+  // 報告 / 參數分析 view：保留上層 segmented，下方 mount m_report.js（auto report or sens）
   const seg = renderSegmented();
-  // 切過來前先 unmount 舊的（保險）
   unmountAutoView();
   _root.innerHTML = `
     <div class="m-segmented">${seg}</div>
     <div class="m-submode-content"><div id="m-input-report-mount"></div></div>
   `;
   bindEvents();
-  const reportContainer = _root.querySelector('#m-input-report-mount');
-  if (reportContainer) mountAutoView(reportContainer);
+  const container = _root.querySelector('#m-input-report-mount');
+  if (container) mountAutoView(container, initView);
 }
 
 function renderSegmented() {
@@ -859,8 +859,8 @@ function bindEvents() {
     btn.addEventListener('click', () => {
       const key = btn.dataset.submode;
       if (_view === key) return;
-      // 從 report 切回 quiz 時，主動 unmount m_report（清掉 _container 引用）
-      if (_view === 'report' && key === 'quiz') unmountAutoView();
+      // 從 auto view（report/sens）切到 quiz 時，主動 unmount m_report
+      if ((_view === 'report' || _view === 'sens') && key === 'quiz') unmountAutoView();
       _view = key;
       try { localStorage.setItem('m_input_view', _view); } catch (e) {}
       render();
