@@ -77,40 +77,39 @@ export function unmountAutoView() {
 // 自動報告無 draft，保留介面相容（m_main.js confirm 流程仍會呼叫）
 export function discardReportDraft() {}
 
-// 報告 tab list mode：兩份報告卡片，點擊跳對應 tab 的報告 view
+// 報告 tab list mode：兩份報告卡片（v1.7 階段 12+：沿用首頁 bigbtn 樣式 + once LS 機制）
 function _renderList() {
   if (!_container) return;
   _container.innerHTML = `
-    <div class="m-report-list">
-      <div class="m-report-card" data-report-card="auto">
-        <div class="m-report-card-icon">📊</div>
-        <div class="m-report-card-meta">
-          <div class="m-report-card-title">自動報告</div>
-          <div class="m-report-card-desc">依觀察答題自動推算 13 維度 · 詳盡 PNG · 重要參數分析</div>
+    <div class="m-home" style="padding:16px 14px">
+      <button class="m-home-bigbtn" data-report-card="auto">
+        <span class="m-home-bigbtn-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
+        <div class="m-home-bigbtn-meta">
+          <div class="m-home-bigbtn-title">部位觀察評分報告</div>
+          <div class="m-home-bigbtn-sub">輸入11部位 頭、額、耳、眉…觀察特徵，自動計算動/靜，產生報告</div>
         </div>
-        <div class="m-report-card-arrow">›</div>
-      </div>
-      <div class="m-report-card" data-report-card="manual">
-        <div class="m-report-card-icon">📋</div>
-        <div class="m-report-card-meta">
-          <div class="m-report-card-title">手動兵法報告</div>
-          <div class="m-report-card-desc">手動輸入 13 維度動靜 · 詳盡 PNG · 重要參數分析</div>
+      </button>
+      <button class="m-home-bigbtn" data-report-card="manual">
+        <span class="m-home-bigbtn-icon">✎</span>
+        <div class="m-home-bigbtn-meta">
+          <div class="m-home-bigbtn-title">手動輸入報告</div>
+          <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
         </div>
-        <div class="m-report-card-arrow">›</div>
-      </div>
+      </button>
     </div>
   `;
   const autoCard = _container.querySelector('[data-report-card="auto"]');
   if (autoCard) autoCard.addEventListener('click', () => {
-    // 跳到「部位觀察」tab 的「報告」view
-    try { localStorage.setItem('m_input_view', 'report'); } catch (e) {}
+    // 跳到「部位觀察」tab 的「報告」view（once LS：mount 讀後立刻清，不破壞「點 tab bar 強制 reset 部位」邏輯）
+    try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {}
     const btn = document.querySelector('.m-tab[data-tab="input"]');
     if (btn) btn.click();
   });
   const manualCard = _container.querySelector('[data-report-card="manual"]');
   if (manualCard) manualCard.addEventListener('click', () => {
-    // 跳到「手動輸入」tab 的「手動兵法報告」view
-    try { localStorage.setItem('m_manual_view', 'overview'); } catch (e) {}
+    try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
     const btn = document.querySelector('.m-tab[data-tab="manual"]');
     if (btn) btn.click();
   });
@@ -356,7 +355,6 @@ function _render() {
   _container.innerHTML = `
     ${renderCoeffSummary(data)}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
-      ${renderPngPreview()}
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>

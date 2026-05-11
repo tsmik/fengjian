@@ -143,9 +143,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
 .m-home-profile-status.is-error{color:#b04545}
-/* 首頁兩大按鈕（v1.7 階段 5）*/
-.m-home-bigbtn{display:block;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 18px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+/* 首頁兩大按鈕（v1.7 階段 5 / 12+）*/
+.m-home-hint{font-size:14px;color:#5a5048;padding:0 4px 10px;letter-spacing:1px;line-height:1.5}
+.m-home-bigbtn{display:flex;align-items:center;gap:14px;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .m-home-bigbtn:active{background:#f5efe6}
+.m-home-bigbtn-icon{flex:0 0 auto;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--active);font-size:32px;line-height:1}
+.m-home-bigbtn-meta{flex:1;min-width:0}
 .m-home-bigbtn-title{font-size:18px;font-weight:600;color:#3a3228;margin-bottom:6px;letter-spacing:1px}
 .m-home-bigbtn-sub{font-size:12px;color:#7a6e64;margin-bottom:14px;line-height:1.6}
 .m-home-bigbtn-progress{display:flex;align-items:center;gap:10px}
@@ -907,22 +910,31 @@ body.m-debug-on .m-debug-clear{display:block}
   <section class="m-tab-page active" id="m-page-home">
   <div class="m-home">
     <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>
+    <div class="m-home-hint">請選擇其中一種方式填入資料，產生人相兵法報告</div>
 
     <button class="m-home-bigbtn" data-go="obs">
-      <div class="m-home-bigbtn-title">部位觀察評分</div>
-      <div class="m-home-bigbtn-sub">輸入11部位 頭、額、耳、眉…觀察特徵，自動計算動/靜，產生報告</div>
-      <div class="m-home-bigbtn-progress">
-        <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
-        <div class="m-home-bigbtn-text"><span id="m-home-obs-q">0</span>/<span id="m-home-obs-q-total">0</span> 題</div>
+      <span class="m-home-bigbtn-icon">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>
+      <div class="m-home-bigbtn-meta">
+        <div class="m-home-bigbtn-title">部位觀察評分</div>
+        <div class="m-home-bigbtn-sub">輸入11部位 頭、額、耳、眉…觀察特徵，自動計算動/靜，產生報告</div>
+        <div class="m-home-bigbtn-progress">
+          <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
+          <div class="m-home-bigbtn-text"><span id="m-home-obs-q">0</span>/<span id="m-home-obs-q-total">0</span> 題</div>
+        </div>
       </div>
     </button>
 
     <button class="m-home-bigbtn" data-go="manual">
-      <div class="m-home-bigbtn-title">手動輸入報告</div>
-      <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
-      <div class="m-home-bigbtn-progress">
-        <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
-        <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>
+      <span class="m-home-bigbtn-icon">✎</span>
+      <div class="m-home-bigbtn-meta">
+        <div class="m-home-bigbtn-title">手動輸入報告</div>
+        <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
+        <div class="m-home-bigbtn-progress">
+          <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
+          <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>
+        </div>
       </div>
     </button>
 

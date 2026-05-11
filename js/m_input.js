@@ -1036,9 +1036,16 @@ export async function mountInput(rootEl) {
   await ensureQuestionsLoaded();
 
   // v1.7 階段 8：每次進部位觀察 tab 強制回到「答題 + 部位視角」（不讀 LS）
-  // segmented 內切換仍寫 LS，但下次 mount 仍 reset
+  // v1.7 階段 12+：唯一例外是「once LS」（報告 tab 卡片點擊時 set），mount 讀後立刻清
   _view = 'quiz';
   _quizMode = 'part';
+  try {
+    const once = localStorage.getItem('m_input_view_once');
+    if (once === 'quiz' || once === 'report' || once === 'sens') {
+      _view = once;
+      localStorage.removeItem('m_input_view_once');
+    }
+  } catch (e) {}
 
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
   loadDimState();

@@ -116,8 +116,15 @@ function _countAnswered(di) {
 export function mountManual(container) {
   _container = container;
   // v1.7 階段 8：每次進手動輸入 tab 強制回到「輸入」view（不讀 LS）
-  // segmented 內切換仍寫 LS，但下次 mount 仍 reset
+  // v1.7 階段 12+：once LS 例外（報告 tab 卡片點擊時 set）
   _manualSubview = 'input';
+  try {
+    const once = localStorage.getItem('m_manual_view_once');
+    if (once === 'input' || once === 'overview' || once === 'sens') {
+      _manualSubview = once;
+      localStorage.removeItem('m_manual_view_once');
+    }
+  } catch (e) {}
   // 維度 tile 展開狀態仍從 LS 讀（user 上次展開哪個維度）
   try {
     const savedDim = localStorage.getItem(LS_DIM_IDX);
@@ -340,7 +347,6 @@ function _renderCoeffSummary() {
 function _renderManualPngRow() {
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
-      ${renderPngPreview()}
       <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
