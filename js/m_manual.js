@@ -315,32 +315,37 @@ function _renderCoeffSummary() {
       </div>
     `;
   };
-  // section 總係數彩條（null → 「—」白字）
+  // 群組總係數 cell（v1.7 階段 10：跟 dim cell 並排，不再上下分）
   const renderTotal = (label, val) => {
     const display = val === null ? '—' : val;
-    return `<div class="m-coeff-section-total"><span class="m-coeff-section-label">${label}</span><span class="m-coeff-section-val">${display}</span></div>`;
+    return `
+      <div class="m-coeff-total">
+        <span class="m-coeff-total-label">${label}</span>
+        <span class="m-coeff-total-val">${display}</span>
+      </div>
+    `;
   };
 
   return `
     <div class="m-coeff-summary">
-      <div class="m-coeff-section is-boss">
-        <div class="m-coeff-section-dims">${renderDim(0)}${renderDim(1)}${renderDim(2)}</div>
+      <div class="m-coeff-row is-boss">
+        ${renderDim(0)}${renderDim(1)}${renderDim(2)}
         ${renderTotal('老闆係數', boss)}
       </div>
-      <div class="m-coeff-section is-mgr">
-        <div class="m-coeff-section-dims">${renderDim(3)}${renderDim(4)}${renderDim(5)}</div>
+      <div class="m-coeff-row is-mgr">
+        ${renderDim(3)}${renderDim(4)}${renderDim(5)}
         ${renderTotal('主管係數', mgr)}
       </div>
-      <div class="m-coeff-section is-luck">
-        <div class="m-coeff-section-dims">${renderDim(6)}${renderDim(7)}${renderDim(8)}</div>
+      <div class="m-coeff-row is-luck">
+        ${renderDim(6)}${renderDim(7)}${renderDim(8)}
         ${renderTotal('運氣係數', luck)}
       </div>
-      <div class="m-coeff-section is-post">
-        <div class="m-coeff-section-dims">${renderDim(9)}${renderDim(10)}${renderDim(11)}${renderDim(12)}</div>
+      <div class="m-coeff-row is-post">
+        ${renderDim(9)}${renderDim(10)}${renderDim(11)}${renderDim(12)}
         ${renderTotal('後天係數', post)}
       </div>
-      <div class="m-coeff-section is-total">
-        <div class="m-coeff-section-dims">${renderGroupCell('先天', pre, 'var(--grp-pre-bg)')}${renderGroupCell('運氣', luck, 'var(--grp-luck-bg)')}${renderGroupCell('後天', post, 'var(--grp-post-bg)')}</div>
+      <div class="m-coeff-row is-total">
+        ${renderGroupCell('先天', pre, 'var(--grp-pre-bg)')}${renderGroupCell('運氣', luck, 'var(--grp-luck-bg)')}${renderGroupCell('後天', post, 'var(--grp-post-bg)')}
         ${renderTotal('總係數', total)}
       </div>
     </div>

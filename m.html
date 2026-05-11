@@ -381,22 +381,21 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-cell.m-grp-cell-mgr:not(.is-jing):not(.is-dong){background:var(--grp-mgr-tint)}
 .m-manual-cell.m-grp-cell-luck:not(.is-jing):not(.is-dong){background:var(--grp-luck-tint)}
 .m-manual-cell.m-grp-cell-post:not(.is-jing):not(.is-dong){background:var(--grp-post-tint)}
-/* v1.7 階段 9：手動報告小結卡（5 段：dim group + dim 個別係數 + 群組總）*/
-.m-coeff-summary{display:flex;flex-direction:column;gap:10px;padding:14px 10px 0}
-.m-coeff-section{background:transparent;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.m-coeff-section-dims{display:flex;gap:0;background:transparent}
-.m-coeff-dim{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 4px;background:#fff;min-width:0}
-.m-coeff-dim-name{font-size:15px;color:#3a3228;letter-spacing:2px;font-weight:500}
-.m-coeff-dim-val{font-size:16px;font-weight:600;color:#3a3228;font-variant-numeric:tabular-nums}
+/* v1.7 階段 10：手動報告小結卡（5 段橫向 row，dim cell + 群組總 cell 並排）*/
+.m-coeff-summary{display:flex;flex-direction:column;gap:6px;padding:14px 10px 0}
+.m-coeff-row{display:flex;gap:0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.m-coeff-dim{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 2px;background:#fff;min-width:0}
+.m-coeff-dim-name{font-size:14px;color:#3a3228;letter-spacing:1px;font-weight:500}
+.m-coeff-dim-val{font-size:15px;font-weight:600;color:#3a3228;font-variant-numeric:tabular-nums}
 .m-coeff-dim-val.is-empty{color:#bbb;font-weight:400}
-.m-coeff-section-total{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-weight:600}
-.m-coeff-section-label{letter-spacing:2px;font-size:14px}
-.m-coeff-section-val{font-size:16px;font-variant-numeric:tabular-nums}
-.m-coeff-section.is-boss .m-coeff-section-total{background:var(--grp-pre)}
-.m-coeff-section.is-mgr .m-coeff-section-total{background:var(--grp-mgr)}
-.m-coeff-section.is-luck .m-coeff-section-total{background:var(--grp-luck)}
-.m-coeff-section.is-post .m-coeff-section-total{background:var(--grp-post)}
-.m-coeff-section.is-total .m-coeff-section-total{background:var(--grp-total)}
+.m-coeff-total{flex:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;color:#fff;min-width:0}
+.m-coeff-total-label{font-size:13px;letter-spacing:1.5px;font-weight:500;white-space:nowrap}
+.m-coeff-total-val{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.m-coeff-row.is-boss .m-coeff-total{background:var(--grp-pre)}
+.m-coeff-row.is-mgr .m-coeff-total{background:var(--grp-mgr)}
+.m-coeff-row.is-luck .m-coeff-total{background:var(--grp-luck)}
+.m-coeff-row.is-post .m-coeff-total{background:var(--grp-post)}
+.m-coeff-row.is-total .m-coeff-total{background:var(--grp-total)}
 /* 舊小結卡 CSS（已不用，保留無害）*/
 .m-manual-coeff-summary{display:flex;flex-direction:column;gap:6px;padding:14px 10px 0}
 .m-manual-coeff-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;font-size:14px;color:#fff;font-weight:600}
