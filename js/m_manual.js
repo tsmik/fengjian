@@ -266,67 +266,48 @@ function _renderClearAllRow() {
   `;
 }
 
-// v1.7 階段 9：手動報告小結卡（5 段：4 個 dim group + 1 個總）
-// 每段：上方各維度個別係數 + 下方群組係數彩條
-// 未填完維度顯示「—」灰字；group 內任一未填完 → 群組係數也「—」
+// v1.7 階段 11：renderCoeffSummary export — 給 m_manual + m_report.js auto view 共用
+// 接收 matrix (13×9 'A'/'B'/null)，render 5 段橫向小結卡（4 個 dim group + 1 個跨群組總）
 // 13 維度個別 PNG 背景色（同步桌機 report.js dimBg）
 const DIM_BG = [
   '#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
   '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'
 ];
-function _renderCoeffSummary() {
+export function renderCoeffSummary(matrix) {
+  if (!Array.isArray(matrix) || matrix.length !== 13) {
+    matrix = Array(13).fill(null).map(() => Array(9).fill(null));
+  }
   const _dimCoeff = (di) => {
-    const r = calcDim(_manualDraft, di);
+    const r = calcDim(matrix, di);
     return r === null ? null : r.coeff.toFixed(2);
   };
   const _groupCoeff = (ids) => {
-    const allFilled = ids.every(di => calcDim(_manualDraft, di) !== null);
-    return allFilled ? avgCoeff(_manualDraft, ids) : null;
+    const allFilled = ids.every(di => calcDim(matrix, di) !== null);
+    return allFilled ? avgCoeff(matrix, ids) : null;
   };
-
   const boss = _groupCoeff([0,1,2]);
   const mgr  = _groupCoeff([3,4,5]);
   const pre  = _groupCoeff([0,1,2,3,4,5]);
   const luck = _groupCoeff([6,7,8]);
   const post = _groupCoeff([9,10,11,12]);
   const total = _groupCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
-
-  // 單個 dim cell（用 calcDim 取個別係數；null → 「—」灰）
   const renderDim = (di) => {
     const v = _dimCoeff(di);
     const valHtml = v === null
       ? `<span class="m-coeff-dim-val is-empty">—</span>`
       : `<span class="m-coeff-dim-val">${v}</span>`;
-    return `
-      <div class="m-coeff-dim" style="background:${DIM_BG[di]}">
-        <span class="m-coeff-dim-name">${DIMS[di].dn}</span>
-        ${valHtml}
-      </div>
-    `;
+    return `<div class="m-coeff-dim" style="background:${DIM_BG[di]}"><span class="m-coeff-dim-name">${DIMS[di].dn}</span>${valHtml}</div>`;
   };
-  // 群組 cell（給最後一段「先天/運氣/後天」用）
   const renderGroupCell = (label, val, bgVar) => {
     const valHtml = val === null
       ? `<span class="m-coeff-dim-val is-empty">—</span>`
       : `<span class="m-coeff-dim-val">${val}</span>`;
-    return `
-      <div class="m-coeff-dim" style="background:${bgVar}">
-        <span class="m-coeff-dim-name">${label}</span>
-        ${valHtml}
-      </div>
-    `;
+    return `<div class="m-coeff-dim" style="background:${bgVar}"><span class="m-coeff-dim-name">${label}</span>${valHtml}</div>`;
   };
-  // 群組總係數 cell（v1.7 階段 10：跟 dim cell 並排，不再上下分）
   const renderTotal = (label, val) => {
     const display = val === null ? '—' : val;
-    return `
-      <div class="m-coeff-total">
-        <span class="m-coeff-total-label">${label}</span>
-        <span class="m-coeff-total-val">${display}</span>
-      </div>
-    `;
+    return `<div class="m-coeff-total"><span class="m-coeff-total-label">${label}</span><span class="m-coeff-total-val">${display}</span></div>`;
   };
-
   return `
     <div class="m-coeff-summary">
       <div class="m-coeff-row is-boss">
@@ -352,13 +333,52 @@ function _renderCoeffSummary() {
     </div>
   `;
 }
+function _renderCoeffSummary() {
+  return renderCoeffSummary(_manualDraft);
+}
 
 function _renderManualPngRow() {
-  // v1.7 階段 8：拿掉「📊 看重要參數分析」按鈕（segmented 第三個 tab 取代）
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
-      <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版 PNG）</button>
+      ${renderPngPreview()}
+      <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
+    </div>
+  `;
+}
+
+// v1.7 階段 11：詳盡報告 PNG 預覽縮圖（inline SVG mockup 模擬 PNG 結構）
+export function renderPngPreview() {
+  return `
+    <div class="m-png-preview">
+      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect x="0" y="0" width="200" height="120" fill="#f7f4ef" rx="4"/>
+        <rect x="6" y="5" width="40" height="5" fill="#3a3228"/>
+        <rect x="6" y="14" width="88" height="6" fill="#8E4B50"/>
+        <rect x="96" y="14" width="44" height="6" fill="#4C6E78"/>
+        <rect x="142" y="14" width="52" height="6" fill="#7B7082"/>
+        <g opacity="0.7">
+          <rect x="6" y="22" width="14" height="74" fill="#D6E4CC"/>
+          <rect x="22" y="22" width="14" height="74" fill="#C8DCD8"/>
+          <rect x="38" y="22" width="14" height="74" fill="#E2DDD5"/>
+          <rect x="54" y="22" width="14" height="74" fill="#F0DECA"/>
+          <rect x="70" y="22" width="14" height="74" fill="#E8D2D8"/>
+          <rect x="86" y="22" width="14" height="74" fill="#EDE4C8"/>
+          <rect x="102" y="22" width="14" height="74" fill="#CEDDE8"/>
+          <rect x="118" y="22" width="14" height="74" fill="#DDD4E4"/>
+          <rect x="134" y="22" width="14" height="74" fill="#D2DDD6"/>
+          <rect x="150" y="22" width="11" height="74" fill="#D4E2CF"/>
+          <rect x="163" y="22" width="11" height="74" fill="#DED5DF"/>
+          <rect x="176" y="22" width="11" height="74" fill="#CADDD8"/>
+          <rect x="189" y="22" width="5" height="74" fill="#CDDAE6"/>
+        </g>
+        <rect x="6" y="100" width="44" height="6" fill="#8E4B50"/>
+        <rect x="52" y="100" width="34" height="6" fill="#8C6B4A"/>
+        <rect x="6" y="108" width="58" height="6" fill="#8E4B50" opacity="0.85"/>
+        <rect x="66" y="108" width="40" height="6" fill="#4C6E78" opacity="0.85"/>
+        <rect x="108" y="108" width="46" height="6" fill="#7B7082" opacity="0.85"/>
+        <rect x="156" y="108" width="38" height="6" fill="#3C3C40"/>
+      </svg>
     </div>
   `;
 }

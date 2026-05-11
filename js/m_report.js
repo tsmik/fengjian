@@ -18,7 +18,8 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable } from './core.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data } from './core.js';
+import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
@@ -351,12 +352,13 @@ async function exportReportPng() {
 function _render() {
   if (!_container) return;
   if (_view === 'sens') { _renderSensView(); return; }
+  // v1.7 階段 11：報告 view 比照手動輸入，加 5 段小結卡（用 obs 推算的 data 矩陣）
   _container.innerHTML = `
-    <div class="m-report-link-wrap">
-      <div class="m-report-link-title">詳盡兵法報告</div>
-      <div class="m-report-link-desc">完整版報告（依觀察資料生成）<br>包含 9×13 矩陣 / 動靜分析 / 流年</div>
-      <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（PNG）</button>
-      <div class="m-report-link-tip">產生後在新分頁開啟，可拖曳放大縮小</div>
+    ${renderCoeffSummary(data)}
+    <div class="m-report-link-wrap" style="padding:20px 16px 8px">
+      ${renderPngPreview()}
+      <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
+      <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
