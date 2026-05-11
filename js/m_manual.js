@@ -284,12 +284,20 @@ export function renderCoeffSummary(matrix) {
   if (!Array.isArray(matrix) || matrix.length !== 13) {
     matrix = Array(13).fill(null).map(() => Array(9).fill(null));
   }
+  // 對齊桌機 report.js dimComplete 邏輯：9 格全填動或靜才算完成
+  const _dimComplete = (di) => {
+    for (let pi = 0; pi < 9; pi++) {
+      if (matrix[di][pi] !== 'A' && matrix[di][pi] !== 'B') return false;
+    }
+    return true;
+  };
   const _dimCoeff = (di) => {
+    if (!_dimComplete(di)) return null;
     const r = calcDim(matrix, di);
     return r === null ? null : r.coeff.toFixed(2);
   };
   const _groupCoeff = (ids) => {
-    const allFilled = ids.every(di => calcDim(matrix, di) !== null);
+    const allFilled = ids.every(di => _dimComplete(di));
     return allFilled ? avgCoeff(matrix, ids) : null;
   };
   const boss = _groupCoeff([0,1,2]);
