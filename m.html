@@ -755,13 +755,13 @@ body.m-debug-on .m-debug-clear{display:block}
 .m-save-zone.is-hidden { display: none; }
 .m-save-zone + .m-nav-user { margin-left: 8px; }
 
-/* 狀態色塊：背景對應 header 深色，文字色塊樣式 */
+/* 狀態色塊：對齊 .m-save-btn 大小（v1.7 階段 13）*/
 .m-save-status {
-  font-size: 12px;
-  padding: 3px 10px;
-  border-radius: 12px;
+  font-size: 13px;
+  padding: 5px 14px;
+  border-radius: 8px;
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
 }
 .m-save-status-saved   { background: #5a8a4a; color: #fff; }              /* 綠：已儲存（對齊 .is-saved 色）*/
 .m-save-status-dirty   { background: var(--warn); color: #4a3a00; }       /* 黃：未儲存（用 --warn）*/
@@ -898,7 +898,7 @@ body.m-debug-on .m-debug-clear{display:block}
 
 <!-- 主介面（登入後才顯示） -->
 <header class="m-nav" id="m-nav" style="display:none">
-  <div class="m-nav-title" id="m-nav-title">人相兵法</div>
+  <div class="m-nav-title" id="m-nav-title">風鑑學堂 人相兵法</div>
   <div class="m-save-zone is-hidden" id="m-save-zone">
     <span class="m-save-status m-save-status-saved" id="m-save-status">已儲存</span>
     <button class="m-save-btn" id="m-save-btn" type="button">儲存</button>

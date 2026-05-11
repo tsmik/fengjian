@@ -140,7 +140,7 @@ export function initHome(displayName){
       window.__userData=Object.assign(window.__userData||{},data);
       if(data.displayName){
         document.getElementById('m-home-name').textContent=data.displayName;
-        if(elNavUser) elNavUser.textContent=data.displayName;
+        // v1.7 階段 13：頂部右上固定顯示「登出」，不再同步 displayName
       }
       elStatus.textContent='已儲存';
       elStatus.className='m-home-profile-status is-saved';

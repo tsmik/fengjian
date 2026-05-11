@@ -102,7 +102,8 @@ function showDenied(){elLoading.style.display='none';elLogin.style.display='none
 function showApp(displayName){
   elLoading.style.display='none';elLogin.style.display='none';elDenied.style.display='none';
   elMain.style.display='block';elNav.style.display='flex';elTabbar.style.display='flex';
-  elNavUser.textContent=displayName||'—';
+  // v1.7 階段 13：頂部右上不再顯示 user name，改顯示「登出」（功能不變，點擊登出）
+  elNavUser.textContent='登出';
   elNavUser.classList.remove('is-guest');
   initHome(displayName);
   // 恢復上次 tab（重整後留在原頁，而非預設首頁）
