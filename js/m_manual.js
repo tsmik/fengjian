@@ -345,7 +345,7 @@ function _renderCoeffSummary() {
         ${renderTotal('後天係數', post)}
       </div>
       <div class="m-coeff-row is-total">
-        ${renderGroupCell('先天', pre, 'var(--grp-pre-bg)')}${renderGroupCell('運氣', luck, 'var(--grp-luck-bg)')}${renderGroupCell('後天', post, 'var(--grp-post-bg)')}
+        ${renderGroupCell('先天', pre, 'var(--grp-pre)')}${renderGroupCell('運氣', luck, 'var(--grp-luck)')}${renderGroupCell('後天', post, 'var(--grp-post)')}
         ${renderTotal('總係數', total)}
       </div>
     </div>
