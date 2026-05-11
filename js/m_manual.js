@@ -350,6 +350,11 @@ function _renderDimRow(dimIdxList, n) {
     let cls = 'm-tile m-dim-tile';
     if (isOpen) cls += ' m-tile-open';
     if (todo) cls += ' m-dim-tile-todo';
+    // 群組色（文字色）：0-2 老闆、3-5 主管、6-8 運氣、9-12 後天
+    if (di <= 2) cls += ' m-grp-tile-boss';
+    else if (di <= 5) cls += ' m-grp-tile-mgr';
+    else if (di <= 8) cls += ' m-grp-tile-luck';
+    else cls += ' m-grp-tile-post';
     return `
       <button class="${cls}" data-mdim="${di}">
         <span class="m-tile-label">${DIMS[di].dn}</span>

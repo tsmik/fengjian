@@ -540,8 +540,14 @@ function renderDimTile(di) {
   const prog = dimProgress(di);
   // 顏色表示答題狀態（取代進度數字）：未答完 → 淡黃 m-dim-tile-todo；答完 → 白底
   const todoCls = (prog.total > 0 && prog.done < prog.total) ? 'm-dim-tile-todo' : '';
+  // 群組色（文字色）：0-2 老闆、3-5 主管、6-8 運氣、9-12 後天
+  let grpCls = '';
+  if (di <= 2) grpCls = 'm-grp-tile-boss';
+  else if (di <= 5) grpCls = 'm-grp-tile-mgr';
+  else if (di <= 8) grpCls = 'm-grp-tile-luck';
+  else grpCls = 'm-grp-tile-post';
   return `
-    <button class="m-tile m-dim-tile ${todoCls} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
+    <button class="m-tile m-dim-tile ${grpCls} ${todoCls} ${isOpen ? 'm-tile-open' : ''}" data-dim="${di}">
       <span class="m-tile-label">${escapeHtml(dm.dn)}</span>
     </button>
   `;

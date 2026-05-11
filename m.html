@@ -252,6 +252,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dim-tile .m-tile-label{font-size:13px}
 .m-dim-tile-todo{background:#fff8d5}
 .m-dim-tile-todo.m-tile-open{background:#fff5b8}
+/* 維度 tile 按群組染文字色（v1.7：保留 todo/open 背景反饋）*/
+.m-dim-tile.m-grp-tile-boss .m-tile-label{color:var(--grp-pre)}
+.m-dim-tile.m-grp-tile-mgr .m-tile-label{color:var(--grp-mgr)}
+.m-dim-tile.m-grp-tile-luck .m-tile-label{color:var(--grp-luck)}
+.m-dim-tile.m-grp-tile-post .m-tile-label{color:var(--grp-post)}
 .m-dim-panel{padding:12px 10px}
 /* 維度大標題：左維度名 + 觀點；右進度 N/M 或結果字 */
 .m-dim-panel-head{display:flex;align-items:baseline;gap:8px;padding:4px 4px 12px;border-bottom:1px solid #d4c9b0;margin-bottom:12px}
