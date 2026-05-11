@@ -244,7 +244,8 @@ function _renderManualInput() {
   if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    body = `${_renderManualOverview()}${_renderCoeffSummary()}${_renderManualPngRow()}${_renderClearAllRow()}`;
+    // v1.7 階段 9+：拿掉 9×13 矩陣，只保留小結卡 + PNG 按鈕 + 清除
+    body = `${_renderCoeffSummary()}${_renderManualPngRow()}${_renderClearAllRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
@@ -267,6 +268,11 @@ function _renderClearAllRow() {
 // v1.7 階段 9：手動報告小結卡（5 段：4 個 dim group + 1 個總）
 // 每段：上方各維度個別係數 + 下方群組係數彩條
 // 未填完維度顯示「—」灰字；group 內任一未填完 → 群組係數也「—」
+// 13 維度個別 PNG 背景色（同步桌機 report.js dimBg）
+const DIM_BG = [
+  '#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
+  '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'
+];
 function _renderCoeffSummary() {
   const _dimCoeff = (di) => {
     const r = calcDim(_manualDraft, di);
@@ -291,19 +297,19 @@ function _renderCoeffSummary() {
       ? `<span class="m-coeff-dim-val is-empty">—</span>`
       : `<span class="m-coeff-dim-val">${v}</span>`;
     return `
-      <div class="m-coeff-dim">
+      <div class="m-coeff-dim" style="background:${DIM_BG[di]}">
         <span class="m-coeff-dim-name">${DIMS[di].dn}</span>
         ${valHtml}
       </div>
     `;
   };
   // 群組 cell（給最後一段「先天/運氣/後天」用）
-  const renderGroupCell = (label, val) => {
+  const renderGroupCell = (label, val, bgVar) => {
     const valHtml = val === null
       ? `<span class="m-coeff-dim-val is-empty">—</span>`
       : `<span class="m-coeff-dim-val">${val}</span>`;
     return `
-      <div class="m-coeff-dim">
+      <div class="m-coeff-dim" style="background:${bgVar}">
         <span class="m-coeff-dim-name">${label}</span>
         ${valHtml}
       </div>
@@ -334,7 +340,7 @@ function _renderCoeffSummary() {
         ${renderTotal('後天係數', post)}
       </div>
       <div class="m-coeff-section is-total">
-        <div class="m-coeff-section-dims">${renderGroupCell('先天', pre)}${renderGroupCell('運氣', luck)}${renderGroupCell('後天', post)}</div>
+        <div class="m-coeff-section-dims">${renderGroupCell('先天', pre, 'var(--grp-pre-bg)')}${renderGroupCell('運氣', luck, 'var(--grp-luck-bg)')}${renderGroupCell('後天', post, 'var(--grp-post-bg)')}</div>
         ${renderTotal('總係數', total)}
       </div>
     </div>
