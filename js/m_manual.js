@@ -26,7 +26,7 @@
 //   - 詳盡報告 PNG（手動版）+ 重要參數分析（手動版）
 // ============================================================
 
-import { DIMS, avgCoeff } from './core.js';
+import { DIMS, avgCoeff, calcDim } from './core.js';
 import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
@@ -264,33 +264,79 @@ function _renderClearAllRow() {
   `;
 }
 
-// v1.7 階段 6：手動報告小結卡（總係數 / 先天 / 老闆 / 主管 / 運氣 / 後天）
-// 計算方式仿桌機：avgCoeff(manualData, [di...]) 取群組維度平均
+// v1.7 階段 9：手動報告小結卡（5 段：4 個 dim group + 1 個總）
+// 每段：上方各維度個別係數 + 下方群組係數彩條
+// 未填完維度顯示「—」灰字；group 內任一未填完 → 群組係數也「—」
 function _renderCoeffSummary() {
-  const BOSS_IDS = [0,1,2];          // 老闆 = 形勢/經緯/方圓
-  const MGR_IDS = [3,4,5];           // 主管 = 曲直/收放/緩急
-  const PRE_IDS = [0,1,2,3,4,5];     // 先天 = 老闆 + 主管
-  const LUCK_IDS = [6,7,8];          // 運氣 = 順逆/分合/真假
-  const POST_IDS = [9,10,11,12];     // 後天 = 攻守/奇正/虛實/進退
-  const ALL_IDS = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+  const _dimCoeff = (di) => {
+    const r = calcDim(_manualDraft, di);
+    return r === null ? null : r.coeff.toFixed(2);
+  };
+  const _groupCoeff = (ids) => {
+    const allFilled = ids.every(di => calcDim(_manualDraft, di) !== null);
+    return allFilled ? avgCoeff(_manualDraft, ids) : null;
+  };
 
-  const boss = avgCoeff(_manualDraft, BOSS_IDS);
-  const mgr = avgCoeff(_manualDraft, MGR_IDS);
-  const pre = avgCoeff(_manualDraft, PRE_IDS);
-  const luck = avgCoeff(_manualDraft, LUCK_IDS);
-  const post = avgCoeff(_manualDraft, POST_IDS);
-  const total = avgCoeff(_manualDraft, ALL_IDS);
+  const boss = _groupCoeff([0,1,2]);
+  const mgr  = _groupCoeff([3,4,5]);
+  const pre  = _groupCoeff([0,1,2,3,4,5]);
+  const luck = _groupCoeff([6,7,8]);
+  const post = _groupCoeff([9,10,11,12]);
+  const total = _groupCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+
+  // 單個 dim cell（用 calcDim 取個別係數；null → 「—」灰）
+  const renderDim = (di) => {
+    const v = _dimCoeff(di);
+    const valHtml = v === null
+      ? `<span class="m-coeff-dim-val is-empty">—</span>`
+      : `<span class="m-coeff-dim-val">${v}</span>`;
+    return `
+      <div class="m-coeff-dim">
+        <span class="m-coeff-dim-name">${DIMS[di].dn}</span>
+        ${valHtml}
+      </div>
+    `;
+  };
+  // 群組 cell（給最後一段「先天/運氣/後天」用）
+  const renderGroupCell = (label, val) => {
+    const valHtml = val === null
+      ? `<span class="m-coeff-dim-val is-empty">—</span>`
+      : `<span class="m-coeff-dim-val">${val}</span>`;
+    return `
+      <div class="m-coeff-dim">
+        <span class="m-coeff-dim-name">${label}</span>
+        ${valHtml}
+      </div>
+    `;
+  };
+  // section 總係數彩條（null → 「—」白字）
+  const renderTotal = (label, val) => {
+    const display = val === null ? '—' : val;
+    return `<div class="m-coeff-section-total"><span class="m-coeff-section-label">${label}</span><span class="m-coeff-section-val">${display}</span></div>`;
+  };
 
   return `
-    <div class="m-manual-coeff-summary">
-      <div class="m-manual-coeff-sub">
-        <div class="m-manual-coeff-row is-boss"><span class="m-manual-coeff-label">老闆係數</span><span class="m-manual-coeff-val">${boss}</span></div>
-        <div class="m-manual-coeff-row is-mgr"><span class="m-manual-coeff-label">主管係數</span><span class="m-manual-coeff-val">${mgr}</span></div>
+    <div class="m-coeff-summary">
+      <div class="m-coeff-section is-boss">
+        <div class="m-coeff-section-dims">${renderDim(0)}${renderDim(1)}${renderDim(2)}</div>
+        ${renderTotal('老闆係數', boss)}
       </div>
-      <div class="m-manual-coeff-row is-pre"><span class="m-manual-coeff-label">先天係數</span><span class="m-manual-coeff-val">${pre}</span></div>
-      <div class="m-manual-coeff-row is-luck"><span class="m-manual-coeff-label">運氣係數</span><span class="m-manual-coeff-val">${luck}</span></div>
-      <div class="m-manual-coeff-row is-post"><span class="m-manual-coeff-label">後天係數</span><span class="m-manual-coeff-val">${post}</span></div>
-      <div class="m-manual-coeff-row is-total"><span class="m-manual-coeff-label">總係數</span><span class="m-manual-coeff-val">${total}</span></div>
+      <div class="m-coeff-section is-mgr">
+        <div class="m-coeff-section-dims">${renderDim(3)}${renderDim(4)}${renderDim(5)}</div>
+        ${renderTotal('主管係數', mgr)}
+      </div>
+      <div class="m-coeff-section is-luck">
+        <div class="m-coeff-section-dims">${renderDim(6)}${renderDim(7)}${renderDim(8)}</div>
+        ${renderTotal('運氣係數', luck)}
+      </div>
+      <div class="m-coeff-section is-post">
+        <div class="m-coeff-section-dims">${renderDim(9)}${renderDim(10)}${renderDim(11)}${renderDim(12)}</div>
+        ${renderTotal('後天係數', post)}
+      </div>
+      <div class="m-coeff-section is-total">
+        <div class="m-coeff-section-dims">${renderGroupCell('先天', pre)}${renderGroupCell('運氣', luck)}${renderGroupCell('後天', post)}</div>
+        ${renderTotal('總係數', total)}
+      </div>
     </div>
   `;
 }

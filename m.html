@@ -381,7 +381,23 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-cell.m-grp-cell-mgr:not(.is-jing):not(.is-dong){background:var(--grp-mgr-tint)}
 .m-manual-cell.m-grp-cell-luck:not(.is-jing):not(.is-dong){background:var(--grp-luck-tint)}
 .m-manual-cell.m-grp-cell-post:not(.is-jing):not(.is-dong){background:var(--grp-post-tint)}
-/* 手動報告小結卡（總/先天/老闆/主管/運氣/後天 係數）*/
+/* v1.7 階段 9：手動報告小結卡（5 段：dim group + dim 個別係數 + 群組總）*/
+.m-coeff-summary{display:flex;flex-direction:column;gap:10px;padding:14px 10px 0}
+.m-coeff-section{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.m-coeff-section-dims{display:flex;gap:1px;background:#e8e0d4}
+.m-coeff-dim{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;background:#fff;min-width:0}
+.m-coeff-dim-name{font-size:12px;color:#5a5048;letter-spacing:1px}
+.m-coeff-dim-val{font-size:16px;font-weight:600;color:#3a3228;font-variant-numeric:tabular-nums}
+.m-coeff-dim-val.is-empty{color:#bbb;font-weight:400}
+.m-coeff-section-total{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-weight:600}
+.m-coeff-section-label{letter-spacing:2px;font-size:14px}
+.m-coeff-section-val{font-size:16px;font-variant-numeric:tabular-nums}
+.m-coeff-section.is-boss .m-coeff-section-total{background:var(--grp-pre)}
+.m-coeff-section.is-mgr .m-coeff-section-total{background:var(--grp-mgr)}
+.m-coeff-section.is-luck .m-coeff-section-total{background:var(--grp-luck)}
+.m-coeff-section.is-post .m-coeff-section-total{background:var(--grp-post)}
+.m-coeff-section.is-total .m-coeff-section-total{background:var(--grp-total)}
+/* 舊小結卡 CSS（已不用，保留無害）*/
 .m-manual-coeff-summary{display:flex;flex-direction:column;gap:6px;padding:14px 10px 0}
 .m-manual-coeff-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;font-size:14px;color:#fff;font-weight:600}
 .m-manual-coeff-row.is-boss{background:var(--grp-pre)}
