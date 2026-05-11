@@ -772,13 +772,21 @@ function renderSections(key) {
   return secs.map(s => `
     <div class="m-section">
       ${s.label ? `<div class="m-section-label">${escapeHtml(s.label)}</div>` : ''}
-      ${(s.qs || []).map(q => renderQuestion(q)).join('')}
+      ${(s.qs || []).map(q => renderQuestion(q, key)).join('')}
     </div>
   `).join('');
 }
 
-function renderQuestion(q) {
-  return q.paired ? renderPairedQuestion(q) : renderSingleQuestion(q);
+function renderQuestion(q, partName) {
+  // v1.7 階段 16+：partName 可選；維度視角等 caller 不傳 → 反推
+  partName = partName || _findPartByQid(q.id);
+  return q.paired ? renderPairedQuestion(q, partName) : renderSingleQuestion(q, partName);
+}
+
+// 題目層級紅點（admin 改某題 → 該題顯示紅點）
+function _questionDot(partName, qid) {
+  if (!partName) return '';
+  return hasUpdate('q_' + partName + '_' + qid) ? '<span class="m-update-dot-inline"></span>' : '';
 }
 
 function renderOptions(qid, curVal, opts) {
@@ -798,11 +806,12 @@ function renderOptions(qid, curVal, opts) {
   }).join('');
 }
 
-function renderSingleQuestion(q) {
+function renderSingleQuestion(q, partName) {
   const todoCls = isAnswered(q) ? '' : ' m-q-todo';
+  const dot = _questionDot(partName, q.id);
   return `
     <div class="m-q${todoCls}">
-      <div class="m-q-text">${escapeHtml(q.text || q.id)}</div>
+      <div class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</div>
       <div class="m-q-opts">${renderOptions(q.id, _draft[q.id], q.opts)}</div>
     </div>
   `;
@@ -835,16 +844,17 @@ function _renderPairedColumnOpts(qid, side, opts) {
     `;
   }).join('');
 }
-function renderPairedQuestion(q) {
+function renderPairedQuestion(q, partName) {
   const isOpen = !!_splitOpen[q.id];
   const _todoCls = isAnswered(q) ? '' : ' m-q-todo';
   const chip = _pairedConclusionChip(q.id);
+  const dot = _questionDot(partName, q.id);
   if (!isOpen) {
     // closed：sync 單排選項保留快速答題（直接點同步答 _L _R）+ 結論 chip
     return `
       <div class="m-q m-q-paired${_todoCls}">
         <div class="m-q-head">
-          <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
+          <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
           <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左/右</button>
           ${chip}
         </div>
@@ -856,7 +866,7 @@ function renderPairedQuestion(q) {
   return `
     <div class="m-q m-q-paired m-q-paired-open${_todoCls}">
       <div class="m-q-head">
-        <span class="m-q-text">${escapeHtml(q.text || q.id)}</span>
+        <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
         <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左/右</button>
         ${chip}
       </div>
