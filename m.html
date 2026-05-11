@@ -36,6 +36,19 @@
 
   --nav-h:48px;
   --tab-h:56px;
+
+  /* v1.7 design tokens：報告群組色（unified with desktop PNG）*/
+  --grp-pre:    #8E4B50;  /* 先天 / 老闆（酒紅）*/
+  --grp-mgr:    #8C6B4A;  /* 主管（金棕）*/
+  --grp-luck:   #4C6E78;  /* 運氣（青藍）*/
+  --grp-post:   #7B7082;  /* 後天（灰紫）*/
+  --grp-total:  #3C3C40;  /* 總係數（深黑）*/
+  --grp-pre-bg:   #f4e1e3;
+  --grp-boss-bg:  #ecd1d4;
+  --grp-mgr-bg:   #ecd9c0;
+  --grp-luck-bg:  #e0e8ec;
+  --grp-post-bg:  #e8e3ec;
+  --grp-total-bg: #d4d4d6;
 }
 
 /* ===== 全域 reset ===== */
@@ -316,12 +329,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-overview-grid{display:grid;grid-template-columns:42px repeat(13, minmax(32px, 1fr));grid-template-rows:auto auto auto repeat(9, 1fr);gap:2px;min-width:max-content}
 /* 大分組 header（先天/運氣/後天）+ 子分組（老闆/主管）— 沿用桌機 report.js 配色 */
 .m-manual-grp{padding:5px 2px;text-align:center;font-size:12px;font-weight:700;letter-spacing:2px;border-radius:3px;display:flex;align-items:center;justify-content:center}
-.m-manual-grp-pre{background:#f4e1e3;color:#8E4B50}
-.m-manual-grp-luck{background:#e0e8ec;color:#4C6E78}
-.m-manual-grp-post{background:#e8e3ec;color:#7B7082}
+.m-manual-grp-pre{background:var(--grp-pre-bg);color:var(--grp-pre)}
+.m-manual-grp-luck{background:var(--grp-luck-bg);color:var(--grp-luck)}
+.m-manual-grp-post{background:var(--grp-post-bg);color:var(--grp-post)}
 .m-manual-subgrp{padding:4px 2px;text-align:center;font-size:11px;font-weight:600;letter-spacing:1px;border-radius:3px;display:flex;align-items:center;justify-content:center}
-.m-manual-subgrp-boss{background:#ecd1d4;color:#8E4B50}
-.m-manual-subgrp-mgr{background:#ecd9c0;color:#8C6B4A}
+.m-manual-subgrp-boss{background:var(--grp-boss-bg);color:var(--grp-pre)}
+.m-manual-subgrp-mgr{background:var(--grp-mgr-bg);color:var(--grp-mgr)}
 .m-manual-spacer{background:transparent}
 
 /* ===== 詳盡報告連結按鈕（自動報告子分頁）===== */
@@ -345,10 +358,27 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-manual-cell{padding:6px 2px;text-align:center;font-size:12px;border-radius:3px;background:#fff;border:1px solid #e0d8cc;color:#3a3228;display:flex;align-items:center;justify-content:center;min-height:28px}
 .m-manual-cell.is-corner{background:#e8dfc8;color:#3d3b39}
 .m-manual-cell.is-col-header{background:#e8dfc8;color:#3d3b39;font-weight:600;font-size:11px;letter-spacing:1px}
+.m-manual-cell.is-col-header.m-grp-col-boss{background:var(--grp-boss-bg);color:var(--grp-pre)}
+.m-manual-cell.is-col-header.m-grp-col-mgr{background:var(--grp-mgr-bg);color:var(--grp-mgr)}
+.m-manual-cell.is-col-header.m-grp-col-luck{background:var(--grp-luck-bg);color:var(--grp-luck)}
+.m-manual-cell.is-col-header.m-grp-col-post{background:var(--grp-post-bg);color:var(--grp-post)}
 .m-manual-cell.is-row-header{background:#e8dfc8;color:#3d3b39;font-weight:600;font-size:12px;letter-spacing:1px}
 .m-manual-cell.is-jing{background:#dfeadb;border-color:#7A9E7E;color:#5a7e5a;font-weight:700}
 .m-manual-cell.is-dong{background:#f4dccd;border-color:#C17A5A;color:#a76040;font-weight:700}
 .m-manual-cell.is-empty{color:#ccc}
+/* 手動報告小結卡（總/先天/老闆/主管/運氣/後天 係數）*/
+.m-manual-coeff-summary{display:flex;flex-direction:column;gap:6px;padding:14px 10px 0}
+.m-manual-coeff-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;font-size:14px;color:#fff;font-weight:600}
+.m-manual-coeff-row.is-boss{background:var(--grp-pre)}
+.m-manual-coeff-row.is-mgr{background:var(--grp-mgr)}
+.m-manual-coeff-row.is-pre{background:var(--grp-pre)}
+.m-manual-coeff-row.is-luck{background:var(--grp-luck)}
+.m-manual-coeff-row.is-post{background:var(--grp-post)}
+.m-manual-coeff-row.is-total{background:var(--grp-total)}
+.m-manual-coeff-label{flex:1;letter-spacing:2px}
+.m-manual-coeff-val{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px}
+.m-manual-coeff-sub{display:flex;gap:6px}
+.m-manual-coeff-sub .m-manual-coeff-row{flex:1;padding:7px 12px;font-size:13px}
 
 /* ===== 手動報告 card 容器（視覺連動感）===== */
 .m-manual-card{margin:10px 10px 0;background:#fff;border:1px solid #e8e0d4;border-radius:14px;padding:8px 4px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.05)}

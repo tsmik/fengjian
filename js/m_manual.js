@@ -26,7 +26,7 @@
 //   - 詳盡報告 PNG（手動版）+ 重要參數分析（手動版）
 // ============================================================
 
-import { DIMS } from './core.js';
+import { DIMS, avgCoeff } from './core.js';
 import { auth, db, debugLog, refreshUserData } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
@@ -242,7 +242,7 @@ function _renderManualInput() {
   `;
   let body;
   if (_manualSubview === 'overview') {
-    body = `${_renderManualOverview()}${_renderManualPngRow()}${_renderClearAllRow()}`;
+    body = `${_renderManualOverview()}${_renderCoeffSummary()}${_renderManualPngRow()}${_renderClearAllRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
@@ -258,6 +258,37 @@ function _renderClearAllRow() {
   return `
     <div class="m-manual-clear-row">
       <button class="m-manual-clear-btn m-manual-clear-btn-all" data-mclear-all="1">清除全部填答</button>
+    </div>
+  `;
+}
+
+// v1.7 階段 6：手動報告小結卡（總係數 / 先天 / 老闆 / 主管 / 運氣 / 後天）
+// 計算方式仿桌機：avgCoeff(manualData, [di...]) 取群組維度平均
+function _renderCoeffSummary() {
+  const BOSS_IDS = [0,1,2];          // 老闆 = 形勢/經緯/方圓
+  const MGR_IDS = [3,4,5];           // 主管 = 曲直/收放/緩急
+  const PRE_IDS = [0,1,2,3,4,5];     // 先天 = 老闆 + 主管
+  const LUCK_IDS = [6,7,8];          // 運氣 = 順逆/分合/真假
+  const POST_IDS = [9,10,11,12];     // 後天 = 攻守/奇正/虛實/進退
+  const ALL_IDS = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+
+  const boss = avgCoeff(_manualDraft, BOSS_IDS);
+  const mgr = avgCoeff(_manualDraft, MGR_IDS);
+  const pre = avgCoeff(_manualDraft, PRE_IDS);
+  const luck = avgCoeff(_manualDraft, LUCK_IDS);
+  const post = avgCoeff(_manualDraft, POST_IDS);
+  const total = avgCoeff(_manualDraft, ALL_IDS);
+
+  return `
+    <div class="m-manual-coeff-summary">
+      <div class="m-manual-coeff-sub">
+        <div class="m-manual-coeff-row is-boss"><span class="m-manual-coeff-label">老闆係數</span><span class="m-manual-coeff-val">${boss}</span></div>
+        <div class="m-manual-coeff-row is-mgr"><span class="m-manual-coeff-label">主管係數</span><span class="m-manual-coeff-val">${mgr}</span></div>
+      </div>
+      <div class="m-manual-coeff-row is-pre"><span class="m-manual-coeff-label">先天係數</span><span class="m-manual-coeff-val">${pre}</span></div>
+      <div class="m-manual-coeff-row is-luck"><span class="m-manual-coeff-label">運氣係數</span><span class="m-manual-coeff-val">${luck}</span></div>
+      <div class="m-manual-coeff-row is-post"><span class="m-manual-coeff-label">後天係數</span><span class="m-manual-coeff-val">${post}</span></div>
+      <div class="m-manual-coeff-row is-total"><span class="m-manual-coeff-label">總係數</span><span class="m-manual-coeff-val">${total}</span></div>
     </div>
   `;
 }
@@ -285,7 +316,13 @@ function _renderManualOverview() {
   html += `<div class="m-manual-spacer" style="grid-row:2;grid-column:8/span 7"></div>`;
   html += `<div class="m-manual-cell is-corner" style="grid-row:3;grid-column:1"></div>`;
   for (let di = 0; di < 13; di++) {
-    html += `<div class="m-manual-cell is-col-header" style="grid-row:3;grid-column:${di + 2}">${DIMS[di].dn}</div>`;
+    // 按群組染色：0-2 老闆、3-5 主管、6-8 運氣、9-12 後天
+    let groupCls = '';
+    if (di <= 2) groupCls = 'm-grp-col-boss';
+    else if (di <= 5) groupCls = 'm-grp-col-mgr';
+    else if (di <= 8) groupCls = 'm-grp-col-luck';
+    else groupCls = 'm-grp-col-post';
+    html += `<div class="m-manual-cell is-col-header ${groupCls}" style="grid-row:3;grid-column:${di + 2}">${DIMS[di].dn}</div>`;
   }
   for (let pi = 0; pi < 9; pi++) {
     const row = pi + 4;
