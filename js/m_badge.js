@@ -40,7 +40,13 @@ export async function initBadges() {
     const ref = doc(db, 'settings', 'updateLog');
     const snap = await getDoc(ref);
     _updateLog = snap.exists() ? snap.data() : {};
-    debugLog('[Badge]', 'updateLog 載入', 'keys=', Object.keys(_updateLog).length);
+    const allKeys = Object.keys(_updateLog);
+    const partKeys = allKeys.filter(k => k.indexOf('part_') === 0);
+    const dimKeys = allKeys.filter(k => k.indexOf('dim_') === 0);
+    const qKeys = allKeys.filter(k => k.indexOf('q_') === 0);
+    debugLog('[Badge]', 'updateLog total:', allKeys.length,
+             'part:', partKeys.length, 'dim:', dimKeys.length, 'q:', qKeys.length);
+    if (qKeys.length > 0) debugLog('[Badge]', 'q keys sample:', qKeys.slice(0, 5).join(', '));
   } catch (e) {
     debugLog('[Badge]', 'updateLog 載入失敗', e && e.message);
     _updateLog = {};
