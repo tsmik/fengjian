@@ -475,4 +475,3 @@ function _bindEvents() {
 
 // v1.7 階段 8：拿掉 _enterSens / _exitSens / _renderSensView
 // 重要參數分析改成 segmented 第三個 tab（_manualSubview === 'sens'）內部 render
-}
