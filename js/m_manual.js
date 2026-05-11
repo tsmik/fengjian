@@ -27,7 +27,7 @@
 // ============================================================
 
 import { DIMS, avgCoeff, calcDim } from './core.js';
-import { auth, db, debugLog, refreshUserData } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
@@ -61,7 +61,7 @@ const DIM_ROW_2_IDX = [6, 7, 8, 9, 10, 11, 12];
 // ===== LS / draft helpers =====
 
 function _getLsKey() {
-  const uid = (auth && auth.currentUser && auth.currentUser.uid) || 'anon';
+  const uid = getEffectiveUid() || 'anon';
   return 'm_manual_draft_' + uid;
 }
 
@@ -196,7 +196,7 @@ async function handleManualSave() {
   _isSavingManual = true;
   setSaveStatus('saving');
   try {
-    const uid = auth.currentUser && auth.currentUser.uid;
+    const uid = getEffectiveUid();
     if (!uid) throw new Error('no auth user');
     const manualJsonStr = JSON.stringify(_manualDraft);
     const userRef = doc(db, 'users', uid);

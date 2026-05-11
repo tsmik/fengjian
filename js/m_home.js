@@ -10,7 +10,7 @@
 //   - 基本資料填寫＋儲存＋reload 還在
 // ============================================================
 
-import { auth, db, debugLog } from "./m_main.js";
+import { auth, db, debugLog, getEffectiveUid } from "./m_main.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA } from "./core.js";
 
@@ -127,7 +127,7 @@ export function initHome(displayName){
   }
   async function saveProfile(){
     try{
-      const uid=auth.currentUser&&auth.currentUser.uid;
+      const uid=getEffectiveUid();
       if(!uid) return;
       const data={
         displayName:elName.value.trim(),

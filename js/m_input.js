@@ -20,7 +20,7 @@
 // ============================================================
 
 import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
-import { auth, db, debugLog, refreshUserData } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
@@ -47,7 +47,7 @@ const DIM_PART_LABELS = ['頭','上停','耳','眉','眼','鼻','口','顴','人
 
 // LS key 帶 UID 後綴：每個 google 帳號在同一裝置上各有獨立草稿
 function getLsKey() {
-  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  const uid = getEffectiveUid() || 'anon';
   return 'm_input_obs_draft_' + uid;
 }
 
@@ -209,7 +209,7 @@ async function handleSaveClick() {
   _isSaving = true;
   setSaveStatus('saving');
   try {
-    const uid = auth.currentUser && auth.currentUser.uid;
+    const uid = getEffectiveUid();
     if (!uid) throw new Error('no auth user');
 
     // 確保 DIM_RULES 載入（recalcFromObs 依賴）

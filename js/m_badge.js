@@ -10,7 +10,7 @@
 // ============================================================
 
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { auth, db, debugLog } from './m_main.js';
+import { auth, db, debugLog, getEffectiveUid } from './m_main.js';
 
 const SEEN_KEY_PREFIX = 'rxbf_seen_';
 
@@ -32,7 +32,7 @@ function _mergeSeen(local, remote) {
 
 function _saveSeen() {
   // 立即寫 LS（快 cache）
-  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  const uid = getEffectiveUid() || 'anon';
   try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(_seenLog)); } catch (e) {}
   // debounce 1 秒寫 firestore（跨裝置同步）
   clearTimeout(_saveCloudTimer);
@@ -40,7 +40,7 @@ function _saveSeen() {
 }
 
 async function _flushSeenToCloud() {
-  const uid = auth.currentUser && auth.currentUser.uid;
+  const uid = getEffectiveUid();
   if (!uid) return;
   try {
     const userRef = doc(db, 'users', uid);
@@ -52,7 +52,7 @@ async function _flushSeenToCloud() {
 }
 
 function _loadSeen() {
-  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  const uid = getEffectiveUid() || 'anon';
   try {
     const raw = localStorage.getItem(SEEN_KEY_PREFIX + uid);
     _seenLog = raw ? JSON.parse(raw) : {};
@@ -80,7 +80,7 @@ export async function initBadges() {
     _updateLog = {};
   }
   // v1.7 階段 16+：load cloud badgeSeen 並 merge（跨裝置同步）
-  const uid = auth.currentUser && auth.currentUser.uid;
+  const uid = getEffectiveUid();
   if (uid) {
     try {
       const userRef = doc(db, 'users', uid);

@@ -57,15 +57,35 @@ const db=getFirestore(app);
 // 暴露給其他 module 用
 export { auth, db, debugLog };
 
+// ===== Teacher 模式（?role=teacher，老師 / 師母共用帳號）=====
+// v1.7 階段 17：跟桌機 ?role=teacher 邏輯一致，密碼驗證 → fake user → 跳過 Firebase Auth
+const TEACHER_PASSWORDS = {
+  'fj2026':   { uid: 'teacher-shared',  name: '老師' },
+  'fj202602': { uid: 'teacher2-shared', name: '師母' }
+};
+const TEACHER_LS_KEY = 'm_teacher_session';
+let _fakeTeacher = null; // { uid, displayName } 設好後 getEffectiveUid 回傳這個 uid
+const isTeacherMode = new URLSearchParams(window.location.search).get('role') === 'teacher';
+
+// 給其他 module 取 uid 用（teacher 模式回 fake uid，否則回 firebase auth uid）
+export function getEffectiveUid() {
+  if (_fakeTeacher) return _fakeTeacher.uid;
+  return (auth.currentUser && auth.currentUser.uid) || null;
+}
+export function getEffectiveDisplayName() {
+  if (_fakeTeacher) return _fakeTeacher.displayName;
+  return (auth.currentUser && auth.currentUser.displayName) || null;
+}
+
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
 // v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
 // 用 getDocFromServer 強制從 server 拿（避免 firebase SDK 預設 cache 拿到舊資料）
 // 失敗回 false（呼叫方自行 fallback 用既有 window.__userData）
 export async function refreshUserData() {
   try {
-    const user = auth.currentUser;
-    if (!user) return false;
-    const userRef = doc(db, 'users', user.uid);
+    const uid = getEffectiveUid();
+    if (!uid) return false;
+    const userRef = doc(db, 'users', uid);
     const userSnap = await getDocFromServer(userRef);
     if (!userSnap.exists()) return false;
     const ud = userSnap.data();
@@ -216,7 +236,77 @@ async function initAuth(){
     }
   });
 }
-initAuth();
+// ===== Teacher 模式入口（v1.7 階段 17）=====
+function showTeacherLogin() {
+  elLoading.style.display='none';
+  elLogin.style.display='none';
+  elDenied.style.display='none';
+  elMain.style.display='none';
+  elNav.style.display='none';
+  elTabbar.style.display='none';
+  const elTeacher = document.getElementById('m-teacher-login');
+  if (elTeacher) elTeacher.style.display='flex';
+  const pwdInput = document.getElementById('m-teacher-pwd');
+  const submitBtn = document.getElementById('m-teacher-submit');
+  const errEl = document.getElementById('m-teacher-error');
+  if (submitBtn) submitBtn.onclick = function(){ _checkTeacherPwd(); };
+  if (pwdInput) pwdInput.onkeydown = function(e){ if (e.key === 'Enter') _checkTeacherPwd(); };
+  // 自動 restore 上次驗證過的 session
+  try {
+    const saved = localStorage.getItem(TEACHER_LS_KEY);
+    if (saved && TEACHER_PASSWORDS[saved]) {
+      const elInput = document.getElementById('m-teacher-pwd');
+      if (elInput) elInput.value = '';
+      _acceptTeacher(TEACHER_PASSWORDS[saved]);
+      return;
+    }
+  } catch (e) {}
+  if (pwdInput) setTimeout(function(){ pwdInput.focus(); }, 100);
+}
+function _checkTeacherPwd() {
+  const pwdInput = document.getElementById('m-teacher-pwd');
+  const errEl = document.getElementById('m-teacher-error');
+  const pwd = pwdInput ? pwdInput.value.trim() : '';
+  const acct = TEACHER_PASSWORDS[pwd];
+  if (acct) {
+    try { localStorage.setItem(TEACHER_LS_KEY, pwd); } catch (e) {}
+    if (errEl) errEl.style.display='none';
+    _acceptTeacher(acct);
+  } else {
+    if (errEl) errEl.style.display='block';
+    if (pwdInput) pwdInput.value='';
+  }
+}
+async function _acceptTeacher(acct) {
+  _fakeTeacher = { uid: acct.uid, displayName: acct.name };
+  debugLog('[Teacher]', 'login', acct.name, 'uid=', acct.uid);
+  const elTeacher = document.getElementById('m-teacher-login');
+  if (elTeacher) elTeacher.style.display='none';
+  showLoading();
+  // 讀 / 建 user doc（rules 已開後門允許 teacher-shared / teacher2-shared）
+  try {
+    const userRef = doc(db, 'users', acct.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      window.__userData = userSnap.data();
+    } else {
+      const initData = { displayName: acct.name, role: 'student', createdAt: new Date().toISOString() };
+      await setDoc(userRef, initData);
+      window.__userData = initData;
+    }
+  } catch (e) {
+    debugLog('[Teacher]', 'user doc 讀取失敗', e && e.message);
+  }
+  try { await ensureQuestionsLoaded(); } catch (e) {}
+  try { await initBadges(); } catch (e) {}
+  showApp(acct.name);
+}
+
+if (isTeacherMode) {
+  showTeacherLogin();
+} else {
+  initAuth();
+}
 
 // ===== Tab 切換 =====
 (function(){
@@ -303,6 +393,12 @@ elNavUser.addEventListener('click',async function(){
       try { discardDraft(); } catch (e) {}
       try { discardReportDraft(); } catch (e) {}
       try { discardManualDraft(); } catch (e) {}
+    }
+    // v1.7 階段 17：teacher 模式登出 = 清 teacher LS + reload（不 call firebase signOut）
+    if (_fakeTeacher) {
+      try { localStorage.removeItem(TEACHER_LS_KEY); } catch (e) {}
+      location.reload();
+      return;
     }
     await signOut(auth);
     location.reload();
