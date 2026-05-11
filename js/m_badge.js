@@ -9,7 +9,7 @@
 // 被用：m_main.js login 後 initBadges；m_input.js render 各 tile / question 時查 hasUpdate
 // ============================================================
 
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { auth, db, debugLog } from './m_main.js';
 
 const SEEN_KEY_PREFIX = 'rxbf_seen_';
@@ -17,10 +17,38 @@ const SEEN_KEY_PREFIX = 'rxbf_seen_';
 let _updateLog = {};
 let _seenLog = {};
 let _refreshCallbacks = [];
+let _saveCloudTimer = null;
+
+// per key timestamp 比較，取較新的
+function _mergeSeen(local, remote) {
+  const result = { ...local };
+  for (const key in remote) {
+    if (!result[key] || new Date(remote[key]) > new Date(result[key])) {
+      result[key] = remote[key];
+    }
+  }
+  return result;
+}
 
 function _saveSeen() {
+  // 立即寫 LS（快 cache）
   const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
   try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(_seenLog)); } catch (e) {}
+  // debounce 1 秒寫 firestore（跨裝置同步）
+  clearTimeout(_saveCloudTimer);
+  _saveCloudTimer = setTimeout(_flushSeenToCloud, 1000);
+}
+
+async function _flushSeenToCloud() {
+  const uid = auth.currentUser && auth.currentUser.uid;
+  if (!uid) return;
+  try {
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, { badgeSeen: _seenLog }, { merge: true });
+    debugLog('[Badge]', 'badgeSeen 寫雲端 ✓');
+  } catch (e) {
+    debugLog('[Badge]', 'badgeSeen 寫雲端失敗', e && e.message);
+  }
 }
 
 function _loadSeen() {
@@ -35,7 +63,7 @@ function _loadSeen() {
 
 // login 後呼叫一次（m_main.js showApp 內）：load seen + fetch updateLog
 export async function initBadges() {
-  _loadSeen();
+  _loadSeen(); // LS 先載（快）
   try {
     const ref = doc(db, 'settings', 'updateLog');
     const snap = await getDoc(ref);
@@ -50,6 +78,24 @@ export async function initBadges() {
   } catch (e) {
     debugLog('[Badge]', 'updateLog 載入失敗', e && e.message);
     _updateLog = {};
+  }
+  // v1.7 階段 16+：load cloud badgeSeen 並 merge（跨裝置同步）
+  const uid = auth.currentUser && auth.currentUser.uid;
+  if (uid) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().badgeSeen) {
+        const cloudSeen = userSnap.data().badgeSeen || {};
+        const before = Object.keys(_seenLog).length;
+        _seenLog = _mergeSeen(_seenLog, cloudSeen);
+        // 寫回 LS（cloud 較新的 entries cache 起來）
+        try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(_seenLog)); } catch (e) {}
+        debugLog('[Badge]', 'badgeSeen 雲端載入 ✓ LS:', before, '→ merged:', Object.keys(_seenLog).length);
+      }
+    } catch (e) {
+      debugLog('[Badge]', 'badgeSeen 載入失敗', e && e.message);
+    }
   }
   _notifyRefresh();
 }

@@ -765,8 +765,25 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     try { var r = localStorage.getItem(SEEN_KEY_PREFIX + uid); return r ? JSON.parse(r) : {}; } catch(e){ return {}; }
   }
 
+  var _saveCloudTimer = null;
   function saveSeenLog(uid, seenLog) {
     try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(seenLog)); } catch(e){}
+    // v1.7 階段 16+：debounce 1 秒寫 firestore（跨裝置同步）
+    clearTimeout(_saveCloudTimer);
+    _saveCloudTimer = setTimeout(function(){ _flushSeenToCloud(uid, seenLog); }, 1000);
+  }
+  function _flushSeenToCloud(uid, seenLog) {
+    if (!window._badgeDb || !uid) return;
+    window._badgeDb.collection('users').doc(uid).set({ badgeSeen: seenLog }, { merge: true })
+      .catch(function(e){ console.log('badgeSeen 寫雲端失敗', e); });
+  }
+  function _mergeSeen(local, remote) {
+    var result = {};
+    for (var k in local) result[k] = local[k];
+    for (var k2 in remote) {
+      if (!result[k2] || new Date(remote[k2]) > new Date(result[k2])) result[k2] = remote[k2];
+    }
+    return result;
   }
 
   function hasUpdate(updateLog, seenLog, key) {
@@ -875,10 +892,23 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){cons
     loadUpdateLog(fbDb).then(function(updateLog){
       window._updateLog = updateLog;
       var seenLog = getSeenLog(uid);
+      // 先用 LS render 一次（快）
       refreshEntryBadges(updateLog, seenLog);
       refreshFaceMapBadges(updateLog, seenLog);
       refreshCondBadges(updateLog, seenLog);
       refreshQuestionBadges(updateLog, seenLog);
+      // v1.7 階段 16+：async fetch cloud badgeSeen 並 merge 重 render
+      fbDb.collection('users').doc(uid).get().then(function(doc){
+        if (doc.exists && doc.data().badgeSeen) {
+          var cloudSeen = doc.data().badgeSeen || {};
+          var merged = _mergeSeen(seenLog, cloudSeen);
+          try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(merged)); } catch(e){}
+          refreshEntryBadges(updateLog, merged);
+          refreshFaceMapBadges(updateLog, merged);
+          refreshCondBadges(updateLog, merged);
+          refreshQuestionBadges(updateLog, merged);
+        }
+      }).catch(function(e){ console.log('badgeSeen 載入失敗', e); });
     });
   };
 
