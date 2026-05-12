@@ -308,10 +308,28 @@ export function renderCoeffSummary(matrix) {
   const total = _groupCoeff([0,1,2,3,4,5,6,7,8,9,10,11,12]);
   const renderDim = (di) => {
     const v = _dimCoeff(di);
+    const dim = DIMS[di];
+    // 判斷主導字 + 主導類型（靜/動），用來在維度名底下加底線
+    let dominantChar = null;
+    let dominantType = null;
+    if (v !== null) {
+      const r = calcDim(matrix, di);
+      if (r) {
+        if (r.a > r.b) { dominantChar = dim.a; dominantType = dim.aT; }
+        else if (r.b > r.a) { dominantChar = dim.b; dominantType = dim.bT; }
+      }
+    }
+    const nameHtml = [...dim.dn].map(ch => {
+      if (ch === dominantChar) {
+        const cls = dominantType === '靜' ? 'is-jing' : 'is-dong';
+        return `<span class="m-coeff-dim-char ${cls}">${ch}</span>`;
+      }
+      return `<span class="m-coeff-dim-char">${ch}</span>`;
+    }).join('');
     const valHtml = v === null
       ? `<span class="m-coeff-dim-val is-empty">—</span>`
       : `<span class="m-coeff-dim-val">${v}</span>`;
-    return `<div class="m-coeff-dim" style="background:${DIM_BG[di]}"><span class="m-coeff-dim-name">${DIMS[di].dn}</span>${valHtml}</div>`;
+    return `<div class="m-coeff-dim" style="background:${DIM_BG[di]}"><span class="m-coeff-dim-name">${nameHtml}</span>${valHtml}</div>`;
   };
   const renderGroupCell = (label, val, bgVar) => {
     const valHtml = val === null

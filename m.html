@@ -419,6 +419,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-coeff-row{display:flex;gap:0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .m-coeff-dim{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 2px;background:#fff;min-width:0}
 .m-coeff-dim-name{font-size:14px;color:#3a3228;letter-spacing:1px;font-weight:500}
+/* 維度名單字底線：標主導字（靜=綠／動=橘），用 box-shadow 不影響行高 */
+.m-coeff-dim-char{display:inline-block;line-height:1}
+.m-coeff-dim-char.is-jing{box-shadow:inset 0 -2px 0 var(--static)}
+.m-coeff-dim-char.is-dong{box-shadow:inset 0 -2px 0 var(--active)}
 .m-coeff-dim-val{font-size:15px;font-weight:600;color:#3a3228;font-variant-numeric:tabular-nums}
 .m-coeff-dim-val.is-empty{color:#bbb;font-weight:400}
 .m-coeff-total{flex:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;color:#fff;min-width:0}
