@@ -138,10 +138,12 @@ export function calcDim(dataArr, i) {
   return { a, b, coeff: Math.min(a, b) / Math.max(a, b), type: a > b ? DIMS[i].aT : DIMS[i].bT };
 }
 
+// 多維度合併係數：各維度個別係數 (min/max) 算完後取平均（簡單平均法）
+// 註：之前是加總法 sum(min)/sum(max)，會讓題目多的維度權重高；改成平均法每維度等權
 export function avgCoeff(dataArr, ids) {
-  var sumMin = 0, sumMax = 0;
-  ids.forEach(function(i) { var r = calcDim(dataArr, i); if (r) { sumMin += Math.min(r.a, r.b); sumMax += Math.max(r.a, r.b); } });
-  return sumMax > 0 ? (sumMin / sumMax).toFixed(2) : "0.00";
+  var sum = 0, n = 0;
+  ids.forEach(function(i) { var r = calcDim(dataArr, i); if (r) { sum += r.coeff; n += 1; } });
+  return n > 0 ? (sum / n).toFixed(2) : "0.00";
 }
 
 export function _getUserDocRef() {
