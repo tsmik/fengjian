@@ -719,15 +719,15 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
   /* nav 深色 bar 全寬，內容 padding 對齊中央 1200px 容器 */
   .m-nav{
-    padding-left:max(16px,calc((100% - 1200px) / 2));
-    padding-right:max(16px,calc((100% - 1200px) / 2));
+    padding-left:max(16px,calc((100% - 1600px) / 2));
+    padding-right:max(16px,calc((100% - 1600px) / 2));
   }
 
   /* tabbar → 左側直立側欄 */
   .m-tabbar{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
-    left:max(0px,calc((100% - 1200px) / 2));
+    left:max(0px,calc((100% - 1600px) / 2));
     right:auto;
     width:200px;
     height:auto;
@@ -750,10 +750,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-main{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
-    left:calc(max(0px,(100% - 1200px) / 2) + 200px);
+    left:calc(max(0px,(100% - 1600px) / 2) + 200px);
     right:auto;
     transform:none;
-    width:1000px;
+    width:1400px;
     max-width:none;
   }
 }
@@ -766,6 +766,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
     gap:16px;
     padding:24px;
     align-content:start;
+    max-width:920px;
+    margin:0 auto;
   }
   .m-home-hello,
   .m-home-hint,
