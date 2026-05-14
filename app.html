@@ -713,23 +713,23 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   font-size:14px;
 }
 /* ===== P1+P2 RWD 骨架：大螢幕不擋畫面 + 底部 4 分頁變左側直立欄 ===== */
-/* 整體容器 = 側欄 180px + 內容 720px = 900px，置中 */
+/* 整體容器 = 側欄 200px + 內容 1000px = 1200px，置中 */
 @media (min-width:1024px){
   .m-width-warn{display:none !important}
 
-  /* nav 深色 bar 全寬，內容 padding 對齊中央 900px 容器 */
+  /* nav 深色 bar 全寬，內容 padding 對齊中央 1200px 容器 */
   .m-nav{
-    padding-left:max(16px,calc((100% - 900px) / 2));
-    padding-right:max(16px,calc((100% - 900px) / 2));
+    padding-left:max(16px,calc((100% - 1200px) / 2));
+    padding-right:max(16px,calc((100% - 1200px) / 2));
   }
 
   /* tabbar → 左側直立側欄 */
   .m-tabbar{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
-    left:max(0px,calc((100% - 900px) / 2));
+    left:max(0px,calc((100% - 1200px) / 2));
     right:auto;
-    width:180px;
+    width:200px;
     height:auto;
     flex-direction:column;
     border-top:none;
@@ -746,14 +746,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   }
   .m-tab-icon{margin-bottom:0}
 
-  /* main → 側欄右側，限寬 720px */
+  /* main → 側欄右側，限寬 1000px */
   .m-main{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
-    left:calc(max(0px,(100% - 900px) / 2) + 180px);
+    left:calc(max(0px,(100% - 1200px) / 2) + 200px);
     right:auto;
     transform:none;
-    width:720px;
+    width:1000px;
     max-width:none;
   }
 }
