@@ -772,6 +772,13 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-home-profile{grid-column:1 / -1}
 }
 
+/* ===== P4 RWD：報告分頁大螢幕展開 ===== */
+/* 報告分頁複用 .m-home grid（P3）：兩張報告卡自動並排，流年參考橫跨整行 */
+@media (min-width:1024px){
+  .m-liunian-section,
+  .m-liunian-placeholder{grid-column:1 / -1}
+}
+
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
 .m-debug-toggle,
 .m-debug-panel,
