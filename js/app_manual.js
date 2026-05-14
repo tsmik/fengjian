@@ -535,34 +535,95 @@ function _renderManualRow(di, pi) {
   `;
 }
 
-// P5c/P5d：桌機 13 維度 × 9 部位完整網格
-// 每格顯示「形｜勢」兩極半格（選中高亮）；表頭顯示即時維度係數；下方接合併係數
+// 合併係數值（組內每維度都 9 格全填才算數，否則 null）
+function _groupCoeffVal(ids) {
+  const allFilled = ids.every(di => _countAnswered(di) === 9);
+  return allFilled ? avgCoeff(_manualDraft, ids) : null;
+}
+
+// P5c~P5f：桌機 13 維度 × 9 部位完整網格
+// 三組佈局（先天 6 / 運氣 3 / 後天 4）+ 形勢雙半格 + 即時係數 + 合併係數整合進網格底部
 function _renderManualGrid() {
-  // 表頭：corner + 13 維度名（含即時係數，9 格全填才顯示數字）
-  let head = '<div class="m-mgrid-corner"></div>';
-  for (let di = 0; di < 13; di++) {
+  const PRE = [0,1,2,3,4,5], LUCK = [6,7,8], POST = [9,10,11,12];
+  const gap = '<div class="m-mgrid-gap"></div>';
+  const corner = '<div class="m-mgrid-corner"></div>';
+
+  // 維度表頭 cell（維度名 + 即時係數）
+  const dimHead = (di) => {
     const r = calcDim(_manualDraft, di);
     const coeff = (_countAnswered(di) === 9 && r) ? r.coeff.toFixed(2) : '—';
-    head += `<div class="m-mgrid-dim-head"><span class="m-mgrid-dim-name">${DIMS[di].dn}</span><span class="m-mgrid-dim-coeff">${coeff}</span></div>`;
-  }
-  // 9 列：部位名 + 13 格（每格兩極半格）
-  let body = '';
+    return `<div class="m-mgrid-dim-head"><span class="m-mgrid-dim-name">${DIMS[di].dn}</span><span class="m-mgrid-dim-coeff">${coeff}</span></div>`;
+  };
+  // 答題格（形勢雙半格）
+  const cell = (di, pi) => {
+    const dim = DIMS[di];
+    const v = _manualDraft[di][pi];
+    const aKind = dim.aT === '靜' ? 'is-jing' : 'is-dong';
+    const bKind = dim.bT === '靜' ? 'is-jing' : 'is-dong';
+    const aSel = v === 'A' ? ' is-sel' : '';
+    const bSel = v === 'B' ? ' is-sel' : '';
+    return `<div class="m-mgrid-cell">`
+      + `<span class="m-mgrid-half ${aKind}${aSel}" data-mhalf="${di}_${pi}_A">${dim.a}</span>`
+      + `<span class="m-mgrid-half ${bKind}${bSel}" data-mhalf="${di}_${pi}_B">${dim.b}</span>`
+      + `</div>`;
+  };
+  // 合併係數 cell
+  const coeffCell = (label, val, cls, span) =>
+    `<div class="m-mgrid-coeff-cell ${cls}" style="grid-column:span ${span}">`
+    + `<span class="m-mgrid-coeff-label">${label}</span>`
+    + `<span class="m-mgrid-coeff-val">${val === null ? '—' : val}</span></div>`;
+  const spacer = (span) => `<div class="m-mgrid-gap" style="grid-column:span ${span}"></div>`;
+
+  let h = `<div class="m-mgrid">`;
+
+  // Row 1：組標題
+  h += corner;
+  h += `<div class="m-mgrid-grp-title m-mgrid-grp-pre" style="grid-column:span 6">先天指數</div>` + gap;
+  h += `<div class="m-mgrid-grp-title m-mgrid-grp-luck" style="grid-column:span 3">運氣指數</div>` + gap;
+  h += `<div class="m-mgrid-grp-title m-mgrid-grp-post" style="grid-column:span 4">後天指數</div>`;
+
+  // Row 2：維度名 + 即時係數
+  h += corner;
+  PRE.forEach(di => h += dimHead(di)); h += gap;
+  LUCK.forEach(di => h += dimHead(di)); h += gap;
+  POST.forEach(di => h += dimHead(di));
+
+  // Row 3~11：9 部位
   for (let pi = 0; pi < 9; pi++) {
-    body += `<div class="m-mgrid-part-head">${PART_LABELS[pi]}</div>`;
-    for (let di = 0; di < 13; di++) {
-      const dim = DIMS[di];
-      const v = _manualDraft[di][pi];
-      const aKind = dim.aT === '靜' ? 'is-jing' : 'is-dong';
-      const bKind = dim.bT === '靜' ? 'is-jing' : 'is-dong';
-      const aSel = v === 'A' ? ' is-sel' : '';
-      const bSel = v === 'B' ? ' is-sel' : '';
-      body += `<div class="m-mgrid-cell">`
-        + `<span class="m-mgrid-half ${aKind}${aSel}" data-mhalf="${di}_${pi}_A">${dim.a}</span>`
-        + `<span class="m-mgrid-half ${bKind}${bSel}" data-mhalf="${di}_${pi}_B">${dim.b}</span>`
-        + `</div>`;
-    }
+    h += `<div class="m-mgrid-part-head">${PART_LABELS[pi]}</div>`;
+    PRE.forEach(di => h += cell(di, pi)); h += gap;
+    LUCK.forEach(di => h += cell(di, pi)); h += gap;
+    POST.forEach(di => h += cell(di, pi));
   }
-  return `<div class="m-mgrid">${head}${body}</div>${_renderCoeffSummary()}`;
+
+  // 合併係數區
+  const boss = _groupCoeffVal([0,1,2]);
+  const mgr  = _groupCoeffVal([3,4,5]);
+  const pre  = _groupCoeffVal([0,1,2,3,4,5]);
+  const luck = _groupCoeffVal([6,7,8]);
+  const post = _groupCoeffVal([9,10,11,12]);
+  const total = _groupCoeffVal([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+
+  // 係數 Row A：老闆 | 主管 ‧ 運氣 ‧ 後天
+  h += corner;
+  h += coeffCell('老闆係數', boss, 'm-mgrid-grp-pre', 3);
+  h += coeffCell('主管係數', mgr, 'm-mgrid-grp-mgr', 3);
+  h += gap;
+  h += coeffCell('運氣係數', luck, 'm-mgrid-grp-luck', 3);
+  h += gap;
+  h += coeffCell('後天係數', post, 'm-mgrid-grp-post', 4);
+
+  // 係數 Row B：先天係數（橫跨先天 6 欄）
+  h += corner;
+  h += coeffCell('先天係數', pre, 'm-mgrid-grp-pre', 6);
+  h += gap + spacer(3) + gap + spacer(4);
+
+  // 係數 Row C：總係數（橫跨 13 維度 + 2 gap = 15 欄）
+  h += corner;
+  h += coeffCell('總係數', total, 'm-mgrid-grp-total', 15);
+
+  h += `</div>`;
+  return h;
 }
 
 function _bindEvents() {

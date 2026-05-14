@@ -781,14 +781,26 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-liunian-placeholder{grid-column:1 / -1}
 }
 
-/* ===== P5c/P5d RWD：桌機手動輸入 13×9 完整網格（雙半格 + 即時係數）===== */
+/* ===== P5c~P5f RWD：桌機手動輸入網格（三組佈局 + 係數整合）===== */
 @media (min-width:1024px){
   .m-mgrid{
     display:grid;
-    grid-template-columns:56px repeat(13,1fr);
+    grid-template-columns:56px repeat(6,1fr) 16px repeat(3,1fr) 16px repeat(4,1fr);
     gap:3px;
     padding:14px 10px;
   }
+  .m-mgrid-gap,.m-mgrid-corner{background:transparent}
+  /* 組標題 */
+  .m-mgrid-grp-title{
+    padding:7px;text-align:center;
+    font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;
+    border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .m-mgrid-grp-title.m-mgrid-grp-pre{background:var(--grp-pre)}
+  .m-mgrid-grp-title.m-mgrid-grp-luck{background:var(--grp-luck)}
+  .m-mgrid-grp-title.m-mgrid-grp-post{background:var(--grp-post)}
+  /* 維度表頭（名稱 + 即時係數）*/
   .m-mgrid-dim-head{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     padding:5px 2px;
@@ -796,14 +808,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   }
   .m-mgrid-dim-name{font-size:12px;font-weight:600;color:#3a3228;letter-spacing:1px}
   .m-mgrid-dim-coeff{font-size:11px;font-weight:700;color:#7a6e64}
+  /* 部位欄 */
   .m-mgrid-part-head{
     font-size:12px;font-weight:600;color:#3d3b39;
     background:var(--sidebar);border-radius:4px;
     display:flex;align-items:center;justify-content:center;
   }
-  .m-mgrid-cell{
-    display:flex;gap:2px;min-height:38px;
-  }
+  /* 答題格（形勢雙半格）*/
+  .m-mgrid-cell{display:flex;gap:2px;min-height:36px}
   .m-mgrid-half{
     flex:1;
     display:flex;align-items:center;justify-content:center;
@@ -814,6 +826,19 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-mgrid-half:hover{filter:brightness(0.97)}
   .m-mgrid-half.is-sel.is-jing{background:#f4f8f1;border-color:#7A9E7E;color:#5a8a5a;font-weight:700}
   .m-mgrid-half.is-sel.is-dong{background:#fbf3ee;border-color:#C17A5A;color:#a76040;font-weight:700}
+  /* 合併係數格 */
+  .m-mgrid-coeff-cell{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:9px 6px;margin-top:3px;
+    border-radius:4px;color:#fff;
+  }
+  .m-mgrid-coeff-label{font-size:13px;font-weight:600;letter-spacing:1px}
+  .m-mgrid-coeff-val{font-size:15px;font-weight:700}
+  .m-mgrid-coeff-cell.m-mgrid-grp-pre{background:var(--grp-pre)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-mgr{background:var(--grp-mgr)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-luck{background:var(--grp-luck)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-post{background:var(--grp-post)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-total{background:var(--grp-total)}
 }
 
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
