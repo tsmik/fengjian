@@ -712,24 +712,49 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   letter-spacing:2px;
   font-size:14px;
 }
-/* ===== P1 RWD 骨架：大螢幕不再擋畫面，改置中限寬容器（內容仍單欄，P2+ 再展開）===== */
+/* ===== P1+P2 RWD 骨架：大螢幕不擋畫面 + 底部 4 分頁變左側直立欄 ===== */
+/* 整體容器 = 側欄 180px + 內容 720px = 900px，置中 */
 @media (min-width:1024px){
   .m-width-warn{display:none !important}
-  /* nav 深色 bar 維持全寬，內容用 padding 對齊中央 720px 區 */
+
+  /* nav 深色 bar 全寬，內容 padding 對齊中央 900px 容器 */
   .m-nav{
-    padding-left:max(16px,calc((100% - 720px) / 2));
-    padding-right:max(16px,calc((100% - 720px) / 2));
+    padding-left:max(16px,calc((100% - 900px) / 2));
+    padding-right:max(16px,calc((100% - 900px) / 2));
   }
-  /* main 與 tabbar 置中限寬 */
-  .m-main{
-    left:50%;right:auto;
-    transform:translateX(-50%);
-    width:100%;max-width:720px;
-  }
+
+  /* tabbar → 左側直立側欄 */
   .m-tabbar{
-    left:50%;right:auto;
-    transform:translateX(-50%);
-    width:100%;max-width:720px;
+    top:calc(var(--nav-h) + var(--safe-top));
+    bottom:0;
+    left:max(0px,calc((100% - 900px) / 2));
+    right:auto;
+    width:180px;
+    height:auto;
+    flex-direction:column;
+    border-top:none;
+    border-right:1px solid var(--border);
+    padding-bottom:0;
+  }
+  .m-tab{
+    flex:0 0 auto;
+    flex-direction:row;
+    justify-content:flex-start;
+    gap:12px;
+    padding:15px 20px;
+    font-size:14px;
+  }
+  .m-tab-icon{margin-bottom:0}
+
+  /* main → 側欄右側，限寬 720px */
+  .m-main{
+    top:calc(var(--nav-h) + var(--safe-top));
+    bottom:0;
+    left:calc(max(0px,(100% - 900px) / 2) + 180px);
+    right:auto;
+    transform:none;
+    width:720px;
+    max-width:none;
   }
 }
 
