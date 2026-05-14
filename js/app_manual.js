@@ -255,12 +255,17 @@ function _renderManualInput() {
     // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
     body = `${_renderCoeffSummary()}${_renderManualPngRow()}`;
   } else {
-    body = `
-      ${_renderDimRow(DIM_ROW_1_IDX, 6)}
-      ${_renderDimRow(DIM_ROW_2_IDX, 7)}
-      ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
-      ${_renderClearAllRow()}
-    `;
+    // P5c：桌機（≥1024px）直接顯示 13×9 完整網格；手機維持「維度 tile + 點開部位」
+    if (window.matchMedia('(min-width:1024px)').matches) {
+      body = `${_renderManualGrid()}${_renderClearAllRow()}`;
+    } else {
+      body = `
+        ${_renderDimRow(DIM_ROW_1_IDX, 6)}
+        ${_renderDimRow(DIM_ROW_2_IDX, 7)}
+        ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
+        ${_renderClearAllRow()}
+      `;
+    }
   }
   return `${viewToggle}${body}`;
 }
@@ -530,6 +535,28 @@ function _renderManualRow(di, pi) {
   `;
 }
 
+// P5c：桌機 13 維度 × 9 部位完整網格（每格點擊循環 空→靜→動→空）
+function _renderManualGrid() {
+  let head = '<div class="m-mgrid-corner"></div>';
+  for (let di = 0; di < 13; di++) {
+    head += `<div class="m-mgrid-dim-head">${DIMS[di].dn}</div>`;
+  }
+  let body = '';
+  for (let pi = 0; pi < 9; pi++) {
+    body += `<div class="m-mgrid-part-head">${PART_LABELS[pi]}</div>`;
+    for (let di = 0; di < 13; di++) {
+      const dim = DIMS[di];
+      const v = _manualDraft[di][pi];
+      let cls = 'm-mgrid-cell', txt = '—';
+      if (v === 'A') { txt = dim.a; cls += dim.aT === '靜' ? ' is-jing' : ' is-dong'; }
+      else if (v === 'B') { txt = dim.b; cls += dim.bT === '靜' ? ' is-jing' : ' is-dong'; }
+      else cls += ' is-empty';
+      body += `<div class="${cls}" data-mcell="${di}_${pi}">${txt}</div>`;
+    }
+  }
+  return `<div class="m-mgrid">${head}${body}</div>`;
+}
+
 function _bindEvents() {
   _container.querySelectorAll('[data-mview]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -566,6 +593,23 @@ function _bindEvents() {
       const pi = parseInt(parts[1], 10);
       const val = parts[2] || null;
       _manualDraft[di][pi] = val === 'A' || val === 'B' ? val : null;
+      _markDirty();
+      _render();
+    });
+  });
+  // P5c：桌機網格 cell 點擊循環 空→靜→動→空
+  _container.querySelectorAll('[data-mcell]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const [di, pi] = cell.dataset.mcell.split('_').map(Number);
+      const dim = DIMS[di];
+      const jingVal = dim.aT === '靜' ? 'A' : 'B';
+      const dongVal = dim.aT === '靜' ? 'B' : 'A';
+      const cur = _manualDraft[di][pi];
+      let next;
+      if (cur === null) next = jingVal;
+      else if (cur === jingVal) next = dongVal;
+      else next = null;
+      _manualDraft[di][pi] = next;
       _markDirty();
       _render();
     });
