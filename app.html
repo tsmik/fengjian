@@ -758,6 +758,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   }
 }
 
+/* ===== P3 RWD：首頁大螢幕展開（兩大按鈕並排 + 基本資料橫跨整行）===== */
+@media (min-width:1024px){
+  .m-home{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    padding:24px;
+    align-content:start;
+  }
+  .m-home-hello,
+  .m-home-hint,
+  .m-home-profile{grid-column:1 / -1}
+}
+
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
 .m-debug-toggle,
 .m-debug-panel,
