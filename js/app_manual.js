@@ -535,26 +535,34 @@ function _renderManualRow(di, pi) {
   `;
 }
 
-// P5c：桌機 13 維度 × 9 部位完整網格（每格點擊循環 空→靜→動→空）
+// P5c/P5d：桌機 13 維度 × 9 部位完整網格
+// 每格顯示「形｜勢」兩極半格（選中高亮）；表頭顯示即時維度係數；下方接合併係數
 function _renderManualGrid() {
+  // 表頭：corner + 13 維度名（含即時係數，9 格全填才顯示數字）
   let head = '<div class="m-mgrid-corner"></div>';
   for (let di = 0; di < 13; di++) {
-    head += `<div class="m-mgrid-dim-head">${DIMS[di].dn}</div>`;
+    const r = calcDim(_manualDraft, di);
+    const coeff = (_countAnswered(di) === 9 && r) ? r.coeff.toFixed(2) : '—';
+    head += `<div class="m-mgrid-dim-head"><span class="m-mgrid-dim-name">${DIMS[di].dn}</span><span class="m-mgrid-dim-coeff">${coeff}</span></div>`;
   }
+  // 9 列：部位名 + 13 格（每格兩極半格）
   let body = '';
   for (let pi = 0; pi < 9; pi++) {
     body += `<div class="m-mgrid-part-head">${PART_LABELS[pi]}</div>`;
     for (let di = 0; di < 13; di++) {
       const dim = DIMS[di];
       const v = _manualDraft[di][pi];
-      let cls = 'm-mgrid-cell', txt = '—';
-      if (v === 'A') { txt = dim.a; cls += dim.aT === '靜' ? ' is-jing' : ' is-dong'; }
-      else if (v === 'B') { txt = dim.b; cls += dim.bT === '靜' ? ' is-jing' : ' is-dong'; }
-      else cls += ' is-empty';
-      body += `<div class="${cls}" data-mcell="${di}_${pi}">${txt}</div>`;
+      const aKind = dim.aT === '靜' ? 'is-jing' : 'is-dong';
+      const bKind = dim.bT === '靜' ? 'is-jing' : 'is-dong';
+      const aSel = v === 'A' ? ' is-sel' : '';
+      const bSel = v === 'B' ? ' is-sel' : '';
+      body += `<div class="m-mgrid-cell">`
+        + `<span class="m-mgrid-half ${aKind}${aSel}" data-mhalf="${di}_${pi}_A">${dim.a}</span>`
+        + `<span class="m-mgrid-half ${bKind}${bSel}" data-mhalf="${di}_${pi}_B">${dim.b}</span>`
+        + `</div>`;
     }
   }
-  return `<div class="m-mgrid">${head}${body}</div>`;
+  return `<div class="m-mgrid">${head}${body}</div>${_renderCoeffSummary()}`;
 }
 
 function _bindEvents() {
@@ -597,19 +605,14 @@ function _bindEvents() {
       _render();
     });
   });
-  // P5c：桌機網格 cell 點擊循環 空→靜→動→空
-  _container.querySelectorAll('[data-mcell]').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const [di, pi] = cell.dataset.mcell.split('_').map(Number);
-      const dim = DIMS[di];
-      const jingVal = dim.aT === '靜' ? 'A' : 'B';
-      const dongVal = dim.aT === '靜' ? 'B' : 'A';
-      const cur = _manualDraft[di][pi];
-      let next;
-      if (cur === null) next = jingVal;
-      else if (cur === jingVal) next = dongVal;
-      else next = null;
-      _manualDraft[di][pi] = next;
+  // P5d：桌機網格半格點擊 — 點兩極之一設值，點已選中的取消
+  _container.querySelectorAll('[data-mhalf]').forEach(half => {
+    half.addEventListener('click', () => {
+      const parts = half.dataset.mhalf.split('_'); // "di_pi_val"
+      const di = parseInt(parts[0], 10);
+      const pi = parseInt(parts[1], 10);
+      const val = parts[2]; // 'A' or 'B'
+      _manualDraft[di][pi] = (_manualDraft[di][pi] === val) ? null : val;
       _markDirty();
       _render();
     });

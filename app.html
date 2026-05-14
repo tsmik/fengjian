@@ -779,7 +779,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-liunian-placeholder{grid-column:1 / -1}
 }
 
-/* ===== P5c RWD：桌機手動輸入 13 維度 × 9 部位完整網格 ===== */
+/* ===== P5c/P5d RWD：桌機手動輸入 13×9 完整網格（雙半格 + 即時係數）===== */
 @media (min-width:1024px){
   .m-mgrid{
     display:grid;
@@ -788,27 +788,30 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
     padding:14px 10px;
   }
   .m-mgrid-dim-head{
-    font-size:12px;font-weight:600;color:#3a3228;letter-spacing:1px;
-    text-align:center;padding:6px 2px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:5px 2px;
     background:var(--sidebar);border-radius:4px;
-    display:flex;align-items:center;justify-content:center;
   }
+  .m-mgrid-dim-name{font-size:12px;font-weight:600;color:#3a3228;letter-spacing:1px}
+  .m-mgrid-dim-coeff{font-size:11px;font-weight:700;color:#7a6e64}
   .m-mgrid-part-head{
     font-size:12px;font-weight:600;color:#3d3b39;
     background:var(--sidebar);border-radius:4px;
     display:flex;align-items:center;justify-content:center;
   }
   .m-mgrid-cell{
-    min-height:38px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:13px;border-radius:4px;cursor:pointer;user-select:none;
-    border:1.5px solid #e0d8cc;background:#fff;color:#3a3228;
-    transition:background 0.1s,border-color 0.1s;
+    display:flex;gap:2px;min-height:38px;
   }
-  .m-mgrid-cell.is-empty{color:#c8c0b4}
-  .m-mgrid-cell.is-jing{background:#f4f8f1;border-color:#7A9E7E;color:#5a8a5a;font-weight:700}
-  .m-mgrid-cell.is-dong{background:#fbf3ee;border-color:#C17A5A;color:#a76040;font-weight:700}
-  .m-mgrid-cell:hover{filter:brightness(0.97)}
+  .m-mgrid-half{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;border-radius:4px;cursor:pointer;user-select:none;
+    border:1.5px solid #e0d8cc;background:#fff;color:#b0a89c;
+    transition:background 0.1s,border-color 0.1s,color 0.1s;
+  }
+  .m-mgrid-half:hover{filter:brightness(0.97)}
+  .m-mgrid-half.is-sel.is-jing{background:#f4f8f1;border-color:#7A9E7E;color:#5a8a5a;font-weight:700}
+  .m-mgrid-half.is-sel.is-dong{background:#fbf3ee;border-color:#C17A5A;color:#a76040;font-weight:700}
 }
 
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
