@@ -1011,7 +1011,7 @@ function renderQuestions(){
     if(!openSections.has(qSecKey))openSections.add(qSecKey); // questions default open
     var qSecOpen=openSections.has(qSecKey);
     eh+=`<div class="section-block"><div class="section-hdr" onclick="toggleSec('${qSecKey}',this)">`;
-    eh+=`<span><span ondblclick="editSectionName(${si},this)" style="cursor:text" title="雙擊改名">${sec.label}</span><button onclick="event.stopPropagation();deleteSection(${si})" style="font-size:11px;color:#c66;background:none;border:1px solid #c66;border-radius:3px;cursor:pointer;padding:1px 6px;margin-left:8px" title="刪除章節">刪</button></span>`;
+    eh+=`<span><span ondblclick="editSectionName(${si},this)" style="cursor:text" title="雙擊改名">${sec.label}</span><button onclick="event.stopPropagation();deleteSection(${si})" style="font-size:11px;color:#c66;background:none;border:1px solid #c66;border-radius:3px;cursor:pointer;padding:1px 6px;margin-left:8px" title="刪除分組">刪</button></span>`;
     eh+=`<span style="font-size:12px;color:var(--text-3)">${sec.qs.length}題 ${qSecOpen?'▲':'▼'}</span></div>`;
     eh+=`<div class="section-body${qSecOpen?' open':''}">`;
 
@@ -1039,7 +1039,7 @@ function renderQuestions(){
       eh+=`<span class="q-actions">`;
       eh+=`<button onclick="moveQ(${si},${qi},-1)">↑</button>`;
       eh+=`<button onclick="moveQ(${si},${qi},1)">↓</button>`;
-      eh+=`<button onclick="moveQToSection(${si},${qi})" title="移到其他章節">→組</button>`;
+      eh+=`<button onclick="moveQToSection(${si},${qi})" title="移到其他分組">→組</button>`;
       eh+=`<button onclick="editQ(${si},${qi})">編輯</button>`;
       eh+=`<button class="del" onclick="deleteQ(${si},${qi})">刪除</button>`;
       eh+=`</span></div>`;
@@ -1054,7 +1054,7 @@ function renderQuestions(){
     eh+=`</div></div>`;
   });
 
-  eh+=`<button class="add-btn" onclick="addSection()" style="margin-top:16px">+ 新增章節</button>`;
+  eh+=`<button class="add-btn" onclick="addSection()" style="margin-top:16px">+ 新增分組</button>`;
 
   document.getElementById('editor').innerHTML=eh;
 }
@@ -1187,7 +1187,7 @@ function removeOpt(si,qi,oi){
 }
 
 function editSectionName(si,el){
-  var name=prompt('修改 Section 名稱：',el.textContent);
+  var name=prompt('修改分組名稱：',el.textContent);
   if(name===null)return;
   pushUndo();
   var pn=Object.keys(questions)[curPart];
@@ -1196,7 +1196,7 @@ function editSectionName(si,el){
 }
 
 function addSection(){
-  var name=prompt('新章節名稱：','');
+  var name=prompt('新分組名稱：','');
   if(!name||!name.trim())return;
   pushUndo();
   var pn=Object.keys(questions)[curPart];
@@ -1208,8 +1208,8 @@ function deleteSection(si){
   var pn=Object.keys(questions)[curPart];
   var sec=questions[pn].sections[si];
   if(!sec)return;
-  if(sec.qs.length>0){alert('此章節有 '+sec.qs.length+' 題，請先把題目移到其他章節再刪除。');return;}
-  if(!confirm('刪除章節「'+sec.label+'」？'))return;
+  if(sec.qs.length>0){alert('此分組有 '+sec.qs.length+' 題，請先把題目移到其他分組再刪除。');return;}
+  if(!confirm('刪除分組「'+sec.label+'」？'))return;
   pushUndo();
   questions[pn].sections.splice(si,1);
   renderAll();markDirty();
@@ -1221,12 +1221,12 @@ function moveQToSection(si,qi){
   if(!pd||!pd.sections)return;
   var q=pd.sections[si].qs[qi];
   var others=pd.sections.map(function(s,i){return {idx:i,label:s.label};}).filter(function(s){return s.idx!==si;});
-  if(others.length===0){alert('沒有其他章節可移動');return;}
-  var promptText='把題目「'+q.text+'」移到哪一章節？\n'+others.map(function(s){return '['+s.idx+'] '+s.label;}).join('\n')+'\n\n輸入章節編號：';
+  if(others.length===0){alert('沒有其他分組可移動');return;}
+  var promptText='把題目「'+q.text+'」移到哪一分組？\n'+others.map(function(s){return '['+s.idx+'] '+s.label;}).join('\n')+'\n\n輸入分組編號：';
   var target=prompt(promptText,'');
   if(target===null)return;
   var targetIdx=parseInt(target,10);
-  if(isNaN(targetIdx)||!pd.sections[targetIdx]||targetIdx===si){alert('無效的章節編號');return;}
+  if(isNaN(targetIdx)||!pd.sections[targetIdx]||targetIdx===si){alert('無效的分組編號');return;}
   pushUndo();
   pd.sections[si].qs.splice(qi,1);
   pd.sections[targetIdx].qs.push(q);
