@@ -458,7 +458,7 @@ export function cpRenderMain(){
       }
     });
 
-    html+='<div style="display:flex;flex-direction:column">';
+    html+='<div style="display:flex;flex-direction:column'+(_isInternalCP?';margin-left:24px':'')+'">';
     groups.forEach(function(g){
       if(g.label){
         // group 摺疊顯示（讀 wt 權重，例：h4 weight:2 → 計 2 分）
