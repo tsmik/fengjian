@@ -17,7 +17,7 @@ function _qidToPart(qid) {
 }
 
 /* ===== 維度條件評分頁 ===== */
-let cpCur=0,cpPartCur=0,_cpLrExpanded={},_cpGroupExpanded={};
+let cpCur=0,cpPartCur=0,_cpLrExpanded={},_cpGroupExpanded={},_cpPartCollapsed={};
 var CP_PART_ORDER=[0,1,4,5,6,7,8,2,9,3,10,11,12];
 var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
 
@@ -274,13 +274,16 @@ export function cpRenderMain(){
       });
       partAllExpanded=_pgIds.length>0&&_pgIds.every(function(id){return !!_cpGroupExpanded[id];});
     }
-    var partArrow=partAllExpanded?'▼':'▶';
-    var partToggleId='part_'+cpCur+'_'+pi;
-    html+='<div id="cp-part-'+label+'" class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePartGroups(\''+partToggleId+'\','+cpCur+','+pi+')">'+
-      '<span style="min-width:5em">'+label+(hasGroups?' <span style="font-size:12px;color:var(--text-3);margin-left:4px">'+partArrow+'</span>':'')+'</span>'+
+    var partCollapseKey='cp_part_'+cpCur+'_'+pi;
+    var isPartCollapsed=!!_cpPartCollapsed[partCollapseKey];
+    var partArrow=isPartCollapsed?'▶':'▼';
+    html+='<div id="cp-part-'+label+'" class="obs-section-label" style="margin-top:12px;display:flex;align-items:center;font-size:var(--cp-part-title);cursor:pointer'+(_isInternalCP?';margin-left:24px':'')+'" onclick="cpTogglePart(\''+partCollapseKey+'\')">'+
+      '<span style="min-width:5em">'+label+' <span style="font-size:12px;color:var(--text-3);margin-left:4px">'+partArrow+'</span></span>'+
       '<span style="font-size:var(--cp-part-meta);color:var(--text-3);font-weight:400;margin-left:1em">'+p.score+'/'+p.max+'　'+p.threshold+'</span>'+
       '<span style="font-size:var(--cp-part-meta);padding:2px 10px;border-radius:10px;background:'+passBg+';color:white;font-weight:400;margin-left:auto">'+passLabel+'</span>'+
     '</div>';
+
+    if(isPartCollapsed)return;
 
     // --- 合併左右配對項 ---
     function buildMerged(itemList){
@@ -513,6 +516,11 @@ export function cpToggleLR(lrKey){
 
 export function cpToggleGroup(groupId){
   _cpGroupExpanded[groupId]=!_cpGroupExpanded[groupId];
+  cpRenderMain();
+}
+
+export function cpTogglePart(key){
+  _cpPartCollapsed[key]=!_cpPartCollapsed[key];
   cpRenderMain();
 }
 
