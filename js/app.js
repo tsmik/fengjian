@@ -15,7 +15,7 @@ import { renderFaceMap, renderObsCenter, renderDimIndex, selectOpt, selectLROpt,
          toggleLRRow, gotoObsPart, toggleDetailGroup, collectDetailForPrompt,
          showObsPage } from './obs_ui.js';
 import { showCondPage, cpGoto, cpQuickChange, cpToggleAllGroups, cpToggleGroup,
-         cpToggleLR, cpTogglePartGroups, cpRender, renderDimPanel,
+         cpToggleLR, cpTogglePartGroups, cpTogglePart, cpRender, renderDimPanel,
          dimGoto, showCondPopup, closeCondPopup, applyCondChange, CAT_STYLE } from './cond_page.js';
 import { showReport, closeReport, reportSave, exportPNG } from './report.js';
 import { showSensPage, renderSensPage, showManualSensPage, renderManualSensPage } from './sens_analysis.js';
@@ -253,6 +253,7 @@ window.cpToggleAllGroups = cpToggleAllGroups;
 window.cpToggleGroup = cpToggleGroup;
 window.cpToggleLR = cpToggleLR;
 window.cpTogglePartGroups = cpTogglePartGroups;
+window.cpTogglePart = cpTogglePart;
 window.deleteCase = deleteCase;
 window.dimGoto = dimGoto;
 window.doLogout = doLogout;
