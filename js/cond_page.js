@@ -542,22 +542,15 @@ export function cpTogglePartGroups(partToggleId,dimIdx,partIdx){
 }
 
 export function cpToggleAllGroups(dimIdx){
+  // 切換所有 section（部位）的收合狀態。若全部已收合 → 全部展開；否則 → 全部收合
   var cr=condResults[dimIdx];if(!cr)return;
-  var allIds=[];
-  Object.keys(cr).forEach(function(pi){
-    var p=cr[pi];
-    if(!p||!p.items)return;
-    var currentLabel=null;
-    p.items.forEach(function(item){
-      if(item.groupLabel && item.groupLabel!==currentLabel){
-        currentLabel=item.groupLabel;
-        allIds.push('grp_'+dimIdx+'_'+pi+'_'+currentLabel.replace(/\s/g,''));
-      }
-    });
+  var sectionKeys=Object.keys(cr).map(function(pi){return 'cp_part_'+dimIdx+'_'+pi;});
+  if(sectionKeys.length===0)return;
+  var allCollapsed=sectionKeys.every(function(k){return !!_cpPartCollapsed[k];});
+  sectionKeys.forEach(function(k){
+    if(allCollapsed)delete _cpPartCollapsed[k];
+    else _cpPartCollapsed[k]=true;
   });
-  if(allIds.length===0)return;
-  var allExpanded=allIds.every(function(id){return !!_cpGroupExpanded[id];});
-  allIds.forEach(function(id){_cpGroupExpanded[id]=!allExpanded;});
   cpRenderMain();
 }
 
