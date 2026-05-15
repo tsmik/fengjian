@@ -273,6 +273,7 @@ var questions={}; // OBS_PARTS_DATA format
 var curDim=0;
 var curPart=0;
 var editingQ=null; // qId being edited
+var _movingQ=null; // 'pn-si-qi' 字串：正在選擇要移到哪個分組的題目
 var openSections=new Set(); // track which sections are expanded
 
 function setStatus(m){document.getElementById('status').textContent=m;}
@@ -1044,6 +1045,19 @@ function renderQuestions(){
       eh+=`<button class="del" onclick="deleteQ(${si},${qi})">刪除</button>`;
       eh+=`</span></div>`;
 
+      // Inline 移到其他分組 chooser
+      if(_movingQ===pn+'-'+si+'-'+qi){
+        eh+=`<div style="padding:10px 14px;background:#f9f7ec;border-top:1px dashed var(--active);display:flex;align-items:center;flex-wrap:wrap;gap:6px">`;
+        eh+=`<span style="font-size:12px;color:var(--text-3);margin-right:6px">移到分組：</span>`;
+        pd.sections.forEach(function(s,i){
+          if(i===si)return;
+          var safeLabel=s.label.replace(/"/g,'&quot;');
+          eh+=`<button onclick="executeMoveQ(${si},${qi},${i})" style="padding:4px 10px;background:var(--static);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px">${safeLabel}</button>`;
+        });
+        eh+=`<button onclick="cancelMoveQ()" style="padding:4px 10px;border:1px solid var(--border);background:white;border-radius:4px;cursor:pointer;font-size:12px;color:var(--text-3);margin-left:auto">取消</button>`;
+        eh+=`</div>`;
+      }
+
       // Edit form (shown when editingQ matches)
       if(editingQ===q.id){
         eh+=renderQEditForm(si,qi,q);
@@ -1219,18 +1233,26 @@ function moveQToSection(si,qi){
   var pn=Object.keys(questions)[curPart];
   var pd=questions[pn];
   if(!pd||!pd.sections)return;
-  var q=pd.sections[si].qs[qi];
-  var others=pd.sections.map(function(s,i){return {idx:i,label:s.label};}).filter(function(s){return s.idx!==si;});
-  if(others.length===0){alert('沒有其他分組可移動');return;}
-  var promptText='把題目「'+q.text+'」移到哪一分組？\n'+others.map(function(s){return '['+s.idx+'] '+s.label;}).join('\n')+'\n\n輸入分組編號：';
-  var target=prompt(promptText,'');
-  if(target===null)return;
-  var targetIdx=parseInt(target,10);
-  if(isNaN(targetIdx)||!pd.sections[targetIdx]||targetIdx===si){alert('無效的分組編號');return;}
+  if(pd.sections.length<2){alert('只有一個分組，沒有其他分組可移動');return;}
+  _movingQ=pn+'-'+si+'-'+qi;
+  renderAll();
+}
+
+function executeMoveQ(si,qi,targetSi){
+  var pn=Object.keys(questions)[curPart];
+  var pd=questions[pn];
+  if(!pd||!pd.sections[targetSi]||targetSi===si)return;
   pushUndo();
+  var q=pd.sections[si].qs[qi];
   pd.sections[si].qs.splice(qi,1);
-  pd.sections[targetIdx].qs.push(q);
+  pd.sections[targetSi].qs.push(q);
+  _movingQ=null;
   renderAll();markDirty();
+}
+
+function cancelMoveQ(){
+  _movingQ=null;
+  renderAll();
 }
 
 // ==================== FIREBASE ====================
