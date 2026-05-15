@@ -260,7 +260,7 @@ export function evaluatePart(partDef, obsDataIn, partResults) {
  * @returns {{ results: object, positiveCount: number, negativeCount: number, attribute: string, coefficient: number }}
  */
 export function evaluateDimension(dimDef, obsDataIn) {
-  var partOrder = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '顴', '人中', '地閣', '頤', '中停', '下停'];
+  var partOrder = ['頂骨', '枕骨', '華陽骨', '頭', '上停', '耳', '眉', '眼', '鼻', '口', '顴', '人中', '地閣', '頤', '中停', '下停'];
   var partResults = {};
 
   for (var pi = 0; pi < partOrder.length; pi++) {

@@ -38,13 +38,13 @@ export function recalcFromObs(){
     pd.sections.forEach(function(s){s.qs.forEach(function(q){qMap[q.id]=q;});});
   });
   for(let k in condResults) delete condResults[k];
-  var PART_NAME_TO_IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12};
+  var PART_NAME_TO_IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12,'頂骨':13,'枕骨':14,'華陽骨':15};
   var PART_IDX_TO_NAME=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   for(var _di=0;_di<13;_di++){
     condResults[_di]={};
     var _dim=DIM_RULES[_di];if(!_dim)continue;
     var _pos=_dim.positive||'A';
-    var _partOrder=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
+    var _partOrder=['頂骨','枕骨','華陽骨','頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
     // Store per-part evaluate results for partResult references
     var _partEvalResults={};
     _partOrder.forEach(function(pn){
