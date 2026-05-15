@@ -260,7 +260,7 @@ function hideLoginGate(){
 
 const DIM_COLORS=['#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
 const DIM_NAMES=['形勢','經緯','方圓','曲直','收放','緩急','順逆','分合','真假','攻守','奇正','虛實','進退'];
-const PART_ORDER=['頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
+const PART_ORDER=['頂骨','枕骨','華陽骨','頭','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','中停','下停'];
 const Q_PART_NAMES=['頭','額','耳','眉','眼','鼻','顴','口','人中','地閣','頤'];
 const Q_PREFIXES={頭:'h',額:'e',耳:'er',眉:'br',眼:'ey',鼻:'n',顴:'q',口:'m',人中:'p',地閣:'c',頤:'y'};
 
@@ -509,6 +509,7 @@ function nodeActs(p,showWrap){
 
 // Rule part → allowed question parts mapping
 var RULE_TO_QPARTS={
+  '頂骨':['頭'],'枕骨':['頭'],'華陽骨':['頭'],
   '頭':['頭'],'上停':['額'],'耳':['耳'],'眉':['眉'],'眼':['眼'],'鼻':['鼻'],'口':['口'],
   '顴':['顴'],'人中':['人中'],'地閣':['地閣'],'頤':['頤'],
   '中停':['眉','眼','鼻','顴'],'下停':['口','人中','地閣','頤']
@@ -570,6 +571,7 @@ function editRuleNode(path){
   }else if(node.op==='AND'||node.op==='OR'||node.op==='COUNT'){
     html+='<div class="row"><label>類型</label><select id="er-optype"><option value="AND"'+(node.op==='AND'?' selected':'')+'>AND</option><option value="OR"'+(node.op==='OR'?' selected':'')+'>OR</option><option value="COUNT"'+(node.op==='COUNT'?' selected':'')+'>COUNT</option></select></div>';
     if(node.op==='COUNT')html+='<div class="row"><label>min</label><input type="number" id="er-min" value="'+node.min+'" min="0" style="width:50px"></div>';
+    html+='<div class="row"><label>權重</label><input type="number" id="er-grp-wt" value="'+(node.weight||1)+'" min="1" style="width:50px"></div>';
   }else if(node.op==='LR'){
     html+='<div class="row"><label>merge</label><select id="er-merge"><option value="any"'+(node.merge==='any'?' selected':'')+'>一邊符合即可</option><option value="all"'+(node.merge==='all'?' selected':'')+'>都符合</option></select></div>';
   }else if(node.op==='NOT'){
@@ -582,6 +584,9 @@ function editRuleNode(path){
   }else if(node.partResult!==undefined){
     var prOpts='';
     var prSides=[
+      {v:'頂骨',label:'頂骨（整體）'},{v:'頂骨.L',label:'左頂骨'},{v:'頂骨.R',label:'右頂骨'},
+      {v:'枕骨',label:'枕骨'},
+      {v:'華陽骨',label:'華陽骨（整體）'},{v:'華陽骨.L',label:'左華陽骨'},{v:'華陽骨.R',label:'右華陽骨'},
       {v:'頭',label:'頭'},{v:'上停',label:'上停'},
       {v:'耳',label:'耳'},
       {v:'眉',label:'眉（整體）'},{v:'眉.L',label:'左眉'},{v:'眉.R',label:'右眉'},
@@ -623,6 +628,8 @@ function saveRuleEdit(path){
     }
     var minEl=document.getElementById('er-min');
     if(minEl&&n.op==='COUNT')n.min=+minEl.value||0;
+    var gwEl=document.getElementById('er-grp-wt');
+    if(gwEl){var gw=+gwEl.value||1;if(gw>1)n.weight=gw;else delete n.weight;}
   }
   else if(n.op==='LR')n.merge=document.getElementById('er-merge').value;
   else if(n.op==='NOT'&&n.item){
