@@ -236,8 +236,8 @@ export function cpRenderMain(){
     '</div>';
   }
 
-  var partOrder=[0,1,4,5,6,7,8,2,9,3,10,11,12];
-  var partLabels=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
+  var partOrder=[13,14,15,0,1,4,5,6,7,8,2,9,3,10,11,12];
+  var partLabels=['頂骨','枕骨','華陽骨','頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
 
   html+='<div style="display:flex;justify-content:flex-end;padding:4px 0"><button onclick="cpToggleAllGroups('+cpCur+')" style="border:1px solid var(--border);background:transparent;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-3)">全部展開／收合</button></div>';
 
