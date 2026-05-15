@@ -122,7 +122,27 @@ export function setLiunianTable(v) { _liunianTable = v; }
 export function setManualData(v) { manualData = v; }
 export function setDimRules(v) { DIM_RULES = v; }
 export function setRulesSource(v) { _rulesSource = v; }
-export function setObsData(v) { obsData = v; }
+// 非配對題（q.paired!==true）不該存 _L/_R。歷史殘留或誤儲存進入引擎前清掉；若無主值則任一 side 提升為主值。引擎跑 LR 時就不會讀到髒的 _L/_R 而誤判（Patch #2）
+function _sanitizeNonPairedSides(obj) {
+  if (!obj || typeof obj !== 'object') return;
+  const pd = OBS_PARTS_DATA || {};
+  Object.keys(pd).forEach(function(pn) {
+    const part = pd[pn];
+    if (!part || !Array.isArray(part.sections)) return;
+    part.sections.forEach(function(sec) {
+      (sec.qs || []).forEach(function(q) {
+        if (!q || !q.id || q.paired) return;
+        const lKey = q.id + '_L', rKey = q.id + '_R';
+        const hasL = lKey in obj, hasR = rKey in obj;
+        if (!hasL && !hasR) return;
+        if (!(q.id in obj)) obj[q.id] = obj[lKey] || obj[rKey] || '';
+        if (hasL) delete obj[lKey];
+        if (hasR) delete obj[rKey];
+      });
+    });
+  });
+}
+export function setObsData(v) { _sanitizeNonPairedSides(v); obsData = v; }
 export function setObsOverride(v) { obsOverride = v; }
 export function setCurObsPart(v) { curObsPart = v; }
 export function setObsPartsData(v) { OBS_PARTS_DATA = v; }
