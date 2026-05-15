@@ -317,7 +317,19 @@ function _expandLR(node,qMap,partResults){
     lBot.forEach(function(ll){items.push(ll);});
     rBot.forEach(function(rl){items.push(rl);});
   }
-  return items.filter(Boolean);
+  items=items.filter(Boolean);
+  // LR 展開時非配對題（q.paired!==true）會被 L/R 雙跑各展一次；此處只保留第一筆並清 side，避免報告誤示「左/右」（純顯示層去重，不影響計分）
+  var _seenRefs={};
+  items=items.filter(function(it){
+    if(!it||!it.ids||it.ids.length!==1)return true;
+    var _q=qMap[it.ids[0]];
+    if(!_q||_q.paired)return true;
+    if(_seenRefs[it.ids[0]])return false;
+    _seenRefs[it.ids[0]]=true;
+    it.side=null;
+    return true;
+  });
+  return items;
 }
 
 function _makeThreshold(ruleNode,pos,items){
