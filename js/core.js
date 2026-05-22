@@ -125,6 +125,9 @@ export function setRulesSource(v) { _rulesSource = v; }
 // 板書文字（settings/board，admin 編輯）：以維度名為 key，如 { "形勢":"…", … }
 export let boardText = {};
 export function setBoardText(v) { boardText = v || {}; }
+// 使用者個人筆記（users/{uid}.boardNotesJson）：{ 維度名: { partIdx: 筆記文字 } }
+export let boardNotes = {};
+export function setBoardNotes(v) { boardNotes = v || {}; }
 // 非配對題（q.paired!==true）不該存 _L/_R。歷史殘留或誤儲存進入引擎前清掉；若無主值則任一 side 提升為主值。引擎跑 LR 時就不會讀到髒的 _L/_R 而誤判（Patch #2）
 function _sanitizeNonPairedSides(obj) {
   if (!obj || typeof obj !== 'object') return;
@@ -191,6 +194,7 @@ function _doSetDoc() {
     dataJson: JSON.stringify(data),
     obsJson: JSON.stringify(obsData),
     overrideJson: JSON.stringify(obsOverride),
+    boardNotesJson: JSON.stringify(boardNotes),
     updatedAt: new Date().toISOString()
   }, { merge: true }).then(function() { _setStatus('saved'); }).catch(function(e) {
     console.log('雲端儲存失敗', e);
