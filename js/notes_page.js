@@ -5,7 +5,7 @@
 //   (2) 12 個固定部位方塊（P2 自動帶入判別條件、P4 使用者筆記）
 // P1（本階段）：只做殼——導覽 / 路由 / 左側維度 / 右側 12 格框架（內容為佔位文字）。
 import { DIMS, BETA_VISIBLE_DIMS, userName, _isTA, _currentCaseId, _currentCaseName,
-         setNavActive, showPage, condResults, boardText, DIM_RULES } from './core.js';
+         setNavActive, showPage, condResults, boardText, DIM_RULES, boardNotes, save } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 
 function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -61,6 +61,7 @@ function boardContentHtml(i){
   html+='<div class="board-cond-heading">'+condHeading+'</div>';
   html+='<div class="board-grid">';
   const cr=condResults[i]||{};
+  const dnNotes=boardNotes[d.dn]||{};
   BOARD_PARTS.forEach(function(bp){
     const p=cr[bp.idx];
     const groups=[];
@@ -75,10 +76,19 @@ function boardContentHtml(i){
     }else{
       body='<div class="board-empty">（此維度無此部位的敘述分組）</div>';
     }
+    // 使用者筆記（已存在則預設展開）
+    const noteVal=(dnNotes[bp.idx]!=null)?dnNotes[bp.idx]:'';
+    const hasNote=!!(noteVal&&String(noteVal).trim());
+    const noteUi='<div class="board-box-foot">'+
+      '<button class="board-note-btn" type="button" onclick="boardToggleNote(this)">'+(hasNote?'我的筆記':'＋ 我的筆記')+'</button>'+
+      '<div class="board-note-box"'+(hasNote?'':' style="display:none"')+'>'+
+        '<textarea class="board-note-area" data-dim="'+_esc(d.dn)+'" data-idx="'+bp.idx+'" oninput="boardNoteInput(this)" placeholder="寫下你的筆記…">'+_esc(noteVal)+'</textarea>'+
+      '</div>'+
+    '</div>';
     html+='<div class="board-box">'+
       '<div class="board-box-head">'+bp.label+'</div>'+
       '<div class="board-box-body">'+body+'</div>'+
-      '<div class="board-box-foot"><button class="board-note-btn" type="button">＋ 我的筆記</button></div>'+
+      noteUi+
     '</div>';
   });
   html+='</div>';
@@ -99,6 +109,24 @@ export function boardSelect(i){
 export function boardRender(){
   boardRenderSidebar();
   if(curBoard>=0)boardSelect(curBoard);
+}
+
+// 展開/收合方塊內的筆記框
+export function boardToggleNote(btn){
+  const box=btn.parentElement.querySelector('.board-note-box');
+  if(!box)return;
+  if(box.style.display!=='none'){box.style.display='none';}
+  else{box.style.display='block';const ta=box.querySelector('textarea');if(ta)ta.focus();}
+}
+
+// 筆記輸入 → 寫入 boardNotes 並走既有 save() debounce 雲端儲存
+export function boardNoteInput(ta){
+  const dim=ta.getAttribute('data-dim');
+  const idx=ta.getAttribute('data-idx');
+  if(!dim)return;
+  if(!boardNotes[dim])boardNotes[dim]={};
+  boardNotes[dim][idx]=ta.value;
+  try{save();}catch(e){console.error('board note save:',e);}
 }
 
 export function showBoardPage(){

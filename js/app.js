@@ -3,7 +3,7 @@ import { DIMS, data, obsData, obsOverride, setData, setObsData, setObsOverride,
          userName, setUserName, _isTA, setIsTA, _currentCaseId, setCurrentCaseId,
          _currentCaseName, setCurrentCaseName, _userGender, setUserGender,
          _userBirthday, setUserBirthday, _caseGender, setCaseGender,
-         DIM_RULES, setDimRules, _rulesSource, setRulesSource, setBoardText,
+         DIM_RULES, setDimRules, _rulesSource, setRulesSource, setBoardText, setBoardNotes,
          OBS_PARTS_DATA, setObsPartsData, OBS_PART_NAMES, setObsPartNames,
          _questionsSource, setQuestionsSource, setLiunianTable,
          emptyData, setNavActive, showPage, save, _showToast, setSaveStatusCallback, flushSaveNow,
@@ -27,7 +27,7 @@ import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
          triggerCaseImport } from './case_mgmt.js';
 import { kRender, kSelect, showKnowledgePage } from './knowledge_page.js';
-import { showBoardPage, boardRenderSidebar, boardSelect, boardRender } from './notes_page.js';
+import { showBoardPage, boardRenderSidebar, boardSelect, boardRender, boardToggleNote, boardNoteInput } from './notes_page.js';
 import { generateAI } from './ai_analysis.js';
 
 export function showModePage() {
@@ -188,8 +188,9 @@ async function initAfterLogin() {
     if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else if(doc.exists&&doc.data().data)setData(doc.data().data);else setData(emptyData());
     if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
     if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});
+    if(doc.exists&&doc.data().boardNotesJson){try{setBoardNotes(JSON.parse(doc.data().boardNotesJson));}catch(_e){setBoardNotes({});}}else setBoardNotes({});
     if(doc.exists){setUserGender(doc.data().gender||'');setUserBirthday(doc.data().birthday||'');}
-  }catch(e){console.log('載入失敗',e);setData(emptyData());setObsData({});setObsOverride({});}
+  }catch(e){console.log('載入失敗',e);setData(emptyData());setObsData({});setObsOverride({});setBoardNotes({});}
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';
 
@@ -293,6 +294,8 @@ window.showCondPage = showCondPage;
 window.showKnowledgePage = showKnowledgePage;
 window.showBoardPage = showBoardPage;
 window.boardSelect = boardSelect;
+window.boardToggleNote = boardToggleNote;
+window.boardNoteInput = boardNoteInput;
 window.showManualPage = showManualPage;
 window.showManualSensPage = showManualSensPage;
 window.showManualSensV2Page = showManualSensV2Page;
