@@ -3,9 +3,9 @@ import { DIMS, BETA_VISIBLE_DIMS, data, condResults, calcDim,
          userName, _isTA, _currentCaseId, _currentCaseName,
          setNavActive, showPage } from './core.js';
 
-const PART_ORDER_K=[0,1,4,5,6,7,8,2,9,3,10,11,12];
-const PART_LABELS_K=['頭','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
-const INTERNAL_PARTS_K={9:true,10:true,11:true,12:true};
+const PART_ORDER_K=[0,13,14,15,1,4,5,6,7,8,2,9,3,10,11,12];
+const PART_LABELS_K=['頭','頂骨','枕骨','華陽骨','上停','耳','眉','眼','鼻','口','中停','顴','下停','人中','地閣','頤'];
+const INTERNAL_PARTS_K={13:true,14:true,15:true,9:true,10:true,11:true,12:true};
 const CAT_COLOR={'先天指數':'background:#5a3e35;color:#f7d9c4','運氣指數':'background:#2d4a5a;color:#c4dff7','後天指數':'background:#3a4a35;color:#c4f7d4'};
 let curK=-1;
 
