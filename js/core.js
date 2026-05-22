@@ -244,7 +244,7 @@ export function setNavActive(tab) {
 
 const ALL_PAGES = ['entry-page','mode-page','app-body','report-overlay',
   'knowledge-overlay','cond-page','sens-page','manual-page',
-  'case-page','manual-sens-page','manual-sens-v2-page'];
+  'case-page','manual-sens-page','manual-sens-v2-page','board-page'];
 
 export function showPage(pageId) {
   ALL_PAGES.forEach(id => {
@@ -254,6 +254,6 @@ export function showPage(pageId) {
   document.getElementById('top-nav').style.display = 'flex';
   if (pageId) {
     const el = document.getElementById(pageId);
-    if (el) el.style.display = (pageId === 'app-body' ? 'grid' : (pageId === 'mode-page' || pageId === 'knowledge-overlay' || pageId === 'cond-page' ? 'flex' : 'block'));
+    if (el) el.style.display = (pageId === 'app-body' ? 'grid' : (pageId === 'mode-page' || pageId === 'knowledge-overlay' || pageId === 'cond-page' || pageId === 'board-page' ? 'flex' : 'block'));
   }
 }

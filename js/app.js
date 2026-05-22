@@ -27,6 +27,7 @@ import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
          triggerCaseImport } from './case_mgmt.js';
 import { kRender, kSelect, showKnowledgePage } from './knowledge_page.js';
+import { showBoardPage, boardRenderSidebar, boardSelect, boardRender } from './notes_page.js';
 import { generateAI } from './ai_analysis.js';
 
 export function showModePage() {
@@ -237,6 +238,7 @@ function _renderCurrentTab() {
     else if (tab === 'nav-report') { showReport(); }
     else if (tab === 'nav-sens') { renderSensPage(); }
     else if (tab === 'nav-know') { renderDimIndex(); }
+    else if (tab === 'nav-board') { boardRender(); }
   } catch(e) { console.log('重渲染失敗', e); }
 }
 
@@ -280,6 +282,8 @@ window.showCaseForm = showCaseForm;
 window.showCasePage = showCasePage;
 window.showCondPage = showCondPage;
 window.showKnowledgePage = showKnowledgePage;
+window.showBoardPage = showBoardPage;
+window.boardSelect = boardSelect;
 window.showManualPage = showManualPage;
 window.showManualSensPage = showManualSensPage;
 window.showManualSensV2Page = showManualSensV2Page;
@@ -512,6 +516,10 @@ window.addEventListener('popstate', function(e){
         showKnowledgePage();
         if (typeof e.state.dim === 'number' && e.state.dim >= 0) kSelect(e.state.dim);
         break;
+      case 'board':
+        showBoardPage();
+        if (typeof e.state.dim === 'number' && e.state.dim >= 0) boardSelect(e.state.dim);
+        break;
       case 'report': showReport(); break;
       case 'sens': showSensPage(); break;
       case 'manual': showManualPage(); break;
@@ -546,5 +554,7 @@ window.onload = () => {
   }
   // Init knowledge page
   kRender();
+  // Init 筆記和參考（板書和部位條件）側欄
+  boardRenderSidebar();
   initBetaUI();
 };
