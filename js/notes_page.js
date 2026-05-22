@@ -5,7 +5,10 @@
 //   (2) 12 個固定部位方塊（P2 自動帶入判別條件、P4 使用者筆記）
 // P1（本階段）：只做殼——導覽 / 路由 / 左側維度 / 右側 12 格框架（內容為佔位文字）。
 import { DIMS, BETA_VISIBLE_DIMS, userName, _isTA, _currentCaseId, _currentCaseName,
-         setNavActive, showPage } from './core.js';
+         setNavActive, showPage, condResults } from './core.js';
+import { recalcFromObs } from './obs_recalc.js';
+
+function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // 固定 12 個部位方塊（label 顯示名 / idx 對應 obs_recalc.js 的 PART_NAME_TO_IDX）
 // 頂骨13 枕骨14 華陽骨15 上停1 耳4 眉5 眼6 鼻7 口8 人中10 地閣11 頤12
@@ -49,13 +52,27 @@ function boardContentHtml(i){
   // 區塊一：板書
   html+='<div class="board-block-title">板書</div>';
   html+='<div class="board-lecture" id="board-lecture">（板書文字將於後續階段由管理後台編輯後顯示）</div>';
-  // 區塊二：部位判別條件
+  // 區塊二：部位判別條件（自動帶入該維度該部位的「敘述分組」名稱，一行一個）
   html+='<div class="board-block-title">部位判別條件</div>';
   html+='<div class="board-grid">';
+  const cr=condResults[i]||{};
   BOARD_PARTS.forEach(function(bp){
+    const p=cr[bp.idx];
+    const groups=[];
+    if(p&&p.items){
+      p.items.forEach(function(it){
+        if(it.groupLabel&&groups.indexOf(it.groupLabel)<0)groups.push(it.groupLabel);
+      });
+    }
+    let body;
+    if(groups.length){
+      body=groups.map(function(g){return '<div class="board-cond-line">'+_esc(g)+'</div>';}).join('');
+    }else{
+      body='<div class="board-empty">（此維度無此部位的敘述分組）</div>';
+    }
     html+='<div class="board-box">'+
       '<div class="board-box-head">'+bp.label+'</div>'+
-      '<div class="board-box-body">（後續階段帶入判別條件）</div>'+
+      '<div class="board-box-body">'+body+'</div>'+
       '<div class="board-box-foot"><button class="board-note-btn" type="button">＋ 我的筆記</button></div>'+
     '</div>';
   });
@@ -80,6 +97,7 @@ export function boardRender(){
 }
 
 export function showBoardPage(){
+  try{recalcFromObs();}catch(e){console.error('board recalc:',e);}
   showPage('board-page');
   const nm=document.getElementById('nav-name');
   if(nm)nm.innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
