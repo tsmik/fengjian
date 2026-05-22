@@ -5,6 +5,12 @@ import { calcDim } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { renderDimPanel } from './cond_page.js';
 
+// 記錄使用者手動收起的「可分左右」題：即使該題有 L/R 值也保持收合。
+// 持久化到 localStorage，重整後仍維持收起，不會又被自動展開打回。
+let _lrCollapsed={};
+try{_lrCollapsed=JSON.parse(localStorage.getItem('obs_lr_collapsed_v1'))||{};}catch(e){_lrCollapsed={};}
+function _saveLrCollapsed(){try{localStorage.setItem('obs_lr_collapsed_v1',JSON.stringify(_lrCollapsed));}catch(e){}}
+
 export function getPartCounts(obsIdx){
   const pn=OBS_PART_NAMES[obsIdx];if(!pn)return{ck:0,tot:0};
   const pd=OBS_PARTS_DATA[pn];if(!pd)return{ck:0,tot:0};
@@ -75,8 +81,10 @@ export function renderObsCenter(){
       const val=obsData[q.id];
       const valL=obsData[q.id+'_L'];
       const valR=obsData[q.id+'_R'];
+      // 是否展開左右列：有 L/R 值、且使用者未手動收起此題
+      const hasLR=(valL!==undefined||valR!==undefined)&&!_lrCollapsed[q.id];
       const isUnanswered=(val===undefined);
-      html+='<div class="obs-q-card'+(isUnanswered?' unanswered':'')+'"><div class="obs-q-top"><span class="obs-q-num2" style="position:relative;display:inline-block"><span class="update-badge q-badge" data-part="'+partName+'" data-qid="'+q.id+'" style="top:-4px;right:-4px;width:8px;height:8px"></span>'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+((valL||valR)?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+((valL||valR)?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
+      html+='<div class="obs-q-card'+(isUnanswered?' unanswered':'')+'"><div class="obs-q-top"><span class="obs-q-num2" style="position:relative;display:inline-block"><span class="update-badge q-badge" data-part="'+partName+'" data-qid="'+q.id+'" style="top:-4px;right:-4px;width:8px;height:8px"></span>'+qNum+'</span><span class="obs-q-text2">'+q.text+'</span>'+(isPaired?'<button class="obs-paired-btn'+(hasLR?' active':'')+'" id="btn-lr-'+q.id+'" onclick="toggleLRRow(\''+q.id+'\',this)">可分左右 '+(hasLR?'▲':'▼')+'</button>':'')+'</div><div class="obs-opts-grid">';
       q.opts.forEach(opt=>{
         const ov=typeof opt==='string'?opt:opt.v;
         const hint=(typeof opt==='object'&&opt.hint)?opt.hint:'';
@@ -85,7 +93,6 @@ export function renderObsCenter(){
       });
       html+='</div>';
       if(isPaired){
-        const hasLR=valL!==undefined||valR!==undefined;
         html+='<div class="obs-lr-row" id="lr-'+q.id+'" style="'+(hasLR?'display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;':'display:none;')+'">';
         html+='<span style="font-size:12px;color:var(--text-3);margin-right:4px;">左：</span>';
         q.opts.forEach(opt=>{const ov=typeof opt==='string'?opt:opt.v;const sel=valL===ov?' selected':'';html+='<span class="obs-pill-lr'+sel+'" onclick="selectLROpt(\''+q.id+'\',\'L\',\''+ov.replace(/'/g,"\\'")+'\',this)">'+ov+'</span>';});
@@ -149,7 +156,7 @@ export function selectLROpt(id,side,val,el){
     if(pd){pd.sections.forEach(sec=>{sec.qs.forEach(q=>{
       if(!q.paired)return;
       const vL=obsData[q.id+'_L'],vR=obsData[q.id+'_R'];
-      if(vL!==undefined||vR!==undefined){
+      if((vL!==undefined||vR!==undefined)&&!_lrCollapsed[q.id]){
         const lrRow=document.getElementById('lr-'+q.id);
         const btn=document.getElementById('btn-lr-'+q.id);
         if(lrRow){lrRow.style.display='flex';lrRow.style.flexWrap='wrap';lrRow.style.alignItems='center';lrRow.style.gap='6px';lrRow.style.marginTop='8px';}
@@ -194,10 +201,11 @@ export function toggleLRRow(id,btn){
   const isOpen=row.style.display!=='none';
   if(isOpen){
     row.style.display='none';btn.innerHTML='可分左右 ▼';btn.classList.remove('active');
-    // 收合時清除 L/R，恢復上層顯示
+    _lrCollapsed[id]=true;_saveLrCollapsed();  // 記住手動收起，重繪/答題/重整後不被打回展開
     // 不清除資料，讓左右不同狀態保留，只是收起 UI
     syncUpperRadio(id);
   }else{
+    delete _lrCollapsed[id];_saveLrCollapsed();  // 手動展開，解除收起記錄
     // 展開時，若 L/R 尚未設定，從上層預填
     const parent=obsData[id];
     if(obsData[id+'_L']===undefined&&obsData[id+'_R']===undefined&&parent!==undefined){
