@@ -397,7 +397,9 @@ export function cpRenderMain(){
           if(_cpLrExpanded[lrKey])anyExpanded=true;
         });
         var gKey=cpCur+'_'+allIds[0];
-        var isExp=!!_cpLrExpanded[gKey]||(anyDiff&&!anyExpanded);
+        // 自動展開只在「使用者尚未手動點過」時生效；點過收合/展開後尊重其選擇（重繪不再被打回）
+        if(!(gKey in _cpLrExpanded))_cpLrExpanded[gKey]=(anyDiff&&!anyExpanded);
+        var isExp=!!_cpLrExpanded[gKey];
 
         out+='<div style="border-bottom:1px solid var(--border);padding:8px 0">';
 
