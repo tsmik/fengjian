@@ -3,7 +3,7 @@ import { DIMS, data, obsData, obsOverride, setData, setObsData, setObsOverride,
          userName, setUserName, _isTA, setIsTA, _currentCaseId, setCurrentCaseId,
          _currentCaseName, setCurrentCaseName, _userGender, setUserGender,
          _userBirthday, setUserBirthday, _caseGender, setCaseGender,
-         DIM_RULES, setDimRules, _rulesSource, setRulesSource,
+         DIM_RULES, setDimRules, _rulesSource, setRulesSource, setBoardText,
          OBS_PARTS_DATA, setObsPartsData, OBS_PART_NAMES, setObsPartNames,
          _questionsSource, setQuestionsSource, setLiunianTable,
          emptyData, setNavActive, showPage, save, _showToast, setSaveStatusCallback, flushSaveNow,
@@ -171,6 +171,15 @@ async function initAfterLogin() {
       if(lnp&&lnp['男']&&lnp['女']){setLiunianTable(lnp);console.log('[流年表] 從 Firebase 載入 ✓');}
     }
   }catch(e){console.log('[流年表] 載入失敗',e);}
+
+  /* ===== Step 1.9: 載入板書文字（settings/board）===== */
+  try{
+    var bdDoc=await db.collection('settings').doc('board').get();
+    if(bdDoc.exists&&bdDoc.data().boardJson){
+      var bdp=JSON.parse(bdDoc.data().boardJson);
+      if(bdp&&typeof bdp==='object'){setBoardText(bdp);console.log('[板書] 從 Firebase 載入 ✓');}
+    }
+  }catch(e){console.log('[板書] 載入失敗',e);}
 
   /* ===== Step 2: 載入使用者資料 ===== */
   const uid = currentUser.uid;

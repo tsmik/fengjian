@@ -5,7 +5,7 @@
 //   (2) 12 個固定部位方塊（P2 自動帶入判別條件、P4 使用者筆記）
 // P1（本階段）：只做殼——導覽 / 路由 / 左側維度 / 右側 12 格框架（內容為佔位文字）。
 import { DIMS, BETA_VISIBLE_DIMS, userName, _isTA, _currentCaseId, _currentCaseName,
-         setNavActive, showPage, condResults } from './core.js';
+         setNavActive, showPage, condResults, boardText, DIM_RULES } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 
 function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -48,12 +48,17 @@ export function boardRenderSidebar(){
 
 // 右側內容（P1：佔位；P2 起帶入條件、P4 起加筆記）
 function boardContentHtml(i){
+  const d=DIMS[i];
   let html='';
-  // 區塊一：板書
+  // 區塊一：板書（admin 於後台編輯，前台唯讀；保留換行）
+  const lecture=boardText[d.dn];
   html+='<div class="board-block-title">板書</div>';
-  html+='<div class="board-lecture" id="board-lecture">（板書文字將於後續階段由管理後台編輯後顯示）</div>';
+  html+='<div class="board-lecture" id="board-lecture">'+(lecture?_esc(lecture):'（尚未設定板書文字）')+'</div>';
   // 區塊二：部位判別條件（自動帶入該維度該部位的「敘述分組」名稱，一行一個）
-  html+='<div class="board-block-title">部位判別條件</div>';
+  // 標題提示此串條件最終判別成的維度結果（正向字，取自規則 positive）
+  const pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
+  const condHeading=pos?('判別為「'+_esc(pos)+'」的條件'):'部位判別條件';
+  html+='<div class="board-cond-heading">'+condHeading+'</div>';
   html+='<div class="board-grid">';
   const cr=condResults[i]||{};
   BOARD_PARTS.forEach(function(bp){

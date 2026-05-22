@@ -159,11 +159,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
   <div class="tab-btn active" onclick="switchTab('rules')">評分規則</div>
   <div class="tab-btn" onclick="switchTab('questions')">觀察問題</div>
   <div class="tab-btn" onclick="switchTab('liunian')">流年表</div>
+  <div class="tab-btn" onclick="switchTab('board')">板書文字</div>
   <div style="flex:1"></div>
   <a href="index_desktop.html" target="_blank" style="font-size:12px;color:var(--text-3);text-decoration:none;padding:10px 14px;display:flex;align-items:center">→ 前台預覽</a>
 </div>
 <div id="breadcrumb"></div>
 <div id="liunian-page" style="display:none;flex:1;overflow:hidden;flex-direction:column"></div>
+<div id="board-edit-page" style="display:none;flex:1;overflow:hidden;flex-direction:column"></div>
 <div id="main">
   <div id="sidebar"></div>
   <div id="editor"></div>
@@ -268,6 +270,9 @@ var activeTab='rules';
 var liunianData=null;
 var _liunianSnapshot=null;
 var _liunianDirty=false;
+var boardData=null;
+var _boardSnapshot=null;
+var _boardDirty=false;
 var rules=[];
 var questions={}; // OBS_PARTS_DATA format
 var curDim=0;
@@ -282,14 +287,21 @@ function switchTab(t){
   if(t!=='liunian' && _dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
   if(t==='liunian' && activeTab!=='liunian' && _dirtyCount>0&&!confirm('有 '+_dirtyCount+' 筆修改未儲存，確定要切換嗎？'))return;
   if(activeTab==='liunian' && t!=='liunian' && _liunianDirty&&!confirm('流年表有未儲存的修改，確定要切換嗎？'))return;
+  if(activeTab==='board' && t!=='board' && _boardDirty&&!confirm('板書文字有未儲存的修改，確定要切換嗎？'))return;
   activeTab=t;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector('.tab-btn[onclick*="'+t+'"]').classList.add('active');
+  document.getElementById('board-edit-page').style.display=(t==='board')?'flex':'none';
   if(t==='liunian'){
     document.getElementById('main').style.display='none';
     document.getElementById('breadcrumb').style.display='none';
     document.getElementById('liunian-page').style.display='flex';
     renderLiunian();
+  }else if(t==='board'){
+    document.getElementById('main').style.display='none';
+    document.getElementById('breadcrumb').style.display='none';
+    document.getElementById('liunian-page').style.display='none';
+    renderBoardEdit();
   }else{
     document.getElementById('main').style.display='grid';
     document.getElementById('breadcrumb').style.display='';
@@ -303,6 +315,7 @@ function renderAll(){
   if(activeTab==='rules')renderRules();
   else if(activeTab==='questions')renderQuestions();
   else if(activeTab==='liunian')renderLiunian();
+  else if(activeTab==='board')renderBoardEdit();
   updateBreadcrumb();
 }
 
@@ -1698,7 +1711,7 @@ document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
 });
 window.addEventListener('beforeunload',function(e){
-  if(_dirtyCount>0||_liunianDirty){e.preventDefault();e.returnValue='';}
+  if(_dirtyCount>0||_liunianDirty||_boardDirty){e.preventDefault();e.returnValue='';}
 });
 
 // ==================== LIUNIAN ====================
@@ -1810,6 +1823,58 @@ function resetLiunian(){
   liunianData=JSON.parse(_liunianSnapshot);
   _liunianDirty=false;
   renderLiunian();
+}
+
+// ===== 板書文字編輯 =====
+function _boardEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderBoardEdit(){
+  var wrap=document.getElementById('board-edit-page');
+  if(!wrap)return;
+  if(!boardData){wrap.innerHTML='<div style="padding:40px;color:#aaa;text-align:center">載入中...</div>';return;}
+  var h='';
+  h+='<div style="padding:16px 24px;flex-shrink:0;border-bottom:1px solid var(--border)"><div style="font-size:16px;font-weight:600">板書文字</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">每個維度一段，可換行。學員會在「筆記和參考 → 板書和部位條件」看到。</div></div>';
+  h+='<div style="flex:1;overflow:auto;padding:16px 24px">';
+  for(var i=0;i<DIM_NAMES.length;i++){
+    var dn=DIM_NAMES[i];
+    var val=(boardData[dn]!=null?boardData[dn]:'');
+    h+='<div style="margin-bottom:18px">';
+    h+='<div style="font-size:14px;font-weight:600;color:'+DIM_COLORS[i]+';margin-bottom:6px">'+dn+'</div>';
+    h+='<textarea data-dim="'+dn+'" oninput="boardEdit(this)" style="width:100%;box-sizing:border-box;min-height:90px;font-family:inherit;font-size:14px;line-height:1.7;padding:10px;border:1px solid var(--border);border-radius:6px;resize:vertical" placeholder="輸入「'+dn+'」的板書文字…">'+_boardEsc(val)+'</textarea>';
+    h+='</div>';
+  }
+  h+='</div>';
+  h+='<div style="flex-shrink:0;padding:12px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px">';
+  h+='<button onclick="saveBoard()" style="padding:8px 20px;background:var(--static,#7A9E7E);color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px">儲存板書文字</button>';
+  h+='<button onclick="resetBoard()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:transparent;font-size:14px">還原</button>';
+  if(_boardDirty)h+='<span style="color:#c66;font-size:13px">有未儲存的修改</span>';
+  h+='</div>';
+  wrap.innerHTML=h;
+}
+function boardEdit(el){
+  if(!boardData)return;
+  boardData[el.getAttribute('data-dim')]=el.value;
+  if(!_boardDirty){
+    _boardDirty=true;
+    var bar=el.closest('#board-edit-page').querySelector('div[style*="border-top"]');
+    if(bar&&!bar.querySelector('.bd-dirty')){var sp=document.createElement('span');sp.className='bd-dirty';sp.style.cssText='color:#c66;font-size:13px';sp.textContent='有未儲存的修改';bar.appendChild(sp);}
+  }
+}
+function saveBoard(){
+  if(!boardData)return;
+  var ts=new Date().toISOString();
+  db.collection('settings').doc('board').set({boardJson:JSON.stringify(boardData),updatedAt:ts}).then(function(){
+    _boardSnapshot=JSON.stringify(boardData);
+    _boardDirty=false;
+    showToast('板書文字已儲存 ✓',true);
+    renderBoardEdit();
+  }).catch(function(e){showToast('儲存失敗：'+e.message,false);});
+}
+function resetBoard(){
+  if(!_boardSnapshot)return;
+  if(!confirm('確定還原到上次儲存的狀態？'))return;
+  boardData=JSON.parse(_boardSnapshot);
+  _boardDirty=false;
+  renderBoardEdit();
 }
 
 // ===== 流年表預設資料 =====
@@ -2214,6 +2279,18 @@ async function loadAllData(){
     db.collection('settings').doc('liunian').set({liunianJson:JSON.stringify(liunianData),updatedAt:new Date().toISOString()}).catch(function(){});
   }
   _liunianSnapshot=JSON.stringify(liunianData);
+
+  // Load board（板書文字）
+  try{
+    var bdoc=await db.collection('settings').doc('board').get();
+    if(bdoc.exists&&bdoc.data().boardJson){
+      var pb=JSON.parse(bdoc.data().boardJson);
+      if(pb&&typeof pb==='object')boardData=pb;
+      console.log('[Board] Firebase ✓');
+    }
+  }catch(e){console.log('[Board] Firebase error',e);}
+  if(!boardData)boardData={};
+  _boardSnapshot=JSON.stringify(boardData);
 
   renderAll();
   takeSnapshot();
