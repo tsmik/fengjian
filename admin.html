@@ -175,7 +175,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;height:100vh;ove
 <div class="publish-modal-overlay" id="publish-modal-overlay">
   <div class="publish-modal">
     <h3 id="publish-modal-title">🚀 發布到 Production</h3>
-    <p id="publish-modal-body">即將把 <strong>Staging</strong> 的評分規則與觀察題目，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。</p>
+    <p id="publish-modal-body">即將把 <strong>Staging</strong> 的評分規則、觀察題目與板書文字，覆蓋到 <strong>Production</strong>（學員看到的正式環境）。</p>
     <div class="warn" id="publish-modal-warn">⚠️ Production 現有資料會被備份後覆蓋。學員下次重新整理頁面後，會使用新的規則與題目計算報告。學員自己填的觀察資料不受影響。</div>
     <p id="publish-modal-desc" style="font-size:13px;color:#716b60"></p>
     <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
@@ -2203,6 +2203,9 @@ async function doProductionPublish(){
 
     var stagingRulesJson = rulesDoc.data().rulesJson;
     var stagingQuestionsJson = questionsDoc.data().questionsJson;
+    // 板書文字（可選，有才一起發布）
+    var boardDoc = await db.collection('settings').doc('board').get();
+    var stagingBoardJson = (boardDoc.exists && boardDoc.data().boardJson) ? boardDoc.data().boardJson : '';
 
     if(desc) desc.textContent = dryRun ? '正在比對差異...' : '正在發布到 Production...';
     var resp = await fetch(PUBLISH_CF_URL, {
@@ -2212,7 +2215,8 @@ async function doProductionPublish(){
         callerUid: user.uid,
         dryRun: dryRun,
         rulesJson: stagingRulesJson,
-        questionsJson: stagingQuestionsJson
+        questionsJson: stagingQuestionsJson,
+        boardJson: stagingBoardJson
       })
     });
     var data = await resp.json();
