@@ -151,6 +151,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
 .m-home-profile-status.is-error{color:#b04545}
+.m-home-profile-save-btn{margin-top:10px;width:100%;padding:11px;border:none;border-radius:8px;background:var(--active,#C17A5A);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-home-profile-save-btn:active{opacity:0.85}
 /* 首頁兩大按鈕（v1.7 階段 5 / 12+）*/
 .m-home-hint{font-size:14px;color:#5a5048;padding:0 4px 10px;letter-spacing:0.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m-home-bigbtn{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
@@ -1016,6 +1018,7 @@ body.m-debug-on .m-debug-clear{display:block}
         </select>
       </div>
       <div class="m-home-profile-status" id="m-home-profile-status"></div>
+      <button class="m-home-profile-save-btn" id="m-home-profile-save" type="button">存檔</button>
     </div>
   </div>
 </section>
@@ -1066,8 +1069,10 @@ body.m-debug-on .m-debug-clear{display:block}
     <span>手動輸入</span>
   </button>
   <button class="m-tab" data-tab="report">
-    <span class="m-tab-icon">▦</span>
-    <span>報告</span>
+    <span class="m-tab-icon">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </span>
+    <span>我的</span>
   </button>
 </nav>
 

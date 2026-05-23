@@ -12,7 +12,25 @@
 
 import { auth, db, debugLog, getEffectiveUid } from "./m_main.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { OBS_PARTS_DATA } from "./core.js";
+import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
+
+// 共用：寫入基本資料到雲端 + 更新記憶體狀態（首頁與「我的」分頁共用）
+export async function persistProfile(d){
+  const uid=getEffectiveUid();
+  if(!uid) throw new Error('未登入');
+  const payload={
+    displayName:(d.displayName||'').trim(),
+    birthday:d.birthday||'',
+    gender:d.gender||'',
+    profileUpdatedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'users',uid),payload,{merge:true});
+  window.__userData=Object.assign(window.__userData||{},payload);
+  try{ setUserName(payload.displayName); setUserGender(payload.gender); setUserBirthday(payload.birthday); }catch(e){}
+  const nm=document.getElementById('m-home-name');
+  if(nm&&payload.displayName) nm.textContent=payload.displayName;
+  return payload;
+}
 
 // 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數
 function calcObsProgress(){
@@ -118,30 +136,13 @@ export function initHome(displayName){
   else if(_initGender==='F'){_initGender='女';_genderMigrated=true;}
   elGender.value=_initGender;
 
-  let saveTimer=null;
-  function scheduleSave(){
+  // 只在按「存檔」時才寫入（不再自動存）
+  const elSave=document.getElementById('m-home-profile-save');
+  async function doSave(){
     elStatus.textContent='儲存中…';
     elStatus.className='m-home-profile-status is-saving';
-    clearTimeout(saveTimer);
-    saveTimer=setTimeout(saveProfile,800);
-  }
-  async function saveProfile(){
     try{
-      const uid=getEffectiveUid();
-      if(!uid) return;
-      const data={
-        displayName:elName.value.trim(),
-        birthday:elBday.value||'',
-        gender:elGender.value||'',
-        profileUpdatedAt:new Date().toISOString()
-      };
-      const userRef=doc(db,'users',uid);
-      await setDoc(userRef,data,{merge:true});
-      window.__userData=Object.assign(window.__userData||{},data);
-      if(data.displayName){
-        document.getElementById('m-home-name').textContent=data.displayName;
-        // v1.7 階段 13：頂部右上固定顯示「登出」，不再同步 displayName
-      }
+      await persistProfile({displayName:elName.value, birthday:elBday.value, gender:elGender.value});
       elStatus.textContent='已儲存';
       elStatus.className='m-home-profile-status is-saved';
       setTimeout(function(){if(elStatus.textContent==='已儲存') elStatus.textContent='';},1500);
@@ -151,8 +152,5 @@ export function initHome(displayName){
       elStatus.className='m-home-profile-status is-error';
     }
   }
-  elName.addEventListener('input',scheduleSave);
-  elBday.addEventListener('change',scheduleSave);
-  elGender.addEventListener('change',scheduleSave);
-  if(_genderMigrated) scheduleSave();
+  if(elSave) elSave.addEventListener('click',doSave);
 }

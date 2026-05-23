@@ -20,6 +20,7 @@
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data } from './core.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
+import { persistProfile } from './m_home.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
@@ -82,6 +83,14 @@ function _renderList() {
   if (!_container) return;
   _container.innerHTML = `
     <div class="m-home" style="padding:16px 14px">
+      <div class="m-home-card m-home-profile">
+        <div class="m-home-card-title">基本資料</div>
+        <div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-my-profile-name" placeholder="未填寫"></div>
+        <div class="m-home-profile-row"><label>出生年月日</label><input type="date" id="m-my-profile-birthday"></div>
+        <div class="m-home-profile-row"><label>性別</label><select id="m-my-profile-gender"><option value="">未填寫</option><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="m-home-profile-status" id="m-my-profile-status"></div>
+        <button class="m-home-profile-save-btn" id="m-my-profile-save" type="button">存檔</button>
+      </div>
       <button class="m-home-bigbtn" data-report-card="auto">
         <span class="m-home-bigbtn-icon">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
@@ -119,6 +128,36 @@ function _renderList() {
     try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
     const btn = document.querySelector('.m-tab[data-tab="manual"]');
     if (btn) btn.click();
+  });
+  _wireMyProfile();
+}
+
+// 「我的」分頁基本資料：可編輯 + 按存檔才寫雲端；存檔後重繪以刷新流年
+function _wireMyProfile() {
+  if (!_container) return;
+  const ud = window.__userData || {};
+  const elName = _container.querySelector('#m-my-profile-name');
+  const elBday = _container.querySelector('#m-my-profile-birthday');
+  const elGender = _container.querySelector('#m-my-profile-gender');
+  const elStatus = _container.querySelector('#m-my-profile-status');
+  const elSave = _container.querySelector('#m-my-profile-save');
+  if (!elName || !elSave) return;
+  elName.value = ud.displayName || '';
+  elBday.value = ud.birthday || '';
+  let g = ud.gender || '';
+  if (g === 'M') g = '男'; else if (g === 'F') g = '女';
+  elGender.value = g;
+  elSave.addEventListener('click', async () => {
+    if (elStatus) { elStatus.textContent = '儲存中…'; elStatus.className = 'm-home-profile-status is-saving'; }
+    try {
+      await persistProfile({ displayName: elName.value, birthday: elBday.value, gender: elGender.value });
+      _renderList(); // 重繪：更新流年（生日/性別可能改了）+ 重新填入
+      const st = _container && _container.querySelector('#m-my-profile-status');
+      if (st) { st.textContent = '已儲存'; st.className = 'm-home-profile-status is-saved'; setTimeout(() => { if (st.textContent === '已儲存') st.textContent = ''; }, 1500); }
+    } catch (e) {
+      debugLog('[Profile]', '儲存失敗', e && e.message ? e.message : e);
+      if (elStatus) { elStatus.textContent = '儲存失敗'; elStatus.className = 'm-home-profile-status is-error'; }
+    }
   });
 }
 
