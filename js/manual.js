@@ -1,7 +1,7 @@
 // js/manual.js — 手動輸入模組
 import { DIMS, data, manualData, setManualData, userName, _isTA, _currentCaseId, _currentCaseName, BETA_VISIBLE_DIMS,
          setNavActive, showPage, _showToast, _getUserDocRef, calcDim, avgCoeff,
-         _liunianTable, currentUser } from './core.js';
+         _liunianTable, currentUser, condResults, DIM_RULES } from './core.js';
 import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo, drawReportCanvas, fallbackDownload } from './report.js';
 
 export function initManualData(){
@@ -634,6 +634,62 @@ export function renderManualPage(){
 
   t+='</table>';
   el.innerHTML=_manualTitleHtml+t;
+  _bindManualHints();
+}
+
+/* ===== 手動表格格子 mouse over 判別標準提示 ===== */
+function _mEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _ensureManualHintEl(){
+  var el=document.getElementById('manual-hint');
+  if(!el){
+    el=document.createElement('div');
+    el.id='manual-hint';
+    el.style.cssText='position:fixed;z-index:9999;max-width:280px;background:#2b2b2b;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.3);display:none;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function _manualHintHtml(i,pi){
+  var pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
+  var p=(condResults[i]||{})[pi];
+  var groups=[];
+  if(p&&p.items)p.items.forEach(function(it){if(it.groupLabel&&groups.indexOf(it.groupLabel)<0)groups.push(it.groupLabel);});
+  var h='';
+  if(pos)h+='<div style="font-weight:700;margin-bottom:6px;color:#ffd479">符合則「'+_mEsc(pos)+'」</div>';
+  if(groups.length){
+    h+='<div style="opacity:0.65;font-size:11px;margin-bottom:2px">條件</div>';
+    h+=groups.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
+  }else{
+    h+='<div style="opacity:0.65">（此維度此部位無判別條件）</div>';
+  }
+  return h;
+}
+function _showManualHint(td,i,pi){
+  var el=_ensureManualHintEl();
+  el.innerHTML=_manualHintHtml(i,pi);
+  el.style.display='block';
+  var r=td.getBoundingClientRect();
+  var x=Math.min(r.left,window.innerWidth-el.offsetWidth-10);
+  var y=r.bottom+6;
+  if(y+el.offsetHeight>window.innerHeight)y=r.top-el.offsetHeight-6;
+  el.style.left=Math.max(8,x)+'px';
+  el.style.top=Math.max(8,y)+'px';
+}
+function manualHideHint(){var el=document.getElementById('manual-hint');if(el)el.style.display='none';}
+let _manualHintBound=false;
+function _bindManualHints(){
+  if(_manualHintBound)return;
+  var host=document.getElementById('manual-table');
+  if(!host)return;
+  _manualHintBound=true;
+  host.addEventListener('mouseover',function(e){
+    var td=e.target.closest&&e.target.closest('td[onclick^="manualCellClick"]');
+    if(!td){manualHideHint();return;}
+    var m=/manualCellClick\((\d+)\s*,\s*(\d+)\)/.exec(td.getAttribute('onclick')||'');
+    if(!m){manualHideHint();return;}
+    _showManualHint(td,parseInt(m[1],10),parseInt(m[2],10));
+  });
+  host.addEventListener('mouseleave',manualHideHint);
 }
 
 export async function exportManualPNG(){
