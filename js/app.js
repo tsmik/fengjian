@@ -25,7 +25,7 @@ import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSa
 import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          closeCaseForm, saveCaseForm, deleteCase, doLogout, editName,
          confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
-         triggerCaseImport } from './case_mgmt.js';
+         triggerCaseImport, showProfilePage, saveProfile } from './case_mgmt.js';
 import { kRender, kSelect, showKnowledgePage } from './knowledge_page.js';
 import { showBoardPage, boardRenderSidebar, boardSelect, boardRender, boardNoteEdit, boardNoteSave, boardNoteInput } from './notes_page.js';
 import { generateAI } from './ai_analysis.js';
@@ -271,6 +271,8 @@ window.dimGoto = dimGoto;
 window.doLogout = doLogout;
 window.editCase = editCase;
 window.editName = editName;
+window.showProfilePage = showProfilePage;
+window.saveProfile = saveProfile;
 window.exportAllCases = exportAllCases;
 window.exportSingleCase = exportSingleCase;
 window.triggerCaseImport = triggerCaseImport;
@@ -533,6 +535,7 @@ window.addEventListener('popstate', function(e){
         showBoardPage();
         if (typeof e.state.dim === 'number' && e.state.dim >= 0) boardSelect(e.state.dim);
         break;
+      case 'profile': showProfilePage(); break;
       case 'report': showReport(); break;
       case 'sens': showSensPage(); break;
       case 'manual': showManualPage(); break;
