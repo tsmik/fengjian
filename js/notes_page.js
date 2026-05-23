@@ -10,6 +10,22 @@ import { recalcFromObs } from './obs_recalc.js';
 
 function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// 單一筆記區塊（顯示/編輯切換）。idxKey：部位 partIdx 或板書用的 'board'
+function _noteBlockHtml(dn, idxKey, noteVal){
+  const v=(noteVal!=null)?String(noteVal):'';
+  const hasNote=!!v.trim();
+  return '<div class="board-note">'+
+    '<div class="board-note-view">'+
+      (hasNote?'<div class="board-note-text">'+_esc(v)+'</div>':'')+
+      '<button class="board-note-btn" type="button" onclick="boardNoteEdit(this)">編輯我的筆記</button>'+
+    '</div>'+
+    '<div class="board-note-edit" style="display:none">'+
+      '<textarea class="board-note-area" data-dim="'+_esc(dn)+'" data-idx="'+_esc(String(idxKey))+'" oninput="boardNoteInput(this)" placeholder="寫下你的筆記…">'+_esc(v)+'</textarea>'+
+      '<div class="board-note-actions"><button class="board-note-save" type="button" onclick="boardNoteSave(this)">儲存</button></div>'+
+    '</div>'+
+  '</div>';
+}
+
 // 固定 12 個部位方塊（label 顯示名 / idx 對應 obs_recalc.js 的 PART_NAME_TO_IDX）
 // 頂骨13 枕骨14 華陽骨15 上停1 耳4 眉5 眼6 鼻7 口8 人中10 地閣11 頤12
 export const BOARD_PARTS=[
@@ -50,10 +66,14 @@ export function boardRenderSidebar(){
 function boardContentHtml(i){
   const d=DIMS[i];
   let html='';
-  // 區塊一：板書（admin 於後台編輯，前台唯讀；保留換行）
+  const dnNotes=boardNotes[d.dn]||{};
+  // 區塊一：板書（左：admin 編輯、前台唯讀；右：學員針對板書的筆記）
   const lecture=boardText[d.dn];
   html+='<div class="board-block-title">板書</div>';
-  html+='<div class="board-lecture" id="board-lecture">'+(lecture?_esc(lecture):'（尚未設定板書文字）')+'</div>';
+  html+='<div class="board-lecture-wrap">'+
+    '<div class="board-lecture" id="board-lecture">'+(lecture?_esc(lecture):'（尚未設定板書文字）')+'</div>'+
+    '<div class="board-lecture-note"><div class="board-note-caption">我的板書筆記</div>'+_noteBlockHtml(d.dn,'board',dnNotes['board'])+'</div>'+
+  '</div>';
   // 區塊二：部位判別條件（自動帶入該維度該部位的「敘述分組」名稱，一行一個）
   // 標題提示此串條件最終判別成的維度結果（正向字，取自規則 positive）
   const pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
@@ -61,7 +81,6 @@ function boardContentHtml(i){
   html+='<div class="board-cond-heading">'+condHeading+'</div>';
   html+='<div class="board-grid">';
   const cr=condResults[i]||{};
-  const dnNotes=boardNotes[d.dn]||{};
   BOARD_PARTS.forEach(function(bp){
     const p=cr[bp.idx];
     const groups=[];
@@ -76,19 +95,7 @@ function boardContentHtml(i){
     }else{
       body='<div class="board-empty">（此維度無此部位的敘述分組）</div>';
     }
-    // 使用者筆記：顯示模式（唯讀文字 + 編輯鈕）/ 編輯模式（自動長高文字框 + 儲存鈕）
-    const noteVal=(dnNotes[bp.idx]!=null)?String(dnNotes[bp.idx]):'';
-    const hasNote=!!noteVal.trim();
-    const noteUi='<div class="board-box-foot"><div class="board-note">'+
-      '<div class="board-note-view">'+
-        (hasNote?'<div class="board-note-text">'+_esc(noteVal)+'</div>':'')+
-        '<button class="board-note-btn" type="button" onclick="boardNoteEdit(this)">編輯我的筆記</button>'+
-      '</div>'+
-      '<div class="board-note-edit" style="display:none">'+
-        '<textarea class="board-note-area" data-dim="'+_esc(d.dn)+'" data-idx="'+bp.idx+'" oninput="boardNoteInput(this)" placeholder="寫下你的筆記…">'+_esc(noteVal)+'</textarea>'+
-        '<div class="board-note-actions"><button class="board-note-save" type="button" onclick="boardNoteSave(this)">儲存</button></div>'+
-      '</div>'+
-    '</div></div>';
+    const noteUi='<div class="board-box-foot">'+_noteBlockHtml(d.dn,bp.idx,dnNotes[bp.idx])+'</div>';
     html+='<div class="board-box">'+
       '<div class="board-box-head">'+bp.label+'</div>'+
       '<div class="board-box-body">'+body+'</div>'+
