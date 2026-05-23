@@ -27,7 +27,7 @@ import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
          triggerCaseImport } from './case_mgmt.js';
 import { kRender, kSelect, showKnowledgePage } from './knowledge_page.js';
-import { showBoardPage, boardRenderSidebar, boardSelect, boardRender, boardToggleNote, boardNoteInput } from './notes_page.js';
+import { showBoardPage, boardRenderSidebar, boardSelect, boardRender, boardNoteEdit, boardNoteSave, boardNoteInput } from './notes_page.js';
 import { generateAI } from './ai_analysis.js';
 
 export function showModePage() {
@@ -294,7 +294,8 @@ window.showCondPage = showCondPage;
 window.showKnowledgePage = showKnowledgePage;
 window.showBoardPage = showBoardPage;
 window.boardSelect = boardSelect;
-window.boardToggleNote = boardToggleNote;
+window.boardNoteEdit = boardNoteEdit;
+window.boardNoteSave = boardNoteSave;
 window.boardNoteInput = boardNoteInput;
 window.showManualPage = showManualPage;
 window.showManualSensPage = showManualSensPage;
