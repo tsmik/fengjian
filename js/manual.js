@@ -635,16 +635,19 @@ export function renderManualPage(){
   t+='</table>';
   el.innerHTML=_manualTitleHtml+t;
   _bindManualHints();
+  _ensureManualHintToggle();
 }
 
 /* ===== 手動表格格子 mouse over 判別標準提示 ===== */
 function _mEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let _manualHintEnabled=true;
+var _HINT_DIMCOLOR=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8','#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
 function _ensureManualHintEl(){
   var el=document.getElementById('manual-hint');
   if(!el){
     el=document.createElement('div');
     el.id='manual-hint';
-    el.style.cssText='position:fixed;z-index:9999;max-width:280px;background:#2b2b2b;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.3);display:none;pointer-events:none';
+    el.style.cssText='position:fixed;z-index:9999;max-width:280px;background:rgba(20,20,20,0.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);color:#f3f3f3;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.25);display:none;pointer-events:none';
     document.body.appendChild(el);
   }
   return el;
@@ -670,7 +673,7 @@ function _hintCollectPartRefs(node,out){
 function _manualHintHtml(i,pi){
   var pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
   var h='';
-  if(pos)h+='<div style="font-weight:700;margin-bottom:6px;color:#ffd479">符合則「'+_mEsc(pos)+'」</div>';
+  if(pos)h+='<div style="font-weight:700;margin-bottom:6px;color:'+(_HINT_DIMCOLOR[i]||'#fff')+'">符合則「'+_mEsc(pos)+'」</div>';
   var own=_hintGroupsOf(i,pi);
   if(own.length){
     // 一般部位：直接列自己的敘述分組
@@ -710,6 +713,7 @@ function _bindManualHints(){
   if(!host)return;
   _manualHintBound=true;
   host.addEventListener('mouseover',function(e){
+    if(!_manualHintEnabled){manualHideHint();return;}
     var td=e.target.closest&&e.target.closest('td[onclick^="manualCellClick"]');
     if(!td){manualHideHint();return;}
     var m=/manualCellClick\((\d+)\s*,\s*(\d+)\)/.exec(td.getAttribute('onclick')||'');
@@ -717,6 +721,23 @@ function _bindManualHints(){
     _showManualHint(td,parseInt(m[1],10),parseInt(m[2],10));
   });
   host.addEventListener('mouseleave',manualHideHint);
+}
+// 右上角切換鈕：開/關判別條件提示（掛在 #manual-page 內，隨頁面顯示而顯示）
+function _updateHintToggle(){
+  var btn=document.getElementById('manual-hint-toggle');if(!btn)return;
+  btn.textContent=_manualHintEnabled?'取消判別條件提示':'預覽判別條件';
+}
+function _ensureManualHintToggle(){
+  var page=document.getElementById('manual-page');if(!page)return;
+  var btn=document.getElementById('manual-hint-toggle');
+  if(!btn){
+    btn=document.createElement('button');
+    btn.id='manual-hint-toggle';btn.type='button';
+    btn.style.cssText='position:fixed;top:56px;right:18px;z-index:9998;font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text-2);cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,0.12)';
+    btn.onclick=function(){_manualHintEnabled=!_manualHintEnabled;if(!_manualHintEnabled)manualHideHint();_updateHintToggle();};
+    page.appendChild(btn);
+  }
+  _updateHintToggle();
 }
 
 export async function exportManualPNG(){
