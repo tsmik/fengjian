@@ -428,13 +428,17 @@ function togglePartExpanded(di, pi) {
   } else {
     _dimPartExpanded[di] = pi;
     // 首次展開時 init：所有 group 預設全部收合（已有狀態則保留）
-    const key = _groupKey(di, pi);
-    if (!_dimGroupCollapsed[key]) {
-      const groups = _collectDimPartGroups(di, pi);
-      const labels = groups.map(g => g.label).filter(Boolean);
-      _dimGroupCollapsed[key] = new Set(labels);
-      saveDimGroupCollapsed();
-    }
+    // 頭(pi=0) 改 init 其三個子部位 13/14/15 的群組
+    const _initIdxs = (pi === 0) ? [13, 14, 15] : [pi];
+    _initIdxs.forEach(idx => {
+      const key = _groupKey(di, idx);
+      if (!_dimGroupCollapsed[key]) {
+        const groups = _collectDimPartGroups(di, idx);
+        const labels = groups.map(g => g.label).filter(Boolean);
+        _dimGroupCollapsed[key] = new Set(labels);
+      }
+    });
+    saveDimGroupCollapsed();
   }
   saveDimPartExpanded();
 }
@@ -489,13 +493,19 @@ function dimProgress(di) {
 // 部位 tile 進度：該維度下該部位涉及的 ref qid 已答數
 function dimPartProgress(di, pi) {
   const dim = DIM_RULES && DIM_RULES[di];
-  const dimPartName = (() => {
-    const idx = DIM_PART_ORDER.indexOf(pi);
-    return idx >= 0 ? DIM_PART_LABELS[idx] : null;
-  })();
-  if (!dim || !dim.parts || !dimPartName || !dim.parts[dimPartName]) return { done: 0, total: 0 };
+  if (!dim || !dim.parts) return { done: 0, total: 0 };
   const refs = new Set();
-  _collectRefsFromNode(dim.parts[dimPartName], refs);
+  if (pi === 0) {
+    // 頭：進度 = 頂骨/枕骨/華陽骨 三個子部位的題目
+    ['頂骨', '枕骨', '華陽骨'].forEach(pn => {
+      if (dim.parts[pn]) _collectRefsFromNode(dim.parts[pn], refs);
+    });
+  } else {
+    const idx = DIM_PART_ORDER.indexOf(pi);
+    const dimPartName = idx >= 0 ? DIM_PART_LABELS[idx] : null;
+    if (!dimPartName || !dim.parts[dimPartName]) return { done: 0, total: 0 };
+    _collectRefsFromNode(dim.parts[dimPartName], refs);
+  }
   let done = 0;
   refs.forEach(qid => { if (isQidAnswered(qid)) done++; });
   return { done, total: refs.size };
@@ -691,22 +701,24 @@ function _collectDimPartGroups(di, pi) {
   });
   return groups;
 }
-function renderDimPartBody(di, pi, dimPartName) {
-  const groups = _collectDimPartGroups(di, pi);
-  if (groups.length === 0) {
-    return `<div class="m-dim-part-body m-dim-empty">（無條件項）</div>`;
-  }
-  return `<div class="m-dim-part-body">${groups.map(g => {
-    const collapsed = g.label ? isGroupCollapsed(di, pi, g.label) : false;
+// 頭的 3 個子部位（題庫中是頭底下的 section，規則引擎中是獨立 part 13/14/15）
+const HEAD_SUBPARTS = [[13, '頂骨'], [14, '枕骨'], [15, '華陽骨']];
+
+// 渲染某 (維度,部位idx) 的所有群組（可填題目 + partResult 結論行）
+function _renderDimGroupsHtml(di, partIdx) {
+  const groups = _collectDimPartGroups(di, partIdx);
+  if (groups.length === 0) return '';
+  return groups.map(g => {
+    const collapsed = g.label ? isGroupCollapsed(di, partIdx, g.label) : false;
     const chevron = g.label ? (collapsed ? '▶' : '▼') : '';
     let bodyHtml = '';
     if (!collapsed) {
-      // 一般題目（refs 還原）
+      // 一般題目（refs 還原，可填）
       const qsHtml = g.qids.map(qid => {
         const q = _findQById(qid);
         return q ? renderQuestion(q) : '';
       }).filter(Boolean).join('');
-      // partResult 結論行（中停/下停常見：「左頭達標」之類，純展示不可答）
+      // partResult 結論行（中停/下停常見：純展示不可答）
       const prHtml = g.partResults.map(it => {
         const okCls = it.ok ? 'ok' : 'ng';
         const mark = it.ok ? '✓' : '✗';
@@ -722,7 +734,7 @@ function renderDimPartBody(di, pi, dimPartName) {
     return `
       <div class="m-dim-group">
         ${g.label ? `
-          <div class="m-dim-group-header" data-dim="${di}" data-pi="${pi}" data-group-label="${escapeHtml(g.label)}">
+          <div class="m-dim-group-header" data-dim="${di}" data-pi="${partIdx}" data-group-label="${escapeHtml(g.label)}">
             <span class="m-dim-group-chevron">${chevron}</span>
             <span class="m-dim-group-label">${escapeHtml(g.label)}</span>
           </div>
@@ -730,7 +742,23 @@ function renderDimPartBody(di, pi, dimPartName) {
         <div class="m-dim-group-body" ${collapsed ? 'style="display:none"' : ''}>${bodyHtml}</div>
       </div>
     `;
-  }).join('')}</div>`;
+  }).join('');
+}
+
+function renderDimPartBody(di, pi, dimPartName) {
+  // 頭：展開頂骨/枕骨/華陽骨 三個子部位的可填條件（取代原本的達標摘要）
+  if (pi === 0) {
+    const inner = HEAD_SUBPARTS.map(([sidx, slabel]) => {
+      const cr = condResults[di] && condResults[di][sidx];
+      if (!cr || cr.threshold === '無規則') return '';
+      const gh = _renderDimGroupsHtml(di, sidx);
+      if (!gh) return '';
+      return `<div class="m-dim-subpart"><div class="m-dim-subpart-title">${escapeHtml(slabel)}</div>${gh}</div>`;
+    }).filter(Boolean).join('');
+    return `<div class="m-dim-part-body">${inner || '<div class="m-dim-empty">（無條件項）</div>'}</div>`;
+  }
+  const gh = _renderDimGroupsHtml(di, pi);
+  return `<div class="m-dim-part-body">${gh || '<div class="m-dim-empty">（無條件項）</div>'}</div>`;
 }
 
 function renderPartMode() {
@@ -1057,9 +1085,13 @@ function bindEvents() {
       const di = parseInt(btn.dataset.dim, 10);
       const pi = parseInt(btn.dataset.pi, 10);
       const action = btn.dataset.dimAction;
-      const groups = _collectDimPartGroups(di, pi);
-      const labels = groups.map(g => g.label).filter(Boolean);
-      setAllGroupsCollapsed(di, pi, labels, action === 'group-collapse-all');
+      // 頭(pi=0) 的群組分散在 13/14/15 三個子部位
+      const _idxs = (pi === 0) ? [13, 14, 15] : [pi];
+      _idxs.forEach(idx => {
+        const groups = _collectDimPartGroups(di, idx);
+        const labels = groups.map(g => g.label).filter(Boolean);
+        setAllGroupsCollapsed(di, idx, labels, action === 'group-collapse-all');
+      });
       render();
     });
   });
