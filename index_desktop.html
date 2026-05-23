@@ -86,8 +86,11 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .mode-flow-label{font-size:12px;font-weight:400;color:var(--text-3);letter-spacing:2px;margin-bottom:10px}
 .mode-flow-row{display:flex;align-items:center;gap:0;margin-bottom:28px}
 .mode-flow-col{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.mode-col-entry{width:300px}
+.mode-col-report{width:210px}
+.mode-col-tool{width:240px}
 .mode-flow-arrow{color:#c4b89a;font-size:20px;padding:0 16px;flex-shrink:0;user-select:none;align-self:center}
-.mode-btn{background:white;border-radius:8px;padding:16px 20px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-left:3px solid #ccc;min-width:160px}
+.mode-btn{background:white;border-radius:8px;padding:16px 20px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:box-shadow 0.2s,transform 0.15s;border-left:3px solid #ccc;min-width:160px;box-sizing:border-box}
 .mode-btn:hover{box-shadow:0 3px 10px rgba(0,0,0,0.1);transform:translateY(-1px)}
 .mode-btn h3{font-size:15px;font-weight:400;margin:0 0 4px;letter-spacing:1px;color:var(--text)}
 .mode-btn p{font-size:12px;color:var(--text-3);line-height:1.5;margin:0}
@@ -526,7 +529,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div class="mode-flow-label">觀察路徑</div>
     <div class="mode-flow-row">
       <!-- 入口 -->
-      <div class="mode-flow-col">
+      <div class="mode-flow-col mode-col-entry">
         <div class="mode-btn is-entry" onclick="showObsPage()">
           <span class="update-badge" id="badge-obs-entry"></span>
           <h3>從部位觀察</h3>
@@ -540,7 +543,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       </div>
       <div class="mode-flow-arrow">→</div>
       <!-- 報告 -->
-      <div class="mode-flow-col">
+      <div class="mode-flow-col mode-col-report">
         <div class="mode-btn is-report" onclick="showReport()">
           <h3>人相兵法報告</h3>
           <p>綜合係數矩陣與動靜比例</p>
@@ -548,7 +551,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       </div>
       <div class="mode-flow-arrow">→</div>
       <!-- 分析工具 -->
-      <div class="mode-flow-col">
+      <div class="mode-flow-col mode-col-tool">
         <div class="mode-btn is-tool" onclick="showSensPage()">
           <h3>重要參數分析</h3>
           <p>模擬觀察題目變動的影響</p>
@@ -567,7 +570,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div class="mode-flow-label">手動路徑</div>
     <div class="mode-flow-row">
       <!-- 入口 -->
-      <div class="mode-flow-col">
+      <div class="mode-flow-col mode-col-entry">
         <div class="mode-btn is-manual" onclick="showManualPage()">
           <h3>手動輸入兵法報告</h3>
           <p>直接輸入 9 部位 × 13 維度動靜判定</p>
@@ -575,7 +578,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       </div>
       <div class="mode-flow-arrow">→</div>
       <!-- 佔位（對齊上排報告欄） -->
-      <div class="mode-flow-col" style="visibility:hidden">
+      <div class="mode-flow-col mode-col-report" style="visibility:hidden">
         <div class="mode-btn is-report" style="pointer-events:none">
           <h3>&nbsp;</h3>
           <p>&nbsp;</p>
@@ -583,7 +586,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
       </div>
       <div class="mode-flow-arrow" style="visibility:hidden">→</div>
       <!-- 分析工具（對齊上排第三欄） -->
-      <div class="mode-flow-col">
+      <div class="mode-flow-col mode-col-tool">
         <div class="mode-btn is-tool" id="mode-card-manual-sens-v2" onclick="showManualSensV2Page()">
           <h3>重要參數分析</h3>
           <p>老師邏輯診斷 + 翻轉建議</p>
