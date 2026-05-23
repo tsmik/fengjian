@@ -620,12 +620,11 @@ export function renderManualPage(){
   // --- R20: 總係數 ---
   if(BETA_VISIBLE_DIMS>=13){
     var allOk=groupComplete(visibleDimIds);
-    var dataColSpan=visiblePre*2+(showLuck?1+visibleLuck*2:0)+(showPost?1+visiblePost*2:0);
+    // 比照自動報告：bar 右緣對齊後天係數右緣 = 先天數據+先天動靜 + (部位+運氣數據+運氣動靜) + (部位+後天數據)
+    var dataColSpan=visiblePre*2+3+(showLuck?1+visibleLuck*2+3:0)+(showPost?1+visiblePost*2:0);
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>';
     t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
-    t+='<td colspan="3" style="padding:2px 4px"></td>';
-    if(showLuck) t+='<td colspan="3" style="padding:2px 4px"></td>';
     if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td style="padding:2px 4px"></td>';
