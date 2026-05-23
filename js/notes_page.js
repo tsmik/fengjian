@@ -10,13 +10,14 @@ import { recalcFromObs } from './obs_recalc.js';
 
 function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// 單一筆記區塊（顯示/編輯切換）。idxKey：部位 partIdx 或板書用的 'board'
-function _noteBlockHtml(dn, idxKey, noteVal){
+// 單一筆記區塊（顯示/編輯切換）。idxKey：部位 partIdx 或板書用的 'board'；clamp：顯示文字是否收合 5 行
+function _noteBlockHtml(dn, idxKey, noteVal, clamp){
   const v=(noteVal!=null)?String(noteVal):'';
   const hasNote=!!v.trim();
+  const tcls='board-note-text'+(clamp?' board-clamp':'');
   return '<div class="board-note">'+
     '<div class="board-note-view">'+
-      (hasNote?'<div class="board-note-text">'+_esc(v)+'</div>':'')+
+      (hasNote?'<div class="'+tcls+'">'+_esc(v)+'</div>':'')+
       '<button class="board-note-btn" type="button" onclick="boardNoteEdit(this)">編輯我的筆記</button>'+
     '</div>'+
     '<div class="board-note-edit" style="display:none">'+
@@ -36,6 +37,32 @@ export const BOARD_PARTS=[
 ];
 
 let curBoard=-1;
+
+// 把標了 .board-clamp 的長文字收合到 5 行（含「…」），超過才顯示展開/收合切換
+function _applyBoardClamps(){
+  var root=document.getElementById('board-content');if(!root)return;
+  root.querySelectorAll('.board-clamp').forEach(function(el){
+    var next=el.nextElementSibling;
+    var toggle=(next&&next.classList&&next.classList.contains('board-clamp-toggle'))?next:null;
+    el.classList.add('clamped');
+    var overflow=el.scrollHeight>el.clientHeight+2;
+    if(overflow){
+      if(!toggle){
+        toggle=document.createElement('span');
+        toggle.className='board-clamp-toggle';
+        toggle.textContent='展開 ▾';
+        toggle.addEventListener('click',function(){
+          if(el.classList.contains('clamped')){el.classList.remove('clamped');toggle.textContent='收合 ▴';}
+          else{el.classList.add('clamped');toggle.textContent='展開 ▾';}
+        });
+        el.insertAdjacentElement('afterend',toggle);
+      }else{toggle.style.display='';}
+    }else{
+      el.classList.remove('clamped');
+      if(toggle)toggle.remove();
+    }
+  });
+}
 
 // 左側維度清單（比照 knowledge_page.kRender）
 export function boardRenderSidebar(){
@@ -71,8 +98,10 @@ function boardContentHtml(i){
   const lecture=boardText[d.dn];
   html+='<div class="board-block-title">板書</div>';
   html+='<div class="board-lecture-wrap">'+
-    '<div class="board-lecture" id="board-lecture">'+(lecture?_esc(lecture):'（尚未設定板書文字）')+'</div>'+
-    '<div class="board-lecture-note"><div class="board-note-caption">我的板書筆記</div>'+_noteBlockHtml(d.dn,'board',dnNotes['board'])+'</div>'+
+    '<div class="board-lecture-col">'+
+      '<div class="board-lecture board-clamp" id="board-lecture">'+(lecture?_esc(lecture):'（尚未設定板書文字）')+'</div>'+
+    '</div>'+
+    '<div class="board-lecture-note"><div class="board-note-caption">我的板書筆記</div>'+_noteBlockHtml(d.dn,'board',dnNotes['board'],true)+'</div>'+
   '</div>';
   // 區塊二：部位判別條件（自動帶入該維度該部位的「敘述分組」名稱，一行一個）
   // 標題提示此串條件最終判別成的維度結果（正向字，取自規則 positive）
@@ -113,7 +142,7 @@ export function boardSelect(i){
   const d=DIMS[i];
   const t=document.getElementById('board-main-title');if(t)t.textContent=d.dn;
   const s=document.getElementById('board-main-sub');if(s)s.textContent=d.cat+' ・ '+d.view;
-  const c=document.getElementById('board-content');if(c)c.innerHTML=boardContentHtml(i);
+  const c=document.getElementById('board-content');if(c){c.innerHTML=boardContentHtml(i);requestAnimationFrame(_applyBoardClamps);}
 }
 
 // 提供給 _renderCurrentTab：重建側欄並重繪目前維度
@@ -141,14 +170,16 @@ export function boardNoteSave(btn){
   const val=ta?ta.value:'';
   if(ta)boardNoteInput(ta);
   try{flushSaveNow();}catch(e){}
+  const idxKey=ta?ta.getAttribute('data-idx'):'';
   const view=root.querySelector('.board-note-view');
   let txt=view?view.querySelector('.board-note-text'):null;
   if(val.trim()){
-    if(!txt){txt=document.createElement('div');txt.className='board-note-text';view.insertBefore(txt,view.firstChild);}
+    if(!txt){txt=document.createElement('div');txt.className='board-note-text'+(idxKey==='board'?' board-clamp':'');view.insertBefore(txt,view.firstChild);}
     txt.textContent=val;
   }else if(txt){txt.remove();}
   const edit=root.querySelector('.board-note-edit');if(edit)edit.style.display='none';
   if(view)view.style.display='block';
+  _applyBoardClamps();
 }
 
 // 筆記輸入 → 寫入 boardNotes、自動長高、走既有 save() debounce 雲端儲存
