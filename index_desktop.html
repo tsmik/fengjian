@@ -464,7 +464,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   <div class="nav-dropdown" id="dd-case">
     <div class="nav-dropdown-btn" id="dd-case-btn">個案資料 ▾</div>
     <div class="nav-dropdown-menu">
-      <div class="nav-dropdown-item" id="nav-profile" onmousedown="event.preventDefault();editName()">使用者資料</div>
+      <div class="nav-dropdown-item" id="nav-profile" onclick="showProfilePage()">使用者資料</div>
       <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
     </div>
   </div>
@@ -611,6 +611,24 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 </div>
 
 <!-- Name Edit Overlay -->
+<!-- 使用者資料頁（取代彈窗）-->
+<div id="profile-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5900;overflow-y:auto;padding:24px">
+  <div style="max-width:560px;margin:0 auto">
+    <h2 style="font-size:20px;font-weight:400;color:var(--text);margin:8px 0 20px">使用者資料</h2>
+    <div style="display:flex;flex-direction:column;gap:16px;background:var(--card-bg,#fafaf8);border:1px solid var(--border);border-radius:10px;padding:20px 22px">
+      <div><label style="display:block;font-size:13px;color:var(--text-3);margin-bottom:6px">姓名</label>
+        <input id="pf-name" maxlength="20" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:9px 10px;font-size:16px;font-family:inherit"></div>
+      <div><label style="display:block;font-size:13px;color:var(--text-3);margin-bottom:6px">性別</label>
+        <select id="pf-gender" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:9px 10px;font-size:16px;font-family:inherit;background:transparent;cursor:pointer">
+          <option value="">未填</option><option value="男">男</option><option value="女">女</option></select></div>
+      <div><label style="display:block;font-size:13px;color:var(--text-3);margin-bottom:6px">生日</label>
+        <input id="pf-birthday" type="date" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:9px 10px;font-size:16px;font-family:inherit"></div>
+      <div><button onclick="saveProfile()" style="background:var(--dark);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:15px;cursor:pointer;font-family:inherit">儲存</button></div>
+    </div>
+    <div id="pf-liunian" style="margin-top:24px"></div>
+  </div>
+</div>
+
 <div id="name-edit-overlay">
   <div class="name-edit-box">
     <h3>個人資料設定</h3>

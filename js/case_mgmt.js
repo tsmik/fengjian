@@ -9,6 +9,7 @@ import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _curren
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex } from './obs_ui.js';
 import { cpRender } from './cond_page.js';
+import { _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
 
 /* module-local state */
 let _editingCaseId = null;
@@ -354,6 +355,47 @@ export function confirmEditName(){
 }
 
 export function closeEditName(){document.getElementById('name-edit-overlay').style.display='none';}
+
+// ===== 使用者資料頁（取代彈窗）：性別/生日輸入 + 流年資訊 =====
+export function showProfilePage(){
+  // admin 正在看某案例時，維持原本案例編輯行為
+  if(_isTA&&_currentCaseId){editCase(_currentCaseId);return;}
+  showPage('profile-page');
+  setNavActive('nav-profile');
+  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  renderProfilePage();
+  if(!window._suppressPushState)history.pushState({page:'profile'},'');
+}
+
+export function renderProfilePage(){
+  var nameEl=document.getElementById('pf-name');if(nameEl)nameEl.value=userName||'';
+  var gEl=document.getElementById('pf-gender');if(gEl)gEl.value=_userGender||'';
+  var bEl=document.getElementById('pf-birthday');if(bEl)bEl.value=_userBirthday||'';
+  _renderProfileLiunian();
+}
+
+function _renderProfileLiunian(){
+  var box=document.getElementById('pf-liunian');if(!box)return;
+  var info=_getLiunianInfo();
+  if(!info){box.innerHTML='<div style="color:var(--text-3);font-size:14px;padding:4px 2px">填好性別與生日後，這裡會顯示流年資訊。</div>';return;}
+  box.innerHTML='<div style="font-size:16px;font-weight:400;margin-bottom:10px;color:var(--text)">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info);
+}
+
+export function saveProfile(){
+  var n=document.getElementById('pf-name').value.trim();
+  if(n){setUserName(n);document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';}
+  setUserGender(document.getElementById('pf-gender').value);
+  setUserBirthday(document.getElementById('pf-birthday').value);
+  if(currentUser){
+    db.collection('users').doc(currentUser.uid).set({
+      displayName:userName,
+      gender:_userGender,
+      birthday:_userBirthday,
+      updatedAt:new Date().toISOString()
+    },{merge:true}).then(function(){_showToast('已儲存 ✓');}).catch(function(e){console.log('個人資料儲存失敗',e);});
+  }
+  _renderProfileLiunian();
+}
 
 export function clearObsData(){
   if(!confirm('確定要清除所有觀察評分資料嗎？此操作無法復原。'))return;
