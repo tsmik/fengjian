@@ -33,7 +33,7 @@ export const BOARD_PARTS=[
   {label:'頂骨',idx:13},{label:'枕骨',idx:14},{label:'華陽骨',idx:15},
   {label:'上停',idx:1},{label:'耳',idx:4},{label:'眉',idx:5},
   {label:'眼',idx:6},{label:'鼻',idx:7},{label:'口',idx:8},
-  {label:'人中',idx:10},{label:'地閣',idx:11},{label:'頤',idx:12}
+  {label:'顴',idx:9},{label:'人中',idx:10},{label:'地閣',idx:11},{label:'頤',idx:12}
 ];
 
 let curBoard=-1;
