@@ -39,9 +39,8 @@ export function _getLiunianInfo(){
   var gender, birthday, refDate;
   if(_isTA&&_currentCaseId){
     gender=_caseGender;birthday=_caseBirthday;refDate=_caseDate||null;
-  }else if(_isTA&&!_currentCaseId){
-    gender=_caseGender;birthday=_caseBirthday;refDate=null;
   }else{
+    // 學員、或 admin 未選案例：用個人資料（使用者資料頁設定的）性別/生日
     gender=_userGender;birthday=_userBirthday;refDate=null;
   }
   if(!gender||!birthday)return null;
