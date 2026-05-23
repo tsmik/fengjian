@@ -411,7 +411,7 @@ exports.publishToProduction = onRequest(
     }
 
     // 從 request body 接收前端傳來的 staging 資料
-    const {callerUid, dryRun, rulesJson, questionsJson} = req.body;
+    const {callerUid, dryRun, rulesJson, questionsJson, boardJson} = req.body;
 
     if (!callerUid || !PUBLISH_ADMIN_UIDS.includes(callerUid)) {
       res.status(403).json({error: "Unauthorized"});
@@ -501,7 +501,7 @@ exports.publishToProduction = onRequest(
           dryRun: true,
           changedParts,
           changedDims,
-          message: `[DRY RUN] 變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}（尚未寫入）`,
+          message: `[DRY RUN] 變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}；板書文字：${boardJson ? "將更新" : "未帶入"}（尚未寫入）`,
         });
         return;
       }
@@ -534,6 +534,23 @@ exports.publishToProduction = onRequest(
         publishedBy: callerUid,
       });
 
+      // 板書文字（可選）：前端有傳才發布，含備份
+      if (boardJson) {
+        const prodBoardDoc = await prodDb.collection("settings").doc("board").get();
+        if (prodBoardDoc.exists) {
+          await prodDb.collection("settings").doc("board_backup").set({
+            ...prodBoardDoc.data(),
+            backedUpAt: now,
+          });
+        }
+        await prodDb.collection("settings").doc("board").set({
+          boardJson,
+          updatedAt: now,
+          publishedFrom: "staging",
+          publishedBy: callerUid,
+        });
+      }
+
       // 寫入更新時間戳記（合併到現有的 updateLog）
       if (Object.keys(updateLog).length > 0) {
         await prodDb.collection("settings").doc("updateLog").set(updateLog, {merge: true});
@@ -544,7 +561,7 @@ exports.publishToProduction = onRequest(
         publishedAt: now,
         changedParts,
         changedDims,
-        message: `發布成功。變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}`,
+        message: `發布成功。變動部位：${changedParts.join("、") || "無"}；變動維度：${changedDims.join("、") || "無"}；板書文字：${boardJson ? "已更新" : "未帶入"}`,
       });
     } catch (err) {
       logger.error("publishToProduction error", {error: err.message, stack: err.stack});
