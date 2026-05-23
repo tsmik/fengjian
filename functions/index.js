@@ -430,6 +430,7 @@ exports.publishToProduction = onRequest(
       // 讀取 production 現有資料（用於比對 + 備份）
       const prodRulesDoc = await prodDb.collection("settings").doc("rules").get();
       const prodQuestionsDoc = await prodDb.collection("settings").doc("questions").get();
+      const prodBoardDoc = await prodDb.collection("settings").doc("board").get();
 
       // 計算各部位/維度更新時間戳記
       const updateLog = {};
@@ -506,7 +507,19 @@ exports.publishToProduction = onRequest(
         return;
       }
 
-      // 備份 production 現有資料
+      // 歷史備份（時間戳記、永不覆蓋）：把發布前的舊 rules+questions+board 整包存一份
+      // doc id 例：backup_2026-05-23T02-19-23-407Z；存於 settings/ 下（公開可讀，方便日後比對/還原）
+      const _bkId = "backup_" + now.replace(/[:.]/g, "-");
+      await prodDb.collection("settings").doc(_bkId).set({
+        type: "publishBackup",
+        backedUpAt: now,
+        publishedBy: callerUid,
+        rulesJson: prodRulesDoc.exists ? (prodRulesDoc.data().rulesJson || "") : "",
+        questionsJson: prodQuestionsDoc.exists ? (prodQuestionsDoc.data().questionsJson || "") : "",
+        boardJson: prodBoardDoc.exists ? (prodBoardDoc.data().boardJson || "") : "",
+      });
+
+      // 備份 production 現有資料（最新一份，向後相容；歷史版見上方 backup_*）
       if (prodRulesDoc.exists) {
         await prodDb.collection("settings").doc("rules_backup").set({
           ...prodRulesDoc.data(),
@@ -534,9 +547,8 @@ exports.publishToProduction = onRequest(
         publishedBy: callerUid,
       });
 
-      // 板書文字（可選）：前端有傳才發布，含備份
+      // 板書文字（可選）：前端有傳才發布，含備份（歷史版已在上方 backup_* 一併存）
       if (boardJson) {
-        const prodBoardDoc = await prodDb.collection("settings").doc("board").get();
         if (prodBoardDoc.exists) {
           await prodDb.collection("settings").doc("board_backup").set({
             ...prodBoardDoc.data(),
