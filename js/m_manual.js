@@ -26,7 +26,8 @@
 //   - 詳盡報告 PNG（手動版）+ 重要參數分析（手動版）
 // ============================================================
 
-import { DIMS, avgCoeff, calcDim } from './core.js';
+import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
+import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
@@ -503,6 +504,66 @@ function _renderDimPanel(di) {
   `;
 }
 
+function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// ===== P1：條件式自動算動靜 =====
+// _manualCond[`${di}_${pi}`] = { 敘述分組名: '是'|'否' }；獨立於部位觀察答案（記憶體，P2 再持久化）
+let _manualCond = {};
+let _condExpanded = {};  // `${di}_${pi}` -> bool（該格條件面板是否展開）
+
+function _collectLeaves(node, out) {
+  if (!node || typeof node !== 'object') return;
+  if (node.ref !== undefined) { out.push({ ref: node.ref, match: node.match }); return; }
+  ['items', 'item', 'each', 'rule'].forEach(k => {
+    const v = node[k];
+    if (Array.isArray(v)) v.forEach(c => _collectLeaves(c, out));
+    else if (v && typeof v === 'object') _collectLeaves(v, out);
+  });
+}
+// 取某 (維度,部位) 的敘述分組（label + 該組所有 leaf 的 ref/match）
+function _partGroups(di, pi) {
+  const dr = DIM_RULES && DIM_RULES[di] && DIM_RULES[di].parts;
+  const rule = dr && dr[PART_LABELS[pi]];
+  if (!rule) return [];
+  const groups = [];
+  (function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.group) {
+      const leaves = []; _collectLeaves(node, leaves);
+      groups.push({ label: node.group, leaves });
+      return;
+    }
+    ['items', 'item', 'each', 'rule'].forEach(k => {
+      const v = node[k];
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') walk(v);
+    });
+  })(rule);
+  return groups;
+}
+// 從該格條件是/否 → 合成答案 → evaluatePart 算出 'A'/'B'；未填完回 null；無條件(容器)回 undefined
+function _condResultOf(di, pi) {
+  const groups = _partGroups(di, pi);
+  if (!groups.length) return undefined;
+  const ans = _manualCond[`${di}_${pi}`] || {};
+  const obs = {};
+  let allAnswered = true;
+  groups.forEach(g => {
+    const a = ans[g.label];
+    if (a !== '是' && a !== '否') allAnswered = false;
+    g.leaves.forEach(lf => {
+      const mv = Array.isArray(lf.match) ? lf.match[0] : lf.match;
+      obs[lf.ref] = (a === '是') ? mv : ' NO';  // 否：給不符合的哨兵值（leaf 為 false 但「已答」）
+    });
+  });
+  if (!allAnswered) return null;
+  const rule = DIM_RULES[di].parts[PART_LABELS[pi]];
+  const res = evaluatePart(rule, obs, {});
+  if (!res || res.result == null) return null;
+  const posChar = DIM_RULES[di].positive;
+  const posIsA = (posChar === DIMS[di].a);
+  return (res.result === 'positive') ? (posIsA ? 'A' : 'B') : (posIsA ? 'B' : 'A');
+}
+
 function _renderManualRow(di, pi) {
   const dim = DIMS[di];
   const v = _manualDraft[di][pi];
@@ -517,15 +578,41 @@ function _renderManualRow(di, pi) {
   if (v === 'A') { resultText = dim.a; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
   else if (v === 'B') { resultText = dim.b; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
   // v1.7 階段 11+：row 結構 [part | result | switch]（result 移到 part 右側）
+  // P1：有敘述分組的部位加「條件」鈕，可展開勾是/否自動算動靜
+  const groups = _partGroups(di, pi);
+  const hasCond = groups.length > 0;
+  const expanded = !!_condExpanded[`${di}_${pi}`];
+  const condBtn = hasCond
+    ? `<button class="m-manual-cond-btn ${expanded ? 'is-open' : ''}" data-mcond="${di}_${pi}">條件 ${expanded ? '▲' : '▼'}</button>`
+    : '';
+  const ans = _manualCond[`${di}_${pi}`] || {};
+  const condPanel = (hasCond && expanded) ? `
+    <div class="m-manual-cond-panel">
+      ${groups.map(g => {
+        const a = ans[g.label];
+        return `<div class="m-manual-cond-row">
+          <span class="m-manual-cond-label">${_esc(g.label)}</span>
+          <span class="m-manual-cond-yn">
+            <button class="m-manual-cond-yn-btn yes ${a === '是' ? 'is-active' : ''}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(g.label)}" data-mcv="是">符合</button>
+            <button class="m-manual-cond-yn-btn no ${a === '否' ? 'is-active' : ''}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(g.label)}" data-mcv="否">不符</button>
+          </span>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
   return `
-    <div class="m-manual-row">
-      <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
-      <div class="m-manual-row-result ${resultCls}">${resultText}</div>
-      <div class="m-manual-row-switch">
-        <button class="m-manual-sw m-manual-sw-jing ${isJing ? 'is-active' : ''}" data-msw="${di}_${pi}_${jingVal}">靜</button>
-        <button class="m-manual-sw m-manual-sw-empty ${isEmpty ? 'is-active' : ''}" data-msw="${di}_${pi}_">—</button>
-        <button class="m-manual-sw m-manual-sw-dong ${isDong ? 'is-active' : ''}" data-msw="${di}_${pi}_${dongVal}">動</button>
+    <div class="m-manual-row-wrap">
+      <div class="m-manual-row">
+        <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
+        <div class="m-manual-row-result ${resultCls}">${resultText}</div>
+        <div class="m-manual-row-switch">
+          <button class="m-manual-sw m-manual-sw-jing ${isJing ? 'is-active' : ''}" data-msw="${di}_${pi}_${jingVal}">靜</button>
+          <button class="m-manual-sw m-manual-sw-empty ${isEmpty ? 'is-active' : ''}" data-msw="${di}_${pi}_">—</button>
+          <button class="m-manual-sw m-manual-sw-dong ${isDong ? 'is-active' : ''}" data-msw="${di}_${pi}_${dongVal}">動</button>
+        </div>
       </div>
+      ${condBtn}
+      ${condPanel}
     </div>
   `;
 }
@@ -576,6 +663,32 @@ function _bindEvents() {
       if (!confirm(`確定清空維度「${DIMS[di].dn}」9 個部位的填答嗎？`)) return;
       _manualDraft[di] = Array(9).fill(null);
       _markDirty();
+      _render();
+    });
+  });
+  // P1：展開/收合條件面板
+  _container.querySelectorAll('[data-mcond]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.mcond;
+      _condExpanded[key] = !_condExpanded[key];
+      _render();
+    });
+  });
+  // P1：勾條件是/否 → 更新答案 → 自動算動靜填格（可被手動鈕覆蓋）
+  _container.querySelectorAll('[data-mcg]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const di = parseInt(btn.dataset.mcd, 10);
+      const pi = parseInt(btn.dataset.mcp, 10);
+      const gl = btn.dataset.mcg;
+      const val = btn.dataset.mcv;
+      const k = `${di}_${pi}`;
+      if (!_manualCond[k]) _manualCond[k] = {};
+      _manualCond[k][gl] = (_manualCond[k][gl] === val) ? null : val; // 再點同一個=取消
+      const computed = _condResultOf(di, pi);
+      if (computed === 'A' || computed === 'B') {
+        _manualDraft[di][pi] = computed;
+        _markDirty();
+      }
       _render();
     });
   });
