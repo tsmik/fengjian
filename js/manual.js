@@ -649,18 +649,45 @@ function _ensureManualHintEl(){
   }
   return el;
 }
+var _HINT_PN=['頭','上停','中停','下停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','頂骨','枕骨','華陽骨'];
+var _HINT_NAME2IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12,'頂骨':13,'枕骨':14,'華陽骨':15};
+// 取某維度某部位的敘述分組（distinct）
+function _hintGroupsOf(i,idx){
+  var p=(condResults[i]||{})[idx],g=[];
+  if(p&&p.items)p.items.forEach(function(it){if(it.groupLabel&&g.indexOf(it.groupLabel)<0)g.push(it.groupLabel);});
+  return g;
+}
+// 走規則樹收集 partResult 引用的部位名（去 .L/.R、去重）
+function _hintCollectPartRefs(node,out){
+  if(!node||typeof node!=='object')return;
+  if(node.partResult){var nm=String(node.partResult).split('.')[0];if(out.indexOf(nm)<0)out.push(nm);}
+  ['items','item','each','rule'].forEach(function(k){
+    var v=node[k];
+    if(Array.isArray(v))v.forEach(function(c){_hintCollectPartRefs(c,out);});
+    else if(v&&typeof v==='object')_hintCollectPartRefs(v,out);
+  });
+}
 function _manualHintHtml(i,pi){
   var pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
-  var p=(condResults[i]||{})[pi];
-  var groups=[];
-  if(p&&p.items)p.items.forEach(function(it){if(it.groupLabel&&groups.indexOf(it.groupLabel)<0)groups.push(it.groupLabel);});
   var h='';
   if(pos)h+='<div style="font-weight:700;margin-bottom:6px;color:#ffd479">符合則「'+_mEsc(pos)+'」</div>';
-  if(groups.length){
-    h+='<div style="opacity:0.65;font-size:11px;margin-bottom:2px">條件</div>';
-    h+=groups.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
+  var own=_hintGroupsOf(i,pi);
+  if(own.length){
+    // 一般部位：直接列自己的敘述分組
+    h+=own.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
   }else{
-    h+='<div style="opacity:0.65">（此維度此部位無判別條件）</div>';
+    // 容器部位（頭/中停/下停）：拆 partResult → 有列的部位「合看」、沒列的展開敘述分組
+    var pd=(DIM_RULES[i]&&DIM_RULES[i].parts)?DIM_RULES[i].parts[_HINT_PN[pi]]:null;
+    var refs=[];_hintCollectPartRefs(pd,refs);
+    var heju=[],detail=[];
+    refs.forEach(function(nm){var idx=_HINT_NAME2IDX[nm];if(idx==null)return;if(idx<=8){if(heju.indexOf(nm)<0)heju.push(nm);}else{if(detail.indexOf(idx)<0)detail.push(idx);}});
+    if(heju.length)h+='<div style="margin-bottom:3px">合看'+_mEsc(heju.join(''))+'</div>';
+    detail.forEach(function(idx){
+      var gs=_hintGroupsOf(i,idx);
+      h+='<div style="opacity:0.6;font-size:11px;margin-top:4px">'+_mEsc(_HINT_PN[idx])+'</div>';
+      if(gs.length)h+=gs.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
+    });
+    if(!heju.length&&!detail.length)h+='<div style="opacity:0.65">（無判別條件）</div>';
   }
   return h;
 }
