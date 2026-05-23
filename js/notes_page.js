@@ -5,7 +5,7 @@
 //   (2) 12 個固定部位方塊（P2 自動帶入判別條件、P4 使用者筆記）
 // P1（本階段）：只做殼——導覽 / 路由 / 左側維度 / 右側 12 格框架（內容為佔位文字）。
 import { DIMS, BETA_VISIBLE_DIMS, userName, _isTA, _currentCaseId, _currentCaseName,
-         setNavActive, showPage, condResults, boardText, DIM_RULES, boardNotes, save } from './core.js';
+         setNavActive, showPage, condResults, boardText, DIM_RULES, boardNotes, save, flushSaveNow } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 
 function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -76,15 +76,19 @@ function boardContentHtml(i){
     }else{
       body='<div class="board-empty">（此維度無此部位的敘述分組）</div>';
     }
-    // 使用者筆記（已存在則預設展開）
-    const noteVal=(dnNotes[bp.idx]!=null)?dnNotes[bp.idx]:'';
-    const hasNote=!!(noteVal&&String(noteVal).trim());
-    const noteUi='<div class="board-box-foot">'+
-      '<button class="board-note-btn" type="button" onclick="boardToggleNote(this)">'+(hasNote?'我的筆記':'＋ 我的筆記')+'</button>'+
-      '<div class="board-note-box"'+(hasNote?'':' style="display:none"')+'>'+
-        '<textarea class="board-note-area" data-dim="'+_esc(d.dn)+'" data-idx="'+bp.idx+'" oninput="boardNoteInput(this)" placeholder="寫下你的筆記…">'+_esc(noteVal)+'</textarea>'+
+    // 使用者筆記：顯示模式（唯讀文字 + 編輯鈕）/ 編輯模式（自動長高文字框 + 儲存鈕）
+    const noteVal=(dnNotes[bp.idx]!=null)?String(dnNotes[bp.idx]):'';
+    const hasNote=!!noteVal.trim();
+    const noteUi='<div class="board-box-foot"><div class="board-note">'+
+      '<div class="board-note-view">'+
+        (hasNote?'<div class="board-note-text">'+_esc(noteVal)+'</div>':'')+
+        '<button class="board-note-btn" type="button" onclick="boardNoteEdit(this)">編輯我的筆記</button>'+
       '</div>'+
-    '</div>';
+      '<div class="board-note-edit" style="display:none">'+
+        '<textarea class="board-note-area" data-dim="'+_esc(d.dn)+'" data-idx="'+bp.idx+'" oninput="boardNoteInput(this)" placeholder="寫下你的筆記…">'+_esc(noteVal)+'</textarea>'+
+        '<div class="board-note-actions"><button class="board-note-save" type="button" onclick="boardNoteSave(this)">儲存</button></div>'+
+      '</div>'+
+    '</div></div>';
     html+='<div class="board-box">'+
       '<div class="board-box-head">'+bp.label+'</div>'+
       '<div class="board-box-body">'+body+'</div>'+
@@ -111,21 +115,43 @@ export function boardRender(){
   if(curBoard>=0)boardSelect(curBoard);
 }
 
-// 展開/收合方塊內的筆記框
-export function boardToggleNote(btn){
-  const box=btn.parentElement.querySelector('.board-note-box');
-  if(!box)return;
-  if(box.style.display!=='none'){box.style.display='none';}
-  else{box.style.display='block';const ta=box.querySelector('textarea');if(ta)ta.focus();}
+// 文字框隨內容自動長高（取代手動拖曳）
+function _autoGrow(ta){if(!ta)return;ta.style.height='auto';ta.style.height=(ta.scrollHeight+2)+'px';}
+
+// 按「編輯我的筆記」→ 進入編輯模式
+export function boardNoteEdit(btn){
+  const root=btn.closest('.board-note');if(!root)return;
+  const view=root.querySelector('.board-note-view');if(view)view.style.display='none';
+  const edit=root.querySelector('.board-note-edit');if(edit)edit.style.display='block';
+  const ta=root.querySelector('textarea');
+  if(ta){_autoGrow(ta);ta.focus();const v=ta.value;ta.value='';ta.value=v;/* 游標移末尾 */}
 }
 
-// 筆記輸入 → 寫入 boardNotes 並走既有 save() debounce 雲端儲存
+// 按「儲存」→ 立即寫入雲端、收起編輯模式、唯讀呈現文字
+export function boardNoteSave(btn){
+  const root=btn.closest('.board-note');if(!root)return;
+  const ta=root.querySelector('textarea');
+  const val=ta?ta.value:'';
+  if(ta)boardNoteInput(ta);
+  try{flushSaveNow();}catch(e){}
+  const view=root.querySelector('.board-note-view');
+  let txt=view?view.querySelector('.board-note-text'):null;
+  if(val.trim()){
+    if(!txt){txt=document.createElement('div');txt.className='board-note-text';view.insertBefore(txt,view.firstChild);}
+    txt.textContent=val;
+  }else if(txt){txt.remove();}
+  const edit=root.querySelector('.board-note-edit');if(edit)edit.style.display='none';
+  if(view)view.style.display='block';
+}
+
+// 筆記輸入 → 寫入 boardNotes、自動長高、走既有 save() debounce 雲端儲存
 export function boardNoteInput(ta){
   const dim=ta.getAttribute('data-dim');
   const idx=ta.getAttribute('data-idx');
   if(!dim)return;
   if(!boardNotes[dim])boardNotes[dim]={};
   boardNotes[dim][idx]=ta.value;
+  _autoGrow(ta);
   try{save();}catch(e){console.error('board note save:',e);}
 }
 

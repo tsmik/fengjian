@@ -716,8 +716,11 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .board-box-foot{padding:8px 12px;border-top:1px solid var(--border)}
 .board-note-btn{font-size:12px;color:var(--active,#4c6472);background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
 .board-note-btn:hover{background:var(--hover-bg,rgba(0,0,0,0.04))}
-.board-note-box{margin-top:8px}
-.board-note-area{width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;line-height:1.6;padding:8px;border:1px solid var(--border);border-radius:6px;resize:vertical;min-height:60px}
+.board-note-text{font-size:13px;color:var(--text-2);line-height:1.6;white-space:pre-wrap;word-break:break-word;background:var(--card-bg,#fafaf8);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px}
+.board-note-area{width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;line-height:1.6;padding:8px;border:1px solid var(--border);border-radius:6px;resize:none;overflow:hidden;min-height:60px}
+.board-note-actions{text-align:right;margin-top:6px}
+.board-note-save{font-size:12px;color:#fff;background:var(--static,#7A9E7E);border:none;border-radius:6px;padding:5px 16px;cursor:pointer;font-family:inherit}
+.board-note-save:hover{opacity:0.9}
 </style>
   <div class="k-wrap">
     <div class="k-sidebar" id="board-sidebar"></div>
