@@ -211,15 +211,13 @@ export function showReport(){
     }
 
     var _lnTableHtml=buildLiunianTableHtml(_lnInfo);
+    // 流年改放獨立區塊（分享圖表時可單獨保留）
+    var lnBox=document.getElementById('report-liunian');
+    if(lnBox) lnBox.innerHTML=_lnTableHtml||'';
 
     // === 開始生成表格 ===
     var rc='border-radius:3px';
     var t='<table style="border-collapse:separate;border-spacing:2px;white-space:nowrap;font-size:11px;font-family:sans-serif;width:100%">';
-
-    // --- R1: 流年（如果有的話）---
-    if(_lnTableHtml){
-      t+='<tr><td colspan="'+totalCols+'" style="padding:0 0 8px 0">'+_lnTableHtml+'</td></tr>';
-    }
 
     // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
     t+='<tr>';
@@ -740,32 +738,59 @@ export async function exportPNG(){
 // 可見元素聯集邊界
 function _unionRect(els){var L=1e9,T=1e9,R=-1e9,B=-1e9;els.forEach(function(el){if(!el)return;var r=el.getBoundingClientRect();if(r.width===0&&r.height===0)return;L=Math.min(L,r.left);T=Math.min(T,r.top);R=Math.max(R,r.right);B=Math.max(B,r.bottom);});return {left:L,top:T,right:R,bottom:B};}
 
-// 截圖式輸出：mode='charts'(只圖表) | 'all'(表格+圖表)；含最上方姓名/流年
+// 擷取指定元素聯集區域
+async function _html2canvasRegion(els){
+  var rect=_unionRect(els), pad=10;
+  if(rect.right<rect.left) return null;
+  return await html2canvas(document.body,{backgroundColor:'#ffffff',scale:2,
+    x:rect.left+window.scrollX-pad, y:rect.top+window.scrollY-pad,
+    width:(rect.right-rect.left)+pad*2, height:(rect.bottom-rect.top)+pad*2,
+    windowWidth:Math.max(document.documentElement.scrollWidth, Math.ceil(rect.right+window.scrollX+80)),
+    windowHeight:Math.max(document.documentElement.scrollHeight, Math.ceil(rect.bottom+window.scrollY+80))});
+}
+// 多張 canvas 上下合併
+function _stackCanvases(cs, gap){
+  cs=cs.filter(Boolean); gap=gap||0;
+  var w=Math.max.apply(null,cs.map(function(c){return c.width;}));
+  var h=cs.reduce(function(a,c){return a+c.height;},0)+gap*Math.max(0,cs.length-1);
+  var out=document.createElement('canvas');out.width=w;out.height=h;
+  var ctx=out.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
+  var y=0;cs.forEach(function(c){ctx.drawImage(c,Math.round((w-c.width)/2),y);y+=c.height+gap;});
+  return out;
+}
+// 截圖式輸出：mode='charts'(姓名/流年+三圖) | 'all'(乾淨表格+三圖)
 async function _captureReport(mode){
   if(typeof html2canvas==='undefined'){alert('截圖元件尚未載入，請稍候再試');return;}
   var btn=document.getElementById('btn-export');var oldT=btn?btn.innerText:'';
   if(btn){btn.innerText='產生中...';btn.disabled=true;}
+  var banner=document.getElementById('staging-banner');var bd=banner?banner.style.display:'';
   var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
   var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
   var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
-  var tableEl=document.getElementById('report-full-table'); var tableD=tableEl?tableEl.style.display:'';
+  var sub=document.getElementById('report-subtitle'); var subTxt=sub?sub.textContent:'';
+  if(banner)banner.style.display='none';
   if(ctp)ctp.style.display='none';
-  if(mode==='charts'&&tableEl) tableEl.style.display='none';
+  if(mode==='charts'&&sub) sub.textContent='人相兵法圖表報告';
   try{
     await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
-    var topEl=document.querySelector('#report-overlay .report-top');
-    var chartsEl=document.getElementById('report-charts-row');
-    var parts=(mode==='charts')?[topEl,chartsEl]:[topEl,tableEl,chartsEl];
-    var rect=_unionRect(parts), pad=12;
-    var canvas=await html2canvas(document.body,{backgroundColor:'#ffffff',scale:2,
-      x:rect.left+window.scrollX-pad, y:rect.top+window.scrollY-pad,
-      width:(rect.right-rect.left)+pad*2, height:(rect.bottom-rect.top)+pad*2,
-      windowWidth:Math.max(document.documentElement.scrollWidth, Math.ceil(rect.right+window.scrollX+60)),
-      windowHeight:Math.max(document.documentElement.scrollHeight, Math.ceil(rect.bottom+window.scrollY+60))});
-    await _shareCanvas(canvas);
+    var coefEl=document.getElementById('report-coef'),r2El=document.getElementById('report-radar2'),sdEl=document.getElementById('report-sd');
+    var chartsCanvas=await _html2canvasRegion([coefEl,r2El,sdEl]);
+    var out;
+    if(mode==='charts'){
+      var topEl=document.querySelector('#report-overlay .report-top');
+      var lnEl=document.getElementById('report-liunian');
+      var headEls=[topEl]; if(lnEl&&lnEl.offsetHeight>2) headEls.push(lnEl);
+      var headCanvas=await _html2canvasRegion(headEls);
+      out=_stackCanvases([headCanvas,chartsCanvas],12);
+    }else{
+      var tableCanvas=drawReportCanvas(undefined,{checkComplete:true});
+      out=_stackCanvases([tableCanvas,chartsCanvas],16);
+    }
+    await _shareCanvas(out);
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
   finally{
-    if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];}); if(tableEl)tableEl.style.display=tableD;
+    if(banner)banner.style.display=bd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
+    if(sub)sub.textContent=subTxt;
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
   }
 }
