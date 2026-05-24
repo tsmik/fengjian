@@ -60,26 +60,30 @@ const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
 const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
 const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))} L ${PS(f(a1,ra))} Z`;
 function sector(a0,a1,r){const l=(a1-a0)>180?1:0;return `M${cx},${cy} L${PS(f(a0,r))} A${r.toFixed(1)},${r.toFixed(1)} 0 ${l} 1 ${PS(f(a1,r))} Z`;}
+// 多邊形扇形：中心 → 沿維度交界各頂點（同半徑）→ 回中心
+function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[`${cx},${cy}`];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L')+' Z';}
+// 內圈邊界 13 邊多邊形頂點
+const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
 let svg='';
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,deg:45},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,deg:135},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,deg:225},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,deg:315}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.732,bs:9.5},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:137.1,bf:0.780,bs:9.4},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:208.1,bf:0.725,bs:10.5},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:300.5,bf:0.726,bs:10.5}
 ];
-svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="${CRBG}"/>`;
-QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${sector(q.a0,q.a1,r)}" fill="${CRD}"/>`;});
+svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
+QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${CRD}"/>`;});
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
-svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
 // 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
 const LABELS=[];
 function lab2(x,y,name,val,fs,key){fs=fs||9;key=key||name;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
-QUAD.forEach(q=>{const p=f(q.deg,rIn*0.80-2);lab2(p[0],p[1],q.name,q.v,9);});
-{const p=f(3*STEP,rIn*0.30);lab2(p[0],p[1],'先天',preV,9);}
+QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs);});
+{const p=f(87.9,rIn*0.244);lab2(p[0],p[1],'先天',preV,10.8);}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
