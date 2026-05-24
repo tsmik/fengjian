@@ -44,13 +44,13 @@ export function buildRadar2SVG(opts){
   // 先天：多邊扇形（0~6格，覆蓋老闆+主管）
   {const rpre=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,rpre)}" fill="#854F51" fill-opacity="0.3"/>`;}
   // 老闆/主管：只留外輪廓線（疊在先天之上，透明0.8）
-  QUAD.forEach((q,qi)=>{if(qi>=2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polyArc(q.a0,q.a1,r)}" fill="none" stroke="${q.col}" stroke-opacity="0.8" stroke-width="1.5" stroke-linejoin="round"/>`;});
+  QUAD.forEach((q,qi)=>{if(qi>=2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polyArc(q.a0,q.a1,r)}" fill="none" stroke="${q.col}" stroke-opacity="0.5" stroke-width="1.5" stroke-linejoin="round"/>`;});
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
   function lab2(x,y,name,val,fs,col){const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
   QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.nm,q.v,q.bs,q.tc);});
   // 係數環：bar 由 rIn 放射、底色＝動/靜色、透明度與分數反比
-  const OP_LOW=1.00,OP_HIGH=0.70;
+  const OP_LOW=0.5,OP_HIGH=0.70;
   DIM.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
     const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);
     svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
@@ -67,7 +67,7 @@ export function buildRadar2SVG(opts){
     const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const ncol=(rT>=rr)?'#fff':mcol;
     svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
   // 先天框（#854F51，字級同運氣）
-  {const p=f(88.3,rIn*0.770);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
+  {const p=f(92.4,rIn*0.743);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
   // 總係數（中央 13 邊形 #494541 白字）
   {const tg=spans.map(ss=>PS(f(ss[0],22))).join(' ');
    svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
