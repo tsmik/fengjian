@@ -18,13 +18,13 @@
   .row label{flex:0 0 120px;color:var(--text)}
   .row input[type=range]{flex:1}
   .row b{flex:0 0 44px;text-align:right;font-family:monospace;color:var(--active)}
-  textarea{width:100%;height:78px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text);margin-top:8px}
+  textarea{width:100%;height:140px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text);margin-top:8px}
   button{padding:7px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="sub">報告圖 手機版預覽（寬度模擬手機）<br>已移除 老闆／主管 與 方圓｜曲直 隔線；係數 0.00 維度在中央處放動/靜色標記</div>
+  <div class="sub">報告圖 手機版預覽（寬度模擬手機）<br>已移除 老闆／主管 與 方圓｜曲直 隔線；係數 0.00 維度在中央處放動/靜色標記<br><b>可拖曳</b>：維度名（含攻守/曲直）、先天/後天/運氣框、係數數字；位移會列在下方框內</div>
   <div class="phone">
     <svg id="poly" viewBox="20 40 360 360" aria-label="報告圖 手機版"></svg>
   </div>
@@ -67,12 +67,20 @@ const NUMPOS=[[13.8,1.975],[42.6,1.921],[70.4,1.925],[98.2,1.940],[126.6,1.985],
 const preV=mean(co.slice(0,6)), luckV=mean(co.slice(6,9)), postV=mean(co.slice(9,13)), totV=mean(co);
 const OP_LOW=0.5, OP_HIGH=0.70, ZERO_MARK=5; // 0分動/靜標記厚度
 
-function lab2(x,y,name,val,fs,col){const tl=(name.length*fs).toFixed(1);
-  return `<text x="${x.toFixed(1)}" y="${(y-fs*0.3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`
-    +`<text x="${x.toFixed(1)}" y="${(y+fs*0.86).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text>`;}
+// ===== 拖曳支援：OFF 記錄各元素位移、LABELS 記錄基準座標 =====
+let OFF={}, LABELS={};
+function reg(key,x,y,meta){LABELS[key]={x:x,y:y,meta:meta||{}};}
+function hit(x,y,w,h){return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="transparent" pointer-events="all"/>`;}
+
+function boxLab(x,y,name,val,fs,col,key){const tl=(name.length*fs).toFixed(1);reg(key,x,y,{type:'box',name:name});
+  const w=fs*2.6,h=fs*2.4;
+  return `<g class="drg" data-key="${key}">${hit(x-w/2,y-fs*1.1,w,h)}`
+    +`<text x="${x.toFixed(1)}" y="${(y-fs*0.3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`
+    +`<text x="${x.toFixed(1)}" y="${(y+fs*0.86).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text></g>`;}
 
 function buildSVG(P){
   const fsName=P.fsName, fsNum=P.fsNum, fsBox=P.fsBox, totS=P.totS;
+  LABELS={};
   let svg='';
   svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
   // 運氣 / 後天 填色扇形（老闆/主管已移除）
@@ -83,10 +91,10 @@ function buildSVG(P){
   // 內圈白色分隔線：只留 先天/運氣/後天 三群組界線（移除 方圓|曲直 那條）
   [[0,1],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-  // 運氣 / 後天 / 先天 框
-  svg+=lab2(f(207.6,rIn*0.767)[0],f(207.6,rIn*0.767)[1],'運氣',luckV,fsBox,'#546D77');
-  svg+=lab2(f(302.1,rIn*0.770)[0],f(302.1,rIn*0.770)[1],'後天',postV,fsBox,'#797181');
-  svg+=lab2(f(92.4,rIn*0.743)[0],f(92.4,rIn*0.743)[1],'先天',preV,fsBox,'#854F51');
+  // 運氣 / 後天 / 先天 框（可拖曳）
+  svg+=boxLab(f(207.6,rIn*0.767)[0],f(207.6,rIn*0.767)[1],'運氣',luckV,fsBox,'#546D77','box:運氣');
+  svg+=boxLab(f(302.1,rIn*0.770)[0],f(302.1,rIn*0.770)[1],'後天',postV,fsBox,'#797181','box:後天');
+  svg+=boxLab(f(92.4,rIn*0.743)[0],f(92.4,rIn*0.743)[1],'先天',preV,fsBox,'#854F51','box:先天');
   // 係數環 bar（係數 0 不顯示）
   DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
     const fill=dm.d>dm.j?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);
@@ -98,13 +106,19 @@ function buildSVG(P){
   [[0,'#854F51',1],[6*STEP,'#546D77',1],[9*STEP,'#797181',1]].forEach(([a,col,op])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="2"/>`;});
   // 最外圍淡灰 13 邊形
   svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-  // 維度名
+  // 維度名（可拖曳）
   DIMS.forEach((dm,i)=>{const np=NAMEPOS[i];const lp=f(np[0],rIn*np[1]);const c=Math.sin(rad(np[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';
-    svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${DIMTXT[i]}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`;});
-  // 維度係數數字
+    const key='名:'+dm.dn;reg(key,lp[0],lp[1],{type:'name',i:i,dn:dm.dn});
+    const w=dm.dn.length*fsName, hx=an==='start'?lp[0]-2:an==='end'?lp[0]-w-2:lp[0]-w/2-2;
+    svg+=`<g class="drg" data-key="${key}">${hit(hx,lp[1]-fsName*0.95,w+4,fsName*1.3)}`
+      +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${DIMTXT[i]}" fill-opacity="0.8" font-weight="600">${dm.dn}</text></g>`;});
+  // 維度係數數字（可拖曳；移出 bar 變動/靜色）
   DIMS.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
-    const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.d>dm.j?A:S;const ncol=(rT>=rr)?'#fff':mcol;
-    svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="${fsNum}" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
+    const key='數:'+dm.dn;reg(key,nx,ny,{type:'num',i:i,dn:dm.dn});const o=OFF[key]||{dx:0,dy:0};
+    const rr=Math.hypot((nx+o.dx)-cx,(ny+o.dy)-cy);const mcol=dm.d>dm.j?A:S;const ncol=(rT>=rr)?'#fff':mcol;
+    const w=fsNum*2.8;
+    svg+=`<g class="drg numlab" data-key="${key}" data-rt="${rT.toFixed(1)}" data-mcol="${mcol}">${hit(nx-w/2,ny-fsNum*0.95,w,fsNum*1.3)}`
+      +`<text class="numtxt" x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="${fsNum}" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text></g>`;});
   // 總係數（中央 13 邊形 #494541 白字；整體依 totS 縮放）
   {const rTot=22*totS, lfs=9*totS, vfs=10.5*totS, tl=(21*totS).toFixed(1);
    const tg=spans.map(ss=>PS(f(ss[0],rTot))).join(' ');
@@ -119,16 +133,42 @@ const sName=document.getElementById('sName'),sNum=document.getElementById('sNum'
 const vName=document.getElementById('vName'),vNum=document.getElementById('vNum'),vBox=document.getElementById('vBox'),vTot=document.getElementById('vTot');
 const DEF={fsName:10.8,fsNum:10.5,fsBox:10.5,totS:1};
 function readP(){return{fsName:parseFloat(sName.value),fsNum:parseFloat(sNum.value),fsBox:parseFloat(sBox.value),totS:parseFloat(sTot.value)};}
+
+function applyOff(){for(const k in LABELS){const o=OFF[k];const g=poly.querySelector(`.drg[data-key="${CSS.escape(k)}"]`);if(g){if(o&&(o.dx||o.dy))g.setAttribute('transform',`translate(${o.dx.toFixed(1)},${o.dy.toFixed(1)})`);else g.removeAttribute('transform');}}}
+function updNumColor(key){const g=poly.querySelector(`.drg[data-key="${CSS.escape(key)}"]`);if(!g||!g.classList.contains('numlab'))return;const L=LABELS[key],o=OFF[key]||{dx:0,dy:0};const rr=Math.hypot((L.x+o.dx)-cx,(L.y+o.dy)-cy);const t=g.querySelector('.numtxt');if(t)t.setAttribute('fill',rr<=parseFloat(g.dataset.rt)?'#fff':g.dataset.mcol);}
+function readout(){
+  const P=readP();
+  let lines=[`維度字大小 = ${P.fsName}`,`數字大小 = ${P.fsNum}`,`先天/運氣/後天框 = ${P.fsBox}`,`總係數圖與字 = ${P.totS}`];
+  let moved=[];
+  for(const k in OFF){const o=OFF[k];if(!o||(Math.abs(o.dx)<0.1&&Math.abs(o.dy)<0.1))continue;const L=LABELS[k];if(!L)continue;const m=L.meta;
+    const X=L.x+o.dx,Y=L.y+o.dy,dx=X-cx,dy=Y-cy;let deg=Math.atan2(dx,-dy)*180/Math.PI;if(deg<0)deg+=360;const fr=Math.hypot(dx,dy)/rIn;
+    if(m.type==='name')moved.push(`NAMEPOS[${m.i}] /*${m.dn}*/ = [${deg.toFixed(1)}, ${fr.toFixed(3)}]`);
+    else if(m.type==='num')moved.push(`NUMPOS[${m.i}] /*${m.dn}*/ = [${deg.toFixed(1)}, ${fr.toFixed(3)}]`);
+    else if(m.type==='box')moved.push(`${m.name}框 = f(${deg.toFixed(1)}, rIn*${fr.toFixed(3)})`);}
+  if(moved.length)lines.push('','[已移動]',...moved);
+  document.getElementById('out').value=lines.join('\n');
+}
 function render(){
   const P=readP();
   vName.textContent=P.fsName.toFixed(1);vNum.textContent=P.fsNum.toFixed(1);vBox.textContent=P.fsBox.toFixed(1);vTot.textContent=P.totS.toFixed(2);
   poly.innerHTML=buildSVG(P);
-  document.getElementById('out').value=
-    `維度字大小 = ${P.fsName}\n數字大小 = ${P.fsNum}\n先天/運氣/後天框 = ${P.fsBox}\n總係數圖與字 = ${P.totS}`;
+  bindDrag();applyOff();readout();
 }
+// ===== 拖曳 =====
+let mode=null,curKey=null,start=null,baseOff=null;
+function toSvg(e){const pt=poly.createSVGPoint();const t=e.touches?e.touches[0]:e;pt.x=t.clientX;pt.y=t.clientY;return pt.matrixTransform(poly.getScreenCTM().inverse());}
+function down(e){e.preventDefault();mode='move';curKey=e.currentTarget.dataset.key;const o=OFF[curKey]||{dx:0,dy:0};baseOff={dx:o.dx,dy:o.dy};const p=toSvg(e);start={x:p.x,y:p.y};}
+function moveEv(e){if(!mode)return;e.preventDefault();const p=toSvg(e);const dx=baseOff.dx+(p.x-start.x),dy=baseOff.dy+(p.y-start.y);OFF[curKey]={dx:dx,dy:dy};
+  const g=poly.querySelector(`.drg[data-key="${CSS.escape(curKey)}"]`);if(g)g.setAttribute('transform',`translate(${dx.toFixed(1)},${dy.toFixed(1)})`);
+  updNumColor(curKey);readout();}
+function up(){mode=null;curKey=null;}
+function bindDrag(){poly.querySelectorAll('.drg').forEach(g=>{g.style.cursor='move';g.addEventListener('mousedown',down);g.addEventListener('touchstart',down,{passive:false});});}
+window.addEventListener('mousemove',moveEv);window.addEventListener('touchmove',moveEv,{passive:false});
+window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
+
 [sName,sNum,sBox,sTot].forEach(el=>el.addEventListener('input',render));
 document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製設定',1200);});
-document.getElementById('resetBtn').addEventListener('click',function(){sName.value=DEF.fsName;sNum.value=DEF.fsNum;sBox.value=DEF.fsBox;sTot.value=DEF.totS;render();});
+document.getElementById('resetBtn').addEventListener('click',function(){sName.value=DEF.fsName;sNum.value=DEF.fsNum;sBox.value=DEF.fsBox;sTot.value=DEF.totS;OFF={};render();});
 render();
 </script>
 </body>
