@@ -536,6 +536,39 @@ function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 let _manualCond = {};
 let _condExpanded = {};  // `${di}_${pi}` -> bool（該格條件面板是否展開）
 
+// ===== 本頁獨立條件（不動全站主規則）：目前僅「形勢」維度(di=0) 的 頭/中停/下停 =====
+// 形=A(靜)、勢=B(動)；refs 由同維度既有答案推導（=A 計入「形」權重），items 由使用者勾符合/不符
+// 部位索引：頭0 上停1 中停2 下停3 耳4 眉5 眼6 鼻7 口8
+const LOCAL_COND = {
+  0: {
+    0: { items: [{ key: '頂骨', w: 2 }, { key: '枕骨', w: 1 }, { key: '華陽骨', w: 2 }], threshold: 3, total: 5 },
+    2: { refNote: '參考眉眼鼻', refs: [{ label: '眉', part: 5, w: 2 }, { label: '眼', part: 6, w: 2 }, { label: '鼻', part: 7, w: 1 }], items: [{ key: '顴', w: 2 }], threshold: 4, total: 7 },
+    3: { refNote: '參考口', refs: [{ label: '口', part: 8, w: 1 }], items: [{ key: '人中', w: 1 }, { key: '地閣', w: 1 }, { key: '頤', w: 2 }], threshold: 3, total: 5 },
+  },
+};
+let _localCond = {};  // `${di}_${pi}` -> { itemKey: '符合'|'不符' }（記憶體，不持久化；算出的結果寫入 _manualDraft 才持久化）
+function _localCondSpec(di, pi) { return (LOCAL_COND[di] && LOCAL_COND[di][pi]) || null; }
+// 算出該格的形(A)/勢(B)；items 需全勾才回 'A'/'B'，否則 null；無此格本頁條件回 undefined
+function _localCondResultOf(di, pi) {
+  const spec = _localCondSpec(di, pi);
+  if (!spec) return undefined;
+  const ans = _localCond[`${di}_${pi}`] || {};
+  for (let i = 0; i < spec.items.length; i++) { const a = ans[spec.items[i].key]; if (a !== '符合' && a !== '不符') return null; }
+  let formW = 0;
+  (spec.refs || []).forEach(r => { if (_manualDraft[di] && _manualDraft[di][r.part] === 'A') formW += r.w; });
+  spec.items.forEach(it => { if (ans[it.key] === '符合') formW += it.w; });
+  return (formW >= spec.threshold) ? 'A' : 'B';  // dim0：形=A
+}
+// 部位答案改變時，重算依賴它的衍生格（中停/下停 參考 眉眼鼻/口）
+function _recomputeDerived(di) {
+  if (!LOCAL_COND[di]) return;
+  [2, 3].forEach(pi => {
+    if (!_localCondSpec(di, pi)) return;
+    const r = _localCondResultOf(di, pi);
+    if (r === 'A' || r === 'B') _manualDraft[di][pi] = r;
+  });
+}
+
 function _collectLeaves(node, out) {
   if (!node || typeof node !== 'object') return;
   if (node.ref !== undefined) { out.push({ ref: node.ref, match: node.match }); return; }
@@ -599,45 +632,58 @@ function _renderManualRow(di, pi) {
   const isJing = v === jingVal;
   const isDong = v === dongVal;
   const isEmpty = v === null;
-  let resultText = '—';
-  let resultCls = '';
-  if (v === 'A') { resultText = dim.a; resultCls = dim.aT === '靜' ? 'is-jing' : 'is-dong'; }
-  else if (v === 'B') { resultText = dim.b; resultCls = dim.bT === '靜' ? 'is-jing' : 'is-dong'; }
-  // v1.7 階段 11+：row 結構 [part | result | switch]（result 移到 part 右側）
-  // P1：有敘述分組的部位加「條件」鈕，可展開勾是/否自動算動靜
+  // v1.8：取消中間「形/勢色塊」，改放「條件」按鈕（點開向下展開、再點收回），靠下方靜/動切換鈕看結果
+  // 條件來源：master 規則組(_partGroups) 或 本頁獨立條件(_localCondSpec)
   const groups = _partGroups(di, pi);
-  const hasCond = groups.length > 0;
+  const local = _localCondSpec(di, pi);
+  const hasCond = groups.length > 0 || !!local;
   const expanded = !!_condExpanded[`${di}_${pi}`];
   const condBtn = hasCond
-    ? `<button class="m-manual-cond-btn ${expanded ? 'is-open' : ''}" data-mcond="${di}_${pi}">條件 ${expanded ? '▲' : '▼'}</button>`
-    : '';
-  const ans = _manualCond[`${di}_${pi}`] || {};
-  const condPanel = (hasCond && expanded) ? `
-    <div class="m-manual-cond-panel">
-      ${groups.map(g => {
-        const a = ans[g.label];
-        return `<div class="m-manual-cond-row">
+    ? `<button class="m-manual-cond-btn-mid ${expanded ? 'is-open' : ''}" data-mcond="${di}_${pi}">條件${expanded ? '▴' : '▾'}</button>`
+    : `<span class="m-manual-row-midblank"></span>`;
+  // 條件面板內容
+  let panelInner = '';
+  if (expanded && groups.length) {
+    const ans = _manualCond[`${di}_${pi}`] || {};
+    panelInner = groups.map(g => {
+      const a = ans[g.label];
+      return `<div class="m-manual-cond-row">
           <span class="m-manual-cond-label">${_esc(g.label)}</span>
           <span class="m-manual-cond-yn">
             <button class="m-manual-cond-yn-btn yes ${a === '是' ? 'is-active' : ''}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(g.label)}" data-mcv="是">符合</button>
             <button class="m-manual-cond-yn-btn no ${a === '否' ? 'is-active' : ''}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(g.label)}" data-mcv="否">不符</button>
           </span>
         </div>`;
-      }).join('')}
-    </div>
-  ` : '';
+    }).join('');
+  } else if (expanded && local) {
+    const lans = _localCond[`${di}_${pi}`] || {};
+    const formula = [...(local.refs || []).map(r => r.label + r.w), ...local.items.map(it => it.key + it.w)].join(' ');
+    panelInner =
+      (local.refNote ? `<div class="m-manual-cond-ref">${_esc(local.refNote)}（依既有答案）</div>` : '')
+      + local.items.map(it => {
+        const a = lans[it.key];
+        return `<div class="m-manual-cond-row">
+          <span class="m-manual-cond-label">${_esc(it.key)}<span class="m-manual-cond-w">×${it.w}</span></span>
+          <span class="m-manual-cond-yn">
+            <button class="m-manual-cond-yn-btn yes ${a === '符合' ? 'is-active' : ''}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(it.key)}" data-mlcv="符合">符合</button>
+            <button class="m-manual-cond-yn-btn no ${a === '不符' ? 'is-active' : ''}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(it.key)}" data-mlcv="不符">不符</button>
+          </span>
+        </div>`;
+      }).join('')
+      + `<div class="m-manual-cond-formula">${_esc(formula)}　${local.threshold}/${local.total} 符合即為${_esc(dim.a)}（否則${_esc(dim.b)}）</div>`;
+  }
+  const condPanel = (hasCond && expanded) ? `<div class="m-manual-cond-panel">${panelInner}</div>` : '';
   return `
     <div class="m-manual-row-wrap">
       <div class="m-manual-row">
         <div class="m-manual-row-part">${PART_LABELS[pi]}</div>
-        <div class="m-manual-row-result ${resultCls}">${resultText}</div>
+        ${condBtn}
         <div class="m-manual-row-switch">
           <button class="m-manual-sw m-manual-sw-jing ${isJing ? 'is-active' : ''}" data-msw="${di}_${pi}_${jingVal}">靜</button>
           <button class="m-manual-sw m-manual-sw-empty ${isEmpty ? 'is-active' : ''}" data-msw="${di}_${pi}_">—</button>
           <button class="m-manual-sw m-manual-sw-dong ${isDong ? 'is-active' : ''}" data-msw="${di}_${pi}_${dongVal}">動</button>
         </div>
       </div>
-      ${condBtn}
       ${condPanel}
     </div>
   `;
@@ -679,6 +725,7 @@ function _bindEvents() {
       const pi = parseInt(parts[1], 10);
       const val = parts[2] || null;
       _manualDraft[di][pi] = val === 'A' || val === 'B' ? val : null;
+      _recomputeDerived(di); // 中停/下停 參考 眉眼鼻/口，部位改變時連動重算
       _markDirty();
       _render();
     });
@@ -711,6 +758,24 @@ function _bindEvents() {
       if (!_manualCond[k]) _manualCond[k] = {};
       _manualCond[k][gl] = (_manualCond[k][gl] === val) ? null : val; // 再點同一個=取消
       const computed = _condResultOf(di, pi);
+      if (computed === 'A' || computed === 'B') {
+        _manualDraft[di][pi] = computed;
+        _markDirty();
+      }
+      _render();
+    });
+  });
+  // v1.8：本頁獨立條件 符合/不符 → 自動算形/勢填格（可被手動鈕覆蓋）
+  _container.querySelectorAll('[data-mlck]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const di = parseInt(btn.dataset.mlcd, 10);
+      const pi = parseInt(btn.dataset.mlcp, 10);
+      const key = btn.dataset.mlck;
+      const val = btn.dataset.mlcv;
+      const k = `${di}_${pi}`;
+      if (!_localCond[k]) _localCond[k] = {};
+      _localCond[k][key] = (_localCond[k][key] === val) ? null : val; // 再點同一個=取消
+      const computed = _localCondResultOf(di, pi);
       if (computed === 'A' || computed === 'B') {
         _manualDraft[di][pi] = computed;
         _markDirty();
