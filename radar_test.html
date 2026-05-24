@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>一目了然雷達圖 試做</title>
+<style>
+  :root{--static:#7A9E7E;--active:#C17A5A;--pre:#8E4B50;--luck:#4C6E78;--post:#7B7082;--text:#3d3b39;--text3:#8a8178;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:'Noto Sans TC','PingFang TC',sans-serif;color:var(--text);padding:14px}
+  .wrap{max-width:460px;margin:0 auto}
+  .title{font-size:18px;font-weight:700;letter-spacing:2px;text-align:center;margin:4px 0 2px}
+  .sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:8px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--text3);margin-top:2px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  .sec-title{font-size:11px;letter-spacing:2px;color:var(--text3);margin:2px 2px 8px}
+  .bar-row{display:grid;grid-template-columns:70px 1fr 44px;align-items:center;gap:8px;margin-bottom:8px}
+  .bar-row .lab{font-size:13px;font-weight:600}
+  .bar-track{height:14px;background:#efe9df;border-radius:7px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:7px}
+  .bar-val{font-size:12px;font-family:monospace;color:var(--text3);text-align:right}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pair .pcard{border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+  .pair .pname{font-size:12px;color:var(--text3)}
+  .pair .pbig{font-size:26px;font-weight:700;font-family:monospace;margin:2px 0}
+  .pair .pdims{font-size:11px;color:var(--text3);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">人相兵法 · 一目了然</div>
+  <div class="sub">（試做 · 假資料）半徑＝係數，綠＝靜主導／橘＝動主導</div>
+
+  <div class="card">
+    <svg id="radar" viewBox="0 0 400 430" aria-label="13維度雷達圖"></svg>
+    <div class="legend"><span><i style="background:var(--static)"></i>靜主導</span><span><i style="background:var(--active)"></i>動主導</span></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title">三大係數</div>
+    <div id="cat-bars"></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title">配對對照</div>
+    <div class="pair">
+      <div class="pcard"><div class="pname">老闆＋運氣（領導·機運）</div><div class="pbig" id="pairA">–</div><div class="pdims">形勢 經緯 方圓<br>順逆 分合 真假</div></div>
+      <div class="pcard"><div class="pname">主管＋後天（執行·修為）</div><div class="pbig" id="pairB">–</div><div class="pdims">曲直 收放 緩急<br>攻守 奇正 虛實 進退</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 假資料（13 維度）=====
+// dn 維度名、char 主導字、type 靜/動、coeff 係數
+const DIMS = [
+  {dn:'形勢',char:'形',type:'靜',coeff:0.29}, {dn:'經緯',char:'緯',type:'動',coeff:0.51},
+  {dn:'方圓',char:'方',type:'靜',coeff:0.40}, {dn:'曲直',char:'直',type:'靜',coeff:0.22},
+  {dn:'收放',char:'放',type:'動',coeff:0.45}, {dn:'緩急',char:'緩',type:'靜',coeff:0.38},
+  {dn:'順逆',char:'順',type:'靜',coeff:0.30}, {dn:'分合',char:'合',type:'靜',coeff:0.33},
+  {dn:'真假',char:'假',type:'動',coeff:0.41}, {dn:'攻守',char:'攻',type:'動',coeff:0.55},
+  {dn:'奇正',char:'正',type:'靜',coeff:0.48}, {dn:'虛實',char:'虛',type:'動',coeff:0.36},
+  {dn:'進退',char:'進',type:'動',coeff:0.60}
+];
+const CATS = [
+  {name:'先天',color:getC('--pre'), from:0,to:5},
+  {name:'運氣',color:getC('--luck'),from:6,to:8},
+  {name:'後天',color:getC('--post'),from:9,to:12}
+];
+function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const S=getC('--static'), A=getC('--active');
+const mean=(a)=>a.reduce((s,x)=>s+x,0)/a.length;
+const co=DIMS.map(d=>d.coeff);
+
+// ===== 畫雷達 =====
+const cx=200, cy=185, R=128;
+const n=DIMS.length, step=2*Math.PI/n, half=step/2;
+const ang=i=>-Math.PI/2 + i*step;
+const pt=(i,r)=>[cx+r*Math.cos(ang(i)), cy+r*Math.sin(ang(i))];
+let svg='';
+
+// 1) 三大類扇形底色
+CATS.forEach(c=>{
+  const a0=ang(c.from)-half, a1=ang(c.to)+half;
+  const p0=[cx+R*Math.cos(a0),cy+R*Math.sin(a0)], p1=[cx+R*Math.cos(a1),cy+R*Math.sin(a1)];
+  svg+=`<path d="M${cx} ${cy} L${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A${R} ${R} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Z" fill="${c.color}" opacity="0.08"/>`;
+});
+// 2) 同心格線
+[0.25,0.5,0.75,1].forEach(t=>{
+  let pts=[];for(let i=0;i<n;i++){const[x,y]=pt(i,R*t);pts.push(x.toFixed(1)+','+y.toFixed(1));}
+  svg+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#e0d8cc" stroke-width="1"/>`;
+});
+// 3) 軸線
+for(let i=0;i<n;i++){const[x,y]=pt(i,R);svg+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e6ddd0" stroke-width="1"/>`;}
+// 4) 資料多邊形
+let dpts=[];for(let i=0;i<n;i++){const[x,y]=pt(i,R*DIMS[i].coeff);dpts.push(x.toFixed(1)+','+y.toFixed(1));}
+svg+=`<polygon points="${dpts.join(' ')}" fill="#9a8c5a" fill-opacity="0.16" stroke="#9a8c5a" stroke-width="1.5"/>`;
+// 5) 頂點（靜綠/動橘）
+for(let i=0;i<n;i++){const[x,y]=pt(i,R*DIMS[i].coeff);svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${DIMS[i].type==='靜'?S:A}"/>`;}
+// 6) 軸標籤（維度名 + 主導字色）
+for(let i=0;i<n;i++){
+  const[x,y]=pt(i,R+20); const c=Math.cos(ang(i));
+  const anchor=c>0.3?'start':c<-0.3?'end':'middle';
+  const col=DIMS[i].type==='靜'?S:A;
+  svg+=`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" font-size="11" text-anchor="${anchor}" fill="${col}" font-weight="600">${DIMS[i].dn}</text>`;
+}
+// 7) 三大類弧標 + 係數
+CATS.forEach(c=>{
+  const mid=(ang(c.from)+ang(c.to))/2;
+  const x=cx+(R+46)*Math.cos(mid), y=cy+(R+46)*Math.sin(mid);
+  const cm=Math.cos(mid); const anchor=cm>0.3?'start':cm<-0.3?'end':'middle';
+  const cv=mean(co.slice(c.from,c.to+1)).toFixed(2);
+  svg+=`<text x="${x.toFixed(1)}" y="${(y-2).toFixed(1)}" font-size="12" text-anchor="${anchor}" fill="${c.color}" font-weight="700">${c.name}</text>`;
+  svg+=`<text x="${x.toFixed(1)}" y="${(y+13).toFixed(1)}" font-size="12" text-anchor="${anchor}" fill="${c.color}" font-family="monospace">${cv}</text>`;
+});
+document.getElementById('radar').innerHTML=svg;
+
+// ===== 三大係數長條 =====
+let cb='';
+CATS.forEach(c=>{
+  const v=mean(co.slice(c.from,c.to+1));
+  cb+=`<div class="bar-row"><span class="lab" style="color:${c.color}">${c.name}</span><div class="bar-track"><div class="bar-fill" style="width:${(v*100).toFixed(0)}%;background:${c.color}"></div></div><span class="bar-val">${v.toFixed(2)}</span></div>`;
+});
+document.getElementById('cat-bars').innerHTML=cb;
+
+// ===== 配對 =====
+const pairA=mean([0,1,2,6,7,8].map(i=>co[i]));
+const pairB=mean([3,4,5,9,10,11,12].map(i=>co[i]));
+document.getElementById('pairA').textContent=pairA.toFixed(2);
+document.getElementById('pairB').textContent=pairB.toFixed(2);
+</script>
+</body>
+</html>
