@@ -543,9 +543,19 @@ let _condExpanded = {};  // `${di}_${pi}` -> bool（該格條件面板是否展�
 // 部位索引：頭0 上停1 中停2 下停3 耳4 眉5 眼6 鼻7 口8
 const LOCAL_COND = {
   0: {
-    0: { items: [{ key: '頂骨', w: 2 }, { key: '枕骨', w: 1 }, { key: '華陽骨', w: 2 }], threshold: 3, total: 5 },
-    2: { refNote: '參考眉眼鼻', refs: [{ label: '眉', part: 5, w: 2 }, { label: '眼', part: 6, w: 2 }, { label: '鼻', part: 7, w: 1 }], items: [{ key: '顴', w: 2 }], threshold: 4, total: 7 },
-    3: { refNote: '參考口', refs: [{ label: '口', part: 8, w: 1 }], items: [{ key: '人中', w: 1 }, { key: '地閣', w: 1 }, { key: '頤', w: 2 }], threshold: 3, total: 5 },
+    0: { items: [
+      { key: '頂骨', w: 2, desc: '龜背，無凹凸，緩緩向中間隆起（左右皆是）' },
+      { key: '枕骨', w: 1, desc: '圓、飽滿，無凹凸、無自剋骨、無橫條骨' },
+      { key: '華陽骨', w: 2, desc: '圓隆起，不尖、不平、不凹（左右皆是）' },
+    ], threshold: 3, total: 5 },
+    2: { refNote: '參考眉眼鼻', refs: [{ label: '眉', part: 5, w: 2 }, { label: '眼', part: 6, w: 2 }, { label: '鼻', part: 7, w: 1 }], items: [
+      { key: '顴', w: 2, desc: '顴高且隆（靠近眼下緣、明顯隆起）且肉多於骨（左右皆是）' },
+    ], threshold: 4, total: 7 },
+    3: { refNote: '參考口', refs: [{ label: '口', part: 8, w: 1 }], items: [
+      { key: '人中', w: 1, desc: '人中深（溝深如剖竹）且人中長（至少食指寬）' },
+      { key: '地閣', w: 1, desc: '地閣起：豐滿有起、承漿凹、朝拱' },
+      { key: '頤', w: 2, desc: '（頤寬或頤平）且頤豐（豐隆有肉）（左右皆是）' },
+    ], threshold: 3, total: 5 },
   },
 };
 let _localCond = {};  // `${di}_${pi}` -> { itemKey: '符合'|'不符' }（記憶體，不持久化；算出的結果寫入 _manualDraft 才持久化）
@@ -665,7 +675,7 @@ function _renderManualRow(di, pi) {
       + local.items.map(it => {
         const a = lans[it.key];
         return `<div class="m-manual-cond-row">
-          <span class="m-manual-cond-label">${_esc(it.key)}<span class="m-manual-cond-w">×${it.w}</span></span>
+          <span class="m-manual-cond-label">${_esc(it.key)}<span class="m-manual-cond-w">×${it.w}</span>${it.desc ? `<span class="m-manual-cond-desc">${_esc(it.desc)}</span>` : ''}</span>
           <span class="m-manual-cond-yn">
             <button class="m-manual-cond-yn-btn yes ${a === '符合' ? 'is-active' : ''}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(it.key)}" data-mlcv="符合">符合</button>
             <button class="m-manual-cond-yn-btn no ${a === '不符' ? 'is-active' : ''}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(it.key)}" data-mlcv="不符">不符</button>
