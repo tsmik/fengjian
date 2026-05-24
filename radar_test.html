@@ -70,10 +70,10 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.598,bs:10.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:124.7,bf:0.597,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.3,bf:0.597,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:306.2,bf:0.556,bs:10.5,col:'#797181',tc:'#797181'}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.579,bs:10.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:126.1,bf:0.624,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:206.7,bf:0.640,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:305.1,bf:0.499,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
@@ -90,9 +90,6 @@ DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.40"/>`;});
 spans.forEach(s=>svg+=`<line x1="${f(s[0],rIn)[0].toFixed(1)}" y1="${f(s[0],rIn)[1].toFixed(1)}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="0.8"/>`;
-DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;const g=(a1-a0)*0.04;
-  const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rS),p1=f(a1-g,rS);
-  svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
 // 只標主導極字：靜主導→靜字在內半環中央；動主導→動字在外半環中央（非主導極不畫）
 const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d;
@@ -100,7 +97,7 @@ DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d
   else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
 // 維度名+係數（位置已用拖曳調好寫死：[deg, frac]）
 const FSD=10.8;
-const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.313],[292.8,2.349],[319.7,2.426],[348.8,2.437]];
+const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
 DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
