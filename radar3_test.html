@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>一目了然 試做</title>
+<title>動靜全圖 試做</title>
 <style>
   :root{--static:#7A9E7E;--active:#C17A5A;--text:#3d3b39;--text3:#9a9188;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2;
         --cream-deep:#cdb892;--cream-bg:#f0e9dc;--cream-text:#7d6643}
@@ -20,13 +20,12 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="sub">（案例數據；係數為假）資料環依靜:動比；只標主導極字（靜多在內/動多在外）；白線＝平衡參考</div>
+  <div class="sub">（案例數據；係數為假）無中央核心；扇形由中心向外，靜(內)動(外)依比例切</div>
   <div class="card">
     <svg id="poly" viewBox="0 -34 400 458" aria-label="一目了然圖"></svg>
   </div>
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.30</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:180px"></div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">維度濃度 <b id="dfV">0.55</b> <input id="dfS" type="range" min="0" max="1" step="0.05" value="0.55" style="vertical-align:middle;width:180px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
@@ -68,29 +67,16 @@ function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP)
 const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
 let svg='';
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-// ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
-const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
-const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.579,bs:10.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:126.1,bf:0.624,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:206.7,bf:0.640,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:305.1,bf:0.499,bs:10.5,col:'#797181',tc:'#797181'}
-];
-svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
-QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
-// 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
-[[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
-svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+// Radar3：無中央核心（老闆/主管/運氣/後天全拿掉）；扇形直接從中心向外填
 // 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
-QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
-// 資料環
-DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
-  svg+=`<path class="dfacet" d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.55"/>`;
+// 資料環：扇形由中心(0)向外，靜(內)/動(外)依 j 比例切，全半徑
+DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=(dm.j/9)*rOut;
+  svg+=`<path class="dfacet" d="${facet(a0,a1,0,rS)}" fill="${S}" fill-opacity="0.55"/>`;
   svg+=`<path class="dfacet" d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.55"/>`;});
-spans.forEach(s=>svg+=`<line x1="${f(s[0],rIn)[0].toFixed(1)}" y1="${f(s[0],rIn)[1].toFixed(1)}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
-svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="0.8"/>`;
+spans.forEach(s=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
+svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut*0.5))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="0.8"/>`;
 // 群組分隔線（比照radar2，中心→外緣）：0格老闆色 / 3格#898179 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 只標主導極字：靜主導→靜字在內半環中央；動主導→動字在外半環中央（非主導極不畫）
@@ -155,8 +141,6 @@ poly.innerHTML=svg;
   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
   document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('coords');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製座標',1200);});
   document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
-  const opS=document.getElementById('opSlider'),opV=document.getElementById('opVal');
-  opS.addEventListener('input',function(){const v=parseFloat(this.value);opV.textContent=v.toFixed(2);poly.querySelectorAll('.qsec').forEach(p=>p.setAttribute('fill-opacity',v));});
   const dfS=document.getElementById('dfS'),dfV=document.getElementById('dfV');
   dfS.addEventListener('input',function(){const v=parseFloat(this.value);dfV.textContent=v.toFixed(2);poly.querySelectorAll('.dfacet').forEach(p=>p.setAttribute('fill-opacity',v));});
   readout();
