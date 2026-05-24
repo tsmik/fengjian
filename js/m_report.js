@@ -19,7 +19,7 @@
 // ============================================================
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim } from './core.js';
-import { buildRadar2SVG, buildSDSVG } from './report_chart.js';
+import { buildRadar2MSVG, buildSDSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile } from './m_home.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
@@ -445,10 +445,10 @@ function _chartsHtml() {
       dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5);
       var rc = calcDim(data, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
     }
-    var radar2 = buildRadar2SVG({
+    var radar2 = buildRadar2MSVG({
       dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
-      bossV: avgCoeff(data,[0,1,2])||0, mgrV: avgCoeff(data,[3,4,5])||0, luckV: avgCoeff(data,[6,7,8])||0,
-      postV: avgCoeff(data,[9,10,11,12])||0, preV: avgCoeff(data,[0,1,2,3,4,5])||0, totV: avgCoeff(data,all)||0
+      luckV: avgCoeff(data,[6,7,8])||0, postV: avgCoeff(data,[9,10,11,12])||0,
+      preV: avgCoeff(data,[0,1,2,3,4,5])||0, totV: avgCoeff(data,all)||0
     });
     var partD = [], partN = [];
     for (var pi = 0; pi < 9; pi++) { var pd = 0, pn = 0; for (var di = 0; di < 13; di++) { var v = data[di] && data[di][pi]; if (v === 'A' || v === 'B') { pn++; var tp = (v === 'A') ? DIMS[di].aT : DIMS[di].bT; if (tp !== '靜') pd++; } } partD.push(pd); partN.push(pn); }

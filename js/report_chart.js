@@ -76,6 +76,46 @@ export function buildRadar2SVG(opts){
   return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
+// ===== 係數雷達 手機版（radar2_m）=====
+// 與桌機版差異：移除 老闆/主管 與 方圓|曲直 隔線；係數 0 在中央放動/靜色標記；
+// 字級放大（維度字15.5/數字14/框12/總係數1.3x）；攻守 曲直 方圓 等位置另調（NAMEPOS_M/NUMPOS_M）
+const NAMEPOS_M=[[14.1,2.395],[40.3,2.320],[68.1,2.242],[103.0,2.253],[128.5,2.340],[155.9,2.401],[180.0,2.504],[204.4,2.406],[233.7,2.390],[260.2,2.261],[290.2,2.365],[319.1,2.357],[345.6,2.398]];
+const NUMPOS_M=[[13.8,1.975],[42.6,1.921],[70.4,1.925],[99.1,1.949],[127.2,2.006],[152.6,2.047],[179.6,2.097],[207.4,2.047],[233.0,1.976],[260.6,1.958],[290.8,1.916],[317.0,1.926],[345.6,1.952]];
+function labM(p,name,val,fs,col){const x=p[0],y=p[1];const tl=(name.length*fs).toFixed(1);
+  return `<text x="${x.toFixed(1)}" y="${(y-fs*0.3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`
+    +`<text x="${x.toFixed(1)}" y="${(y+fs*0.86).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
+export function buildRadar2MSVG(opts){
+  opts=opts||{};
+  const coeff=opts.dimCoeff||new Array(13).fill(0);
+  const sfrac=opts.dimSFrac||new Array(13).fill(0.5);
+  const luckV=+opts.luckV||0, postV=+opts.postV||0, preV=+opts.preV||0;
+  const totV=(opts.totV!=null?+opts.totV:(coeff.reduce((a,x)=>a+(+x||0),0)/13));
+  const DIM=[];for(let i=0;i<13;i++){const d=CORE_DIMS[i]||{};DIM.push({dn:d.dn||'',c:(+coeff[i]||0),sf:Math.max(0,Math.min(1,+sfrac[i]||0))});}
+  const fsName=15.5, fsNum=14, fsBox=12, totS=1.3, ZERO_MARK=5, OP_LOW=0.5, OP_HIGH=0.70;
+  const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
+  let svg='';
+  svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
+  {const r=rIn*Math.sqrt(Math.min(1,luckV/COEF_MAX));svg+=`<path d="${polySector(6*STEP,9*STEP,r)}" fill="#546D77" fill-opacity="0.3"/>`;}
+  {const r=rIn*Math.sqrt(Math.min(1,postV/COEF_MAX));svg+=`<path d="${polySector(9*STEP,360,r)}" fill="#797181" fill-opacity="0.3"/>`;}
+  {const r=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,r)}" fill="#854F51" fill-opacity="0.3"/>`;}
+  [[0,1],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
+  svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+  svg+=labM(f(213.4,rIn*0.720),'運氣',luckV,fsBox,'#546D77');
+  svg+=labM(f(301.4,rIn*0.672),'後天',postV,fsBox,'#797181');
+  svg+=labM(f(93.6,rIn*0.687),'先天',preV,fsBox,'#854F51');
+  DIM.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);if(frac>0)svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
+  DIM.forEach((dm,i)=>{if(dm.c>0)return;const[a0,a1]=spans[i];const fill=dm.sf<0.5?A:S;svg+=`<path d="${facet(a0,a1,rIn,rIn+ZERO_MARK)}" fill="${fill}" fill-opacity="0.9" stroke="#fff" stroke-width="0.8"/>`;});
+  [[0,'#854F51',1],[6*STEP,'#546D77',1],[9*STEP,'#797181',1]].forEach(([a,col,op])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="2"/>`;});
+  svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
+  DIM.forEach((dm,i)=>{const np=NAMEPOS_M[i];const lp=f(np[0],rIn*np[1]);const c=Math.sin(rad(np[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${DIMTXT[i]}" fill-opacity="0.8" font-weight="600">${esc(dm.dn)}</text>`;});
+  DIM.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS_M[i][0],rIn*NUMPOS_M[i][1]);const nx=npp[0],ny=npp[1];const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const ncol=(rT>=rr)?'#fff':mcol;svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="${fsNum}" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
+  {const rTot=22*totS, lfs=9*totS, vfs=10.5*totS, tl=(21*totS).toFixed(1);const tg=spans.map(ss=>PS(f(ss[0],rTot))).join(' ');
+   svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
+     +`<text x="${cx}" y="${(cy-3*totS).toFixed(1)}" font-size="${lfs.toFixed(1)}" text-anchor="middle" fill="#fff">總係數</text>`
+     +`<text x="${cx}" y="${(cy+9*totS).toFixed(1)}" font-size="${vfs.toFixed(1)}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${totV.toFixed(2)}</text>`;}
+  return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+}
+
 // ===== 子彈/動靜 共用 bar 形 =====
 const _bR=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;};
 const _bL=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${(x+r).toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} v${h.toFixed(1)} h${(-(w-r)).toFixed(1)} a${r},${r} 0 0 1 ${-r},${-r} v${(-(h-2*r)).toFixed(1)} a${r},${r} 0 0 1 ${r},${-r} Z`;};
