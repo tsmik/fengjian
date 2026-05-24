@@ -84,7 +84,6 @@ svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
 QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
-// 係數環：灰色 bar 由 rIn 放射，長度 ∝ 係數（coeff/0.8）；最外緣線依動靜上色
 // 係數環：bar 由 rIn 放射，長度 ∝ 係數；底色＝動/靜色，透明度與分數反比(低分濃/高分淡)
 let OP_LOW=1.00, OP_HIGH=0.70;
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
@@ -92,20 +91,22 @@ DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX)
   svg+=`<path class="cbar" data-frac="${frac.toFixed(3)}" d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
 // 先天/運氣/後天 群組分隔線（由中心延伸到外緣）：0格老闆色 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
-// 最外緣線（動主導→動色 / 靜主導→靜色）
-DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const g=(a1-a0)*0.04;
-  const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rT),p1=f(a1-g,rT);
-  svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
-// 維度名+係數：跟著各 bar 外緣（rT）擺，靠近該維度的動靜分隔線
+// 最外圍淡灰 13 邊形
+svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
+// 維度名：13邊形外（僅名稱，可拖曳）
 const FSD=10.8;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const lp=f(mid,rT+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
   svg+=`<g class="drg" data-key="${key}">`
      +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`
-     +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${dm.c.toFixed(2)}</text>`
-     +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+     +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+1).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
+// 維度係數數字：13邊形內圍；被 bar 蓋到→白字，否則動/靜色
+const rNum=rOut-11;
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const np=f(mid,rNum);
+  const covered=rT>=rNum;const ncol=covered?'#fff':(dm.d>dm.j?A:S);
+  svg+=`<text x="${np[0].toFixed(1)}" y="${(np[1]+3.5).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
 // 學員姓名（輸出時顯示在標題上方；目前為佔位字，之後接真實姓名）
 {const p=f(322.8,rIn*3.596);const nx=p[0],ny=p[1];LABELS.push({key:'姓名',x:nx,y:ny,fs:13.5});
  svg+=`<g class="drg" data-key="姓名">`
