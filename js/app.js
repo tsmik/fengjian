@@ -21,7 +21,7 @@ import { showReport, closeReport, reportSave, exportPNG, showShareMenu } from '.
 import { showSensPage, renderSensPage, showManualSensPage, renderManualSensPage } from './sens_analysis.js';
 import { showManualSensV2Page, renderManualSensV2Page } from './manual_sens_v2.js';
 import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSave,
-         renderManualPage, initManualData, exportManualPNG } from './manual.js';
+         renderManualPage, initManualData, exportManualPNG, showManualShareMenu } from './manual.js';
 import { showCasePage, renderCaseList, loadCase, showCaseForm, editCase,
          closeCaseForm, saveCaseForm, deleteCase, doLogout, editName,
          confirmEditName, closeEditName, clearObsData, exportAllCases, exportSingleCase, moveGroup,
@@ -287,6 +287,7 @@ window.manualClear = manualClear;
 window.manualImportObs = manualImportObs;
 window.manualSave = manualSave;
 window.exportManualPNG = exportManualPNG;
+window.showManualShareMenu = showManualShareMenu;
 window.reportSave = reportSave;
 window.saveCaseForm = saveCaseForm;
 window.selectLROpt = selectLROpt;

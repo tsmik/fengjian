@@ -695,11 +695,17 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- 手動輸入兵法報告頁 -->
 <div id="manual-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5800;overflow-y:auto;padding:15px;overflow-x:hidden">
   <div id="manual-table" style="overflow-x:auto;width:100%"></div>
+  <!-- 報告圖：係數總覽 / 報告圖 / 總動靜 -->
+  <div id="manual-charts-row" style="display:flex;gap:20px;align-items:flex-start;margin:14px 0;flex-wrap:wrap">
+    <div id="manual-coef" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
+    <div id="manual-radar2" style="flex:0 0 auto;width:330px;max-width:100%;align-self:flex-start"></div>
+    <div id="manual-sd" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
+  </div>
   <div class="report-actions">
     <button class="btn-back" onclick="manualImportObs()" style="flex:1;margin:0;">帶入觀察資料</button>
     <button class="btn-back" onclick="manualClear()" style="flex:1;margin:0;">清除全部</button>
     <button class="btn-back" onclick="manualSave()" id="manual-save-btn" style="flex:1;margin:0;">儲存評分</button>
-    <button class="btn-line" onclick="exportManualPNG()" id="btn-manual-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-line" onclick="showManualShareMenu(this)" id="btn-manual-export" style="flex:1;margin:0;">分享報告</button>
   </div>
 </div>
 <!-- 敏感度分析頁 -->

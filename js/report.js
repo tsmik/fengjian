@@ -773,10 +773,18 @@ function _cropHeader(tableCanvas){
   o.getContext('2d').drawImage(tableCanvas,0,0);
   return o;
 }
-// 截圖式輸出：mode='charts'(姓名/流年+三圖) | 'all'(乾淨表格+三圖)
-async function _captureReport(mode){
+// 三圖排版（自動/手動共用的預設 transform）+ 撐開圖區
+export function arrangeReportCharts(coefId,r2Id,sdId,rowId){
+  var T={};T[coefId]=[670,35,1.65];T[r2Id]=[-271,22,1.70];T[sdId]=[2,252,1.65];
+  [coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){var t=T[id];el.style.transformOrigin='top left';el.style.transform='translate('+t[0]+'px,'+t[1]+'px) scale('+t[2]+')';}});
+  var row=document.getElementById(rowId);
+  if(row){var rt=row.getBoundingClientRect().top,mb=0;[coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);}});if(mb>0)row.style.minHeight=(mb+14)+'px';}
+}
+// 截圖式輸出：mode='charts'|'all'；cfg={btnId,coefId,r2Id,sdId,src}
+export async function captureComposite(mode, cfg){
+  cfg=cfg||{};
   if(typeof html2canvas==='undefined'){alert('截圖元件尚未載入，請稍候再試');return;}
-  var btn=document.getElementById('btn-export');var oldT=btn?btn.innerText:'';
+  var btn=cfg.btnId?document.getElementById(cfg.btnId):null;var oldT=btn?btn.innerText:'';
   if(btn){btn.innerText='產生中...';btn.disabled=true;}
   var banner=document.getElementById('staging-banner');var bd=banner?banner.style.display:'';
   var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
@@ -786,15 +794,14 @@ async function _captureReport(mode){
   if(ctp)ctp.style.display='none';
   try{
     await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
-    var coefEl=document.getElementById('report-coef'),r2El=document.getElementById('report-radar2'),sdEl=document.getElementById('report-sd');
-    var chartsCanvas=await _html2canvasRegion([coefEl,r2El,sdEl]);
+    var els=[document.getElementById(cfg.coefId),document.getElementById(cfg.r2Id),document.getElementById(cfg.sdId)];
+    var chartsCanvas=await _html2canvasRegion(els);
     var out;
     if(mode==='charts'){
-      // 表頭(姓名/虛歲/流年)用乾淨重畫裁切，標題改「圖表報告」
-      var hdrCanvas=_cropHeader(drawReportCanvas(undefined,{checkComplete:true,subtitle:'人相兵法圖表報告'}));
+      var hdrCanvas=_cropHeader(drawReportCanvas(cfg.src,{checkComplete:true,subtitle:'人相兵法圖表報告'}));
       out=_stackCanvases([hdrCanvas, _scaleCanvasW(chartsCanvas, hdrCanvas.width)],12);
     }else{
-      var tableCanvas=drawReportCanvas(undefined,{checkComplete:true});
+      var tableCanvas=drawReportCanvas(cfg.src,{checkComplete:true});
       out=_stackCanvases([tableCanvas, _scaleCanvasW(chartsCanvas, Math.round(tableCanvas.width*0.9))],16);
     }
     await _shareCanvas(out);
@@ -804,19 +811,22 @@ async function _captureReport(mode){
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
   }
 }
-
-// 分享按鈕：跳出三選項
-export function showShareMenu(btn){
+// 三選項分享選單：opts={onTable,onCharts,onAll}
+export function buildShareMenu(btn, opts){
   var ex=document.getElementById('share-menu'); if(ex){ex.remove();return;}
   var m=document.createElement('div'); m.id='share-menu';
   m.style.cssText='position:fixed;z-index:10002;background:#fff;border:1px solid var(--border,#e7ded2);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.18);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:150px';
-  var opts=[['分享表格',function(){exportPNG();}],['分享圖表',function(){_captureReport('charts');}],['分享表格＋圖表',function(){_captureReport('all');}]];
-  opts.forEach(function(o){var b=document.createElement('button');b.textContent=o[0];b.style.cssText='padding:9px 12px;border:none;background:transparent;font-size:14px;text-align:center;cursor:pointer;border-radius:6px;color:#3d3b39;font-family:inherit';b.onmouseover=function(){b.style.background='#f3eee4';};b.onmouseout=function(){b.style.background='transparent';};b.onclick=function(){m.remove();o[1]();};m.appendChild(b);});
+  var items=[['分享表格',opts.onTable],['分享圖表',opts.onCharts],['分享表格＋圖表',opts.onAll]];
+  items.forEach(function(o){var b=document.createElement('button');b.textContent=o[0];b.style.cssText='padding:9px 12px;border:none;background:transparent;font-size:14px;text-align:center;cursor:pointer;border-radius:6px;color:#3d3b39;font-family:inherit';b.onmouseover=function(){b.style.background='#f3eee4';};b.onmouseout=function(){b.style.background='transparent';};b.onclick=function(){m.remove();o[1]&&o[1]();};m.appendChild(b);});
   document.body.appendChild(m);
   var r=btn.getBoundingClientRect();
   m.style.left=Math.max(8,Math.min(r.left, window.innerWidth-m.offsetWidth-8))+'px';
   m.style.top=Math.max(8,r.top-m.offsetHeight-8)+'px';
   setTimeout(function(){document.addEventListener('mousedown',function h(e){if(!m.contains(e.target)&&e.target!==btn){m.remove();document.removeEventListener('mousedown',h);}});},0);
+}
+var _AUTO_CFG={btnId:'btn-export',coefId:'report-coef',r2Id:'report-radar2',sdId:'report-sd',src:undefined};
+export function showShareMenu(btn){
+  buildShareMenu(btn,{onTable:function(){exportPNG();},onCharts:function(){captureComposite('charts',_AUTO_CFG);},onAll:function(){captureComposite('all',_AUTO_CFG);}});
 }
 
 export function fallbackDownload(canvas){
