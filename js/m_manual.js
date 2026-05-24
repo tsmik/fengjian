@@ -27,6 +27,7 @@
 // ============================================================
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
+import { buildRadar2MSVG, buildSDSVG } from './report_chart.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { setSaveStatus, getSaveStatus } from './m_input.js';
@@ -254,7 +255,7 @@ function _renderManualInput() {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
     // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
-    body = `${_renderCoeffSummary()}${_renderManualPngRow()}`;
+    body = `${_renderCoeffSummary()}${_chartsHtml()}${_renderManualPngRow()}`;
   } else {
     body = `
       ${_renderDimRow(DIM_ROW_1_IDX, 6)}
@@ -369,6 +370,31 @@ export function renderCoeffSummary(matrix) {
 }
 function _renderCoeffSummary() {
   return renderCoeffSummary(_manualDraft);
+}
+
+// 手機手動報告：係數總表下方接 報告圖(radar2_m) + 總動靜（與自動報告共用 builder）
+function _chartsHtml() {
+  try {
+    var m = _manualDraft;
+    if (!Array.isArray(m) || m.length !== 13) return '';
+    var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+    var dimSFrac = [], dimCoeffArr = [];
+    for (var i = 0; i < 13; i++) {
+      var s = 0, d = 0;
+      for (var p = 0; p < 9; p++) { var vv = m[i] && m[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
+      dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5);
+      var rc = calcDim(m, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
+    }
+    var radar2 = buildRadar2MSVG({
+      dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
+      luckV: avgCoeff(m,[6,7,8])||0, postV: avgCoeff(m,[9,10,11,12])||0,
+      preV: avgCoeff(m,[0,1,2,3,4,5])||0, totV: avgCoeff(m,all)||0
+    });
+    var partD = [], partN = [];
+    for (var pi = 0; pi < 9; pi++) { var pd = 0, pn = 0; for (var di = 0; di < 13; di++) { var v = m[di] && m[di][pi]; if (v === 'A' || v === 'B') { pn++; var tp = (v === 'A') ? DIMS[di].aT : DIMS[di].bT; if (tp !== '靜') pd++; } } partD.push(pd); partN.push(pn); }
+    var sd = buildSDSVG({ partD: partD, partN: partN, barH: 20, nameFs: 16, numFs: 13 });
+    return '<div style="padding:6px 12px 0">' + radar2 + '<div style="height:14px"></div>' + sd + '</div>';
+  } catch (e) { return ''; }
 }
 
 function _renderManualPngRow() {
