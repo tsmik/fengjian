@@ -72,24 +72,56 @@ export function buildRadar2SVG(opts){
   return `<svg viewBox="0 -34 400 458" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
-// ===== 係數總覽子彈圖（radar0）=====
+// ===== 係數總覽（radar0）：係數子彈圖 + 逐部位總動靜 =====
+const _bR=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;};
+const _bL=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${(x+r).toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} v${h.toFixed(1)} h${(-(w-r)).toFixed(1)} a${r},${r} 0 0 1 ${-r},${-r} v${(-(h-2*r)).toFixed(1)} a${r},${r} 0 0 1 ${r},${-r} Z`;};
 export function buildRadar0SVG(opts){
   opts=opts||{};
   const preV=+opts.preV||0,bossV=+opts.bossV||0,mgrV=+opts.mgrV||0,luckV=+opts.luckV||0,postV=+opts.postV||0,totV=+opts.totV||0;
+  const partD=opts.partD||new Array(9).fill(0), partN=opts.partN||new Array(9).fill(0);
+  const PLAB=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+  const TOTCOL='#494541';
   const ROWS=[
     {name:'先天',v:preV,col:'#8E4B50'},{name:'老闆',v:bossV,col:'#936A78'},{name:'主管',v:mgrV,col:'#876D4F'},
-    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:'#1f1f1f'}
+    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:TOTCOL}
   ];
-  const CMAX=0.8,X0=74,TOP=14,BAR_H=10,GAP=9.6,PAD=8,LP=4,TRACKW=300,LINE_COL='#1f1f1f';
+  // 逐部位動靜
+  const SD_ROWS=[];let sumD=0,sumN=0;
+  for(let i=0;i<9;i++){const d=+partD[i]||0,nn=+partN[i]||0;SD_ROWS.push({name:PLAB[i],d:d,s:nn-d,t:nn||1});sumD+=d;sumN+=nn;}
+  SD_ROWS.push({name:'總計',d:sumD,s:sumN-sumD,t:sumN||1});
+  const THICK_AFTER=[3,8];
+  const CMAX=0.8,X0=74,BAR_H=12,GAP=9.6,PAD=8,LP=4,TRACKW=300,COEF_OP=0.7,SD_OP=0.85,GT=GAP,GK=GAP+6;
+  const A2='#C17A5A',S2='#7A9E7E';
   const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
-  const bp=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;};
-  const n=ROWS.length,stackTop=TOP,stackBot=TOP+n*(BAR_H+GAP)-GAP,tEdge=xOf(totV),cTop=stackTop-PAD,cBot=stackBot+PAD;
   let s='';
-  s+=`<rect x="${X0}" y="${cTop.toFixed(1)}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
+  // 標題：左上姓名、右上 人相兵法係數總覽
+  s+=`<text x="${X0}" y="20" font-size="11.5" text-anchor="start" fill="#9a9188" font-weight="600">${esc(opts.name||'')}</text>`;
+  s+=`<text x="${(X0+TRACKW).toFixed(1)}" y="20" font-size="14" text-anchor="end" fill="#3d3b39" font-weight="700" letter-spacing="1">人相兵法係數總覽</text>`;
+  // 係數總覽（6 子彈）
+  const n=ROWS.length, cTop=34, stackTop=cTop+PAD, stackBot=stackTop+n*(BAR_H+GAP)-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
+  s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   ROWS.forEach((r,i)=>{const y=stackTop+i*(BAR_H+GAP);const cyy=y+BAR_H/2;
-    s+=`<path d="${bp(X0,y,xOf(r.v)-X0,BAR_H,Math.min(3,BAR_H/2))}" fill="${r.col}" fill-opacity="0.92"/>`;
+    s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,BAR_H,Math.min(3,BAR_H/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
     s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="12" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
-  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${LINE_COL}" stroke-width="1.5"/>`;
-  return `<svg viewBox="0 0 400 150" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${TOTCOL}" stroke-width="1.5"/>`;
+  // 總動靜（逐部位）
+  const SDH=BAR_H, prr=Math.min(3,SDH/2);
+  const headBoxTop=cBot+GAP, headBase=headBoxTop+12, sdCTop=headBoxTop+16+GAP, barsTop=sdCTop+PAD;
+  let hh=0; SD_ROWS.forEach((r,i)=>{hh+=SDH; if(i<SD_ROWS.length-1) hh+=(THICK_AFTER.indexOf(i)>=0?GK:GT);});
+  s+=`<text x="${(X0+TRACKW).toFixed(1)}" y="${headBase.toFixed(1)}" font-size="14" text-anchor="end" fill="#3d3b39" font-weight="700" letter-spacing="1">總動靜</text>`;
+  s+=`<rect x="${X0}" y="${sdCTop.toFixed(1)}" width="${TRACKW}" height="${(hh+2*PAD).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
+  let y=barsTop;
+  SD_ROWS.forEach((r,i)=>{const isTot=(i===SD_ROWS.length-1);const op=isTot?Math.min(1,SD_OP+0.18):SD_OP;
+    const dW=TRACKW*r.d/r.t, bd=X0+dW, cyy=y+SDH/2;
+    s+=`<path d="${_bL(X0,y,dW,SDH,prr)}" fill="${A2}" fill-opacity="${op}"/>`;
+    s+=`<path d="${_bR(bd,y,TRACKW-dW,SDH,prr)}" fill="${S2}" fill-opacity="${op}"/>`;
+    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11.5" text-anchor="end" dominant-baseline="central" fill="#6a6458" font-weight="700">${r.name}</text>`;
+    if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
+    if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
+    const gp=(i<SD_ROWS.length-1?(THICK_AFTER.indexOf(i)>=0?GK:GT):0);
+    if(THICK_AFTER.indexOf(i)>=0){const ly=y+SDH+gp/2;s+=`<line x1="${X0}" y1="${ly.toFixed(1)}" x2="${(X0+TRACKW).toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;}
+    y+=SDH+gp;
+  });
+  return `<svg viewBox="0 0 400 420" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
