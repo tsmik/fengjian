@@ -27,6 +27,7 @@
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.30</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:150px"> ｜ 先天濃度 <b id="preVal">0.30</b> <input id="preSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:150px"></div>
+    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">老闆/主管輪廓濃度 <b id="qlVal">0.80</b> <input id="qlSlider" type="range" min="0" max="1" step="0.05" value="0.8" style="vertical-align:middle;width:180px"></div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">bar 低分濃 <b id="loV">1.00</b> <input id="loS" type="range" min="0" max="1" step="0.05" value="1" style="vertical-align:middle;width:140px"> ｜ 高分淡 <b id="hiV">0.70</b> <input id="hiS" type="range" min="0" max="1" step="0.05" value="0.7" style="vertical-align:middle;width:140px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
@@ -64,6 +65,8 @@ const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))
 function sector(a0,a1,r){const l=(a1-a0)>180?1:0;return `M${cx},${cy} L${PS(f(a0,r))} A${r.toFixed(1)},${r.toFixed(1)} 0 ${l} 1 ${PS(f(a1,r))} Z`;}
 // 多邊形扇形：中心 → 沿維度交界各頂點（同半徑）→ 回中心
 function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[`${cx},${cy}`];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L')+' Z';}
+// 只取外緣折線（不含往中心的兩條邊）
+function polyArc(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L');}
 // 內圈邊界 13 邊多邊形頂點
 const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
 let svg='';
@@ -76,9 +79,12 @@ const QUAD=[
   {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.1,bf:0.770,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
-QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
+// 運氣/後天 填色扇形
+QUAD.forEach((q,qi)=>{if(qi<2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
 // 先天：多邊扇形（0~6格，覆蓋老闆+主管），濃度可調
 {const rpre=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path class="presec" d="${polySector(0,6*STEP,rpre)}" fill="#854F51" fill-opacity="0.30"/>`;}
+// 老闆/主管：只留外輪廓線（疊在先天之上），透明0.8 可調
+QUAD.forEach((q,qi)=>{if(qi>=2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qline" d="${polyArc(q.a0,q.a1,r)}" fill="none" stroke="${q.col}" stroke-opacity="0.8" stroke-width="1.5" stroke-linejoin="round"/>`;});
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
@@ -181,6 +187,8 @@ poly.innerHTML=svg;
   opS.addEventListener('input',function(){const v=parseFloat(this.value);opV.textContent=v.toFixed(2);poly.querySelectorAll('.qsec').forEach(p=>p.setAttribute('fill-opacity',v));});
   const preS=document.getElementById('preSlider'),preVe=document.getElementById('preVal');
   preS.addEventListener('input',function(){const v=parseFloat(this.value);preVe.textContent=v.toFixed(2);poly.querySelectorAll('.presec').forEach(p=>p.setAttribute('fill-opacity',v));});
+  const qlS=document.getElementById('qlSlider'),qlVe=document.getElementById('qlVal');
+  qlS.addEventListener('input',function(){const v=parseFloat(this.value);qlVe.textContent=v.toFixed(2);poly.querySelectorAll('.qline').forEach(p=>p.setAttribute('stroke-opacity',v));});
   readout();
 })();
 </script>

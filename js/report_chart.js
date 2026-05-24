@@ -16,6 +16,7 @@ const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
 const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
 const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))} L ${PS(f(a1,ra))} Z`;
 function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[`${cx},${cy}`];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L')+' Z';}
+function polyArc(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L');}
 const spans=[];for(let i=0;i<13;i++)spans.push([i*STEP,(i+1)*STEP]);
 function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 const NAMEPOS=[[14.1,2.395],[40.3,2.320],[69.1,2.318],[97.2,2.300],[128.5,2.340],[155.9,2.401],[180.0,2.504],[204.4,2.406],[233.7,2.390],[261.9,2.332],[290.2,2.365],[319.1,2.357],[345.6,2.398]];
@@ -38,9 +39,12 @@ export function buildRadar2SVG(opts){
   ];
   let svg='';
   svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
-  QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
+  // 運氣/後天 填色扇形
+  QUAD.forEach((q,qi)=>{if(qi<2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
   // 先天：多邊扇形（0~6格，覆蓋老闆+主管）
   {const rpre=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,rpre)}" fill="#854F51" fill-opacity="0.3"/>`;}
+  // 老闆/主管：只留外輪廓線（疊在先天之上，透明0.8）
+  QUAD.forEach((q,qi)=>{if(qi>=2)return;const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polyArc(q.a0,q.a1,r)}" fill="none" stroke="${q.col}" stroke-opacity="0.8" stroke-width="1.5" stroke-linejoin="round"/>`;});
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
   function lab2(x,y,name,val,fs,col){const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
