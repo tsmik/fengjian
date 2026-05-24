@@ -59,19 +59,19 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:90,v:bossV,deg:45},
-  {name:'主管',a0:90,a1:180,v:mgrV,deg:135},
-  {name:'運氣',a0:180,a1:270,v:CORE[1].v,deg:225},
-  {name:'後天',a0:270,a1:360,v:CORE[2].v,deg:315}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,deg:45},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,deg:135},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,deg:225},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,deg:315}
 ];
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${sector(q.a0,q.a1,r)}" fill="${CRD}"/>`;});
-// 四象限間白色分隔線
-[0,90,180,270].forEach(a=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`;});
+// 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
+[[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
 // 文字：先天置中、老闆/主管在先天外圍、運氣/後天在共同弧
 function lab2(x,y,name,val,fs){fs=fs||9;const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
-QUAD.forEach(q=>{const p=f(q.deg,rIn*0.80);lab2(p[0],p[1],q.name,q.v,9);});
+QUAD.forEach(q=>{const p=f(q.deg,rIn*0.80-2);lab2(p[0],p[1],q.name,q.v,9);});
 {const p=f(3*STEP,rIn*0.30);lab2(p[0],p[1],'先天',preV,9);}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
@@ -82,16 +82,11 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" 
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;const g=(a1-a0)*0.04;
   const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rS),p1=f(a1-g,rS);
   svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
-// 兩極字都標：靜字在內半環中央、動字在外半環中央；主導極實色(綠/橘)，另一極半透明白(透出底層)
+// 只標主導極字：靜主導→靜字在內半環中央；動主導→動字在外半環中央（非主導極不畫）
 const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d;
-  const pj=f(mid,rInner),pd=f(mid,rOuter);
-  // 靜極字（內）
-  if(jDom) svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;
-  else svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="#ffffff" opacity="0.4" font-weight="700">${dm.jc}</text>`;
-  // 動極字（外）
-  if(!jDom) svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;
-  else svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="#ffffff" opacity="0.4" font-weight="700">${dm.dc}</text>`;});
+  if(jDom){const pj=f(mid,rInner);svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;}
+  else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
 // 維度名+係數
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
   svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
