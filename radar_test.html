@@ -122,12 +122,13 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
    +`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="13.6" text-anchor="middle" fill="var(--text)" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`
    +`<circle class="rsz" data-key="標題" cx="${(tx+55).toFixed(1)}" cy="${(ty+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
    +`</g>`;}
-// 總係數（中央；黑透明底白字；可拖曳/縮放）
+// 總係數（中央；黑透明 13 邊形底白字；可拖曳/縮放）
 {const tcx=200,tcy=215;LABELS.push({key:'總係數',x:tcx,y:tcy,fs:10.5});
+ const tg=spans.map(s=>PS(f(s[0],20))).join(' ');
  svg+=`<g class="drg" data-key="總係數">`
-   +`<rect x="${tcx-17}" y="${tcy-14}" width="34" height="28" rx="5" fill="#000" fill-opacity="0.45"/>`
-   +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">總係數</text>`
-   +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="700">${mean(co).toFixed(2)}</text>`
+   +`<polygon points="${tg}" fill="#000" fill-opacity="0.45"/>`
+   +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
+   +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace">${mean(co).toFixed(2)}</text>`
    +`<circle class="rsz" data-key="總係數" cx="${tcx+20}" cy="${tcy+15}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
    +`</g>`;}
 // 動靜圖例（可拖曳/縮放）

@@ -83,11 +83,12 @@ export function buildReportChartSVG(opts){
   {const p=f(322.8,rIn*3.596);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.5" text-anchor="middle" fill="#9a9188" font-weight="600">${esc(name)}</text>`;}
   // 標題
   {const p=f(31.6,rIn*3.395);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.6" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
-  // 總係數（中央；黑透明底白字）
+  // 總係數（中央；黑透明 13 邊形底白字）
   {const tcx=200,tcy=215,totV=+opts.totalV||0;
-   svg+=`<rect x="${tcx-17}" y="${tcy-14}" width="34" height="28" rx="5" fill="#000" fill-opacity="0.45"/>`
-     +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">總係數</text>`
-     +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="700">${totV.toFixed(2)}</text>`;}
+   const tg=spans.map(s=>PS(f(s[0],20))).join(' ');
+   svg+=`<polygon points="${tg}" fill="#000" fill-opacity="0.45"/>`
+     +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
+     +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace">${totV.toFixed(2)}</text>`;}
   // 動靜圖例
   {const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
    svg+=`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
