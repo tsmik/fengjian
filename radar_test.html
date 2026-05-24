@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>一目了然扇形圖 試做</title>
 <style>
-  :root{--static:#7A9E7E;--active:#C17A5A;--text:#3d3b39;--text3:#8a8178;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2}
+  :root{--static:#7A9E7E;--active:#C17A5A;--text:#3d3b39;--text3:#9a9188;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);font-family:'Noto Sans TC','PingFang TC',sans-serif;color:var(--text);padding:14px}
   .wrap{max-width:460px;margin:0 auto}
@@ -30,29 +30,21 @@
 function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const S=getC('--static'), A=getC('--active');
 
-// 順時針從 12 點開始；每維度 {dn, 靜, 動, span(度)}；假資料
-// Q1 右上(0-90): 形勢/經緯/方圓  Q4 右下(90-180): 順逆/分合/真假
-// Q3 左下(180-270): 攻守/奇正/虛實/進退  Q2 左上(270-360): 曲直/收放/緩急
+// 順時針從 12 點：右上(0-90) 形勢經緯方圓 / 右下(90-180) 曲直收放緩急
+//               左下(180-270) 順逆分合真假 / 左上(270-360) 攻守奇正虛實進退
+// {dn, j:靜數, d:動數, c:係數}（假資料）
 const DIMS=[
-  {dn:'形勢',j:2,d:7}, {dn:'經緯',j:5,d:3}, {dn:'方圓',j:6,d:3},      // Q1
-  {dn:'順逆',j:5,d:4}, {dn:'分合',j:3,d:6}, {dn:'真假',j:6,d:2},      // Q4
-  {dn:'攻守',j:2,d:7}, {dn:'奇正',j:5,d:4}, {dn:'虛實',j:4,d:4}, {dn:'進退',j:6,d:3}, // Q3
-  {dn:'曲直',j:3,d:5}, {dn:'收放',j:4,d:5}, {dn:'緩急',j:7,d:2}       // Q2
+  {dn:'形勢',j:2,d:7,c:0.29}, {dn:'經緯',j:5,d:3,c:0.51}, {dn:'方圓',j:6,d:3,c:0.40},
+  {dn:'曲直',j:3,d:5,c:0.22}, {dn:'收放',j:4,d:5,c:0.45}, {dn:'緩急',j:7,d:2,c:0.38},
+  {dn:'順逆',j:5,d:4,c:0.30}, {dn:'分合',j:3,d:6,c:0.33}, {dn:'真假',j:6,d:2,c:0.41},
+  {dn:'攻守',j:2,d:7,c:0.55}, {dn:'奇正',j:5,d:4,c:0.48}, {dn:'虛實',j:4,d:4,c:0.36}, {dn:'進退',j:6,d:3,c:0.60}
 ];
-const QUADS=[
-  {name:'老闆', mid:45},   // 形勢經緯方圓
-  {name:'運氣', mid:135},  // 順逆分合真假
-  {name:'後天', mid:225},  // 攻守奇正虛實進退
-  {name:'主管', mid:315}   // 曲直收放緩急
-];
-// 各維度角度範圍（度，順時針從頂）
-const spans=[];
-let acc=0;
-// Q1 三個各30 / Q4 三個各30 / Q3 四個各22.5 / Q2 三個各30
-const sizes=[30,30,30, 30,30,30, 22.5,22.5,22.5,22.5, 30,30,30];
+const QUADS=[{name:'老闆',mid:45},{name:'主管',mid:135},{name:'運氣',mid:225},{name:'後天',mid:315}];
+const sizes=[30,30,30, 30,30,30, 30,30,30, 22.5,22.5,22.5,22.5];
+const spans=[]; let acc=0;
 for(let i=0;i<13;i++){spans.push([acc,acc+sizes[i]]);acc+=sizes[i];}
 
-const cx=200, cy=215, R=160, MAX=9, u=R/MAX;
+const cx=200, cy=210, R=140, MAX=9, u=R/MAX;
 const rad=deg=>deg*Math.PI/180;
 const f=(deg,r)=>[ (cx+r*Math.sin(rad(deg))).toFixed(2), (cy-r*Math.cos(rad(deg))).toFixed(2) ];
 function annular(a0,a1,rIn,rOut){
@@ -61,26 +53,29 @@ function annular(a0,a1,rIn,rOut){
   return `M${o0[0]} ${o0[1]} A${rOut} ${rOut} 0 0 1 ${o1[0]} ${o1[1]} L${i1[0]} ${i1[1]} A${rIn} ${rIn} 0 0 0 ${i0[0]} ${i0[1]} Z`;
 }
 let svg='';
-// 刻度圈 1~9
+// 刻度圈 1~9（淡、不搶視覺）
 for(let k=1;k<=MAX;k++){
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${(k*u).toFixed(1)}" fill="none" stroke="#ece4d8" stroke-width="1"/>`;
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${(k*u).toFixed(1)}" fill="none" stroke="#efe9df" stroke-width="${k===MAX?1:0.6}"/>`;
 }
-// 象限分隔線（0/90/180/270）
-[0,90,180,270].forEach(a=>{const p=f(a,R);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#d8cdbe" stroke-width="1.5"/>`;});
-// 維度扇形：綠(靜) + 橘(動)
+// 象限分隔線（淡）
+[0,90,180,270].forEach(a=>{const p=f(a,R);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#ece4d8" stroke-width="1"/>`;});
+// 維度扇形：綠(靜)內 + 橘(動)外
 DIMS.forEach((dm,i)=>{
   const[a0,a1]=spans[i];
   const rJ=dm.j*u, rD=(dm.j+dm.d)*u;
-  if(dm.j>0) svg+=`<path d="${annular(a0,a1,0,rJ)}" fill="${S}" fill-opacity="0.9" stroke="#fff" stroke-width="1"/>`;
-  if(dm.d>0) svg+=`<path d="${annular(a0,a1,rJ,rD)}" fill="${A}" fill-opacity="0.9" stroke="#fff" stroke-width="1"/>`;
-  // 維度名（外緣）
-  const mid=(a0+a1)/2; const lp=f(mid,R+16);
-  const c=Math.sin(rad(mid)); const anchor=c>0.25?'start':c<-0.25?'end':'middle';
-  svg+=`<text x="${lp[0]}" y="${(parseFloat(lp[1])+4).toFixed(1)}" font-size="11" text-anchor="${anchor}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
+  if(dm.j>0) svg+=`<path d="${annular(a0,a1,0,rJ)}" fill="${S}" fill-opacity="0.92" stroke="#fff" stroke-width="1.2"/>`;
+  if(dm.d>0) svg+=`<path d="${annular(a0,a1,rJ,rD)}" fill="${A}" fill-opacity="0.92" stroke="#fff" stroke-width="1.2"/>`;
 });
-// 象限標籤（角落）
-QUADS.forEach(q=>{const lp=f(q.mid,R+40);const c=Math.sin(rad(q.mid));const anchor=c>0.25?'start':c<-0.25?'end':'middle';
-  svg+=`<text x="${lp[0]}" y="${lp[1]}" font-size="13" text-anchor="${anchor}" fill="var(--text3)" font-weight="700" letter-spacing="1">${q.name}</text>`;});
+// 維度名 + 係數（圓外，雷達式）
+DIMS.forEach((dm,i)=>{
+  const[a0,a1]=spans[i]; const mid=(a0+a1)/2;
+  const lp=f(mid,R+16); const c=Math.sin(rad(mid)); const anchor=c>0.25?'start':c<-0.25?'end':'middle';
+  svg+=`<text x="${lp[0]}" y="${lp[1]}" font-size="12" text-anchor="${anchor}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
+  svg+=`<text x="${lp[0]}" y="${(parseFloat(lp[1])+13).toFixed(1)}" font-size="11" text-anchor="${anchor}" fill="var(--text3)" font-family="monospace">${dm.c.toFixed(2)}</text>`;
+});
+// 象限標籤（角落，淡）
+QUADS.forEach(q=>{const lp=f(q.mid,R+50);const c=Math.sin(rad(q.mid));const anchor=c>0.25?'start':c<-0.25?'end':'middle';
+  svg+=`<text x="${lp[0]}" y="${lp[1]}" font-size="12" text-anchor="${anchor}" fill="#c3b8a8" font-weight="700" letter-spacing="1">${q.name}</text>`;});
 document.getElementById('rose').innerHTML=svg;
 </script>
 </body>
