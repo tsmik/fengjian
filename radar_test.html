@@ -72,7 +72,7 @@ const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
   {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.713,bs:10.5,col:'#936A78',tc:'#936A78'},
   {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:136.4,bf:0.751,bs:10.4,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.6,bf:0.737,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:214.9,bf:0.763,bs:10.5,col:'#546D77',tc:'#546D77'},
   {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.0,bf:0.721,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
@@ -84,7 +84,7 @@ svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
 QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
-{const p=f(90.9,rIn*0.285);lab2(p[0],p[1],'先天',preV,11.2,'先天','#854F51');}
+{const p=f(92.7,rIn*0.679);lab2(p[0],p[1],'先天',preV,11.2,'先天','#854F51');}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
@@ -101,7 +101,7 @@ DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d
   else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
 // 維度名+係數（位置已用拖曳調好寫死：[deg, frac]）
 const FSD=10.8;
-const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[156.2,2.395],[180.0,2.436],[205.8,2.374],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
+const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
 DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
@@ -111,19 +111,27 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
      +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
 // 學員姓名（輸出時顯示在標題上方；目前為佔位字，之後接真實姓名）
-{const p=f(0.0,rIn*3.287);const nx=p[0],ny=p[1];LABELS.push({key:'姓名',x:nx,y:ny,fs:15.3});
+{const p=f(322.8,rIn*3.596);const nx=p[0],ny=p[1];LABELS.push({key:'姓名',x:nx,y:ny,fs:13.5});
  svg+=`<g class="drg" data-key="姓名">`
-   +`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="15.3" text-anchor="middle" fill="var(--text3)" font-weight="600">學員姓名</text>`
+   +`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="13.5" text-anchor="middle" fill="var(--text3)" font-weight="600">學員姓名</text>`
    +`<circle class="rsz" data-key="姓名" cx="${(nx+40).toFixed(1)}" cy="${(ny+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
    +`</g>`;}
-// 標題（可拖曳/縮放；x 對齊圓心置中）
-{const p=f(0.0,rIn*2.919);const tx=p[0],ty=p[1];LABELS.push({key:'標題',x:tx,y:ty,fs:14.5});
+// 標題（可拖曳/縮放）
+{const p=f(31.6,rIn*3.395);const tx=p[0],ty=p[1];LABELS.push({key:'標題',x:tx,y:ty,fs:13.6});
  svg+=`<g class="drg" data-key="標題">`
-   +`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="14.5" text-anchor="middle" fill="var(--text)" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`
+   +`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="13.6" text-anchor="middle" fill="var(--text)" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`
    +`<circle class="rsz" data-key="標題" cx="${(tx+55).toFixed(1)}" cy="${(ty+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
    +`</g>`;}
+// 總係數（中央；黑透明底白字；可拖曳/縮放）
+{const tcx=200,tcy=215;LABELS.push({key:'總係數',x:tcx,y:tcy,fs:10.5});
+ svg+=`<g class="drg" data-key="總係數">`
+   +`<rect x="${tcx-17}" y="${tcy-14}" width="34" height="28" rx="5" fill="#000" fill-opacity="0.45"/>`
+   +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">總係數</text>`
+   +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="700">${mean(co).toFixed(2)}</text>`
+   +`<circle class="rsz" data-key="總係數" cx="${tcx+20}" cy="${tcy+15}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+   +`</g>`;}
 // 動靜圖例（可拖曳/縮放）
-{const p=f(218.8,rIn*3.623);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;LABELS.push({key:'圖例',x:lx,y:ly,fs:fz});
+{const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;LABELS.push({key:'圖例',x:lx,y:ly,fs:fz});
  svg+=`<g class="drg" data-key="圖例">`
    +`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
    +`<text x="${(lx+15*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="var(--text3)">靜</text>`

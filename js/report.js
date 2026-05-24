@@ -644,7 +644,7 @@ export function showReport(){
           name:(_currentCaseName||userName||''),
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
           preV:vPre||0, luckV:vLuck||0, postV:vPost||0,
-          bossV:vLead||0, mgrV:vSub||0
+          bossV:vLead||0, mgrV:vSub||0, totalV:vTotal||0
         });
         // 寬度對齊先天指數區塊（含等比例高度，svg width:100% 自動處理）
         var sizeChart=function(){

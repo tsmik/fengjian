@@ -42,7 +42,7 @@ export function buildReportChartSVG(opts){
   const QUAD=[
     {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.713,bs:10.5,col:'#936A78',tc:'#936A78'},
     {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:136.4,bf:0.751,bs:10.4,col:'#AE6D4F',tc:'#876D4F'},
-    {name:'運氣',a0:6*STEP,a1:9*STEP,v:luckV,bd:207.6,bf:0.737,bs:10.5,col:'#546D77',tc:'#546D77'},
+    {name:'運氣',a0:6*STEP,a1:9*STEP,v:luckV,bd:214.9,bf:0.763,bs:10.5,col:'#546D77',tc:'#546D77'},
     {name:'後天',a0:9*STEP,a1:360,v:postV,bd:302.0,bf:0.721,bs:10.5,col:'#797181',tc:'#797181'}
   ];
   let svg='';
@@ -56,7 +56,7 @@ export function buildReportChartSVG(opts){
   // 核心文字框（老闆/主管/運氣/後天 + 先天）
   function lab2(x,y,nm,val,fs,col){const tl=(nm.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${nm}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
   QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.tc);});
-  {const p=f(90.9,rIn*0.285);lab2(p[0],p[1],'先天',preV,11.2,'#854F51');}
+  {const p=f(92.7,rIn*0.679);lab2(p[0],p[1],'先天',preV,11.2,'#854F51');}
   // 資料環（靜綠/動橘）
   DIM.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+dm.sf*H;
     svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
@@ -75,16 +75,21 @@ export function buildReportChartSVG(opts){
     else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
   // 維度名+係數（位置寫死 [deg, frac]）
   const FSD=10.8;
-  const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[156.2,2.395],[180.0,2.436],[205.8,2.374],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
+  const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
   DIM.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);
     svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`
        +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`;});
-  // 學員姓名（標題上方）
-  {const p=f(0.0,rIn*3.287);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="15.3" text-anchor="middle" fill="#9a9188" font-weight="600">${esc(name)}</text>`;}
+  // 學員姓名
+  {const p=f(322.8,rIn*3.596);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.5" text-anchor="middle" fill="#9a9188" font-weight="600">${esc(name)}</text>`;}
   // 標題
-  {const p=f(0.0,rIn*2.919);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="14.5" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
+  {const p=f(31.6,rIn*3.395);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.6" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
+  // 總係數（中央；黑透明底白字）
+  {const tcx=200,tcy=215,totV=+opts.totalV||0;
+   svg+=`<rect x="${tcx-17}" y="${tcy-14}" width="34" height="28" rx="5" fill="#000" fill-opacity="0.45"/>`
+     +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">總係數</text>`
+     +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="700">${totV.toFixed(2)}</text>`;}
   // 動靜圖例
-  {const p=f(218.8,rIn*3.623);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
+  {const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
    svg+=`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
      +`<text x="${(lx+15*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="#9a9188">靜</text>`
      +`<rect x="${(lx+40*ls).toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${A}"/>`
