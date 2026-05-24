@@ -674,6 +674,9 @@ function _ctApply(){
   var a=document.getElementById('report-radar2'),b=document.getElementById('report-radar0');
   if(a){a.style.transformOrigin='top left';a.style.transform='translate('+_ct.r2.tx+'px,'+_ct.r2.ty+'px) scale('+_ct.r2.s+')';}
   if(b){b.style.transformOrigin='top left';b.style.transform='translate('+_ct.r0.tx+'px,'+_ct.r0.ty+'px) scale('+_ct.r0.s+')';}
+  // 依縮放後的圖高度撐開圖區，讓下方按鈕不被蓋
+  var row=document.getElementById('report-charts-row');
+  if(row){var rt=row.getBoundingClientRect().top,mb=0;[a,b].forEach(function(el){if(el){mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);}});if(mb>0)row.style.minHeight=(mb+14)+'px';}
 }
 function _ctReadout(){var o=document.getElementById('ct-out');if(!o)return;o.value='Radar2: x='+_ct.r2.tx.toFixed(0)+' y='+_ct.r2.ty.toFixed(0)+' scale='+_ct.r2.s.toFixed(2)+'\nRadar0: x='+_ct.r0.tx.toFixed(0)+' y='+_ct.r0.ty.toFixed(0)+' scale='+_ct.r0.s.toFixed(2);}
 function _ctGrip(el,which){
@@ -684,7 +687,7 @@ function _ctGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupChartTuner(){
-  if(!_ct)_ct={r2:{tx:0,ty:0,s:1},r0:{tx:0,ty:0,s:1}};
+  if(!_ct)_ct={r2:{tx:23,ty:-22,s:1.85},r0:{tx:313,ty:-7,s:1.50}};
   if(!_ctWired){
     window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
     window.addEventListener('mouseup',function(){_ctDrag=null;});
