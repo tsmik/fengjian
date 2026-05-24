@@ -100,8 +100,8 @@ export function buildRadar2MSVG(opts){
   {const r=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,r)}" fill="#854F51" fill-opacity="0.3"/>`;}
   [[0,1],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-  svg+=labM(f(213.4,rIn*0.720),'運氣',luckV,fsBox,'#546D77');
-  svg+=labM(f(301.4,rIn*0.672),'後天',postV,fsBox,'#797181');
+  svg+=labM(f(211.0,rIn*0.711),'運氣',luckV,fsBox,'#546D77');
+  svg+=labM(f(299.9,rIn*0.699),'後天',postV,fsBox,'#797181');
   svg+=labM(f(93.6,rIn*0.687),'先天',preV,fsBox,'#854F51');
   DIM.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);if(frac>0)svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
   DIM.forEach((dm,i)=>{if(dm.c>0)return;const[a0,a1]=spans[i];const fill=dm.sf<0.5?A:S;svg+=`<path d="${facet(a0,a1,rIn,rIn+ZERO_MARK)}" fill="${fill}" fill-opacity="0.9" stroke="#fff" stroke-width="0.8"/>`;});
