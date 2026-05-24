@@ -27,6 +27,7 @@
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.30</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:180px"></div>
+    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">bar 低分濃 <b id="loV">0.85</b> <input id="loS" type="range" min="0" max="1" step="0.05" value="0.85" style="vertical-align:middle;width:140px"> ｜ 高分淡 <b id="hiV">0.20</b> <input id="hiS" type="range" min="0" max="1" step="0.05" value="0.2" style="vertical-align:middle;width:140px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -85,9 +86,11 @@ function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const
 QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
 {const p=f(92.7,rIn*0.679);lab2(p[0],p[1],'先天',preV,11.2,'先天','#854F51');}
 // 係數環：灰色 bar 由 rIn 放射，長度 ∝ 係數（coeff/0.8）；最外緣線依動靜上色
-const GRAY='#b7b1a8';
-DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;
-  svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${GRAY}" fill-opacity="0.7" stroke="#fff" stroke-width="0.8"/>`;});
+// 係數環：bar 由 rIn 放射，長度 ∝ 係數；底色＝動/靜色，透明度與分數反比(低分濃/高分淡)
+let OP_LOW=0.85, OP_HIGH=0.20;
+DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
+  const fill=dm.d>dm.j?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);
+  svg+=`<path class="cbar" data-frac="${frac.toFixed(3)}" d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
 // 先天/運氣/後天 群組分隔線（由中心延伸到外緣）：0格老闆色 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 最外緣線（動主導→動色 / 靜主導→靜色）
@@ -159,6 +162,9 @@ poly.innerHTML=svg;
   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
   document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('coords');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製座標',1200);});
   document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
+  const loS=document.getElementById('loS'),loV=document.getElementById('loV'),hiS=document.getElementById('hiS'),hiV=document.getElementById('hiV');
+  function applyBarOp(){const lo=parseFloat(loS.value),hi=parseFloat(hiS.value);loV.textContent=lo.toFixed(2);hiV.textContent=hi.toFixed(2);poly.querySelectorAll('.cbar').forEach(p=>{const fr=parseFloat(p.dataset.frac);p.setAttribute('fill-opacity',(lo*(1-fr)+hi*fr).toFixed(3));});}
+  loS.addEventListener('input',applyBarOp);hiS.addEventListener('input',applyBarOp);
   const opS=document.getElementById('opSlider'),opV=document.getElementById('opVal');
   opS.addEventListener('input',function(){const v=parseFloat(this.value);opV.textContent=v.toFixed(2);poly.querySelectorAll('.qsec').forEach(p=>p.setAttribute('fill-opacity',v));});
   readout();
