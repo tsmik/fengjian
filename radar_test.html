@@ -21,7 +21,7 @@
 <body>
 <div class="wrap">
   <div class="title">人相兵法 · 一目了然</div>
-  <div class="sub">（試做 · 假資料）13 維度平均分布；外環依「靜:動」比，交界線色＝偏向<br>點線＝動靜平衡參考；內圈弧線＝先天/運氣/後天係數</div>
+  <div class="sub">（試做 · 假資料）內側小字＝靜極／外側小字＝動極；實線＝動靜平衡參考</div>
   <div class="card">
     <svg id="poly" viewBox="0 0 400 480" aria-label="一目了然圖"></svg>
     <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
@@ -31,16 +31,18 @@
 function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const S=getC('--static'),A=getC('--active');
 const CRD=getC('--cream-deep'),CRBG=getC('--cream-bg'),CRT=getC('--cream-text');
-const Sm='#90b094', Am='#cc9173'; // 交界線中間色
+const Sm='#90b094', Am='#cc9173';          // 交界線中間色
+const Sd='#4f6f53', Ad='#8f5236';          // 極字深色
+// jc=靜極字, dc=動極字
 const DIMS=[
-  {dn:'形勢',j:2,c:0.29},{dn:'經緯',j:5,c:0.51},{dn:'方圓',j:6,c:0.40},
-  {dn:'曲直',j:3,c:0.22},{dn:'收放',j:4,c:0.45},{dn:'緩急',j:7,c:0.38},
-  {dn:'順逆',j:5,c:0.30},{dn:'分合',j:3,c:0.33},{dn:'真假',j:6,c:0.41},
-  {dn:'攻守',j:2,c:0.55},{dn:'奇正',j:5,c:0.48},{dn:'虛實',j:4,c:0.36},{dn:'進退',j:6,c:0.60}
+  {dn:'形勢',j:2,c:0.29,jc:'形',dc:'勢'},{dn:'經緯',j:5,c:0.51,jc:'經',dc:'緯'},{dn:'方圓',j:6,c:0.40,jc:'方',dc:'圓'},
+  {dn:'曲直',j:3,c:0.22,jc:'直',dc:'曲'},{dn:'收放',j:4,c:0.45,jc:'收',dc:'放'},{dn:'緩急',j:7,c:0.38,jc:'緩',dc:'急'},
+  {dn:'順逆',j:5,c:0.30,jc:'順',dc:'逆'},{dn:'分合',j:3,c:0.33,jc:'合',dc:'分'},{dn:'真假',j:6,c:0.41,jc:'真',dc:'假'},
+  {dn:'攻守',j:2,c:0.55,jc:'守',dc:'攻'},{dn:'奇正',j:5,c:0.48,jc:'正',dc:'奇'},{dn:'虛實',j:4,c:0.36,jc:'實',dc:'虛'},{dn:'進退',j:6,c:0.60,jc:'退',dc:'進'}
 ];
 DIMS.forEach(d=>d.d=9-d.j);
 const STEP=360/13;
-const spans=[];for(let i=0;i<13;i++)spans.push([i*STEP,(i+1)*STEP]); // 平均分布
+const spans=[];for(let i=0;i<13;i++)spans.push([i*STEP,(i+1)*STEP]);
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length, co=DIMS.map(d=>d.c);
 const CORE=[
   {name:'先天',a0:0,a1:6*STEP,v:mean(co.slice(0,6))},
@@ -56,28 +58,31 @@ const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))
 const arc=(a0,a1,r)=>{const l=(a1-a0)>180?1:0;return `M${PS(f(a0,r))} A${r.toFixed(1)},${r.toFixed(1)} 0 ${l} 1 ${PS(f(a1,r))}`;};
 let svg='';
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-// ===== 內圈：圓底 + 每區一條外弧線（係數/0.8 位置）=====
+// 內圈（暫維持弧線版，待討論）
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="${CRBG}"/>`;
 [0,6*STEP,9*STEP].forEach(a=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(a,rIn)[0].toFixed(1)}" y2="${f(a,rIn)[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`);
-CORE.forEach(c=>{const r=rIn*Math.min(1,c.v/COEF_MAX);
-  svg+=`<path d="${arc(c.a0+2,c.a1-2,r)}" fill="none" stroke="${CRD}" stroke-width="3" stroke-linecap="round"/>`;});
+CORE.forEach(c=>{const r=rIn*Math.min(1,c.v/COEF_MAX);svg+=`<path d="${arc(c.a0+2,c.a1-2,r)}" fill="none" stroke="${CRD}" stroke-width="3" stroke-linecap="round"/>`;});
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-// 內圈文字：各區內、靠中央
 CORE.forEach(c=>{const mid=(c.a0+c.a1)/2;const lp=f(mid,rIn*0.45);
   svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]-2).toFixed(1)}" font-size="12" text-anchor="middle" fill="${CRT}" font-weight="700">${c.name}</text>`;
   svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="12" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${c.v.toFixed(2)}</text>`;});
-// ===== 外環扇形（綠靜內 / 橘動外）填淡 =====
+// 外環扇形
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.38"/>`;
   svg+=`<path d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.38"/>`;});
 // 維度間白分隔線
 spans.forEach(s=>svg+=`<line x1="${f(s[0],rIn)[0].toFixed(1)}" y1="${f(s[0],rIn)[1].toFixed(1)}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
-// 動靜平衡參考線：點線、相連的同心折線（13邊，在 band 中點）
-svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" stroke="#b8ab97" stroke-width="1.6" stroke-dasharray="2,3" opacity="0.9"/>`;
-// 動靜交界線（小內縮、中間色；橘偏動/綠偏靜）
+// 動靜平衡參考線：實線同心折線（同維度邊線質感）
+svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" stroke="#cfc3b0" stroke-width="1.6"/>`;
+// 動靜交界線
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;const g=(a1-a0)*0.04;
   const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rS),p1=f(a1-g,rS);
   svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
+// 內外極字（內=靜極綠字 / 外=動極橘字）
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;
+  const pj=f(mid,rIn+11),pd=f(mid,rOut-13);
+  svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+4).toFixed(1)}" font-size="11" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;
+  svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+4).toFixed(1)}" font-size="11" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;});
 // 維度名+係數
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
   svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
