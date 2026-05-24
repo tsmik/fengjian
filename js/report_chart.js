@@ -123,5 +123,6 @@ export function buildRadar0SVG(opts){
     if(THICK_AFTER.indexOf(i)>=0){const ly=y+SDH+gp/2;s+=`<line x1="${X0}" y1="${ly.toFixed(1)}" x2="${(X0+TRACKW).toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;}
     y+=SDH+gp;
   });
-  return `<svg viewBox="0 0 400 420" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  const vbH=Math.ceil(sdCTop+hh+2*PAD+6);
+  return `<svg viewBox="0 0 400 ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
