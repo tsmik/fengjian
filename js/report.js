@@ -690,7 +690,7 @@ function _ctGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupChartTuner(){
-  if(!_ct)_ct={coef:{tx:0,ty:0,s:1},r2:{tx:0,ty:0,s:1},sd:{tx:0,ty:0,s:1}};
+  if(!_ct)_ct={coef:{tx:670,ty:35,s:1.65},r2:{tx:-271,ty:22,s:1.70},sd:{tx:2,ty:252,s:1.65}};
   if(!_ctWired){
     window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
     window.addEventListener('mouseup',function(){_ctDrag=null;});
