@@ -70,10 +70,10 @@ let svg='';
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.598,bs:10.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:124.7,bf:0.597,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.3,bf:0.597,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:306.2,bf:0.556,bs:10.5,col:'#797181',tc:'#797181'}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:26.7,bf:0.731,bs:10.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:140.0,bf:0.763,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.6,bf:0.767,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.1,bf:0.770,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
@@ -115,7 +115,7 @@ DIMS.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPO
      +`<circle class="rsz" data-key="${key}" cx="${(nx+12).toFixed(1)}" cy="${ny.toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
 // 先天框（字框同運氣 fs10.5、色 #854F51；可拖曳）
-{const p=f(3*STEP,rIn*0.42);lab2(p[0],p[1],'先天',preV,10.5,'先天','#854F51');}
+{const p=f(88.3,rIn*0.770);lab2(p[0],p[1],'先天',preV,10.5,'先天','#854F51');}
 // 總係數（中央 13 邊形 #494541 白字；數字字級同運氣 10.5；可拖曳）
 {const tcx=cx,tcy=cy,totV=mean(co);LABELS.push({key:'總係數',x:tcx,y:tcy,fs:10.5});
  const tg=spans.map(s=>PS(f(s[0],22))).join(' ');

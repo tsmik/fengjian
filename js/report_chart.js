@@ -27,17 +27,20 @@ export function buildRadar2SVG(opts){
   const coeff=opts.dimCoeff||new Array(13).fill(0);
   const sfrac=opts.dimSFrac||new Array(13).fill(0.5);
   const bossV=+opts.bossV||0,mgrV=+opts.mgrV||0,luckV=+opts.luckV||0,postV=+opts.postV||0;
+  const preV=(opts.preV!=null?+opts.preV:(bossV+mgrV)/2), totV=(opts.totV!=null?+opts.totV:(coeff.reduce((a,x)=>a+(+x||0),0)/13));
   const DIM=[];for(let i=0;i<13;i++){const d=CORE_DIMS[i]||{};DIM.push({dn:d.dn||'',c:(+coeff[i]||0),sf:Math.max(0,Math.min(1,+sfrac[i]||0))});}
   const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
   const QUAD=[
-    {a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.598,bs:10.5,col:'#936A78',tc:'#936A78',nm:'老闆'},
-    {a0:3*STEP,a1:6*STEP,v:mgrV,bd:124.7,bf:0.597,bs:10.5,col:'#AE6D4F',tc:'#876D4F',nm:'主管'},
-    {a0:6*STEP,a1:9*STEP,v:luckV,bd:207.3,bf:0.597,bs:10.5,col:'#546D77',tc:'#546D77',nm:'運氣'},
-    {a0:9*STEP,a1:360,v:postV,bd:306.2,bf:0.556,bs:10.5,col:'#797181',tc:'#797181',nm:'後天'}
+    {a0:0,a1:3*STEP,v:bossV,bd:26.7,bf:0.731,bs:10.5,col:'#936A78',tc:'#936A78',nm:'老闆'},
+    {a0:3*STEP,a1:6*STEP,v:mgrV,bd:140.0,bf:0.763,bs:10.5,col:'#AE6D4F',tc:'#876D4F',nm:'主管'},
+    {a0:6*STEP,a1:9*STEP,v:luckV,bd:207.6,bf:0.767,bs:10.5,col:'#546D77',tc:'#546D77',nm:'運氣'},
+    {a0:9*STEP,a1:360,v:postV,bd:302.1,bf:0.770,bs:10.5,col:'#797181',tc:'#797181',nm:'後天'}
   ];
   let svg='';
   svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
   QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
+  // 先天：多邊扇形（0~6格，覆蓋老闆+主管）
+  {const rpre=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,rpre)}" fill="#854F51" fill-opacity="0.3"/>`;}
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
   function lab2(x,y,name,val,fs,col){const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
@@ -47,8 +50,8 @@ export function buildRadar2SVG(opts){
   DIM.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
     const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);
     svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
-  // 先天/運氣/後天 群組分隔線（中心→外緣）
-  [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
+  // 先天/運氣/後天 群組分隔線（中心→外緣）；方圓|曲直(3格)淡 0.5
+  [[0,'#936A78',1],[3*STEP,'#898179',0.5],[6*STEP,'#546D77',1],[9*STEP,'#797181',1]].forEach(([a,col,op])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="2"/>`;});
   // 最外圍淡灰 13 邊形
   svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
   // 維度名（13邊形外）
@@ -59,6 +62,13 @@ export function buildRadar2SVG(opts){
   DIM.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
     const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const ncol=(rT>=rr)?'#fff':mcol;
     svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
+  // 先天框（#854F51，字級同運氣）
+  {const p=f(88.3,rIn*0.770);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
+  // 總係數（中央 13 邊形 #494541 白字）
+  {const tg=spans.map(ss=>PS(f(ss[0],22))).join(' ');
+   svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
+     +`<text x="${cx}" y="${(cy-3).toFixed(1)}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
+     +`<text x="${cx}" y="${(cy+9).toFixed(1)}" font-size="10.5" textLength="21" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${totV.toFixed(2)}</text>`;}
   return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 

@@ -647,7 +647,8 @@ export function showReport(){
         for(var pi=0;pi<9;pi++){var pd=0,pn=0;for(var di=0;di<13;di++){var vv=data[di]&&data[di][pi];if(vv==='A'||vv==='B'){pn++;var tp=(vv==='A')?DIMS[di].aT:DIMS[di].bT;if(tp!=='靜')pd++;}}partD.push(pd);partN.push(pn);}
         if(r2El) r2El.innerHTML=buildRadar2SVG({
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
-          bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0
+          bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0,
+          preV:vPre||0, totV:vTotal||0
         });
         if(coefEl) coefEl.innerHTML=buildCoefSVG({
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
