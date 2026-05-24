@@ -3,115 +3,98 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>係數總覽 試做</title>
+<title>係數總覽（子彈圖）試做</title>
 <style>
-  :root{--static:#7A9E7E;--active:#C17A5A;--text:#3d3b39;--text3:#9a9188;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2;
-        --cream-deep:#cdb892;--cream-bg:#f0e9dc;--cream-text:#7d6643}
+  :root{--text:#3d3b39;--text3:#9a9188;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);font-family:'Noto Sans TC','PingFang TC',sans-serif;color:var(--text);padding:14px}
-  .wrap{max-width:460px;margin:0 auto}
+  .wrap{max-width:480px;margin:0 auto}
   .title{font-size:18px;font-weight:700;letter-spacing:2px;text-align:center;margin:4px 0 2px}
   .sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:10px;line-height:1.6}
   .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
-  svg{display:block;width:100%;height:auto}
+  svg{display:block;width:100%;height:auto;cursor:move}
   .ctrl{margin-top:10px}
-  textarea{width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)}
-  button{margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
+  .ctrl .row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
+  textarea{width:100%;height:48px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)}
+  button{padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="title">人相兵法 · 係數總覽</div>
-  <div class="sub">（案例數據；係數為假）總係數＋先天/運氣/後天＋老闆/主管；面積∝係數</div>
+  <div class="sub">（案例數據；係數為假）長條＝係數；虛線＝總係數(平均)；超過線＝高於平均</div>
   <div class="card">
-    <svg id="poly" viewBox="0 0 400 430" aria-label="係數總覽圖"></svg>
+    <svg id="chart" viewBox="0 0 400 250" aria-label="係數子彈圖"></svg>
   </div>
   <div class="ctrl">
-    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖框移位置；拖右下小圓點縮放；下方顯示座標</div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.45</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.45" style="vertical-align:middle;width:180px"></div>
-    <textarea id="coords" readonly></textarea>
-    <button id="copyBtn">複製座標</button> <button id="resetBtn">歸位</button>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖圖移動；下方滑桿調 bar 粗細／軸長</div>
+    <div class="row">bar 粗細 <input id="hS" type="range" min="10" max="34" step="1" value="18" style="width:150px"> <b id="hV">18</b>
+      ｜ 軸長 <input id="wS" type="range" min="180" max="300" step="5" value="270" style="width:150px"> <b id="wV">270</b></div>
+    <textarea id="out" readonly></textarea>
+    <div style="margin-top:6px"><button id="copyBtn">複製設定</button> <button id="resetBtn">歸位</button></div>
   </div>
 </div>
 <script>
-function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
-const CRT=getC('--cream-text');
 const DIMS_C=[0.13,0.29,0.80,0.00,0.29,0.50,0.50,0.29,0.80,0.80,0.50,0.50,0.13];
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
-const bossV=mean(DIMS_C.slice(0,3)), mgrV=mean(DIMS_C.slice(3,6)), preV=mean(DIMS_C.slice(0,6)),
-      luckV=mean(DIMS_C.slice(6,9)), postV=mean(DIMS_C.slice(9,13)), totV=mean(DIMS_C);
-const COEF_MAX=0.8, STEP=360/13;
-const cx=200,cy=205,rOut=150;
-const rad=d=>d*Math.PI/180;
-const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
-const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
-const spans=[];for(let i=0;i<13;i++)spans.push(i*STEP);
-const rOf=v=>rOut*Math.sqrt(Math.min(1,v/COEF_MAX)); // 面積∝係數
-function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[`${cx},${cy}`];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L')+' Z';}
-const polyAt=r=>spans.map(a=>PS(f(a,r))).join(' ');
-
-const GROUPS=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,col:'#936A78',tc:'#936A78',bd:43,bf:0.45},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,col:'#AE6D4F',tc:'#876D4F',bd:125,bf:0.42},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:luckV,col:'#546D77',tc:'#546D77',bd:208,bf:0.5},
-  {name:'後天',a0:9*STEP,a1:360,v:postV,col:'#797181',tc:'#797181',bd:305,bf:0.5}
+const bossV=mean(DIMS_C.slice(0,3)),mgrV=mean(DIMS_C.slice(3,6)),preV=mean(DIMS_C.slice(0,6)),
+      luckV=mean(DIMS_C.slice(6,9)),postV=mean(DIMS_C.slice(9,13)),totV=mean(DIMS_C);
+const CMAX=0.8;
+const ROWS=[
+  {name:'先天',v:preV,col:'#8E4B50',sub:false},
+  {name:'老闆',v:bossV,col:'#936A78',sub:true},
+  {name:'主管',v:mgrV,col:'#876D4F',sub:true},
+  {name:'運氣',v:luckV,col:'#546D77',sub:false},
+  {name:'後天',v:postV,col:'#797181',sub:false}
 ];
+let BAR_H=18, TRACKW=270, TX=0, TY=0;
+const X0=74, TOP=46, GAP=12;
+const chart=document.getElementById('chart');
 
-let svg='';
-// 外框 + 刻度環（0.25/0.5/0.75/1.0 × rOut）
-[0.25,0.5,0.75,1].forEach(t=>{svg+=`<polygon points="${polyAt(rOut*t)}" fill="none" stroke="#ece5d8" stroke-width="1"/>`;});
-// 四群組扇形（面積∝係數）
-GROUPS.forEach(g=>{svg+=`<path class="qsec" d="${polySector(g.a0,g.a1,rOf(g.v))}" fill="${g.col}" fill-opacity="0.45"/>`;});
-// 群組白色分隔線（0/3/6/9 格；3格=老闆|主管 透明0.45）
-[[0,1],[3*STEP,0.45],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
-// 先天弧：跨 0–6 格、半徑依先天係數（先天色折線）
-{const rp=rOf(preV);let d='M'+[0,1,2,3,4,5,6].map(k=>PS(f(k*STEP,rp))).join(' L');svg+=`<path d="${d}" fill="none" stroke="#8E4B50" stroke-width="2.4" stroke-linejoin="round"/>`;}
-// 總係數參考環：完整 13 邊形虛線，半徑＝總係數水位（超出環＝高於平均）
-svg+=`<polygon points="${polyAt(rOf(totV))}" fill="none" stroke="#3d3b39" stroke-width="2" stroke-dasharray="5 3" stroke-opacity="0.85"/>`;
-
-// ===== 可拖曳文字框 =====
-const LABELS=[];
-function lab2(x,y,name,val,fs,key,col){fs=fs||10.5;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
-GROUPS.forEach(g=>{const p=f(g.bd,rOut*g.bf);lab2(p[0],p[1],g.name,g.v,10.5,g.name,g.tc);});
-// 先天框（近先天弧頂）
-{const p=f(3*STEP,rOf(preV)+14);lab2(p[0],p[1],'先天',preV,11,'先天','#8E4B50');}
-// 總係數（中央；黑透明 13 邊形底白字）
-{const tcx=cx,tcy=cy,TSC=0.9;LABELS.push({key:'總係數',x:tcx,y:tcy,fs:10.5*TSC});
- const tg=spans.map(a=>PS(f(a,20*TSC))).join(' ');
- svg+=`<g class="drg" data-key="總係數">`
-   +`<polygon points="${tg}" fill="#000" fill-opacity="0.5"/>`
-   +`<text x="${tcx}" y="${(tcy-2*TSC).toFixed(1)}" font-size="${(9*TSC).toFixed(1)}" text-anchor="middle" fill="#fff">總係數</text>`
-   +`<text x="${tcx}" y="${(tcy+10*TSC).toFixed(1)}" font-size="${(10.5*TSC).toFixed(1)}" textLength="${(27*TSC).toFixed(1)}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${totV.toFixed(2)}</text>`
-   +`<circle class="rsz" data-key="總係數" cx="${(tcx+20*TSC).toFixed(1)}" cy="${(tcy+15*TSC).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
-   +`</g>`;}
-
-const poly=document.getElementById('poly');
-poly.innerHTML=svg;
-// ===== 拖曳/縮放 + 座標讀數 =====
+function render(){
+  const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
+  const botY=TOP+ROWS.length*(BAR_H+GAP)-GAP;
+  let s=`<g id="bg" transform="translate(${TX},${TY})">`;
+  // 刻度尺
+  [0,0.2,0.4,0.6,0.8].forEach(t=>{const x=xOf(t);
+    s+=`<line x1="${x.toFixed(1)}" y1="${TOP-4}" x2="${x.toFixed(1)}" y2="${botY}" stroke="#efe9dd" stroke-width="1"/>`;
+    s+=`<text x="${x.toFixed(1)}" y="${TOP-9}" font-size="9" fill="#bbb0a0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">${t.toFixed(1)}</text>`;});
+  // 先天群組左側括線（先天+老闆+主管）
+  {const y1=TOP, y2=TOP+3*(BAR_H+GAP)-GAP;s+=`<path d="M${X0-50},${y1} h-5 v${(y2-y1).toFixed(1)} h5" fill="none" stroke="#d8cdbd" stroke-width="1"/>`;}
+  // 各列
+  ROWS.forEach((r,i)=>{const y=TOP+i*(BAR_H+GAP);const cy=y+BAR_H/2;const bw=xOf(r.v)-X0;
+    s+=`<rect x="${X0}" y="${y}" width="${TRACKW}" height="${BAR_H}" rx="3" fill="#f1ece1"/>`;
+    s+=`<rect x="${X0}" y="${y}" width="${bw.toFixed(1)}" height="${BAR_H}" rx="3" fill="${r.col}" fill-opacity="0.9"/>`;
+    const nx=r.sub?X0-12:X0-8;const fs=r.sub?11:12.5;
+    s+=`<text x="${nx}" y="${cy}" font-size="${fs}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="${r.sub?600:700}">${r.name}</text>`;
+    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cy}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
+  // 總係數參考線（直貫）
+  const tx=xOf(totV);
+  s+=`<line x1="${tx.toFixed(1)}" y1="${TOP-2}" x2="${tx.toFixed(1)}" y2="${botY+4}" stroke="#3d3b39" stroke-width="2" stroke-dasharray="5 3"/>`;
+  s+=`<text x="${tx.toFixed(1)}" y="${TOP-22}" font-size="11" text-anchor="middle" fill="#3d3b39" font-weight="700">總係數 ${totV.toFixed(2)}</text>`;
+  s+='</g>';
+  chart.innerHTML=s;
+  readout();
+}
+function readout(){document.getElementById('out').value=`bar 粗細=${BAR_H}  軸長=${TRACKW}  位置 x=${TX.toFixed(0)} y=${TY.toFixed(0)}`;}
+// 拖曳移動
 (function(){
-  const off={};const L4=k=>LABELS.find(l=>l.key===k);
-  function getO(k){if(!off[k])off[k]={tx:0,ty:0,s:1};return off[k];}
-  function toSvg(e){const pt=poly.createSVGPoint();const t=e.touches?e.touches[0]:e;pt.x=t.clientX;pt.y=t.clientY;return pt.matrixTransform(poly.getScreenCTM().inverse());}
-  function applyT(k){const o=getO(k),L=L4(k),g=poly.querySelector(`.drg[data-key="${CSS.escape(k)}"]`);g.setAttribute('transform',`translate(${o.tx.toFixed(1)},${o.ty.toFixed(1)}) translate(${L.x.toFixed(1)},${L.y.toFixed(1)}) scale(${o.s.toFixed(3)}) translate(${(-L.x).toFixed(1)},${(-L.y).toFixed(1)})`);}
-  function readout(){document.getElementById('coords').value=LABELS.map(L=>{const o=getO(L.key);const X=L.x+o.tx,Y=L.y+o.ty;const dx=X-cx,dy=Y-cy;let deg=Math.atan2(dx,-dy)*180/Math.PI;if(deg<0)deg+=360;const r=Math.hypot(dx,dy);return `${L.key}: f(${deg.toFixed(1)}, rOut*${(r/rOut).toFixed(3)})  fs=${(L.fs*o.s).toFixed(1)}  scale=${o.s.toFixed(2)}`;}).join('\n');}
-  let mode=null,key=null,start=null,base=null,anchor=null,d0=0;
-  function downMove(e){e.preventDefault();mode='move';key=e.currentTarget.dataset.key;const o=getO(key);const p=toSvg(e);start={x:p.x,y:p.y};base={tx:o.tx,ty:o.ty};}
-  function downResize(e){e.preventDefault();e.stopPropagation();mode='resize';key=e.currentTarget.dataset.key;const o=getO(key),L=L4(key);anchor={x:L.x+o.tx,y:L.y+o.ty};const p=toSvg(e);d0=Math.max(2,Math.hypot(p.x-anchor.x,p.y-anchor.y));base={s:o.s};}
-  function move(e){if(!mode)return;e.preventDefault();const p=toSvg(e),o=getO(key);
-    if(mode==='move'){o.tx=base.tx+(p.x-start.x);o.ty=base.ty+(p.y-start.y);}
-    else{const d=Math.hypot(p.x-anchor.x,p.y-anchor.y);o.s=Math.min(3,Math.max(0.4,base.s*d/d0));}
-    applyT(key);readout();}
-  function up(){mode=null;}
-  poly.querySelectorAll('.drg').forEach(g=>{g.style.cursor='move';g.addEventListener('mousedown',downMove);g.addEventListener('touchstart',downMove,{passive:false});});
-  poly.querySelectorAll('.rsz').forEach(h=>{h.style.cursor='nwse-resize';h.addEventListener('mousedown',downResize);h.addEventListener('touchstart',downResize,{passive:false});});
+  let drag=false,sx,sy,bx,by;
+  function toSvg(e){const pt=chart.createSVGPoint();const t=e.touches?e.touches[0]:e;pt.x=t.clientX;pt.y=t.clientY;return pt.matrixTransform(chart.getScreenCTM().inverse());}
+  function down(e){e.preventDefault();drag=true;const p=toSvg(e);sx=p.x;sy=p.y;bx=TX;by=TY;}
+  function move(e){if(!drag)return;e.preventDefault();const p=toSvg(e);TX=bx+(p.x-sx);TY=by+(p.y-sy);const g=document.getElementById('bg');if(g)g.setAttribute('transform',`translate(${TX.toFixed(1)},${TY.toFixed(1)})`);readout();}
+  function up(){drag=false;}
+  chart.addEventListener('mousedown',down);chart.addEventListener('touchstart',down,{passive:false});
   window.addEventListener('mousemove',move);window.addEventListener('touchmove',move,{passive:false});
   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
-  document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('coords');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製座標',1200);});
-  document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
-  const opS=document.getElementById('opSlider'),opV=document.getElementById('opVal');
-  opS.addEventListener('input',function(){const v=parseFloat(this.value);opV.textContent=v.toFixed(2);poly.querySelectorAll('.qsec').forEach(p=>p.setAttribute('fill-opacity',v));});
-  readout();
 })();
+const hS=document.getElementById('hS'),hV=document.getElementById('hV');
+hS.addEventListener('input',function(){BAR_H=parseInt(this.value,10);hV.textContent=BAR_H;render();});
+const wS=document.getElementById('wS'),wV=document.getElementById('wV');
+wS.addEventListener('input',function(){TRACKW=parseInt(this.value,10);wV.textContent=TRACKW;render();});
+document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製設定',1200);});
+document.getElementById('resetBtn').addEventListener('click',function(){BAR_H=18;TRACKW=270;TX=0;TY=0;hS.value=18;hV.textContent=18;wS.value=270;wV.textContent=270;render();});
+render();
 </script>
 </body>
 </html>
