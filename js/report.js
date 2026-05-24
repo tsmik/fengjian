@@ -5,6 +5,7 @@ import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, 
          setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { collectDetailForPrompt } from './obs_ui.js';
+import { buildReportChartSVG } from './report_chart.js';
 
 /* ===== Report Save ===== */
 export function reportSave(){
@@ -223,7 +224,7 @@ export function showReport(){
     // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>';
-    t+='<td colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">先天指數</td>';
+    t+='<td id="report-pre-header" colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">先天指數</td>';
     if(showLuck){
       t+='<td style="padding:2px 4px"></td>';
       t+='<td colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">運氣指數</td>';
@@ -628,6 +629,32 @@ export function showReport(){
 
     t+='</table>';
     ftEl.innerHTML=t;
+
+    // ===== 報告圖（一目了然）：表格下方，寬度對齊先天指數區塊 =====
+    try{
+      var chartEl=document.getElementById('report-chart');
+      if(chartEl){
+        var dimSFrac=[],dimCoeffArr=[];
+        for(var ci=0;ci<13;ci++){
+          var sc=dimSCounts[ci]||0, dcn=dimDCounts[ci]||0, tot=sc+dcn;
+          dimSFrac.push(tot>0?sc/tot:0.5);
+          dimCoeffArr.push(dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:0);
+        }
+        chartEl.innerHTML=buildReportChartSVG({
+          name:(_currentCaseName||userName||''),
+          dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
+          preV:vPre||0, luckV:vLuck||0, postV:vPost||0,
+          bossV:vLead||0, mgrV:vSub||0
+        });
+        // 寬度對齊先天指數區塊（含等比例高度，svg width:100% 自動處理）
+        var sizeChart=function(){
+          var ph=document.getElementById('report-pre-header');
+          if(ph){var w=ph.getBoundingClientRect().width;if(w>0)chartEl.style.width=w+'px';}
+        };
+        sizeChart();
+        requestAnimationFrame(sizeChart);
+      }
+    }catch(e){ if(window.debugLog) debugLog('[ReportChart]', e&&e.message?e.message:e); }
   }
 
   // 顯示 AI 評析區域（只在 BETA 全開時顯示）

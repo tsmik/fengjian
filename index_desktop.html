@@ -771,16 +771,20 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <span style="font-size:15px;color:#888;margin-left:12px">人相兵法係數報告</span>
   </div>
   <div id="report-full-table" style="margin:8px 0;overflow-x:auto;width:100%"></div>
+  <!-- 報告圖（表格下方）+ 縮短的按鈕排（圖右側） -->
+  <div id="report-chart-row" style="display:flex;gap:20px;align-items:flex-start;margin:14px 0;flex-wrap:wrap">
+    <div id="report-chart" style="flex:0 0 auto;width:360px"></div>
+    <div class="report-actions" id="report-actions" style="display:flex;flex-direction:column;gap:8px;flex:1 1 150px;min-width:140px;max-width:240px">
+      <button class="btn-back" onclick="showObsPage()" style="margin:0">&#8592; 回到觀察</button>
+      <button class="btn-back" onclick="showCondPage()" style="margin:0">&#8592; 修改評分</button>
+      <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="margin:0">儲存評分</button>
+      <button class="btn-line" onclick="exportPNG()" id="btn-export" style="margin:0">分享報告</button>
+      <button class="btn-back" onclick="clearObsData()" style="margin:0;color:var(--active);border-color:var(--active)">清除觀察資料</button>
+    </div>
+  </div>
   <div id="ai-section" style="padding:16px 20px;border-top:2px solid var(--border);margin-top:20px;display:none">
     <button id="btn-ai" onclick="generateAI()" style="padding:10px 28px;background:var(--active);color:white;border:none;border-radius:6px;font-size:15px;font-weight:400;cursor:pointer;letter-spacing:2px">生成 AI 評析</button>
     <div id="ai-analysis-area" style="margin-top:16px"></div>
-  </div>
-  <div class="report-actions">
-    <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
-    <button class="btn-back" onclick="showCondPage()" style="flex:1;margin:0;">&#8592; 修改評分</button>
-    <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
-    <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
-    <button class="btn-back" onclick="clearObsData()" style="flex:1;margin:0;color:var(--active);border-color:var(--active)">清除觀察資料</button>
   </div>
 </div>
 
