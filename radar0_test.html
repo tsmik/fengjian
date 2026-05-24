@@ -54,24 +54,27 @@ const chart=document.getElementById('chart');
 function render(){
   const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
   const botY=TOP+ROWS.length*(BAR_H+GAP)-GAP;
+  const tEdge=xOf(totV);
   let s=`<g id="bg" transform="translate(${TX},${TY})">`;
-  // 刻度尺
+  // 1. 各列淡軌（全長 0~0.8）
+  ROWS.forEach((r,i)=>{const y=TOP+i*(BAR_H+GAP);s+=`<rect x="${X0}" y="${y}" width="${TRACKW}" height="${BAR_H}" rx="3" fill="#f3eee4"/>`;});
+  // 2. 總係數：最底層大黑透明子彈（背景帶，右緣＝平均）
+  s+=`<rect x="${X0}" y="${(TOP-2).toFixed(1)}" width="${(tEdge-X0).toFixed(1)}" height="${(botY-(TOP-2)).toFixed(1)}" rx="3" fill="#000" fill-opacity="0.16"/>`;
+  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(TOP-2).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${botY.toFixed(1)}" stroke="#3d3b39" stroke-width="1.2" stroke-opacity="0.55"/>`;
+  // 3. 刻度
   [0,0.2,0.4,0.6,0.8].forEach(t=>{const x=xOf(t);
-    s+=`<line x1="${x.toFixed(1)}" y1="${TOP-4}" x2="${x.toFixed(1)}" y2="${botY}" stroke="#efe9dd" stroke-width="1"/>`;
-    s+=`<text x="${x.toFixed(1)}" y="${TOP-9}" font-size="9" fill="#bbb0a0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">${t.toFixed(1)}</text>`;});
-  // 先天群組左側括線（先天+老闆+主管）
+    s+=`<line x1="${x.toFixed(1)}" y1="${(TOP-4).toFixed(1)}" x2="${x.toFixed(1)}" y2="${botY.toFixed(1)}" stroke="#e7ddcb" stroke-width="1" stroke-opacity="0.5"/>`;
+    s+=`<text x="${x.toFixed(1)}" y="${(TOP-9).toFixed(1)}" font-size="9" fill="#bbb0a0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">${t.toFixed(1)}</text>`;});
+  // 4. 先天群組左側括線（先天+老闆+主管）
   {const y1=TOP, y2=TOP+3*(BAR_H+GAP)-GAP;s+=`<path d="M${X0-50},${y1} h-5 v${(y2-y1).toFixed(1)} h5" fill="none" stroke="#d8cdbd" stroke-width="1"/>`;}
-  // 各列
+  // 5. 各列彩條+名稱+數字
   ROWS.forEach((r,i)=>{const y=TOP+i*(BAR_H+GAP);const cy=y+BAR_H/2;const bw=xOf(r.v)-X0;
-    s+=`<rect x="${X0}" y="${y}" width="${TRACKW}" height="${BAR_H}" rx="3" fill="#f1ece1"/>`;
     s+=`<rect x="${X0}" y="${y}" width="${bw.toFixed(1)}" height="${BAR_H}" rx="3" fill="${r.col}" fill-opacity="0.9"/>`;
     const nx=r.sub?X0-12:X0-8;const fs=r.sub?11:12.5;
     s+=`<text x="${nx}" y="${cy}" font-size="${fs}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="${r.sub?600:700}">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cy}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
-  // 總係數參考線（直貫）
-  const tx=xOf(totV);
-  s+=`<line x1="${tx.toFixed(1)}" y1="${TOP-2}" x2="${tx.toFixed(1)}" y2="${botY+4}" stroke="#3d3b39" stroke-width="2" stroke-dasharray="5 3"/>`;
-  s+=`<text x="${tx.toFixed(1)}" y="${TOP-22}" font-size="11" text-anchor="middle" fill="#3d3b39" font-weight="700">總係數 ${totV.toFixed(2)}</text>`;
+  // 6. 總係數標籤
+  s+=`<text x="${tEdge.toFixed(1)}" y="${(TOP-22).toFixed(1)}" font-size="11" text-anchor="middle" fill="#3d3b39" font-weight="700">總係數 ${totV.toFixed(2)}</text>`;
   s+='</g>';
   chart.innerHTML=s;
   readout();
