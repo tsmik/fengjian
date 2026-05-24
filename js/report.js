@@ -227,7 +227,7 @@ export function showReport(){
     t+='<td id="report-pre-header" colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">先天指數</td>';
     if(showLuck){
       t+='<td style="padding:2px 4px"></td>';
-      t+='<td colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">運氣指數</td>';
+      t+='<td id="report-luck-header" colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px;font-weight:400">運氣指數</td>';
     }
     if(showPost){
       t+='<td style="padding:2px 4px"></td>';
@@ -646,13 +646,23 @@ export function showReport(){
           preV:vPre||0, luckV:vLuck||0, postV:vPost||0,
           bossV:vLead||0, mgrV:vSub||0, totalV:vTotal||0
         });
-        // 寬度對齊先天指數區塊（含等比例高度，svg width:100% 自動處理）
+        // 圖右緣對齊「運氣指數」左緣（高度等比例，svg width:100% 自動處理）
         var sizeChart=function(){
+          var left=chartEl.getBoundingClientRect().left;
+          var lh=document.getElementById('report-luck-header');
           var ph=document.getElementById('report-pre-header');
-          if(ph){var w=ph.getBoundingClientRect().width;if(w>0)chartEl.style.width=w+'px';}
+          var w=0;
+          if(lh){w=lh.getBoundingClientRect().left-left;}
+          else if(ph){var pr=ph.getBoundingClientRect();w=pr.right-left;}
+          if(w>0)chartEl.style.width=w+'px';
         };
         sizeChart();
         requestAnimationFrame(sizeChart);
+        // staging：報告圖 + 按鈕排 可自由移動/縮放（測試工具）
+        var _h=location.hostname;
+        if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
+          try{ setupReportTuner(); }catch(e2){}
+        }
       }
     }catch(e){ if(window.debugLog) debugLog('[ReportChart]', e&&e.message?e.message:e); }
   }
@@ -666,6 +676,59 @@ export function showReport(){
 
 /* ===== Close Report ===== */
 export function closeReport(){document.getElementById('report-overlay').style.display='none';}
+
+/* ===== staging 調整工具：報告圖 + 按鈕排 可自由移動/縮放 ===== */
+let _tuner=null, _tunerWired=false, _tunerDrag=null;
+function _tunerApply(){
+  var c=document.getElementById('report-chart'), a=document.getElementById('report-actions');
+  if(c){c.style.transformOrigin='top left';c.style.transform='translate('+_tuner.chart.tx+'px,'+_tuner.chart.ty+'px) scale('+_tuner.chart.s+')';}
+  if(a){a.style.transformOrigin='top left';a.style.transform='translate('+_tuner.actions.tx+'px,'+_tuner.actions.ty+'px) scale('+_tuner.actions.s+')';}
+}
+function _tunerReadout(){
+  var o=document.getElementById('rpt-tuner-out'); if(!o)return;
+  o.value='報告圖: x='+_tuner.chart.tx.toFixed(0)+' y='+_tuner.chart.ty.toFixed(0)+' scale='+_tuner.chart.s.toFixed(2)
+        +'\n按鈕: x='+_tuner.actions.tx.toFixed(0)+' y='+_tuner.actions.ty.toFixed(0)+' scale='+_tuner.actions.s.toFixed(2);
+}
+function _tunerGrip(el,which){
+  var g=document.createElement('div');
+  g.className='rpt-grip'; g.textContent='✚';
+  g.style.cssText='position:absolute;top:-11px;left:-11px;width:22px;height:22px;line-height:19px;text-align:center;border-radius:50%;background:#cc9173;color:#fff;border:2px solid #fff;cursor:move;z-index:10000;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.35);user-select:none';
+  if(getComputedStyle(el).position==='static') el.style.position='relative';
+  el.appendChild(g);
+  g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_tuner[which];_tunerDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
+}
+function setupReportTuner(){
+  if(!_tuner)_tuner={chart:{tx:0,ty:0,s:1},actions:{tx:0,ty:0,s:1}};
+  if(!_tunerWired){
+    window.addEventListener('mousemove',function(e){if(!_tunerDrag)return;var st=_tuner[_tunerDrag.which];st.tx=_tunerDrag.bx+(e.clientX-_tunerDrag.sx);st.ty=_tunerDrag.by+(e.clientY-_tunerDrag.sy);_tunerApply();_tunerReadout();});
+    window.addEventListener('mouseup',function(){_tunerDrag=null;});
+    _tunerWired=true;
+  }
+  var chartEl=document.getElementById('report-chart');
+  var actionsEl=document.getElementById('report-actions');
+  if(chartEl) _tunerGrip(chartEl,'chart'); // chart innerHTML 每次重設，需重加把手
+  if(actionsEl && !actionsEl.dataset.tuned){ _tunerGrip(actionsEl,'actions'); actionsEl.dataset.tuned='1'; }
+  if(!document.getElementById('rpt-tuner-panel')){
+    var panel=document.createElement('div');
+    panel.id='rpt-tuner-panel';
+    panel.style.cssText='margin:10px 0;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39';
+    panel.innerHTML='<div style="margin-bottom:6px;color:#9a8456">staging 調整工具：拖 ✚ 把手移動；下方滑桿縮放</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">報告圖大小 <input id="rpt-chart-scale" type="range" min="0.4" max="2.5" step="0.05" value="1" style="width:200px"> <b id="rpt-chart-sv">1.00</b></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">按鈕大小 <input id="rpt-act-scale" type="range" min="0.4" max="2" step="0.05" value="1" style="width:200px"> <b id="rpt-act-sv">1.00</b></div>'
+      +'<textarea id="rpt-tuner-out" readonly style="width:100%;height:50px;font-family:monospace;font-size:11px;border:1px solid #e7ded2;border-radius:6px;padding:5px;box-sizing:border-box"></textarea>'
+      +'<button id="rpt-tuner-copy" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">複製設定</button>'
+      +' <button id="rpt-tuner-reset" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">歸位</button>';
+    var row=document.getElementById('report-chart-row');
+    if(row&&row.parentNode) row.parentNode.insertBefore(panel,row.nextSibling);
+    panel.querySelector('#rpt-chart-scale').addEventListener('input',function(){_tuner.chart.s=parseFloat(this.value);document.getElementById('rpt-chart-sv').textContent=_tuner.chart.s.toFixed(2);_tunerApply();_tunerReadout();});
+    panel.querySelector('#rpt-act-scale').addEventListener('input',function(){_tuner.actions.s=parseFloat(this.value);document.getElementById('rpt-act-sv').textContent=_tuner.actions.s.toFixed(2);_tunerApply();_tunerReadout();});
+    panel.querySelector('#rpt-tuner-copy').addEventListener('click',function(){var ta=document.getElementById('rpt-tuner-out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';var b=this;setTimeout(function(){b.textContent='複製設定';},1200);});
+    panel.querySelector('#rpt-tuner-reset').addEventListener('click',function(){_tuner.chart={tx:0,ty:0,s:1};_tuner.actions={tx:0,ty:0,s:1};document.getElementById('rpt-chart-scale').value=1;document.getElementById('rpt-act-scale').value=1;document.getElementById('rpt-chart-sv').textContent='1.00';document.getElementById('rpt-act-sv').textContent='1.00';_tunerApply();_tunerReadout();});
+  }
+  var cs=document.getElementById('rpt-chart-scale'); if(cs){cs.value=_tuner.chart.s;document.getElementById('rpt-chart-sv').textContent=_tuner.chart.s.toFixed(2);}
+  var as=document.getElementById('rpt-act-scale'); if(as){as.value=_tuner.actions.s;document.getElementById('rpt-act-sv').textContent=_tuner.actions.s.toFixed(2);}
+  _tunerApply(); _tunerReadout();
+}
 
 /* ===== Export PNG ===== */
 export async function exportPNG(){

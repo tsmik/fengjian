@@ -27,7 +27,6 @@
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.30</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:180px"></div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">總係數環濃度 <b id="ringVal">0.50</b> <input id="ringSlider" type="range" min="0" max="1" step="0.05" value="0.5" style="vertical-align:middle;width:180px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -81,8 +80,6 @@ QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path cla
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-// 總係數參考環（13 邊形黑框線；半徑依總係數，用來比較各係數高低）
-{const totV=mean(co);const r_tot=rIn*Math.sqrt(Math.min(1,totV/COEF_MAX));const tr=spans.map(s=>PS(f(s[0],r_tot))).join(' ');svg+=`<polygon class="totring" points="${tr}" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="1.2"/>`;}
 // 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
@@ -170,8 +167,6 @@ poly.innerHTML=svg;
   document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
   const opS=document.getElementById('opSlider'),opV=document.getElementById('opVal');
   opS.addEventListener('input',function(){const v=parseFloat(this.value);opV.textContent=v.toFixed(2);poly.querySelectorAll('.qsec').forEach(p=>p.setAttribute('fill-opacity',v));});
-  const ringS=document.getElementById('ringSlider'),ringV=document.getElementById('ringVal');
-  ringS.addEventListener('input',function(){const v=parseFloat(this.value);ringV.textContent=v.toFixed(2);poly.querySelectorAll('.totring').forEach(p=>p.setAttribute('stroke-opacity',v));});
   readout();
 })();
 </script>

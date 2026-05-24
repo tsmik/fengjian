@@ -53,8 +53,6 @@ export function buildReportChartSVG(opts){
   QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-  // 總係數參考環（13 邊形黑框線；半徑依總係數，用來比較各係數高低）
-  {const tv=+opts.totalV||0;const r_tot=rIn*Math.sqrt(Math.min(1,tv/COEF_MAX));const tr=spans.map(s=>PS(f(s[0],r_tot))).join(' ');svg+=`<polygon points="${tr}" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="1.2"/>`;}
   // 核心文字框（老闆/主管/運氣/後天 + 先天）
   function lab2(x,y,nm,val,fs,col){const tl=(nm.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${nm}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
   QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.tc);});
