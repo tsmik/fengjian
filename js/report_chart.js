@@ -53,6 +53,8 @@ export function buildReportChartSVG(opts){
   QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+  // 總係數參考環（13 邊形黑框線；半徑依總係數，用來比較各係數高低）
+  {const tv=+opts.totalV||0;const r_tot=rIn*Math.sqrt(Math.min(1,tv/COEF_MAX));const tr=spans.map(s=>PS(f(s[0],r_tot))).join(' ');svg+=`<polygon points="${tr}" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="1.2"/>`;}
   // 核心文字框（老闆/主管/運氣/後天 + 先天）
   function lab2(x,y,nm,val,fs,col){const tl=(nm.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${nm}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${(+val||0).toFixed(2)}</text>`;}
   QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.tc);});
@@ -84,11 +86,11 @@ export function buildReportChartSVG(opts){
   // 標題
   {const p=f(31.6,rIn*3.395);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.6" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
   // 總係數（中央；黑透明 13 邊形底白字）
-  {const tcx=200,tcy=215,totV=+opts.totalV||0;
-   const tg=spans.map(s=>PS(f(s[0],20))).join(' ');
+  {const tcx=200,tcy=215,TSC=0.85,totV=+opts.totalV||0;
+   const tg=spans.map(s=>PS(f(s[0],20*TSC))).join(' ');
    svg+=`<polygon points="${tg}" fill="#000" fill-opacity="0.45"/>`
-     +`<text x="${tcx}" y="${tcy-2}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
-     +`<text x="${tcx}" y="${tcy+10}" font-size="10.5" textLength="27" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace">${totV.toFixed(2)}</text>`;}
+     +`<text x="${tcx}" y="${(tcy-2*TSC).toFixed(1)}" font-size="${(9*TSC).toFixed(1)}" text-anchor="middle" fill="#fff">總係數</text>`
+     +`<text x="${tcx}" y="${(tcy+10*TSC).toFixed(1)}" font-size="${(10.5*TSC).toFixed(1)}" textLength="${(27*TSC).toFixed(1)}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="#fff" font-family="monospace">${totV.toFixed(2)}</text>`;}
   // 動靜圖例
   {const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
    svg+=`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
