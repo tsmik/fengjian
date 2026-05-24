@@ -73,11 +73,16 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rBal))).join(' ')}" fill="none" 
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;const g=(a1-a0)*0.04;
   const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rS),p1=f(a1-g,rS);
   svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
-// 只標主導極字：靜多→內圈線與平衡線中間(綠)；動多→平衡線與外圈線中間(橘)；字小
+// 兩極字都標：靜字在內半環中央、動字在外半環中央；主導極實色(綠/橘)，另一極半透明白(透出底層)
 const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;
-  if(dm.j>dm.d){const p=f(mid,rInner);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;}
-  else{const p=f(mid,rOuter);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d;
+  const pj=f(mid,rInner),pd=f(mid,rOuter);
+  // 靜極字（內）
+  if(jDom) svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;
+  else svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="#ffffff" opacity="0.6" font-weight="700">${dm.jc}</text>`;
+  // 動極字（外）
+  if(!jDom) svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;
+  else svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="#ffffff" opacity="0.6" font-weight="700">${dm.dc}</text>`;});
 // 維度名+係數
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
   svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
