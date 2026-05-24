@@ -20,70 +20,72 @@
 <body>
 <div class="wrap">
   <div class="title">人相兵法 · 一目了然</div>
-  <div class="sub">（試做 · 假資料）外圈放射直條：綠＝靜數／橘＝動數（用長度比，不用面積）<br>內圈三分區：先天／運氣／後天 係數</div>
+  <div class="sub">（試做 · 假資料）13邊形：外環依「靜:動」比分綠橘，恆=9<br>白線＝動靜平衡輪廓（內凹偏靜／外凸偏動）</div>
   <div class="card">
-    <svg id="rose" viewBox="0 0 400 470" aria-label="一目了然圖"></svg>
+    <svg id="poly" viewBox="0 0 400 470" aria-label="一目了然多邊形圖"></svg>
     <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
   </div>
 </div>
 <script>
 function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const S=getC('--static'),A=getC('--active'),PRE=getC('--pre'),LUCK=getC('--luck'),POST=getC('--post');
-// 右上(0-90)形勢經緯方圓 / 右下(90-180)曲直收放緩急 / 左下(180-270)順逆分合真假 / 左上(270-360)攻守奇正虛實進退
+// 右上 形勢經緯方圓 / 右下 曲直收放緩急 / 左下 順逆分合真假 / 左上 攻守奇正虛實進退
+// j=靜 d=動 (j+d=9), c=係數（假資料）
 const DIMS=[
-  {dn:'形勢',j:2,d:7,c:0.29},{dn:'經緯',j:5,d:3,c:0.51},{dn:'方圓',j:6,d:3,c:0.40},
-  {dn:'曲直',j:3,d:5,c:0.22},{dn:'收放',j:4,d:5,c:0.45},{dn:'緩急',j:7,d:2,c:0.38},
-  {dn:'順逆',j:5,d:4,c:0.30},{dn:'分合',j:3,d:6,c:0.33},{dn:'真假',j:6,d:2,c:0.41},
-  {dn:'攻守',j:2,d:7,c:0.55},{dn:'奇正',j:5,d:4,c:0.48},{dn:'虛實',j:4,d:4,c:0.36},{dn:'進退',j:6,d:3,c:0.60}
+  {dn:'形勢',j:2,c:0.29},{dn:'經緯',j:5,c:0.51},{dn:'方圓',j:6,c:0.40},
+  {dn:'曲直',j:3,c:0.22},{dn:'收放',j:4,c:0.45},{dn:'緩急',j:7,c:0.38},
+  {dn:'順逆',j:5,c:0.30},{dn:'分合',j:3,c:0.33},{dn:'真假',j:6,c:0.41},
+  {dn:'攻守',j:2,c:0.55},{dn:'奇正',j:5,c:0.48},{dn:'虛實',j:4,c:0.36},{dn:'進退',j:6,c:0.60}
 ];
+DIMS.forEach(d=>d.d=9-d.j);
 const sizes=[30,30,30,30,30,30,30,30,30,22.5,22.5,22.5,22.5];
 const spans=[];let acc=0;for(let i=0;i<13;i++){spans.push([acc,acc+sizes[i]]);acc+=sizes[i];}
-const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
-const co=DIMS.map(d=>d.c);
-// 內圈三分區（右半=先天 0-180 / 左下=運氣 180-270 / 左上=後天 270-360）
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length, co=DIMS.map(d=>d.c);
 const CORE=[
-  {name:'先天',col:PRE, a0:0,a1:180, mid:90,  v:mean(co.slice(0,6))},
-  {name:'運氣',col:LUCK,a0:180,a1:270,mid:225, v:mean(co.slice(6,9))},
-  {name:'後天',col:POST,a0:270,a1:360,mid:315, v:mean(co.slice(9,13))}
+  {name:'先天',col:PRE, a:[0,180], mid:90, v:mean(co.slice(0,6))},
+  {name:'運氣',col:LUCK,a:[180,270],mid:225,v:mean(co.slice(6,9))},
+  {name:'後天',col:POST,a:[270,360],mid:315,v:mean(co.slice(9,13))}
 ];
-
-const cx=200,cy=215,RUNIT=12,Rpix=150,u=Rpix/RUNIT,rCore=3*u; // 半徑12，內圈3
-const rad=deg=>deg*Math.PI/180;
-const f=(deg,r)=>[(cx+r*Math.sin(rad(deg))).toFixed(2),(cy-r*Math.cos(rad(deg))).toFixed(2)];
-function annular(a0,a1,rIn,rOut){
-  const o0=f(a0,rOut),o1=f(a1,rOut),i1=f(a1,rIn),i0=f(a0,rIn);
-  const large=(a1-a0)>180?1:0;
-  if(rIn<=0.01) return `M${cx} ${cy} L${o0[0]} ${o0[1]} A${rOut} ${rOut} 0 ${large} 1 ${o1[0]} ${o1[1]} Z`;
-  return `M${o0[0]} ${o0[1]} A${rOut} ${rOut} 0 ${large} 1 ${o1[0]} ${o1[1]} L${i1[0]} ${i1[1]} A${rIn} ${rIn} 0 ${large} 0 ${i0[0]} ${i0[1]} Z`;
+const cx=200,cy=215,U=20.5,rIn=5*U,rOut=7*U; // 內徑5 外徑7
+const rad=d=>d*Math.PI/180;
+const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
+const P=(deg,r)=>{const p=f(deg,r);return p[0].toFixed(2)+' '+p[1].toFixed(2);};
+function facet(a0,a1,ra,rb){ // 直邊四邊形（內邊 ra、外邊 rb）
+  return `M${P(a0,ra)} L${P(a0,rb)} L${P(a1,rb)} L${P(a1,ra)} Z`;
 }
 let svg='';
-// 刻度圈（淡）：核心邊界 + 外圈每3單位一圈
-for(let k=3;k<=12;k+=3){svg+=`<circle cx="${cx}" cy="${cy}" r="${(k*u).toFixed(1)}" fill="none" stroke="#efe9df" stroke-width="0.7"/>`;}
-svg+=`<circle cx="${cx}" cy="${cy}" r="${Rpix}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-// 內圈三分區 + 文字
+// 外 13 邊形外框（淡）
+let outer=[]; spans.forEach(s=>outer.push(P(s[0],rOut)));
+svg+=`<polygon points="${outer.map(p=>p.replace(' ',',')).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
+// 內核三分區（直邊扇形）
+function coreRegion(a0,a1){let pts=[`${cx} ${cy}`];for(let a=a0;a<a1+0.01;a+=(a1-a0));/*noop*/;
+  // 沿邊界頂點走（每個 span 邊界）
+  let v=[`${cx} ${cy}`]; spans.forEach(s=>{if(s[0]>=a0&&s[0]<=a1)v.push(P(s[0],rIn));}); v.push(P(a1,rIn)); return v.join(' L ');}
 CORE.forEach(c=>{
-  svg+=`<path d="${annular(c.a0,c.a1,0,rCore)}" fill="${c.col}" opacity="0.14"/>`;
-  const lp=f(c.mid,rCore*0.55);
-  svg+=`<text x="${lp[0]}" y="${(parseFloat(lp[1])-2).toFixed(1)}" font-size="11" text-anchor="middle" fill="${c.col}" font-weight="700">${c.name}</text>`;
-  svg+=`<text x="${lp[0]}" y="${(parseFloat(lp[1])+12).toFixed(1)}" font-size="12" text-anchor="middle" fill="${c.col}" font-family="monospace" font-weight="700">${c.v.toFixed(2)}</text>`;
+  svg+=`<path d="M ${coreRegion(c.a[0],c.a[1])} Z" fill="${c.col}" opacity="0.13"/>`;
 });
-// 內圈分隔線
-[0,180,270].forEach(a=>{const p=f(a,rCore);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#fff" stroke-width="1.5"/>`;});
-// 外圈放射直條（窄、留縫）：綠(靜)+橘(動) 疊長度
+[0,180,270].forEach(a=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(a,rIn)[0].toFixed(1)}" y2="${f(a,rIn)[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`);
+CORE.forEach(c=>{const lp=f(c.mid,rIn*0.6);
+  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]-3).toFixed(1)}" font-size="13" text-anchor="middle" fill="${c.col}" font-weight="700">${c.name}</text>`;
+  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+14).toFixed(1)}" font-size="14" text-anchor="middle" fill="${c.col}" font-family="monospace" font-weight="700">${c.v.toFixed(2)}</text>`;});
+// 外環：每維度依比例分綠(靜,內)/橘(動,外)；填色淡，交界線搶眼
+const splitPts=[];
 DIMS.forEach((dm,i)=>{
-  const[a0,a1]=spans[i];const mid=(a0+a1)/2;const w=(a1-a0)*0.5;const b0=mid-w/2,b1=mid+w/2;
-  const rJ=rCore+dm.j*u, rD=rCore+(dm.j+dm.d)*u;
-  if(dm.j>0) svg+=`<path d="${annular(b0,b1,rCore,rJ)}" fill="${S}" rx="2"/>`;
-  if(dm.d>0) svg+=`<path d="${annular(b0,b1,rJ,rD)}" fill="${A}"/>`;
+  const[a0,a1]=spans[i]; const rS=rIn+(dm.j/9)*(rOut-rIn);
+  svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.55"/>`;
+  svg+=`<path d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.55"/>`;
+  splitPts.push(P((a0+a1)/2,rS));
 });
-// 維度名 + 係數（圓外）
-DIMS.forEach((dm,i)=>{
-  const[a0,a1]=spans[i];const mid=(a0+a1)/2;const lp=f(mid,Rpix+16);
-  const c=Math.sin(rad(mid));const anchor=c>0.25?'start':c<-0.25?'end':'middle';
-  svg+=`<text x="${lp[0]}" y="${lp[1]}" font-size="12" text-anchor="${anchor}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
-  svg+=`<text x="${lp[0]}" y="${(parseFloat(lp[1])+13).toFixed(1)}" font-size="11" text-anchor="${anchor}" fill="var(--text3)" font-family="monospace">${dm.c.toFixed(2)}</text>`;
-});
-document.getElementById('rose').innerHTML=svg;
+// 分隔線（維度間，淡）
+spans.forEach(s=>svg+=`<line x1="${f(s[0],rIn)[0].toFixed(1)}" y1="${f(s[0],rIn)[1].toFixed(1)}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
+// 動靜平衡輪廓線（連 13 個交界中點）
+svg+=`<polygon points="${splitPts.map(p=>p.replace(' ',',')).join(' ')}" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round" opacity="0.95"/>`;
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const rS=rIn+(dm.j/9)*(rOut-rIn);const p=f(mid,rS);svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.3" fill="#fff"/>`;});
+// 維度名 + 係數（外）
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
+  svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
+  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+13).toFixed(1)}" font-size="11" text-anchor="${an}" fill="var(--text3)" font-family="monospace">${dm.c.toFixed(2)}</text>`;});
+document.getElementById('poly').innerHTML=svg;
 </script>
 </body>
 </html>
