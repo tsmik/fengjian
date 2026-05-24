@@ -22,7 +22,7 @@
 <div class="wrap">
   <div class="sub">（案例數據；假）上：係數總覽（子彈圖）／下：動靜總覽（逐部位）</div>
   <div class="card">
-    <svg id="chart" viewBox="0 0 400 410" aria-label="係數總覽圖"></svg>
+    <svg id="chart" viewBox="0 0 400 420" aria-label="係數總覽圖"></svg>
   </div>
   <div class="ctrl">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖圖移動；下方滑桿調整</div>
@@ -56,6 +56,7 @@ let BAR_H=10, TRACKW=300, COEF_OP=0.7, SD_OP=0.8, TX=0, TY=0;
 const CMAX=0.8, X0=74, GAP=9.6, PAD=8, LP=4, SDG_THIN=2.5, SDG_THICK=8;
 const chart=document.getElementById('chart');
 function barR(x,y,w,h,r){w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;}
+function barL(x,y,w,h,r){w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${(x+r).toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} v${h.toFixed(1)} h${(-(w-r)).toFixed(1)} a${r},${r} 0 0 1 ${-r},${-r} v${(-(h-2*r)).toFixed(1)} a${r},${r} 0 0 1 ${r},${-r} Z`;}
 
 function render(){
   const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
@@ -72,21 +73,22 @@ function render(){
     s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="12" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
   s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${TOTCOL}" stroke-width="1.5"/>`;
-  // ===== 動靜總覽（逐部位：動左/靜右；米白底）=====
-  const SDH=BAR_H+6;
-  const headY=cBot+26, barsTop=cBot+34;
-  // 先算總高
-  let hh=0; SD_ROWS.forEach((r,i)=>{hh+=SDH; if(i<SD_ROWS.length-1) hh+=(THICK_AFTER.indexOf(i)>=0?SDG_THICK:SDG_THIN);});
-  s+=`<text x="${X0}" y="${headY.toFixed(1)}" font-size="13" text-anchor="start" fill="${A}" font-weight="700">總動靜</text>`;
-  s+=`<rect x="${X0}" y="${(barsTop-PAD).toFixed(1)}" width="${TRACKW}" height="${(hh+2*PAD).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
+  // ===== 動靜總覽（逐部位：動左/靜右，兩端圓角；高度/間隔同係數；米白底）=====
+  const SDH=BAR_H, GT=GAP, GK=GAP+6, prr=Math.min(3,SDH/2);
+  // 「總動靜」標題：右對齊、同上方標題色；與上下米白紙各留一個 bar 間隔(GAP)
+  const headBoxTop=cBot+GAP, headBase=headBoxTop+12, sdCTop=headBoxTop+16+GAP, barsTop=sdCTop+PAD;
+  let hh=0; SD_ROWS.forEach((r,i)=>{hh+=SDH; if(i<SD_ROWS.length-1) hh+=(THICK_AFTER.indexOf(i)>=0?GK:GT);});
+  s+=`<text x="${(X0+TRACKW).toFixed(1)}" y="${headBase.toFixed(1)}" font-size="14" text-anchor="end" fill="#3d3b39" font-weight="700" letter-spacing="1">總動靜</text>`;
+  s+=`<rect x="${X0}" y="${sdCTop.toFixed(1)}" width="${TRACKW}" height="${(hh+2*PAD).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   let y=barsTop;
-  SD_ROWS.forEach((r,i)=>{const dW=TRACKW*r.d/r.t, bd=X0+dW, cyy=y+SDH/2;
-    s+=`<rect x="${X0}" y="${y.toFixed(1)}" width="${dW.toFixed(1)}" height="${SDH}" fill="${A}" fill-opacity="${SD_OP}"/>`;
-    s+=`<rect x="${bd.toFixed(1)}" y="${y.toFixed(1)}" width="${(TRACKW-dW).toFixed(1)}" height="${SDH}" fill="${S}" fill-opacity="${SD_OP}"/>`;
+  SD_ROWS.forEach((r,i)=>{const isTot=(i===SD_ROWS.length-1);const op=isTot?Math.min(1,SD_OP+0.18):SD_OP;
+    const dW=TRACKW*r.d/r.t, bd=X0+dW, cyy=y+SDH/2;
+    s+=`<path d="${barL(X0,y,dW,SDH,prr)}" fill="${A}" fill-opacity="${op}"/>`;
+    s+=`<path d="${barR(bd,y,TRACKW-dW,SDH,prr)}" fill="${S}" fill-opacity="${op}"/>`;
     s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11.5" text-anchor="end" dominant-baseline="central" fill="#6a6458" font-weight="700">${r.name}</text>`;
-    if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10.5" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
-    if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10.5" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
-    y+=SDH+(i<SD_ROWS.length-1?(THICK_AFTER.indexOf(i)>=0?SDG_THICK:SDG_THIN):0);
+    if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
+    if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
+    y+=SDH+(i<SD_ROWS.length-1?(THICK_AFTER.indexOf(i)>=0?GK:GT):0);
   });
   s+='</g>';
   chart.innerHTML=s;
