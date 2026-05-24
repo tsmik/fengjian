@@ -28,8 +28,11 @@
   </div>
   <div class="ctrl">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖圖移動；下方滑桿調 bar 粗細／軸長</div>
-    <div class="row">bar 粗細 <input id="hS" type="range" min="10" max="34" step="1" value="18" style="width:150px"> <b id="hV">18</b>
-      ｜ 軸長 <input id="wS" type="range" min="180" max="300" step="5" value="270" style="width:150px"> <b id="wV">270</b></div>
+    <div class="row">bar 粗細 <input id="hS" type="range" min="10" max="34" step="1" value="18" style="width:140px"> <b id="hV">18</b>
+      ｜ 軸長 <input id="wS" type="range" min="180" max="300" step="5" value="270" style="width:140px"> <b id="wV">270</b></div>
+    <div class="row">總凸出 <input id="pS" type="range" min="0" max="24" step="1" value="6" style="width:120px"> <b id="pV">6</b>
+      ｜ 總濃度 <input id="oS" type="range" min="0" max="0.6" step="0.02" value="0.16" style="width:120px"> <b id="oV">0.16</b>
+      ｜ 總字級 <input id="fS" type="range" min="8" max="22" step="0.5" value="11" style="width:120px"> <b id="fV">11</b></div>
     <textarea id="out" readonly></textarea>
     <div style="margin-top:6px"><button id="copyBtn">複製設定</button> <button id="resetBtn">歸位</button></div>
   </div>
@@ -41,45 +44,42 @@ const bossV=mean(DIMS_C.slice(0,3)),mgrV=mean(DIMS_C.slice(3,6)),preV=mean(DIMS_
       luckV=mean(DIMS_C.slice(6,9)),postV=mean(DIMS_C.slice(9,13)),totV=mean(DIMS_C);
 const CMAX=0.8;
 const ROWS=[
-  {name:'先天',v:preV,col:'#8E4B50',sub:false},
-  {name:'老闆',v:bossV,col:'#936A78',sub:true},
-  {name:'主管',v:mgrV,col:'#876D4F',sub:true},
-  {name:'運氣',v:luckV,col:'#546D77',sub:false},
-  {name:'後天',v:postV,col:'#797181',sub:false}
+  {name:'先天',v:preV,col:'#8E4B50'},
+  {name:'老闆',v:bossV,col:'#936A78'},
+  {name:'主管',v:mgrV,col:'#876D4F'},
+  {name:'運氣',v:luckV,col:'#546D77'},
+  {name:'後天',v:postV,col:'#797181'}
 ];
-let BAR_H=18, TRACKW=270, TX=0, TY=0;
+let BAR_H=18, TRACKW=270, PROTRUDE=6, TOTAL_OP=0.16, TOTAL_FS=11, TX=0, TY=0;
 const X0=74, TOP=46, GAP=12;
 const chart=document.getElementById('chart');
 
+// 子彈形：左方角、右圓角
+function barPath(x,y,w,h,r){w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;}
+
 function render(){
   const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
-  const botY=TOP+ROWS.length*(BAR_H+GAP)-GAP;
-  const tEdge=xOf(totV);
+  const n=ROWS.length, stackTop=TOP, stackBot=TOP+n*(BAR_H+GAP)-GAP;
+  const tEdge=xOf(totV), tyTop=stackTop-PROTRUDE, tyBot=stackBot+PROTRUDE;
   let s=`<g id="bg" transform="translate(${TX},${TY})">`;
-  // 1. 各列淡軌（全長 0~0.8）
-  ROWS.forEach((r,i)=>{const y=TOP+i*(BAR_H+GAP);s+=`<rect x="${X0}" y="${y}" width="${TRACKW}" height="${BAR_H}" rx="3" fill="#f3eee4"/>`;});
-  // 2. 總係數：最底層大黑透明子彈（背景帶，右緣＝平均）
-  s+=`<rect x="${X0}" y="${(TOP-2).toFixed(1)}" width="${(tEdge-X0).toFixed(1)}" height="${(botY-(TOP-2)).toFixed(1)}" rx="3" fill="#000" fill-opacity="0.16"/>`;
-  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(TOP-2).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${botY.toFixed(1)}" stroke="#3d3b39" stroke-width="1.2" stroke-opacity="0.55"/>`;
-  // 3. 刻度
+  // 1. 米色刻度層（最底）
+  s+=`<rect x="${X0}" y="${tyTop.toFixed(1)}" width="${TRACKW}" height="${(tyBot-tyTop).toFixed(1)}" rx="3" fill="#f3eee4"/>`;
   [0,0.2,0.4,0.6,0.8].forEach(t=>{const x=xOf(t);
-    s+=`<line x1="${x.toFixed(1)}" y1="${(TOP-4).toFixed(1)}" x2="${x.toFixed(1)}" y2="${botY.toFixed(1)}" stroke="#e7ddcb" stroke-width="1" stroke-opacity="0.5"/>`;
-    s+=`<text x="${x.toFixed(1)}" y="${(TOP-9).toFixed(1)}" font-size="9" fill="#bbb0a0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">${t.toFixed(1)}</text>`;});
-  // 4. 先天群組左側括線（先天+老闆+主管）
-  {const y1=TOP, y2=TOP+3*(BAR_H+GAP)-GAP;s+=`<path d="M${X0-50},${y1} h-5 v${(y2-y1).toFixed(1)} h5" fill="none" stroke="#d8cdbd" stroke-width="1"/>`;}
-  // 5. 各列彩條+名稱+數字
-  ROWS.forEach((r,i)=>{const y=TOP+i*(BAR_H+GAP);const cy=y+BAR_H/2;const bw=xOf(r.v)-X0;
-    s+=`<rect x="${X0}" y="${y}" width="${bw.toFixed(1)}" height="${BAR_H}" rx="3" fill="${r.col}" fill-opacity="0.9"/>`;
-    const nx=r.sub?X0-12:X0-8;const fs=r.sub?11:12.5;
-    s+=`<text x="${nx}" y="${cy}" font-size="${fs}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="${r.sub?600:700}">${r.name}</text>`;
-    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cy}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
-  // 6. 總係數標籤
-  s+=`<text x="${tEdge.toFixed(1)}" y="${(TOP-22).toFixed(1)}" font-size="11" text-anchor="middle" fill="#3d3b39" font-weight="700">總係數 ${totV.toFixed(2)}</text>`;
+    s+=`<line x1="${x.toFixed(1)}" y1="${tyTop.toFixed(1)}" x2="${x.toFixed(1)}" y2="${tyBot.toFixed(1)}" stroke="#e3d8c5" stroke-width="1"/>`;
+    s+=`<text x="${x.toFixed(1)}" y="${(tyTop-6).toFixed(1)}" font-size="9" fill="#bbb0a0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">${t.toFixed(1)}</text>`;});
+  // 2. 總係數層（大黑透明子彈，上下凸出墊底）
+  s+=`<path d="${barPath(X0,tyTop,tEdge-X0,tyBot-tyTop,3)}" fill="#000" fill-opacity="${TOTAL_OP}"/>`;
+  s+=`<text x="${(tEdge-4).toFixed(1)}" y="${(tyBot+TOTAL_FS+2).toFixed(1)}" font-size="${TOTAL_FS}" text-anchor="end" fill="#3d3b39" font-weight="700" font-family="'Helvetica Neue',Arial,sans-serif">總係數 ${totV.toFixed(2)}</text>`;
+  // 3. 五個係數（平等：同高同字、左方右圓）
+  ROWS.forEach((r,i)=>{const y=stackTop+i*(BAR_H+GAP);const cy=y+BAR_H/2;
+    s+=`<path d="${barPath(X0,y,xOf(r.v)-X0,BAR_H,3)}" fill="${r.col}" fill-opacity="0.92"/>`;
+    s+=`<text x="${(X0-8).toFixed(1)}" y="${cy.toFixed(1)}" font-size="12" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
+    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
   s+='</g>';
   chart.innerHTML=s;
   readout();
 }
-function readout(){document.getElementById('out').value=`bar 粗細=${BAR_H}  軸長=${TRACKW}  位置 x=${TX.toFixed(0)} y=${TY.toFixed(0)}`;}
+function readout(){document.getElementById('out').value=`bar粗細=${BAR_H} 軸長=${TRACKW} 總凸出=${PROTRUDE} 總濃度=${TOTAL_OP} 總字級=${TOTAL_FS}\n位置 x=${TX.toFixed(0)} y=${TY.toFixed(0)}`;}
 // 拖曳移動
 (function(){
   let drag=false,sx,sy,bx,by;
@@ -95,8 +95,14 @@ const hS=document.getElementById('hS'),hV=document.getElementById('hV');
 hS.addEventListener('input',function(){BAR_H=parseInt(this.value,10);hV.textContent=BAR_H;render();});
 const wS=document.getElementById('wS'),wV=document.getElementById('wV');
 wS.addEventListener('input',function(){TRACKW=parseInt(this.value,10);wV.textContent=TRACKW;render();});
+const pS=document.getElementById('pS'),pV=document.getElementById('pV');
+pS.addEventListener('input',function(){PROTRUDE=parseInt(this.value,10);pV.textContent=PROTRUDE;render();});
+const oS=document.getElementById('oS'),oV=document.getElementById('oV');
+oS.addEventListener('input',function(){TOTAL_OP=parseFloat(this.value);oV.textContent=TOTAL_OP.toFixed(2);render();});
+const fS=document.getElementById('fS'),fV=document.getElementById('fV');
+fS.addEventListener('input',function(){TOTAL_FS=parseFloat(this.value);fV.textContent=TOTAL_FS;render();});
 document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製設定',1200);});
-document.getElementById('resetBtn').addEventListener('click',function(){BAR_H=18;TRACKW=270;TX=0;TY=0;hS.value=18;hV.textContent=18;wS.value=270;wV.textContent=270;render();});
+document.getElementById('resetBtn').addEventListener('click',function(){BAR_H=18;TRACKW=270;PROTRUDE=6;TOTAL_OP=0.16;TOTAL_FS=11;TX=0;TY=0;hS.value=18;hV.textContent=18;wS.value=270;wV.textContent=270;pS.value=6;pV.textContent=6;oS.value=0.16;oV.textContent='0.16';fS.value=11;fV.textContent=11;render();});
 render();
 </script>
 </body>
