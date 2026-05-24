@@ -30,7 +30,7 @@ import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
 import { buildRadar2MSVG, buildSDSVG } from './report_chart.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
-import { setSaveStatus, getSaveStatus } from './m_input.js';
+import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
@@ -138,6 +138,8 @@ export function mountManual(container) {
   _loadManualDraft();
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
   _render();
+  // v1.8：mount 即載入主規則，讓 master 條件（上停/耳/眉/眼/鼻/口…）不必先儲存就顯示
+  ensureDimRulesLoaded().then(() => { if (_container) _render(); }).catch(() => {});
   // mount 時必為 saved（_draft = firestore baseline，無 LS 殘留）；user 改才轉 dirty
   setSaveStatus('saved');
   // 綁儲存按鈕（覆蓋 m_input.js 的綁定）
