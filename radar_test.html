@@ -71,21 +71,21 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.732,bs:9.5},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:137.1,bf:0.780,bs:9.4},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:208.1,bf:0.725,bs:10.5},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:300.5,bf:0.726,bs:10.5}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.732,bs:9.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:137.1,bf:0.780,bs:9.4,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:208.1,bf:0.725,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:300.5,bf:0.726,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
-QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${CRD}"/>`;});
+QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.6"/>`;});
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
 // 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
 const LABELS=[];
-function lab2(x,y,name,val,fs,key){fs=fs||9;key=key||name;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
-QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs);});
-{const p=f(87.9,rIn*0.244);lab2(p[0],p[1],'先天',preV,10.8);}
+function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
+QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
+{const p=f(87.9,rIn*0.244);lab2(p[0],p[1],'先天',preV,10.8,'先天','#854F51');}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
@@ -100,9 +100,10 @@ const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d;
   if(jDom){const pj=f(mid,rInner);svg+=`<text x="${pj[0].toFixed(1)}" y="${(pj[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Sd}" font-weight="700">${dm.jc}</text>`;}
   else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
-// 維度名+係數
+// 維度名+係數（位置已用拖曳調好寫死：[deg, frac]）
 const FSD=10.8;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
+const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[156.2,2.395],[180.0,2.436],[205.8,2.374],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
+DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
   svg+=`<g class="drg" data-key="${key}">`
