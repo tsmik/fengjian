@@ -20,11 +20,9 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="title">人相兵法 · 一目了然</div>
   <div class="sub">（案例數據；係數為假）資料環依靜:動比；只標主導極字（靜多在內/動多在外）；白線＝平衡參考</div>
   <div class="card">
     <svg id="poly" viewBox="0 0 400 470" aria-label="一目了然圖"></svg>
-    <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
   </div>
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
@@ -112,6 +110,21 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
      +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`
      +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
+// 標題（可拖曳/縮放）
+{const tx=200,ty=24;LABELS.push({key:'標題',x:tx,y:ty,fs:16});
+ svg+=`<g class="drg" data-key="標題">`
+   +`<text x="${tx}" y="${ty}" font-size="16" text-anchor="middle" fill="var(--text)" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`
+   +`<circle class="rsz" data-key="標題" cx="${tx+60}" cy="${ty+4}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+   +`</g>`;}
+// 動靜圖例（可拖曳/縮放）
+{const lx=168,ly=452;LABELS.push({key:'圖例',x:lx,y:ly,fs:12});
+ svg+=`<g class="drg" data-key="圖例">`
+   +`<rect x="${lx}" y="${ly-9}" width="11" height="11" rx="2" fill="${S}"/>`
+   +`<text x="${lx+15}" y="${ly}" font-size="12" fill="var(--text3)">靜</text>`
+   +`<rect x="${lx+40}" y="${ly-9}" width="11" height="11" rx="2" fill="${A}"/>`
+   +`<text x="${lx+55}" y="${ly}" font-size="12" fill="var(--text3)">動</text>`
+   +`<circle class="rsz" data-key="圖例" cx="${lx+72}" cy="${ly+4}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+   +`</g>`;}
 const poly=document.getElementById('poly');
 poly.innerHTML=svg;
 // ===== 拖曳調框位置/大小 + 座標讀數 =====
