@@ -698,7 +698,7 @@ function _tunerGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_tuner[which];_tunerDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupReportTuner(){
-  if(!_tuner)_tuner={chart:{tx:0,ty:0,s:1},actions:{tx:0,ty:0,s:1}};
+  if(!_tuner)_tuner={chart:{tx:23,ty:-56,s:1.10},actions:{tx:626,ty:19,s:0.95}};
   if(!_tunerWired){
     window.addEventListener('mousemove',function(e){if(!_tunerDrag)return;var st=_tuner[_tunerDrag.which];st.tx=_tunerDrag.bx+(e.clientX-_tunerDrag.sx);st.ty=_tunerDrag.by+(e.clientY-_tunerDrag.sy);_tunerApply();_tunerReadout();});
     window.addEventListener('mouseup',function(){_tunerDrag=null;});
