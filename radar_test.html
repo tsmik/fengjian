@@ -76,12 +76,12 @@ svg+=lineArc(3,3*STEP-3,r_boss);
 svg+=lineArc(3*STEP+3,6*STEP-3,r_mgr);
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
 // 文字：先天置中、老闆/主管在先天外圍、運氣/後天在共同弧
-function lab2(x,y,name,val,fs){svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs||10}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+10).toFixed(1)}" font-size="${(fs||10)+1}" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
-lab2(cx,cy,'先天',preV,9);
-{const p=f(1.5*STEP,rIn*0.8);lab2(p[0],p[1],'老闆',bossV,9);}
-{const p=f(4.5*STEP,rIn*0.8);lab2(p[0],p[1],'主管',mgrV,9);}
-{const p=f(7.5*STEP,rIn*0.5);lab2(p[0],p[1],'運氣',CORE[1].v,10);}
-{const p=f(11*STEP,rIn*0.5);lab2(p[0],p[1],'後天',CORE[2].v,10);}
+function lab2(x,y,name,val,fs){fs=fs||9;const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
+{const p=f(3*STEP,rIn*0.30);lab2(p[0],p[1],'先天',preV,9);}
+{const p=f(1.5*STEP,rIn*0.66);lab2(p[0],p[1],'老闆',bossV,9);}
+{const p=f(4.5*STEP,rIn*0.66);lab2(p[0],p[1],'主管',mgrV,9);}
+{const p=f(7.5*STEP,rIn*0.62);lab2(p[0],p[1],'運氣',CORE[1].v,9);}
+{const p=f(11*STEP,rIn*0.5);lab2(p[0],p[1],'後天',CORE[2].v,9);}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
