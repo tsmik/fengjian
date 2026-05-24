@@ -2,92 +2,126 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>整體動靜 試做</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>人相兵法動靜總圖 試做</title>
 <style>
   :root{--static:#7A9E7E;--active:#C17A5A;--text:#3d3b39;--text3:#9a9188;--bg:#f7f4ef;--card:#fffdfa;--border:#e7ded2}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);font-family:'Noto Sans TC','PingFang TC',sans-serif;color:var(--text);padding:14px}
-  .wrap{max-width:460px;margin:0 auto}
-  .title{font-size:18px;font-weight:700;letter-spacing:2px;text-align:center;margin:4px 0 2px}
+  .wrap{max-width:920px;margin:0 auto}
+  .title{font-size:20px;font-weight:700;letter-spacing:3px;text-align:center;margin:4px 0 2px}
   .sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:10px;line-height:1.6}
   .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
   svg{display:block;width:100%;height:auto;cursor:move}
   .legend{display:flex;gap:18px;justify-content:center;font-size:12px;color:var(--text3);margin-top:6px}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
   .ctrl{margin-top:10px}
-  .ctrl .row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
-  textarea{width:100%;height:56px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)}
-  button{padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
+  .ctrl .row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
+  textarea{width:100%;height:74px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)}
+  button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
+  .seg{padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer}
+  .seg.on{background:#cc7a3a;color:#fff;border-color:#cc7a3a}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="title">整體動靜</div>
-  <div class="sub">（案例數據；假）各部位在 13 維度的動靜組成；動在左(橘)、靜在右(綠)</div>
+  <div class="title">人相兵法動靜總圖</div>
+  <div class="sub">（案例數據；假）各部位在各指數下的動靜組成；動在左(橘)、靜在右(綠)</div>
   <div class="card">
-    <svg id="chart" viewBox="0 0 420 520" aria-label="整體動靜圖"></svg>
+    <svg id="chart" viewBox="0 0 900 600" aria-label="動靜總圖"></svg>
     <div class="legend"><span><i style="background:var(--active)"></i>動</span><span><i style="background:var(--static)"></i>靜</span></div>
   </div>
   <div class="ctrl">
-    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖圖＝移動位置；下方滑桿調 bar 粗細／長度</div>
-    <div class="row">bar 粗細 <input id="hS" type="range" min="10" max="48" step="1" value="22" style="width:180px"> <b id="hV">22</b></div>
-    <div class="row">bar 長度 <input id="lS" type="range" min="120" max="380" step="2" value="300" style="width:180px"> <b id="lV">300</b></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖任一圖＝移動該圖；下方先「選取圖」再用滑桿調該圖的 bar 粗細／長度</div>
+    <div class="row" id="segs">選取圖：</div>
+    <div class="row">bar 粗細 <input id="hS" type="range" min="8" max="40" step="1" value="18" style="width:160px"> <b id="hV">18</b>
+      ｜ bar 長度 <input id="lS" type="range" min="120" max="420" step="2" value="300" style="width:160px"> <b id="lV">300</b></div>
     <textarea id="out" readonly></textarea>
     <div style="margin-top:6px"><button id="copyBtn">複製設定</button> <button id="resetBtn">歸位</button></div>
   </div>
 </div>
 <script>
 const A='#C17A5A', S='#7A9E7E';
-// 假數據：每部位「動」數（部位總和=13），靜=13-動
+// 假數據：每部位在 先天(0-6)/運氣(0-3)/後天(0-4) 的「動」數
 const PARTS=[
-  {name:'頭',d:5},{name:'上停',d:4},{name:'中停',d:7},{name:'下停',d:3},
-  {name:'耳',d:6},{name:'眉',d:8},{name:'眼',d:2},{name:'鼻',d:9},{name:'口',d:5}
+  {name:'頭',  pre:4,luck:1,post:2},
+  {name:'上停',pre:2,luck:1,post:1},
+  {name:'中停',pre:5,luck:2,post:1},
+  {name:'下停',pre:1,luck:0,post:2},
+  {name:'耳',  pre:3,luck:1,post:2},
+  {name:'眉',  pre:4,luck:2,post:2},
+  {name:'眼',  pre:1,luck:0,post:1},
+  {name:'鼻',  pre:5,luck:2,post:2},
+  {name:'口',  pre:3,luck:1,post:1}
 ];
-PARTS.forEach(p=>p.s=13-p.d);
-const totD=PARTS.reduce((a,p)=>a+p.d,0), totS=PARTS.reduce((a,p)=>a+p.s,0);
-const ROWS=PARTS.map(p=>({name:p.name,d:p.d,s:p.s,t:p.d+p.s})).concat([{name:'總計',d:totD,s:totS,t:totD+totS}]);
-// 粗白線分隔：下停(index3)之後、口(index8)之後
-const THICK_AFTER=[3,8];
-
-let BAR_H=22, BAR_LEN=300, TX=0, TY=0;
-const BAR_LEFT=70, TOP=18, GAP_THIN=2, GAP_THICK=8;
+const CHARTS=[
+  {key:'tot', label:'總動靜', total:13, d:p=>p.pre+p.luck+p.post},
+  {key:'pre', label:'先天動靜', total:6,  d:p=>p.pre},
+  {key:'luck',label:'運氣動靜', total:3,  d:p=>p.luck},
+  {key:'post',label:'後天動靜', total:4,  d:p=>p.post}
+];
+const ST={
+  tot:{h:18,len:300,tx:0,ty:0},
+  pre:{h:18,len:300,tx:470,ty:0},
+  luck:{h:18,len:300,tx:0,ty:300},
+  post:{h:18,len:300,tx:470,ty:300}
+};
+let active='tot';
+const BAR_LEFT=70, GAP_THIN=2, GAP_THICK=8, THICK_AFTER=[3,8];
+const chart=document.getElementById('chart');
 
 function render(){
-  let y=TOP, svg='';
-  ROWS.forEach((r,i)=>{
-    const bx=BAR_LEFT, by=y, dW=BAR_LEN*r.d/r.t, bd=bx+dW, cy=by+BAR_H/2;
-    svg+=`<rect x="${bx}" y="${by}" width="${dW.toFixed(2)}" height="${BAR_H}" fill="${A}"/>`;
-    svg+=`<rect x="${bd.toFixed(2)}" y="${by}" width="${(BAR_LEN-dW).toFixed(2)}" height="${BAR_H}" fill="${S}"/>`;
-    svg+=`<text x="${bx-8}" y="${cy}" font-size="12" text-anchor="end" dominant-baseline="central" fill="#3d3b39" font-weight="600">${r.name}</text>`;
-    svg+=`<text x="${(bd-4).toFixed(2)}" y="${cy}" font-size="11" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
-    svg+=`<text x="${(bd+4).toFixed(2)}" y="${cy}" font-size="11" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
-    y += BAR_H + (THICK_AFTER.indexOf(i)>=0?GAP_THICK:GAP_THIN);
+  let svg='';
+  CHARTS.forEach(c=>{
+    const s=ST[c.key];
+    const rows=PARTS.map(p=>{const d=c.d(p);return {name:p.name,d:d,s:c.total-d,t:c.total};});
+    const td=rows.reduce((a,r)=>a+r.d,0), ts=rows.reduce((a,r)=>a+r.s,0);
+    rows.push({name:'總計',d:td,s:ts,t:td+ts});
+    let g=`<g class="chartgrp" data-key="${c.key}" transform="translate(${s.tx},${s.ty})">`;
+    g+=`<text x="${BAR_LEFT}" y="11" font-size="13" font-weight="700" fill="${active===c.key?'#cc7a3a':'#3d3b39'}">${c.label}</text>`;
+    let y=20;
+    rows.forEach((r,i)=>{
+      const bx=BAR_LEFT,by=y,dW=s.len*r.d/r.t,bd=bx+dW,cy=by+s.h/2;
+      g+=`<rect x="${bx}" y="${by}" width="${dW.toFixed(2)}" height="${s.h}" fill="${A}"/>`;
+      g+=`<rect x="${bd.toFixed(2)}" y="${by}" width="${(s.len-dW).toFixed(2)}" height="${s.h}" fill="${S}"/>`;
+      g+=`<text x="${bx-8}" y="${cy}" font-size="11" text-anchor="end" dominant-baseline="central" fill="#3d3b39" font-weight="600">${r.name}</text>`;
+      if(dW>9)g+=`<text x="${(bd-4).toFixed(2)}" y="${cy}" font-size="10" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
+      if(s.len-dW>9)g+=`<text x="${(bd+4).toFixed(2)}" y="${cy}" font-size="10" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
+      y += s.h + (THICK_AFTER.indexOf(i)>=0?GAP_THICK:GAP_THIN);
+    });
+    g+='</g>';
+    svg+=g;
   });
-  document.getElementById('chart').innerHTML=`<g id="bg" transform="translate(${TX},${TY})">${svg}</g>`;
+  chart.innerHTML=svg;
   readout();
 }
 function readout(){
-  document.getElementById('out').value=`bar 粗細=${BAR_H}  長度=${BAR_LEN}  位置 x=${TX.toFixed(0)} y=${TY.toFixed(0)}`;
+  document.getElementById('out').value=CHARTS.map(c=>{const s=ST[c.key];return `${c.label}: 粗細=${s.h} 長度=${s.len} x=${s.tx.toFixed(0)} y=${s.ty.toFixed(0)}`;}).join('\n');
 }
-// 拖曳移動
+function syncSliders(){const s=ST[active];document.getElementById('hS').value=s.h;document.getElementById('hV').textContent=s.h;document.getElementById('lS').value=s.len;document.getElementById('lV').textContent=s.len;}
+
+// 選取圖 segmented buttons
 (function(){
-  const chart=document.getElementById('chart');
-  let drag=false,sx,sy,bx,by;
+  const box=document.getElementById('segs');
+  CHARTS.forEach(c=>{const b=document.createElement('button');b.className='seg'+(c.key===active?' on':'');b.textContent=c.label;b.dataset.key=c.key;b.addEventListener('click',function(){active=c.key;document.querySelectorAll('.seg').forEach(x=>x.classList.toggle('on',x.dataset.key===active));syncSliders();render();});box.appendChild(b);});
+})();
+
+// 拖曳移動（拖哪張圖就移哪張，並設為選取）
+(function(){
+  let drag=null;
   function toSvg(e){const pt=chart.createSVGPoint();const t=e.touches?e.touches[0]:e;pt.x=t.clientX;pt.y=t.clientY;return pt.matrixTransform(chart.getScreenCTM().inverse());}
-  function down(e){e.preventDefault();drag=true;const p=toSvg(e);sx=p.x;sy=p.y;bx=TX;by=TY;}
-  function move(e){if(!drag)return;e.preventDefault();const p=toSvg(e);TX=bx+(p.x-sx);TY=by+(p.y-sy);const g=document.getElementById('bg');if(g)g.setAttribute('transform',`translate(${TX.toFixed(1)},${TY.toFixed(1)})`);readout();}
-  function up(){drag=false;}
+  function down(e){const grp=e.target.closest && e.target.closest('.chartgrp');const key=grp?grp.getAttribute('data-key'):null;if(!key)return;e.preventDefault();active=key;document.querySelectorAll('.seg').forEach(x=>x.classList.toggle('on',x.dataset.key===active));syncSliders();const p=toSvg(e);drag={key:key,sx:p.x,sy:p.y,bx:ST[key].tx,by:ST[key].ty};render();}
+  function move(e){if(!drag)return;e.preventDefault();const p=toSvg(e);ST[drag.key].tx=drag.bx+(p.x-drag.sx);ST[drag.key].ty=drag.by+(p.y-drag.sy);const g=chart.querySelector(`.chartgrp[data-key="${drag.key}"]`);if(g)g.setAttribute('transform',`translate(${ST[drag.key].tx.toFixed(1)},${ST[drag.key].ty.toFixed(1)})`);readout();}
+  function up(){drag=null;}
   chart.addEventListener('mousedown',down);chart.addEventListener('touchstart',down,{passive:false});
   window.addEventListener('mousemove',move);window.addEventListener('touchmove',move,{passive:false});
   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
 })();
-const hS=document.getElementById('hS'),hV=document.getElementById('hV');
-hS.addEventListener('input',function(){BAR_H=parseInt(this.value,10);hV.textContent=BAR_H;render();});
-const lS=document.getElementById('lS'),lV=document.getElementById('lV');
-lS.addEventListener('input',function(){BAR_LEN=parseInt(this.value,10);lV.textContent=BAR_LEN;render();});
+
+document.getElementById('hS').addEventListener('input',function(){ST[active].h=parseInt(this.value,10);document.getElementById('hV').textContent=ST[active].h;render();});
+document.getElementById('lS').addEventListener('input',function(){ST[active].len=parseInt(this.value,10);document.getElementById('lV').textContent=ST[active].len;render();});
 document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製設定',1200);});
-document.getElementById('resetBtn').addEventListener('click',function(){BAR_H=22;BAR_LEN=300;TX=0;TY=0;hS.value=22;hV.textContent=22;lS.value=300;lV.textContent=300;render();});
+document.getElementById('resetBtn').addEventListener('click',function(){ST.tot={h:18,len:300,tx:0,ty:0};ST.pre={h:18,len:300,tx:470,ty:0};ST.luck={h:18,len:300,tx:0,ty:300};ST.post={h:18,len:300,tx:470,ty:300};syncSliders();render();});
 render();
 </script>
 </body>
