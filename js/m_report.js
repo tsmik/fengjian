@@ -18,7 +18,8 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data } from './core.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS } from './core.js';
+import { buildCoefSVG, buildSDSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile } from './m_home.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
@@ -433,6 +434,21 @@ async function exportReportPng() {
 
 // ===== render =====
 
+// 手機報告圖：係數總表下方接 係數總覽 + 總動靜（不放 radar2）
+function _chartsHtml() {
+  try {
+    var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+    var coef = buildCoefSVG({
+      preV: avgCoeff(data,[0,1,2,3,4,5])||0, bossV: avgCoeff(data,[0,1,2])||0, mgrV: avgCoeff(data,[3,4,5])||0,
+      luckV: avgCoeff(data,[6,7,8])||0, postV: avgCoeff(data,[9,10,11,12])||0, totV: avgCoeff(data,all)||0
+    });
+    var partD = [], partN = [];
+    for (var pi = 0; pi < 9; pi++) { var d = 0, n = 0; for (var di = 0; di < 13; di++) { var v = data[di] && data[di][pi]; if (v === 'A' || v === 'B') { n++; var tp = (v === 'A') ? DIMS[di].aT : DIMS[di].bT; if (tp !== '靜') d++; } } partD.push(d); partN.push(n); }
+    var sd = buildSDSVG({ partD: partD, partN: partN });
+    return '<div style="padding:6px 12px 0">' + coef + '<div style="height:10px"></div>' + sd + '</div>';
+  } catch (e) { return ''; }
+}
+
 function _render() {
   if (!_container) return;
   if (_view === 'sens') { _renderSensView(); return; }
@@ -440,6 +456,7 @@ function _render() {
   // v1.7 階段 14：流年參考搬到報告 tab 兩大按鈕下方，這裡不再顯示
   _container.innerHTML = `
     ${renderCoeffSummary(data)}
+    ${_chartsHtml()}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
