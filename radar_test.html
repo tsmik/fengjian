@@ -26,6 +26,12 @@
     <svg id="poly" viewBox="0 0 400 470" aria-label="一目了然圖"></svg>
     <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
   </div>
+  <div style="margin-top:10px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式：用滑鼠拖五個框（老闆/主管/運氣/後天/先天）調位置，下方即時顯示座標</div>
+    <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
+    <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
+    <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
+  </div>
 </div>
 <script>
 function getC(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
@@ -69,8 +75,9 @@ QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-// 文字：先天置中、老闆/主管在先天外圍、運氣/後天在共同弧
-function lab2(x,y,name,val,fs){fs=fs||9;const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
+// 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
+const LABELS=[];
+function lab2(x,y,name,val,fs,key){fs=fs||9;key=key||name;const tl=(name.length*fs).toFixed(1);LABELS.push({key,x,y});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`</g>`;}
 QUAD.forEach(q=>{const p=f(q.deg,rIn*0.80-2);lab2(p[0],p[1],q.name,q.v,9);});
 {const p=f(3*STEP,rIn*0.30);lab2(p[0],p[1],'先天',preV,9);}
 // 資料環
@@ -91,7 +98,26 @@ DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
   svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
   svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+13).toFixed(1)}" font-size="11" text-anchor="${an}" fill="var(--text3)" font-family="monospace">${dm.c.toFixed(2)}</text>`;});
-document.getElementById('poly').innerHTML=svg;
+const poly=document.getElementById('poly');
+poly.innerHTML=svg;
+// ===== 拖曳調框位置 + 座標讀數 =====
+(function(){
+  let cur=null,start=null,base=null;const off={};
+  function toSvg(e){const pt=poly.createSVGPoint();const t=e.touches?e.touches[0]:e;pt.x=t.clientX;pt.y=t.clientY;return pt.matrixTransform(poly.getScreenCTM().inverse());}
+  function readout(){
+    const ta=document.getElementById('coords');
+    ta.value=LABELS.map(L=>{const o=off[L.key]||{tx:0,ty:0};const X=L.x+o.tx,Y=L.y+o.ty;const dx=X-cx,dy=Y-cy;let deg=Math.atan2(dx,-dy)*180/Math.PI;if(deg<0)deg+=360;const r=Math.hypot(dx,dy);return `${L.key}: f(${deg.toFixed(1)}, rIn*${(r/rIn).toFixed(3)})   x=${X.toFixed(1)} y=${Y.toFixed(1)}`;}).join('\n');
+  }
+  function down(e){e.preventDefault();cur=e.currentTarget;const k=cur.dataset.key;const o=off[k]||{tx:0,ty:0};off[k]=o;const p=toSvg(e);start={x:p.x,y:p.y};base={tx:o.tx,ty:o.ty};}
+  function move(e){if(!cur)return;e.preventDefault();const k=cur.dataset.key;const p=toSvg(e);const tx=base.tx+(p.x-start.x),ty=base.ty+(p.y-start.y);off[k]={tx,ty};cur.setAttribute('transform',`translate(${tx.toFixed(1)},${ty.toFixed(1)})`);readout();}
+  function up(){cur=null;}
+  poly.querySelectorAll('.drg').forEach(g=>{g.style.cursor='move';g.addEventListener('mousedown',down);g.addEventListener('touchstart',down,{passive:false});});
+  window.addEventListener('mousemove',move);window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up);window.addEventListener('touchend',up);
+  document.getElementById('copyBtn').addEventListener('click',function(){const ta=document.getElementById('coords');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';const b=this;setTimeout(()=>b.textContent='複製座標',1200);});
+  document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
+  readout();
+})();
 </script>
 </body>
 </html>
