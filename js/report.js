@@ -695,15 +695,14 @@ function setupChartTuner(){
   if(b) _ctGrip(b,'r0');
   if(!document.getElementById('ct-panel')){
     var panel=document.createElement('div');panel.id='ct-panel';
-    panel.style.cssText='margin:10px 0;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39';
+    panel.style.cssText='position:fixed;right:14px;bottom:14px;z-index:10001;width:270px;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
     panel.innerHTML='<div style="margin-bottom:6px;color:#9a8456">staging 調整：拖 ✚ 移動；滑桿縮放</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">Radar2 大小 <input id="ct-r2" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r2v">1.00</b></div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">Radar0 大小 <input id="ct-r0" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r0v">1.00</b></div>'
       +'<textarea id="ct-out" readonly style="width:100%;height:46px;font-family:monospace;font-size:11px;border:1px solid #e7ded2;border-radius:6px;padding:5px;box-sizing:border-box"></textarea>'
       +'<button id="ct-copy" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">複製設定</button>'
       +' <button id="ct-reset" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">歸位</button>';
-    var row=document.getElementById('report-charts-row');
-    if(row&&row.parentNode) row.parentNode.insertBefore(panel,row.nextSibling);
+    document.body.appendChild(panel);
     panel.querySelector('#ct-r2').addEventListener('input',function(){_ct.r2.s=parseFloat(this.value);document.getElementById('ct-r2v').textContent=_ct.r2.s.toFixed(2);_ctApply();_ctReadout();});
     panel.querySelector('#ct-r0').addEventListener('input',function(){_ct.r0.s=parseFloat(this.value);document.getElementById('ct-r0v').textContent=_ct.r0.s.toFixed(2);_ctApply();_ctReadout();});
     panel.querySelector('#ct-copy').addEventListener('click',function(){var ta=document.getElementById('ct-out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';var b2=this;setTimeout(function(){b2.textContent='複製設定';},1200);});
