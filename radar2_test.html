@@ -66,7 +66,6 @@ function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP)
 // 內圈邊界 13 邊多邊形頂點
 const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
 let svg='';
-svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
@@ -89,16 +88,15 @@ QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,
 const GRAY='#b7b1a8';
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${GRAY}" fill-opacity="0.7" stroke="#fff" stroke-width="0.8"/>`;});
-// 先天/運氣/後天 群組分隔線：0格(形勢起=老闆色) / 6格(順逆起=運氣色) / 9格(攻守起=後天色)
-[[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p0=f(a,rIn),p1=f(a,rOut);svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
+// 先天/運氣/後天 群組分隔線（由中心延伸到外緣）：0格老闆色 / 6格運氣色 / 9格後天色
+[[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 最外緣線（動主導→動色 / 靜主導→靜色）
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const g=(a1-a0)*0.04;
   const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rT),p1=f(a1-g,rT);
   svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.2" stroke-linecap="round"/>`;});
-// 維度名+係數（位置已用拖曳調好寫死：[deg, frac]）
+// 維度名+係數：跟著各 bar 外緣（rT）擺，靠近該維度的動靜分隔線
 const FSD=10.8;
-const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
-DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const lp=f(mid,rT+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
   svg+=`<g class="drg" data-key="${key}">`
