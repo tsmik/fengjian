@@ -642,12 +642,18 @@ export function showReport(){
           dimCoeffArr.push(dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:0);
         }
         if(r2El) r2El.innerHTML=buildRadar2SVG({
+          name:(_currentCaseName||userName||''),
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
           bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0
         });
         if(r0El) r0El.innerHTML=buildRadar0SVG({
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
+        // staging：兩圖可自由移動/縮放（測試工具）
+        var _h=location.hostname;
+        if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
+          try{ setupChartTuner(); }catch(e2){}
+        }
       }
     }catch(e){ if(window.debugLog) debugLog('[ReportChart]', e&&e.message?e.message:e); }
   }
@@ -661,6 +667,52 @@ export function showReport(){
 
 /* ===== Close Report ===== */
 export function closeReport(){document.getElementById('report-overlay').style.display='none';}
+
+/* ===== staging 調整工具：Radar2 + Radar0 兩圖自由移動/縮放 ===== */
+let _ct=null, _ctWired=false, _ctDrag=null;
+function _ctApply(){
+  var a=document.getElementById('report-radar2'),b=document.getElementById('report-radar0');
+  if(a){a.style.transformOrigin='top left';a.style.transform='translate('+_ct.r2.tx+'px,'+_ct.r2.ty+'px) scale('+_ct.r2.s+')';}
+  if(b){b.style.transformOrigin='top left';b.style.transform='translate('+_ct.r0.tx+'px,'+_ct.r0.ty+'px) scale('+_ct.r0.s+')';}
+}
+function _ctReadout(){var o=document.getElementById('ct-out');if(!o)return;o.value='Radar2: x='+_ct.r2.tx.toFixed(0)+' y='+_ct.r2.ty.toFixed(0)+' scale='+_ct.r2.s.toFixed(2)+'\nRadar0: x='+_ct.r0.tx.toFixed(0)+' y='+_ct.r0.ty.toFixed(0)+' scale='+_ct.r0.s.toFixed(2);}
+function _ctGrip(el,which){
+  var g=document.createElement('div');g.textContent='✚';
+  g.style.cssText='position:absolute;top:-11px;left:-11px;width:22px;height:22px;line-height:19px;text-align:center;border-radius:50%;background:#cc9173;color:#fff;border:2px solid #fff;cursor:move;z-index:10000;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.35);user-select:none';
+  if(getComputedStyle(el).position==='static') el.style.position='relative';
+  el.appendChild(g);
+  g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
+}
+function setupChartTuner(){
+  if(!_ct)_ct={r2:{tx:0,ty:0,s:1},r0:{tx:0,ty:0,s:1}};
+  if(!_ctWired){
+    window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
+    window.addEventListener('mouseup',function(){_ctDrag=null;});
+    _ctWired=true;
+  }
+  var a=document.getElementById('report-radar2'),b=document.getElementById('report-radar0');
+  if(a) _ctGrip(a,'r2');
+  if(b) _ctGrip(b,'r0');
+  if(!document.getElementById('ct-panel')){
+    var panel=document.createElement('div');panel.id='ct-panel';
+    panel.style.cssText='margin:10px 0;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39';
+    panel.innerHTML='<div style="margin-bottom:6px;color:#9a8456">staging 調整：拖 ✚ 移動；滑桿縮放</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">Radar2 大小 <input id="ct-r2" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r2v">1.00</b></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">Radar0 大小 <input id="ct-r0" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r0v">1.00</b></div>'
+      +'<textarea id="ct-out" readonly style="width:100%;height:46px;font-family:monospace;font-size:11px;border:1px solid #e7ded2;border-radius:6px;padding:5px;box-sizing:border-box"></textarea>'
+      +'<button id="ct-copy" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">複製設定</button>'
+      +' <button id="ct-reset" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">歸位</button>';
+    var row=document.getElementById('report-charts-row');
+    if(row&&row.parentNode) row.parentNode.insertBefore(panel,row.nextSibling);
+    panel.querySelector('#ct-r2').addEventListener('input',function(){_ct.r2.s=parseFloat(this.value);document.getElementById('ct-r2v').textContent=_ct.r2.s.toFixed(2);_ctApply();_ctReadout();});
+    panel.querySelector('#ct-r0').addEventListener('input',function(){_ct.r0.s=parseFloat(this.value);document.getElementById('ct-r0v').textContent=_ct.r0.s.toFixed(2);_ctApply();_ctReadout();});
+    panel.querySelector('#ct-copy').addEventListener('click',function(){var ta=document.getElementById('ct-out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';var b2=this;setTimeout(function(){b2.textContent='複製設定';},1200);});
+    panel.querySelector('#ct-reset').addEventListener('click',function(){_ct.r2={tx:0,ty:0,s:1};_ct.r0={tx:0,ty:0,s:1};document.getElementById('ct-r2').value=1;document.getElementById('ct-r0').value=1;document.getElementById('ct-r2v').textContent='1.00';document.getElementById('ct-r0v').textContent='1.00';_ctApply();_ctReadout();});
+  }
+  var s2=document.getElementById('ct-r2');if(s2){s2.value=_ct.r2.s;document.getElementById('ct-r2v').textContent=_ct.r2.s.toFixed(2);}
+  var s0=document.getElementById('ct-r0');if(s0){s0.value=_ct.r0.s;document.getElementById('ct-r0v').textContent=_ct.r0.s.toFixed(2);}
+  _ctApply();_ctReadout();
+}
 
 /* ===== Export PNG ===== */
 export async function exportPNG(){

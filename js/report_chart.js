@@ -17,6 +17,7 @@ const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
 const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))} L ${PS(f(a1,ra))} Z`;
 function polySector(a0,a1,r){const k0=Math.round(a0/STEP),k1=Math.round(a1/STEP);let pts=[`${cx},${cy}`];for(let k=k0;k<=k1;k++)pts.push(PS(f(k*STEP,r)));return 'M'+pts.join(' L')+' Z';}
 const spans=[];for(let i=0;i<13;i++)spans.push([i*STEP,(i+1)*STEP]);
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 const NAMEPOS=[[14.1,2.395],[40.3,2.320],[69.1,2.318],[97.2,2.300],[128.5,2.340],[155.9,2.401],[180.0,2.504],[204.4,2.406],[233.7,2.390],[261.9,2.332],[290.2,2.365],[319.1,2.357],[345.6,2.398]];
 const NUMPOS=[[13.8,1.975],[42.6,1.921],[70.4,1.925],[98.2,1.940],[126.6,1.985],[152.6,2.047],[180.0,2.083],[207.4,2.047],[234.3,2.028],[261.2,1.985],[289.7,1.956],[317.6,1.950],[345.6,1.952]];
 
@@ -58,7 +59,17 @@ export function buildRadar2SVG(opts){
   DIM.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
     const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const ncol=(rT>=rr)?'#fff':mcol;
     svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
-  return `<svg viewBox="10 42 380 356" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  // 學員姓名
+  {const p=f(322.8,rIn*3.596);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.5" text-anchor="middle" fill="#9a9188" font-weight="600">${esc(opts.name||'')}</text>`;}
+  // 標題
+  {const p=f(31.6,rIn*3.395);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.6" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
+  // 動靜圖例
+  {const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
+   svg+=`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
+     +`<text x="${(lx+15*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="#9a9188">靜</text>`
+     +`<rect x="${(lx+40*ls).toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${A}"/>`
+     +`<text x="${(lx+55*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="#9a9188">動</text>`;}
+  return `<svg viewBox="0 -34 400 458" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
 // ===== 係數總覽子彈圖（radar0）=====
@@ -67,9 +78,9 @@ export function buildRadar0SVG(opts){
   const preV=+opts.preV||0,bossV=+opts.bossV||0,mgrV=+opts.mgrV||0,luckV=+opts.luckV||0,postV=+opts.postV||0,totV=+opts.totV||0;
   const ROWS=[
     {name:'先天',v:preV,col:'#8E4B50'},{name:'老闆',v:bossV,col:'#936A78'},{name:'主管',v:mgrV,col:'#876D4F'},
-    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:'#b09a6a'}
+    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:'#1f1f1f'}
   ];
-  const CMAX=0.8,X0=74,TOP=14,BAR_H=10,GAP=9.6,PAD=8,LP=4,TRACKW=300,LINE_COL='#8a7440';
+  const CMAX=0.8,X0=74,TOP=14,BAR_H=10,GAP=9.6,PAD=8,LP=4,TRACKW=300,LINE_COL='#1f1f1f';
   const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
   const bp=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;};
   const n=ROWS.length,stackTop=TOP,stackBot=TOP+n*(BAR_H+GAP)-GAP,tEdge=xOf(totV),cTop=stackTop-PAD,cBot=stackBot+PAD;
