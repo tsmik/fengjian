@@ -795,7 +795,7 @@ async function _captureReport(mode){
       out=_stackCanvases([hdrCanvas, _scaleCanvasW(chartsCanvas, hdrCanvas.width)],12);
     }else{
       var tableCanvas=drawReportCanvas(undefined,{checkComplete:true});
-      out=_stackCanvases([tableCanvas, _scaleCanvasW(chartsCanvas, tableCanvas.width)],16);
+      out=_stackCanvases([tableCanvas, _scaleCanvasW(chartsCanvas, Math.round(tableCanvas.width*0.9))],16);
     }
     await _shareCanvas(out);
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
