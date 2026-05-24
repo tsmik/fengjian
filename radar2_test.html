@@ -89,6 +89,8 @@ QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,
 const GRAY='#b7b1a8';
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${GRAY}" fill-opacity="0.7" stroke="#fff" stroke-width="0.8"/>`;});
+// 先天/運氣/後天 群組分隔線：0格(形勢起=老闆色) / 6格(順逆起=運氣色) / 9格(攻守起=後天色)
+[[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p0=f(a,rIn),p1=f(a,rOut);svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 最外緣線（動主導→動色 / 靜主導→靜色）
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const g=(a1-a0)*0.04;
   const col=dm.d>dm.j?Am:Sm;const p0=f(a0+g,rT),p1=f(a1-g,rT);
