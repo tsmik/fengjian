@@ -758,6 +758,21 @@ function _stackCanvases(cs, gap){
   var y=0;cs.forEach(function(c){ctx.drawImage(c,Math.round((w-c.width)/2),y);y+=c.height+gap;});
   return out;
 }
+// 等比縮放 canvas 到目標寬
+function _scaleCanvasW(c, targetW){
+  if(!c||c.width<=targetW) return c;
+  var h=Math.round(c.height*targetW/c.width);
+  var o=document.createElement('canvas');o.width=targetW;o.height=h;
+  var ctx=o.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(c,0,0,targetW,h);
+  return o;
+}
+// 從乾淨表格 canvas 裁切上半（標題+流年）當表頭
+function _cropHeader(tableCanvas){
+  var hb=tableCanvas._headerBottomPx||Math.round(tableCanvas.height*0.12);
+  var o=document.createElement('canvas');o.width=tableCanvas.width;o.height=hb;
+  o.getContext('2d').drawImage(tableCanvas,0,0);
+  return o;
+}
 // 截圖式輸出：mode='charts'(姓名/流年+三圖) | 'all'(乾淨表格+三圖)
 async function _captureReport(mode){
   if(typeof html2canvas==='undefined'){alert('截圖元件尚未載入，請稍候再試');return;}
@@ -767,30 +782,25 @@ async function _captureReport(mode){
   var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
   var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
   var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
-  var sub=document.getElementById('report-subtitle'); var subTxt=sub?sub.textContent:'';
   if(banner)banner.style.display='none';
   if(ctp)ctp.style.display='none';
-  if(mode==='charts'&&sub) sub.textContent='人相兵法圖表報告';
   try{
     await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
     var coefEl=document.getElementById('report-coef'),r2El=document.getElementById('report-radar2'),sdEl=document.getElementById('report-sd');
     var chartsCanvas=await _html2canvasRegion([coefEl,r2El,sdEl]);
     var out;
     if(mode==='charts'){
-      var topEl=document.querySelector('#report-overlay .report-top');
-      var lnEl=document.getElementById('report-liunian');
-      var headEls=[topEl]; if(lnEl&&lnEl.offsetHeight>2) headEls.push(lnEl);
-      var headCanvas=await _html2canvasRegion(headEls);
-      out=_stackCanvases([headCanvas,chartsCanvas],12);
+      // 表頭(姓名/虛歲/流年)用乾淨重畫裁切，標題改「圖表報告」
+      var hdrCanvas=_cropHeader(drawReportCanvas(undefined,{checkComplete:true,subtitle:'人相兵法圖表報告'}));
+      out=_stackCanvases([hdrCanvas, _scaleCanvasW(chartsCanvas, hdrCanvas.width)],12);
     }else{
       var tableCanvas=drawReportCanvas(undefined,{checkComplete:true});
-      out=_stackCanvases([tableCanvas,chartsCanvas],16);
+      out=_stackCanvases([tableCanvas, _scaleCanvasW(chartsCanvas, tableCanvas.width)],16);
     }
     await _shareCanvas(out);
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
   finally{
     if(banner)banner.style.display=bd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
-    if(sub)sub.textContent=subTxt;
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
   }
 }
@@ -1085,7 +1095,7 @@ export function drawReportCanvas(srcData, opts){
       nx+=32;
     }
   }
-  txtL('人相兵法係數報告',nx+20,yTitle,TITLE_H,'#888',12,false);
+  txtL((opts.subtitle||'人相兵法係數報告'),nx+20,yTitle,TITLE_H,'#888',12,false);
 
   // --- 2. 流年（flex 色塊）---
   if(hasLn){
@@ -1342,5 +1352,6 @@ export function drawReportCanvas(srcData, opts){
     txtC('總係數 '+(isGroupOk(visibleDimIds)?vTotal:INC),xPreData,yR20,totalCoeffW,TOTAL_H,'#fff',11,false);
   }
 
+  canvas._headerBottomPx=Math.round(yR2*SC); // 標題+流年 高度（給分享圖表裁切表頭用）
   return canvas;
 }
