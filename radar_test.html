@@ -20,7 +20,7 @@
 <body>
 <div class="wrap">
   <div class="title">人相兵法 · 一目了然</div>
-  <div class="sub">（試做 · 假資料）外圈長條：綠靜＋橘動（等寬，恆=9）<br>內圈面積：先天／運氣／後天 係數高低</div>
+  <div class="sub">（試做 · 假資料）外環扇形依「靜:動」比分綠橘；交界線色＝該維度偏向（橘=偏動/綠=偏靜）<br>內圈面積：先天／運氣／後天（係數÷0.8）</div>
   <div class="card">
     <svg id="poly" viewBox="0 0 400 480" aria-label="一目了然圖"></svg>
     <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
@@ -44,10 +44,11 @@ const CORE=[
   {name:'運氣',col:LUCK,a0:180,a1:270,mid:225,v:mean(co.slice(6,9))},
   {name:'後天',col:POST,a0:270,a1:360,mid:315,v:mean(co.slice(9,13))}
 ];
-const cx=200,cy=220,U=150/9,rIn=4*U,rOut=9*U; // 內4 外9
+const COEF_MAX=0.8;
+const cx=200,cy=220,U=150/9,rIn=4*U,rOut=9*U;
 const rad=d=>d*Math.PI/180;
 const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
-const PS=(p)=>p[0].toFixed(2)+','+p[1].toFixed(2);
+const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
 function band(a0,a1,rA,rB){
   const bnds=[a0]; spans.forEach(s=>{if(s[0]>a0+0.01&&s[0]<a1-0.01)bnds.push(s[0]);}); bnds.push(a1);
   let outer=bnds.map(a=>PS(f(a,rB)));
@@ -55,32 +56,30 @@ function band(a0,a1,rA,rB){
   let inner=[...bnds].reverse().map(a=>PS(f(a,rA)));
   return `M ${outer.join(' L ')} L ${inner.join(' L ')} Z`;
 }
+const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))} L ${PS(f(a1,ra))} Z`;
 let svg='';
-// 外框 + 刻度（淡）
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-// 內圈三大係數（面積：填到 係數×rIn）
+// 內圈三大係數：面積 = 係數/0.8（r = rIn*sqrt(係數/0.8)）
 CORE.forEach(c=>{
-  svg+=`<path d="${band(c.a0,c.a1,0,c.v*rIn)}" fill="${c.col}" opacity="0.45"/>`;
-  svg+=`<path d="${band(c.a0,c.a1,c.v*rIn,rIn)}" fill="${c.col}" opacity="0.08"/>`;
+  const r=rIn*Math.sqrt(Math.min(1,c.v/COEF_MAX));
+  svg+=`<path d="${band(c.a0,c.a1,0,r)}" fill="${c.col}" opacity="0.5"/>`;
+  svg+=`<path d="${band(c.a0,c.a1,r,rIn)}" fill="${c.col}" opacity="0.07"/>`;
 });
 [0,180,270].forEach(a=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(a,rIn)[0].toFixed(1)}" y2="${f(a,rIn)[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`);
 CORE.forEach(c=>{const lp=f(c.mid,rIn*0.62);
   svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]-3).toFixed(1)}" font-size="12" text-anchor="middle" fill="${c.col}" font-weight="700">${c.name}</text>`;
   svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+13).toFixed(1)}" font-size="13" text-anchor="middle" fill="${c.col}" font-family="monospace" font-weight="700">${c.v.toFixed(2)}</text>`;});
-// 外圈長條（以內圈邊長為底，沿 mid 方向平行延伸；綠靜+橘動，等寬）
-const H=rOut-rIn;
-DIMS.forEach((dm,i)=>{
-  const[a0,a1]=spans[i];const mid=(a0+a1)/2;const g=(a1-a0)*0.10;
-  const e0=f(a0+g,rIn),e1=f(a1-g,rIn);
-  const dir=[Math.sin(rad(mid)),-Math.cos(rad(mid))];
-  const add=(p,v)=>[p[0]+dir[0]*v,p[1]+dir[1]*v];
-  const gLen=(dm.j/9)*H;
-  const gr=[e0,e1,add(e1,gLen),add(e0,gLen)];
-  const or=[add(e0,gLen),add(e1,gLen),add(e1,H),add(e0,H)];
-  if(dm.j>0) svg+=`<polygon points="${gr.map(PS).join(' ')}" fill="${S}"/>`;
-  if(dm.d>0) svg+=`<polygon points="${or.map(PS).join(' ')}" fill="${A}"/>`;
-});
+// 外環扇形（綠靜內 / 橘動外）填淡
+DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*(rOut-rIn);
+  svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.45"/>`;
+  svg+=`<path d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.45"/>`;});
+// 維度間分隔線
+spans.forEach(s=>svg+=`<line x1="${f(s[0],rIn)[0].toFixed(1)}" y1="${f(s[0],rIn)[1].toFixed(1)}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
+// 動靜交界線：每維度一段，色＝偏向（動>靜橘／靜>動綠）
+DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*(rOut-rIn);
+  const col=dm.d>dm.j?A:S; const p0=f(a0,rS),p1=f(a1,rS);
+  svg+=`<line x1="${p0[0].toFixed(1)}" y1="${p0[1].toFixed(1)}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="3.5" stroke-linecap="round"/>`;});
 // 維度名+係數
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';
   svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="12" text-anchor="${an}" fill="var(--text)" font-weight="600">${dm.dn}</text>`;
