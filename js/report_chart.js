@@ -59,63 +59,55 @@ export function buildRadar2SVG(opts){
   DIM.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
     const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const ncol=(rT>=rr)?'#fff':mcol;
     svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`;});
-  // 學員姓名
-  {const p=f(322.8,rIn*3.596);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.5" text-anchor="middle" fill="#9a9188" font-weight="600">${esc(opts.name||'')}</text>`;}
-  // 標題
-  {const p=f(31.6,rIn*3.395);svg+=`<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" font-size="13.6" text-anchor="middle" fill="#3d3b39" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`;}
-  // 動靜圖例
-  {const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;
-   svg+=`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
-     +`<text x="${(lx+15*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="#9a9188">靜</text>`
-     +`<rect x="${(lx+40*ls).toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${A}"/>`
-     +`<text x="${(lx+55*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="#9a9188">動</text>`;}
-  return `<svg viewBox="0 -34 400 458" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
-// ===== 係數總覽（radar0）：係數子彈圖 + 逐部位總動靜 =====
+// ===== 子彈/動靜 共用 bar 形 =====
 const _bR=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${x.toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} a${r},${r} 0 0 1 ${r},${r} v${(h-2*r).toFixed(1)} a${r},${r} 0 0 1 ${-r},${r} h${(-(w-r)).toFixed(1)} Z`;};
 const _bL=(x,y,w,h,r)=>{w=Math.max(0,w);r=Math.max(0,Math.min(r,h/2,w));return `M${(x+r).toFixed(1)},${y.toFixed(1)} h${(w-r).toFixed(1)} v${h.toFixed(1)} h${(-(w-r)).toFixed(1)} a${r},${r} 0 0 1 ${-r},${-r} v${(-(h-2*r)).toFixed(1)} a${r},${r} 0 0 1 ${r},${-r} Z`;};
-export function buildRadar0SVG(opts){
+const R0_X0=74, R0_BAR=12, R0_GAP=9.6, R0_PAD=8, R0_TW=300, R0_CMAX=0.8;
+const R0_TOT='#494541', R0_A='#C17A5A', R0_S='#7A9E7E';
+
+// ===== 係數總覽（6 子彈，無標題）=====
+export function buildCoefSVG(opts){
   opts=opts||{};
   const preV=+opts.preV||0,bossV=+opts.bossV||0,mgrV=+opts.mgrV||0,luckV=+opts.luckV||0,postV=+opts.postV||0,totV=+opts.totV||0;
-  const partD=opts.partD||new Array(9).fill(0), partN=opts.partN||new Array(9).fill(0);
-  const PLAB=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
-  const TOTCOL='#494541';
   const ROWS=[
     {name:'先天',v:preV,col:'#8E4B50'},{name:'老闆',v:bossV,col:'#936A78'},{name:'主管',v:mgrV,col:'#876D4F'},
-    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:TOTCOL}
+    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:R0_TOT}
   ];
-  // 逐部位動靜
-  const SD_ROWS=[];let sumD=0,sumN=0;
-  for(let i=0;i<9;i++){const d=+partD[i]||0,nn=+partN[i]||0;SD_ROWS.push({name:PLAB[i],d:d,s:nn-d,t:nn||1});sumD+=d;sumN+=nn;}
-  SD_ROWS.push({name:'總計',d:sumD,s:sumN-sumD,t:sumN||1});
-  const THICK_AFTER=[3,8];
-  const CMAX=0.8,X0=74,BAR_H=12,GAP=9.6,PAD=8,LP=4,TRACKW=300,COEF_OP=0.7,SD_OP=0.85,GT=GAP,GK=GAP+6;
-  const A2='#C17A5A',S2='#7A9E7E';
-  const xOf=v=>X0+(Math.min(1,v/CMAX))*TRACKW;
+  const X0=R0_X0,BAR_H=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,LP=4,TRACKW=R0_TW,COEF_OP=0.7;
+  const xOf=v=>X0+(Math.min(1,v/R0_CMAX))*TRACKW;
+  const n=ROWS.length, cTop=4, stackTop=cTop+PAD, stackBot=stackTop+n*(BAR_H+GAP)-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
   let s='';
-  // 標題：左上姓名、右上 人相兵法係數總覽
-  s+=`<text x="${X0}" y="20" font-size="11.5" text-anchor="start" fill="#9a9188" font-weight="600">${esc(opts.name||'')}</text>`;
-  s+=`<text x="${(X0+TRACKW).toFixed(1)}" y="20" font-size="14" text-anchor="end" fill="#3d3b39" font-weight="700" letter-spacing="1">人相兵法係數總覽</text>`;
-  // 係數總覽（6 子彈）
-  const n=ROWS.length, cTop=34, stackTop=cTop+PAD, stackBot=stackTop+n*(BAR_H+GAP)-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
   s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   ROWS.forEach((r,i)=>{const y=stackTop+i*(BAR_H+GAP);const cyy=y+BAR_H/2;
     s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,BAR_H,Math.min(3,BAR_H/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
     s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="12" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${r.v.toFixed(2)}</text>`;});
-  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${TOTCOL}" stroke-width="1.5"/>`;
-  // 總動靜（逐部位）
-  const SDH=BAR_H, prr=Math.min(3,SDH/2);
-  const headBoxTop=cBot+GAP, headBase=headBoxTop+12, sdCTop=headBoxTop+16+GAP, barsTop=sdCTop+PAD;
+  s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${R0_TOT}" stroke-width="1.5"/>`;
+  const vbH=Math.ceil(cBot+LP+4);
+  return `<svg viewBox="0 0 400 ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// ===== 總動靜（逐部位 10 條，無標題）=====
+export function buildSDSVG(opts){
+  opts=opts||{};
+  const partD=opts.partD||new Array(9).fill(0), partN=opts.partN||new Array(9).fill(0);
+  const PLAB=['頭','上停','中停','下停','耳','眉','眼','鼻','口'], THICK_AFTER=[3,8];
+  const SD_ROWS=[];let sumD=0,sumN=0;
+  for(let i=0;i<9;i++){const d=+partD[i]||0,nn=+partN[i]||0;SD_ROWS.push({name:PLAB[i],d:d,s:nn-d,t:nn||1});sumD+=d;sumN+=nn;}
+  SD_ROWS.push({name:'總計',d:sumD,s:sumN-sumD,t:sumN||1});
+  const X0=R0_X0,SDH=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,TRACKW=R0_TW,SD_OP=0.85,GT=GAP,GK=GAP+6,prr=Math.min(3,SDH/2);
+  const sdCTop=2, barsTop=sdCTop+PAD;
   let hh=0; SD_ROWS.forEach((r,i)=>{hh+=SDH; if(i<SD_ROWS.length-1) hh+=(THICK_AFTER.indexOf(i)>=0?GK:GT);});
-  s+=`<text x="${(X0+TRACKW).toFixed(1)}" y="${headBase.toFixed(1)}" font-size="14" text-anchor="end" fill="#3d3b39" font-weight="700" letter-spacing="1">總動靜</text>`;
-  s+=`<rect x="${X0}" y="${sdCTop.toFixed(1)}" width="${TRACKW}" height="${(hh+2*PAD).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
+  let s='';
+  s+=`<rect x="${X0}" y="${sdCTop}" width="${TRACKW}" height="${(hh+2*PAD).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   let y=barsTop;
   SD_ROWS.forEach((r,i)=>{const isTot=(i===SD_ROWS.length-1);const op=isTot?Math.min(1,SD_OP+0.18):SD_OP;
     const dW=TRACKW*r.d/r.t, bd=X0+dW, cyy=y+SDH/2;
-    s+=`<path d="${_bL(X0,y,dW,SDH,prr)}" fill="${A2}" fill-opacity="${op}"/>`;
-    s+=`<path d="${_bR(bd,y,TRACKW-dW,SDH,prr)}" fill="${S2}" fill-opacity="${op}"/>`;
+    s+=`<path d="${_bL(X0,y,dW,SDH,prr)}" fill="${R0_A}" fill-opacity="${op}"/>`;
+    s+=`<path d="${_bR(bd,y,TRACKW-dW,SDH,prr)}" fill="${R0_S}" fill-opacity="${op}"/>`;
     s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11.5" text-anchor="end" dominant-baseline="central" fill="#6a6458" font-weight="700">${r.name}</text>`;
     if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
     if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
@@ -123,6 +115,6 @@ export function buildRadar0SVG(opts){
     if(THICK_AFTER.indexOf(i)>=0){const ly=y+SDH+gp/2;s+=`<line x1="${X0}" y1="${ly.toFixed(1)}" x2="${(X0+TRACKW).toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;}
     y+=SDH+gp;
   });
-  const vbH=Math.ceil(sdCTop+hh+2*PAD+6);
+  const vbH=Math.ceil(sdCTop+hh+2*PAD+4);
   return `<svg viewBox="0 0 400 ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }

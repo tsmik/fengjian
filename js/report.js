@@ -5,7 +5,7 @@ import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, 
          setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { collectDetailForPrompt } from './obs_ui.js';
-import { buildRadar2SVG, buildRadar0SVG } from './report_chart.js';
+import { buildRadar2SVG, buildCoefSVG, buildSDSVG } from './report_chart.js';
 
 /* ===== Report Save ===== */
 export function reportSave(){
@@ -630,11 +630,12 @@ export function showReport(){
     t+='</table>';
     ftEl.innerHTML=t;
 
-    // ===== 報告圖：表格下方，Radar2(係數雷達) 左 + Radar0(係數總覽) 右 =====
+    // ===== 報告圖：表格下方，三張分開（係數總覽 / 報告圖 / 總動靜）=====
     try{
       var r2El=document.getElementById('report-radar2');
-      var r0El=document.getElementById('report-radar0');
-      if(r2El||r0El){
+      var coefEl=document.getElementById('report-coef');
+      var sdEl=document.getElementById('report-sd');
+      if(r2El||coefEl||sdEl){
         var dimSFrac=[],dimCoeffArr=[];
         for(var ci=0;ci<13;ci++){
           var sc=dimSCounts[ci]||0, dcn=dimDCounts[ci]||0, tot=sc+dcn;
@@ -645,15 +646,13 @@ export function showReport(){
         var partD=[],partN=[];
         for(var pi=0;pi<9;pi++){var pd=0,pn=0;for(var di=0;di<13;di++){var vv=data[di]&&data[di][pi];if(vv==='A'||vv==='B'){pn++;var tp=(vv==='A')?DIMS[di].aT:DIMS[di].bT;if(tp!=='靜')pd++;}}partD.push(pd);partN.push(pn);}
         if(r2El) r2El.innerHTML=buildRadar2SVG({
-          name:(_currentCaseName||userName||''),
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
           bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0
         });
-        if(r0El) r0El.innerHTML=buildRadar0SVG({
-          name:(_currentCaseName||userName||''),
-          preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0,
-          partD:partD, partN:partN
+        if(coefEl) coefEl.innerHTML=buildCoefSVG({
+          preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
+        if(sdEl) sdEl.innerHTML=buildSDSVG({ partD:partD, partN:partN });
         // staging：兩圖可自由移動/縮放（測試工具）
         var _h=location.hostname;
         if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
@@ -673,17 +672,15 @@ export function showReport(){
 /* ===== Close Report ===== */
 export function closeReport(){document.getElementById('report-overlay').style.display='none';}
 
-/* ===== staging 調整工具：Radar2 + Radar0 兩圖自由移動/縮放 ===== */
+/* ===== staging 調整工具：三圖（係數總覽/報告圖/總動靜）自由移動/縮放 ===== */
+const _CT_DEF={coef:{id:'report-coef',label:'係數總覽'},r2:{id:'report-radar2',label:'報告圖'},sd:{id:'report-sd',label:'總動靜'}};
 let _ct=null, _ctWired=false, _ctDrag=null;
 function _ctApply(){
-  var a=document.getElementById('report-radar2'),b=document.getElementById('report-radar0');
-  if(a){a.style.transformOrigin='top left';a.style.transform='translate('+_ct.r2.tx+'px,'+_ct.r2.ty+'px) scale('+_ct.r2.s+')';}
-  if(b){b.style.transformOrigin='top left';b.style.transform='translate('+_ct.r0.tx+'px,'+_ct.r0.ty+'px) scale('+_ct.r0.s+')';}
-  // 依縮放後的圖高度撐開圖區，讓下方按鈕不被蓋
-  var row=document.getElementById('report-charts-row');
-  if(row){var rt=row.getBoundingClientRect().top,mb=0;[a,b].forEach(function(el){if(el){mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);}});if(mb>0)row.style.minHeight=(mb+14)+'px';}
+  var mb=0, rowEl=document.getElementById('report-charts-row'), rt=rowEl?rowEl.getBoundingClientRect().top:0;
+  Object.keys(_CT_DEF).forEach(function(k){var el=document.getElementById(_CT_DEF[k].id);if(!el)return;var st=_ct[k];el.style.transformOrigin='top left';el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+st.s+')';if(rowEl)mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);});
+  if(rowEl&&mb>0)rowEl.style.minHeight=(mb+14)+'px';
 }
-function _ctReadout(){var o=document.getElementById('ct-out');if(!o)return;o.value='Radar2: x='+_ct.r2.tx.toFixed(0)+' y='+_ct.r2.ty.toFixed(0)+' scale='+_ct.r2.s.toFixed(2)+'\nRadar0: x='+_ct.r0.tx.toFixed(0)+' y='+_ct.r0.ty.toFixed(0)+' scale='+_ct.r0.s.toFixed(2);}
+function _ctReadout(){var o=document.getElementById('ct-out');if(!o)return;o.value=Object.keys(_CT_DEF).map(function(k){var st=_ct[k];return _CT_DEF[k].label+': x='+st.tx.toFixed(0)+' y='+st.ty.toFixed(0)+' scale='+st.s.toFixed(2);}).join('\n');}
 function _ctGrip(el,which){
   var g=document.createElement('div');g.textContent='✚';
   g.style.cssText='position:absolute;top:-11px;left:-11px;width:22px;height:22px;line-height:19px;text-align:center;border-radius:50%;background:#cc9173;color:#fff;border:2px solid #fff;cursor:move;z-index:10000;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.35);user-select:none';
@@ -692,32 +689,27 @@ function _ctGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupChartTuner(){
-  if(!_ct)_ct={r2:{tx:4,ty:-47,s:1.85},r0:{tx:330,ty:0,s:1.0}};
+  if(!_ct)_ct={coef:{tx:0,ty:0,s:1},r2:{tx:0,ty:0,s:1},sd:{tx:0,ty:0,s:1}};
   if(!_ctWired){
     window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
     window.addEventListener('mouseup',function(){_ctDrag=null;});
     _ctWired=true;
   }
-  var a=document.getElementById('report-radar2'),b=document.getElementById('report-radar0');
-  if(a) _ctGrip(a,'r2');
-  if(b) _ctGrip(b,'r0');
+  Object.keys(_CT_DEF).forEach(function(k){var el=document.getElementById(_CT_DEF[k].id);if(el)_ctGrip(el,k);});
   if(!document.getElementById('ct-panel')){
     var panel=document.createElement('div');panel.id='ct-panel';
-    panel.style.cssText='position:fixed;right:14px;bottom:14px;z-index:10001;width:270px;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
-    panel.innerHTML='<div style="margin-bottom:6px;color:#9a8456">staging 調整：拖 ✚ 移動；滑桿縮放</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">Radar2 大小 <input id="ct-r2" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r2v">1.00</b></div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">Radar0 大小 <input id="ct-r0" type="range" min="0.4" max="2.2" step="0.05" value="1" style="width:200px"> <b id="ct-r0v">1.00</b></div>'
-      +'<textarea id="ct-out" readonly style="width:100%;height:46px;font-family:monospace;font-size:11px;border:1px solid #e7ded2;border-radius:6px;padding:5px;box-sizing:border-box"></textarea>'
+    panel.style.cssText='position:fixed;right:14px;bottom:14px;z-index:10001;width:280px;padding:10px;border:1px dashed #cc9173;border-radius:8px;background:#fffdfa;font-size:13px;color:#3d3b39;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+    var rows=Object.keys(_CT_DEF).map(function(k){return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'+_CT_DEF[k].label+' <input id="ct-'+k+'" type="range" min="0.4" max="2.4" step="0.05" value="1" style="width:160px"> <b id="ct-'+k+'v">1.00</b></div>';}).join('');
+    panel.innerHTML='<div style="margin-bottom:6px;color:#9a8456">staging 調整：拖 ✚ 移動；滑桿縮放</div>'+rows
+      +'<textarea id="ct-out" readonly style="width:100%;height:54px;font-family:monospace;font-size:11px;border:1px solid #e7ded2;border-radius:6px;padding:5px;box-sizing:border-box"></textarea>'
       +'<button id="ct-copy" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">複製設定</button>'
       +' <button id="ct-reset" style="margin-top:5px;padding:5px 12px;border:1px solid #e7ded2;border-radius:6px;background:#fff;cursor:pointer">歸位</button>';
     document.body.appendChild(panel);
-    panel.querySelector('#ct-r2').addEventListener('input',function(){_ct.r2.s=parseFloat(this.value);document.getElementById('ct-r2v').textContent=_ct.r2.s.toFixed(2);_ctApply();_ctReadout();});
-    panel.querySelector('#ct-r0').addEventListener('input',function(){_ct.r0.s=parseFloat(this.value);document.getElementById('ct-r0v').textContent=_ct.r0.s.toFixed(2);_ctApply();_ctReadout();});
+    Object.keys(_CT_DEF).forEach(function(k){panel.querySelector('#ct-'+k).addEventListener('input',function(){_ct[k].s=parseFloat(this.value);document.getElementById('ct-'+k+'v').textContent=_ct[k].s.toFixed(2);_ctApply();_ctReadout();});});
     panel.querySelector('#ct-copy').addEventListener('click',function(){var ta=document.getElementById('ct-out');ta.select();try{document.execCommand('copy');}catch(e){}this.textContent='已複製';var b2=this;setTimeout(function(){b2.textContent='複製設定';},1200);});
-    panel.querySelector('#ct-reset').addEventListener('click',function(){_ct.r2={tx:0,ty:0,s:1};_ct.r0={tx:0,ty:0,s:1};document.getElementById('ct-r2').value=1;document.getElementById('ct-r0').value=1;document.getElementById('ct-r2v').textContent='1.00';document.getElementById('ct-r0v').textContent='1.00';_ctApply();_ctReadout();});
+    panel.querySelector('#ct-reset').addEventListener('click',function(){Object.keys(_CT_DEF).forEach(function(k){_ct[k]={tx:0,ty:0,s:1};document.getElementById('ct-'+k).value=1;document.getElementById('ct-'+k+'v').textContent='1.00';});_ctApply();_ctReadout();});
   }
-  var s2=document.getElementById('ct-r2');if(s2){s2.value=_ct.r2.s;document.getElementById('ct-r2v').textContent=_ct.r2.s.toFixed(2);}
-  var s0=document.getElementById('ct-r0');if(s0){s0.value=_ct.r0.s;document.getElementById('ct-r0v').textContent=_ct.r0.s.toFixed(2);}
+  Object.keys(_CT_DEF).forEach(function(k){var sl=document.getElementById('ct-'+k);if(sl){sl.value=_ct[k].s;document.getElementById('ct-'+k+'v').textContent=_ct[k].s.toFixed(2);}});
   _ctApply();_ctReadout();
 }
 
