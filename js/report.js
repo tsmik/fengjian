@@ -790,8 +790,10 @@ export async function captureComposite(mode, cfg){
   var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
   var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
   var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
+  var bgEl=cfg.bgId?document.getElementById(cfg.bgId):null; var bgPrev=bgEl?bgEl.style.background:'';
   if(banner)banner.style.display='none';
   if(ctp)ctp.style.display='none';
+  if(bgEl)bgEl.style.background='#ffffff';
   try{
     await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
     var els=[document.getElementById(cfg.coefId),document.getElementById(cfg.r2Id),document.getElementById(cfg.sdId)];
@@ -808,6 +810,7 @@ export async function captureComposite(mode, cfg){
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
   finally{
     if(banner)banner.style.display=bd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
+    if(bgEl)bgEl.style.background=bgPrev;
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
   }
 }

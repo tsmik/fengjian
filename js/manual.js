@@ -653,7 +653,7 @@ export function renderManualPage(){
 
 // 手動報告分享：三選項
 export function showManualShareMenu(btn){
-  var cfg={btnId:'btn-manual-export',coefId:'manual-coef',r2Id:'manual-radar2',sdId:'manual-sd',src:manualData};
+  var cfg={btnId:'btn-manual-export',coefId:'manual-coef',r2Id:'manual-radar2',sdId:'manual-sd',src:manualData,bgId:'manual-page'};
   buildShareMenu(btn,{onTable:function(){exportManualPNG();},onCharts:function(){captureComposite('charts',cfg);},onAll:function(){captureComposite('all',cfg);}});
 }
 
