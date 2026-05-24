@@ -39,10 +39,10 @@ const S=getC('--static'),A=getC('--active');
 const CRD=getC('--cream-deep'),CRBG=getC('--cream-bg'),CRT=getC('--cream-text');
 const Sm='#90b094', Am='#cc9173', Sd='#4f6f53', Ad='#8f5236';
 const DIMS=[
-  {dn:'形勢',j:5,c:0.80,jc:'形',dc:'勢'},{dn:'經緯',j:1,c:0.80,jc:'經',dc:'緯'},{dn:'方圓',j:3,c:0.80,jc:'方',dc:'圓'},
-  {dn:'曲直',j:0,c:0.80,jc:'直',dc:'曲'},{dn:'收放',j:5,c:0.80,jc:'收',dc:'放'},{dn:'緩急',j:5,c:0.80,jc:'緩',dc:'急'},
-  {dn:'順逆',j:7,c:0.80,jc:'順',dc:'逆'},{dn:'分合',j:3,c:0.80,jc:'合',dc:'分'},{dn:'真假',j:9,c:0.80,jc:'真',dc:'假'},
-  {dn:'攻守',j:0,c:0.80,jc:'守',dc:'攻'},{dn:'奇正',j:4,c:0.80,jc:'正',dc:'奇'},{dn:'虛實',j:3,c:0.80,jc:'實',dc:'虛'},{dn:'進退',j:2,c:0.80,jc:'退',dc:'進'}
+  {dn:'形勢',j:5,c:0.13,jc:'形',dc:'勢'},{dn:'經緯',j:1,c:0.29,jc:'經',dc:'緯'},{dn:'方圓',j:3,c:0.80,jc:'方',dc:'圓'},
+  {dn:'曲直',j:0,c:0.00,jc:'直',dc:'曲'},{dn:'收放',j:5,c:0.29,jc:'收',dc:'放'},{dn:'緩急',j:5,c:0.50,jc:'緩',dc:'急'},
+  {dn:'順逆',j:7,c:0.50,jc:'順',dc:'逆'},{dn:'分合',j:3,c:0.29,jc:'合',dc:'分'},{dn:'真假',j:9,c:0.80,jc:'真',dc:'假'},
+  {dn:'攻守',j:0,c:0.80,jc:'守',dc:'攻'},{dn:'奇正',j:4,c:0.50,jc:'正',dc:'奇'},{dn:'虛實',j:3,c:0.50,jc:'實',dc:'虛'},{dn:'進退',j:2,c:0.13,jc:'退',dc:'進'}
 ];
 DIMS.forEach(d=>d.d=9-d.j);
 // 維度專屬顏色（取自兵法報告 dimText）
@@ -70,10 +70,10 @@ let svg='';
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:41.9,bf:0.695,bs:10.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:126.0,bf:0.741,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:210.0,bf:0.738,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.0,bf:0.721,bs:10.5,col:'#797181',tc:'#797181'}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.598,bs:10.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:124.7,bf:0.597,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.3,bf:0.597,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:306.2,bf:0.556,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
@@ -90,26 +90,27 @@ DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX)
   const fill=dm.d>dm.j?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);
   svg+=`<path class="cbar" data-frac="${frac.toFixed(3)}" d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
 // 先天/運氣/後天 群組分隔線（由中心延伸到外緣）：0格老闆色 / 6格運氣色 / 9格後天色
-[[0,'#936A78'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
+[[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 最外圍淡灰 13 邊形
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
 // 維度名：13邊形外（僅名稱，可拖曳）
 const FSD=10.8;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const key=dm.dn;
+const NAMEPOS=[[14.1,2.395],[40.3,2.320],[69.1,2.318],[97.2,2.300],[128.5,2.340],[155.9,2.401],[180.0,2.504],[204.4,2.406],[233.7,2.390],[261.9,2.332],[290.2,2.365],[319.1,2.357],[345.6,2.398]];
+DIMS.forEach((dm,i)=>{const np2=NAMEPOS[i];const lp=f(np2[0],rIn*np2[1]);const c=Math.sin(rad(np2[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
   svg+=`<g class="drg" data-key="${key}">`
      +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`
      +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+1).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
-// 維度係數數字：可個別拖曳；位置在 bar 內(<=rT)→白字，在 bar 外→動/靜色
-const rNum=rOut-11;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const np=f(mid,rNum);const ny=np[1]+3.5;
-  const mcol=dm.d>dm.j?A:S;const ncol=(rT>=rNum)?'#fff':mcol;const key='數'+dm.dn;
-  LABELS.push({key,x:np[0],y:ny,fs:10.5});
+// 維度係數數字：位置寫死(仍可拖曳)；在 bar 內(<=rT)→白字，在 bar 外→動/靜色
+const NUMPOS=[[13.8,1.975],[42.6,1.921],[70.4,1.925],[98.2,1.940],[126.6,1.985],[152.6,2.047],[180.0,2.083],[207.4,2.047],[234.3,2.028],[261.2,1.985],[289.7,1.956],[317.6,1.950],[345.6,1.952]];
+DIMS.forEach((dm,i)=>{const rT=rIn+Math.min(1,dm.c/COEF_MAX)*H;const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
+  const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.d>dm.j?A:S;const ncol=(rT>=rr)?'#fff':mcol;const key='數'+dm.dn;
+  LABELS.push({key,x:nx,y:ny,fs:10.5});
   svg+=`<g class="drg numlab" data-key="${key}" data-rt="${rT.toFixed(1)}" data-mcol="${mcol}">`
-     +`<text class="numtxt" x="${np[0].toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`
-     +`<circle class="rsz" data-key="${key}" cx="${(np[0]+12).toFixed(1)}" cy="${ny.toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+     +`<text class="numtxt" x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${dm.c.toFixed(2)}</text>`
+     +`<circle class="rsz" data-key="${key}" cx="${(nx+12).toFixed(1)}" cy="${ny.toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
 // 學員姓名（輸出時顯示在標題上方；目前為佔位字，之後接真實姓名）
 {const p=f(322.8,rIn*3.596);const nx=p[0],ny=p[1];LABELS.push({key:'姓名',x:nx,y:ny,fs:13.5});
