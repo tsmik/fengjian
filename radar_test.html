@@ -66,6 +66,8 @@ const QUAD=[
 ];
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path d="${sector(q.a0,q.a1,r)}" fill="${CRD}"/>`;});
+// 四象限間白色分隔線
+[0,90,180,270].forEach(a=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`;});
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
 // 文字：先天置中、老闆/主管在先天外圍、運氣/後天在共同弧
 function lab2(x,y,name,val,fs){fs=fs||9;const tl=(name.length*fs).toFixed(1);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
