@@ -112,7 +112,8 @@ export function buildSDSVG(opts){
   const SD_ROWS=[];let sumD=0,sumN=0;
   for(let i=0;i<9;i++){const d=+partD[i]||0,nn=+partN[i]||0;SD_ROWS.push({name:PLAB[i],d:d,s:nn-d,t:nn||1});sumD+=d;sumN+=nn;}
   SD_ROWS.push({name:'總計',d:sumD,s:sumN-sumD,t:sumN||1});
-  const X0=R0_X0,SDH=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,TRACKW=R0_TW,SD_OP=0.85,GT=GAP,GK=GAP+6,prr=Math.min(3,SDH/2);
+  const X0=R0_X0,SDH=(+opts.barH||R0_BAR),GAP=R0_GAP,PAD=R0_PAD,TRACKW=R0_TW,SD_OP=0.85,GT=GAP,GK=GAP+6,prr=Math.min(3,SDH/2);
+  const nameFs=(+opts.nameFs||11.5), numFs=(+opts.numFs||10);
   const sdCTop=2, barsTop=sdCTop+PAD;
   let hh=0; SD_ROWS.forEach((r,i)=>{hh+=SDH; if(i<SD_ROWS.length-1) hh+=(THICK_AFTER.indexOf(i)>=0?GK:GT);});
   let s='';
@@ -122,9 +123,9 @@ export function buildSDSVG(opts){
     const dW=TRACKW*r.d/r.t, bd=X0+dW, cyy=y+SDH/2;
     s+=`<path d="${_bL(X0,y,dW,SDH,prr)}" fill="${R0_A}" fill-opacity="${op}"/>`;
     s+=`<path d="${_bR(bd,y,TRACKW-dW,SDH,prr)}" fill="${R0_S}" fill-opacity="${op}"/>`;
-    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11.5" text-anchor="end" dominant-baseline="central" fill="#6a6458" font-weight="700">${r.name}</text>`;
-    if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
-    if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="10" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
+    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${nameFs}" text-anchor="end" dominant-baseline="central" fill="#6a6458" font-weight="700">${r.name}</text>`;
+    if(dW>10) s+=`<text x="${(bd-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${numFs}" text-anchor="end" dominant-baseline="central" fill="#fff" font-weight="700">${r.d}</text>`;
+    if(TRACKW-dW>10) s+=`<text x="${(bd+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${numFs}" text-anchor="start" dominant-baseline="central" fill="#fff" font-weight="700">${r.s}</text>`;
     const gp=(i<SD_ROWS.length-1?(THICK_AFTER.indexOf(i)>=0?GK:GT):0);
     if(THICK_AFTER.indexOf(i)>=0){const ly=y+SDH+gp/2;s+=`<line x1="${X0}" y1="${ly.toFixed(1)}" x2="${(X0+TRACKW).toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;}
     y+=SDH+gp;
