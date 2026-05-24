@@ -56,15 +56,32 @@ const facet=(a0,a1,ra,rb)=>`M ${PS(f(a0,ra))} L ${PS(f(a0,rb))} L ${PS(f(a1,rb))
 function sector(a0,a1,r){const l=(a1-a0)>180?1:0;return `M${cx},${cy} L${PS(f(a0,r))} A${r.toFixed(1)},${r.toFixed(1)} 0 ${l} 1 ${PS(f(a1,r))} Z`;}
 let svg='';
 svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-// 核心 A2
+// ===== 核心：先天/運氣/後天 面積；先天內再拆老闆/主管 =====
+const COL_OUT='#9e8456'; // 扇形外深色
+const ac=(a0,a1,r)=>`M${PS(f(a0,r))} A${r.toFixed(1)},${r.toFixed(1)} 0 0 1 ${PS(f(a1,r))}`;
+const preV=CORE[0].v, r_pre=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));
+const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6));
+const r_boss=rIn*Math.sqrt(Math.min(1,bossV/COEF_MAX)), r_mgr=rIn*Math.sqrt(Math.min(1,mgrV/COEF_MAX));
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="${CRBG}"/>`;
 CORE.forEach(c=>{const r=rIn*Math.sqrt(Math.min(1,c.v/COEF_MAX));svg+=`<path d="${sector(c.a0,c.a1,r)}" fill="${CRD}"/>`;});
+// 主要分區線（白，全長）
 [0,6*STEP,9*STEP].forEach(a=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(a,rIn)[0].toFixed(1)}" y2="${f(a,rIn)[1].toFixed(1)}" stroke="#fff" stroke-width="1.5"/>`);
+// 老闆/主管 分隔線（3*STEP）：先天扇形內透明白、扇形外深色
+{const d1=f(3*STEP,14),d2=f(3*STEP,r_pre),d3=f(3*STEP,rIn);
+ svg+=`<line x1="${d1[0].toFixed(1)}" y1="${d1[1].toFixed(1)}" x2="${d2[0].toFixed(1)}" y2="${d2[1].toFixed(1)}" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.5"/>`;
+ svg+=`<line x1="${d2[0].toFixed(1)}" y1="${d2[1].toFixed(1)}" x2="${d3[0].toFixed(1)}" y2="${d3[1].toFixed(1)}" stroke="${COL_OUT}" stroke-width="1.5"/>`;}
+// 老闆/主管 係數弧：扇形內透明白 / 扇形外深色
+function lineArc(a0,a1,r){const ins=r<r_pre;return `<path d="${ac(a0,a1,r)}" fill="none" stroke="${ins?'#ffffff':COL_OUT}" stroke-opacity="${ins?0.55:1}" stroke-width="2.5" stroke-linecap="round"/>`;}
+svg+=lineArc(3,3*STEP-3,r_boss);
+svg+=lineArc(3*STEP+3,6*STEP-3,r_mgr);
 svg+=`<circle cx="${cx}" cy="${cy}" r="${rIn.toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
-// 文字框中心對齊到同一圓弧：錨點 lp 為兩行的視覺中心，name 在上、coeff 在下對稱排
-CORE.forEach(c=>{const mid=(c.a0+c.a1)/2;const lp=f(mid,rIn*0.5);
-  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]-3).toFixed(1)}" font-size="10" text-anchor="middle" fill="${CRT}" font-weight="700">${c.name}</text>`;
-  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+11).toFixed(1)}" font-size="12" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${c.v.toFixed(2)}</text>`;});
+// 文字：先天置中、老闆/主管在先天外圍、運氣/後天在共同弧
+function lab2(x,y,name,val,fs){svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs||10}" text-anchor="middle" fill="${CRT}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+10).toFixed(1)}" font-size="${(fs||10)+1}" text-anchor="middle" fill="${CRT}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`;}
+lab2(cx,cy,'先天',preV,9);
+{const p=f(1.5*STEP,rIn*0.8);lab2(p[0],p[1],'老闆',bossV,9);}
+{const p=f(4.5*STEP,rIn*0.8);lab2(p[0],p[1],'主管',mgrV,9);}
+{const p=f(7.5*STEP,rIn*0.5);lab2(p[0],p[1],'運氣',CORE[1].v,10);}
+{const p=f(11*STEP,rIn*0.5);lab2(p[0],p[1],'後天',CORE[2].v,10);}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
