@@ -683,7 +683,7 @@ function _ctApply(){
 }
 function _ctReadout(){var o=document.getElementById('ct-out');if(!o)return;o.value=Object.keys(_CT_DEF).map(function(k){var st=_ct[k];return _CT_DEF[k].label+': x='+st.tx.toFixed(0)+' y='+st.ty.toFixed(0)+' scale='+st.s.toFixed(2);}).join('\n');}
 function _ctGrip(el,which){
-  var g=document.createElement('div');g.textContent='✚';
+  var g=document.createElement('div');g.className='ct-grip';g.textContent='✚';
   g.style.cssText='position:absolute;top:-11px;left:-11px;width:22px;height:22px;line-height:19px;text-align:center;border-radius:50%;background:#cc9173;color:#fff;border:2px solid #fff;cursor:move;z-index:10000;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.35);user-select:none';
   if(getComputedStyle(el).position==='static') el.style.position='relative';
   el.appendChild(g);
@@ -715,22 +715,73 @@ function setupChartTuner(){
 }
 
 /* ===== Export PNG ===== */
+// 共用：把 canvas 分享或下載
+async function _shareCanvas(canvas){
+  var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  var _expName=_currentCaseName||userName||'報告';
+  var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
+    '人相兵法_'+_expName+'.png',{type:'image/png'});
+  if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'人相兵法報告',text:_expName+' 的人相兵法報告'});}
+    catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}
+  }else{fallbackDownload(canvas);}
+}
+
+// 分享表格（原本的乾淨表格 PNG）
 export async function exportPNG(){
-  var btn=document.getElementById('btn-export');
-  btn.innerText='產生中...';btn.disabled=true;
+  var btn=document.getElementById('btn-export');var oldT=btn?btn.innerText:'';
+  if(btn){btn.innerText='產生中...';btn.disabled=true;}
   await new Promise(function(r){setTimeout(r,50);});
+  try{ await _shareCanvas(drawReportCanvas(undefined,{checkComplete:true})); }
+  catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
+  if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
+}
+
+// 可見元素聯集邊界
+function _unionRect(els){var L=1e9,T=1e9,R=-1e9,B=-1e9;els.forEach(function(el){if(!el)return;var r=el.getBoundingClientRect();if(r.width===0&&r.height===0)return;L=Math.min(L,r.left);T=Math.min(T,r.top);R=Math.max(R,r.right);B=Math.max(B,r.bottom);});return {left:L,top:T,right:R,bottom:B};}
+
+// 截圖式輸出：mode='charts'(只圖表) | 'all'(表格+圖表)；含最上方姓名/流年
+async function _captureReport(mode){
+  if(typeof html2canvas==='undefined'){alert('截圖元件尚未載入，請稍候再試');return;}
+  var btn=document.getElementById('btn-export');var oldT=btn?btn.innerText:'';
+  if(btn){btn.innerText='產生中...';btn.disabled=true;}
+  var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
+  var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
+  var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
+  var tableEl=document.getElementById('report-full-table'); var tableD=tableEl?tableEl.style.display:'';
+  if(ctp)ctp.style.display='none';
+  if(mode==='charts'&&tableEl) tableEl.style.display='none';
   try{
-    var canvas=drawReportCanvas(undefined,{checkComplete:true});
-    var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    var _expName=_currentCaseName||userName||'報告';
-    var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
-      '人相兵法_'+_expName+'.png',{type:'image/png'});
-    if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:'人相兵法報告',text:_expName+' 的人相兵法報告'});}
-      catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}
-    }else{fallbackDownload(canvas);}
+    await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
+    var topEl=document.querySelector('#report-overlay .report-top');
+    var chartsEl=document.getElementById('report-charts-row');
+    var parts=(mode==='charts')?[topEl,chartsEl]:[topEl,tableEl,chartsEl];
+    var rect=_unionRect(parts), pad=12;
+    var canvas=await html2canvas(document.body,{backgroundColor:'#ffffff',scale:2,
+      x:rect.left+window.scrollX-pad, y:rect.top+window.scrollY-pad,
+      width:(rect.right-rect.left)+pad*2, height:(rect.bottom-rect.top)+pad*2,
+      windowWidth:Math.max(document.documentElement.scrollWidth, Math.ceil(rect.right+window.scrollX+60)),
+      windowHeight:Math.max(document.documentElement.scrollHeight, Math.ceil(rect.bottom+window.scrollY+60))});
+    await _shareCanvas(canvas);
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
-  btn.innerText='分享報告';btn.disabled=false;
+  finally{
+    if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];}); if(tableEl)tableEl.style.display=tableD;
+    if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
+  }
+}
+
+// 分享按鈕：跳出三選項
+export function showShareMenu(btn){
+  var ex=document.getElementById('share-menu'); if(ex){ex.remove();return;}
+  var m=document.createElement('div'); m.id='share-menu';
+  m.style.cssText='position:fixed;z-index:10002;background:#fff;border:1px solid var(--border,#e7ded2);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.18);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:150px';
+  var opts=[['分享表格',function(){exportPNG();}],['分享圖表',function(){_captureReport('charts');}],['分享表格＋圖表',function(){_captureReport('all');}]];
+  opts.forEach(function(o){var b=document.createElement('button');b.textContent=o[0];b.style.cssText='padding:9px 12px;border:none;background:transparent;font-size:14px;text-align:center;cursor:pointer;border-radius:6px;color:#3d3b39;font-family:inherit';b.onmouseover=function(){b.style.background='#f3eee4';};b.onmouseout=function(){b.style.background='transparent';};b.onclick=function(){m.remove();o[1]();};m.appendChild(b);});
+  document.body.appendChild(m);
+  var r=btn.getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(r.left, window.innerWidth-m.offsetWidth-8))+'px';
+  m.style.top=Math.max(8,r.top-m.offsetHeight-8)+'px';
+  setTimeout(function(){document.addEventListener('mousedown',function h(e){if(!m.contains(e.target)&&e.target!==btn){m.remove();document.removeEventListener('mousedown',h);}});},0);
 }
 
 export function fallbackDownload(canvas){

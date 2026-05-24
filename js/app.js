@@ -17,7 +17,7 @@ import { renderFaceMap, renderObsCenter, renderDimIndex, selectOpt, selectLROpt,
 import { showCondPage, cpGoto, cpQuickChange, cpToggleAllGroups, cpToggleGroup,
          cpToggleLR, cpTogglePartGroups, cpTogglePart, cpRender, renderDimPanel,
          dimGoto, showCondPopup, closeCondPopup, applyCondChange, CAT_STYLE } from './cond_page.js';
-import { showReport, closeReport, reportSave, exportPNG } from './report.js';
+import { showReport, closeReport, reportSave, exportPNG, showShareMenu } from './report.js';
 import { showSensPage, renderSensPage, showManualSensPage, renderManualSensPage } from './sens_analysis.js';
 import { showManualSensV2Page, renderManualSensV2Page } from './manual_sens_v2.js';
 import { showManualPage, manualCellClick, manualClear, manualImportObs, manualSave,
@@ -278,6 +278,7 @@ window.exportSingleCase = exportSingleCase;
 window.triggerCaseImport = triggerCaseImport;
 window.moveGroup = moveGroup;
 window.exportPNG = exportPNG;
+window.showShareMenu = showShareMenu;
 window.generateAI = generateAI;
 window.gotoObsPart = gotoObsPart;
 window.loadCase = loadCase;

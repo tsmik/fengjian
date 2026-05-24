@@ -781,7 +781,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
     <button class="btn-back" onclick="showCondPage()" style="flex:1;margin:0;">&#8592; 修改評分</button>
     <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
-    <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-line" onclick="showShareMenu(this)" id="btn-export" style="flex:1;margin:0;">分享報告</button>
     <button class="btn-back" onclick="clearObsData()" style="flex:1;margin:0;color:var(--active);border-color:var(--active)">清除觀察資料</button>
   </div>
   <div id="ai-section" style="padding:16px 20px;border-top:2px solid var(--border);margin-top:20px;display:none">
@@ -790,6 +790,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
