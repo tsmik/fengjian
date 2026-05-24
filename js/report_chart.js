@@ -91,7 +91,7 @@ export function buildRadar2MSVG(opts){
   const luckV=+opts.luckV||0, postV=+opts.postV||0, preV=+opts.preV||0;
   const totV=(opts.totV!=null?+opts.totV:(coeff.reduce((a,x)=>a+(+x||0),0)/13));
   const DIM=[];for(let i=0;i<13;i++){const d=CORE_DIMS[i]||{};DIM.push({dn:d.dn||'',c:(+coeff[i]||0),sf:Math.max(0,Math.min(1,+sfrac[i]||0))});}
-  const fsName=15.5, fsNum=14, fsBox=12, totS=1.3, ZERO_MARK=5, OP_LOW=0.5, OP_HIGH=0.70;
+  const fsName=15.5, fsNum=14, fsBox=13.5, totS=1.3, ZERO_MARK=5, OP_LOW=0.5, OP_HIGH=0.70;
   const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
   let svg='';
   svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
