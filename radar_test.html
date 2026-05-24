@@ -27,7 +27,7 @@
     <div class="legend"><span><i style="background:var(--static)"></i>靜</span><span><i style="background:var(--active)"></i>動</span></div>
   </div>
   <div style="margin-top:10px">
-    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式：拖框身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -102,9 +102,14 @@ DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d
   else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
 // 維度名+係數
 const FSD=10.8;
-DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);
-  svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" font-weight="600">${dm.dn}</text>`;
-  svg+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`;});
+DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const lp=f(mid,rOut+16);const c=Math.sin(rad(mid));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
+  const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
+  LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
+  svg+=`<g class="drg" data-key="${key}">`
+     +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" font-weight="600">${dm.dn}</text>`
+     +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`
+     +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+     +`</g>`;});
 const poly=document.getElementById('poly');
 poly.innerHTML=svg;
 // ===== 拖曳調框位置/大小 + 座標讀數 =====
