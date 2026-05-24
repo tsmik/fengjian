@@ -38,10 +38,10 @@ const S=getC('--static'),A=getC('--active');
 const CRD=getC('--cream-deep'),CRBG=getC('--cream-bg'),CRT=getC('--cream-text');
 const Sm='#90b094', Am='#cc9173', Sd='#4f6f53', Ad='#8f5236';
 const DIMS=[
-  {dn:'形勢',j:5,c:0.29,jc:'形',dc:'勢'},{dn:'經緯',j:1,c:0.51,jc:'經',dc:'緯'},{dn:'方圓',j:3,c:0.40,jc:'方',dc:'圓'},
-  {dn:'曲直',j:0,c:0.22,jc:'直',dc:'曲'},{dn:'收放',j:5,c:0.45,jc:'收',dc:'放'},{dn:'緩急',j:5,c:0.38,jc:'緩',dc:'急'},
-  {dn:'順逆',j:7,c:0.30,jc:'順',dc:'逆'},{dn:'分合',j:3,c:0.33,jc:'合',dc:'分'},{dn:'真假',j:9,c:0.41,jc:'真',dc:'假'},
-  {dn:'攻守',j:0,c:0.55,jc:'守',dc:'攻'},{dn:'奇正',j:4,c:0.48,jc:'正',dc:'奇'},{dn:'虛實',j:3,c:0.36,jc:'實',dc:'虛'},{dn:'進退',j:2,c:0.60,jc:'退',dc:'進'}
+  {dn:'形勢',j:5,c:0.13,jc:'形',dc:'勢'},{dn:'經緯',j:1,c:0.29,jc:'經',dc:'緯'},{dn:'方圓',j:3,c:0.80,jc:'方',dc:'圓'},
+  {dn:'曲直',j:0,c:0.00,jc:'直',dc:'曲'},{dn:'收放',j:5,c:0.29,jc:'收',dc:'放'},{dn:'緩急',j:5,c:0.50,jc:'緩',dc:'急'},
+  {dn:'順逆',j:7,c:0.50,jc:'順',dc:'逆'},{dn:'分合',j:3,c:0.29,jc:'合',dc:'分'},{dn:'真假',j:9,c:0.80,jc:'真',dc:'假'},
+  {dn:'攻守',j:0,c:0.80,jc:'守',dc:'攻'},{dn:'奇正',j:4,c:0.50,jc:'正',dc:'奇'},{dn:'虛實',j:3,c:0.50,jc:'實',dc:'虛'},{dn:'進退',j:2,c:0.13,jc:'退',dc:'進'}
 ];
 DIMS.forEach(d=>d.d=9-d.j);
 // 維度專屬顏色（取自兵法報告 dimText）
@@ -70,10 +70,10 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.713,bs:10.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:136.4,bf:0.751,bs:10.4,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:214.9,bf:0.763,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.0,bf:0.721,bs:10.5,col:'#797181',tc:'#797181'}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.2,bf:0.598,bs:10.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:124.7,bf:0.597,bs:10.5,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.3,bf:0.597,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:306.2,bf:0.556,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
 QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
@@ -100,7 +100,7 @@ DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d
   else{const pd=f(mid,rOuter);svg+=`<text x="${pd[0].toFixed(1)}" y="${(pd[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${Ad}" font-weight="700">${dm.dc}</text>`;}});
 // 維度名+係數（位置已用拖曳調好寫死：[deg, frac]）
 const FSD=10.8;
-const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.300],[292.9,2.336],[319.5,2.397],[345.3,2.457]];
+const DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[98.2,2.292],[129.4,2.355],[155.4,2.454],[180.0,2.477],[206.0,2.422],[233.3,2.388],[262.8,2.313],[292.8,2.349],[319.7,2.426],[348.8,2.437]];
 DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const tl=(dm.dn.length*FSD).toFixed(1);const key=dm.dn;
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
