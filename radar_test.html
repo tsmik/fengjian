@@ -28,7 +28,7 @@
   </div>
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.60</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.6" style="vertical-align:middle;width:180px"></div>
+    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">扇形濃度 <b id="opVal">0.30</b> <input id="opSlider" type="range" min="0" max="1" step="0.05" value="0.3" style="vertical-align:middle;width:180px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -72,13 +72,13 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // ===== 核心：四象限面積（老闆/主管/運氣/後天）=====
 const bossV=mean(co.slice(0,3)), mgrV=mean(co.slice(3,6)), preV=CORE[0].v;
 const QUAD=[
-  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.732,bs:9.5,col:'#936A78',tc:'#936A78'},
-  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:137.1,bf:0.780,bs:9.4,col:'#AE6D4F',tc:'#876D4F'},
-  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:208.1,bf:0.725,bs:10.5,col:'#546D77',tc:'#546D77'},
-  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:300.5,bf:0.726,bs:10.5,col:'#797181',tc:'#797181'}
+  {name:'老闆',a0:0,a1:3*STEP,v:bossV,bd:43.5,bf:0.713,bs:10.5,col:'#936A78',tc:'#936A78'},
+  {name:'主管',a0:3*STEP,a1:6*STEP,v:mgrV,bd:136.4,bf:0.751,bs:10.4,col:'#AE6D4F',tc:'#876D4F'},
+  {name:'運氣',a0:6*STEP,a1:9*STEP,v:CORE[1].v,bd:207.6,bf:0.737,bs:10.5,col:'#546D77',tc:'#546D77'},
+  {name:'後天',a0:9*STEP,a1:360,v:CORE[2].v,bd:302.0,bf:0.721,bs:10.5,col:'#797181',tc:'#797181'}
 ];
 svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
-QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.6"/>`;});
+QUAD.forEach(q=>{const r=rIn*Math.sqrt(Math.min(1,q.v/COEF_MAX));svg+=`<path class="qsec" d="${polySector(q.a0,q.a1,r)}" fill="${q.col}" fill-opacity="0.3"/>`;});
 // 係數間白色分隔線（老闆|主管=先天內部切分，透明0.4；其餘實白）
 [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
 svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
@@ -86,7 +86,7 @@ svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="monospace" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
 QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.name,q.v,q.bs,q.name,q.tc);});
-{const p=f(87.9,rIn*0.244);lab2(p[0],p[1],'先天',preV,10.8,'先天','#854F51');}
+{const p=f(90.9,rIn*0.285);lab2(p[0],p[1],'先天',preV,11.2,'先天','#854F51');}
 // 資料環
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=rIn+(dm.j/9)*H;
   svg+=`<path d="${facet(a0,a1,rIn,rS)}" fill="${S}" fill-opacity="0.40"/>`;
@@ -108,8 +108,8 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
   const w=dm.dn.length*FSD;const hx=an==='start'?lp[0]+w+4:an==='end'?lp[0]+4:lp[0]+w/2+4;
   LABELS.push({key,x:lp[0],y:lp[1],fs:FSD});
   svg+=`<g class="drg" data-key="${key}">`
-     +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" font-weight="600">${dm.dn}</text>`
-     +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`
+     +`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`
+     +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="monospace" font-weight="600">${dm.c.toFixed(2)}</text>`
      +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
 const poly=document.getElementById('poly');
