@@ -19,7 +19,7 @@
 // ============================================================
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim } from './core.js';
-import { buildRadar2MSVG, buildSDSVG } from './report_chart.js';
+import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile } from './m_home.js';
 import { db, debugLog, refreshUserData } from './m_main.js';
@@ -438,11 +438,11 @@ async function exportReportPng() {
 function _chartsHtml() {
   try {
     var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
-    var dimSFrac = [], dimCoeffArr = [];
+    var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
     for (var i = 0; i < 13; i++) {
       var s = 0, d = 0;
       for (var p = 0; p < 9; p++) { var vv = data[i] && data[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
-      dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5);
+      dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
       var rc = calcDim(data, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
     }
     var radar2 = buildRadar2MSVG({
@@ -450,9 +450,7 @@ function _chartsHtml() {
       luckV: avgCoeff(data,[6,7,8])||0, postV: avgCoeff(data,[9,10,11,12])||0,
       preV: avgCoeff(data,[0,1,2,3,4,5])||0, totV: avgCoeff(data,all)||0
     });
-    var partD = [], partN = [];
-    for (var pi = 0; pi < 9; pi++) { var pd = 0, pn = 0; for (var di = 0; di < 13; di++) { var v = data[di] && data[di][pi]; if (v === 'A' || v === 'B') { pn++; var tp = (v === 'A') ? DIMS[di].aT : DIMS[di].bT; if (tp !== '靜') pd++; } } partD.push(pd); partN.push(pn); }
-    var sd = buildSDSVG({ partD: partD, partN: partN, barH: 20, nameFs: 16, numFs: 13 });
+    var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr });
     return '<div style="padding:6px 12px 0">' + radar2 + '<div style="height:14px"></div>' + sd + '</div>';
   } catch (e) { return ''; }
 }

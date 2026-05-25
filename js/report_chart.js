@@ -173,3 +173,48 @@ export function buildSDSVG(opts){
   const vbH=Math.ceil(sdCTop+hh+2*PAD+4);
   return `<svg viewBox="0 0 400 ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
+
+// ===== 總動靜（radar3 動靜全圖）=====
+// 每維度三角形由中心放射、靜(內)/動(外) 依面積比例切（rS=rOut·√(靜/total)）；靜1&&total9 固定 57
+// 中央米色 13 邊形(42)+先天/運氣/後天 分隔線與文字；8 條動:靜參考環；維度名+係數；主導極字+數量
+const R3_DIMPOS=[[13.9,2.477],[38.7,2.404],[67.4,2.331],[97.3,2.246],[128.8,2.319],[155.4,2.424],[180.0,2.436],[206.0,2.392],[232.3,2.334],[262.6,2.233],[293.5,2.316],[319.7,2.407],[345.6,2.454]];
+const R3_CORELABELS=[['先天',87.1,0.290],['運氣',207.7,0.347],['後天',304.0,0.328]];
+const R3_CORE=42, R3_RING1=57, R3_OP=0.55, R3_Sd='#4f6f53', R3_Ad='#8f5236', R3_FSD=10.8;
+export function buildRadar3SVG(opts){
+  opts=opts||{};
+  const st=opts.dimStatic||new Array(13).fill(0);
+  const dy=opts.dimActive||new Array(13).fill(0);
+  const coeff=opts.dimCoeff||new Array(13).fill(0);
+  let svg='';
+  // 最外圍淡灰 13 邊形
+  svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
+  // 資料環：每維度 靜(內)/動(外) 面積比例切
+  for(let i=0;i<13;i++){const[a0,a1]=spans[i];const s=+st[i]||0,d=+dy[i]||0,tot=s+d;
+    let rS; if(tot===0)rS=0; else if(s===1&&tot===9)rS=R3_RING1; else rS=rOut*Math.sqrt(s/tot);
+    svg+=`<path d="${facet(a0,a1,0,rS)}" fill="${S}" fill-opacity="${R3_OP}"/>`;
+    svg+=`<path d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="${R3_OP}"/>`;}
+  // 白色分隔輻線
+  spans.forEach(s=>{const p=f(s[0],rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`;});
+  // 8 條 動:靜 參考環（靜=1 用 57，其餘面積公式）
+  for(let k=1;k<=8;k++){const r=(k===1)?R3_RING1:rOut*Math.sqrt(k/9);
+    svg+=`<polygon points="${spans.map(s=>PS(f(s[0],r))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.3" stroke-width="0.7"/>`;}
+  // 群組分隔線（中心→外緣）
+  [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
+  // 中央 13 邊形：米色填滿 + 先天/運氣/後天 分隔線
+  svg+=`<polygon points="${spans.map(s=>PS(f(s[0],R3_CORE))).join(' ')}" fill="${CRBG}"/>`;
+  [0,6*STEP,9*STEP].forEach(a=>{const p=f(a,R3_CORE);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;});
+  svg+=`<polygon points="${spans.map(s=>PS(f(s[0],R3_CORE))).join(' ')}" fill="none" stroke="#cdb892" stroke-width="0.8"/>`;
+  // 主導極字 + 數量（靜主導內、動主導外）
+  const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
+  for(let i=0;i<13;i++){const dm=CORE_DIMS[i]||{};const s=+st[i]||0,d=+dy[i]||0;const mid=(spans[i][0]+spans[i][1])/2;
+    const sCh=(dm.aT==='靜')?dm.a:dm.b, aCh=(dm.aT==='靜')?dm.b:dm.a;
+    if(s>d){const p=f(mid,rInner);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${R3_Sd}" font-weight="700">${esc(sCh)}${s}</text>`;}
+    else{const p=f(mid,rOuter);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+3.5).toFixed(1)}" font-size="10" text-anchor="middle" fill="${R3_Ad}" font-weight="700">${esc(aCh)}${d}</text>`;}}
+  // 維度名 + 係數
+  for(let i=0;i<13;i++){const dm=CORE_DIMS[i]||{};const dp=R3_DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const nm=dm.dn||'';const tl=(nm.length*R3_FSD).toFixed(1);
+    svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${R3_FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${esc(nm)}</text>`
+      +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${R3_FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${(+coeff[i]||0).toFixed(2)}</text>`;}
+  // 中央 先天/運氣/後天 文字（深米色）
+  R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+3).toFixed(1)}" font-size="${R3_FSD}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
+  return `<svg viewBox="0 -34 400 458" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+}

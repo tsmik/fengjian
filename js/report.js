@@ -5,7 +5,7 @@ import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, 
          setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { collectDetailForPrompt } from './obs_ui.js';
-import { buildRadar2SVG, buildCoefSVG, buildSDSVG } from './report_chart.js';
+import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
 
 /* ===== Report Save ===== */
 export function reportSave(){
@@ -640,9 +640,6 @@ export function showReport(){
           dimSFrac.push(tot>0?sc/tot:0.5);
           dimCoeffArr.push(dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:0);
         }
-        // 逐部位動靜（總動靜用）：每個部位跨 13 維度的動/靜計數
-        var partD=[],partN=[];
-        for(var pi=0;pi<9;pi++){var pd=0,pn=0;for(var di=0;di<13;di++){var vv=data[di]&&data[di][pi];if(vv==='A'||vv==='B'){pn++;var tp=(vv==='A')?DIMS[di].aT:DIMS[di].bT;if(tp!=='靜')pd++;}}partD.push(pd);partN.push(pn);}
         if(r2El) r2El.innerHTML=buildRadar2SVG({
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
           bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0,
@@ -651,7 +648,7 @@ export function showReport(){
         if(coefEl) coefEl.innerHTML=buildCoefSVG({
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
-        if(sdEl) sdEl.innerHTML=buildSDSVG({ partD:partD, partN:partN });
+        if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr });
         // staging：兩圖可自由移動/縮放（測試工具）
         var _h=location.hostname;
         if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
