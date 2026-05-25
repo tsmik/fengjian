@@ -788,9 +788,13 @@ export async function captureComposite(mode, cfg){
   var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
   var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
   var bgEl=cfg.bgId?document.getElementById(cfg.bgId):null; var bgPrev=bgEl?bgEl.style.background:'';
+  // 截圖圖表時暫時隱藏圖表列「同層的其他元素」（表格/流年/標題/按鈕…）：
+  // 圖表位置上移後，截取區會吃到上方表格的黑色總係數條，造成一條黑線。visibility:hidden 不影響版面，圖表不會位移。
+  var _coefEl=document.getElementById(cfg.coefId); var _chartsRow=_coefEl?_coefEl.parentElement:null; var _hiddenSibs=[];
   if(banner)banner.style.display='none';
   if(ctp)ctp.style.display='none';
   if(bgEl)bgEl.style.background='#ffffff';
+  if(_chartsRow&&_chartsRow.parentElement){Array.prototype.forEach.call(_chartsRow.parentElement.children,function(ch){if(ch!==_chartsRow){_hiddenSibs.push([ch,ch.style.visibility]);ch.style.visibility='hidden';}});}
   try{
     await new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});
     var els=[document.getElementById(cfg.coefId),document.getElementById(cfg.r2Id),document.getElementById(cfg.sdId)];
@@ -808,6 +812,7 @@ export async function captureComposite(mode, cfg){
   finally{
     if(banner)banner.style.display=bd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
     if(bgEl)bgEl.style.background=bgPrev;
+    _hiddenSibs.forEach(function(p){p[0].style.visibility=p[1];});
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
   }
 }
