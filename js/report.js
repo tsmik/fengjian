@@ -685,7 +685,7 @@ function _ctGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupChartTuner(){
-  if(!_ct)_ct={coef:{tx:670,ty:35,s:1.65},r2:{tx:-271,ty:22,s:1.70},sd:{tx:2,ty:252,s:1.65}};
+  if(!_ct)_ct={coef:{tx:717,ty:-5,s:1.40},r2:{tx:-272,ty:-3,s:1.85},sd:{tx:19,ty:62,s:1.65}};
   if(!_ctWired){
     window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
     window.addEventListener('mouseup',function(){_ctDrag=null;});
@@ -772,7 +772,7 @@ function _cropHeader(tableCanvas){
 }
 // 三圖排版（自動/手動共用的預設 transform）+ 撐開圖區
 export function arrangeReportCharts(coefId,r2Id,sdId,rowId){
-  var T={};T[coefId]=[670,35,1.65];T[r2Id]=[-271,22,1.70];T[sdId]=[2,252,1.65];
+  var T={};T[coefId]=[717,-5,1.40];T[r2Id]=[-272,-3,1.85];T[sdId]=[19,62,1.65];
   [coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){var t=T[id];el.style.transformOrigin='top left';el.style.transform='translate('+t[0]+'px,'+t[1]+'px) scale('+t[2]+')';}});
   var row=document.getElementById(rowId);
   if(row){var rt=row.getBoundingClientRect().top,mb=0;[coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);}});if(mb>0)row.style.minHeight=(mb+14)+'px';}
