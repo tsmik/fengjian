@@ -108,7 +108,7 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
      +`</g>`;});
 // 中央 先天/運氣/後天 文字框（文字 only、深米色、可拖曳調位置與大小；無係數）
 const CORE_LABELS=[['先天',3*STEP],['運氣',7.5*STEP],['後天',11*STEP]];
-CORE_LABELS.forEach(([nm,ang])=>{const p=f(ang,coreR*0.55);const x=p[0],y=p[1];const fs=9;const hw=nm.length*fs/2;LABELS.push({key:nm,x,y,fs});
+CORE_LABELS.forEach(([nm,ang])=>{const p=f(ang,coreR*0.55);const x=p[0],y=p[1];const fs=FSD;const hw=nm.length*fs/2;LABELS.push({key:nm,x,y,fs});
   svg+=`<g class="drg" data-key="${nm}">`
     +`<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`
     +`<circle class="rsz" data-key="${nm}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+4).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
