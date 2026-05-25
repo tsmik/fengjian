@@ -106,27 +106,13 @@ DIMS.forEach((dm,i)=>{const dp=DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Mat
      +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+12).toFixed(1)}" font-size="${FSD}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${dm.c.toFixed(2)}</text>`
      +`<circle class="rsz" data-key="${key}" cx="${hx.toFixed(1)}" cy="${(lp[1]+13).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
      +`</g>`;});
-// 學員姓名（輸出時顯示在標題上方；目前為佔位字，之後接真實姓名）
-{const p=f(322.8,rIn*3.596);const nx=p[0],ny=p[1];LABELS.push({key:'姓名',x:nx,y:ny,fs:13.5});
- svg+=`<g class="drg" data-key="姓名">`
-   +`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="13.5" text-anchor="middle" fill="var(--text3)" font-weight="600">學員姓名</text>`
-   +`<circle class="rsz" data-key="姓名" cx="${(nx+40).toFixed(1)}" cy="${(ny+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
-   +`</g>`;}
-// 標題（可拖曳/縮放）
-{const p=f(31.6,rIn*3.395);const tx=p[0],ty=p[1];LABELS.push({key:'標題',x:tx,y:ty,fs:13.6});
- svg+=`<g class="drg" data-key="標題">`
-   +`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="13.6" text-anchor="middle" fill="var(--text)" font-weight="700" letter-spacing="2">人相兵法報告圖</text>`
-   +`<circle class="rsz" data-key="標題" cx="${(tx+55).toFixed(1)}" cy="${(ty+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
-   +`</g>`;}
-// 動靜圖例（可拖曳/縮放）
-{const p=f(221.2,rIn*3.773);const lx=p[0],ly=p[1];const ls=10/12,fz=12*ls;LABELS.push({key:'圖例',x:lx,y:ly,fs:fz});
- svg+=`<g class="drg" data-key="圖例">`
-   +`<rect x="${lx.toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${S}"/>`
-   +`<text x="${(lx+15*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="var(--text3)">靜</text>`
-   +`<rect x="${(lx+40*ls).toFixed(1)}" y="${(ly-9*ls).toFixed(1)}" width="${(11*ls).toFixed(1)}" height="${(11*ls).toFixed(1)}" rx="2" fill="${A}"/>`
-   +`<text x="${(lx+55*ls).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fz.toFixed(1)}" fill="var(--text3)">動</text>`
-   +`<circle class="rsz" data-key="圖例" cx="${(lx+72*ls).toFixed(1)}" cy="${(ly+4).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
-   +`</g>`;}
+// 中央 先天/運氣/後天 文字框（文字 only、深米色、可拖曳調位置與大小；無係數）
+const CORE_LABELS=[['先天',3*STEP],['運氣',7.5*STEP],['後天',11*STEP]];
+CORE_LABELS.forEach(([nm,ang])=>{const p=f(ang,coreR*0.55);const x=p[0],y=p[1];const fs=9;const hw=nm.length*fs/2;LABELS.push({key:nm,x,y,fs});
+  svg+=`<g class="drg" data-key="${nm}">`
+    +`<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`
+    +`<circle class="rsz" data-key="${nm}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+4).toFixed(1)}" r="3.0" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`
+    +`</g>`;});
 const poly=document.getElementById('poly');
 poly.innerHTML=svg;
 // ===== 拖曳調框位置/大小 + 座標讀數 =====
