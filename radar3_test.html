@@ -20,7 +20,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="sub">（案例數據；係數為假）無中央核心；扇形由中心向外，靜(內)動(外)依<b>面積比例</b>切（rS=rOut·√(靜/9)）</div>
+  <div class="sub">（案例數據；係數為假）面積比例切；附 8 條 動:靜 分界參考環（動1靜8…動8靜1），挑要保留哪幾條</div>
   <div class="card">
     <svg id="poly" viewBox="0 -34 400 458" aria-label="一目了然圖"></svg>
   </div>
@@ -77,8 +77,13 @@ DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=Math.sqrt(dm.j/9)*rOut;
   svg+=`<path class="dfacet" d="${facet(a0,a1,0,rS)}" fill="${S}" fill-opacity="0.55"/>`;
   svg+=`<path class="dfacet" d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.55"/>`;});
 spans.forEach(s=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
-// 參考環：一半面積處（面積比例下，半面積在 rOut·√0.5≈0.707 半徑）
-svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut*Math.SQRT1_2))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="0.8"/>`;
+// 參考環組：各 動:靜 比例的面積分界多邊形（rS=rOut·√(靜/9)），供挑選最終保留哪幾條
+// 靜=1..8（內→外），對應 動8靜1 … 動1靜8
+for(let st=1; st<=8; st++){ const dn=9-st; const r=rOut*Math.sqrt(st/9);
+  svg+=`<polygon class="refring" points="${spans.map(s=>PS(f(s[0],r))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.75" stroke-width="0.7"/>`;
+  const lp=f(4,r);
+  svg+=`<text x="${(lp[0]+2).toFixed(1)}" y="${(lp[1]+3).toFixed(1)}" font-size="7.5" fill="#fff" stroke="#5a544c" stroke-width="0.5" paint-order="stroke" font-weight="700">動${dn}靜${st}</text>`;
+}
 // 群組分隔線（比照radar2，中心→外緣）：0格老闆色 / 3格#898179 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
 // 只標主導極字：靜主導→靜字在內半環中央；動主導→動字在外半環中央（非主導極不畫）
