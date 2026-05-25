@@ -784,6 +784,8 @@ export async function captureComposite(mode, cfg){
   var btn=cfg.btnId?document.getElementById(cfg.btnId):null;var oldT=btn?btn.innerText:'';
   if(btn){btn.innerText='產生中...';btn.disabled=true;}
   var banner=document.getElementById('staging-banner');var bd=banner?banner.style.display:'';
+  // 頂部固定導覽列(#top-nav)：html2canvas 會把 fixed 元素畫在截圖原點 → 上緣出現深色列+綠色「已儲存」殘影，截圖時暫時隱藏
+  var topnav=document.getElementById('top-nav');var tnd=topnav?topnav.style.display:'';
   var ctp=document.getElementById('ct-panel'); var ctpd=ctp?ctp.style.display:'';
   var grips=Array.prototype.slice.call(document.querySelectorAll('.ct-grip'));
   var gd=grips.map(function(g){var d=g.style.display;g.style.display='none';return d;});
@@ -792,6 +794,7 @@ export async function captureComposite(mode, cfg){
   // 圖表位置上移後，截取區會吃到上方表格的黑色總係數條，造成一條黑線。visibility:hidden 不影響版面，圖表不會位移。
   var _coefEl=document.getElementById(cfg.coefId); var _chartsRow=_coefEl?_coefEl.parentElement:null; var _hiddenSibs=[];
   if(banner)banner.style.display='none';
+  if(topnav)topnav.style.display='none';
   if(ctp)ctp.style.display='none';
   if(bgEl)bgEl.style.background='#ffffff';
   if(_chartsRow&&_chartsRow.parentElement){Array.prototype.forEach.call(_chartsRow.parentElement.children,function(ch){if(ch!==_chartsRow){_hiddenSibs.push([ch,ch.style.visibility]);ch.style.visibility='hidden';}});}
@@ -810,7 +813,7 @@ export async function captureComposite(mode, cfg){
     await _shareCanvas(out);
   }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
   finally{
-    if(banner)banner.style.display=bd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
+    if(banner)banner.style.display=bd; if(topnav)topnav.style.display=tnd; if(ctp)ctp.style.display=ctpd; grips.forEach(function(g,i){g.style.display=gd[i];});
     if(bgEl)bgEl.style.background=bgPrev;
     _hiddenSibs.forEach(function(p){p[0].style.visibility=p[1];});
     if(btn){btn.innerText=oldT||'分享報告';btn.disabled=false;}
