@@ -27,6 +27,8 @@
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">維度濃度 <b id="dfV">0.55</b> <input id="dfS" type="range" min="0" max="1" step="0.05" value="0.55" style="vertical-align:middle;width:180px"></div>
+    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">最內圈(靜1動8)半徑 <b id="ringV">50</b> <input id="ringS" type="range" min="10" max="140" step="1" value="50" style="vertical-align:middle;width:180px"></div>
+    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">中央13邊形大小 <b id="coreV">50</b> <input id="coreS" type="range" min="0" max="140" step="1" value="50" style="vertical-align:middle;width:180px"></div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -76,11 +78,16 @@ function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const
 DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=Math.sqrt(dm.j/9)*rOut;
   svg+=`<path class="dfacet" d="${facet(a0,a1,0,rS)}" fill="${S}" fill-opacity="0.55"/>`;
   svg+=`<path class="dfacet" d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.55"/>`;});
+// 中央 13 邊形核心：先天(0~6格)/運氣(6~9格)/後天(9~13格) 三淡色色塊（大小可調，預設 coreR）
+const CORE_GROUPS=[[0,6*STEP,'#854F51'],[6*STEP,9*STEP,'#546D77'],[9*STEP,360,'#797181']];
+let coreR=50;
+CORE_GROUPS.forEach(([a0,a1,col])=>{svg+=`<path class="core-sec" data-a0="${a0}" data-a1="${a1}" d="${polySector(a0,a1,coreR)}" fill="${col}" fill-opacity="0.25"/>`;});
+svg+=`<polygon id="core-outline" points="${spans.map(s=>PS(f(s[0],coreR))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="0.8"/>`;
 spans.forEach(s=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
 // 參考環組：各 動:靜 比例的面積分界多邊形（rS=rOut·√(靜/9)），供挑選最終保留哪幾條
 // 靜=1..8（內→外），對應 動8靜1 … 動1靜8
 for(let st=1; st<=8; st++){ const r=rOut*Math.sqrt(st/9);
-  svg+=`<polygon class="refring" points="${spans.map(s=>PS(f(s[0],r))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.3" stroke-width="0.7"/>`;
+  svg+=`<polygon class="refring"${st===1?' id="ring-inner"':''} points="${spans.map(s=>PS(f(s[0],r))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.3" stroke-width="0.7"/>`;
 }
 // 群組分隔線（比照radar2，中心→外緣）：0格老闆色 / 3格#898179 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
@@ -148,6 +155,12 @@ poly.innerHTML=svg;
   document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
   const dfS=document.getElementById('dfS'),dfV=document.getElementById('dfV');
   dfS.addEventListener('input',function(){const v=parseFloat(this.value);dfV.textContent=v.toFixed(2);poly.querySelectorAll('.dfacet').forEach(p=>p.setAttribute('fill-opacity',v));});
+  // 最內圈(靜1動8) 半徑可調
+  const ringS=document.getElementById('ringS'),ringV=document.getElementById('ringV');
+  ringS.addEventListener('input',function(){const r=parseFloat(this.value);ringV.textContent=r.toFixed(0);const rg=document.getElementById('ring-inner');if(rg)rg.setAttribute('points',spans.map(s=>PS(f(s[0],r))).join(' '));});
+  // 中央 13 邊形核心 大小可調
+  const coreS=document.getElementById('coreS'),coreV=document.getElementById('coreV');
+  coreS.addEventListener('input',function(){const r=parseFloat(this.value);coreV.textContent=r.toFixed(0);poly.querySelectorAll('.core-sec').forEach(p=>{const a0=parseFloat(p.dataset.a0),a1=parseFloat(p.dataset.a1);p.setAttribute('d',polySector(a0,a1,r));});const co=document.getElementById('core-outline');if(co)co.setAttribute('points',spans.map(s=>PS(f(s[0],r))).join(' '));});
   readout();
 })();
 </script>
