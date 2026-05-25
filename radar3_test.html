@@ -27,8 +27,7 @@
   <div style="margin-top:10px">
     <div style="font-size:12px;color:var(--text3);margin-bottom:4px">拖曳模式（含外圍 13 個維度字）：拖字身＝移位置；拖右下角小圓點＝縮放大小。下方即時顯示座標與字級</div>
     <div style="margin-bottom:6px;font-size:13px;color:var(--text)">維度濃度 <b id="dfV">0.55</b> <input id="dfS" type="range" min="0" max="1" step="0.05" value="0.55" style="vertical-align:middle;width:180px"></div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">最內圈(靜1動8)半徑 <b id="ringV">50</b> <input id="ringS" type="range" min="10" max="140" step="1" value="50" style="vertical-align:middle;width:180px"></div>
-    <div style="margin-bottom:6px;font-size:13px;color:var(--text)">中央13邊形大小 <b id="coreV">50</b> <input id="coreS" type="range" min="0" max="140" step="1" value="50" style="vertical-align:middle;width:180px"></div>
+    <div style="font-size:12px;color:var(--text3)">中央13邊形=42、最內圈(靜1)=57（已寫死）</div>
     <textarea id="coords" readonly style="width:100%;height:120px;font-family:monospace;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--card);color:var(--text)"></textarea>
     <button id="copyBtn" style="margin-top:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">複製座標</button>
     <button id="resetBtn" style="margin-top:6px;margin-left:6px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;cursor:pointer">歸位</button>
@@ -58,6 +57,7 @@ const CORE=[
 ];
 const COEF_MAX=0.8;
 const cx=200,cy=215,U=150/9,rIn=4*U,rOut=9*U,H=rOut-rIn,rBal=rIn+0.5*H;
+const coreR=42, RING1=57; // Mike 設定：中央13邊形半徑、靜1(1/9) 填充與最內圈半徑
 const rad=d=>d*Math.PI/180;
 const f=(deg,r)=>[cx+r*Math.sin(rad(deg)),cy-r*Math.cos(rad(deg))];
 const PS=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
@@ -73,24 +73,23 @@ svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" 
 // 文字框（可拖曳）：LABELS 記錄每個框的原始座標供讀數
 const LABELS=[];
 function lab2(x,y,name,val,fs,key,col){fs=fs||9;key=key||name;col=col||CRT;const tl=(name.length*fs).toFixed(1);const hw=name.length*fs/2;LABELS.push({key,x,y,fs});svg+=`<g class="drg" data-key="${key}">`+`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${val.toFixed(2)}</text>`+`<circle class="rsz" data-key="${key}" cx="${(x+hw+4).toFixed(1)}" cy="${(y+11).toFixed(1)}" r="3.2" fill="#cc9173" stroke="#fff" stroke-width="0.8"/>`+`</g>`;}
-// 資料環：扇形由中心(0)向外，靜(內)/動(外)依「面積比例」切（三角形面積∝r²，故切點 rS=rOut·√(靜/9)）
-// 這樣靜的面積=靜/9、動的面積=動/9，真正的 形:勢 面積比
-DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=Math.sqrt(dm.j/9)*rOut;
+// 資料環：扇形由中心(0)向外，靜(內)/動(外)依「面積比例」切（rS=rOut·√(靜/9)）
+// 例外：靜=1(1/9) 固定填到 RING1（Mike 指定），其餘維持面積公式
+DIMS.forEach((dm,i)=>{const[a0,a1]=spans[i];const rS=(dm.j===1)?RING1:Math.sqrt(dm.j/9)*rOut;
   svg+=`<path class="dfacet" d="${facet(a0,a1,0,rS)}" fill="${S}" fill-opacity="0.55"/>`;
   svg+=`<path class="dfacet" d="${facet(a0,a1,rS,rOut)}" fill="${A}" fill-opacity="0.55"/>`;});
-// 中央 13 邊形核心：先天(0~6格)/運氣(6~9格)/後天(9~13格) 三淡色色塊（大小可調，預設 coreR）
-const CORE_GROUPS=[[0,6*STEP,'#854F51'],[6*STEP,9*STEP,'#546D77'],[9*STEP,360,'#797181']];
-let coreR=50;
-CORE_GROUPS.forEach(([a0,a1,col])=>{svg+=`<path class="core-sec" data-a0="${a0}" data-a1="${a1}" d="${polySector(a0,a1,coreR)}" fill="${col}" fill-opacity="0.25"/>`;});
-svg+=`<polygon id="core-outline" points="${spans.map(s=>PS(f(s[0],coreR))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="0.8"/>`;
 spans.forEach(s=>svg+=`<line x1="${cx}" y1="${cy}" x2="${f(s[0],rOut)[0].toFixed(1)}" y2="${f(s[0],rOut)[1].toFixed(1)}" stroke="#fff" stroke-width="1"/>`);
 // 參考環組：各 動:靜 比例的面積分界多邊形（rS=rOut·√(靜/9)），供挑選最終保留哪幾條
 // 靜=1..8（內→外），對應 動8靜1 … 動1靜8
-for(let st=1; st<=8; st++){ const r=rOut*Math.sqrt(st/9);
+for(let st=1; st<=8; st++){ const r=(st===1)?RING1:rOut*Math.sqrt(st/9);
   svg+=`<polygon class="refring"${st===1?' id="ring-inner"':''} points="${spans.map(s=>PS(f(s[0],r))).join(' ')}" fill="none" stroke="#fff" stroke-opacity="0.3" stroke-width="0.7"/>`;
 }
 // 群組分隔線（比照radar2，中心→外緣）：0格老闆色 / 3格#898179 / 6格運氣色 / 9格後天色
 [[0,'#936A78'],[3*STEP,'#898179'],[6*STEP,'#546D77'],[9*STEP,'#797181']].forEach(([a,col])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-width="2"/>`;});
+// 中央 13 邊形：米色填滿蓋住下面的圖；只留 先天/運氣/後天 分隔線（畫在群組線之後，蓋掉核心內的方圓|曲直那條）
+svg+=`<polygon points="${spans.map(s=>PS(f(s[0],coreR))).join(' ')}" fill="${CRBG}"/>`;
+[0,6*STEP,9*STEP].forEach(a=>{const p=f(a,coreR);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#b09a6a" stroke-width="1.2"/>`;});
+svg+=`<polygon points="${spans.map(s=>PS(f(s[0],coreR))).join(' ')}" fill="none" stroke="#cdb892" stroke-width="0.8"/>`;
 // 只標主導極字：靜主導→靜字在內半環中央；動主導→動字在外半環中央（非主導極不畫）
 const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
 DIMS.forEach((dm,i)=>{const mid=(spans[i][0]+spans[i][1])/2;const jDom=dm.j>dm.d;
@@ -155,12 +154,6 @@ poly.innerHTML=svg;
   document.getElementById('resetBtn').addEventListener('click',function(){for(const k in off)delete off[k];poly.querySelectorAll('.drg').forEach(g=>g.removeAttribute('transform'));readout();});
   const dfS=document.getElementById('dfS'),dfV=document.getElementById('dfV');
   dfS.addEventListener('input',function(){const v=parseFloat(this.value);dfV.textContent=v.toFixed(2);poly.querySelectorAll('.dfacet').forEach(p=>p.setAttribute('fill-opacity',v));});
-  // 最內圈(靜1動8) 半徑可調
-  const ringS=document.getElementById('ringS'),ringV=document.getElementById('ringV');
-  ringS.addEventListener('input',function(){const r=parseFloat(this.value);ringV.textContent=r.toFixed(0);const rg=document.getElementById('ring-inner');if(rg)rg.setAttribute('points',spans.map(s=>PS(f(s[0],r))).join(' '));});
-  // 中央 13 邊形核心 大小可調
-  const coreS=document.getElementById('coreS'),coreV=document.getElementById('coreV');
-  coreS.addEventListener('input',function(){const r=parseFloat(this.value);coreV.textContent=r.toFixed(0);poly.querySelectorAll('.core-sec').forEach(p=>{const a0=parseFloat(p.dataset.a0),a1=parseFloat(p.dataset.a1);p.setAttribute('d',polySector(a0,a1,r));});const co=document.getElementById('core-outline');if(co)co.setAttribute('points',spans.map(s=>PS(f(s[0],r))).join(' '));});
   readout();
 })();
 </script>
