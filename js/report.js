@@ -739,7 +739,7 @@ function _unionRect(els){var L=1e9,T=1e9,R=-1e9,B=-1e9;els.forEach(function(el){
 
 // 擷取指定元素聯集區域
 async function _html2canvasRegion(els){
-  var rect=_unionRect(els), pad=44; // pad 夠大以涵蓋圖上方絕對定位的標題（同層元素已隱藏，多出區域為白底）
+  var rect=_unionRect(els), pad=10; // 最頂的圖(係數總覽)無標題，pad 小即可；過大會在表頭/表格與圖之間留下一條空白條
   if(rect.right<rect.left) return null;
   return await html2canvas(document.body,{backgroundColor:'#ffffff',scale:2,
     x:rect.left+window.scrollX-pad, y:rect.top+window.scrollY-pad,
