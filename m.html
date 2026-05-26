@@ -125,6 +125,32 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 }
 .m-tab-page.active{display:block}
 
+/* ===== 目前分析橫幅（個案管理 M1）===== */
+.m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:baseline;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid #ece3d6}
+.m-analysis-banner-label{color:var(--text-3);font-size:12px;flex-shrink:0}
+.m-analysis-banner-name{color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== 我的分頁：分析對象切換（個案管理 M1）===== */
+.m-case-switch{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:14px}
+.m-case-switch-title{font-size:13px;color:#888;margin-bottom:10px;font-weight:500}
+.m-case-list{display:flex;flex-direction:column;gap:8px}
+.m-case-item{display:flex;align-items:center;gap:10px;width:100%;background:#faf7f2;border:1px solid #e8e0d4;border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;font-family:inherit}
+.m-case-item:active{background:#f2ebe0}
+.m-case-item.is-active{border-color:var(--active);background:#fbf1ea;box-shadow:inset 0 0 0 1px var(--active)}
+.m-case-item-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:#3a3228;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-case-item-meta{font-size:12px;color:var(--text-3);flex-shrink:0}
+.m-case-item-tag{font-size:11px;color:var(--active);background:#fbf1ea;border:1px solid #e6d3c6;border-radius:6px;padding:2px 7px;flex-shrink:0}
+.m-case-item.is-active .m-case-item-tag{background:#fff}
+.m-case-add{width:100%;margin-top:10px;padding:11px;border:1px dashed #d3c7b6;border-radius:10px;background:#fff;color:var(--text-3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-case-add:active{background:#f5efe6}
+.m-case-addform{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.m-case-addform input,.m-case-addform select{padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+.m-case-addform-btns{display:flex;gap:8px}
+.m-case-addform-btns button{flex:1;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-newcase-create{background:var(--active,#C17A5A);color:#fff}
+.m-newcase-cancel{background:#ece6dd;color:#5a5048}
+.m-case-addform-status{font-size:12px;color:#b04545;min-height:14px}
+
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
 .m-home-hello{font-size:20px;font-weight:600;color:#3a3228;padding:4px 4px 0}
@@ -993,6 +1019,10 @@ body.m-debug-on .m-debug-clear{display:block}
 </header>
 
 <main class="m-main" id="m-main" style="display:none">
+  <div class="m-analysis-banner" id="m-analysis-banner" style="display:none">
+    <span class="m-analysis-banner-label">目前分析</span>
+    <span class="m-analysis-banner-name" id="m-analysis-banner-name">—</span>
+  </div>
   <section class="m-tab-page active" id="m-page-home">
   <div class="m-home">
     <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>

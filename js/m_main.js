@@ -128,6 +128,13 @@ export async function createCase(fields) {
   const ref = await addDoc(collection(db, 'users', uid, 'cases'), payload);
   return ref.id;
 }
+// 分析分頁頂部「目前分析：XXX」橫幅名字（讀 window.__userData.displayName）
+export function updateAnalysisBanner() {
+  const el = document.getElementById('m-analysis-banner-name');
+  if (!el) return;
+  const ud = window.__userData || {};
+  el.textContent = ud.displayName || '本人';
+}
 
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
 // v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
@@ -410,6 +417,13 @@ if (isTeacherMode) {
       const saveZone = document.getElementById('m-save-zone');
       if(saveZone){
         saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report');
+      }
+      // 「目前分析：XXX」橫幅：只在分析分頁（部位觀察 / 手動輸入）顯示
+      const banner = document.getElementById('m-analysis-banner');
+      if(banner){
+        const showBanner = (key === 'input' || key === 'manual');
+        banner.style.display = showBanner ? 'flex' : 'none';
+        if(showBanner) updateAnalysisBanner();
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
