@@ -100,6 +100,9 @@ function _paintCasePage(){
         '<button type="button" class="case-empty-add" onclick="showCaseForm()">＋ 新增個案</button>'+
         '<button type="button" class="case-empty-grp" onclick="showGroupMgr()">管理分組</button>'+
       '</div></div>';
+    // 量本人卡高度，讓兩個方塊欄等高(各約一半)，避免 stretch 溢出頂到導覽列
+    var _sc=listEl.querySelector('.case-self-card'), _ac=listEl.querySelector('.case-empty-actions');
+    if(_sc&&_ac)_ac.style.height=_sc.offsetHeight+'px';
     return;
   }
   if(_hdr)_hdr.style.display='';
