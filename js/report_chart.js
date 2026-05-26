@@ -218,5 +218,6 @@ export function buildRadar3SVG(opts){
       +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+fsName+1.2).toFixed(1)}" font-size="${fsNum}" textLength="${tl}" lengthAdjust="spacingAndGlyphs" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${(+coeff[i]||0).toFixed(2)}</text>`;}
   // 中央 先天/運氣/後天 文字（深米色）
   R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsCore*0.3).toFixed(1)}" font-size="${fsCore}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
-  return `<svg viewBox="0 -34 400 458" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  const VB=opts.viewBox||'0 -34 400 458'; // 手機版傳 "20 40 360 360" 使 13 邊形與 radar2 同大
+  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }

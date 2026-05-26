@@ -27,7 +27,7 @@
 // ============================================================
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
-import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
+import { chartsBlockHtml, exportMobileCharts } from './m_report.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
@@ -376,31 +376,16 @@ function _renderCoeffSummary() {
 
 // 手機手動報告：係數總表下方接 報告圖(radar2_m) + 總動靜（與自動報告共用 builder）
 function _chartsHtml() {
-  try {
-    var m = _manualDraft;
-    if (!Array.isArray(m) || m.length !== 13) return '';
-    var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
-    var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
-    for (var i = 0; i < 13; i++) {
-      var s = 0, d = 0;
-      for (var p = 0; p < 9; p++) { var vv = m[i] && m[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
-      dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
-      var rc = calcDim(m, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
-    }
-    var radar2 = buildRadar2MSVG({
-      dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
-      luckV: avgCoeff(m,[6,7,8])||0, postV: avgCoeff(m,[9,10,11,12])||0,
-      preV: avgCoeff(m,[0,1,2,3,4,5])||0, totV: avgCoeff(m,all)||0
-    });
-    var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5 });
-    return '<div style="padding:6px 12px 0">' + radar2 + '<div style="height:14px"></div>' + sd + '</div>';
-  } catch (e) { return ''; }
+  if (!Array.isArray(_manualDraft) || _manualDraft.length !== 13) return '';
+  return chartsBlockHtml(_manualDraft);
 }
 
 function _renderManualPngRow() {
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版PNG）</button>
+      <button class="m-report-link-btn" data-mcharts="1">產生圖表</button>
+      <button class="m-report-link-btn" data-mrc="1">產生報告＋圖表</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
@@ -715,6 +700,12 @@ function _bindEvents() {
   });
   _container.querySelectorAll('[data-mpng]').forEach(btn => {
     btn.addEventListener('click', () => exportManualPng(btn));
+  });
+  _container.querySelectorAll('[data-mcharts]').forEach(btn => {
+    btn.addEventListener('click', () => exportMobileCharts({ mode: 'charts', srcData: _manualDraft, btn: btn }));
+  });
+  _container.querySelectorAll('[data-mrc]').forEach(btn => {
+    btn.addEventListener('click', () => exportMobileCharts({ mode: 'all', srcData: _manualDraft, btn: btn }));
   });
   _container.querySelectorAll('[data-mclear-all]').forEach(btn => {
     btn.addEventListener('click', () => {

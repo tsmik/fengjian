@@ -434,25 +434,103 @@ async function exportReportPng() {
 
 // ===== render =====
 
-// 手機報告圖：係數總表下方接 報告圖(radar2) + 總動靜（總動靜字放大符合手機閱讀）
-function _chartsHtml() {
+// 手機報告圖 SVG（radar2 報告圖 + radar3 動靜全圖）；自動/手動共用
+export var R2_TITLE = '人相兵法係數圖', R3_TITLE = '人相兵法動靜分布圖', CHART_GAP = 14;
+export function buildMobileChartSvgs(matrix) {
+  var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+  var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
+  for (var i = 0; i < 13; i++) {
+    var s = 0, d = 0;
+    for (var p = 0; p < 9; p++) { var vv = matrix[i] && matrix[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
+    dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
+    var rc = calcDim(matrix, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
+  }
+  var radar2 = buildRadar2MSVG({
+    dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
+    luckV: avgCoeff(matrix,[6,7,8])||0, postV: avgCoeff(matrix,[9,10,11,12])||0,
+    preV: avgCoeff(matrix,[0,1,2,3,4,5])||0, totV: avgCoeff(matrix,all)||0
+  });
+  // radar3 手機版：字級放大；viewBox 與 radar2 同寬(360) → 13 邊形一樣大
+  var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5, viewBox: '20 40 360 360' });
+  return { radar2: radar2, sd: sd };
+}
+// 共用 HTML：標題 + 圖；bar↔radar2 與 radar2↔radar3 間隔同高(CHART_GAP)
+export function chartsBlockHtml(matrix) {
   try {
-    var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
-    var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
-    for (var i = 0; i < 13; i++) {
-      var s = 0, d = 0;
-      for (var p = 0; p < 9; p++) { var vv = data[i] && data[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
-      dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
-      var rc = calcDim(data, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
-    }
-    var radar2 = buildRadar2MSVG({
-      dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
-      luckV: avgCoeff(data,[6,7,8])||0, postV: avgCoeff(data,[9,10,11,12])||0,
-      preV: avgCoeff(data,[0,1,2,3,4,5])||0, totV: avgCoeff(data,all)||0
-    });
-    var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5 });
-    return '<div style="padding:6px 12px 0">' + radar2 + '<div style="height:14px"></div>' + sd + '</div>';
+    var c = buildMobileChartSvgs(matrix);
+    return '<div style="padding:' + CHART_GAP + 'px 12px 0">'
+      + '<div class="m-chart-title">' + R2_TITLE + '</div>' + c.radar2
+      + '<div style="height:' + CHART_GAP + 'px"></div>'
+      + '<div class="m-chart-title">' + R3_TITLE + '</div>' + c.sd
+      + '</div>';
   } catch (e) { return ''; }
+}
+function _chartsHtml() { return chartsBlockHtml(data); }
+
+// ===== 圖表輸出（手機）：SVG 字串點陣化後與表格/表頭合成；自動/手動共用 =====
+function _svgToCanvas(svgStr, pxW) {
+  return new Promise(function (resolve, reject) {
+    var m = svgStr.match(/viewBox="([^"]+)"/);
+    var vb = m ? m[1].trim().split(/\s+/).map(Number) : [0, 0, 400, 400];
+    var aspect = vb[3] / vb[2];
+    var pxH = Math.round(pxW * aspect);
+    var sized = svgStr.replace('<svg ', '<svg width="' + pxW + '" height="' + pxH + '" ');
+    var blob = new Blob([sized], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function () { var c = document.createElement('canvas'); c.width = pxW; c.height = pxH; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH); ctx.drawImage(img, 0, 0, pxW, pxH); URL.revokeObjectURL(url); resolve(c); };
+    img.onerror = function (e) { URL.revokeObjectURL(url); reject(new Error('SVG 點陣化失敗')); };
+    img.src = url;
+  });
+}
+function _titleCanvas(text, pxW, scale) { var h = Math.round(34 * scale); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#5a4f45'; ctx.font = '700 ' + Math.round(16 * scale) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, pxW / 2, h * 0.62); return c; }
+function _stackV(cs, gap) { cs = cs.filter(Boolean); gap = gap || 0; var w = Math.max.apply(null, cs.map(function (c) { return c.width; })); var h = cs.reduce(function (a, c) { return a + c.height; }, 0) + gap * Math.max(0, cs.length - 1); var out = document.createElement('canvas'); out.width = w; out.height = h; var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); var y = 0; cs.forEach(function (c) { ctx.drawImage(c, Math.round((w - c.width) / 2), y); y += c.height + gap; }); return out; }
+function _cropTop(canvas, px) { var o = document.createElement('canvas'); o.width = canvas.width; o.height = px; o.getContext('2d').drawImage(canvas, 0, 0); return o; }
+
+export async function exportMobileCharts(opts) {
+  opts = opts || {};
+  var mode = opts.mode || 'charts'; // 'charts' | 'all'
+  var srcData = opts.srcData, btn = opts.btn;
+  if (btn && btn.disabled) return;
+  var oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '產生中…'; }
+  await new Promise(function (r) { setTimeout(r, 50); });
+  try {
+    await ensureDimRulesLoaded();
+    await _ensureLiunianLoaded();
+    if (!srcData) await refreshUserData();
+    var ud = window.__userData || {};
+    var displayName = ud.displayName || '報告';
+    setUserName(displayName);
+    var g = ud.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女'; if (g) setUserGender(g);
+    if (ud.birthday) setUserBirthday(ud.birthday);
+    var matrix = srcData;
+    if (!srcData) { if (ud.obsJson) { try { setObsData(JSON.parse(ud.obsJson)); } catch (e) {} } recalcFromObs(); matrix = data; }
+    var SC = 3;
+    var tableCanvas = drawReportCanvas(srcData, { checkComplete: true, scale: SC, subtitle: mode === 'charts' ? '人相兵法圖表報告' : undefined });
+    var W = tableCanvas.width;
+    var svgs = buildMobileChartSvgs(matrix);
+    var r2c = await _svgToCanvas(svgs.radar2, Math.round(W * 0.92));
+    var r3c = await _svgToCanvas(svgs.sd, Math.round(W * 0.92));
+    var gap = Math.round(CHART_GAP * SC);
+    var pieces;
+    if (mode === 'charts') {
+      var hdr = _cropTop(tableCanvas, tableCanvas._headerBottomPx || Math.round(tableCanvas.height * 0.12));
+      pieces = [hdr, _titleCanvas(R2_TITLE, W, SC), r2c, _titleCanvas(R3_TITLE, W, SC), r3c];
+    } else {
+      pieces = [tableCanvas, _titleCanvas(R2_TITLE, W, SC), r2c, _titleCanvas(R3_TITLE, W, SC), r3c];
+    }
+    var out = _stackV(pieces, gap);
+    var blob = await new Promise(function (r) { out.toBlob(r, 'image/png'); });
+    if (!blob) throw new Error('toBlob 失敗');
+    var fn = '人相兵法' + (mode === 'charts' ? '_圖表' : '_報告圖表') + '_' + displayName + '.png';
+    _openPngOverlay(blob, fn);
+  } catch (e) {
+    debugLog('[m_report]', '圖表輸出失敗', e && e.message ? e.message : e);
+    alert('產生失敗：' + (e && e.message ? e.message : e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
 }
 
 function _render() {
@@ -465,11 +543,17 @@ function _render() {
     ${_chartsHtml()}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
+      <button id="m-report-charts-btn" class="m-report-link-btn">產生圖表</button>
+      <button id="m-report-rc-btn" class="m-report-link-btn">產生報告＋圖表</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
   if (pngBtn) pngBtn.onclick = exportReportPng;
+  const chartsBtn = _container.querySelector('#m-report-charts-btn');
+  if (chartsBtn) chartsBtn.onclick = function () { exportMobileCharts({ mode: 'charts', btn: chartsBtn }); };
+  const rcBtn = _container.querySelector('#m-report-rc-btn');
+  if (rcBtn) rcBtn.onclick = function () { exportMobileCharts({ mode: 'all', btn: rcBtn }); };
 }
 
 // ===== 重要參數分析 view（自動版）=====
