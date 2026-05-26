@@ -483,9 +483,26 @@ function _svgToCanvas(svgStr, pxW) {
     img.src = url;
   });
 }
-function _titleCanvas(text, pxW, scale) { var h = Math.round(34 * scale); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#5a4f45'; ctx.font = '700 ' + Math.round(16 * scale) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, pxW / 2, h * 0.62); return c; }
+// 標題 canvas（字級用像素值；置中）
+function _titleCanvas(text, pxW, fontPx) { var h = Math.round(fontPx * 1.9); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#5a4f45'; ctx.font = '700 ' + Math.round(fontPx) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, pxW / 2, h * 0.55); return c; }
+// 姓名表頭 canvas（左對齊；字級＝維度字大小）
+function _nameHeaderCanvas(name, pxW, fontPx) { var h = Math.round(fontPx * 2.0); var pad = Math.round(fontPx * 0.6); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#3a3228'; ctx.font = '700 ' + Math.round(fontPx) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(name, pad, h * 0.55); return c; }
 function _stackV(cs, gap) { cs = cs.filter(Boolean); gap = gap || 0; var w = Math.max.apply(null, cs.map(function (c) { return c.width; })); var h = cs.reduce(function (a, c) { return a + c.height; }, 0) + gap * Math.max(0, cs.length - 1); var out = document.createElement('canvas'); out.width = w; out.height = h; var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); var y = 0; cs.forEach(function (c) { ctx.drawImage(c, Math.round((w - c.width) / 2), y); y += c.height + gap; }); return out; }
-function _cropTop(canvas, px) { var o = document.createElement('canvas'); o.width = canvas.width; o.height = px; o.getContext('2d').drawImage(canvas, 0, 0); return o; }
+// 兩張圖左右並列：總寬 totalW；各圖上方標題字級＝該圖維度字大小(14 / 360 viewBox)
+async function _buildChartsRow(svgs, totalW) {
+  var gap = Math.round(totalW * 0.02);
+  var chartW = Math.floor((totalW - gap) / 2);
+  var titleFs = 14 * chartW / 360;
+  var r2c = await _svgToCanvas(svgs.radar2, chartW);
+  var r3c = await _svgToCanvas(svgs.sd, chartW);
+  var col2 = _stackV([_titleCanvas(R2_TITLE, chartW, titleFs), r2c], Math.round(titleFs * 0.3));
+  var col3 = _stackV([_titleCanvas(R3_TITLE, chartW, titleFs), r3c], Math.round(titleFs * 0.3));
+  var h = Math.max(col2.height, col3.height);
+  var out = document.createElement('canvas'); out.width = chartW * 2 + gap; out.height = h;
+  var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, out.width, h);
+  ctx.drawImage(col2, 0, 0); ctx.drawImage(col3, chartW + gap, 0);
+  return { canvas: out, titleFs: titleFs };
+}
 
 export async function exportMobileCharts(opts) {
   opts = opts || {};
@@ -507,20 +524,19 @@ export async function exportMobileCharts(opts) {
     var matrix = srcData;
     if (!srcData) { if (ud.obsJson) { try { setObsData(JSON.parse(ud.obsJson)); } catch (e) {} } recalcFromObs(); matrix = data; }
     var SC = 3;
-    var tableCanvas = drawReportCanvas(srcData, { checkComplete: true, scale: SC, subtitle: mode === 'charts' ? '人相兵法圖表報告' : undefined });
-    var W = tableCanvas.width;
     var svgs = buildMobileChartSvgs(matrix);
-    var r2c = await _svgToCanvas(svgs.radar2, Math.round(W * 0.92));
-    var r3c = await _svgToCanvas(svgs.sd, Math.round(W * 0.92));
-    var gap = Math.round(CHART_GAP * SC);
-    var pieces;
+    var out;
     if (mode === 'charts') {
-      var hdr = _cropTop(tableCanvas, tableCanvas._headerBottomPx || Math.round(tableCanvas.height * 0.12));
-      pieces = [hdr, _titleCanvas(R2_TITLE, W, SC), r2c, _titleCanvas(R3_TITLE, W, SC), r3c];
+      // 姓名（只要姓名，不要虛歲/流年）+ 兩圖左右並列
+      var row = await _buildChartsRow(svgs, 1600);
+      var hdr = _nameHeaderCanvas(displayName, row.canvas.width, row.titleFs);
+      out = _stackV([hdr, row.canvas], Math.round(row.titleFs * 0.6));
     } else {
-      pieces = [tableCanvas, _titleCanvas(R2_TITLE, W, SC), r2c, _titleCanvas(R3_TITLE, W, SC), r3c];
+      // 完整表格 + 兩圖左右並列（兩圖總寬＝表格寬）
+      var tableCanvas = drawReportCanvas(srcData, { checkComplete: true, scale: SC });
+      var row2 = await _buildChartsRow(svgs, tableCanvas.width);
+      out = _stackV([tableCanvas, row2.canvas], Math.round(CHART_GAP * SC));
     }
-    var out = _stackV(pieces, gap);
     var blob = await new Promise(function (r) { out.toBlob(r, 'image/png'); });
     if (!blob) throw new Error('toBlob 失敗');
     var fn = '人相兵法' + (mode === 'charts' ? '_圖表' : '_報告圖表') + '_' + displayName + '.png';
@@ -543,7 +559,7 @@ function _render() {
     ${_chartsHtml()}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
-      <button id="m-report-charts-btn" class="m-report-link-btn">產生圖表</button>
+      <button id="m-report-charts-btn" class="m-report-link-btn">產生圖表(PNG)</button>
       <button id="m-report-rc-btn" class="m-report-link-btn">產生報告＋圖表</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>

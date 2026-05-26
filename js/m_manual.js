@@ -384,7 +384,7 @@ function _renderManualPngRow() {
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版PNG）</button>
-      <button class="m-report-link-btn" data-mcharts="1">產生圖表</button>
+      <button class="m-report-link-btn" data-mcharts="1">產生圖表(PNG)</button>
       <button class="m-report-link-btn" data-mrc="1">產生報告＋圖表</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
