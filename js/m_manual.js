@@ -522,8 +522,9 @@ let _manualCond = {};
 let _condExpanded = {};  // `${di}_${pi}` -> bool（該格條件面板是否展開）
 
 // ===== 本頁獨立條件（不動全站主規則）：13 維度的 頭/中停/下停，動態從 admin 規則(DIM_RULES) 產生 =====
-// 規則結構＝COUNT{min, items}；每項目要嘛 partResult(參考其他部位) 要嘛某小部位的條件。
-// 小部位＝以 ref 前綴判斷；權重＝該小部位的項目數；門檻＝COUNT.min；敘述分組＝項目裡的判別條件。
+// 規則結構＝COUNT{min, items}；每項目可能是：(a) partResult 引用本頁有答案的部位(眉/眼/鼻/口…)→參考、
+//   (b) partResult 引用子部位(頂骨/枕骨/華陽骨/顴/人中/地閣/頤)→查該子部位規則的敘述分組、(c) 內嵌 match 條件。
+// 權重＝該子部位被引用次數(.L/.R 兩次＝2)；門檻＝COUNT.min；敘述分組＝子部位規則內的 group 標題。
 // 計分：該小部位底下敘述分組全符合→計入權重；參考部位＝同維度該部位答案為正極→計入；總和≥門檻→正極(符合)，否則反極。
 let _localCond = {};  // `${di}_${pi}` -> { 敘述分組名: '符合'|'不符' }（記憶體，不持久化；算出的結果寫入 _manualDraft 才持久化）
 const _LOCAL_PARTS = { 0: '頭', 2: '中停', 3: '下停' };
@@ -535,6 +536,24 @@ function _refSubpart(ref) {
   const pre = m[1], n = parseInt(m[2], 10);
   if (pre === 'h') { if (n <= 4) return '頂骨'; if (n <= 10) return '枕骨'; if (n <= 13) return '華陽骨'; return '頭骨整體'; }
   return ({ q: '顴', p: '人中', c: '地閣', y: '頤', n: '鼻', m: '口', br: '眉', ey: '眼', er: '耳', e: '上停' })[pre] || null;
+}
+// 子部位（頂骨/枕骨/華陽骨/顴/人中/地閣/頤）→ 取該部位規則裡的「敘述分組」(group) 標題清單。
+// 這些子部位在 admin 規則中是獨立的 part，頭/中停/下停 用 partResult 引用它們；敘述分組存在其 group 節點。
+function _subpartCrits(di, subpart) {
+  const dr = DIM_RULES && DIM_RULES[di];
+  const rule = dr && dr.parts && dr.parts[subpart];
+  if (!rule) return [];
+  const labels = [], seen = {};
+  (function walk(nd) {
+    if (!nd || typeof nd !== 'object') return;
+    if (nd.group) { if (!seen[nd.group]) { seen[nd.group] = 1; labels.push(nd.group); } return; }
+    ['items', 'item', 'each', 'rule'].forEach(k => { const v = nd[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v); });
+  })(rule);
+  if (!labels.length) {  // 無 group 標題時退而取 match 描述
+    const lv = []; _collectLeaves(rule, lv);
+    lv.forEach(l => { const mv = Array.isArray(l.match) ? l.match.join('或') : l.match; if (mv != null && !seen[mv]) { seen[mv] = 1; labels.push(mv); } });
+  }
+  return labels;
 }
 // 一個條件項目 → { subpart, crits[] }（crits 取項目內所有 leaf 的 match 描述；陣列 match 以「或」連）
 function _itemCrits(node) {
@@ -571,8 +590,14 @@ function _localCondSpec(di, pi) {
   node.items.forEach(it => {
     if (it && it.partResult) {
       const base = String(it.partResult).split('.')[0];
-      if (!refMap[base]) refMap[base] = { label: base, part: _PR_PARTIDX[base], w: 0 };
-      refMap[base].w += 1;
+      if (_PR_PARTIDX[base] != null) {
+        // 引用本頁有獨立答案的部位（眉/眼/鼻/口…）→ 參考既有答案
+        if (!refMap[base]) refMap[base] = { label: base, part: _PR_PARTIDX[base], w: 0 };
+        refMap[base].w += 1;
+      } else {
+        // 引用子部位（頂骨/枕骨/華陽骨/顴/人中/地閣/頤）→ 查該子部位規則取敘述分組，當作一組（權重＝被引用次數，如 .L/.R 兩次＝2）
+        _addGrp(base, _subpartCrits(di, base), 1);
+      }
     } else if (isAnd) {
       // AND：把項目內的葉子再依小部位分組（每小部位最多算 1 權重，全中才達標）
       const lv = []; _collectLeaves(it, lv); const bySub = {};
