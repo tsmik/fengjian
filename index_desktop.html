@@ -412,6 +412,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-form-cancel{background:#eee;color:var(--text)}
 .case-form-del{background:#fbe9e7;color:#c03830}
 .case-form-open{background:var(--static);color:#fff}
+.cf-row2{display:flex;gap:14px}
+.cf-col{flex:1;min-width:0}
+.cf-row2 input,.cf-row2 select{box-sizing:border-box;max-width:100%}
 </style>
 <style>
   /* staging banner（v3.11） */
@@ -534,18 +537,15 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 </div>
 
 <!-- Case Form Overlay -->
-<div id="case-form-overlay">
+<div id="case-form-overlay" onclick="if(event.target===this)cfTryClose()">
   <div class="case-form">
-    <h3 id="case-form-title">新增個案</h3>
-    <label>姓名 *</label>
-    <input id="cf-name" placeholder="輸入姓名" maxlength="20">
-    <label>性別</label>
-    <select id="cf-gender" onchange="cfRenderLiunian()"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select>
-    <label>生日</label>
-    <input id="cf-birthday" type="date" onchange="cfRenderLiunian()">
-    <div id="cf-row-date">
-      <label>觀察日期</label>
-      <input id="cf-date" type="date" onchange="cfRenderLiunian()">
+    <div class="cf-row2">
+      <div class="cf-col"><label>姓名 *</label><input id="cf-name" placeholder="輸入姓名" maxlength="20"></div>
+      <div class="cf-col"><label>性別</label><select id="cf-gender" onchange="cfRenderLiunian()"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select></div>
+    </div>
+    <div class="cf-row2">
+      <div class="cf-col"><label>生日</label><input id="cf-birthday" type="date" onchange="cfRenderLiunian()"></div>
+      <div class="cf-col" id="cf-row-date"><label>觀察日期</label><input id="cf-date" type="date" onchange="cfRenderLiunian()"></div>
     </div>
     <div id="cf-row-group">
       <label>組別</label>
@@ -559,7 +559,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div id="cf-liunian" style="display:none;margin-top:18px"></div>
     <div class="case-form-actions">
       <button id="cf-delete-btn" class="case-form-del" onclick="cfDelete()" style="display:none">刪除</button>
-      <button class="case-form-cancel" onclick="closeCaseForm()">取消</button>
+      <button class="case-form-cancel" onclick="cfTryClose()">取消</button>
       <button id="cf-open-btn" class="case-form-open" onclick="cfOpen()" style="display:none">打開</button>
       <button class="case-form-save" onclick="saveCaseForm()">建立</button>
     </div>

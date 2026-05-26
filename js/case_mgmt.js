@@ -14,6 +14,7 @@ import { _getLiunianInfo, getLiunianInfoFor, buildLiunianTitleHtml, buildLiunian
 /* module-local state */
 let _editingCaseId = null;
 let _editingSelf = false;  // 視窗是否在編輯「本人」
+let _cfOpenSnapshot = '';  // 視窗開啟時的欄位快照（判斷是否有未儲存變更）
 let _groupOrder = []; // 從 Firestore 讀取的組別排序
 let _selfCache = null;   // 本人資料快取 {name,gender,birthday}
 let _casesCache = [];    // 個案快取 [{id,data}]
@@ -174,6 +175,7 @@ if(typeof window!=='undefined'){
   window.cfOpen=cfOpen;
   window.cfDelete=cfDelete;
   window.cfRenderLiunian=cfRenderLiunian;
+  window.cfTryClose=cfTryClose;
 }
 
 export function moveGroup(groupName, direction){
@@ -228,7 +230,6 @@ export function loadCase(caseId){
 
 // 依模式調整視窗：標題/儲存字/欄位顯示/刪除打開鈕
 function _cfApplyMode(mode){ // 'new' | 'case' | 'self'
-  document.getElementById('case-form-title').innerText = mode==='self'?'本人資料':(mode==='case'?'編輯個案':'新增個案');
   var sv=document.querySelector('.case-form-save'); if(sv)sv.innerText = (mode==='new')?'建立':'儲存';
   var isSelf=(mode==='self');
   ['cf-row-date','cf-row-group','cf-row-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=isSelf?'none':'';});
@@ -259,6 +260,7 @@ export function showCaseForm(){
   document.getElementById('cf-group').value='';
   _cfApplyMode('new');
   cfRenderLiunian();
+  _cfOpenSnapshot=_cfSnapshot();
   document.getElementById('case-form-overlay').style.display='flex';
   setTimeout(function(){document.getElementById('cf-name').focus();},100);
 }
@@ -276,6 +278,7 @@ export function editCase(caseId){
     document.getElementById('cf-group').value=c.group||'';
     _cfApplyMode('case');
     cfRenderLiunian();
+    _cfOpenSnapshot=_cfSnapshot();
     document.getElementById('case-form-overlay').style.display='flex';
   }).catch(function(e){
     console.log('載入個案失敗',e);
@@ -292,11 +295,25 @@ export function editSelf(){
   document.getElementById('cf-birthday').value=s.birthday||'';
   _cfApplyMode('self');
   cfRenderLiunian();
+  _cfOpenSnapshot=_cfSnapshot();
   document.getElementById('case-form-overlay').style.display='flex';
 }
 
 export function closeCaseForm(){
   document.getElementById('case-form-overlay').style.display='none';
+}
+
+// 目前欄位快照（6 欄）
+function _cfSnapshot(){
+  function v(id){var el=document.getElementById(id);return el?el.value:'';}
+  return [v('cf-name'),v('cf-gender'),v('cf-birthday'),v('cf-date'),v('cf-group'),v('cf-note')].join('');
+}
+// 點視窗外/取消：有未儲存變更才確認，否則直接關閉
+export function cfTryClose(){
+  if(_cfOpenSnapshot!==_cfSnapshot()){
+    if(!confirm('有尚未儲存的變更，確定離開不儲存嗎？'))return;
+  }
+  closeCaseForm();
 }
 
 // 收集欄位並送出儲存；回傳 {promise,id,group,isNew} 或 null(驗證失敗)
