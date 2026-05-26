@@ -2,7 +2,8 @@
 import { DIMS, data, manualData, setManualData, userName, _isTA, _currentCaseId, _currentCaseName, BETA_VISIBLE_DIMS,
          setNavActive, showPage, _showToast, _getUserDocRef, calcDim, avgCoeff,
          _liunianTable, currentUser, condResults, DIM_RULES } from './core.js';
-import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo, drawReportCanvas, fallbackDownload } from './report.js';
+import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo, drawReportCanvas, fallbackDownload, captureComposite, buildShareMenu, arrangeReportCharts } from './report.js';
+import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
 
 export function initManualData(){
   if(manualData)return;
@@ -635,6 +636,24 @@ export function renderManualPage(){
   el.innerHTML=_manualTitleHtml+t;
   _bindManualHints();
   _ensureManualHintToggle();
+  // 報告圖（手動）：三圖 + 套用排版
+  try{
+    var _coef=document.getElementById('manual-coef'),_r2=document.getElementById('manual-radar2'),_sd=document.getElementById('manual-sd');
+    if(_coef||_r2||_sd){
+      var _dimSFrac=[],_dimCoeffArr=[];
+      for(var _ci=0;_ci<13;_ci++){var _sc=dimSCounts[_ci]||0,_dn=dimDCounts[_ci]||0,_tt=_sc+_dn;_dimSFrac.push(_tt>0?_sc/_tt:0.5);_dimCoeffArr.push(dimCoeffs[_ci]&&typeof dimCoeffs[_ci].coeff==='number'?dimCoeffs[_ci].coeff:0);}
+      if(_r2)_r2.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,preV:vPre||0,totV:vTotal||0});
+      if(_coef)_coef.innerHTML=buildCoefSVG({preV:vPre||0,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,totV:vTotal||0});
+      if(_sd)_sd.innerHTML=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'人相兵法動靜分布圖'});
+      requestAnimationFrame(function(){arrangeReportCharts('manual-coef','manual-radar2','manual-sd','manual-charts-row');});
+    }
+  }catch(e){}
+}
+
+// 手動報告分享：三選項
+export function showManualShareMenu(btn){
+  var cfg={btnId:'btn-manual-export',coefId:'manual-coef',r2Id:'manual-radar2',sdId:'manual-sd',src:manualData,bgId:'manual-page'};
+  buildShareMenu(btn,{onTable:function(){exportManualPNG();},onCharts:function(){captureComposite('charts',cfg);},onAll:function(){captureComposite('all',cfg);}});
 }
 
 /* ===== 手動表格格子 mouse over 判別標準提示 ===== */

@@ -151,8 +151,6 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
 .m-home-profile-status.is-error{color:#b04545}
-.m-home-profile-save-btn{margin-top:10px;width:100%;padding:11px;border:none;border-radius:8px;background:var(--active,#C17A5A);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
-.m-home-profile-save-btn:active{opacity:0.85}
 /* 首頁兩大按鈕（v1.7 階段 5 / 12+）*/
 .m-home-hint{font-size:14px;color:#5a5048;padding:0 4px 10px;letter-spacing:0.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m-home-bigbtn{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
@@ -309,9 +307,6 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* 群組 sections：每群可獨立收合 */
 .m-dim-part-body{background:#fff;padding:8px 10px}
 .m-dim-empty{padding:14px;font-size:12px;color:#aaa;font-style:italic;text-align:center}
-.m-dim-subpart{margin-bottom:10px}
-.m-dim-subpart:last-child{margin-bottom:0}
-.m-dim-subpart-title{font-size:13px;font-weight:600;color:#8a5a3a;padding:4px 2px;border-bottom:2px solid #e8ddd0;margin-bottom:4px}
 .m-dim-group{margin-bottom:8px}
 .m-dim-group:last-child{margin-bottom:0}
 .m-dim-group-header{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;border-bottom:1px solid #ede8e0}
@@ -392,7 +387,6 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-report-link-btn{display:inline-block;padding:14px 36px;background:#C17A5A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:2px;box-shadow:0 2px 6px rgba(193,122,90,0.3);font-family:inherit;border:none;cursor:pointer}
 .m-report-link-btn:active{background:#a76040}
 .m-report-link-tip{font-size:12px;color:#a89e92;margin-top:4px;letter-spacing:1px}
-.m-chart-title{text-align:center;font-size:15px;font-weight:700;color:#5a4f45;letter-spacing:2px;margin-bottom:6px}
 
 /* ===== PNG 全螢幕 overlay（pinch zoom + drag）===== */
 .m-png-overlay{display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column;align-items:stretch;justify-content:stretch}
@@ -469,32 +463,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 維度展開新 UI：左部位 / 中 switch / 右結果（取代舊 part tile）===== */
 .m-manual-rows{margin-top:4px}
-.m-manual-row-wrap{border-bottom:1px solid #f0ebe0}
-.m-manual-row-wrap:last-child{border-bottom:none}
-.m-manual-row{display:grid;grid-template-columns:36px 56px 1fr;gap:8px;align-items:center;padding:7px 2px}
+.m-manual-row{display:grid;grid-template-columns:36px 56px 1fr;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid #f0ebe0}
 .m-manual-row:last-child{border-bottom:none}
-/* P1：條件式自動算動靜 */
-.m-manual-cond-btn{display:block;width:100%;margin:0 0 6px;padding:6px;background:#f5efe6;border:1px solid #e3d8c8;border-radius:6px;color:#8a6e54;font-size:12px;font-family:inherit;cursor:pointer;letter-spacing:1px}
-.m-manual-cond-btn.is-open{background:#ece2d4}
-.m-manual-cond-panel{margin:0 0 8px;padding:8px 6px;background:#fcfaf6;border:1px solid #eee3d4;border-radius:8px}
-.m-manual-cond-row{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid #f3ece0}
-.m-manual-cond-row:last-child{border-bottom:none}
-.m-manual-cond-label{flex:1;font-size:13px;color:#3d3b39;line-height:1.4}
-.m-manual-cond-yn{display:flex;gap:0;border:1.5px solid #d0c8be;border-radius:7px;overflow:hidden;flex-shrink:0}
-.m-manual-cond-yn-btn{padding:6px 12px;background:transparent;border:none;font-family:inherit;font-size:13px;color:#7a6e64;cursor:pointer}
-.m-manual-cond-yn-btn.yes{border-right:1px solid #d0c8be}
-.m-manual-cond-yn-btn.yes.is-active{background:#7A9E7E;color:#fff;font-weight:700}
-.m-manual-cond-yn-btn.no.is-active{background:#C17A5A;color:#fff;font-weight:700}
-/* v1.8：條件鈕移到中間欄（取代形/勢色塊）；無條件的部位用空白佔位 */
-.m-manual-cond-btn-mid{width:100%;height:30px;padding:0;background:#f5efe6;border:1px solid #e3d8c8;border-radius:6px;color:#8a6e54;font-size:12px;font-family:inherit;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.m-manual-cond-btn-mid.is-open{background:#ece2d4;color:#6f543c}
-.m-manual-row-midblank{display:block;width:100%;height:30px}
-.m-manual-cond-ref{font-size:12px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 8px;margin-bottom:6px;letter-spacing:1px}
-.m-manual-cond-w{color:#b09a6a;font-size:11px;margin-left:4px}
-.m-manual-cond-grouphd{font-size:13px;font-weight:700;color:#6f543c;padding:7px 2px 3px;border-bottom:1px solid #efe6d6}
-.m-manual-cond-grouphd:first-child{padding-top:2px}
-.m-manual-cond-row .m-manual-cond-label{padding-left:8px}
-.m-manual-cond-formula{font-size:12px;color:#8a8175;line-height:1.5;padding:6px 2px 2px;letter-spacing:0.5px}
 .m-manual-row-part{font-weight:600;color:#3d3b39;text-align:center;font-size:13px}
 .m-manual-row-switch{display:grid;grid-template-columns:1fr 1fr 1fr;border:1.5px solid #d0c8be;border-radius:8px;overflow:hidden;background:#ede8e0}
 .m-manual-sw{padding:8px 2px;background:transparent;border:none;font-family:inherit;font-size:13px;color:#7a6e64;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
@@ -742,9 +712,133 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   letter-spacing:2px;
   font-size:14px;
 }
+/* ===== P1+P2 RWD 骨架：大螢幕不擋畫面 + 底部 4 分頁變左側直立欄 ===== */
+/* 整體容器 = 側欄 200px + 內容 1000px = 1200px，置中 */
 @media (min-width:1024px){
-  .m-width-warn{display:flex}
-  .m-nav,.m-main,.m-tabbar,.m-login,.m-denied,.m-loading,#m-staging-banner{display:none !important}
+  .m-width-warn{display:none !important}
+
+  /* nav 深色 bar 全寬，內容 padding 對齊中央 1200px 容器 */
+  .m-nav{
+    padding-left:max(16px,calc((100% - 1600px) / 2));
+    padding-right:max(16px,calc((100% - 1600px) / 2));
+  }
+
+  /* tabbar → 左側直立側欄 */
+  .m-tabbar{
+    top:calc(var(--nav-h) + var(--safe-top));
+    bottom:0;
+    left:max(0px,calc((100% - 1600px) / 2));
+    right:auto;
+    width:200px;
+    height:auto;
+    flex-direction:column;
+    border-top:none;
+    border-right:1px solid var(--border);
+    padding-bottom:0;
+  }
+  .m-tab{
+    flex:0 0 auto;
+    flex-direction:row;
+    justify-content:flex-start;
+    gap:12px;
+    padding:15px 20px;
+    font-size:14px;
+  }
+  .m-tab-icon{margin-bottom:0}
+
+  /* main → 側欄右側，限寬 1000px */
+  .m-main{
+    top:calc(var(--nav-h) + var(--safe-top));
+    bottom:0;
+    left:calc(max(0px,(100% - 1600px) / 2) + 200px);
+    right:auto;
+    transform:none;
+    width:1400px;
+    max-width:none;
+  }
+}
+
+/* ===== P3 RWD：首頁大螢幕展開（兩大按鈕並排 + 基本資料橫跨整行）===== */
+@media (min-width:1024px){
+  .m-home{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    padding:24px;
+    align-content:start;
+    max-width:920px;
+    margin:0 auto;
+  }
+  .m-home-hello,
+  .m-home-hint,
+  .m-home-profile{grid-column:1 / -1}
+}
+
+/* ===== P4 RWD：報告分頁大螢幕展開 ===== */
+/* 報告分頁複用 .m-home grid（P3）：兩張報告卡自動並排，流年參考橫跨整行 */
+@media (min-width:1024px){
+  .m-liunian-section,
+  .m-liunian-placeholder{grid-column:1 / -1}
+}
+
+/* ===== P5c~P5f RWD：桌機手動輸入網格（三組佈局 + 係數整合）===== */
+@media (min-width:1024px){
+  .m-mgrid{
+    display:grid;
+    grid-template-columns:56px repeat(6,1fr) 16px repeat(3,1fr) 16px repeat(4,1fr);
+    gap:3px;
+    padding:14px 10px;
+  }
+  .m-mgrid-gap,.m-mgrid-corner{background:transparent}
+  /* 組標題 */
+  .m-mgrid-grp-title{
+    padding:7px;text-align:center;
+    font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;
+    border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .m-mgrid-grp-title.m-mgrid-grp-pre{background:var(--grp-pre)}
+  .m-mgrid-grp-title.m-mgrid-grp-luck{background:var(--grp-luck)}
+  .m-mgrid-grp-title.m-mgrid-grp-post{background:var(--grp-post)}
+  /* 維度表頭（名稱 + 即時係數）*/
+  .m-mgrid-dim-head{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:5px 2px;
+    background:var(--sidebar);border-radius:4px;
+  }
+  .m-mgrid-dim-name{font-size:12px;font-weight:600;color:#3a3228;letter-spacing:1px}
+  .m-mgrid-dim-coeff{font-size:11px;font-weight:700;color:#7a6e64}
+  /* 部位欄 */
+  .m-mgrid-part-head{
+    font-size:12px;font-weight:600;color:#3d3b39;
+    background:var(--sidebar);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  /* 答題格（形勢雙半格）*/
+  .m-mgrid-cell{display:flex;gap:2px;min-height:36px}
+  .m-mgrid-half{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;border-radius:4px;cursor:pointer;user-select:none;
+    border:1.5px solid #e0d8cc;background:#fff;color:#b0a89c;
+    transition:background 0.1s,border-color 0.1s,color 0.1s;
+  }
+  .m-mgrid-half:hover{filter:brightness(0.97)}
+  .m-mgrid-half.is-sel.is-jing{background:#f4f8f1;border-color:#7A9E7E;color:#5a8a5a;font-weight:700}
+  .m-mgrid-half.is-sel.is-dong{background:#fbf3ee;border-color:#C17A5A;color:#a76040;font-weight:700}
+  /* 合併係數格 */
+  .m-mgrid-coeff-cell{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:9px 6px;margin-top:3px;
+    border-radius:4px;color:#fff;
+  }
+  .m-mgrid-coeff-label{font-size:13px;font-weight:600;letter-spacing:1px}
+  .m-mgrid-coeff-val{font-size:15px;font-weight:700}
+  .m-mgrid-coeff-cell.m-mgrid-grp-pre{background:var(--grp-pre)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-mgr{background:var(--grp-mgr)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-luck{background:var(--grp-luck)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-post{background:var(--grp-post)}
+  .m-mgrid-coeff-cell.m-mgrid-grp-total{background:var(--grp-total)}
 }
 
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
@@ -1043,7 +1137,6 @@ body.m-debug-on .m-debug-clear{display:block}
         </select>
       </div>
       <div class="m-home-profile-status" id="m-home-profile-status"></div>
-      <button class="m-home-profile-save-btn" id="m-home-profile-save" type="button">存檔</button>
     </div>
   </div>
 </section>
@@ -1094,15 +1187,13 @@ body.m-debug-on .m-debug-clear{display:block}
     <span>手動輸入</span>
   </button>
   <button class="m-tab" data-tab="report">
-    <span class="m-tab-icon">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-    </span>
-    <span>我的</span>
+    <span class="m-tab-icon">▦</span>
+    <span>報告</span>
   </button>
 </nav>
 
 
-<script type="module" src="js/m_main.js"></script>
+<script type="module" src="js/app_main.js"></script>
 
 </body>
 </html>

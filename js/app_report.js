@@ -18,15 +18,13 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim } from './core.js';
-import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
-import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
-import { persistProfile } from './m_home.js';
-import { db, debugLog, refreshUserData } from './m_main.js';
-import { ensureDimRulesLoaded } from './m_input.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data } from './core.js';
+import { renderCoeffSummary, renderPngPreview } from './app_manual.js';
+import { db, debugLog, refreshUserData } from './app_main.js';
+import { ensureDimRulesLoaded } from './app_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
-import { renderAutoSens } from './m_sens.js';
+import { renderAutoSens } from './app_sens.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 let _container = null;
@@ -84,14 +82,6 @@ function _renderList() {
   if (!_container) return;
   _container.innerHTML = `
     <div class="m-home" style="padding:16px 14px">
-      <div class="m-home-card m-home-profile">
-        <div class="m-home-card-title">基本資料</div>
-        <div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-my-profile-name" placeholder="未填寫"></div>
-        <div class="m-home-profile-row"><label>出生年月日</label><input type="date" id="m-my-profile-birthday"></div>
-        <div class="m-home-profile-row"><label>性別</label><select id="m-my-profile-gender"><option value="">未填寫</option><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="m-home-profile-status" id="m-my-profile-status"></div>
-        <button class="m-home-profile-save-btn" id="m-my-profile-save" type="button">存檔</button>
-      </div>
       <button class="m-home-bigbtn" data-report-card="auto">
         <span class="m-home-bigbtn-icon">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
@@ -129,36 +119,6 @@ function _renderList() {
     try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
     const btn = document.querySelector('.m-tab[data-tab="manual"]');
     if (btn) btn.click();
-  });
-  _wireMyProfile();
-}
-
-// 「我的」分頁基本資料：可編輯 + 按存檔才寫雲端；存檔後重繪以刷新流年
-function _wireMyProfile() {
-  if (!_container) return;
-  const ud = window.__userData || {};
-  const elName = _container.querySelector('#m-my-profile-name');
-  const elBday = _container.querySelector('#m-my-profile-birthday');
-  const elGender = _container.querySelector('#m-my-profile-gender');
-  const elStatus = _container.querySelector('#m-my-profile-status');
-  const elSave = _container.querySelector('#m-my-profile-save');
-  if (!elName || !elSave) return;
-  elName.value = ud.displayName || '';
-  elBday.value = ud.birthday || '';
-  let g = ud.gender || '';
-  if (g === 'M') g = '男'; else if (g === 'F') g = '女';
-  elGender.value = g;
-  elSave.addEventListener('click', async () => {
-    if (elStatus) { elStatus.textContent = '儲存中…'; elStatus.className = 'm-home-profile-status is-saving'; }
-    try {
-      await persistProfile({ displayName: elName.value, birthday: elBday.value, gender: elGender.value });
-      _renderList(); // 重繪：更新流年（生日/性別可能改了）+ 重新填入
-      const st = _container && _container.querySelector('#m-my-profile-status');
-      if (st) { st.textContent = '已儲存'; st.className = 'm-home-profile-status is-saved'; setTimeout(() => { if (st.textContent === '已儲存') st.textContent = ''; }, 1500); }
-    } catch (e) {
-      debugLog('[Profile]', '儲存失敗', e && e.message ? e.message : e);
-      if (elStatus) { elStatus.textContent = '儲存失敗'; elStatus.className = 'm-home-profile-status is-error'; }
-    }
   });
 }
 
@@ -434,121 +394,6 @@ async function exportReportPng() {
 
 // ===== render =====
 
-// 手機報告圖 SVG（radar2 報告圖 + radar3 動靜全圖）；自動/手動共用
-export var R2_TITLE = '人相兵法係數圖', R3_TITLE = '人相兵法動靜分布圖', CHART_GAP = 14;
-export function buildMobileChartSvgs(matrix) {
-  var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
-  var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
-  for (var i = 0; i < 13; i++) {
-    var s = 0, d = 0;
-    for (var p = 0; p < 9; p++) { var vv = matrix[i] && matrix[i][p]; if (vv === 'A' || vv === 'B') { var t = (vv === 'A') ? DIMS[i].aT : DIMS[i].bT; if (t === '靜') s++; else d++; } }
-    dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
-    var rc = calcDim(matrix, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
-  }
-  var radar2 = buildRadar2MSVG({
-    dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
-    luckV: avgCoeff(matrix,[6,7,8])||0, postV: avgCoeff(matrix,[9,10,11,12])||0,
-    preV: avgCoeff(matrix,[0,1,2,3,4,5])||0, totV: avgCoeff(matrix,all)||0
-  });
-  // radar3 手機版：字級放大；viewBox 與 radar2 同寬(360) → 13 邊形一樣大
-  var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5, viewBox: '20 40 360 360' });
-  return { radar2: radar2, sd: sd };
-}
-// 共用 HTML：標題 + 圖；bar↔radar2 與 radar2↔radar3 間隔同高(CHART_GAP)
-export function chartsBlockHtml(matrix) {
-  try {
-    var c = buildMobileChartSvgs(matrix);
-    return '<div style="padding:' + CHART_GAP + 'px 12px 0">'
-      + '<div class="m-chart-title">' + R2_TITLE + '</div>' + c.radar2
-      + '<div style="height:' + CHART_GAP + 'px"></div>'
-      + '<div class="m-chart-title">' + R3_TITLE + '</div>' + c.sd
-      + '</div>';
-  } catch (e) { return ''; }
-}
-function _chartsHtml() { return chartsBlockHtml(data); }
-
-// ===== 圖表輸出（手機）：SVG 字串點陣化後與表格/表頭合成；自動/手動共用 =====
-function _svgToCanvas(svgStr, pxW) {
-  return new Promise(function (resolve, reject) {
-    var m = svgStr.match(/viewBox="([^"]+)"/);
-    var vb = m ? m[1].trim().split(/\s+/).map(Number) : [0, 0, 400, 400];
-    var aspect = vb[3] / vb[2];
-    var pxH = Math.round(pxW * aspect);
-    var sized = svgStr.replace('<svg ', '<svg width="' + pxW + '" height="' + pxH + '" ');
-    var blob = new Blob([sized], { type: 'image/svg+xml;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var img = new Image();
-    img.onload = function () { var c = document.createElement('canvas'); c.width = pxW; c.height = pxH; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH); ctx.drawImage(img, 0, 0, pxW, pxH); URL.revokeObjectURL(url); resolve(c); };
-    img.onerror = function (e) { URL.revokeObjectURL(url); reject(new Error('SVG 點陣化失敗')); };
-    img.src = url;
-  });
-}
-// 標題 canvas（字級用像素值；置中）
-function _titleCanvas(text, pxW, fontPx) { var h = Math.round(fontPx * 1.9); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#5a4f45'; ctx.font = '700 ' + Math.round(fontPx) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, pxW / 2, h * 0.55); return c; }
-// 姓名表頭 canvas（左對齊；字級＝維度字大小）
-function _nameHeaderCanvas(name, pxW, fontPx) { var h = Math.round(fontPx * 2.0); var pad = Math.round(fontPx * 0.6); var c = document.createElement('canvas'); c.width = pxW; c.height = h; var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, h); ctx.fillStyle = '#3a3228'; ctx.font = '700 ' + Math.round(fontPx) + 'px "Noto Sans TC","PingFang TC",sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(name, pad, h * 0.55); return c; }
-function _stackV(cs, gap) { cs = cs.filter(Boolean); gap = gap || 0; var w = Math.max.apply(null, cs.map(function (c) { return c.width; })); var h = cs.reduce(function (a, c) { return a + c.height; }, 0) + gap * Math.max(0, cs.length - 1); var out = document.createElement('canvas'); out.width = w; out.height = h; var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); var y = 0; cs.forEach(function (c) { ctx.drawImage(c, Math.round((w - c.width) / 2), y); y += c.height + gap; }); return out; }
-// 兩張圖左右並列：總寬 totalW；各圖上方標題字級＝該圖維度字大小(14 / 360 viewBox)
-async function _buildChartsRow(svgs, totalW) {
-  var gap = Math.round(totalW * 0.02);
-  var chartW = Math.floor((totalW - gap) / 2);
-  var titleFs = 14 * chartW / 360;
-  var r2c = await _svgToCanvas(svgs.radar2, chartW);
-  var r3c = await _svgToCanvas(svgs.sd, chartW);
-  var col2 = _stackV([_titleCanvas(R2_TITLE, chartW, titleFs), r2c], Math.round(titleFs * 0.3));
-  var col3 = _stackV([_titleCanvas(R3_TITLE, chartW, titleFs), r3c], Math.round(titleFs * 0.3));
-  var h = Math.max(col2.height, col3.height);
-  var out = document.createElement('canvas'); out.width = chartW * 2 + gap; out.height = h;
-  var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, out.width, h);
-  ctx.drawImage(col2, 0, 0); ctx.drawImage(col3, chartW + gap, 0);
-  return { canvas: out, titleFs: titleFs };
-}
-
-export async function exportMobileCharts(opts) {
-  opts = opts || {};
-  var mode = opts.mode || 'charts'; // 'charts' | 'all'
-  var srcData = opts.srcData, btn = opts.btn;
-  if (btn && btn.disabled) return;
-  var oldText = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = '產生中…'; }
-  await new Promise(function (r) { setTimeout(r, 50); });
-  try {
-    await ensureDimRulesLoaded();
-    await _ensureLiunianLoaded();
-    if (!srcData) await refreshUserData();
-    var ud = window.__userData || {};
-    var displayName = ud.displayName || '報告';
-    setUserName(displayName);
-    var g = ud.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女'; if (g) setUserGender(g);
-    if (ud.birthday) setUserBirthday(ud.birthday);
-    var matrix = srcData;
-    if (!srcData) { if (ud.obsJson) { try { setObsData(JSON.parse(ud.obsJson)); } catch (e) {} } recalcFromObs(); matrix = data; }
-    var SC = 3;
-    var svgs = buildMobileChartSvgs(matrix);
-    var out;
-    if (mode === 'charts') {
-      // 姓名（只要姓名，不要虛歲/流年）+ 兩圖左右並列
-      var row = await _buildChartsRow(svgs, 1600);
-      var hdr = _nameHeaderCanvas(displayName, row.canvas.width, row.titleFs);
-      out = _stackV([hdr, row.canvas], Math.round(row.titleFs * 0.6));
-    } else {
-      // 完整表格 + 兩圖左右並列（兩圖總寬＝表格寬）
-      var tableCanvas = drawReportCanvas(srcData, { checkComplete: true, scale: SC });
-      var row2 = await _buildChartsRow(svgs, tableCanvas.width);
-      out = _stackV([tableCanvas, row2.canvas], Math.round(CHART_GAP * SC));
-    }
-    var blob = await new Promise(function (r) { out.toBlob(r, 'image/png'); });
-    if (!blob) throw new Error('toBlob 失敗');
-    var fn = '人相兵法' + (mode === 'charts' ? '_圖表' : '_報告圖表') + '_' + displayName + '.png';
-    _openPngOverlay(blob, fn);
-  } catch (e) {
-    debugLog('[m_report]', '圖表輸出失敗', e && e.message ? e.message : e);
-    alert('產生失敗：' + (e && e.message ? e.message : e));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = oldText; }
-  }
-}
-
 function _render() {
   if (!_container) return;
   if (_view === 'sens') { _renderSensView(); return; }
@@ -556,20 +401,13 @@ function _render() {
   // v1.7 階段 14：流年參考搬到報告 tab 兩大按鈕下方，這裡不再顯示
   _container.innerHTML = `
     ${renderCoeffSummary(data)}
-    ${_chartsHtml()}
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
       <button id="m-report-png-btn" class="m-report-link-btn">產生詳盡報告（自動版PNG）</button>
-      <button id="m-report-charts-btn" class="m-report-link-btn">產生圖表(PNG)</button>
-      <button id="m-report-rc-btn" class="m-report-link-btn">產生報告＋圖表</button>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
   const pngBtn = _container.querySelector('#m-report-png-btn');
   if (pngBtn) pngBtn.onclick = exportReportPng;
-  const chartsBtn = _container.querySelector('#m-report-charts-btn');
-  if (chartsBtn) chartsBtn.onclick = function () { exportMobileCharts({ mode: 'charts', btn: chartsBtn }); };
-  const rcBtn = _container.querySelector('#m-report-rc-btn');
-  if (rcBtn) rcBtn.onclick = function () { exportMobileCharts({ mode: 'all', btn: rcBtn }); };
 }
 
 // ===== 重要參數分析 view（自動版）=====

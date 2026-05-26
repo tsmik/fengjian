@@ -99,6 +99,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .mode-btn.is-tool{border-left-color:var(--static);min-width:150px}
 .mode-btn.is-manual{border-left-color:#7a8a6a;min-width:180px}
 .mode-flow-divider{border:none;border-top:1px solid var(--border);margin:0 0 28px}
+/* 報告圖表標題（絕對定位於各圖上方，隨圖一起 transform 縮放；字級在 JS 依各圖維度字大小設定） */
+#report-charts-row>div,#manual-charts-row>div{position:relative}
+.rep-chart-title{position:absolute;bottom:100%;left:0;right:0;text-align:center;font-weight:700;color:#5a4f45;letter-spacing:1px;white-space:nowrap;line-height:1.3;padding-bottom:1px}
 .mode-case-btn{position:absolute;top:16px;right:40px;background:white;border-radius:8px;padding:10px 16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:3px solid var(--static);transition:box-shadow 0.2s}
 .mode-case-btn:hover{box-shadow:0 3px 10px rgba(0,0,0,0.1)}
 .mode-case-btn h3{font-size:14px;font-weight:400;margin:0 0 2px;letter-spacing:1px;color:var(--text)}
@@ -248,7 +251,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .obs-basis-panel .basis-mark{display:inline-block;width:18px;text-align:center}
 
 /* ===== Report Overlay ===== */
-#report-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:#fff;z-index:2000;padding:15px;overflow-y:auto;overflow-x:hidden}
+#report-overlay{display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:2000;padding:15px;overflow-y:auto;overflow-x:hidden}
 .report-top{display:flex;justify-content:flex-start;align-items:baseline;margin-bottom:8px;gap:8px}
 .report-name{width:50%;border-bottom:2px solid var(--text);padding:8px 0;font-size:28px;font-weight:400;}
 .report-title{font-size:28px;font-weight:400;letter-spacing:1px}
@@ -695,11 +698,17 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- 手動輸入兵法報告頁 -->
 <div id="manual-page" style="display:none;position:fixed;top:48px;left:0;width:100%;height:calc(100vh - 48px);background:var(--bg);z-index:5800;overflow-y:auto;padding:15px;overflow-x:hidden">
   <div id="manual-table" style="overflow-x:auto;width:100%"></div>
+  <!-- 報告圖：係數總覽 / 報告圖 / 總動靜 -->
+  <div id="manual-charts-row" style="display:flex;gap:20px;align-items:flex-start;margin:14px 0;flex-wrap:wrap">
+    <div id="manual-coef" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
+    <div id="manual-radar2" style="flex:0 0 auto;width:330px;max-width:100%;align-self:flex-start"></div>
+    <div id="manual-sd" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
+  </div>
   <div class="report-actions">
     <button class="btn-back" onclick="manualImportObs()" style="flex:1;margin:0;">帶入觀察資料</button>
     <button class="btn-back" onclick="manualClear()" style="flex:1;margin:0;">清除全部</button>
     <button class="btn-back" onclick="manualSave()" id="manual-save-btn" style="flex:1;margin:0;">儲存評分</button>
-    <button class="btn-line" onclick="exportManualPNG()" id="btn-manual-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-line" onclick="showManualShareMenu(this)" id="btn-manual-export" style="flex:1;margin:0;">分享報告</button>
   </div>
 </div>
 <!-- 敏感度分析頁 -->
@@ -768,22 +777,30 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <div id="report-overlay">
   <div class="report-top">
     <div id="report-name-display" style="font-size:20px;font-weight:400;display:inline"></div>
-    <span style="font-size:15px;color:#888;margin-left:12px">人相兵法係數報告</span>
+    <span id="report-subtitle" style="font-size:15px;color:#888;margin-left:12px">人相兵法係數報告</span>
   </div>
+  <div id="report-liunian" style="margin:8px 0;width:100%;overflow-x:auto"></div>
   <div id="report-full-table" style="margin:8px 0;overflow-x:auto;width:100%"></div>
-  <div id="ai-section" style="padding:16px 20px;border-top:2px solid var(--border);margin-top:20px;display:none">
-    <button id="btn-ai" onclick="generateAI()" style="padding:10px 28px;background:var(--active);color:white;border:none;border-radius:6px;font-size:15px;font-weight:400;cursor:pointer;letter-spacing:2px">生成 AI 評析</button>
-    <div id="ai-analysis-area" style="margin-top:16px"></div>
+  <!-- 報告圖（表格下方）：三張分開 係數總覽 / 報告圖 / 總動靜 -->
+  <div id="report-charts-row" style="display:flex;gap:20px;align-items:flex-start;margin:14px 0;flex-wrap:wrap">
+    <div id="report-coef" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
+    <div id="report-radar2" style="flex:0 0 auto;width:330px;max-width:100%;align-self:flex-start"></div>
+    <div id="report-sd" style="flex:0 0 auto;width:300px;max-width:100%;align-self:flex-start"></div>
   </div>
   <div class="report-actions">
     <button class="btn-back" onclick="showObsPage()" style="flex:1;margin:0;">&#8592; 回到觀察</button>
     <button class="btn-back" onclick="showCondPage()" style="flex:1;margin:0;">&#8592; 修改評分</button>
     <button class="btn-back" onclick="reportSave()" id="report-save-btn" style="flex:1;margin:0;">儲存評分</button>
-    <button class="btn-line" onclick="exportPNG()" id="btn-export" style="flex:1;margin:0;">分享報告</button>
+    <button class="btn-line" onclick="showShareMenu(this)" id="btn-export" style="flex:1;margin:0;">分享報告</button>
     <button class="btn-back" onclick="clearObsData()" style="flex:1;margin:0;color:var(--active);border-color:var(--active)">清除觀察資料</button>
+  </div>
+  <div id="ai-section" style="padding:16px 20px;border-top:2px solid var(--border);margin-top:20px;display:none">
+    <button id="btn-ai" onclick="generateAI()" style="padding:10px 28px;background:var(--active);color:white;border:none;border-radius:6px;font-size:15px;font-weight:400;cursor:pointer;letter-spacing:2px">生成 AI 評析</button>
+    <div id="ai-analysis-area" style="margin-top:16px"></div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
