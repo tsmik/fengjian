@@ -142,7 +142,7 @@ function _buildCaseRowHtml(docId, c){
   html+='<div class="case-row-name">'+(c.name||'未命名')+'</div>';
   html+='<div class="case-row-gender">'+(c.gender||'')+'</div>';
   html+='<div class="case-row-actions">';
-  html+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
+  if(userRole==='admin')html+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
   html+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
   html+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
   html+='</div></div>';
@@ -315,7 +315,7 @@ export function doLogout(){
 }
 
 export function editName(){
-  if(_isTA&&_currentCaseId){
+  if(_currentCaseId){
     editCase(_currentCaseId);
     return;
   }
@@ -330,7 +330,7 @@ export function confirmEditName(){
   var n=document.getElementById('name-edit-input').value.trim();
   if(n){
     setUserName(n);
-    document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+    document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   }
   setUserGender(document.getElementById('profile-gender').value);
   setUserBirthday(document.getElementById('profile-birthday').value);
@@ -359,10 +359,10 @@ export function closeEditName(){document.getElementById('name-edit-overlay').sty
 // ===== 使用者資料頁（取代彈窗）：性別/生日輸入 + 流年資訊 =====
 export function showProfilePage(){
   // admin 正在看某案例時，維持原本案例編輯行為
-  if(_isTA&&_currentCaseId){editCase(_currentCaseId);return;}
+  if(_currentCaseId){editCase(_currentCaseId);return;}
   showPage('profile-page');
   setNavActive('nav-profile');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   renderProfilePage();
   if(!window._suppressPushState)history.pushState({page:'profile'},'');
 }
@@ -383,7 +383,7 @@ function _renderProfileLiunian(){
 
 export function saveProfile(){
   var n=document.getElementById('pf-name').value.trim();
-  if(n){setUserName(n);document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';}
+  if(n){setUserName(n);document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';}
   setUserGender(document.getElementById('pf-gender').value);
   setUserBirthday(document.getElementById('pf-birthday').value);
   if(currentUser){

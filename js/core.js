@@ -175,7 +175,7 @@ export function avgCoeff(dataArr, ids) {
 export function _getUserDocRef() {
   if (!currentUser) return null;
   const uid = currentUser.uid;
-  if (userRole === 'admin' && _currentCaseId) {
+  if (_currentCaseId) {
     return db.collection('users').doc(uid).collection('cases').doc(_currentCaseId);
   }
   return db.collection('users').doc(uid);
