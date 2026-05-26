@@ -645,10 +645,10 @@ export function showReport(){
           bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0,
           preV:vPre||0, totV:vTotal||0
         });
-        if(coefEl) coefEl.innerHTML='<div class="rep-chart-title" style="font-size:9px">人相兵法係數總覽</div>'+buildCoefSVG({
+        if(coefEl) coefEl.innerHTML=buildCoefSVG({
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
-        if(sdEl) sdEl.innerHTML='<div class="rep-chart-title" style="font-size:8.1px">人相兵法動靜分布圖</div>'+buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr });
+        if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr, title:'人相兵法動靜分布圖' });
         // staging：兩圖可自由移動/縮放（測試工具）
         var _h=location.hostname;
         if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
