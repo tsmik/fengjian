@@ -472,6 +472,19 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   body.staging-mode #staging-banner {
     display: block;
   }
+  /* staging banner 把(一般流)導覽列往下推 28px，但固定定位分頁仍停在 top:48px 會被導覽列蓋住。
+     staging 時把這些分頁下移 28px(=banner高)對齊導覽列下緣。production 無 staging-mode 不受影響。 */
+  body.staging-mode #mode-page,
+  body.staging-mode #report-overlay,
+  body.staging-mode #knowledge-overlay,
+  body.staging-mode #case-page,
+  body.staging-mode #profile-page,
+  body.staging-mode #manual-page,
+  body.staging-mode #sens-page,
+  body.staging-mode #manual-sens-page,
+  body.staging-mode #manual-sens-v2-page,
+  body.staging-mode #cond-page,
+  body.staging-mode #board-page { top: 76px; height: calc(100vh - 76px); }
 </style>
 </head>
 <body>
