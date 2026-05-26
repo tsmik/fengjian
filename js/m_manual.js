@@ -392,7 +392,7 @@ function _chartsHtml() {
       luckV: avgCoeff(m,[6,7,8])||0, postV: avgCoeff(m,[9,10,11,12])||0,
       preV: avgCoeff(m,[0,1,2,3,4,5])||0, totV: avgCoeff(m,all)||0
     });
-    var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr });
+    var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5 });
     return '<div style="padding:6px 12px 0">' + radar2 + '<div style="height:14px"></div>' + sd + '</div>';
   } catch (e) { return ''; }
 }
