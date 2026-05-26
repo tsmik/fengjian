@@ -361,6 +361,41 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-row-actions button{width:22px;height:22px;border:none;background:transparent;color:#ccc;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
 .case-row-actions button:hover{background:var(--hover);color:var(--text)}
 .case-row-actions .case-btn-del:hover{background:#fee;color:#c03830}
+/* ===== 個案管理 名片版 ===== */
+.case-search{height:38px;flex:1;max-width:300px;margin:0 16px;border:1px solid var(--border);border-radius:8px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--card-bg,#fafaf8);color:var(--text);outline:none}
+.case-search:focus{border-color:var(--static)}
+.case-header-btns{display:flex;align-items:center;flex-shrink:0}
+.case-layout{display:flex;gap:24px;align-items:flex-start}
+.case-self-col{width:300px;flex-shrink:0;position:sticky;top:0}
+.case-cards-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.case-self-card{background:var(--card-bg,#fafaf8);border:1px solid var(--border);border-radius:12px;padding:18px 20px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.case-self-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.case-self-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
+.case-self-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.case-self-label{font-size:12px;color:var(--text-3);letter-spacing:1px}
+.case-active-badge{font-size:12px;color:#fff;background:var(--static);padding:3px 12px;border-radius:20px;white-space:nowrap}
+.case-switch-hint{font-size:11px;color:var(--text-3);white-space:nowrap}
+.case-self-name{font-size:22px;font-weight:400;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.case-self-edit{width:26px;height:26px;border:none;background:transparent;color:#bbb;cursor:pointer;border-radius:50%;font-size:13px;flex-shrink:0}
+.case-self-edit:hover{background:var(--hover);color:var(--text)}
+.case-self-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--text);margin-bottom:14px}
+.case-self-meta span{background:var(--hover,#f0eee9);padding:3px 12px;border-radius:14px}
+.case-self-liunian{border-top:1px solid var(--border);padding-top:14px}
+.cm-section{display:flex;flex-direction:column}
+.case-grid{display:flex;flex-wrap:wrap;gap:14px;padding:12px 2px 4px}
+.case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
+.case-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
+.case-card:hover .case-card-actions{opacity:1}
+.case-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
+.case-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:6px;padding-right:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-card-age{font-size:13px;color:var(--text-3);margin-bottom:auto}
+.case-card-group{font-size:11px;color:var(--text-3);background:#f3f1ec;align-self:flex-start;padding:2px 9px;border-radius:10px;margin-top:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-active-dot{position:absolute;top:13px;right:14px;width:9px;height:9px;border-radius:50%;background:var(--static);box-shadow:0 0 0 3px rgba(122,158,126,.22)}
+.case-card-actions{position:absolute;bottom:8px;right:8px;display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.case-card-actions button{width:25px;height:25px;border:none;background:rgba(255,255,255,.92);color:#aaa;cursor:pointer;border-radius:50%;font-size:12px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.case-card-actions button:hover{color:var(--text)}
+.case-card-actions .case-btn-del:hover{color:#c03830}
+@media(max-width:900px){.case-layout{flex-direction:column}.case-self-col{width:100%;position:static}}
 #case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
 #case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}
@@ -468,11 +503,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     </div>
   </div>
   <div class="nav-dropdown" id="dd-case">
-    <div class="nav-dropdown-btn" id="dd-case-btn">個案資料 ▾</div>
-    <div class="nav-dropdown-menu">
-      <div class="nav-dropdown-item" id="nav-profile" onclick="showProfilePage()">使用者資料</div>
-      <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
-    </div>
+    <div class="nav-dropdown-btn" id="nav-cases" onclick="showCasePage()">個案管理</div>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-save-zone" id="nav-save-zone" style="display:none">
@@ -487,10 +518,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- Case Management Page (TA only) -->
 <div id="case-page">
   <div class="case-header">
-    <h2>案例管理</h2>
-    <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
-    <button id="case-import-btn" class="case-export-btn" onclick="triggerCaseImport()" style="margin-left:8px;">⬆ 匯入</button>
-    <button id="case-export-all-btn" class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">⬇ 匯出全部</button>
+    <h2>個案管理</h2>
+    <input id="case-search" class="case-search" type="search" placeholder="搜尋姓名…" oninput="caseSearch(this.value)" autocomplete="off">
+    <div class="case-header-btns">
+      <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
+      <button id="case-import-btn" class="case-export-btn" onclick="triggerCaseImport()" style="margin-left:8px;">⬆ 匯入</button>
+      <button id="case-export-all-btn" class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">⬇ 匯出全部</button>
+    </div>
   </div>
   <div id="case-list"></div>
 </div>

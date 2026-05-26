@@ -36,6 +36,15 @@ export function getLiunian(gender, xusui){
   return rows.find(function(r){return r.age===xusui;})||null;
 }
 
+// 指定性別/生日/觀察日 算流年（給本人卡等需要明確對象的呼叫端）
+export function getLiunianInfoFor(gender, birthday, refDate){
+  if(!gender||!birthday)return null;
+  var xusui=calcXuSui(birthday,refDate||null);
+  if(!xusui||xusui<1)return null;
+  var ln=getLiunian(gender,xusui);
+  if(!ln)return null;
+  return {xusui:xusui, mark:ln.mark, ln:ln};
+}
 export function _getLiunianInfo(){
   var gender, birthday, refDate;
   if(_currentCaseId){
@@ -44,12 +53,7 @@ export function _getLiunianInfo(){
     // 學員、或 admin 未選案例：用個人資料（使用者資料頁設定的）性別/生日
     gender=_userGender;birthday=_userBirthday;refDate=null;
   }
-  if(!gender||!birthday)return null;
-  var xusui=calcXuSui(birthday,refDate);
-  if(!xusui||xusui<1)return null;
-  var ln=getLiunian(gender,xusui);
-  if(!ln)return null;
-  return {xusui:xusui, mark:ln.mark, ln:ln};
+  return getLiunianInfoFor(gender, birthday, refDate);
 }
 
 export function buildLiunianTitleHtml(info){

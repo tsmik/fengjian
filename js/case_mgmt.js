@@ -9,11 +9,14 @@ import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _curren
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex } from './obs_ui.js';
 import { cpRender } from './cond_page.js';
-import { _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
+import { _getLiunianInfo, getLiunianInfoFor, buildLiunianTitleHtml, buildLiunianTableHtml, calcXuSui } from './report.js';
 
 /* module-local state */
 let _editingCaseId = null;
 let _groupOrder = []; // 從 Firestore 讀取的組別排序
+let _selfCache = null;   // 本人資料快取 {name,gender,birthday}
+let _casesCache = [];    // 個案快取 [{id,data}]
+let _caseSearchTerm = ''; // 名片搜尋字串
 
 /* ===== 助教模式：案例管理 ===== */
 export function showCasePage(){
@@ -30,106 +33,28 @@ export function renderCaseList(){
   listEl.innerHTML='<div style="color:#aaa;padding:20px;text-align:center">載入中...</div>';
 
   db.collection('users').doc(currentUser.uid).get().then(function(selfDoc){
-    var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
-    if(selfDoc.exists&&Array.isArray(selfDoc.data().groupOrder)){
-      _groupOrder=selfDoc.data().groupOrder;
-    }else{
-      _groupOrder=[];
-    }
-
-    // 更新 datalist
-    var dl=document.getElementById('cf-group-list');
+    var sd=selfDoc.exists?selfDoc.data():{};
+    _selfCache={
+      name:(sd.displayName||userName||'我自己'),
+      gender:(sd.gender||_userGender||''),
+      birthday:(sd.birthday||_userBirthday||'')
+    };
+    if(Array.isArray(sd.groupOrder)){_groupOrder=sd.groupOrder;}else{_groupOrder=[];}
 
     db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
-      var grouped={};
-      var allGroups=new Set();
-      snap.forEach(function(doc){
-        var c=doc.data();
-        var g=c.group||'';
-        if(!grouped[g])grouped[g]=[];
-        grouped[g].push({id:doc.id, data:c});
-        if(g)allGroups.add(g);
-      });
+      _casesCache=[];
+      snap.forEach(function(doc){_casesCache.push({id:doc.id, data:doc.data()});});
 
+      // 更新組別 datalist
+      var dl=document.getElementById('cf-group-list');
       if(dl){
         dl.innerHTML='';
-        _groupOrder.forEach(function(g){
-          if(g){var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);}
-        });
-        allGroups.forEach(function(g){
-          if(_groupOrder.indexOf(g)<0){
-            var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);
-          }
-        });
+        var seen={};
+        _groupOrder.forEach(function(g){if(g&&!seen[g]){seen[g]=1;var o=document.createElement('option');o.value=g;dl.appendChild(o);}});
+        _casesCache.forEach(function(it){var g=it.data.group||'';if(g&&!seen[g]){seen[g]=1;var o=document.createElement('option');o.value=g;dl.appendChild(o);}});
       }
 
-      // 組別順序
-      var orderedGroups=[];
-      _groupOrder.forEach(function(g){
-        if(grouped[g])orderedGroups.push(g);
-      });
-      allGroups.forEach(function(g){
-        if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);
-      });
-      // 未分組放最後
-      var allSections=orderedGroups.slice();
-      if(grouped['']&&grouped[''].length>0) allSections.push('');
-
-      // 建立各組 HTML
-      var sectionHtmls=[];
-      for(var si=0;si<allSections.length;si++){
-        var gName=allSections[si];
-        var cases=grouped[gName];
-        var isUngrouped=(gName==='');
-        // 計算在有名組中的索引位置（用於上移下移）
-        var namedIdx=isUngrouped?-1:orderedGroups.indexOf(gName);
-        var namedLen=orderedGroups.length;
-
-        var s='<div class="case-group-section">';
-        s+='<div class="case-group-header">';
-        if(isUngrouped){
-          s+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
-        }else{
-          s+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
-          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(namedIdx===0?' disabled':'')+'>▲</button>';
-          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(namedIdx===namedLen-1?' disabled':'')+'>▼</button>';
-        }
-        s+='</div><div class="case-group-body">';
-        cases.forEach(function(item){
-          s+=_buildCaseRowHtml(item.id, item.data);
-        });
-        s+='</div></div>';
-        sectionHtmls.push({html:s, count:cases.length});
-      }
-
-      // Waterfall 分配到 4 欄（找最短欄放入）
-      var NUM_COLS=4;
-      var cols=[];
-      var colHeights=[];
-      for(var ci=0;ci<NUM_COLS;ci++){cols.push([]);colHeights.push(0);}
-      for(var si2=0;si2<sectionHtmls.length;si2++){
-        // 找最短的欄
-        var minH=colHeights[0], minIdx=0;
-        for(var ci2=1;ci2<NUM_COLS;ci2++){
-          if(colHeights[ci2]<minH){minH=colHeights[ci2];minIdx=ci2;}
-        }
-        cols[minIdx].push(sectionHtmls[si2].html);
-        // 用案例數量當高度估算（標題+每行）
-        colHeights[minIdx]+=sectionHtmls[si2].count+2;
-      }
-
-      // 組裝 HTML
-      var html='';
-      // 本人行
-      html+='<div class="case-self-bar" onclick="loadCase(null)">'+userName+' <span style="font-size:12px;color:var(--static)">（本人）</span></div>';
-      // 四欄 waterfall
-      html+='<div class="case-waterfall">';
-      for(var ci3=0;ci3<NUM_COLS;ci3++){
-        html+='<div class="case-waterfall-col">'+cols[ci3].join('')+'</div>';
-      }
-      html+='</div>';
-
-      listEl.innerHTML=html;
+      _paintCasePage();
     }).catch(function(e){
       console.log('載入案例失敗',e);
       listEl.innerHTML='<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
@@ -137,16 +62,129 @@ export function renderCaseList(){
   });
 }
 
-function _buildCaseRowHtml(docId, c){
-  var html='<div class="case-row" onclick="loadCase(\''+docId+'\')">';
-  html+='<div class="case-row-name">'+(c.name||'未命名')+'</div>';
-  html+='<div class="case-row-gender">'+(c.gender||'')+'</div>';
-  html+='<div class="case-row-actions">';
-  if(userRole==='admin')html+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
-  html+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
-  html+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
-  html+='</div></div>';
-  return html;
+// 依目前快取 + 搜尋字 繪製：左本人卡 + 右名片格
+function _paintCasePage(){
+  var listEl=document.getElementById('case-list');
+  if(!listEl)return;
+  var term=(_caseSearchTerm||'').trim().toLowerCase();
+
+  var grouped={};
+  var allGroups=new Set();
+  _casesCache.forEach(function(it){
+    if(term && (it.data.name||'').toLowerCase().indexOf(term)<0) return;
+    var g=it.data.group||'';
+    if(!grouped[g])grouped[g]=[];
+    grouped[g].push(it);
+    if(g)allGroups.add(g);
+  });
+
+  var orderedGroups=[];
+  _groupOrder.forEach(function(g){if(grouped[g])orderedGroups.push(g);});
+  allGroups.forEach(function(g){if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);});
+  var allSections=orderedGroups.slice();
+  if(grouped['']&&grouped[''].length>0)allSections.push('');
+  var namedLen=orderedGroups.length;
+
+  var gridHtml='';
+  if(allSections.length===0){
+    gridHtml='<div style="color:var(--text-3);padding:30px 6px;font-size:14px">'+
+      (term?('找不到符合「'+_escHtml(_caseSearchTerm)+'」的個案'):'還沒有個案，點右上「＋ 新增個案」建立第一張名片。')+'</div>';
+  }
+  for(var si=0;si<allSections.length;si++){
+    var gName=allSections[si];
+    var cases=grouped[gName];
+    var isUngrouped=(gName==='');
+    var namedIdx=isUngrouped?-1:orderedGroups.indexOf(gName);
+    gridHtml+='<div class="cm-section"><div class="case-group-header">';
+    if(isUngrouped){
+      gridHtml+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
+    }else{
+      var gEsc=_escHtml(gName).replace(/'/g,"\\'");
+      gridHtml+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
+      gridHtml+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+gEsc+'\',\'up\')" title="上移"'+(namedIdx===0?' disabled':'')+'>▲</button>';
+      gridHtml+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+gEsc+'\',\'down\')" title="下移"'+(namedIdx===namedLen-1?' disabled':'')+'>▼</button>';
+    }
+    gridHtml+='</div><div class="case-grid">';
+    cases.forEach(function(item){gridHtml+=_buildNamecardHtml(item.id, item.data);});
+    gridHtml+='</div></div>';
+  }
+
+  listEl.innerHTML='<div class="case-layout">'+
+    '<div class="case-self-col">'+_buildSelfPanelHtml()+'</div>'+
+    '<div class="case-cards-col">'+gridHtml+'</div></div>';
+}
+
+function _calcAgeText(birthday){
+  if(!birthday)return '';
+  var b=new Date(birthday);
+  if(isNaN(b.getTime()))return '';
+  var now=new Date();
+  var a=now.getFullYear()-b.getFullYear();
+  var m=now.getMonth()-b.getMonth();
+  if(m<0||(m===0&&now.getDate()<b.getDate()))a--;
+  if(a<0||a>150)return '';
+  return a+' 歲';
+}
+
+function _buildSelfPanelHtml(){
+  var s=_selfCache||{};
+  var active=!_currentCaseId;
+  var info=getLiunianInfoFor(s.gender, s.birthday, null);
+  var ageText=info?('虛歲 '+info.xusui):_calcAgeText(s.birthday);
+  var h='<div class="case-self-card'+(active?' is-active':'')+'" onclick="loadCase(null)">';
+  h+='<div class="case-self-top"><div class="case-self-label">我的名片 · 本人</div>'+
+     (active?'<span class="case-active-badge">● 分析中</span>':'<span class="case-switch-hint">點此分析本人 ▸</span>')+'</div>';
+  h+='<div class="case-self-name">'+_escHtml(s.name||'我自己')+
+     '<button class="case-self-edit" onclick="event.stopPropagation();editSelfProfile()" title="編輯本人資料">✎</button></div>';
+  h+='<div class="case-self-meta">';
+  if(s.gender)h+='<span>'+s.gender+'</span>';
+  if(s.birthday)h+='<span>'+s.birthday+'</span>';
+  if(ageText)h+='<span>'+ageText+'</span>';
+  if(!s.gender&&!s.birthday)h+='<span style="color:var(--text-3)">尚未填寫性別/生日</span>';
+  h+='</div>';
+  if(info){
+    h+='<div class="case-self-liunian"><div style="font-size:13px;color:var(--text-3);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info)+'</div>';
+  }else{
+    h+='<div class="case-self-liunian" style="color:var(--text-3);font-size:13px">填好性別與生日後，這裡會顯示流年。</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function _buildNamecardHtml(docId, c){
+  var active=(_currentCaseId===docId);
+  var info=getLiunianInfoFor(c.gender, c.birthday, c.date||null);
+  var ageText=info?('虛歲 '+info.xusui):_calcAgeText(c.birthday);
+  var grp=c.group||'未分組';
+  var delName=_escHtml(c.name||'').replace(/'/g,"\\'");
+  var h='<div class="case-card'+(active?' is-active':'')+'" onclick="loadCase(\''+docId+'\')">';
+  if(active)h+='<span class="case-active-dot" title="分析中"></span>';
+  h+='<div class="case-card-name">'+_escHtml(c.name||'未命名')+'</div>';
+  h+='<div class="case-card-age">'+(ageText||'—')+'</div>';
+  h+='<div class="case-card-group">'+_escHtml(grp)+'</div>';
+  h+='<div class="case-card-actions">';
+  if(userRole==='admin')h+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
+  h+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
+  h+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+delName+'\')" title="刪除">✕</button>';
+  h+='</div></div>';
+  return h;
+}
+
+// 名片搜尋（oninput）
+export function caseSearch(v){ _caseSearchTerm=v||''; _paintCasePage(); }
+
+// 編輯本人資料（從本人卡的 ✎ 進入，不受目前是否選個案影響）
+export function editSelfProfile(){
+  showPage('profile-page');
+  setNavActive('nav-cases');
+  document.getElementById('nav-name').innerText=userName||'';
+  renderProfilePage();
+  if(!window._suppressPushState)history.pushState({page:'profile'},'');
+}
+
+if(typeof window!=='undefined'){
+  window.caseSearch=caseSearch;
+  window.editSelfProfile=editSelfProfile;
 }
 
 export function moveGroup(groupName, direction){
