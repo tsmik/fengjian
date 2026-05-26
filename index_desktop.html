@@ -368,19 +368,20 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-layout{display:flex;gap:24px;align-items:flex-start}
 .case-self-col{width:300px;flex-shrink:0;position:sticky;top:0}
 .case-cards-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
-.case-self-card{background:var(--card-bg,#fafaf8);border:1px solid var(--border);border-radius:12px;padding:18px 20px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.case-self-card{background:#6e6047;border:1px solid #5b4f39;border-radius:12px;padding:18px 20px;cursor:pointer;color:#fff;transition:border-color .15s,box-shadow .15s}
 .case-self-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
 .case-self-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
 .case-self-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.case-self-label{font-size:12px;color:var(--text-3);letter-spacing:1px}
+.case-self-label{font-size:12px;color:rgba(255,255,255,.6);letter-spacing:1px}
+.case-self-dim{color:rgba(255,255,255,.6)}
 .case-active-badge{font-size:12px;color:#fff;background:var(--static);padding:3px 12px;border-radius:20px;white-space:nowrap}
-.case-switch-hint{font-size:11px;color:var(--text-3);white-space:nowrap}
-.case-self-name{font-size:22px;font-weight:400;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.case-switch-hint{font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap}
+.case-self-name{font-size:22px;font-weight:400;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .case-self-edit{width:26px;height:26px;border:none;background:transparent;color:#bbb;cursor:pointer;border-radius:50%;font-size:13px;flex-shrink:0}
 .case-self-edit:hover{background:var(--hover);color:var(--text)}
-.case-self-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--text);margin-bottom:14px}
-.case-self-meta span{background:var(--hover,#f0eee9);padding:3px 12px;border-radius:14px}
-.case-self-liunian{border-top:1px solid var(--border);padding-top:14px}
+.case-self-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:#fff;margin-bottom:14px}
+.case-self-meta span{background:rgba(255,255,255,.16);padding:3px 12px;border-radius:14px}
+.case-self-liunian{border-top:1px solid rgba(255,255,255,.22);padding-top:14px}
 .cm-section{display:flex;flex-direction:column}
 .case-grid{display:flex;flex-wrap:wrap;gap:14px;padding:12px 2px 4px}
 .case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
@@ -389,7 +390,8 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
 .case-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:6px;padding-right:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .case-card-age{font-size:13px;color:var(--text-3);margin-bottom:auto}
-.case-card-group{font-size:11px;color:var(--text-3);background:#f3f1ec;align-self:flex-start;padding:2px 9px;border-radius:10px;margin-top:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-card-note{font-size:12px;color:var(--text-3);margin-top:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-note-empty{color:#cbc6bd}
 .case-active-dot{position:absolute;top:13px;right:14px;width:9px;height:9px;border-radius:50%;background:var(--static);box-shadow:0 0 0 3px rgba(122,158,126,.22)}
 .case-card-actions{position:absolute;bottom:8px;right:8px;display:flex;gap:3px;opacity:0;transition:opacity .15s}
 .case-card-actions button{width:25px;height:25px;border:none;background:rgba(255,255,255,.92);color:#aaa;cursor:pointer;border-radius:50%;font-size:12px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.14)}
@@ -397,7 +399,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-card-actions .case-btn-del:hover{color:#c03830}
 @media(max-width:900px){.case-layout{flex-direction:column}.case-self-col{width:100%;position:static}}
 #case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
-#case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+#case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}
 #case-form-overlay .case-form label{display:block;font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:4px;margin-top:14px;letter-spacing:1px}
 #case-form-overlay .case-form input,#case-form-overlay .case-form select,#case-form-overlay .case-form textarea{width:100%;border:none;border-bottom:2px solid #ddd;padding:8px 0;font-size:16px;font-weight:400;background:transparent;outline:none;color:var(--text)}
@@ -408,6 +410,8 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-form-actions button{flex:1;height:44px;border:none;border-radius:8px;font-size:15px;font-weight:400;cursor:pointer;letter-spacing:1px}
 .case-form-save{background:var(--dark);color:white}
 .case-form-cancel{background:#eee;color:var(--text)}
+.case-form-del{background:#fbe9e7;color:#c03830}
+.case-form-open{background:var(--static);color:#fff}
 </style>
 <style>
   /* staging banner（v3.11） */
@@ -536,18 +540,27 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <label>姓名 *</label>
     <input id="cf-name" placeholder="輸入姓名" maxlength="20">
     <label>性別</label>
-    <select id="cf-gender"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select>
+    <select id="cf-gender" onchange="cfRenderLiunian()"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select>
     <label>生日</label>
-    <input id="cf-birthday" type="date">
-    <label>觀察日期</label>
-    <input id="cf-date" type="date">
-    <label>組別</label>
-    <input id="cf-group" placeholder="輸入或選擇組別（如：第一期）" maxlength="30" list="cf-group-list" autocomplete="off">
-    <datalist id="cf-group-list"></datalist>
-    <label>備註</label>
-    <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
+    <input id="cf-birthday" type="date" onchange="cfRenderLiunian()">
+    <div id="cf-row-date">
+      <label>觀察日期</label>
+      <input id="cf-date" type="date" onchange="cfRenderLiunian()">
+    </div>
+    <div id="cf-row-group">
+      <label>組別</label>
+      <input id="cf-group" placeholder="輸入或選擇組別（如：第一期）" maxlength="30" list="cf-group-list" autocomplete="off">
+      <datalist id="cf-group-list"></datalist>
+    </div>
+    <div id="cf-row-note">
+      <label>備註</label>
+      <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
+    </div>
+    <div id="cf-liunian" style="display:none;margin-top:18px"></div>
     <div class="case-form-actions">
+      <button id="cf-delete-btn" class="case-form-del" onclick="cfDelete()" style="display:none">刪除</button>
       <button class="case-form-cancel" onclick="closeCaseForm()">取消</button>
+      <button id="cf-open-btn" class="case-form-open" onclick="cfOpen()" style="display:none">打開</button>
       <button class="case-form-save" onclick="saveCaseForm()">建立</button>
     </div>
   </div>
@@ -560,6 +573,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div id="mode-case-section" class="mode-case-btn" style="display:none" onclick="showCasePage()">
       <h3>案例管理</h3>
       <p>新增、選擇、編輯個案</p>
+    </div>
+
+    <!-- 目前分析對象 -->
+    <div id="mode-current-case" style="display:flex;align-items:center;gap:12px;margin:0 0 18px;flex-wrap:wrap">
+      <span style="font-size:13px;color:var(--text-3)">目前分析</span>
+      <span id="mode-current-name" style="font-size:21px;color:var(--text);font-weight:400"></span>
+      <button onclick="showCasePage()" style="font-size:12px;color:var(--text-3);background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit">← 回個案管理</button>
     </div>
 
     <!-- 上排：觀察路徑 -->

@@ -13,6 +13,7 @@ import { _getLiunianInfo, getLiunianInfoFor, buildLiunianTitleHtml, buildLiunian
 
 /* module-local state */
 let _editingCaseId = null;
+let _editingSelf = false;  // 視窗是否在編輯「本人」
 let _groupOrder = []; // 從 Firestore 讀取的組別排序
 let _selfCache = null;   // 本人資料快取 {name,gender,birthday}
 let _casesCache = [];    // 個案快取 [{id,data}]
@@ -131,21 +132,20 @@ function _buildSelfPanelHtml(){
   var active=!_currentCaseId;
   var info=getLiunianInfoFor(s.gender, s.birthday, null);
   var ageText=info?('虛歲 '+info.xusui):_calcAgeText(s.birthday);
-  var h='<div class="case-self-card'+(active?' is-active':'')+'" onclick="loadCase(null)">';
+  var h='<div class="case-self-card'+(active?' is-active':'')+'" onclick="editSelf()">';
   h+='<div class="case-self-top"><div class="case-self-label">我的名片 · 本人</div>'+
-     (active?'<span class="case-active-badge">● 分析中</span>':'<span class="case-switch-hint">點此分析本人 ▸</span>')+'</div>';
-  h+='<div class="case-self-name">'+_escHtml(s.name||'我自己')+
-     '<button class="case-self-edit" onclick="event.stopPropagation();editSelfProfile()" title="編輯本人資料">✎</button></div>';
+     (active?'<span class="case-active-badge">● 分析中</span>':'<span class="case-switch-hint">點開資料 ▸</span>')+'</div>';
+  h+='<div class="case-self-name">'+_escHtml(s.name||'我自己')+'</div>';
   h+='<div class="case-self-meta">';
   if(s.gender)h+='<span>'+s.gender+'</span>';
   if(s.birthday)h+='<span>'+s.birthday+'</span>';
   if(ageText)h+='<span>'+ageText+'</span>';
-  if(!s.gender&&!s.birthday)h+='<span style="color:var(--text-3)">尚未填寫性別/生日</span>';
+  if(!s.gender&&!s.birthday)h+='<span class="case-self-dim">尚未填寫性別/生日</span>';
   h+='</div>';
   if(info){
-    h+='<div class="case-self-liunian"><div style="font-size:13px;color:var(--text-3);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info)+'</div>';
+    h+='<div class="case-self-liunian"><div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info)+'</div>';
   }else{
-    h+='<div class="case-self-liunian" style="color:var(--text-3);font-size:13px">填好性別與生日後，這裡會顯示流年。</div>';
+    h+='<div class="case-self-liunian case-self-dim" style="font-size:13px">填好性別與生日後，這裡會顯示流年。</div>';
   }
   h+='</div>';
   return h;
@@ -155,36 +155,25 @@ function _buildNamecardHtml(docId, c){
   var active=(_currentCaseId===docId);
   var info=getLiunianInfoFor(c.gender, c.birthday, c.date||null);
   var ageText=info?('虛歲 '+info.xusui):_calcAgeText(c.birthday);
-  var grp=c.group||'未分組';
-  var delName=_escHtml(c.name||'').replace(/'/g,"\\'");
-  var h='<div class="case-card'+(active?' is-active':'')+'" onclick="loadCase(\''+docId+'\')">';
+  var note=(c.note||'').trim();
+  var h='<div class="case-card'+(active?' is-active':'')+'" onclick="editCase(\''+docId+'\')">';
   if(active)h+='<span class="case-active-dot" title="分析中"></span>';
   h+='<div class="case-card-name">'+_escHtml(c.name||'未命名')+'</div>';
   h+='<div class="case-card-age">'+(ageText||'—')+'</div>';
-  h+='<div class="case-card-group">'+_escHtml(grp)+'</div>';
-  h+='<div class="case-card-actions">';
-  if(userRole==='admin')h+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
-  h+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
-  h+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+delName+'\')" title="刪除">✕</button>';
-  h+='</div></div>';
+  h+='<div class="case-card-note">'+(note?_escHtml(note):'<span class="case-note-empty">（無備註）</span>')+'</div>';
+  h+='</div>';
   return h;
 }
 
 // 名片搜尋（oninput）
 export function caseSearch(v){ _caseSearchTerm=v||''; _paintCasePage(); }
 
-// 編輯本人資料（從本人卡的 ✎ 進入，不受目前是否選個案影響）
-export function editSelfProfile(){
-  showPage('profile-page');
-  setNavActive('nav-cases');
-  document.getElementById('nav-name').innerText=userName||'';
-  renderProfilePage();
-  if(!window._suppressPushState)history.pushState({page:'profile'},'');
-}
-
 if(typeof window!=='undefined'){
   window.caseSearch=caseSearch;
-  window.editSelfProfile=editSelfProfile;
+  window.editSelf=editSelf;
+  window.cfOpen=cfOpen;
+  window.cfDelete=cfDelete;
+  window.cfRenderLiunian=cfRenderLiunian;
 }
 
 export function moveGroup(groupName, direction){
@@ -237,24 +226,45 @@ export function loadCase(caseId){
   }
 }
 
+// 依模式調整視窗：標題/儲存字/欄位顯示/刪除打開鈕
+function _cfApplyMode(mode){ // 'new' | 'case' | 'self'
+  document.getElementById('case-form-title').innerText = mode==='self'?'本人資料':(mode==='case'?'編輯個案':'新增個案');
+  var sv=document.querySelector('.case-form-save'); if(sv)sv.innerText = (mode==='new')?'建立':'儲存';
+  var isSelf=(mode==='self');
+  ['cf-row-date','cf-row-group','cf-row-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=isSelf?'none':'';});
+  var del=document.getElementById('cf-delete-btn'); if(del)del.style.display=(mode==='case')?'':'none';
+  var op=document.getElementById('cf-open-btn'); if(op)op.style.display=(mode==='new')?'none':'';
+}
+
+// 視窗內即時流年（改性別/生日/觀察日 時重算）
+export function cfRenderLiunian(){
+  var box=document.getElementById('cf-liunian'); if(!box)return;
+  var gender=document.getElementById('cf-gender').value;
+  var birthday=document.getElementById('cf-birthday').value;
+  var dateEl=document.getElementById('cf-date');
+  var refDate=(_editingSelf||!dateEl)?null:(dateEl.value||null);
+  var info=getLiunianInfoFor(gender,birthday,refDate);
+  if(!info){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';
+  box.innerHTML='<div style="font-size:13px;color:var(--text-3);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info);
+}
+
 export function showCaseForm(){
-  _editingCaseId=null;
-  document.getElementById('case-form-title').innerText='新增個案';
-  document.querySelector('.case-form-save').innerText='建立';
+  _editingCaseId=null;_editingSelf=false;
   document.getElementById('cf-name').value='';
   document.getElementById('cf-gender').value='';
   document.getElementById('cf-birthday').value='';
   document.getElementById('cf-date').value=new Date().toISOString().substring(0,10);
   document.getElementById('cf-note').value='';
   document.getElementById('cf-group').value='';
+  _cfApplyMode('new');
+  cfRenderLiunian();
   document.getElementById('case-form-overlay').style.display='flex';
   setTimeout(function(){document.getElementById('cf-name').focus();},100);
 }
 
 export function editCase(caseId){
-  _editingCaseId=caseId;
-  document.getElementById('case-form-title').innerText='編輯個案';
-  document.querySelector('.case-form-save').innerText='儲存';
+  _editingCaseId=caseId;_editingSelf=false;
   db.collection('users').doc(currentUser.uid).collection('cases').doc(caseId).get().then(function(doc){
     if(!doc.exists){alert('個案不存在');return;}
     var c=doc.data();
@@ -264,21 +274,43 @@ export function editCase(caseId){
     document.getElementById('cf-date').value=c.date||'';
     document.getElementById('cf-note').value=c.note||'';
     document.getElementById('cf-group').value=c.group||'';
+    _cfApplyMode('case');
+    cfRenderLiunian();
     document.getElementById('case-form-overlay').style.display='flex';
-    setTimeout(function(){document.getElementById('cf-name').focus();},100);
   }).catch(function(e){
     console.log('載入個案失敗',e);
     alert('載入失敗');
   });
 }
 
+// 編輯本人資料（精簡：姓名/性別/生日/流年）
+export function editSelf(){
+  _editingCaseId=null;_editingSelf=true;
+  var s=_selfCache||{name:userName,gender:_userGender,birthday:_userBirthday};
+  document.getElementById('cf-name').value=s.name||'';
+  document.getElementById('cf-gender').value=s.gender||'';
+  document.getElementById('cf-birthday').value=s.birthday||'';
+  _cfApplyMode('self');
+  cfRenderLiunian();
+  document.getElementById('case-form-overlay').style.display='flex';
+}
+
 export function closeCaseForm(){
   document.getElementById('case-form-overlay').style.display='none';
 }
 
-export function saveCaseForm(){
+// 收集欄位並送出儲存；回傳 {promise,id,group,isNew} 或 null(驗證失敗)
+function _collectAndSave(){
   var name=document.getElementById('cf-name').value.trim();
-  if(!name){document.getElementById('cf-name').focus();return;}
+  if(!name){document.getElementById('cf-name').focus();return null;}
+  if(_editingSelf){
+    setUserName(name);
+    setUserGender(document.getElementById('cf-gender').value);
+    setUserBirthday(document.getElementById('cf-birthday').value);
+    _selfCache={name:name,gender:_userGender,birthday:_userBirthday};
+    var p=db.collection('users').doc(currentUser.uid).set({displayName:name,gender:_userGender,birthday:_userBirthday,updatedAt:new Date().toISOString()},{merge:true});
+    return {promise:p,id:null,group:'',isNew:false};
+  }
   var fields={
     name:name,
     gender:document.getElementById('cf-gender').value,
@@ -288,36 +320,70 @@ export function saveCaseForm(){
     group:document.getElementById('cf-group').value.trim(),
     updatedAt:new Date().toISOString()
   };
+  if(_editingCaseId){
+    return {promise:db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).set(fields,{merge:true}),id:_editingCaseId,group:fields.group,isNew:false};
+  }
+  fields.dataJson=JSON.stringify(emptyData());
+  fields.obsJson='{}';
+  fields.overrideJson='{}';
+  fields.createdAt=new Date().toISOString();
+  return {promise:db.collection('users').doc(currentUser.uid).collection('cases').add(fields),id:null,group:fields.group,isNew:true};
+}
+
+function _afterGroupUpdate(group){
+  if(group && _groupOrder.indexOf(group)<0){
+    _groupOrder.push(group);
+    db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).catch(function(e){console.log('groupOrder更新失敗',e);});
+  }
+}
+
+export function saveCaseForm(){
   var saveBtn=document.querySelector('.case-form-save');
   var origText=saveBtn.innerText;
-  saveBtn.innerText=(_editingCaseId?'儲存':'建立')+'中...';saveBtn.disabled=true;
-
-  var promise;
-  if(_editingCaseId){
-    promise=db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).set(fields,{merge:true});
-  }else{
-    fields.dataJson=JSON.stringify(emptyData());
-    fields.obsJson='{}';
-    fields.overrideJson='{}';
-    fields.createdAt=new Date().toISOString();
-    promise=db.collection('users').doc(currentUser.uid).collection('cases').add(fields);
-  }
-
-  promise.then(function(){
+  var r=_collectAndSave();
+  if(!r)return;
+  saveBtn.innerText='儲存中...';saveBtn.disabled=true;
+  r.promise.then(function(){
     closeCaseForm();
     saveBtn.innerText=origText;saveBtn.disabled=false;
-    _editingCaseId=null;
-    var newGroup=fields.group;
-    if(newGroup && _groupOrder.indexOf(newGroup)<0){
-      _groupOrder.push(newGroup);
-      db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).catch(function(e){console.log('groupOrder更新失敗',e);});
-    }
+    _afterGroupUpdate(r.group);
     renderCaseList();
   }).catch(function(e){
     console.log('儲存失敗',e);
     alert('儲存失敗，請重試');
     saveBtn.innerText=origText;saveBtn.disabled=false;
   });
+}
+
+// 「打開」：先儲存，再切換成分析此人並進首頁
+export function cfOpen(){
+  var r=_collectAndSave();
+  if(!r)return;
+  var openBtn=document.getElementById('cf-open-btn');
+  if(openBtn){openBtn.innerText='開啟中...';openBtn.disabled=true;}
+  var wasSelf=_editingSelf;
+  r.promise.then(function(res){
+    _afterGroupUpdate(r.group);
+    var id = wasSelf ? null : (r.id || (res && res.id) || null);
+    closeCaseForm();
+    if(openBtn){openBtn.innerText='打開';openBtn.disabled=false;}
+    loadCase(id);
+  }).catch(function(e){
+    console.log('開啟失敗',e);
+    alert('儲存失敗，請重試');
+    if(openBtn){openBtn.innerText='打開';openBtn.disabled=false;}
+  });
+}
+
+// 「刪除」：確認後刪除個案並關閉視窗（本人不會有此鈕）
+export function cfDelete(){
+  if(!_editingCaseId)return;
+  var name=document.getElementById('cf-name').value.trim()||'此個案';
+  if(!confirm('確定要刪除「'+name+'」的所有紀錄嗎？此操作無法復原。'))return;
+  db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).delete().then(function(){
+    closeCaseForm();
+    renderCaseList();
+  }).catch(function(e){console.log('刪除失敗',e);alert('刪除失敗，請重試');});
 }
 
 export function deleteCase(caseId,caseName){

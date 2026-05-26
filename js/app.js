@@ -33,6 +33,8 @@ import { generateAI } from './ai_analysis.js';
 export function showModePage() {
   showPage('mode-page');
   document.getElementById('nav-name').innerText = (_currentCaseId ? _currentCaseName : userName) || '';
+  var _mcn = document.getElementById('mode-current-name');
+  if (_mcn) _mcn.innerText = (_currentCaseId ? _currentCaseName : userName) || '我自己';
   var mcs = document.getElementById('mode-case-section');
   if (mcs) { mcs.style.display = _isTA ? '' : 'none'; }
   setNavActive(null);
