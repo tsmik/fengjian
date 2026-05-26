@@ -649,6 +649,8 @@ export function showReport(){
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
         if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr, title:'人相兵法動靜分布圖' });
+        // 基本排版：正式站與 staging 都要套用（與手動報告一致）；之前只靠 staging 調整器，正式站會跑版
+        requestAnimationFrame(function(){ try{ arrangeReportCharts('report-coef','report-radar2','report-sd','report-charts-row'); }catch(e3){} });
         // staging：兩圖可自由移動/縮放（測試工具）
         var _h=location.hostname;
         if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
