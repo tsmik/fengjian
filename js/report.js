@@ -694,11 +694,11 @@ export function showReport(){
         if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr, title:'人相兵法動靜分布圖' });
         // 基本排版：正式站與 staging 都要套用（與手動報告一致）；之前只靠 staging 調整器，正式站會跑版
         requestAnimationFrame(function(){ try{ arrangeReportCharts('report-coef','report-radar2','report-sd','report-charts-row'); }catch(e3){} });
-        // staging：兩圖可自由移動/縮放（測試工具）
-        var _h=location.hostname;
-        if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
-          try{ setupChartTuner(); }catch(e2){}
-        }
+        // staging 圖表位置調整器：已定稿、先收起（會擋住右下角筆記鈕）。要再調圖表位置時把下面這段解除註解。
+        // var _h=location.hostname;
+        // if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
+        //   try{ setupChartTuner(); }catch(e2){}
+        // }
       }
     }catch(e){ if(window.debugLog) debugLog('[ReportChart]', e&&e.message?e.message:e); }
   }
