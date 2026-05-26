@@ -21,7 +21,7 @@ let _gmRows = [];          // 管理分組視窗的工作列 [{orig,name,desc}]
 
 // 卡片色卡（預設米色 + 人相兵法報告 13 維度顏色）
 const CARD_DEFAULT_COLOR = '#D9CBA8';
-const CARD_COLORS = ['#D9CBA8','#5E8080','#6E9292','#7EA4A4','#527070','#608282','#6E9494','#9E8A5A','#B29E6E','#C6B282','#7A5A50','#8E6C62','#A27E74','#B69088'];
+const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
 // 把色卡顏色淡化成卡片底色（保持深字可讀）
 function _cardTint(hex){
   hex=hex||CARD_DEFAULT_COLOR;
@@ -198,6 +198,7 @@ if(typeof window!=='undefined'){
   window.cfRenderLiunian=cfRenderLiunian;
   window.cfTryClose=cfTryClose;
   window.cfPickColor=cfPickColor;
+  window.cfToggleColors=cfToggleColors;
   window.showGroupMgr=showGroupMgr;
   window.closeGroupMgr=closeGroupMgr;
   window.gmAdd=gmAdd;
@@ -280,13 +281,17 @@ export function cfRenderLiunian(){
 
 // 色卡：渲染色票 + 選色（本人/個案視窗共用）
 function _cfRenderColors(){
+  var trig=document.getElementById('cf-color-trigger');
+  if(trig)trig.style.background=_cfColor||CARD_DEFAULT_COLOR;
   var box=document.getElementById('cf-colors'); if(!box)return;
+  box.style.display='none';  // 渲染時收合，點小按鈕才展開
   box.innerHTML=CARD_COLORS.map(function(hex){
     var sel=(hex.toLowerCase()===(_cfColor||'').toLowerCase())?' selected':'';
     return '<button type="button" class="cf-swatch'+sel+'" style="background:'+hex+'" onclick="cfPickColor(\''+hex+'\')"></button>';
   }).join('');
 }
 export function cfPickColor(hex){ _cfColor=hex; _cfRenderColors(); }
+export function cfToggleColors(){ var b=document.getElementById('cf-colors'); if(b)b.style.display=(b.style.display==='flex')?'none':'flex'; }
 
 export function showCaseForm(){
   _editingCaseId=null;_editingSelf=false;
