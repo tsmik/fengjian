@@ -99,6 +99,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .mode-btn.is-tool{border-left-color:var(--static);min-width:150px}
 .mode-btn.is-manual{border-left-color:#7a8a6a;min-width:180px}
 .mode-flow-divider{border:none;border-top:1px solid var(--border);margin:0 0 28px}
+/* 報告圖表標題（絕對定位於各圖上方，隨圖一起 transform 縮放；字級在 JS 依各圖維度字大小設定） */
+#report-charts-row>div,#manual-charts-row>div{position:relative}
+.rep-chart-title{position:absolute;bottom:100%;left:0;right:0;text-align:center;font-weight:700;color:#5a4f45;letter-spacing:1px;white-space:nowrap;line-height:1.3;padding-bottom:1px}
 .mode-case-btn{position:absolute;top:16px;right:40px;background:white;border-radius:8px;padding:10px 16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:3px solid var(--static);transition:box-shadow 0.2s}
 .mode-case-btn:hover{box-shadow:0 3px 10px rgba(0,0,0,0.1)}
 .mode-case-btn h3{font-size:14px;font-weight:400;margin:0 0 2px;letter-spacing:1px;color:var(--text)}

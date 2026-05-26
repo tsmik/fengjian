@@ -642,9 +642,9 @@ export function renderManualPage(){
     if(_coef||_r2||_sd){
       var _dimSFrac=[],_dimCoeffArr=[];
       for(var _ci=0;_ci<13;_ci++){var _sc=dimSCounts[_ci]||0,_dn=dimDCounts[_ci]||0,_tt=_sc+_dn;_dimSFrac.push(_tt>0?_sc/_tt:0.5);_dimCoeffArr.push(dimCoeffs[_ci]&&typeof dimCoeffs[_ci].coeff==='number'?dimCoeffs[_ci].coeff:0);}
-      if(_r2)_r2.innerHTML=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,preV:vPre||0,totV:vTotal||0});
-      if(_coef)_coef.innerHTML=buildCoefSVG({preV:vPre||0,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,totV:vTotal||0});
-      if(_sd)_sd.innerHTML=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr});
+      if(_r2)_r2.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,preV:vPre||0,totV:vTotal||0});
+      if(_coef)_coef.innerHTML='<div class="rep-chart-title" style="font-size:9px">人相兵法係數總覽</div>'+buildCoefSVG({preV:vPre||0,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,totV:vTotal||0});
+      if(_sd)_sd.innerHTML='<div class="rep-chart-title" style="font-size:8.1px">人相兵法動靜分布圖</div>'+buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr});
       requestAnimationFrame(function(){arrangeReportCharts('manual-coef','manual-radar2','manual-sd','manual-charts-row');});
     }
   }catch(e){}

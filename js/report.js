@@ -640,15 +640,15 @@ export function showReport(){
           dimSFrac.push(tot>0?sc/tot:0.5);
           dimCoeffArr.push(dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:0);
         }
-        if(r2El) r2El.innerHTML=buildRadar2SVG({
+        if(r2El) r2El.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
           bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0,
           preV:vPre||0, totV:vTotal||0
         });
-        if(coefEl) coefEl.innerHTML=buildCoefSVG({
+        if(coefEl) coefEl.innerHTML='<div class="rep-chart-title" style="font-size:9px">人相兵法係數總覽</div>'+buildCoefSVG({
           preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
         });
-        if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr });
+        if(sdEl) sdEl.innerHTML='<div class="rep-chart-title" style="font-size:8.1px">人相兵法動靜分布圖</div>'+buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr });
         // staging：兩圖可自由移動/縮放（測試工具）
         var _h=location.hostname;
         if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
@@ -685,7 +685,7 @@ function _ctGrip(el,which){
   g.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();var st=_ct[which];_ctDrag={which:which,sx:e.clientX,sy:e.clientY,bx:st.tx,by:st.ty};});
 }
 function setupChartTuner(){
-  if(!_ct)_ct={coef:{tx:717,ty:-5,s:1.40},r2:{tx:-272,ty:-3,s:1.85},sd:{tx:19,ty:62,s:1.65}};
+  if(!_ct)_ct={coef:{tx:717,ty:-5,s:1.40},r2:{tx:-261,ty:49,s:1.80},sd:{tx:25,ty:100,s:1.60}};
   if(!_ctWired){
     window.addEventListener('mousemove',function(e){if(!_ctDrag)return;var st=_ct[_ctDrag.which];st.tx=_ctDrag.bx+(e.clientX-_ctDrag.sx);st.ty=_ctDrag.by+(e.clientY-_ctDrag.sy);_ctApply();_ctReadout();});
     window.addEventListener('mouseup',function(){_ctDrag=null;});
@@ -737,7 +737,7 @@ function _unionRect(els){var L=1e9,T=1e9,R=-1e9,B=-1e9;els.forEach(function(el){
 
 // 擷取指定元素聯集區域
 async function _html2canvasRegion(els){
-  var rect=_unionRect(els), pad=10;
+  var rect=_unionRect(els), pad=44; // pad 夠大以涵蓋圖上方絕對定位的標題（同層元素已隱藏，多出區域為白底）
   if(rect.right<rect.left) return null;
   return await html2canvas(document.body,{backgroundColor:'#ffffff',scale:2,
     x:rect.left+window.scrollX-pad, y:rect.top+window.scrollY-pad,
@@ -772,7 +772,7 @@ function _cropHeader(tableCanvas){
 }
 // 三圖排版（自動/手動共用的預設 transform）+ 撐開圖區
 export function arrangeReportCharts(coefId,r2Id,sdId,rowId){
-  var T={};T[coefId]=[717,-5,1.40];T[r2Id]=[-272,-3,1.85];T[sdId]=[19,62,1.65];
+  var T={};T[coefId]=[717,-5,1.40];T[r2Id]=[-261,49,1.80];T[sdId]=[25,100,1.60];
   [coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){var t=T[id];el.style.transformOrigin='top left';el.style.transform='translate('+t[0]+'px,'+t[1]+'px) scale('+t[2]+')';}});
   var row=document.getElementById(rowId);
   if(row){var rt=row.getBoundingClientRect().top,mb=0;[coefId,r2Id,sdId].forEach(function(id){var el=document.getElementById(id);if(el){mb=Math.max(mb,el.getBoundingClientRect().bottom-rt);}});if(mb>0)row.style.minHeight=(mb+14)+'px';}
