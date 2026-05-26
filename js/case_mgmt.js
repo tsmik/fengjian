@@ -475,11 +475,11 @@ function _gmRender(){
     return;
   }
   box.innerHTML=_gmRows.map(function(r,i){
-    return '<div class="gm-row" data-i="'+i+'" data-orig="'+_escHtml(r.orig||'')+'" ondragover="gmDragOver(event)" ondrop="gmDrop(event,'+i+')">'+
-      '<div class="gm-handle" draggable="true" ondragstart="gmDragStart(event,'+i+')" title="拖曳排序">⠿</div>'+
-      '<input class="gm-name" value="'+_escHtml(r.name||'')+'" placeholder="分組名稱" maxlength="30">'+
-      '<input class="gm-desc" value="'+_escHtml(r.desc||'')+'" placeholder="說明（選填）" maxlength="60">'+
-      '<button type="button" class="gm-del" onclick="gmDel('+i+')" title="刪除分組">✕</button>'+
+    return '<div class="gm-row" draggable="true" data-i="'+i+'" data-orig="'+_escHtml(r.orig||'')+'" ondragstart="gmDragStart(event,'+i+')" ondragover="gmDragOver(event)" ondrop="gmDrop(event,'+i+')">'+
+      '<div class="gm-handle" title="拖曳排序">⠿</div>'+
+      '<input class="gm-name" draggable="false" value="'+_escHtml(r.name||'')+'" placeholder="分組名稱" maxlength="30">'+
+      '<input class="gm-desc" draggable="false" value="'+_escHtml(r.desc||'')+'" placeholder="說明（選填）" maxlength="60">'+
+      '<button type="button" class="gm-del" draggable="false" onclick="gmDel('+i+')" title="刪除分組">✕</button>'+
     '</div>';
   }).join('');
 }
