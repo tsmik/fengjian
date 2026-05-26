@@ -90,6 +90,20 @@ function _paintCasePage(){
   if(!listEl)return;
   var term=(_caseSearchTerm||'').trim().toLowerCase();
 
+  var _hdr=document.querySelector('#case-page .case-header');
+  // 完全沒有個案 → 本人卡右邊放兩個大方塊(新增個案/管理分組)，頂部工具列收起
+  if(_casesCache.length===0){
+    if(_hdr)_hdr.style.display='none';
+    listEl.innerHTML='<div class="case-layout case-empty">'+
+      '<div class="case-self-col">'+_buildSelfPanelHtml()+'</div>'+
+      '<div class="case-empty-actions">'+
+        '<button type="button" class="case-empty-add" onclick="showCaseForm()">＋ 新增個案</button>'+
+        '<button type="button" class="case-empty-grp" onclick="showGroupMgr()">管理分組</button>'+
+      '</div></div>';
+    return;
+  }
+  if(_hdr)_hdr.style.display='';
+
   var grouped={};
   var allGroups=new Set();
   _casesCache.forEach(function(it){
@@ -109,8 +123,7 @@ function _paintCasePage(){
 
   var gridHtml='';
   if(allSections.length===0){
-    gridHtml='<div style="color:var(--text-3);padding:30px 6px;font-size:14px">'+
-      (term?('找不到符合「'+_escHtml(_caseSearchTerm)+'」的個案'):'還沒有個案，點右上「＋ 新增個案」建立第一張名片。')+'</div>';
+    gridHtml='<div style="color:var(--text-3);padding:30px 6px;font-size:14px">找不到符合「'+_escHtml(_caseSearchTerm)+'」的個案</div>';
   }
   for(var si=0;si<allSections.length;si++){
     var gName=allSections[si];

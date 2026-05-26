@@ -387,6 +387,14 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .cm-section{display:flex;flex-direction:column;flex:0 0 auto;width:206px}
 .case-grid{display:flex;flex-direction:column;gap:12px;padding:10px 0 0}
 .cm-section .case-card{width:100%}
+/* 空狀態：本人卡右邊兩個大方塊 */
+.case-empty{align-items:stretch}
+.case-empty-actions{flex:0 0 150px;width:150px;display:flex;flex-direction:column;gap:14px}
+.case-empty-add,.case-empty-grp{flex:1;border-radius:12px;font-size:16px;cursor:pointer;font-family:inherit;letter-spacing:1px}
+.case-empty-add{border:none;background:var(--dark);color:#fff}
+.case-empty-add:hover{opacity:.9}
+.case-empty-grp{border:1px solid var(--border);background:#fafaf8;color:var(--text)}
+.case-empty-grp:hover{background:var(--hover)}
 .case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
 .case-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
 .case-card:hover .case-card-actions{opacity:1}
