@@ -18,11 +18,11 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml } from './core.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim } from './core.js';
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
-import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, setActiveCase, listCases, createCase, updateAnalysisBanner } from './m_main.js';
+import { persistProfile } from './m_home.js';
+import { db, debugLog, refreshUserData } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -84,10 +84,6 @@ function _renderList() {
   if (!_container) return;
   _container.innerHTML = `
     <div class="m-home" style="padding:16px 14px">
-      <div class="m-case-switch" id="m-case-switch-mount">
-        <div class="m-case-switch-title">分析對象</div>
-        <div class="m-case-list"><div style="color:#a89e92;font-size:13px;padding:4px 2px">載入中…</div></div>
-      </div>
       <div class="m-home-card m-home-profile">
         <div class="m-home-card-title">基本資料</div>
         <div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-my-profile-name" placeholder="未填寫"></div>
@@ -135,110 +131,6 @@ function _renderList() {
     if (btn) btn.click();
   });
   _wireMyProfile();
-  _renderCaseSwitcher();
-}
-
-// ===== 分析對象切換（個案管理 M1）=====
-// 本人卡（置頂）+ 個案卡（直列）+ 新增個案；點卡 = 切換分析對象，整個「我的」分頁跟著重繪
-async function _renderCaseSwitcher() {
-  const mount = _container && _container.querySelector('#m-case-switch-mount');
-  if (!mount) return;
-  const uid = getEffectiveUid();
-  const activeCaseId = getActiveCaseId();
-  // 本人姓名：從 users/{uid} 讀（目前 window.__userData 可能是個案，不能用）
-  let selfName = '本人';
-  try {
-    const selfSnap = await getDoc(doc(db, 'users', uid));
-    if (selfSnap.exists()) selfName = selfSnap.data().displayName || '本人';
-  } catch (e) { debugLog('[Case]', '讀本人姓名失敗', e && e.message); }
-  let cases = [];
-  try { cases = await listCases(); } catch (e) {}
-  // mount 期間可能已離開報告 tab → 不再寫
-  if (!_container || !_isListMode) return;
-  const m2 = _container.querySelector('#m-case-switch-mount');
-  if (!m2) return;
-
-  const esc = (s) => _escHtml(String(s == null ? '' : s));
-  const caseMeta = (c) => [c.gender, c.birthday].filter(Boolean).join(' · ');
-  let html = '<div class="m-case-switch-title">分析對象</div><div class="m-case-list">';
-  html += '<button class="m-case-item' + (activeCaseId ? '' : ' is-active') + '" data-case="">'
-    + '<span class="m-case-item-name">' + esc(selfName) + '</span>'
-    + '<span class="m-case-item-tag">本人</span></button>';
-  cases.forEach((c) => {
-    const meta = caseMeta(c);
-    html += '<button class="m-case-item' + (activeCaseId === c.id ? ' is-active' : '') + '" data-case="' + esc(c.id) + '">'
-      + '<span class="m-case-item-name">' + esc(c.name || '(未命名)') + '</span>'
-      + (meta ? '<span class="m-case-item-meta">' + esc(meta) + '</span>' : '')
-      + '</button>';
-  });
-  html += '</div><button class="m-case-add" id="m-case-add-btn">＋ 新增個案</button>';
-  html += '<div id="m-case-add-formslot"></div>';
-  m2.innerHTML = html;
-
-  m2.querySelectorAll('.m-case-item').forEach((btn) => {
-    btn.addEventListener('click', () => _switchCase(btn.dataset.case || null));
-  });
-  const addBtn = m2.querySelector('#m-case-add-btn');
-  if (addBtn) addBtn.addEventListener('click', _showAddCaseForm);
-}
-
-async function _switchCase(caseId) {
-  const cur = getActiveCaseId() || null;
-  if ((caseId || null) === cur) return; // 點目前這人 = 無動作
-  setActiveCase(caseId || null);
-  await refreshUserData();
-  try { updateHomeProgress(); } catch (e) {}
-  try { updateAnalysisBanner(); } catch (e) {}
-  _renderList(); // 整塊重繪：基本資料 / 報告入口 / 流年 / 清單 active 都跟著換
-}
-
-function _showAddCaseForm() {
-  const slot = _container && _container.querySelector('#m-case-add-formslot');
-  const addBtn = _container && _container.querySelector('#m-case-add-btn');
-  if (!slot) return;
-  if (addBtn) addBtn.style.display = 'none';
-  slot.innerHTML = `
-    <div class="m-case-addform">
-      <input type="text" id="m-newcase-name" placeholder="個案姓名" maxlength="20">
-      <select id="m-newcase-gender"><option value="">性別（可不填）</option><option value="男">男</option><option value="女">女</option></select>
-      <input type="date" id="m-newcase-birthday">
-      <div class="m-case-addform-status" id="m-newcase-status"></div>
-      <div class="m-case-addform-btns">
-        <button type="button" class="m-newcase-create" id="m-newcase-create">建立並分析</button>
-        <button type="button" class="m-newcase-cancel" id="m-newcase-cancel">取消</button>
-      </div>
-    </div>
-  `;
-  const nameEl = slot.querySelector('#m-newcase-name');
-  if (nameEl) nameEl.focus();
-  const cancelBtn = slot.querySelector('#m-newcase-cancel');
-  if (cancelBtn) cancelBtn.addEventListener('click', () => { slot.innerHTML = ''; if (addBtn) addBtn.style.display = ''; });
-  const createBtn = slot.querySelector('#m-newcase-create');
-  if (createBtn) createBtn.addEventListener('click', () => _createNewCase(slot, createBtn));
-}
-
-async function _createNewCase(slot, createBtn) {
-  const statusEl = slot.querySelector('#m-newcase-status');
-  const name = (slot.querySelector('#m-newcase-name').value || '').trim();
-  if (!name) { if (statusEl) statusEl.textContent = '請填個案姓名'; return; }
-  const gender = slot.querySelector('#m-newcase-gender').value || '';
-  const birthday = slot.querySelector('#m-newcase-birthday').value || '';
-  createBtn.disabled = true;
-  const old = createBtn.textContent;
-  createBtn.textContent = '建立中…';
-  try {
-    const newId = await createCase({ name, gender, birthday });
-    setActiveCase(newId);
-    await refreshUserData();
-    try { updateHomeProgress(); } catch (e) {}
-    try { updateAnalysisBanner(); } catch (e) {}
-    _renderList(); // 新個案建立後直接切成分析對象
-  } catch (e) {
-    debugLog('[Case]', '新增個案失敗', e && e.message ? e.message : e);
-    if (statusEl) statusEl.textContent = '建立失敗，請重試';
-    createBtn.disabled = false;
-    createBtn.textContent = old;
-  }
 }
 
 // 「我的」分頁基本資料：可編輯 + 按存檔才寫雲端；存檔後重繪以刷新流年

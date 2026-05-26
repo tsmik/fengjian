@@ -13,7 +13,7 @@ import {
   setPersistence, browserLocalPersistence, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, getDocs, addDoc
+  getFirestore, doc, getDoc, getDocFromServer, setDoc, collection
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
@@ -77,65 +77,6 @@ export function getEffectiveDisplayName() {
   return (auth.currentUser && auth.currentUser.displayName) || null;
 }
 
-// ===== 個案管理 M1：目前分析對象（本人 = null / 個案 = caseId）=====
-// 狀態存 localStorage，per-uid（同帳號跨裝置不同步「正在看誰」是刻意的：各裝置各自選）
-// 本人模式（caseId = null）時 getCurrentDocRef 回 users/{uid}，與 M1 之前行為完全一致（向後相容）
-function _activeCaseLsKey() {
-  return 'm_active_case_' + (getEffectiveUid() || 'anon');
-}
-export function getActiveCaseId() {
-  try { return localStorage.getItem(_activeCaseLsKey()) || null; } catch (e) { return null; }
-}
-export function setActiveCase(caseId) {
-  try {
-    if (caseId) localStorage.setItem(_activeCaseLsKey(), caseId);
-    else localStorage.removeItem(_activeCaseLsKey());
-  } catch (e) {}
-}
-// 目前分析對象的 doc ref：本人 → users/{uid}；個案 → users/{uid}/cases/{caseId}
-export function getCurrentDocRef() {
-  const uid = getEffectiveUid();
-  if (!uid) return null;
-  const caseId = getActiveCaseId();
-  if (caseId) return doc(db, 'users', uid, 'cases', caseId);
-  return doc(db, 'users', uid);
-}
-// 列出本帳號所有個案（依 createdAt 由舊到新）；回傳 [{id, ...data}]
-export async function listCases() {
-  const uid = getEffectiveUid();
-  if (!uid) return [];
-  try {
-    const snap = await getDocs(collection(db, 'users', uid, 'cases'));
-    const arr = [];
-    snap.forEach(function (d) { arr.push(Object.assign({ id: d.id }, d.data())); });
-    arr.sort(function (a, b) { return String(a.createdAt || '').localeCompare(String(b.createdAt || '')); });
-    return arr;
-  } catch (e) {
-    debugLog('[Case]', 'listCases 失敗', e && e.message ? e.message : e);
-    return [];
-  }
-}
-// 新增個案（M1：手機簡單表單用）；回傳新個案 id
-export async function createCase(fields) {
-  const uid = getEffectiveUid();
-  if (!uid) throw new Error('未登入');
-  const payload = {
-    name: (fields.name || '').trim(),
-    gender: fields.gender || '',
-    birthday: fields.birthday || '',
-    createdAt: new Date().toISOString()
-  };
-  const ref = await addDoc(collection(db, 'users', uid, 'cases'), payload);
-  return ref.id;
-}
-// 分析分頁頂部「目前分析：XXX」橫幅名字（讀 window.__userData.displayName）
-export function updateAnalysisBanner() {
-  const el = document.getElementById('m-analysis-banner-name');
-  if (!el) return;
-  const ud = window.__userData || {};
-  el.textContent = ud.displayName || '本人';
-}
-
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
 // v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
 // 用 getDocFromServer 強制從 server 拿（避免 firebase SDK 預設 cache 拿到舊資料）
@@ -144,12 +85,10 @@ export async function refreshUserData() {
   try {
     const uid = getEffectiveUid();
     if (!uid) return false;
-    const userRef = getCurrentDocRef();
+    const userRef = doc(db, 'users', uid);
     const userSnap = await getDocFromServer(userRef);
     if (!userSnap.exists()) return false;
     const ud = userSnap.data();
-    // 個案 doc 用 name 欄位 → 正規化成 displayName，讓既有讀 displayName 的碼通用
-    if (getActiveCaseId() && ud.name != null && ud.displayName == null) ud.displayName = ud.name;
     window.__userData = ud;
     debugLog('[Sync]', 'refreshed ✓ obsJson:', (ud.obsJson || '').length,
              'manualDataJson:', (ud.manualDataJson || '').length,
@@ -417,13 +356,6 @@ if (isTeacherMode) {
       const saveZone = document.getElementById('m-save-zone');
       if(saveZone){
         saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report');
-      }
-      // 「目前分析：XXX」橫幅：只在分析分頁（部位觀察 / 手動輸入）顯示
-      const banner = document.getElementById('m-analysis-banner');
-      if(banner){
-        const showBanner = (key === 'input' || key === 'manual');
-        banner.style.display = showBanner ? 'flex' : 'none';
-        if(showBanner) updateAnalysisBanner();
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}

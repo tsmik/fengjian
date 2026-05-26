@@ -20,7 +20,7 @@
 // ============================================================
 
 import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
-import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
@@ -48,8 +48,7 @@ const DIM_PART_LABELS = ['頭','上停','耳','眉','眼','鼻','口','顴','人
 // LS key 帶 UID 後綴：每個 google 帳號在同一裝置上各有獨立草稿
 function getLsKey() {
   const uid = getEffectiveUid() || 'anon';
-  const caseId = getActiveCaseId();
-  return 'm_input_obs_draft_' + uid + (caseId ? '_' + caseId : '');
+  return 'm_input_obs_draft_' + uid;
 }
 
 let _root = null;
@@ -236,8 +235,8 @@ async function handleSaveClick() {
     const obsJsonStr = JSON.stringify(draftCopy);
     const dataJsonStr = JSON.stringify(coreData);
 
-    // 寫 Firestore（目前分析對象：本人 users/{uid} 或個案 cases/{caseId}）
-    const userRef = getCurrentDocRef();
+    // 寫 Firestore
+    const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
       obsJson: obsJsonStr,
       dataJson: dataJsonStr,

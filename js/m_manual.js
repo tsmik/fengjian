@@ -29,12 +29,12 @@
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
 import { chartsBlockHtml, exportMobileCharts } from './m_report.js';
 import { evaluatePart } from './rule_engine.js';
-import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
-import { setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_DIM_IDX = 'm_manual_dim_idx';
 const LS_VIEW = 'm_manual_view';
@@ -64,8 +64,7 @@ const DIM_ROW_2_IDX = [6, 7, 8, 9, 10, 11, 12];
 
 function _getLsKey() {
   const uid = getEffectiveUid() || 'anon';
-  const caseId = getActiveCaseId();
-  return 'm_manual_draft_' + uid + (caseId ? '_' + caseId : '');
+  return 'm_manual_draft_' + uid;
 }
 
 function _newEmptyMatrix() {
@@ -204,7 +203,7 @@ async function handleManualSave() {
     const uid = getEffectiveUid();
     if (!uid) throw new Error('no auth user');
     const manualJsonStr = JSON.stringify(_manualDraft);
-    const userRef = getCurrentDocRef();
+    const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
       manualDataJson: manualJsonStr,
       updatedAt: new Date().toISOString(),
