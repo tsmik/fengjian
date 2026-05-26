@@ -32,7 +32,9 @@ import { generateAI } from './ai_analysis.js';
 
 export function showModePage() {
   showPage('mode-page');
-  document.getElementById('nav-name').innerText = (_isTA && _currentCaseId ? _currentCaseName : userName) || '';
+  document.getElementById('nav-name').innerText = (_currentCaseId ? _currentCaseName : userName) || '';
+  var _mcn = document.getElementById('mode-current-name');
+  if (_mcn) _mcn.innerText = (_currentCaseId ? _currentCaseName : userName) || '我自己';
   var mcs = document.getElementById('mode-case-section');
   if (mcs) { mcs.style.display = _isTA ? '' : 'none'; }
   setNavActive(null);
@@ -194,13 +196,17 @@ async function initAfterLogin() {
   recalcFromObs();
   document.getElementById('entry-page').style.display='none';
 
-  // 助教模式判斷（admin-link 與 nav-cases 都只有 admin 才顯示）
+  // 助教模式判斷（admin-link 只有 admin；nav-cases 案例管理開放給全部學員，匯入匯出仍限 admin）
   var _isAdmin=(userRole==='admin');
   setIsTA(_isAdmin);
   var _adminLink=document.getElementById('admin-link');
   if(_adminLink) _adminLink.style.display=_isAdmin?'':'none';
   var _navCases=document.getElementById('nav-cases');
-  if(_navCases) _navCases.style.display=_isAdmin?'':'none';
+  if(_navCases) _navCases.style.display='';
+  var _impBtn=document.getElementById('case-import-btn');
+  if(_impBtn) _impBtn.style.display=_isAdmin?'':'none';
+  var _expBtn=document.getElementById('case-export-all-btn');
+  if(_expBtn) _expBtn.style.display=_isAdmin?'':'none';
   if(_isAdmin){
     setCurrentCaseId(null);
     setCurrentCaseName(userName);

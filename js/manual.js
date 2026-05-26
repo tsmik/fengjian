@@ -9,8 +9,10 @@ export function initManualData(){
   if(manualData)return;
   setManualData(Array(13).fill(null).map(function(){return Array(9).fill(null);}));
 }
+// 手動資料草稿的 LS key：per-使用者 per-個案（避免切換個案時殘留上一個的值）
+function _manualLsKey(){ return 'manual_data_v1_'+((currentUser&&currentUser.uid)||'anon')+'_'+(_currentCaseId||'self'); }
 export function manualSaveLocal(){
-  if(manualData)localStorage.setItem('manual_data_v1',JSON.stringify(manualData));
+  if(manualData)localStorage.setItem(_manualLsKey(),JSON.stringify(manualData));
 }
 export function manualLoadData(){
   // 優先 Firebase，備用 localStorage
@@ -23,14 +25,15 @@ export function manualLoadData(){
   }).catch(function(){manualLoadLocal();renderManualPage();});
 }
 export function manualLoadLocal(){
-  try{var s=localStorage.getItem('manual_data_v1');if(s)setManualData(JSON.parse(s));}catch(e){}
+  try{var s=localStorage.getItem(_manualLsKey());if(s)setManualData(JSON.parse(s));else setManualData(null);}catch(e){}
   if(!manualData)initManualData();
 }
 
 export function showManualPage(){
   showPage('manual-page');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual');
+  if(window.openReportNote)window.openReportNote();
   if(!window._suppressPushState) history.pushState({page:'manual'},'');
   initManualData();
   manualLoadData();
@@ -109,7 +112,7 @@ export function renderManualPage(){
   initManualData();
   var _manualLnInfo=_getLiunianInfo();
   var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
-  var _displayName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'未命名';
+  var _displayName=(_currentCaseId?_currentCaseName:userName)||'未命名';
   var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
 
   // === 可見維度計算 ===
@@ -641,9 +644,11 @@ export function renderManualPage(){
     var _coef=document.getElementById('manual-coef'),_r2=document.getElementById('manual-radar2'),_sd=document.getElementById('manual-sd');
     if(_coef||_r2||_sd){
       var _dimSFrac=[],_dimCoeffArr=[];
-      for(var _ci=0;_ci<13;_ci++){var _sc=dimSCounts[_ci]||0,_dn=dimDCounts[_ci]||0,_tt=_sc+_dn;_dimSFrac.push(_tt>0?_sc/_tt:0.5);_dimCoeffArr.push(dimCoeffs[_ci]&&typeof dimCoeffs[_ci].coeff==='number'?dimCoeffs[_ci].coeff:0);}
-      if(_r2)_r2.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,preV:vPre||0,totV:vTotal||0});
-      if(_coef)_coef.innerHTML=buildCoefSVG({preV:vPre||0,bossV:vLead||0,mgrV:vSub||0,luckV:vLuck||0,postV:vPost||0,totV:vTotal||0});
+      for(var _ci=0;_ci<13;_ci++){var _sc=dimSCounts[_ci]||0,_dn=dimDCounts[_ci]||0,_tt=_sc+_dn;_dimSFrac.push(_tt>0?_sc/_tt:0.5);_dimCoeffArr.push(dimComplete[_ci]&&dimCoeffs[_ci]&&typeof dimCoeffs[_ci].coeff==='number'?dimCoeffs[_ci].coeff:null);}
+      var _gv=function(ids,v){return groupComplete(ids)?(v==null?null:v):null;};
+      var _pre=_gv([0,1,2,3,4,5],vPre),_boss=_gv([0,1,2],vLead),_mgr=_gv([3,4,5],vSub),_luck=_gv([6,7,8],vLuck),_post=_gv([9,10,11,12],vPost),_tot=_gv([0,1,2,3,4,5,6,7,8,9,10,11,12],vTotal);
+      if(_r2)_r2.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot});
+      if(_coef)_coef.innerHTML=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot});
       if(_sd)_sd.innerHTML=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'人相兵法動靜分布圖'});
       requestAnimationFrame(function(){arrangeReportCharts('manual-coef','manual-radar2','manual-sd','manual-charts-row');});
     }
@@ -765,7 +770,7 @@ export async function exportManualPNG(){
   try{
     initManualData();
     var canvas=drawReportCanvas(manualData, {checkComplete:true});
-    var _expName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'報告';
+    var _expName=(_currentCaseId?_currentCaseName:userName)||'報告';
     var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
       '人相兵法_'+_expName+'_手動.png',{type:'image/png'});
     var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);

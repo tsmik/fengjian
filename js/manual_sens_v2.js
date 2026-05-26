@@ -688,7 +688,7 @@ function renderBlock(dataArr, blockType) {
 
 export function showManualSensV2Page() {
   showPage('manual-sens-v2-page');
-  document.getElementById('nav-name').innerText = (_isTA && _currentCaseId ? _currentCaseName : userName) || '';
+  document.getElementById('nav-name').innerText = (_currentCaseId ? _currentCaseName : userName) || '';
   setNavActive('nav-manual-sens-v2');
   if (!window._suppressPushState) history.pushState({ page: 'manual-sens-v2' }, '');
   initManualData();
@@ -750,3 +750,5 @@ export function renderManualSensV2Page() {
 
   el.innerHTML = html;
 }
+
+// cf-redeploy touch 2026-05-26

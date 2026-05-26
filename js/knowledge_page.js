@@ -258,9 +258,11 @@ export function kSelect(i){
 
 export function showKnowledgePage(){
   showPage('knowledge-overlay');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-know');
   if(!window._suppressPushState){
     history.pushState({page:'knowledge',dim:curK},'');
   }
 }
+
+// cf-redeploy touch 2026-05-26

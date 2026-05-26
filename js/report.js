@@ -36,20 +36,24 @@ export function getLiunian(gender, xusui){
   return rows.find(function(r){return r.age===xusui;})||null;
 }
 
+// 指定性別/生日/觀察日 算流年（給本人卡等需要明確對象的呼叫端）
+export function getLiunianInfoFor(gender, birthday, refDate){
+  if(!gender||!birthday)return null;
+  var xusui=calcXuSui(birthday,refDate||null);
+  if(!xusui||xusui<1)return null;
+  var ln=getLiunian(gender,xusui);
+  if(!ln)return null;
+  return {xusui:xusui, mark:ln.mark, ln:ln};
+}
 export function _getLiunianInfo(){
   var gender, birthday, refDate;
-  if(_isTA&&_currentCaseId){
+  if(_currentCaseId){
     gender=_caseGender;birthday=_caseBirthday;refDate=_caseDate||null;
   }else{
     // 學員、或 admin 未選案例：用個人資料（使用者資料頁設定的）性別/生日
     gender=_userGender;birthday=_userBirthday;refDate=null;
   }
-  if(!gender||!birthday)return null;
-  var xusui=calcXuSui(birthday,refDate);
-  if(!xusui||xusui<1)return null;
-  var ln=getLiunian(gender,xusui);
-  if(!ln)return null;
-  return {xusui:xusui, mark:ln.mark, ln:ln};
+  return getLiunianInfoFor(gender, birthday, refDate);
 }
 
 export function buildLiunianTitleHtml(info){
@@ -88,11 +92,47 @@ export function buildLiunianTableHtml(info){
   return h;
 }
 
+/* ===== 報告浮動筆記（老師的話）：per-個案 reportNote，自動+手動報告共用一則 ===== */
+let _reportNoteTimer=null;
+export function openReportNote(){
+  var fab=document.getElementById('report-note-fab'); if(fab)fab.style.display='inline-flex';
+  var ta=document.getElementById('report-note-text');
+  if(ta){ta.value='';var ref=_getUserDocRef();if(ref)ref.get().then(function(d){if(d.exists&&d.data().reportNote!=null)ta.value=d.data().reportNote;}).catch(function(){});}
+}
+export function hideReportNote(){
+  var fab=document.getElementById('report-note-fab'); if(fab)fab.style.display='none';
+  var p=document.getElementById('report-note-panel'); if(p)p.style.display='none';
+}
+export function toggleReportNotePanel(){
+  var p=document.getElementById('report-note-panel'); if(!p)return;
+  var isOpen=(p.style.display==='flex');
+  p.style.display=isOpen?'none':'flex';
+  if(!isOpen){var ta=document.getElementById('report-note-text');if(ta)ta.focus();}
+}
+export function onReportNoteInput(){
+  clearTimeout(_reportNoteTimer);
+  var st=document.getElementById('report-note-status'); if(st)st.textContent='儲存中…';
+  _reportNoteTimer=setTimeout(function(){
+    var ta=document.getElementById('report-note-text'); if(!ta)return;
+    var ref=_getUserDocRef(); if(!ref)return;
+    ref.set({reportNote:ta.value,updatedAt:new Date().toISOString()},{merge:true}).then(function(){
+      if(st){st.textContent='已儲存';setTimeout(function(){if(st&&st.textContent==='已儲存')st.textContent='';},1500);}
+    }).catch(function(e){console.log('筆記儲存失敗',e);if(st)st.textContent='儲存失敗';});
+  },500);
+}
+if(typeof window!=='undefined'){
+  window.openReportNote=openReportNote;
+  window.hideReportNote=hideReportNote;
+  window.toggleReportNotePanel=toggleReportNotePanel;
+  window.onReportNoteInput=onReportNoteInput;
+}
+
 /* ===== Show Report ===== */
 export function showReport(){
   showPage('report-overlay');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
+  openReportNote();
   if(!window._suppressPushState) history.pushState({page:'report'},'');
   recalcFromObs();
   var _lnInfo=_getLiunianInfo();
@@ -638,24 +678,27 @@ export function showReport(){
         for(var ci=0;ci<13;ci++){
           var sc=dimSCounts[ci]||0, dcn=dimDCounts[ci]||0, tot=sc+dcn;
           dimSFrac.push(tot>0?sc/tot:0.5);
-          dimCoeffArr.push(dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:0);
+          // 未填完維度傳 null → 圖上顯示 --、不畫扇形
+          dimCoeffArr.push(dimComplete[ci]&&dimCoeffs[ci]&&typeof dimCoeffs[ci].coeff==='number'?dimCoeffs[ci].coeff:null);
         }
+        var _gv=function(ids,v){return isGroupOk(ids)?(v==null?null:v):null;};
+        var _pre=_gv([0,1,2,3,4,5],vPre), _boss=_gv([0,1,2],vLead), _mgr=_gv([3,4,5],vSub), _luck=_gv([6,7,8],vLuck), _post=_gv([9,10,11,12],vPost), _tot=_gv(visibleDimIds,vTotal);
         if(r2El) r2El.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({
           dimSFrac:dimSFrac, dimCoeff:dimCoeffArr,
-          bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0,
-          preV:vPre||0, totV:vTotal||0
+          bossV:_boss, mgrV:_mgr, luckV:_luck, postV:_post,
+          preV:_pre, totV:_tot
         });
         if(coefEl) coefEl.innerHTML=buildCoefSVG({
-          preV:vPre||0, bossV:vLead||0, mgrV:vSub||0, luckV:vLuck||0, postV:vPost||0, totV:vTotal||0
+          preV:_pre, bossV:_boss, mgrV:_mgr, luckV:_luck, postV:_post, totV:_tot
         });
         if(sdEl) sdEl.innerHTML=buildRadar3SVG({ dimStatic:dimSCounts, dimActive:dimDCounts, dimCoeff:dimCoeffArr, title:'人相兵法動靜分布圖' });
         // 基本排版：正式站與 staging 都要套用（與手動報告一致）；之前只靠 staging 調整器，正式站會跑版
         requestAnimationFrame(function(){ try{ arrangeReportCharts('report-coef','report-radar2','report-sd','report-charts-row'); }catch(e3){} });
-        // staging：兩圖可自由移動/縮放（測試工具）
-        var _h=location.hostname;
-        if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
-          try{ setupChartTuner(); }catch(e2){}
-        }
+        // staging 圖表位置調整器：已定稿、先收起（會擋住右下角筆記鈕）。要再調圖表位置時把下面這段解除註解。
+        // var _h=location.hostname;
+        // if(_h==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(_h)){
+        //   try{ setupChartTuner(); }catch(e2){}
+        // }
       }
     }catch(e){ if(window.debugLog) debugLog('[ReportChart]', e&&e.message?e.message:e); }
   }

@@ -175,7 +175,7 @@ export function avgCoeff(dataArr, ids) {
 export function _getUserDocRef() {
   if (!currentUser) return null;
   const uid = currentUser.uid;
-  if (userRole === 'admin' && _currentCaseId) {
+  if (_currentCaseId) {
     return db.collection('users').doc(uid).collection('cases').doc(_currentCaseId);
   }
   return db.collection('users').doc(uid);
@@ -258,6 +258,9 @@ export function showPage(pageId) {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+  // 切頁先收起報告浮動筆記（報告/手動報告頁會再自行 openReportNote 顯示）
+  var _rnf=document.getElementById('report-note-fab'); if(_rnf)_rnf.style.display='none';
+  var _rnp=document.getElementById('report-note-panel'); if(_rnp)_rnp.style.display='none';
   document.getElementById('top-nav').style.display = 'flex';
   if (pageId) {
     const el = document.getElementById(pageId);

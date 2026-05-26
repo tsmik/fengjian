@@ -66,9 +66,9 @@ export async function generateAI() {
     '<span style="font-size:14px;color:var(--text-3)">AI 分析中...</span></div>';
 
   // 判斷性別、生日、姓名（個案 or 使用者自己）
-  const gender = (_isTA && _currentCaseId) ? _caseGender : _userGender;
-  const birthday = (_isTA && _currentCaseId) ? _caseBirthday : _userBirthday;
-  const name = (_isTA && _currentCaseId) ? _currentCaseName : userName;
+  const gender = (_currentCaseId) ? _caseGender : _userGender;
+  const birthday = (_currentCaseId) ? _caseBirthday : _userBirthday;
+  const name = (_currentCaseId) ? _currentCaseName : userName;
   const age = birthday ? calcXuSui(birthday) : null;
 
   const dimData = buildDimData();

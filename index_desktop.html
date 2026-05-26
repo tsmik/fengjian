@@ -336,6 +336,8 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-header h2{font-size:24px;font-weight:400;letter-spacing:2px;color:var(--text)}
 .case-add-btn{height:36px;padding:0 18px;background:var(--dark);color:white;border:none;border-radius:6px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-add-btn:hover{opacity:0.85}
+.case-mng-btn{height:36px;padding:0 18px;background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
+.case-mng-btn:hover{background:var(--hover)}
 .case-export-btn{height:36px;padding:0 18px;background:transparent;color:var(--text-3);border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px}
 .case-export-btn:hover{background:var(--hover);color:var(--text)}
 .case-self-bar{padding:8px 12px;margin-bottom:16px;cursor:pointer;border-bottom:2px solid var(--static);background:rgba(122,158,126,0.06);font-size:14px;color:var(--text)}
@@ -361,8 +363,63 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-row-actions button{width:22px;height:22px;border:none;background:transparent;color:#ccc;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
 .case-row-actions button:hover{background:var(--hover);color:var(--text)}
 .case-row-actions .case-btn-del:hover{background:#fee;color:#c03830}
-#case-form-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
-#case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+/* ===== 個案管理 名片版 ===== */
+.case-search{height:38px;width:260px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--card-bg,#fafaf8);color:var(--text);outline:none}
+.case-search:focus{border-color:var(--static)}
+.case-header-btns{display:flex;align-items:center;flex-shrink:0}
+.case-layout{display:flex;gap:24px;align-items:flex-start}
+.case-self-col{width:300px;flex-shrink:0;position:sticky;top:0}
+.case-cards-col{flex:1;min-width:0;display:flex;flex-direction:row;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
+.case-self-card{background:#fafaf8;border:1px solid var(--border);border-radius:12px;padding:18px 20px;cursor:pointer;color:var(--text);transition:border-color .15s,box-shadow .15s}
+.case-self-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.case-self-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
+.case-self-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.case-self-label{font-size:12px;color:var(--text-3);letter-spacing:1px}
+.case-self-dim{color:var(--text-3)}
+.case-active-badge{font-size:12px;color:#fff;background:var(--static);padding:3px 12px;border-radius:20px;white-space:nowrap}
+.case-switch-hint{font-size:11px;color:var(--text-3);white-space:nowrap}
+.case-self-name{font-size:22px;font-weight:400;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.case-self-edit{width:26px;height:26px;border:none;background:transparent;color:#bbb;cursor:pointer;border-radius:50%;font-size:13px;flex-shrink:0}
+.case-self-edit:hover{background:var(--hover);color:var(--text)}
+.case-self-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--text);margin-bottom:14px}
+.case-self-meta span{background:rgba(0,0,0,.06);padding:3px 12px;border-radius:14px}
+.case-self-liunian{border-top:1px solid rgba(0,0,0,.12);padding-top:14px}
+.cm-section{display:flex;flex-direction:column;flex:0 0 auto;width:206px}
+.case-grid{display:flex;flex-direction:column;gap:12px;padding:10px 0 0}
+.cm-section .case-card{width:100%}
+/* 空狀態：本人卡右邊兩個大方塊（高度由 JS 設成與本人卡同高，頂端對齊） */
+.case-empty-actions{flex:0 0 150px;width:150px;display:flex;flex-direction:column;gap:14px}
+.case-empty-add,.case-empty-grp{flex:1;border-radius:12px;font-size:16px;cursor:pointer;font-family:inherit;letter-spacing:1px}
+.case-empty-add{border:none;background:var(--dark);color:#fff}
+.case-empty-add:hover{opacity:.9}
+.case-empty-grp{border:1px solid var(--border);background:#fafaf8;color:var(--text)}
+.case-empty-grp:hover{background:var(--hover)}
+/* 報告浮動筆記（老師的話） */
+#report-note-fab{display:none;position:fixed;right:20px;bottom:20px;z-index:5850;align-items:center;gap:6px;background:var(--dark);color:#fff;border-radius:24px;padding:10px 18px;font-size:14px;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.25);letter-spacing:1px;user-select:none}
+#report-note-fab:hover{opacity:.92}
+#report-note-panel{display:none;position:fixed;right:20px;bottom:70px;z-index:5851;width:320px;max-width:calc(100vw - 40px);background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.2);flex-direction:column;overflow:hidden}
+#report-note-panel .rn-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sidebar);font-size:13px;color:var(--text)}
+#report-note-panel .rn-head>span:first-child{flex:1}
+#report-note-panel .rn-status{font-size:11px;color:var(--static)}
+#report-note-panel .rn-close{width:24px;height:24px;border:none;background:transparent;color:var(--text-3);cursor:pointer;font-size:13px;border-radius:50%;flex-shrink:0}
+#report-note-panel .rn-close:hover{background:var(--hover)}
+#report-note-panel textarea{border:none;outline:none;resize:vertical;min-height:170px;max-height:50vh;padding:12px;font-size:15px;font-family:inherit;line-height:1.6;color:var(--text);background:#fff;box-sizing:border-box}
+.case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
+.case-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
+.case-card:hover .case-card-actions{opacity:1}
+.case-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
+.case-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:6px;padding-right:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-card-age{font-size:13px;color:var(--text-3);margin-bottom:auto}
+.case-card-note{font-size:12px;color:var(--text-3);margin-top:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-note-empty{color:#cbc6bd}
+.case-active-dot{position:absolute;top:13px;right:14px;width:9px;height:9px;border-radius:50%;background:var(--static);box-shadow:0 0 0 3px rgba(122,158,126,.22)}
+.case-card-actions{position:absolute;bottom:8px;right:8px;display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.case-card-actions button{width:25px;height:25px;border:none;background:rgba(255,255,255,.92);color:#aaa;cursor:pointer;border-radius:50%;font-size:12px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.case-card-actions button:hover{color:var(--text)}
+.case-card-actions .case-btn-del:hover{color:#c03830}
+@media(max-width:900px){.case-layout{flex-direction:column}.case-self-col{width:100%;position:static}}
+#case-form-overlay,#group-mgr-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
+#case-form-overlay .case-form,#group-mgr-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}
 #case-form-overlay .case-form label{display:block;font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:4px;margin-top:14px;letter-spacing:1px}
 #case-form-overlay .case-form input,#case-form-overlay .case-form select,#case-form-overlay .case-form textarea{width:100%;border:none;border-bottom:2px solid #ddd;padding:8px 0;font-size:16px;font-weight:400;background:transparent;outline:none;color:var(--text)}
@@ -373,6 +430,32 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-form-actions button{flex:1;height:44px;border:none;border-radius:8px;font-size:15px;font-weight:400;cursor:pointer;letter-spacing:1px}
 .case-form-save{background:var(--dark);color:white}
 .case-form-cancel{background:#eee;color:var(--text)}
+.case-form-del{background:#fbe9e7;color:#c03830}
+.case-form-open{background:var(--static);color:#fff}
+.cf-color-row{display:flex;align-items:center;gap:10px;margin-top:16px}
+.cf-color-trigger{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:#fff;text-shadow:0 0 3px rgba(0,0,0,.6)}
+.cf-color-trigger:hover{box-shadow:0 0 0 2px var(--text-3)}
+.cf-colors{display:none;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cf-swatch{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0}
+.cf-swatch.selected{box-shadow:0 0 0 2px var(--text)}
+.case-group-desc{display:block;font-size:12px;color:var(--text-3);font-weight:300;margin-top:3px;letter-spacing:0}
+.gm-form{max-width:480px}
+#gm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.gm-row{display:flex;align-items:center;gap:8px;cursor:grab}
+.gm-row:active{cursor:grabbing}
+.gm-handle{color:#bbb;font-size:16px;line-height:1;padding:2px 4px;user-select:none;flex-shrink:0}
+.gm-handle:active{cursor:grabbing}
+.gm-row.gm-dragover{outline:2px dashed var(--static);outline-offset:2px;border-radius:6px}
+.gm-row input{box-sizing:border-box;min-width:0;border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);outline:none;cursor:text}
+.gm-row .gm-name{flex:0 0 34%}
+.gm-row .gm-desc{flex:1;font-size:13px;color:var(--text-3)}
+.gm-del{width:28px;height:28px;border:none;background:transparent;color:#c9c2b6;cursor:pointer;border-radius:50%;font-size:13px;flex-shrink:0}
+.gm-del:hover{background:#fee;color:#c03830}
+.gm-add{width:100%;height:38px;border:1.5px dashed var(--border);background:transparent;color:var(--text-3);border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;margin-bottom:4px}
+.gm-add:hover{background:var(--hover);color:var(--text)}
+.cf-row2{display:flex;gap:14px}
+.cf-col{flex:1;min-width:0}
+.cf-row2 input,.cf-row2 select{box-sizing:border-box;max-width:100%}
 </style>
 <style>
   /* staging banner（v3.11） */
@@ -399,6 +482,19 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
   body.staging-mode #staging-banner {
     display: block;
   }
+  /* staging banner 把(一般流)導覽列往下推 28px，但固定定位分頁仍停在 top:48px 會被導覽列蓋住。
+     staging 時把這些分頁下移 28px(=banner高)對齊導覽列下緣。production 無 staging-mode 不受影響。 */
+  body.staging-mode #mode-page,
+  body.staging-mode #report-overlay,
+  body.staging-mode #knowledge-overlay,
+  body.staging-mode #case-page,
+  body.staging-mode #profile-page,
+  body.staging-mode #manual-page,
+  body.staging-mode #sens-page,
+  body.staging-mode #manual-sens-page,
+  body.staging-mode #manual-sens-v2-page,
+  body.staging-mode #cond-page,
+  body.staging-mode #board-page { top: 76px; height: calc(100vh - 76px); }
 </style>
 </head>
 <body>
@@ -439,6 +535,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 
 <div id="toast-notify" style="position:fixed;top:20px;right:20px;background:#7A9E7E;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:400;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none"></div>
 
+<!-- 報告浮動筆記（老師的話）：自動/手動報告頁共用，per-個案 -->
+<div id="report-note-fab" onclick="toggleReportNotePanel()" title="老師的話／我的筆記">✏️ 筆記</div>
+<div id="report-note-panel">
+  <div class="rn-head"><span>老師的話／我的筆記</span><span id="report-note-status" class="rn-status"></span><button type="button" class="rn-close" onclick="toggleReportNotePanel()">✕</button></div>
+  <textarea id="report-note-text" oninput="onReportNoteInput()" placeholder="記下老師的話、分析重點…（自動儲存）"></textarea>
+</div>
+
 <!-- Top Nav Bar -->
 <nav id="top-nav">
   <div class="nav-brand" onclick="showModePage()">風鑑學堂 人相兵法</div>
@@ -468,11 +571,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     </div>
   </div>
   <div class="nav-dropdown" id="dd-case">
-    <div class="nav-dropdown-btn" id="dd-case-btn">個案資料 ▾</div>
-    <div class="nav-dropdown-menu">
-      <div class="nav-dropdown-item" id="nav-profile" onclick="showProfilePage()">使用者資料</div>
-      <div class="nav-dropdown-item" id="nav-cases" onclick="showCasePage()" style="display:none">案例管理</div>
-    </div>
+    <div class="nav-dropdown-btn" id="nav-cases" onclick="showCasePage()">個案管理</div>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-save-zone" id="nav-save-zone" style="display:none">
@@ -487,34 +586,62 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- Case Management Page (TA only) -->
 <div id="case-page">
   <div class="case-header">
-    <h2>案例管理</h2>
-    <button class="case-add-btn" onclick="showCaseForm()">＋ 新增個案</button>
-    <button class="case-export-btn" onclick="triggerCaseImport()" style="margin-left:8px;">⬆ 匯入</button>
-    <button class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">⬇ 匯出全部</button>
+    <div class="case-header-btns">
+      <button class="case-mng-btn" onclick="showGroupMgr()">管理個案分組</button>
+      <button class="case-add-btn" onclick="showCaseForm()" style="margin-left:8px;">＋ 新增個案</button>
+      <button id="case-import-btn" class="case-export-btn" onclick="triggerCaseImport()" style="margin-left:8px;">⬆ 匯入</button>
+      <button id="case-export-all-btn" class="case-export-btn" onclick="exportAllCases()" style="margin-left:8px;">⬇ 匯出全部</button>
+    </div>
+    <input id="case-search" class="case-search" type="search" placeholder="搜尋姓名…" oninput="caseSearch(this.value)" autocomplete="off">
   </div>
   <div id="case-list"></div>
 </div>
 
 <!-- Case Form Overlay -->
-<div id="case-form-overlay">
+<div id="case-form-overlay" onclick="if(event.target===this)cfTryClose()">
   <div class="case-form">
-    <h3 id="case-form-title">新增個案</h3>
-    <label>姓名 *</label>
-    <input id="cf-name" placeholder="輸入姓名" maxlength="20">
-    <label>性別</label>
-    <select id="cf-gender"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select>
-    <label>生日</label>
-    <input id="cf-birthday" type="date">
-    <label>觀察日期</label>
-    <input id="cf-date" type="date">
-    <label>組別</label>
-    <input id="cf-group" placeholder="輸入或選擇組別（如：第一期）" maxlength="30" list="cf-group-list" autocomplete="off">
-    <datalist id="cf-group-list"></datalist>
-    <label>備註</label>
-    <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
+    <div class="cf-row2">
+      <div class="cf-col"><label>姓名 *</label><input id="cf-name" placeholder="輸入姓名" maxlength="20"></div>
+      <div class="cf-col"><label>性別</label><select id="cf-gender" onchange="cfRenderLiunian()"><option value="">未填</option><option value="男">男</option><option value="女">女</option></select></div>
+    </div>
+    <div class="cf-row2">
+      <div class="cf-col"><label>生日</label><input id="cf-birthday" type="date" onchange="cfRenderLiunian()"></div>
+      <div class="cf-col" id="cf-row-date"><label>觀察日期</label><input id="cf-date" type="date" onchange="cfRenderLiunian()"></div>
+    </div>
+    <div id="cf-row-group">
+      <label>組別</label>
+      <input id="cf-group" placeholder="輸入或選擇組別（如：第一期）" maxlength="30" list="cf-group-list" autocomplete="off">
+      <datalist id="cf-group-list"></datalist>
+    </div>
+    <div id="cf-row-note">
+      <label>備註</label>
+      <textarea id="cf-note" placeholder="例如：誰帶來的、什麼場合" maxlength="200"></textarea>
+    </div>
+    <div class="cf-color-row">
+      <label style="margin:0">卡片顏色</label>
+      <button type="button" id="cf-color-trigger" class="cf-color-trigger" onclick="cfToggleColors()" title="點選卡片顏色">✎</button>
+    </div>
+    <div id="cf-colors" class="cf-colors"></div>
+    <div id="cf-liunian" style="display:none;margin-top:18px"></div>
     <div class="case-form-actions">
-      <button class="case-form-cancel" onclick="closeCaseForm()">取消</button>
+      <button id="cf-open-btn" class="case-form-open" onclick="cfOpen()" style="display:none">打開</button>
       <button class="case-form-save" onclick="saveCaseForm()">建立</button>
+      <button id="cf-delete-btn" class="case-form-del" onclick="cfDelete()" style="display:none">刪除</button>
+      <button class="case-form-cancel" onclick="cfTryClose()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理分組視窗 -->
+<div id="group-mgr-overlay" onclick="if(event.target===this)closeGroupMgr()">
+  <div class="case-form gm-form">
+    <h3 style="font-size:18px;font-weight:400;margin:0 0 4px;letter-spacing:2px">管理個案分組</h3>
+    <p style="font-size:12px;color:var(--text-3);margin:0 0 14px">可新增、改名、加說明、拖曳排序、刪除分組。</p>
+    <div id="gm-list"></div>
+    <button type="button" class="gm-add" onclick="gmAdd()">＋ 新增分組</button>
+    <div class="case-form-actions">
+      <button class="case-form-cancel" onclick="closeGroupMgr()">取消</button>
+      <button id="gm-save" class="case-form-save" onclick="gmSave()">儲存</button>
     </div>
   </div>
 </div>
@@ -526,6 +653,12 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     <div id="mode-case-section" class="mode-case-btn" style="display:none" onclick="showCasePage()">
       <h3>案例管理</h3>
       <p>新增、選擇、編輯個案</p>
+    </div>
+
+    <!-- 目前分析對象 -->
+    <div id="mode-current-case" style="display:flex;align-items:center;gap:12px;margin:0 0 18px;flex-wrap:wrap">
+      <div style="font-size:21px;color:var(--text);font-weight:400"><span id="mode-current-name"></span> 的人相兵法</div>
+      <button onclick="showCasePage()" style="font-size:12px;color:var(--text-3);background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit">個案管理 →</button>
     </div>
 
     <!-- 上排：觀察路徑 -->

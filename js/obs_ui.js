@@ -308,7 +308,7 @@ export function showObsPage(){
   showPage('app-body');
   document.getElementById('obs-page').style.display='grid';
   document.getElementById('dim-page').style.display='none';
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-obs');
   renderFaceMap();renderObsCenter();renderDimIndex();
   if(!window._suppressPushState) history.pushState({page:'obs'},'');

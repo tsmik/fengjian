@@ -2,18 +2,41 @@
 import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _currentCaseName, setCurrentCaseName,
          _userGender, setUserGender, _userBirthday, setUserBirthday,
          _caseGender, setCaseGender, _caseBirthday, setCaseBirthday, _caseDate, setCaseDate,
-         data, setData, obsData, setObsData, obsOverride, setObsOverride, condResults,
+         data, setData, obsData, setObsData, obsOverride, setObsOverride, setManualData, condResults,
          emptyData, setNavActive, showPage, _showToast, _escHtml, _getUserDocRef, save,
          currentUser, setCurrentUser, userRole, setUserRole,
          DIMS } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { renderFaceMap, renderObsCenter, renderDimIndex } from './obs_ui.js';
 import { cpRender } from './cond_page.js';
-import { _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
+import { _getLiunianInfo, getLiunianInfoFor, buildLiunianTitleHtml, buildLiunianTableHtml, calcXuSui } from './report.js';
 
 /* module-local state */
 let _editingCaseId = null;
+let _editingSelf = false;  // 視窗是否在編輯「本人」
+let _cfOpenSnapshot = '';  // 視窗開啟時的欄位快照（判斷是否有未儲存變更）
+let _groupDescs = {};      // 分組說明 {分組名: 說明}
+let _cfColor = '';         // 視窗目前選的卡片顏色
+let _gmRows = [];          // 管理分組視窗的工作列 [{orig,name,desc}]
+let _gmDragFrom = null;    // 拖曳排序的來源 index
+
+// 卡片色卡（預設米色 + 人相兵法報告 13 維度顏色）
+const CARD_DEFAULT_COLOR = '#D9CBA8';
+const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+// 把色卡顏色淡化成卡片底色（保持深字可讀）
+function _cardTint(hex){
+  hex=hex||CARD_DEFAULT_COLOR;
+  if(hex.charAt(0)!=='#'||hex.length<7)return '#ffffff';
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  if(isNaN(r)||isNaN(g)||isNaN(b))return '#ffffff';
+  var f=0.40;
+  r=Math.round(r*f+255*(1-f));g=Math.round(g*f+255*(1-f));b=Math.round(b*f+255*(1-f));
+  return 'rgb('+r+','+g+','+b+')';
+}
 let _groupOrder = []; // 從 Firestore 讀取的組別排序
+let _selfCache = null;   // 本人資料快取 {name,gender,birthday}
+let _casesCache = [];    // 個案快取 [{id,data}]
+let _caseSearchTerm = ''; // 名片搜尋字串
 
 /* ===== 助教模式：案例管理 ===== */
 export function showCasePage(){
@@ -30,106 +53,30 @@ export function renderCaseList(){
   listEl.innerHTML='<div style="color:#aaa;padding:20px;text-align:center">載入中...</div>';
 
   db.collection('users').doc(currentUser.uid).get().then(function(selfDoc){
-    var selfUpdated=selfDoc.exists&&selfDoc.data().updatedAt?selfDoc.data().updatedAt:'';
-    if(selfDoc.exists&&Array.isArray(selfDoc.data().groupOrder)){
-      _groupOrder=selfDoc.data().groupOrder;
-    }else{
-      _groupOrder=[];
-    }
-
-    // 更新 datalist
-    var dl=document.getElementById('cf-group-list');
+    var sd=selfDoc.exists?selfDoc.data():{};
+    _selfCache={
+      name:(sd.displayName||userName||'我自己'),
+      gender:(sd.gender||_userGender||''),
+      birthday:(sd.birthday||_userBirthday||''),
+      color:(sd.cardColor||'')
+    };
+    if(Array.isArray(sd.groupOrder)){_groupOrder=sd.groupOrder;}else{_groupOrder=[];}
+    _groupDescs=(sd.groupDescs&&typeof sd.groupDescs==='object')?sd.groupDescs:{};
 
     db.collection('users').doc(currentUser.uid).collection('cases').orderBy('createdAt','desc').get().then(function(snap){
-      var grouped={};
-      var allGroups=new Set();
-      snap.forEach(function(doc){
-        var c=doc.data();
-        var g=c.group||'';
-        if(!grouped[g])grouped[g]=[];
-        grouped[g].push({id:doc.id, data:c});
-        if(g)allGroups.add(g);
-      });
+      _casesCache=[];
+      snap.forEach(function(doc){_casesCache.push({id:doc.id, data:doc.data()});});
 
+      // 更新組別 datalist
+      var dl=document.getElementById('cf-group-list');
       if(dl){
         dl.innerHTML='';
-        _groupOrder.forEach(function(g){
-          if(g){var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);}
-        });
-        allGroups.forEach(function(g){
-          if(_groupOrder.indexOf(g)<0){
-            var opt=document.createElement('option');opt.value=g;dl.appendChild(opt);
-          }
-        });
+        var seen={};
+        _groupOrder.forEach(function(g){if(g&&!seen[g]){seen[g]=1;var o=document.createElement('option');o.value=g;dl.appendChild(o);}});
+        _casesCache.forEach(function(it){var g=it.data.group||'';if(g&&!seen[g]){seen[g]=1;var o=document.createElement('option');o.value=g;dl.appendChild(o);}});
       }
 
-      // 組別順序
-      var orderedGroups=[];
-      _groupOrder.forEach(function(g){
-        if(grouped[g])orderedGroups.push(g);
-      });
-      allGroups.forEach(function(g){
-        if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);
-      });
-      // 未分組放最後
-      var allSections=orderedGroups.slice();
-      if(grouped['']&&grouped[''].length>0) allSections.push('');
-
-      // 建立各組 HTML
-      var sectionHtmls=[];
-      for(var si=0;si<allSections.length;si++){
-        var gName=allSections[si];
-        var cases=grouped[gName];
-        var isUngrouped=(gName==='');
-        // 計算在有名組中的索引位置（用於上移下移）
-        var namedIdx=isUngrouped?-1:orderedGroups.indexOf(gName);
-        var namedLen=orderedGroups.length;
-
-        var s='<div class="case-group-section">';
-        s+='<div class="case-group-header">';
-        if(isUngrouped){
-          s+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
-        }else{
-          s+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span></div>';
-          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'up\')" title="上移"'+(namedIdx===0?' disabled':'')+'>▲</button>';
-          s+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+_escHtml(gName).replace(/'/g,"\\'")+'\',\'down\')" title="下移"'+(namedIdx===namedLen-1?' disabled':'')+'>▼</button>';
-        }
-        s+='</div><div class="case-group-body">';
-        cases.forEach(function(item){
-          s+=_buildCaseRowHtml(item.id, item.data);
-        });
-        s+='</div></div>';
-        sectionHtmls.push({html:s, count:cases.length});
-      }
-
-      // Waterfall 分配到 4 欄（找最短欄放入）
-      var NUM_COLS=4;
-      var cols=[];
-      var colHeights=[];
-      for(var ci=0;ci<NUM_COLS;ci++){cols.push([]);colHeights.push(0);}
-      for(var si2=0;si2<sectionHtmls.length;si2++){
-        // 找最短的欄
-        var minH=colHeights[0], minIdx=0;
-        for(var ci2=1;ci2<NUM_COLS;ci2++){
-          if(colHeights[ci2]<minH){minH=colHeights[ci2];minIdx=ci2;}
-        }
-        cols[minIdx].push(sectionHtmls[si2].html);
-        // 用案例數量當高度估算（標題+每行）
-        colHeights[minIdx]+=sectionHtmls[si2].count+2;
-      }
-
-      // 組裝 HTML
-      var html='';
-      // 本人行
-      html+='<div class="case-self-bar" onclick="loadCase(null)">'+userName+' <span style="font-size:12px;color:var(--static)">（本人）</span></div>';
-      // 四欄 waterfall
-      html+='<div class="case-waterfall">';
-      for(var ci3=0;ci3<NUM_COLS;ci3++){
-        html+='<div class="case-waterfall-col">'+cols[ci3].join('')+'</div>';
-      }
-      html+='</div>';
-
-      listEl.innerHTML=html;
+      _paintCasePage();
     }).catch(function(e){
       console.log('載入案例失敗',e);
       listEl.innerHTML='<div style="color:#c03830;padding:12px">載入個案清單失敗</div>';
@@ -137,16 +84,143 @@ export function renderCaseList(){
   });
 }
 
-function _buildCaseRowHtml(docId, c){
-  var html='<div class="case-row" onclick="loadCase(\''+docId+'\')">';
-  html+='<div class="case-row-name">'+(c.name||'未命名')+'</div>';
-  html+='<div class="case-row-gender">'+(c.gender||'')+'</div>';
-  html+='<div class="case-row-actions">';
-  html+='<button onclick="event.stopPropagation();exportSingleCase(\''+docId+'\')" title="匯出">⬇</button>';
-  html+='<button onclick="event.stopPropagation();editCase(\''+docId+'\')" title="編輯">✎</button>';
-  html+='<button class="case-btn-del" onclick="event.stopPropagation();deleteCase(\''+docId+'\',\''+_escHtml(c.name||'')+'\')" title="刪除">✕</button>';
-  html+='</div></div>';
-  return html;
+// 依目前快取 + 搜尋字 繪製：左本人卡 + 右名片格
+function _paintCasePage(){
+  var listEl=document.getElementById('case-list');
+  if(!listEl)return;
+  var term=(_caseSearchTerm||'').trim().toLowerCase();
+
+  var _hdr=document.querySelector('#case-page .case-header');
+  // 完全沒有個案 → 本人卡右邊放兩個大方塊(新增個案/管理分組)，頂部工具列收起
+  if(_casesCache.length===0){
+    if(_hdr)_hdr.style.display='none';
+    listEl.innerHTML='<div class="case-layout case-empty">'+
+      '<div class="case-self-col">'+_buildSelfPanelHtml()+'</div>'+
+      '<div class="case-empty-actions">'+
+        '<button type="button" class="case-empty-add" onclick="showCaseForm()">＋ 新增個案</button>'+
+        '<button type="button" class="case-empty-grp" onclick="showGroupMgr()">管理個案分組</button>'+
+      '</div></div>';
+    // 量本人卡高度，讓兩個方塊欄等高(各約一半)，避免 stretch 溢出頂到導覽列
+    var _sc=listEl.querySelector('.case-self-card'), _ac=listEl.querySelector('.case-empty-actions');
+    if(_sc&&_ac)_ac.style.height=_sc.offsetHeight+'px';
+    return;
+  }
+  if(_hdr)_hdr.style.display='';
+
+  var grouped={};
+  var allGroups=new Set();
+  _casesCache.forEach(function(it){
+    if(term && (it.data.name||'').toLowerCase().indexOf(term)<0) return;
+    var g=it.data.group||'';
+    if(!grouped[g])grouped[g]=[];
+    grouped[g].push(it);
+    if(g)allGroups.add(g);
+  });
+
+  var orderedGroups=[];
+  _groupOrder.forEach(function(g){if(grouped[g])orderedGroups.push(g);});
+  allGroups.forEach(function(g){if(_groupOrder.indexOf(g)<0 && grouped[g])orderedGroups.push(g);});
+  var allSections=orderedGroups.slice();
+  if(grouped['']&&grouped[''].length>0)allSections.push('');
+  var namedLen=orderedGroups.length;
+
+  var gridHtml='';
+  if(allSections.length===0){
+    gridHtml='<div style="color:var(--text-3);padding:30px 6px;font-size:14px">找不到符合「'+_escHtml(_caseSearchTerm)+'」的個案</div>';
+  }
+  for(var si=0;si<allSections.length;si++){
+    var gName=allSections[si];
+    var cases=grouped[gName];
+    var isUngrouped=(gName==='');
+    var namedIdx=isUngrouped?-1:orderedGroups.indexOf(gName);
+    gridHtml+='<div class="cm-section"><div class="case-group-header">';
+    if(isUngrouped){
+      gridHtml+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
+    }else{
+      var gDesc=_groupDescs[gName]||'';
+      gridHtml+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span>'+(gDesc?'<span class="case-group-desc">'+_escHtml(gDesc)+'</span>':'')+'</div>';
+    }
+    gridHtml+='</div><div class="case-grid">';
+    cases.forEach(function(item){gridHtml+=_buildNamecardHtml(item.id, item.data);});
+    gridHtml+='</div></div>';
+  }
+
+  listEl.innerHTML='<div class="case-layout">'+
+    '<div class="case-self-col">'+_buildSelfPanelHtml()+'</div>'+
+    '<div class="case-cards-col">'+gridHtml+'</div></div>';
+}
+
+function _calcAgeText(birthday){
+  if(!birthday)return '';
+  var b=new Date(birthday);
+  if(isNaN(b.getTime()))return '';
+  var now=new Date();
+  var a=now.getFullYear()-b.getFullYear();
+  var m=now.getMonth()-b.getMonth();
+  if(m<0||(m===0&&now.getDate()<b.getDate()))a--;
+  if(a<0||a>150)return '';
+  return a+' 歲';
+}
+
+function _buildSelfPanelHtml(){
+  var s=_selfCache||{};
+  var active=!_currentCaseId;
+  var info=getLiunianInfoFor(s.gender, s.birthday, null);
+  var ageText=info?('虛歲 '+info.xusui):_calcAgeText(s.birthday);
+  var bg=_cardTint(s.color||CARD_DEFAULT_COLOR);
+  var h='<div class="case-self-card'+(active?' is-active':'')+'" style="background:'+bg+'" onclick="editSelf()">';
+  h+='<div class="case-self-top"><div class="case-self-label">我的名片 · 本人</div>'+
+     (active?'<span class="case-active-badge">● 分析中</span>':'<span class="case-switch-hint">點開資料 ▸</span>')+'</div>';
+  h+='<div class="case-self-name">'+_escHtml(s.name||'我自己')+'</div>';
+  h+='<div class="case-self-meta">';
+  if(s.gender)h+='<span>'+s.gender+'</span>';
+  if(s.birthday)h+='<span>'+s.birthday+'</span>';
+  if(ageText)h+='<span>'+ageText+'</span>';
+  if(!s.gender&&!s.birthday)h+='<span class="case-self-dim">尚未填寫性別/生日</span>';
+  h+='</div>';
+  if(info){
+    h+='<div class="case-self-liunian"><div style="font-size:13px;color:var(--text-3);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info)+'</div>';
+  }else{
+    h+='<div class="case-self-liunian case-self-dim" style="font-size:13px">填好性別與生日後，這裡會顯示流年。</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function _buildNamecardHtml(docId, c){
+  var active=(_currentCaseId===docId);
+  var info=getLiunianInfoFor(c.gender, c.birthday, c.date||null);
+  var ageText=info?('虛歲 '+info.xusui):_calcAgeText(c.birthday);
+  var note=(c.note||'').trim();
+  var h='<div class="case-card'+(active?' is-active':'')+'" style="background:'+_cardTint(c.color||CARD_DEFAULT_COLOR)+'" onclick="editCase(\''+docId+'\')">';
+  if(active)h+='<span class="case-active-dot" title="分析中"></span>';
+  h+='<div class="case-card-name">'+_escHtml(c.name||'未命名')+'</div>';
+  h+='<div class="case-card-age">'+(ageText||'—')+'</div>';
+  h+='<div class="case-card-note">'+(note?_escHtml(note):'<span class="case-note-empty">（無備註）</span>')+'</div>';
+  h+='</div>';
+  return h;
+}
+
+// 名片搜尋（oninput）
+export function caseSearch(v){ _caseSearchTerm=v||''; _paintCasePage(); }
+
+if(typeof window!=='undefined'){
+  window.caseSearch=caseSearch;
+  window.editSelf=editSelf;
+  window.cfOpen=cfOpen;
+  window.cfDelete=cfDelete;
+  window.cfRenderLiunian=cfRenderLiunian;
+  window.cfTryClose=cfTryClose;
+  window.cfPickColor=cfPickColor;
+  window.cfToggleColors=cfToggleColors;
+  window.showGroupMgr=showGroupMgr;
+  window.closeGroupMgr=closeGroupMgr;
+  window.gmAdd=gmAdd;
+  window.gmDragStart=gmDragStart;
+  window.gmDragOver=gmDragOver;
+  window.gmDrop=gmDrop;
+  window.gmDel=gmDel;
+  window.gmSave=gmSave;
 }
 
 export function moveGroup(groupName, direction){
@@ -177,6 +251,7 @@ export function loadCase(caseId){
       if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else setData(emptyData());
       if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
       if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});
+      if(doc.exists&&doc.data().manualDataJson){try{setManualData(JSON.parse(doc.data().manualDataJson));}catch(e){setManualData(null);}}else{setManualData(null);}
       if(doc.exists){setCaseGender(doc.data().gender||'');setCaseBirthday(doc.data().birthday||'');setCaseDate('');}
       recalcFromObs();
       window.showModePage();
@@ -193,30 +268,68 @@ export function loadCase(caseId){
       if(c.dataJson)setData(JSON.parse(c.dataJson));else setData(emptyData());
       if(c.obsJson)setObsData(JSON.parse(c.obsJson));else setObsData({});
       if(c.overrideJson)setObsOverride(JSON.parse(c.overrideJson));else setObsOverride({});
+      if(c.manualDataJson){try{setManualData(JSON.parse(c.manualDataJson));}catch(e){setManualData(null);}}else{setManualData(null);}
       recalcFromObs();
       window.showModePage();
     }).catch(function(e){console.log('載入個案失敗',e);alert('載入失敗');});
   }
 }
 
+// 依模式調整視窗：標題/儲存字/欄位顯示/刪除打開鈕
+function _cfApplyMode(mode){ // 'new' | 'case' | 'self'
+  var sv=document.querySelector('.case-form-save'); if(sv)sv.innerText = (mode==='new')?'建立':'儲存';
+  var isSelf=(mode==='self');
+  ['cf-row-date','cf-row-group','cf-row-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=isSelf?'none':'';});
+  var del=document.getElementById('cf-delete-btn'); if(del)del.style.display=(mode==='case')?'':'none';
+  var op=document.getElementById('cf-open-btn'); if(op)op.style.display=(mode==='new')?'none':'';
+}
+
+// 視窗內即時流年（改性別/生日/觀察日 時重算）
+export function cfRenderLiunian(){
+  var box=document.getElementById('cf-liunian'); if(!box)return;
+  var gender=document.getElementById('cf-gender').value;
+  var birthday=document.getElementById('cf-birthday').value;
+  var dateEl=document.getElementById('cf-date');
+  var refDate=(_editingSelf||!dateEl)?null:(dateEl.value||null);
+  var info=getLiunianInfoFor(gender,birthday,refDate);
+  if(!info){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';
+  box.innerHTML='<div style="font-size:13px;color:var(--text-3);margin-bottom:8px">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info);
+}
+
+// 色卡：渲染色票 + 選色（本人/個案視窗共用）
+function _cfRenderColors(){
+  var trig=document.getElementById('cf-color-trigger');
+  if(trig)trig.style.background=_cfColor||CARD_DEFAULT_COLOR;
+  var box=document.getElementById('cf-colors'); if(!box)return;
+  box.style.display='none';  // 渲染時收合，點小按鈕才展開
+  box.innerHTML=CARD_COLORS.map(function(hex){
+    var sel=(hex.toLowerCase()===(_cfColor||'').toLowerCase())?' selected':'';
+    return '<button type="button" class="cf-swatch'+sel+'" style="background:'+hex+'" onclick="cfPickColor(\''+hex+'\')"></button>';
+  }).join('');
+}
+export function cfPickColor(hex){ _cfColor=hex; _cfRenderColors(); }
+export function cfToggleColors(){ var b=document.getElementById('cf-colors'); if(b)b.style.display=(b.style.display==='flex')?'none':'flex'; }
+
 export function showCaseForm(){
-  _editingCaseId=null;
-  document.getElementById('case-form-title').innerText='新增個案';
-  document.querySelector('.case-form-save').innerText='建立';
+  _editingCaseId=null;_editingSelf=false;
   document.getElementById('cf-name').value='';
   document.getElementById('cf-gender').value='';
   document.getElementById('cf-birthday').value='';
   document.getElementById('cf-date').value=new Date().toISOString().substring(0,10);
   document.getElementById('cf-note').value='';
   document.getElementById('cf-group').value='';
+  _cfColor=CARD_DEFAULT_COLOR;
+  _cfApplyMode('new');
+  _cfRenderColors();
+  cfRenderLiunian();
+  _cfOpenSnapshot=_cfSnapshot();
   document.getElementById('case-form-overlay').style.display='flex';
   setTimeout(function(){document.getElementById('cf-name').focus();},100);
 }
 
 export function editCase(caseId){
-  _editingCaseId=caseId;
-  document.getElementById('case-form-title').innerText='編輯個案';
-  document.querySelector('.case-form-save').innerText='儲存';
+  _editingCaseId=caseId;_editingSelf=false;
   db.collection('users').doc(currentUser.uid).collection('cases').doc(caseId).get().then(function(doc){
     if(!doc.exists){alert('個案不存在');return;}
     var c=doc.data();
@@ -226,21 +339,62 @@ export function editCase(caseId){
     document.getElementById('cf-date').value=c.date||'';
     document.getElementById('cf-note').value=c.note||'';
     document.getElementById('cf-group').value=c.group||'';
+    _cfColor=c.color||CARD_DEFAULT_COLOR;
+    _cfApplyMode('case');
+    _cfRenderColors();
+    cfRenderLiunian();
+    _cfOpenSnapshot=_cfSnapshot();
     document.getElementById('case-form-overlay').style.display='flex';
-    setTimeout(function(){document.getElementById('cf-name').focus();},100);
   }).catch(function(e){
     console.log('載入個案失敗',e);
     alert('載入失敗');
   });
 }
 
+// 編輯本人資料（精簡：姓名/性別/生日/流年）
+export function editSelf(){
+  _editingCaseId=null;_editingSelf=true;
+  var s=_selfCache||{name:userName,gender:_userGender,birthday:_userBirthday};
+  document.getElementById('cf-name').value=s.name||'';
+  document.getElementById('cf-gender').value=s.gender||'';
+  document.getElementById('cf-birthday').value=s.birthday||'';
+  _cfColor=s.color||CARD_DEFAULT_COLOR;
+  _cfApplyMode('self');
+  _cfRenderColors();
+  cfRenderLiunian();
+  _cfOpenSnapshot=_cfSnapshot();
+  document.getElementById('case-form-overlay').style.display='flex';
+}
+
 export function closeCaseForm(){
   document.getElementById('case-form-overlay').style.display='none';
 }
 
-export function saveCaseForm(){
+// 目前欄位快照（6 欄）
+function _cfSnapshot(){
+  function v(id){var el=document.getElementById(id);return el?el.value:'';}
+  return [v('cf-name'),v('cf-gender'),v('cf-birthday'),v('cf-date'),v('cf-group'),v('cf-note'),(_cfColor||'')].join('');
+}
+// 點視窗外/取消：有未儲存變更才確認，否則直接關閉
+export function cfTryClose(){
+  if(_cfOpenSnapshot!==_cfSnapshot()){
+    if(!confirm('有尚未儲存的變更，確定離開不儲存嗎？'))return;
+  }
+  closeCaseForm();
+}
+
+// 收集欄位並送出儲存；回傳 {promise,id,group,isNew} 或 null(驗證失敗)
+function _collectAndSave(){
   var name=document.getElementById('cf-name').value.trim();
-  if(!name){document.getElementById('cf-name').focus();return;}
+  if(!name){document.getElementById('cf-name').focus();return null;}
+  if(_editingSelf){
+    setUserName(name);
+    setUserGender(document.getElementById('cf-gender').value);
+    setUserBirthday(document.getElementById('cf-birthday').value);
+    _selfCache={name:name,gender:_userGender,birthday:_userBirthday,color:_cfColor};
+    var p=db.collection('users').doc(currentUser.uid).set({displayName:name,gender:_userGender,birthday:_userBirthday,cardColor:_cfColor,updatedAt:new Date().toISOString()},{merge:true});
+    return {promise:p,id:null,group:'',isNew:false};
+  }
   var fields={
     name:name,
     gender:document.getElementById('cf-gender').value,
@@ -248,38 +402,160 @@ export function saveCaseForm(){
     date:document.getElementById('cf-date').value,
     note:document.getElementById('cf-note').value.trim(),
     group:document.getElementById('cf-group').value.trim(),
+    color:_cfColor,
     updatedAt:new Date().toISOString()
   };
+  if(_editingCaseId){
+    return {promise:db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).set(fields,{merge:true}),id:_editingCaseId,group:fields.group,isNew:false};
+  }
+  fields.dataJson=JSON.stringify(emptyData());
+  fields.obsJson='{}';
+  fields.overrideJson='{}';
+  fields.createdAt=new Date().toISOString();
+  return {promise:db.collection('users').doc(currentUser.uid).collection('cases').add(fields),id:null,group:fields.group,isNew:true};
+}
+
+function _afterGroupUpdate(group){
+  if(group && _groupOrder.indexOf(group)<0){
+    _groupOrder.push(group);
+    db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).catch(function(e){console.log('groupOrder更新失敗',e);});
+  }
+}
+
+export function saveCaseForm(){
   var saveBtn=document.querySelector('.case-form-save');
   var origText=saveBtn.innerText;
-  saveBtn.innerText=(_editingCaseId?'儲存':'建立')+'中...';saveBtn.disabled=true;
-
-  var promise;
-  if(_editingCaseId){
-    promise=db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).set(fields,{merge:true});
-  }else{
-    fields.dataJson=JSON.stringify(emptyData());
-    fields.obsJson='{}';
-    fields.overrideJson='{}';
-    fields.createdAt=new Date().toISOString();
-    promise=db.collection('users').doc(currentUser.uid).collection('cases').add(fields);
-  }
-
-  promise.then(function(){
+  var r=_collectAndSave();
+  if(!r)return;
+  saveBtn.innerText='儲存中...';saveBtn.disabled=true;
+  r.promise.then(function(){
     closeCaseForm();
     saveBtn.innerText=origText;saveBtn.disabled=false;
-    _editingCaseId=null;
-    var newGroup=fields.group;
-    if(newGroup && _groupOrder.indexOf(newGroup)<0){
-      _groupOrder.push(newGroup);
-      db.collection('users').doc(currentUser.uid).set({groupOrder:_groupOrder},{merge:true}).catch(function(e){console.log('groupOrder更新失敗',e);});
-    }
+    _afterGroupUpdate(r.group);
     renderCaseList();
   }).catch(function(e){
     console.log('儲存失敗',e);
     alert('儲存失敗，請重試');
     saveBtn.innerText=origText;saveBtn.disabled=false;
   });
+}
+
+// 「打開」：先儲存，再切換成分析此人並進首頁
+export function cfOpen(){
+  var r=_collectAndSave();
+  if(!r)return;
+  var openBtn=document.getElementById('cf-open-btn');
+  if(openBtn){openBtn.innerText='開啟中...';openBtn.disabled=true;}
+  var wasSelf=_editingSelf;
+  r.promise.then(function(res){
+    _afterGroupUpdate(r.group);
+    var id = wasSelf ? null : (r.id || (res && res.id) || null);
+    closeCaseForm();
+    if(openBtn){openBtn.innerText='打開';openBtn.disabled=false;}
+    loadCase(id);
+  }).catch(function(e){
+    console.log('開啟失敗',e);
+    alert('儲存失敗，請重試');
+    if(openBtn){openBtn.innerText='打開';openBtn.disabled=false;}
+  });
+}
+
+// 「刪除」：確認後刪除個案並關閉視窗（本人不會有此鈕）
+export function cfDelete(){
+  if(!_editingCaseId)return;
+  var name=document.getElementById('cf-name').value.trim()||'此個案';
+  if(!confirm('確定要刪除「'+name+'」的所有紀錄嗎？此操作無法復原。'))return;
+  db.collection('users').doc(currentUser.uid).collection('cases').doc(_editingCaseId).delete().then(function(){
+    closeCaseForm();
+    renderCaseList();
+  }).catch(function(e){console.log('刪除失敗',e);alert('刪除失敗，請重試');});
+}
+
+/* ===== 管理分組 ===== */
+function _gmSyncFromDom(){
+  var rows=document.querySelectorAll('#gm-list .gm-row');
+  var arr=[];
+  rows.forEach(function(el){
+    arr.push({
+      orig:el.getAttribute('data-orig')||null,
+      name:el.querySelector('.gm-name').value,
+      desc:el.querySelector('.gm-desc').value
+    });
+  });
+  _gmRows=arr;
+}
+function _gmRender(){
+  var box=document.getElementById('gm-list'); if(!box)return;
+  if(_gmRows.length===0){
+    box.innerHTML='<div style="color:var(--text-3);font-size:13px;padding:12px 2px">尚無分組，點下方「＋ 新增分組」建立。</div>';
+    return;
+  }
+  box.innerHTML=_gmRows.map(function(r,i){
+    return '<div class="gm-row" draggable="true" data-i="'+i+'" data-orig="'+_escHtml(r.orig||'')+'" ondragstart="gmDragStart(event,'+i+')" ondragover="gmDragOver(event)" ondrop="gmDrop(event,'+i+')">'+
+      '<div class="gm-handle" title="拖曳排序">⠿</div>'+
+      '<input class="gm-name" draggable="false" value="'+_escHtml(r.name||'')+'" placeholder="分組名稱" maxlength="30">'+
+      '<input class="gm-desc" draggable="false" value="'+_escHtml(r.desc||'')+'" placeholder="說明（選填）" maxlength="60">'+
+      '<button type="button" class="gm-del" draggable="false" onclick="gmDel('+i+')" title="刪除分組">✕</button>'+
+    '</div>';
+  }).join('');
+}
+export function showGroupMgr(){
+  var names=_groupOrder.slice();
+  _casesCache.forEach(function(it){var g=it.data.group||'';if(g&&names.indexOf(g)<0)names.push(g);});
+  _gmRows=names.map(function(n){return {orig:n,name:n,desc:(_groupDescs[n]||'')};});
+  _gmRender();
+  document.getElementById('group-mgr-overlay').style.display='flex';
+}
+export function closeGroupMgr(){ document.getElementById('group-mgr-overlay').style.display='none'; }
+export function gmAdd(){ _gmSyncFromDom(); _gmRows.push({orig:null,name:'',desc:''}); _gmRender(); }
+export function gmDragStart(e,i){ _gmSyncFromDom(); _gmDragFrom=i; if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(i));}catch(_){}} }
+export function gmDragOver(e){ e.preventDefault(); if(e.dataTransfer)e.dataTransfer.dropEffect='move'; }
+export function gmDrop(e,i){ e.preventDefault(); if(_gmDragFrom==null||_gmDragFrom===i){_gmDragFrom=null;return;} _gmSyncFromDom(); var moved=_gmRows.splice(_gmDragFrom,1)[0]; _gmRows.splice(i,0,moved); _gmDragFrom=null; _gmRender(); }
+export function gmDel(i){
+  _gmSyncFromDom();
+  var r=_gmRows[i];
+  if(r&&(r.name||r.orig)){
+    if(!confirm('確定刪除分組「'+(r.name||r.orig)+'」？該分組底下的個案會變成「未分組」（個案本身不會被刪）。'))return;
+  }
+  _gmRows.splice(i,1);
+  _gmRender();
+}
+export function gmSave(){
+  _gmSyncFromDom();
+  var seen={},order=[],descs={};
+  for(var i=0;i<_gmRows.length;i++){
+    var nm=(_gmRows[i].name||'').trim();
+    if(!nm){alert('分組名稱不能空白');return;}
+    if(seen[nm]){alert('分組名稱重複：'+nm);return;}
+    seen[nm]=1;order.push(nm);descs[nm]=(_gmRows[i].desc||'').trim();
+  }
+  // 重新命名 / 刪除 → 傳播到個案的 group 欄位
+  var renameMap={},keptOrig={};
+  _gmRows.forEach(function(r){var nm=(r.name||'').trim();if(r.orig){keptOrig[r.orig]=1;if(r.orig!==nm)renameMap[r.orig]=nm;}});
+  var allOrig=_groupOrder.slice();
+  _casesCache.forEach(function(it){var g=it.data.group||'';if(g&&allOrig.indexOf(g)<0)allOrig.push(g);});
+  var deleted={};
+  allOrig.forEach(function(n){if(!keptOrig[n])deleted[n]=1;});
+  var batch=db.batch(),touched=false;
+  _casesCache.forEach(function(it){
+    var g=it.data.group||'';
+    var ref=db.collection('users').doc(currentUser.uid).collection('cases').doc(it.id);
+    if(g&&renameMap[g]){batch.update(ref,{group:renameMap[g]});touched=true;}
+    else if(g&&deleted[g]){batch.update(ref,{group:''});touched=true;}
+  });
+  var saveBtn=document.getElementById('gm-save');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.innerText='儲存中...';}
+  var userRef=db.collection('users').doc(currentUser.uid);
+  function finish(){
+    userRef.set({groupOrder:order,groupDescs:descs},{merge:true}).then(function(){
+      if(saveBtn){saveBtn.disabled=false;saveBtn.innerText='儲存';}
+      closeGroupMgr();
+      renderCaseList();
+    }).catch(function(e){console.log('分組儲存失敗',e);alert('儲存失敗，請重試');if(saveBtn){saveBtn.disabled=false;saveBtn.innerText='儲存';}});
+  }
+  if(touched){
+    batch.commit().then(finish).catch(function(e){console.log('個案分組更新失敗',e);alert('更新失敗，請重試');if(saveBtn){saveBtn.disabled=false;saveBtn.innerText='儲存';}});
+  }else{ finish(); }
 }
 
 export function deleteCase(caseId,caseName){
@@ -315,7 +591,7 @@ export function doLogout(){
 }
 
 export function editName(){
-  if(_isTA&&_currentCaseId){
+  if(_currentCaseId){
     editCase(_currentCaseId);
     return;
   }
@@ -330,7 +606,7 @@ export function confirmEditName(){
   var n=document.getElementById('name-edit-input').value.trim();
   if(n){
     setUserName(n);
-    document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+    document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   }
   setUserGender(document.getElementById('profile-gender').value);
   setUserBirthday(document.getElementById('profile-birthday').value);
@@ -359,10 +635,10 @@ export function closeEditName(){document.getElementById('name-edit-overlay').sty
 // ===== 使用者資料頁（取代彈窗）：性別/生日輸入 + 流年資訊 =====
 export function showProfilePage(){
   // admin 正在看某案例時，維持原本案例編輯行為
-  if(_isTA&&_currentCaseId){editCase(_currentCaseId);return;}
+  if(_currentCaseId){editCase(_currentCaseId);return;}
   showPage('profile-page');
   setNavActive('nav-profile');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   renderProfilePage();
   if(!window._suppressPushState)history.pushState({page:'profile'},'');
 }
@@ -383,7 +659,7 @@ function _renderProfileLiunian(){
 
 export function saveProfile(){
   var n=document.getElementById('pf-name').value.trim();
-  if(n){setUserName(n);document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';}
+  if(n){setUserName(n);document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';}
   setUserGender(document.getElementById('pf-gender').value);
   setUserBirthday(document.getElementById('pf-birthday').value);
   if(currentUser){
