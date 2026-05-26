@@ -264,3 +264,5 @@ export function showKnowledgePage(){
     history.pushState({page:'knowledge',dim:curK},'');
   }
 }
+
+// cf-redeploy touch 2026-05-26

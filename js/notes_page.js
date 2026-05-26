@@ -202,3 +202,5 @@ export function showBoardPage(){
   if(curBoard<0)boardSelect(0);
   if(!window._suppressPushState){history.pushState({page:'board',dim:curBoard},'');}
 }
+
+// cf-redeploy touch 2026-05-26

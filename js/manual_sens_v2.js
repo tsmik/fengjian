@@ -750,3 +750,5 @@ export function renderManualSensV2Page() {
 
   el.innerHTML = html;
 }
+
+// cf-redeploy touch 2026-05-26

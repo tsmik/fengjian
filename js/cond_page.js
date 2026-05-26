@@ -785,3 +785,5 @@ export function applyCondChange(qid,side,val){
   recalcFromObs();save();
   renderDimCondPage();
 }
+
+// cf-redeploy touch 2026-05-26
