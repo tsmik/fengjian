@@ -29,7 +29,7 @@ export function manualLoadLocal(){
 
 export function showManualPage(){
   showPage('manual-page');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual');
   if(!window._suppressPushState) history.pushState({page:'manual'},'');
   initManualData();
@@ -109,7 +109,7 @@ export function renderManualPage(){
   initManualData();
   var _manualLnInfo=_getLiunianInfo();
   var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
-  var _displayName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'未命名';
+  var _displayName=(_currentCaseId?_currentCaseName:userName)||'未命名';
   var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
 
   // === 可見維度計算 ===
@@ -765,7 +765,7 @@ export async function exportManualPNG(){
   try{
     initManualData();
     var canvas=drawReportCanvas(manualData, {checkComplete:true});
-    var _expName=(_isTA&&_currentCaseId?_currentCaseName:userName)||'報告';
+    var _expName=(_currentCaseId?_currentCaseName:userName)||'報告';
     var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
       '人相兵法_'+_expName+'_手動.png',{type:'image/png'});
     var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);

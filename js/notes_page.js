@@ -197,7 +197,7 @@ export function showBoardPage(){
   try{recalcFromObs();}catch(e){console.error('board recalc:',e);}
   showPage('board-page');
   const nm=document.getElementById('nav-name');
-  if(nm)nm.innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  if(nm)nm.innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-board');
   if(curBoard<0)boardSelect(0);
   if(!window._suppressPushState){history.pushState({page:'board',dim:curBoard},'');}

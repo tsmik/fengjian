@@ -23,7 +23,7 @@ var CP_PART_LABELS=['頭','上停','耳','眉','眼','鼻','口','中停','顴',
 
 export function showCondPage(){
   showPage('cond-page');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-cond');
   recalcFromObs();
   cpRender();

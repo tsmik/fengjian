@@ -38,7 +38,7 @@ export function getLiunian(gender, xusui){
 
 export function _getLiunianInfo(){
   var gender, birthday, refDate;
-  if(_isTA&&_currentCaseId){
+  if(_currentCaseId){
     gender=_caseGender;birthday=_caseBirthday;refDate=_caseDate||null;
   }else{
     // 學員、或 admin 未選案例：用個人資料（使用者資料頁設定的）性別/生日
@@ -91,7 +91,7 @@ export function buildLiunianTableHtml(info){
 /* ===== Show Report ===== */
 export function showReport(){
   showPage('report-overlay');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
   if(!window._suppressPushState) history.pushState({page:'report'},'');
   recalcFromObs();

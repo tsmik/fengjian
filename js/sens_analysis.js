@@ -8,7 +8,7 @@ import { initManualData, manualLoadData } from './manual.js';
 /* ===== 敏感度分析頁 ===== */
 export function showSensPage(){
   showPage('sens-page');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-sens');
   if(!window._suppressPushState) history.pushState({page:'sens'},'');
   recalcFromObs();
@@ -703,7 +703,7 @@ export function renderSensPage(){
 /* ===== 手動敏感度分析頁 ===== */
 export function showManualSensPage(){
   showPage('manual-sens-page');
-  document.getElementById('nav-name').innerText=(_isTA&&_currentCaseId?_currentCaseName:userName)||'';
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual-sens');
   if(!window._suppressPushState) history.pushState({page:'manual-sens'},'');
   initManualData();
