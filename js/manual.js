@@ -9,8 +9,10 @@ export function initManualData(){
   if(manualData)return;
   setManualData(Array(13).fill(null).map(function(){return Array(9).fill(null);}));
 }
+// 手動資料草稿的 LS key：per-使用者 per-個案（避免切換個案時殘留上一個的值）
+function _manualLsKey(){ return 'manual_data_v1_'+((currentUser&&currentUser.uid)||'anon')+'_'+(_currentCaseId||'self'); }
 export function manualSaveLocal(){
-  if(manualData)localStorage.setItem('manual_data_v1',JSON.stringify(manualData));
+  if(manualData)localStorage.setItem(_manualLsKey(),JSON.stringify(manualData));
 }
 export function manualLoadData(){
   // 優先 Firebase，備用 localStorage
@@ -23,7 +25,7 @@ export function manualLoadData(){
   }).catch(function(){manualLoadLocal();renderManualPage();});
 }
 export function manualLoadLocal(){
-  try{var s=localStorage.getItem('manual_data_v1');if(s)setManualData(JSON.parse(s));}catch(e){}
+  try{var s=localStorage.getItem(_manualLsKey());if(s)setManualData(JSON.parse(s));else setManualData(null);}catch(e){}
   if(!manualData)initManualData();
 }
 

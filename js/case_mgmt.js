@@ -2,7 +2,7 @@
 import { userName, setUserName, _isTA, _currentCaseId, setCurrentCaseId, _currentCaseName, setCurrentCaseName,
          _userGender, setUserGender, _userBirthday, setUserBirthday,
          _caseGender, setCaseGender, _caseBirthday, setCaseBirthday, _caseDate, setCaseDate,
-         data, setData, obsData, setObsData, obsOverride, setObsOverride, condResults,
+         data, setData, obsData, setObsData, obsOverride, setObsOverride, setManualData, condResults,
          emptyData, setNavActive, showPage, _showToast, _escHtml, _getUserDocRef, save,
          currentUser, setCurrentUser, userRole, setUserRole,
          DIMS } from './core.js';
@@ -235,6 +235,7 @@ export function loadCase(caseId){
       if(doc.exists&&doc.data().dataJson)setData(JSON.parse(doc.data().dataJson));else setData(emptyData());
       if(doc.exists&&doc.data().obsJson)setObsData(JSON.parse(doc.data().obsJson));else setObsData({});
       if(doc.exists&&doc.data().overrideJson)setObsOverride(JSON.parse(doc.data().overrideJson));else setObsOverride({});
+      if(doc.exists&&doc.data().manualDataJson){try{setManualData(JSON.parse(doc.data().manualDataJson));}catch(e){setManualData(null);}}else{setManualData(null);}
       if(doc.exists){setCaseGender(doc.data().gender||'');setCaseBirthday(doc.data().birthday||'');setCaseDate('');}
       recalcFromObs();
       window.showModePage();
@@ -251,6 +252,7 @@ export function loadCase(caseId){
       if(c.dataJson)setData(JSON.parse(c.dataJson));else setData(emptyData());
       if(c.obsJson)setObsData(JSON.parse(c.obsJson));else setObsData({});
       if(c.overrideJson)setObsOverride(JSON.parse(c.overrideJson));else setObsOverride({});
+      if(c.manualDataJson){try{setManualData(JSON.parse(c.manualDataJson));}catch(e){setManualData(null);}}else{setManualData(null);}
       recalcFromObs();
       window.showModePage();
     }).catch(function(e){console.log('載入個案失敗',e);alert('載入失敗');});
