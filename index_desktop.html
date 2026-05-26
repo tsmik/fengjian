@@ -401,7 +401,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-card-actions .case-btn-del:hover{color:#c03830}
 @media(max-width:900px){.case-layout{flex-direction:column}.case-self-col{width:100%;position:static}}
 #case-form-overlay,#group-mgr-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:5000;align-items:center;justify-content:center}
-#case-form-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+#case-form-overlay .case-form,#group-mgr-overlay .case-form{background:white;border-radius:16px;padding:32px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 #case-form-overlay .case-form h3{font-size:20px;font-weight:400;margin-bottom:20px;letter-spacing:2px}
 #case-form-overlay .case-form label{display:block;font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:4px;margin-top:14px;letter-spacing:1px}
 #case-form-overlay .case-form input,#case-form-overlay .case-form select,#case-form-overlay .case-form textarea{width:100%;border:none;border-bottom:2px solid #ddd;padding:8px 0;font-size:16px;font-weight:400;background:transparent;outline:none;color:var(--text)}
@@ -415,7 +415,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-form-del{background:#fbe9e7;color:#c03830}
 .case-form-open{background:var(--static);color:#fff}
 .cf-color-row{display:flex;align-items:center;gap:10px;margin-top:16px}
-.cf-color-trigger{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0}
+.cf-color-trigger{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:#fff;text-shadow:0 0 3px rgba(0,0,0,.6)}
 .cf-color-trigger:hover{box-shadow:0 0 0 2px var(--text-3)}
 .cf-colors{display:none;flex-wrap:wrap;gap:8px;margin-top:10px}
 .cf-swatch{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0}
@@ -580,7 +580,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
     </div>
     <div class="cf-color-row">
       <label style="margin:0">卡片顏色</label>
-      <button type="button" id="cf-color-trigger" class="cf-color-trigger" onclick="cfToggleColors()" title="點選卡片顏色"></button>
+      <button type="button" id="cf-color-trigger" class="cf-color-trigger" onclick="cfToggleColors()" title="點選卡片顏色">✎</button>
     </div>
     <div id="cf-colors" class="cf-colors"></div>
     <div id="cf-liunian" style="display:none;margin-top:18px"></div>
