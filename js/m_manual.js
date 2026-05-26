@@ -521,46 +521,95 @@ function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 let _manualCond = {};
 let _condExpanded = {};  // `${di}_${pi}` -> bool（該格條件面板是否展開）
 
-// ===== 本頁獨立條件（不動全站主規則）：目前僅「形勢」維度(di=0) 的 頭/中停/下停 =====
-// 形=A(靜)、勢=B(動)；refs 由同維度既有答案推導（=A 計入「形」權重），items 由使用者勾符合/不符
-// 部位索引：頭0 上停1 中停2 下停3 耳4 眉5 眼6 鼻7 口8
-// 兩層結構：item（頂骨/枕骨/…）為加權群組，底下列各「敘述分組」逐項勾符合/不符；
-// 該 item 底下全部敘述分組皆符合 → 計入該 item 權重（w）。dim0：形=A、勢=B
-const LOCAL_COND = {
-  0: {
-    0: { threshold: 3, total: 5, groups: [
-      { name: '頂骨', w: 2, crits: ['頂骨龜背'] },
-      { name: '枕骨', w: 1, crits: ['枕骨圓', '枕骨無凹凸/自剋骨'] },
-      { name: '華陽骨', w: 2, crits: ['華陽骨隆起'] },
-    ] },
-    2: { threshold: 4, total: 7, refNote: '參考眉眼鼻', refs: [{ label: '眉', part: 5, w: 2 }, { label: '眼', part: 6, w: 2 }, { label: '鼻', part: 7, w: 1 }], groups: [
-      { name: '顴', w: 2, crits: ['顴豐隆有起'] },
-    ] },
-    3: { threshold: 3, total: 5, refNote: '參考口', refs: [{ label: '口', part: 8, w: 1 }], groups: [
-      { name: '人中', w: 1, crits: ['人中深', '人中長'] },
-      { name: '地閣', w: 1, crits: ['地閣起'] },
-      { name: '頤', w: 2, crits: ['頤骨有出來'] },
-    ] },
-  },
-};
+// ===== 本頁獨立條件（不動全站主規則）：13 維度的 頭/中停/下停，動態從 admin 規則(DIM_RULES) 產生 =====
+// 規則結構＝COUNT{min, items}；每項目要嘛 partResult(參考其他部位) 要嘛某小部位的條件。
+// 小部位＝以 ref 前綴判斷；權重＝該小部位的項目數；門檻＝COUNT.min；敘述分組＝項目裡的判別條件。
+// 計分：該小部位底下敘述分組全符合→計入權重；參考部位＝同維度該部位答案為正極→計入；總和≥門檻→正極(符合)，否則反極。
 let _localCond = {};  // `${di}_${pi}` -> { 敘述分組名: '符合'|'不符' }（記憶體，不持久化；算出的結果寫入 _manualDraft 才持久化）
-function _localCondSpec(di, pi) { return (LOCAL_COND[di] && LOCAL_COND[di][pi]) || null; }
-// 算出該格的形(A)/勢(B)；所有敘述分組需全勾才回 'A'/'B'，否則 null；無此格本頁條件回 undefined
+const _LOCAL_PARTS = { 0: '頭', 2: '中停', 3: '下停' };
+const _PR_PARTIDX = { '頭': 0, '上停': 1, '中停': 2, '下停': 3, '耳': 4, '眉': 5, '眼': 6, '鼻': 7, '口': 8 };
+function _refSubpart(ref) {
+  if (!ref) return null;
+  const m = String(ref).match(/^([a-z]+)(\d+)/i);
+  if (!m) return null;
+  const pre = m[1], n = parseInt(m[2], 10);
+  if (pre === 'h') { if (n <= 4) return '頂骨'; if (n <= 10) return '枕骨'; if (n <= 13) return '華陽骨'; return '頭骨整體'; }
+  return ({ q: '顴', p: '人中', c: '地閣', y: '頤', n: '鼻', m: '口', br: '眉', ey: '眼', er: '耳', e: '上停' })[pre] || null;
+}
+// 一個條件項目 → { subpart, crits[] }（crits 取項目內所有 leaf 的 match 描述；陣列 match 以「或」連）
+function _itemCrits(node) {
+  const leaves = [];
+  (function walk(nd) {
+    if (!nd || typeof nd !== 'object') return;
+    if (nd.ref !== undefined && nd.match !== undefined) { leaves.push(nd); return; }
+    ['items', 'item', 'each', 'rule'].forEach(k => { const v = nd[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v); });
+  })(node);
+  if (!leaves.length) return null;
+  const seen = {}, crits = [];
+  leaves.forEach(lf => { const mv = Array.isArray(lf.match) ? lf.match.join('或') : lf.match; if (mv != null && !seen[mv]) { seen[mv] = 1; crits.push(mv); } });
+  return { subpart: _refSubpart(leaves[0].ref), crits };
+}
+// 動態產生某 (維度,部位) 的條件規格
+function _localCondSpec(di, pi) {
+  const partLabel = _LOCAL_PARTS[pi];
+  if (!partLabel) return null;
+  const dim = DIMS[di] || {};
+  const dr = DIM_RULES && DIM_RULES[di];
+  const posChar = (dr && dr.positive) || dim.a, negChar = (dr && dr.negative) || dim.b;
+  // 解開外層包裝(rule/each/LR)，找到 COUNT 或 AND 節點
+  let node = dr && dr.parts && dr.parts[partLabel];
+  let guard = 0;
+  while (node && guard++ < 6 && node.op !== 'COUNT' && node.op !== 'AND') { node = node.rule || node.each || null; }
+  if (!node || !node.items || !node.items.length) {
+    // 規則未定義（例如 曲直 中停沒有顴）：中停 仍顯示「顴」標題供之後 admin 補；其餘不顯示
+    if (pi === 2) return { partLabel, threshold: 0, total: 0, refs: [], refNote: '', groups: [{ name: '顴', w: 0, crits: [] }], posChar, negChar, empty: true };
+    return null;
+  }
+  const isAnd = (node.op === 'AND'); // AND→全部都要符合
+  const refMap = {}, grpMap = {}, grpOrder = [];
+  const _addGrp = (sp, crits, inc) => { if (!sp) return; if (!grpMap[sp]) { grpMap[sp] = { name: sp, w: 0, crits: [] }; grpOrder.push(sp); } grpMap[sp].w += inc; crits.forEach(c => { if (grpMap[sp].crits.indexOf(c) < 0) grpMap[sp].crits.push(c); }); };
+  node.items.forEach(it => {
+    if (it && it.partResult) {
+      const base = String(it.partResult).split('.')[0];
+      if (!refMap[base]) refMap[base] = { label: base, part: _PR_PARTIDX[base], w: 0 };
+      refMap[base].w += 1;
+    } else if (isAnd) {
+      // AND：把項目內的葉子再依小部位分組（每小部位最多算 1 權重，全中才達標）
+      const lv = []; _collectLeaves(it, lv); const bySub = {};
+      lv.forEach(l => { const sp = _refSubpart(l.ref); if (!sp) return; const mv = Array.isArray(l.match) ? l.match.join('或') : l.match; (bySub[sp] = bySub[sp] || []).push(mv); });
+      Object.keys(bySub).forEach(sp => _addGrp(sp, bySub[sp], 0));
+    } else {
+      const ic = _itemCrits(it);
+      if (ic && ic.subpart) _addGrp(ic.subpart, ic.crits, 1);
+    }
+  });
+  if (isAnd) grpOrder.forEach(k => { grpMap[k].w = 1; });
+  // 中停：即使規則沒有顴條件（例如曲直），也列出「顴」標題（待 admin 補）
+  if (pi === 2 && !grpMap['顴']) { grpMap['顴'] = { name: '顴', w: 0, crits: [] }; grpOrder.push('顴'); }
+  const refs = Object.keys(refMap).map(k => refMap[k]).filter(r => r.part != null);
+  const groups = grpOrder.map(k => grpMap[k]);
+  const total = groups.reduce((a, g) => a + g.w, 0) + refs.reduce((a, r) => a + r.w, 0);
+  const threshold = (node.op === 'COUNT' && typeof node.min === 'number') ? node.min : total;
+  return { partLabel, threshold, total, refs, refNote: refs.length ? '參考' + refs.map(r => r.label).join('') : '', groups, posChar, negChar };
+}
+// 算出該格的正極/反極（回 'A'/'B'）；所有敘述分組需全勾才回，否則 null；無規則回 undefined
 function _localCondResultOf(di, pi) {
   const spec = _localCondSpec(di, pi);
-  if (!spec) return undefined;
+  if (!spec || spec.empty) return undefined;
+  const dim = DIMS[di] || {};
+  const posVal = (spec.posChar === dim.a) ? 'A' : 'B';   // 正極(符合達標)對應的答案值
   const ans = _localCond[`${di}_${pi}`] || {};
   for (const g of spec.groups) for (const c of g.crits) { const a = ans[c]; if (a !== '符合' && a !== '不符') return null; }
-  let formW = 0;
-  (spec.refs || []).forEach(r => { if (_manualDraft[di] && _manualDraft[di][r.part] === 'A') formW += r.w; });
-  spec.groups.forEach(g => { if (g.crits.every(c => ans[c] === '符合')) formW += g.w; }); // item 底下全符合才計權重
-  return (formW >= spec.threshold) ? 'A' : 'B';  // dim0：形=A
+  let posW = 0;
+  (spec.refs || []).forEach(r => { if (r.part != null && _manualDraft[di] && _manualDraft[di][r.part] === posVal) posW += r.w; });
+  spec.groups.forEach(g => { if (g.crits.length && g.crits.every(c => ans[c] === '符合')) posW += g.w; });
+  return (posW >= spec.threshold) ? posVal : (posVal === 'A' ? 'B' : 'A');
 }
 // 部位答案改變時，重算依賴它的衍生格（中停/下停 參考 眉眼鼻/口）
 function _recomputeDerived(di) {
-  if (!LOCAL_COND[di]) return;
   [2, 3].forEach(pi => {
-    if (!_localCondSpec(di, pi)) return;
+    const spec = _localCondSpec(di, pi);
+    if (!spec || spec.empty) return;
     const r = _localCondResultOf(di, pi);
     if (r === 'A' || r === 'B') _manualDraft[di][pi] = r;
   });
@@ -654,11 +703,12 @@ function _renderManualRow(di, pi) {
     }).join('');
   } else if (expanded && local) {
     const lans = _localCond[`${di}_${pi}`] || {};
-    const formula = [...(local.refs || []).map(r => r.label + r.w), ...local.groups.map(g => g.name + g.w)].join(' ');
+    const formula = [...(local.refs || []).map(r => r.label + r.w), ...local.groups.filter(g => g.w).map(g => g.name + g.w)].join(' ');
     panelInner =
       (local.refNote ? `<div class="m-manual-cond-ref">${_esc(local.refNote)}（依既有答案）</div>` : '')
       + local.groups.map(g => {
-        const head = `<div class="m-manual-cond-grouphd">${_esc(g.name)}<span class="m-manual-cond-w">×${g.w}</span></div>`;
+        const head = `<div class="m-manual-cond-grouphd">${_esc(g.name)}${g.w ? `<span class="m-manual-cond-w">×${g.w}</span>` : ''}</div>`;
+        if (!g.crits.length) return head + `<div class="m-manual-cond-row"><span class="m-manual-cond-label" style="color:#a89e92">（此維度規則尚未定義，待 admin 補上）</span></div>`;
         const rows = g.crits.map(c => {
           const a = lans[c];
           return `<div class="m-manual-cond-row">
@@ -671,7 +721,7 @@ function _renderManualRow(di, pi) {
         }).join('');
         return head + rows;
       }).join('')
-      + `<div class="m-manual-cond-formula">${_esc(formula)}　${local.threshold}/${local.total} 符合即為${_esc(dim.a)}（否則${_esc(dim.b)}）</div>`;
+      + (local.total ? `<div class="m-manual-cond-formula">${_esc(formula)}　${local.threshold}/${local.total} 符合即為${_esc(local.posChar)}（否則${_esc(local.negChar)}）</div>` : '');
   }
   const condPanel = (hasCond && expanded) ? `<div class="m-manual-cond-panel">${panelInner}</div>` : '';
   return `
