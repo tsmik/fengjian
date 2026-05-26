@@ -10,26 +10,31 @@
 //   - 基本資料填寫＋儲存＋reload 還在
 // ============================================================
 
-import { auth, db, debugLog, getEffectiveUid } from "./m_main.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from "./m_main.js";
+import { setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
 
 // 共用：寫入基本資料到雲端 + 更新記憶體狀態（首頁與「我的」分頁共用）
 export async function persistProfile(d){
   const uid=getEffectiveUid();
   if(!uid) throw new Error('未登入');
-  const payload={
-    displayName:(d.displayName||'').trim(),
-    birthday:d.birthday||'',
-    gender:d.gender||'',
-    profileUpdatedAt:new Date().toISOString()
-  };
-  await setDoc(doc(db,'users',uid),payload,{merge:true});
-  window.__userData=Object.assign(window.__userData||{},payload);
-  try{ setUserName(payload.displayName); setUserGender(payload.gender); setUserBirthday(payload.birthday); }catch(e){}
+  const name=(d.displayName||'').trim();
+  const birthday=d.birthday||'';
+  const gender=d.gender||'';
+  const caseId=getActiveCaseId();
+  const ref=getCurrentDocRef();
+  if(caseId){
+    // 個案 doc 用 name 欄位（對齊桌機 case_mgmt），不寫 displayName
+    await setDoc(ref,{ name, birthday, gender, updatedAt:new Date().toISOString() },{merge:true});
+  }else{
+    await setDoc(ref,{ displayName:name, birthday, gender, profileUpdatedAt:new Date().toISOString() },{merge:true});
+  }
+  // window.__userData 一律存正規化後的 displayName，讓既有讀 displayName 的碼通用
+  window.__userData=Object.assign(window.__userData||{},{ displayName:name, birthday, gender });
+  try{ setUserName(name); setUserGender(gender); setUserBirthday(birthday); }catch(e){}
   const nm=document.getElementById('m-home-name');
-  if(nm&&payload.displayName) nm.textContent=payload.displayName;
-  return payload;
+  if(nm&&name) nm.textContent=name;
+  return window.__userData;
 }
 
 // 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數
