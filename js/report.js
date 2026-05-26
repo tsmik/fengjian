@@ -832,7 +832,7 @@ export function buildShareMenu(btn, opts){
   m.style.top=Math.max(8,r.top-m.offsetHeight-8)+'px';
   setTimeout(function(){document.addEventListener('mousedown',function h(e){if(!m.contains(e.target)&&e.target!==btn){m.remove();document.removeEventListener('mousedown',h);}});},0);
 }
-var _AUTO_CFG={btnId:'btn-export',coefId:'report-coef',r2Id:'report-radar2',sdId:'report-sd',src:undefined};
+var _AUTO_CFG={btnId:'btn-export',coefId:'report-coef',r2Id:'report-radar2',sdId:'report-sd',src:undefined,bgId:'report-overlay'};
 export function showShareMenu(btn){
   buildShareMenu(btn,{onTable:function(){exportPNG();},onCharts:function(){captureComposite('charts',_AUTO_CFG);},onAll:function(){captureComposite('all',_AUTO_CFG);}});
 }
