@@ -33,6 +33,7 @@ export function showManualPage(){
   showPage('manual-page');
   document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-manual');
+  if(window.openReportNote)window.openReportNote();
   if(!window._suppressPushState) history.pushState({page:'manual'},'');
   initManualData();
   manualLoadData();

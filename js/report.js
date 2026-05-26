@@ -92,11 +92,47 @@ export function buildLiunianTableHtml(info){
   return h;
 }
 
+/* ===== 報告浮動筆記（老師的話）：per-個案 reportNote，自動+手動報告共用一則 ===== */
+let _reportNoteTimer=null;
+export function openReportNote(){
+  var fab=document.getElementById('report-note-fab'); if(fab)fab.style.display='inline-flex';
+  var ta=document.getElementById('report-note-text');
+  if(ta){ta.value='';var ref=_getUserDocRef();if(ref)ref.get().then(function(d){if(d.exists&&d.data().reportNote!=null)ta.value=d.data().reportNote;}).catch(function(){});}
+}
+export function hideReportNote(){
+  var fab=document.getElementById('report-note-fab'); if(fab)fab.style.display='none';
+  var p=document.getElementById('report-note-panel'); if(p)p.style.display='none';
+}
+export function toggleReportNotePanel(){
+  var p=document.getElementById('report-note-panel'); if(!p)return;
+  var isOpen=(p.style.display==='flex');
+  p.style.display=isOpen?'none':'flex';
+  if(!isOpen){var ta=document.getElementById('report-note-text');if(ta)ta.focus();}
+}
+export function onReportNoteInput(){
+  clearTimeout(_reportNoteTimer);
+  var st=document.getElementById('report-note-status'); if(st)st.textContent='儲存中…';
+  _reportNoteTimer=setTimeout(function(){
+    var ta=document.getElementById('report-note-text'); if(!ta)return;
+    var ref=_getUserDocRef(); if(!ref)return;
+    ref.set({reportNote:ta.value,updatedAt:new Date().toISOString()},{merge:true}).then(function(){
+      if(st){st.textContent='已儲存';setTimeout(function(){if(st&&st.textContent==='已儲存')st.textContent='';},1500);}
+    }).catch(function(e){console.log('筆記儲存失敗',e);if(st)st.textContent='儲存失敗';});
+  },500);
+}
+if(typeof window!=='undefined'){
+  window.openReportNote=openReportNote;
+  window.hideReportNote=hideReportNote;
+  window.toggleReportNotePanel=toggleReportNotePanel;
+  window.onReportNoteInput=onReportNoteInput;
+}
+
 /* ===== Show Report ===== */
 export function showReport(){
   showPage('report-overlay');
   document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
   setNavActive('nav-report');
+  openReportNote();
   if(!window._suppressPushState) history.pushState({page:'report'},'');
   recalcFromObs();
   var _lnInfo=_getLiunianInfo();

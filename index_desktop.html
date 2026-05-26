@@ -394,6 +394,16 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-empty-add:hover{opacity:.9}
 .case-empty-grp{border:1px solid var(--border);background:#fafaf8;color:var(--text)}
 .case-empty-grp:hover{background:var(--hover)}
+/* 報告浮動筆記（老師的話） */
+#report-note-fab{display:none;position:fixed;right:20px;bottom:20px;z-index:5850;align-items:center;gap:6px;background:var(--dark);color:#fff;border-radius:24px;padding:10px 18px;font-size:14px;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.25);letter-spacing:1px;user-select:none}
+#report-note-fab:hover{opacity:.92}
+#report-note-panel{display:none;position:fixed;right:20px;bottom:70px;z-index:5851;width:320px;max-width:calc(100vw - 40px);background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.2);flex-direction:column;overflow:hidden}
+#report-note-panel .rn-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sidebar);font-size:13px;color:var(--text)}
+#report-note-panel .rn-head>span:first-child{flex:1}
+#report-note-panel .rn-status{font-size:11px;color:var(--static)}
+#report-note-panel .rn-close{width:24px;height:24px;border:none;background:transparent;color:var(--text-3);cursor:pointer;font-size:13px;border-radius:50%;flex-shrink:0}
+#report-note-panel .rn-close:hover{background:var(--hover)}
+#report-note-panel textarea{border:none;outline:none;resize:vertical;min-height:170px;max-height:50vh;padding:12px;font-size:15px;font-family:inherit;line-height:1.6;color:var(--text);background:#fff;box-sizing:border-box}
 .case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
 .case-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
 .case-card:hover .case-card-actions{opacity:1}
@@ -524,6 +534,13 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <!-- 老師通道登入畫面結束 -->
 
 <div id="toast-notify" style="position:fixed;top:20px;right:20px;background:#7A9E7E;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:400;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none"></div>
+
+<!-- 報告浮動筆記（老師的話）：自動/手動報告頁共用，per-個案 -->
+<div id="report-note-fab" onclick="toggleReportNotePanel()" title="老師的話／我的筆記">✏️ 筆記</div>
+<div id="report-note-panel">
+  <div class="rn-head"><span>老師的話／我的筆記</span><span id="report-note-status" class="rn-status"></span><button type="button" class="rn-close" onclick="toggleReportNotePanel()">✕</button></div>
+  <textarea id="report-note-text" oninput="onReportNoteInput()" placeholder="記下老師的話、分析重點…（自動儲存）"></textarea>
+</div>
 
 <!-- Top Nav Bar -->
 <nav id="top-nav">
