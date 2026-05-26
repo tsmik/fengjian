@@ -18,6 +18,7 @@ let _cfOpenSnapshot = '';  // 視窗開啟時的欄位快照（判斷是否有�
 let _groupDescs = {};      // 分組說明 {分組名: 說明}
 let _cfColor = '';         // 視窗目前選的卡片顏色
 let _gmRows = [];          // 管理分組視窗的工作列 [{orig,name,desc}]
+let _gmDragFrom = null;    // 拖曳排序的來源 index
 
 // 卡片色卡（預設米色 + 人相兵法報告 13 維度顏色）
 const CARD_DEFAULT_COLOR = '#D9CBA8';
@@ -120,11 +121,8 @@ function _paintCasePage(){
     if(isUngrouped){
       gridHtml+='<div class="case-group-title ungrouped">未分組<span class="case-group-count">（'+cases.length+'）</span></div>';
     }else{
-      var gEsc=_escHtml(gName).replace(/'/g,"\\'");
       var gDesc=_groupDescs[gName]||'';
       gridHtml+='<div class="case-group-title">'+_escHtml(gName)+'<span class="case-group-count">（'+cases.length+'）</span>'+(gDesc?'<span class="case-group-desc">'+_escHtml(gDesc)+'</span>':'')+'</div>';
-      gridHtml+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+gEsc+'\',\'up\')" title="上移"'+(namedIdx===0?' disabled':'')+'>▲</button>';
-      gridHtml+='<button class="case-group-move" onclick="event.stopPropagation();moveGroup(\''+gEsc+'\',\'down\')" title="下移"'+(namedIdx===namedLen-1?' disabled':'')+'>▼</button>';
     }
     gridHtml+='</div><div class="case-grid">';
     cases.forEach(function(item){gridHtml+=_buildNamecardHtml(item.id, item.data);});
@@ -202,7 +200,9 @@ if(typeof window!=='undefined'){
   window.showGroupMgr=showGroupMgr;
   window.closeGroupMgr=closeGroupMgr;
   window.gmAdd=gmAdd;
-  window.gmMove=gmMove;
+  window.gmDragStart=gmDragStart;
+  window.gmDragOver=gmDragOver;
+  window.gmDrop=gmDrop;
   window.gmDel=gmDel;
   window.gmSave=gmSave;
 }
@@ -475,15 +475,10 @@ function _gmRender(){
     return;
   }
   box.innerHTML=_gmRows.map(function(r,i){
-    return '<div class="gm-row" data-orig="'+_escHtml(r.orig||'')+'">'+
-      '<div class="gm-move">'+
-        '<button type="button" onclick="gmMove('+i+',-1)"'+(i===0?' disabled':'')+'>▲</button>'+
-        '<button type="button" onclick="gmMove('+i+',1)"'+(i===_gmRows.length-1?' disabled':'')+'>▼</button>'+
-      '</div>'+
-      '<div class="gm-fields">'+
-        '<input class="gm-name" value="'+_escHtml(r.name||'')+'" placeholder="分組名稱" maxlength="30">'+
-        '<input class="gm-desc" value="'+_escHtml(r.desc||'')+'" placeholder="說明（選填）" maxlength="60">'+
-      '</div>'+
+    return '<div class="gm-row" data-i="'+i+'" data-orig="'+_escHtml(r.orig||'')+'" ondragover="gmDragOver(event)" ondrop="gmDrop(event,'+i+')">'+
+      '<div class="gm-handle" draggable="true" ondragstart="gmDragStart(event,'+i+')" title="拖曳排序">⠿</div>'+
+      '<input class="gm-name" value="'+_escHtml(r.name||'')+'" placeholder="分組名稱" maxlength="30">'+
+      '<input class="gm-desc" value="'+_escHtml(r.desc||'')+'" placeholder="說明（選填）" maxlength="60">'+
       '<button type="button" class="gm-del" onclick="gmDel('+i+')" title="刪除分組">✕</button>'+
     '</div>';
   }).join('');
@@ -497,7 +492,9 @@ export function showGroupMgr(){
 }
 export function closeGroupMgr(){ document.getElementById('group-mgr-overlay').style.display='none'; }
 export function gmAdd(){ _gmSyncFromDom(); _gmRows.push({orig:null,name:'',desc:''}); _gmRender(); }
-export function gmMove(i,dir){ _gmSyncFromDom(); var j=i+dir; if(j<0||j>=_gmRows.length)return; var t=_gmRows[i];_gmRows[i]=_gmRows[j];_gmRows[j]=t; _gmRender(); }
+export function gmDragStart(e,i){ _gmSyncFromDom(); _gmDragFrom=i; if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(i));}catch(_){}} }
+export function gmDragOver(e){ e.preventDefault(); if(e.dataTransfer)e.dataTransfer.dropEffect='move'; }
+export function gmDrop(e,i){ e.preventDefault(); if(_gmDragFrom==null||_gmDragFrom===i){_gmDragFrom=null;return;} _gmSyncFromDom(); var moved=_gmRows.splice(_gmDragFrom,1)[0]; _gmRows.splice(i,0,moved); _gmDragFrom=null; _gmRender(); }
 export function gmDel(i){
   _gmSyncFromDom();
   var r=_gmRows[i];

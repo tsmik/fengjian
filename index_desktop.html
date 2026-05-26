@@ -369,7 +369,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-header-btns{display:flex;align-items:center;flex-shrink:0}
 .case-layout{display:flex;gap:24px;align-items:flex-start}
 .case-self-col{width:300px;flex-shrink:0;position:sticky;top:0}
-.case-cards-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.case-cards-col{flex:1;min-width:0;display:flex;flex-direction:row;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
 .case-self-card{background:#fafaf8;border:1px solid var(--border);border-radius:12px;padding:18px 20px;cursor:pointer;color:var(--text);transition:border-color .15s,box-shadow .15s}
 .case-self-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
 .case-self-card.is-active{border-color:var(--static);box-shadow:0 0 0 2px rgba(122,158,126,.22)}
@@ -384,8 +384,9 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .case-self-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--text);margin-bottom:14px}
 .case-self-meta span{background:rgba(0,0,0,.06);padding:3px 12px;border-radius:14px}
 .case-self-liunian{border-top:1px solid rgba(0,0,0,.12);padding-top:14px}
-.cm-section{display:flex;flex-direction:column}
-.case-grid{display:flex;flex-wrap:wrap;gap:14px;padding:12px 2px 4px}
+.cm-section{display:flex;flex-direction:column;flex:0 0 auto;width:206px}
+.case-grid{display:flex;flex-direction:column;gap:12px;padding:10px 0 0}
+.cm-section .case-card{width:100%}
 .case-card{position:relative;width:190px;min-height:118px;box-sizing:border-box;background:#fff;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;display:flex;flex-direction:column}
 .case-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
 .case-card:hover .case-card-actions{opacity:1}
@@ -424,12 +425,12 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 .gm-form{max-width:480px}
 #gm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .gm-row{display:flex;align-items:center;gap:8px}
-.gm-move{display:flex;flex-direction:column;gap:2px}
-.gm-move button{width:22px;height:18px;border:none;background:var(--hover);color:var(--text-3);border-radius:4px;cursor:pointer;font-size:10px;line-height:1;padding:0}
-.gm-move button:disabled{opacity:.35;cursor:default}
-.gm-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.gm-fields input{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);outline:none}
-.gm-fields .gm-desc{font-size:12px;color:var(--text-3)}
+.gm-handle{cursor:grab;color:#bbb;font-size:16px;line-height:1;padding:2px 4px;user-select:none;flex-shrink:0}
+.gm-handle:active{cursor:grabbing}
+.gm-row.gm-dragover{outline:2px dashed var(--static);outline-offset:2px;border-radius:6px}
+.gm-row input{box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);outline:none}
+.gm-row .gm-name{flex:0 0 36%}
+.gm-row .gm-desc{flex:1;font-size:13px;color:var(--text-3)}
 .gm-del{width:28px;height:28px;border:none;background:transparent;color:#c9c2b6;cursor:pointer;border-radius:50%;font-size:13px;flex-shrink:0}
 .gm-del:hover{background:#fee;color:#c03830}
 .gm-add{width:100%;height:38px;border:1.5px dashed var(--border);background:transparent;color:var(--text-3);border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;margin-bottom:4px}
@@ -597,7 +598,7 @@ body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;width:100%;heigh
 <div id="group-mgr-overlay" onclick="if(event.target===this)closeGroupMgr()">
   <div class="case-form gm-form">
     <h3 style="font-size:18px;font-weight:400;margin:0 0 4px;letter-spacing:2px">管理分組</h3>
-    <p style="font-size:12px;color:var(--text-3);margin:0 0 14px">可新增、改名、加說明、調整上下順序、刪除分組。</p>
+    <p style="font-size:12px;color:var(--text-3);margin:0 0 14px">可新增、改名、加說明、拖曳排序、刪除分組。</p>
     <div id="gm-list"></div>
     <button type="button" class="gm-add" onclick="gmAdd()">＋ 新增分組</button>
     <div class="case-form-actions">
