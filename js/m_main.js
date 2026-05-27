@@ -125,6 +125,7 @@ export async function createCase(fields) {
     birthday: fields.birthday || '',
     group: fields.group || '',
     color: fields.color || '',
+    note: fields.note || '',
     createdAt: new Date().toISOString()
   };
   const ref = await addDoc(collection(db, 'users', uid, 'cases'), payload);
