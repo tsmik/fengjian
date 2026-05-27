@@ -139,18 +139,44 @@ function _renderList() {
 }
 
 // ===== 分析對象切換（個案管理 M1）=====
-// 本人卡（置頂）+ 個案卡（直列）+ 新增個案；點卡 = 切換分析對象，整個「我的」分頁跟著重繪
+// 比照桌機：本人卡（置頂）＋依組別分區的彩色個案卡；點卡 = 切換分析對象，整塊重繪
+// 14 色色盤 + 淡化底色（與桌機 case_mgmt.js 一致）
+const CARD_DEFAULT_COLOR = '#D9CBA8';
+const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+function _cardTint(hex) {
+  hex = hex || CARD_DEFAULT_COLOR;
+  if (hex.charAt(0) !== '#' || hex.length < 7) return '#ffffff';
+  let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
+  const f = 0.40;
+  r = Math.round(r * f + 255 * (1 - f)); g = Math.round(g * f + 255 * (1 - f)); b = Math.round(b * f + 255 * (1 - f));
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+// 沒設色的個案：依 id 雜湊穩定配一個色盤色（不同裝置同 id 同色）
+function _autoColor(id) {
+  let h = 0; const s = String(id || '');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return CARD_COLORS[h % CARD_COLORS.length];
+}
+let _knownGroups = [];      // 現有組別名（給新增表單 datalist）
+let _existingCaseCount = 0; // 給新個案配色用
+
 async function _renderCaseSwitcher() {
   const mount = _container && _container.querySelector('#m-case-switch-mount');
   if (!mount) return;
   const uid = getEffectiveUid();
   const activeCaseId = getActiveCaseId();
-  // 本人姓名：從 users/{uid} 讀（目前 window.__userData 可能是個案，不能用）
-  let selfName = '本人';
+  // 本人：從 users/{uid} 讀姓名 / 卡色 / 組別順序（目前 window.__userData 可能是個案，不能用）
+  let selfName = '本人', selfColor = CARD_DEFAULT_COLOR, groupOrder = [];
   try {
     const selfSnap = await getDoc(doc(db, 'users', uid));
-    if (selfSnap.exists()) selfName = selfSnap.data().displayName || '本人';
-  } catch (e) { debugLog('[Case]', '讀本人姓名失敗', e && e.message); }
+    if (selfSnap.exists()) {
+      const sd = selfSnap.data();
+      selfName = sd.displayName || '本人';
+      selfColor = sd.cardColor || CARD_DEFAULT_COLOR;
+      if (Array.isArray(sd.groupOrder)) groupOrder = sd.groupOrder;
+    }
+  } catch (e) { debugLog('[Case]', '讀本人資料失敗', e && e.message); }
   let cases = [];
   try { cases = await listCases(); } catch (e) {}
   // mount 期間可能已離開報告 tab → 不再寫
@@ -158,21 +184,42 @@ async function _renderCaseSwitcher() {
   const m2 = _container.querySelector('#m-case-switch-mount');
   if (!m2) return;
 
+  _existingCaseCount = cases.length;
   const esc = (s) => _escHtml(String(s == null ? '' : s));
+  const caseColor = (c) => c.color || _autoColor(c.id);
   const caseMeta = (c) => [c.gender, c.birthday].filter(Boolean).join(' · ');
-  let html = '<div class="m-case-switch-title">分析對象</div><div class="m-case-list">';
-  html += '<button class="m-case-item' + (activeCaseId ? '' : ' is-active') + '" data-case="">'
+  const cardHtml = (c) => '<button class="m-case-item' + (activeCaseId === c.id ? ' is-active' : '')
+    + '" data-case="' + esc(c.id) + '" style="background:' + _cardTint(caseColor(c)) + '">'
+    + '<span class="m-case-item-name">' + esc(c.name || '(未命名)') + '</span>'
+    + (caseMeta(c) ? '<span class="m-case-item-meta">' + esc(caseMeta(c)) + '</span>' : '')
+    + '</button>';
+
+  // 依組別分群
+  const grouped = {};
+  cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
+  const named = Object.keys(grouped).filter((g) => g !== '');
+  const orderedNamed = [];
+  groupOrder.forEach((g) => { if (grouped[g]) orderedNamed.push(g); });
+  named.forEach((g) => { if (orderedNamed.indexOf(g) < 0) orderedNamed.push(g); });
+  _knownGroups = orderedNamed.slice();
+
+  let html = '<div class="m-case-switch-title">分析對象</div>';
+  // 本人卡（自己一區，無組別標題）
+  html += '<div class="m-case-list"><button class="m-case-item' + (activeCaseId ? '' : ' is-active')
+    + '" data-case="" style="background:' + _cardTint(selfColor) + '">'
     + '<span class="m-case-item-name">' + esc(selfName) + '</span>'
-    + '<span class="m-case-item-tag">本人</span></button>';
-  cases.forEach((c) => {
-    const meta = caseMeta(c);
-    html += '<button class="m-case-item' + (activeCaseId === c.id ? ' is-active' : '') + '" data-case="' + esc(c.id) + '">'
-      + '<span class="m-case-item-name">' + esc(c.name || '(未命名)') + '</span>'
-      + (meta ? '<span class="m-case-item-meta">' + esc(meta) + '</span>' : '')
-      + '</button>';
+    + '<span class="m-case-item-tag">本人</span></button></div>';
+  // 各命名組別
+  orderedNamed.forEach((g) => {
+    html += '<div class="m-case-group-title">' + esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>';
+    html += '<div class="m-case-list">' + grouped[g].map(cardHtml).join('') + '</div>';
   });
-  html += '</div><button class="m-case-add" id="m-case-add-btn">＋ 新增個案</button>';
-  html += '<div id="m-case-add-formslot"></div>';
+  // 未分組
+  if (grouped[''] && grouped[''].length) {
+    html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div>';
+    html += '<div class="m-case-list">' + grouped[''].map(cardHtml).join('') + '</div>';
+  }
+  html += '<button class="m-case-add" id="m-case-add-btn">＋ 新增個案</button><div id="m-case-add-formslot"></div>';
   m2.innerHTML = html;
 
   m2.querySelectorAll('.m-case-item').forEach((btn) => {
@@ -197,11 +244,14 @@ function _showAddCaseForm() {
   const addBtn = _container && _container.querySelector('#m-case-add-btn');
   if (!slot) return;
   if (addBtn) addBtn.style.display = 'none';
+  const groupOpts = _knownGroups.map((g) => '<option value="' + _escHtml(String(g)) + '">').join('');
   slot.innerHTML = `
     <div class="m-case-addform">
       <input type="text" id="m-newcase-name" placeholder="個案姓名" maxlength="20">
       <select id="m-newcase-gender"><option value="">性別（可不填）</option><option value="男">男</option><option value="女">女</option></select>
       <input type="date" id="m-newcase-birthday">
+      <input type="text" id="m-newcase-group" placeholder="組別（可不填，選現有或打新組名）" list="m-newcase-grouplist" maxlength="20">
+      <datalist id="m-newcase-grouplist">${groupOpts}</datalist>
       <div class="m-case-addform-status" id="m-newcase-status"></div>
       <div class="m-case-addform-btns">
         <button type="button" class="m-newcase-create" id="m-newcase-create">建立並分析</button>
@@ -223,11 +273,13 @@ async function _createNewCase(slot, createBtn) {
   if (!name) { if (statusEl) statusEl.textContent = '請填個案姓名'; return; }
   const gender = slot.querySelector('#m-newcase-gender').value || '';
   const birthday = slot.querySelector('#m-newcase-birthday').value || '';
+  const group = (slot.querySelector('#m-newcase-group').value || '').trim();
+  const color = CARD_COLORS[_existingCaseCount % CARD_COLORS.length]; // 自動配色，存進 doc
   createBtn.disabled = true;
   const old = createBtn.textContent;
   createBtn.textContent = '建立中…';
   try {
-    const newId = await createCase({ name, gender, birthday });
+    const newId = await createCase({ name, gender, birthday, group, color });
     setActiveCase(newId);
     await refreshUserData();
     try { updateHomeProgress(); } catch (e) {}
