@@ -10,8 +10,8 @@
 //   - 基本資料填寫＋儲存＋reload 還在
 // ============================================================
 
-import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from "./m_main.js";
-import { setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef, setActiveCase, refreshUserData, setSelfName } from "./m_main.js";
+import { setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
 
 // 共用：寫入基本資料到雲端 + 更新記憶體狀態（首頁與「我的」分頁共用）
@@ -31,15 +31,16 @@ export async function persistProfile(d){
   }
   // window.__userData 一律存正規化後的 displayName，讓既有讀 displayName 的碼通用
   window.__userData=Object.assign(window.__userData||{},{ displayName:name, birthday, gender });
+  if(!caseId){ try{ setSelfName(name); }catch(e){} } // 本人姓名快取（橫幅「回到本人」用）
   try{ setUserName(name); setUserGender(gender); setUserBirthday(birthday); }catch(e){}
   const nm=document.getElementById('m-home-name');
   if(nm&&name) nm.textContent=name;
   return window.__userData;
 }
 
-// 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數
-export function calcObsProgress(){
-  const ud=window.__userData||{};
+// 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數（可傳 ud，預設 window.__userData）
+export function calcObsProgress(ud){
+  ud=ud||window.__userData||{};
   let obs={};
   if(ud.obsJson){
     try{obs=JSON.parse(ud.obsJson)||{};}catch(e){obs={};}
@@ -63,9 +64,9 @@ export function calcObsProgress(){
   return {answered, total};
 }
 
-// 手動輸入維度進度：manualDataJson 13×9 array 中已填滿 9 cell 的維度數
-export function calcManualDimProgress(){
-  const ud=window.__userData||{};
+// 手動輸入維度進度：manualDataJson 13×9 array 中已填滿 9 cell 的維度數（可傳 ud）
+export function calcManualDimProgress(ud){
+  ud=ud||window.__userData||{};
   if(!ud.manualDataJson) return 0;
   let arr;
   try{arr=JSON.parse(ud.manualDataJson);}catch(e){return 0;}
@@ -82,9 +83,9 @@ export function calcManualDimProgress(){
   return count;
 }
 
-// 從 window.__userData + OBS_PARTS_DATA 重算兩大按鈕進度（給 m_input.js / m_manual.js 儲存後呼叫）
-export function updateHomeProgress(){
-  const obs=calcObsProgress();
+// 重算兩大按鈕進度（可傳 ud，預設 window.__userData；給儲存後呼叫）
+export function updateHomeProgress(ud){
+  const obs=calcObsProgress(ud);
   const elObsFill=document.getElementById('m-home-obs-fill');
   const elObsQ=document.getElementById('m-home-obs-q');
   const elObsQTotal=document.getElementById('m-home-obs-q-total');
@@ -92,11 +93,27 @@ export function updateHomeProgress(){
   if(elObsQTotal) elObsQTotal.textContent=obs.total;
   if(elObsFill) elObsFill.style.width=(obs.total>0 ? obs.answered/obs.total*100 : 0)+'%';
 
-  const manualDim=calcManualDimProgress();
+  const manualDim=calcManualDimProgress(ud);
   const elManualFill=document.getElementById('m-home-manual-fill');
   const elManualDim=document.getElementById('m-home-manual-dim');
   if(elManualDim) elManualDim.textContent=manualDim;
   if(elManualFill) elManualFill.style.width=(manualDim/13*100)+'%';
+}
+
+// 首頁固定顯示「本人」：從 users/{uid} 讀本人資料更新進度＋姓名＋基本資料（不動 active 個案）
+export async function refreshHomeSelf(){
+  const uid=getEffectiveUid();
+  if(!uid) return;
+  let sd={};
+  try{ const s=await getDoc(doc(db,'users',uid)); if(s.exists()) sd=s.data(); }
+  catch(e){ debugLog('[Home]','讀本人失敗',e&&e.message); return; }
+  updateHomeProgress(sd);
+  const nm=document.getElementById('m-home-name'); if(nm) nm.textContent=sd.displayName||'—';
+  const elName=document.getElementById('m-home-profile-name'); if(elName) elName.value=sd.displayName||'';
+  const elBday=document.getElementById('m-home-profile-birthday'); if(elBday) elBday.value=sd.birthday||'';
+  const elGender=document.getElementById('m-home-profile-gender');
+  if(elGender){ let g=sd.gender||''; if(g==='M')g='男'; else if(g==='F')g='女'; elGender.value=g; }
+  try{ setSelfName(sd.displayName||''); }catch(e){}
 }
 
 export function initHome(displayName){
@@ -106,17 +123,17 @@ export function initHome(displayName){
   // 2. 兩大按鈕進度
   updateHomeProgress();
 
-  // 3. 兩大按鈕點擊：跳對應 tab + 設好預設 view
+  // 3. 兩大按鈕點擊：永遠分析「本人」（先把 active 設回本人）→ 跳對應 tab
   document.querySelectorAll('[data-go]').forEach(function(btn){
-    btn.onclick=function(){
+    btn.onclick=async function(){
       const target=btn.dataset.go;
+      try{ setActiveCase(null); await refreshUserData(); }catch(e){}
+      try{ updateHomeProgress(); }catch(e){}
       if(target==='obs'){
-        // 部位觀察 tab → 答題 view
         try{ localStorage.setItem('m_input_view','quiz'); }catch(e){}
         const tabBtn=document.querySelector('.m-tab[data-tab="input"]');
         if(tabBtn) tabBtn.click();
       }else if(target==='manual'){
-        // 手動輸入 tab → 輸入 view
         try{ localStorage.setItem('m_manual_view','input'); }catch(e){}
         const tabBtn=document.querySelector('.m-tab[data-tab="manual"]');
         if(tabBtn) tabBtn.click();

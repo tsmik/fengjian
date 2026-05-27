@@ -126,9 +126,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-tab-page.active{display:block}
 
 /* ===== 目前分析橫幅（個案管理 M1）===== */
-.m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:baseline;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid #ece3d6}
+.m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid rgba(0,0,0,0.06)}
 .m-analysis-banner-label{color:var(--text-3);font-size:12px;flex-shrink:0}
-.m-analysis-banner-name{color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-analysis-banner-name{flex:1;min-width:0;color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-analysis-back{flex-shrink:0;display:inline-flex;align-items:center;background:rgba(255,255,255,0.75);border:1px solid rgba(0,0,0,0.12);border-radius:14px;padding:4px 11px;font-size:13px;color:#3a3228;font-family:inherit;cursor:pointer;white-space:nowrap}
+.m-analysis-back:active{background:rgba(255,255,255,0.95)}
 
 /* ===== 我的分頁：分析對象切換（個案管理 M1）===== */
 .m-case-switch{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:14px}
@@ -1069,6 +1071,7 @@ body.m-debug-on .m-debug-clear{display:block}
 <main class="m-main" id="m-main" style="display:none">
   <div class="m-analysis-banner" id="m-analysis-banner" style="display:none">
     <span class="m-analysis-banner-name" id="m-analysis-banner-name">—</span>
+    <button class="m-analysis-back" id="m-analysis-back-self" type="button" style="display:none"></button>
   </div>
   <section class="m-tab-page active" id="m-page-home">
   <div class="m-home">

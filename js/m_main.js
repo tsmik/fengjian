@@ -16,7 +16,7 @@ import {
   getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, getDocs, addDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { initHome } from "./m_home.js";
+import { initHome, refreshHomeSelf } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft } from "./m_manual.js";
@@ -76,6 +76,10 @@ export function getEffectiveDisplayName() {
   if (_fakeTeacher) return _fakeTeacher.displayName;
   return (auth.currentUser && auth.currentUser.displayName) || null;
 }
+// 本人姓名快取（橫幅「回到本人」按鈕用；登入時 + 本人改名時更新）
+let _selfName = '';
+export function setSelfName(n) { _selfName = n || ''; }
+export function getSelfName() { return _selfName; }
 
 // ===== 個案管理 M1：目前分析對象（本人 = null / 個案 = caseId）=====
 // 狀態存 localStorage，per-uid（同帳號跨裝置不同步「正在看誰」是刻意的：各裝置各自選）
@@ -170,6 +174,27 @@ export function updateAnalysisBanner() {
   el.textContent = name + ' 的 人相兵法';
   const color = ud.color || ud.cardColor || _BANNER_DEFAULT_COLOR;
   if (banner) banner.style.background = _bannerTint(color);
+  // 分析個案時，姓名列右邊出現「回到本人」按鈕
+  const backBtn = document.getElementById('m-analysis-back-self');
+  if (backBtn) {
+    if (getActiveCaseId()) {
+      backBtn.textContent = '回到' + (_selfName || '本人') + ' ›';
+      backBtn.style.display = 'inline-flex';
+      backBtn.onclick = _backToSelf;
+    } else {
+      backBtn.style.display = 'none';
+    }
+  }
+}
+// 從個案分析切回本人，並重掛目前分析分頁
+async function _backToSelf() {
+  setActiveCase(null);
+  try { await refreshUserData(); } catch (e) {}
+  updateAnalysisBanner();
+  const activeTab = document.querySelector('.m-tab.active');
+  const key = activeTab && activeTab.dataset.tab;
+  if (key === 'input') { try { unmountInput(); } catch (e) {} mountInput(document.getElementById('m-page-input')); }
+  else if (key === 'manual') { try { unmountManual(); } catch (e) {} mountManual(document.getElementById('m-page-manual')); }
 }
 
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
@@ -223,6 +248,7 @@ function showApp(displayName){
   // v1.7 階段 13：頂部右上不再顯示 user name，改顯示「登出」（功能不變，點擊登出）
   elNavUser.textContent='登出';
   elNavUser.classList.remove('is-guest');
+  setSelfName(displayName);
   initHome(displayName);
   // 恢復上次 tab（重整後留在原頁，而非預設首頁）
   try {
@@ -481,6 +507,8 @@ if (isTeacherMode) {
         unmountInput();
         unmountReport();
         unmountManual();
+        // 首頁固定顯示本人（不受目前分析個案影響）
+        if (key === 'home') { try { refreshHomeSelf(); } catch (e) {} }
       }
     });
   });
