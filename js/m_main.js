@@ -144,12 +144,32 @@ export async function deleteCase(caseId) {
   if (!uid || !caseId) throw new Error('參數不足');
   await deleteDoc(doc(db, 'users', uid, 'cases', caseId));
 }
-// 分析分頁頂部「目前分析：XXX」橫幅名字（讀 window.__userData.displayName）
+// 更新本人帳號層欄位（如 cardColor）；merge 寫 users/{uid}
+export async function updateSelfCard(fields) {
+  const uid = getEffectiveUid();
+  if (!uid) throw new Error('未登入');
+  await setDoc(doc(db, 'users', uid), Object.assign({}, fields, { profileUpdatedAt: new Date().toISOString() }), { merge: true });
+  window.__userData = Object.assign(window.__userData || {}, fields);
+}
+// 分析分頁頂部橫幅：「{姓名} 的 人相兵法」＋整列底色＝該對象顏色
+const _BANNER_DEFAULT_COLOR = '#D9CBA8';
+function _bannerTint(hex) {
+  if (!hex || hex.charAt(0) !== '#' || hex.length < 7) return '#fbf7f0';
+  let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#fbf7f0';
+  const f = 0.40;
+  r = Math.round(r * f + 255 * (1 - f)); g = Math.round(g * f + 255 * (1 - f)); b = Math.round(b * f + 255 * (1 - f));
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
 export function updateAnalysisBanner() {
+  const banner = document.getElementById('m-analysis-banner');
   const el = document.getElementById('m-analysis-banner-name');
   if (!el) return;
   const ud = window.__userData || {};
-  el.textContent = ud.displayName || '本人';
+  const name = ud.displayName || '本人';
+  el.textContent = name + ' 的 人相兵法';
+  const color = ud.color || ud.cardColor || _BANNER_DEFAULT_COLOR;
+  if (banner) banner.style.background = _bannerTint(color);
 }
 
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====

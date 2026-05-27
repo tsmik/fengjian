@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateAnalysisBanner } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -186,31 +186,29 @@ function _paintDashboard() {
   if (!p || !t) return;
   let g = p.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   const obs = _obsProgress(p.obsJson), man = _manualProgress(p.manualJson);
-  // 名片 header
-  let h = '<div class="m-case-item" style="background:' + _cardTint(p.color) + ';cursor:default">'
-    + '<span class="m-case-item-col"><span class="m-case-item-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span>'
-    + (p.isCase && p.group ? '<span class="m-case-item-sub">' + _esc(p.group) + '</span>' : '') + '</span>'
-    + '<span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
+  // 外框：人物顏色「包住」標題＋基本資料＋流年＋報告連結，視覺上是同一張卡
+  let inner = '<div class="m-dash-head"><span class="m-dash-head-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span><span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
   // 基本資料（檢視 or 編輯）
   if (_dashEdit) {
     const groupOpts = _knownGroups.map((gg) => '<option value="' + _esc(gg) + '">').join('');
-    h += '<div class="m-home-card m-home-profile">'
+    inner += '<div class="m-home-card m-home-profile">'
       + '<div class="m-home-card-title">編輯基本資料</div>'
       + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-dash-name" value="' + _esc(p.name) + '" maxlength="20"></div>'
       + '<div class="m-home-profile-row"><label>性別</label><select id="m-dash-gender"><option value="">未填寫</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>'
       + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-dash-birthday" value="' + _esc(p.birthday) + '"></div>';
     if (p.isCase) {
-      h += '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-dash-group" list="m-dash-grouplist" value="' + _esc(p.group || '') + '"><datalist id="m-dash-grouplist">' + groupOpts + '</datalist></div>';
-      h += '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-dash-note" value="' + _esc(p.note || '') + '"></div>';
-      h += '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-dash-colors">'
-        + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
-        + '</div>';
+      inner += '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-dash-group" list="m-dash-grouplist" value="' + _esc(p.group || '') + '"><datalist id="m-dash-grouplist">' + groupOpts + '</datalist></div>';
+      inner += '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-dash-note" value="' + _esc(p.note || '') + '"></div>';
     }
-    h += '<div class="m-home-profile-status" id="m-dash-status"></div>'
+    // 卡片顏色（本人＋個案皆可改）
+    inner += '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-dash-colors">'
+      + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
+      + '</div>';
+    inner += '<div class="m-home-profile-status" id="m-dash-status"></div>'
       + '<div class="m-case-addform-btns"><button type="button" class="m-newcase-create" id="m-dash-save">存檔</button><button type="button" class="m-newcase-cancel" id="m-dash-cancel">取消</button></div>'
       + '</div>';
   } else {
-    h += '<div class="m-home-card">'
+    inner += '<div class="m-home-card">'
       + '<div style="display:flex;align-items:center;margin-bottom:6px"><div class="m-home-card-title" style="margin:0">基本資料</div><button type="button" class="m-detail-edit-btn" id="m-dash-edit">編輯</button></div>'
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">姓名</span><span>' + _esc(p.name || '未填寫') + '</span></div>'
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">性別</span><span>' + (g || '未填寫') + '</span></div>'
@@ -220,13 +218,15 @@ function _paintDashboard() {
       + '</div>';
   }
   // 流年（縮兩行）
-  h += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
+  inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
   // 報告連結 + 進度
-  h += '<button class="m-home-bigbtn" data-dash-report="auto"><span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + obs.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
-  h += '<button class="m-home-bigbtn" data-dash-report="manual"><span class="m-home-bigbtn-icon">✎</span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + man.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
-  // 底部
+  inner += '<button class="m-home-bigbtn" data-dash-report="auto"><span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + obs.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
+  inner += '<button class="m-home-bigbtn" data-dash-report="manual"><span class="m-home-bigbtn-icon">✎</span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + man.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
+
+  let h = '<div class="m-dash-wrap" style="background:' + _cardTint(p.color) + '">' + inner + '</div>';
+  // 底部（外框之外）
   if (p.isCase) h += '<button class="m-detail-delete" id="m-dash-delete" type="button">刪除此個案</button>';
-  else h += '<button class="m-case-add" id="m-dash-mgmt" type="button">個案新增 / 管理</button>';
+  else h += '<button class="m-dash-mgmt-btn" id="m-dash-mgmt" type="button">個案新增 / 管理</button>';
 
   t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
 
@@ -236,7 +236,7 @@ function _paintDashboard() {
   const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
   const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
   const saveBtn = t.querySelector('#m-dash-save'); if (saveBtn) saveBtn.onclick = _saveDashboardEdit;
-  if (_dashEdit && p.isCase) {
+  if (_dashEdit) {
     t.querySelectorAll('#m-dash-colors .m-color-dot').forEach((dot) => {
       dot.onclick = () => { _detailSelColor = dot.dataset.color; t.querySelectorAll('#m-dash-colors .m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot)); };
     });
@@ -267,8 +267,11 @@ async function _saveDashboardEdit() {
       const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = name || '個案';
       try { updateAnalysisBanner(); } catch (e) {}
     } else {
+      const color = _detailSelColor || p.color || '';
       await persistProfile({ displayName: name, birthday: birthday, gender: gender });
-      Object.assign(p, { name: name, gender: gender, birthday: birthday });
+      await updateSelfCard({ cardColor: color }); // 本人卡片顏色（帳號層 cardColor）
+      Object.assign(p, { name: name, gender: gender, birthday: birthday, color: color });
+      try { updateAnalysisBanner(); } catch (e) {}
     }
     _dashEdit = false;
     _paintDashboard();
@@ -365,7 +368,9 @@ function _openNewCaseForm() {
     + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-nc-birthday"></div>'
     + '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-nc-group" list="m-nc-grouplist" placeholder="可不填"><datalist id="m-nc-grouplist">' + groupOpts + '</datalist></div>'
     + '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-nc-note" placeholder="可不填"></div>'
-    + '<div class="m-home-profile-row"><label>卡片顏色</label><span class="m-color-dot is-sel" style="background:' + _ncColor + ';cursor:default"></span></div>'
+    + '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-nc-colors">'
+    + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _ncColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
+    + '</div>'
     + '<div class="m-home-profile-status" id="m-nc-status"></div>'
     + '<div class="m-case-addform-btns"><button type="button" class="m-newcase-create" id="m-nc-create">建立</button><button type="button" class="m-newcase-cancel" id="m-nc-cancel">取消</button></div>'
     + '</div>';
@@ -373,6 +378,10 @@ function _openNewCaseForm() {
   const back = document.getElementById('m-form-back'); if (back) back.onclick = _closeNewCaseForm;
   const cancel = body.querySelector('#m-nc-cancel'); if (cancel) cancel.onclick = _closeNewCaseForm;
   const create = body.querySelector('#m-nc-create'); if (create) create.onclick = () => _submitNewCase(create);
+  // 卡片顏色可點選挑色
+  body.querySelectorAll('#m-nc-colors .m-color-dot').forEach((dot) => {
+    dot.onclick = () => { _ncColor = dot.dataset.color; body.querySelectorAll('#m-nc-colors .m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot)); };
+  });
   const nameEl = body.querySelector('#m-nc-name'); if (nameEl) nameEl.focus();
 }
 function _closeNewCaseForm() {
@@ -390,10 +399,9 @@ async function _submitNewCase(createBtn) {
   const note = (body.querySelector('#m-nc-note').value || '').trim();
   createBtn.disabled = true; const old = createBtn.textContent; createBtn.textContent = '建立中…';
   try {
-    const newId = await createCase({ name: name, gender: gender, birthday: birthday, group: group, note: note, color: _ncColor });
+    await createCase({ name: name, gender: gender, birthday: birthday, group: group, note: note, color: _ncColor });
     _closeNewCaseForm();
-    await _openCaseDetail(newId); // 建立後直接進該個案細節
-    const mg = document.getElementById('m-case-mgmt'); if (mg && mg.classList.contains('is-open')) _renderMgmt();
+    _renderMgmt(); // 建立後回到案例管理畫面（不停在新個案資料頁）
   } catch (e) {
     debugLog('[Case]', '新增個案失敗', e && e.message ? e.message : e);
     if (statusEl) statusEl.textContent = '建立失敗，請重試';

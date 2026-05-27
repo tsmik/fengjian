@@ -190,6 +190,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-color-dot.is-sel{border-color:#3a3228;box-shadow:0 0 0 2px #fff inset}
 .m-detail-delete{margin-top:4px;width:100%;padding:11px;border:1px solid #e0bcbc;border-radius:10px;background:#fff;color:#b04545;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
 .m-detail-delete:active{background:#fbeeee}
+/* 儀表板：人物顏色外框包住所有區塊 */
+.m-dash-wrap{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.m-dash-wrap .m-liunian-section{margin-top:0}
+.m-dash-head{display:flex;align-items:center;gap:10px;padding:2px 4px 0}
+.m-dash-head-name{flex:1;min-width:0;font-size:19px;font-weight:700;color:#3a3228;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 個案新增/管理：深色底白字，與上方區隔 */
+.m-dash-mgmt-btn{width:100%;margin-top:4px;padding:14px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-size:15px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer}
+.m-dash-mgmt-btn:active{opacity:0.88}
 
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
@@ -1060,7 +1068,6 @@ body.m-debug-on .m-debug-clear{display:block}
 
 <main class="m-main" id="m-main" style="display:none">
   <div class="m-analysis-banner" id="m-analysis-banner" style="display:none">
-    <span class="m-analysis-banner-label">目前分析</span>
     <span class="m-analysis-banner-name" id="m-analysis-banner-name">—</span>
   </div>
   <section class="m-tab-page active" id="m-page-home">
