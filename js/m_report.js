@@ -18,7 +18,7 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml } from './core.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml, OBS_PARTS_DATA } from './core.js';
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
@@ -79,21 +79,26 @@ export function unmountAutoView() {
 // 自動報告無 draft，保留介面相容（m_main.js confirm 流程仍會呼叫）
 export function discardReportDraft() {}
 
-// 「我的」tab = 名片夾清單（本人置頂 + 排序 + 名片列）；點名片進全螢幕細節
+// 「我的」tab = 本人儀表板（基本資料＋編輯、流年、報告連結＋填寫進度、底部 個案新增/管理）
 function _renderList() {
   if (!_container) return;
-  _container.innerHTML = `
-    <div class="m-home" style="padding:16px 14px">
-      <div class="m-case-switch" id="m-case-switch-mount">
-        <div class="m-case-switch-title">名片夾</div>
-        <div style="color:#a89e92;font-size:13px;padding:4px 2px">載入中…</div>
-      </div>
-    </div>
-  `;
-  _renderCaseList();
+  _container.innerHTML = '<div class="m-home" style="padding:16px 14px"><div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div></div>';
+  _renderSelfDashboard();
+}
+async function _renderSelfDashboard() {
+  const uid = getEffectiveUid();
+  let sd = {};
+  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists()) sd = s.data(); }
+  catch (e) { debugLog('[Case]', '讀本人失敗', e && e.message); }
+  if (!_container || !_isListMode) return;
+  _dashIsCase = false;
+  _dashEdit = false;
+  _dashPerson = { isCase: false, id: null, name: sd.displayName || '', gender: sd.gender || '', birthday: sd.birthday || '', color: sd.cardColor || CARD_DEFAULT_COLOR, group: '', note: '', obsJson: sd.obsJson || '', manualJson: sd.manualDataJson || '' };
+  _dashTarget = _container;
+  _paintDashboard();
 }
 
-// ===== 名片夾清單 + 全螢幕細節（個案管理）=====
+// ===== 個案管理：本人儀表板 + 案例管理總畫面 + 新增表單 + 全螢幕細節 =====
 // 14 色色盤 + 淡化底色（與桌機 case_mgmt.js 一致）
 const CARD_DEFAULT_COLOR = '#D9CBA8';
 const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
@@ -113,299 +118,330 @@ function _autoColor(id) {
   return CARD_COLORS[h % CARD_COLORS.length];
 }
 function _esc(s) { return _escHtml(String(s == null ? '' : s)); }
+// createdAt/updatedAt 可能是 ISO 字串(手機建)或 Firestore Timestamp 物件(桌機建)；統一成可排序字串
+function _tsStr(v) {
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  try { if (typeof v.toDate === 'function') return v.toDate().toISOString(); } catch (e) {}
+  if (typeof v === 'object' && typeof v.seconds === 'number') return new Date(v.seconds * 1000).toISOString();
+  return String(v);
+}
 let _knownGroups = [];      // 現有組別名（給表單 datalist）
-let _existingCaseCount = 0; // 給新個案配色用
-let _caseSort = (function () { try { return localStorage.getItem('m_case_sort') || 'created'; } catch (e) { return 'created'; } })();
-let _detailCaseId = null;   // 目前開啟細節的個案 id（null = 本人）
-let _detailSelColor = '';   // 細節頁色卡暫選
+let _existingCaseCount = 0;
+let _caseSort = (function () { try { return localStorage.getItem('m_case_sort') || 'group'; } catch (e) { return 'group'; } })();
+let _ncColor = '';          // 新增個案進入時派的顏色
+// 儀表板共用狀態（本人 = 我的分頁 inline；個案 = 全螢幕細節）
+let _dashPerson = null;     // {isCase,id,name,gender,birthday,color,group,note,obsJson,manualJson}
+let _dashTarget = null;     // 渲染容器
+let _dashIsCase = false;
+let _dashEdit = false;
+let _detailSelColor = '';   // 編輯時色卡暫選
 
-// ---- 名片夾清單 ----
-async function _renderCaseList() {
-  const mount = _container && _container.querySelector('#m-case-switch-mount');
-  if (!mount) return;
-  const uid = getEffectiveUid();
-  let selfName = '本人', selfColor = CARD_DEFAULT_COLOR, groupOrder = [];
-  try {
-    const selfSnap = await getDoc(doc(db, 'users', uid));
-    if (selfSnap.exists()) {
-      const sd = selfSnap.data();
-      selfName = sd.displayName || '本人';
-      selfColor = sd.cardColor || CARD_DEFAULT_COLOR;
-      if (Array.isArray(sd.groupOrder)) groupOrder = sd.groupOrder;
+// 進度（填寫百分比）
+function _obsProgress(obsJson) {
+  let obs = {};
+  try { if (obsJson) obs = JSON.parse(obsJson) || {}; } catch (e) {}
+  let answered = 0, total = 0;
+  for (const pk of Object.keys(OBS_PARTS_DATA)) {
+    const part = OBS_PARTS_DATA[pk];
+    if (!part || !Array.isArray(part.sections)) continue;
+    for (const sec of part.sections) {
+      for (const q of (sec.qs || [])) {
+        total++;
+        if (q.paired) { if (obs[q.id] !== undefined || (obs[q.id + '_L'] !== undefined && obs[q.id + '_R'] !== undefined)) answered++; }
+        else if (obs[q.id] !== undefined) answered++;
+      }
     }
-  } catch (e) { debugLog('[Case]', '讀本人資料失敗', e && e.message); }
+  }
+  return { pct: total > 0 ? Math.round(answered / total * 100) : 0 };
+}
+function _manualProgress(manualJson) {
+  let arr; try { arr = JSON.parse(manualJson); } catch (e) { return { pct: 0 }; }
+  if (!Array.isArray(arr)) return { pct: 0 };
+  let filled = 0, total = 0;
+  for (let i = 0; i < arr.length; i++) { if (!Array.isArray(arr[i])) continue; for (let j = 0; j < arr[i].length; j++) { total++; if (arr[i][j] === 'A' || arr[i][j] === 'B') filled++; } }
+  return { pct: total > 0 ? Math.round(filled / total * 100) : 0 };
+}
+
+// 流年參考（縮成兩行：七十五/九執/業務 ; 親族/子女/耳鼻/五官/三停）
+async function _liunianCompactHtml(gender, birthday) {
+  try { await _ensureLiunianLoaded(); } catch (e) {}
+  let g = gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
+  if (g) setUserGender(g);
+  if (birthday) setUserBirthday(birthday);
+  const info = _getLiunianInfo();
+  if (!info) return '<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">填出生年月日＋性別後顯示</div></div>';
+  const ln = info.ln;
+  const cell = (l, v) => '<div class="m-liunian-cell"><span class="m-liunian-cell-label">' + l + '</span><span class="m-liunian-cell-value">' + (v || '—') + '</span></div>';
+  const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
+  return '<div class="m-liunian-section"><div class="m-liunian-title">流年參考' + buildLiunianTitleHtml(info) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(3,1fr)">' + cell('七十五', v75) + cell('九執', ln.jiuzhi) + cell('業務', ln.yewu) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(5,1fr)">' + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('耳鼻', ln.erbei) + cell('五官', ln.wuguan) + cell('三停', ln.santing) + '</div>'
+    + '</div>';
+}
+
+// ---- 儀表板（本人 / 個案共用版型）----
+function _paintDashboard() {
+  const p = _dashPerson, t = _dashTarget;
+  if (!p || !t) return;
+  let g = p.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
+  const obs = _obsProgress(p.obsJson), man = _manualProgress(p.manualJson);
+  // 名片 header
+  let h = '<div class="m-case-item" style="background:' + _cardTint(p.color) + ';cursor:default">'
+    + '<span class="m-case-item-col"><span class="m-case-item-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span>'
+    + (p.isCase && p.group ? '<span class="m-case-item-sub">' + _esc(p.group) + '</span>' : '') + '</span>'
+    + '<span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
+  // 基本資料（檢視 or 編輯）
+  if (_dashEdit) {
+    const groupOpts = _knownGroups.map((gg) => '<option value="' + _esc(gg) + '">').join('');
+    h += '<div class="m-home-card m-home-profile">'
+      + '<div class="m-home-card-title">編輯基本資料</div>'
+      + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-dash-name" value="' + _esc(p.name) + '" maxlength="20"></div>'
+      + '<div class="m-home-profile-row"><label>性別</label><select id="m-dash-gender"><option value="">未填寫</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>'
+      + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-dash-birthday" value="' + _esc(p.birthday) + '"></div>';
+    if (p.isCase) {
+      h += '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-dash-group" list="m-dash-grouplist" value="' + _esc(p.group || '') + '"><datalist id="m-dash-grouplist">' + groupOpts + '</datalist></div>';
+      h += '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-dash-note" value="' + _esc(p.note || '') + '"></div>';
+      h += '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-dash-colors">'
+        + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
+        + '</div>';
+    }
+    h += '<div class="m-home-profile-status" id="m-dash-status"></div>'
+      + '<div class="m-case-addform-btns"><button type="button" class="m-newcase-create" id="m-dash-save">存檔</button><button type="button" class="m-newcase-cancel" id="m-dash-cancel">取消</button></div>'
+      + '</div>';
+  } else {
+    h += '<div class="m-home-card">'
+      + '<div style="display:flex;align-items:center;margin-bottom:6px"><div class="m-home-card-title" style="margin:0">基本資料</div><button type="button" class="m-detail-edit-btn" id="m-dash-edit">編輯</button></div>'
+      + '<div class="m-detail-info-row"><span class="m-detail-info-label">姓名</span><span>' + _esc(p.name || '未填寫') + '</span></div>'
+      + '<div class="m-detail-info-row"><span class="m-detail-info-label">性別</span><span>' + (g || '未填寫') + '</span></div>'
+      + '<div class="m-detail-info-row"><span class="m-detail-info-label">生日</span><span>' + _esc(p.birthday || '未填寫') + '</span></div>'
+      + (p.isCase ? '<div class="m-detail-info-row"><span class="m-detail-info-label">組別</span><span>' + _esc(p.group || '未分組') + '</span></div>' : '')
+      + (p.isCase ? '<div class="m-detail-info-row"><span class="m-detail-info-label">備註</span><span>' + _esc(p.note || '—') + '</span></div>' : '')
+      + '</div>';
+  }
+  // 流年（縮兩行）
+  h += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
+  // 報告連結 + 進度
+  h += '<button class="m-home-bigbtn" data-dash-report="auto"><span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + obs.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
+  h += '<button class="m-home-bigbtn" data-dash-report="manual"><span class="m-home-bigbtn-icon">✎</span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + man.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
+  // 底部
+  if (p.isCase) h += '<button class="m-detail-delete" id="m-dash-delete" type="button">刪除此個案</button>';
+  else h += '<button class="m-case-add" id="m-dash-mgmt" type="button">個案新增 / 管理</button>';
+
+  t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
+
+  // 流年 async（render 後可能已換人 → 比對 p）
+  _liunianCompactHtml(p.gender, p.birthday).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
+  // wire
+  const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
+  const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
+  const saveBtn = t.querySelector('#m-dash-save'); if (saveBtn) saveBtn.onclick = _saveDashboardEdit;
+  if (_dashEdit && p.isCase) {
+    t.querySelectorAll('#m-dash-colors .m-color-dot').forEach((dot) => {
+      dot.onclick = () => { _detailSelColor = dot.dataset.color; t.querySelectorAll('#m-dash-colors .m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot)); };
+    });
+  }
+  const aBtn = t.querySelector('[data-dash-report="auto"]'); if (aBtn) aBtn.onclick = () => _gotoReport('auto');
+  const mBtn = t.querySelector('[data-dash-report="manual"]'); if (mBtn) mBtn.onclick = () => _gotoReport('manual');
+  const delBtn = t.querySelector('#m-dash-delete'); if (delBtn) delBtn.onclick = _deleteCurrentCase;
+  const mgmtBtn = t.querySelector('#m-dash-mgmt'); if (mgmtBtn) mgmtBtn.onclick = _openCaseMgmt;
+}
+
+async function _saveDashboardEdit() {
+  const t = _dashTarget, p = _dashPerson;
+  if (!t || !p) return;
+  const statusEl = t.querySelector('#m-dash-status');
+  const setS = (txt, cls) => { if (statusEl) { statusEl.textContent = txt; statusEl.className = 'm-home-profile-status ' + (cls || ''); } };
+  const name = (t.querySelector('#m-dash-name').value || '').trim();
+  const birthday = t.querySelector('#m-dash-birthday').value || '';
+  const gender = t.querySelector('#m-dash-gender').value || '';
+  setS('儲存中…', 'is-saving');
+  try {
+    if (p.isCase) {
+      const group = (t.querySelector('#m-dash-group').value || '').trim();
+      const note = (t.querySelector('#m-dash-note').value || '').trim();
+      const color = _detailSelColor || p.color || '';
+      await updateCase(p.id, { name: name, gender: gender, birthday: birthday, group: group, note: note, color: color });
+      window.__userData = Object.assign(window.__userData || {}, { displayName: name, name: name, gender: gender, birthday: birthday, group: group, note: note, color: color });
+      Object.assign(p, { name: name, gender: gender, birthday: birthday, group: group, note: note, color: color });
+      const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = name || '個案';
+      try { updateAnalysisBanner(); } catch (e) {}
+    } else {
+      await persistProfile({ displayName: name, birthday: birthday, gender: gender });
+      Object.assign(p, { name: name, gender: gender, birthday: birthday });
+    }
+    _dashEdit = false;
+    _paintDashboard();
+    const mg = document.getElementById('m-case-mgmt'); if (mg && mg.classList.contains('is-open')) _renderMgmt();
+  } catch (e) {
+    debugLog('[Case]', '儀表板儲存失敗', e && e.message ? e.message : e);
+    setS('儲存失敗', 'is-error');
+  }
+}
+
+// 從儀表板報告連結進入：把這人設成目前分析 → 切到對應分頁
+async function _gotoReport(kind) {
+  setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
+  await refreshUserData();
+  try { updateHomeProgress(); } catch (e) {}
+  try { updateAnalysisBanner(); } catch (e) {}
+  _closeCaseDetail();
+  _closeCaseMgmt();
+  if (kind === 'auto') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click(); }
+  else { try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
+}
+
+// ---- 案例管理總畫面 ----
+function _openCaseMgmt() {
+  _renderMgmt();
+  const ov = document.getElementById('m-case-mgmt');
+  if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
+  const back = document.getElementById('m-mgmt-back'); if (back) back.onclick = _closeCaseMgmt;
+}
+function _closeCaseMgmt() {
+  const ov = document.getElementById('m-case-mgmt'); if (ov) ov.classList.remove('is-open');
+}
+async function _renderMgmt() {
+  const body = document.getElementById('m-mgmt-body');
+  const barActions = document.getElementById('m-mgmt-bar-actions');
+  if (!body) return;
+  body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
+  if (barActions) barActions.innerHTML = '';
+  const uid = getEffectiveUid();
+  let groupOrder = [];
+  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists() && Array.isArray(s.data().groupOrder)) groupOrder = s.data().groupOrder; } catch (e) {}
   let cases = [];
   try { cases = await listCases(); } catch (e) {}
-  if (!_container || !_isListMode) return;
-  const m2 = _container.querySelector('#m-case-switch-mount');
-  if (!m2) return;
+  if (!document.getElementById('m-case-mgmt')) return;
   _existingCaseCount = cases.length;
-
   const caseColor = (c) => c.color || _autoColor(c.id);
-  // 現有組別順序（本人 groupOrder 優先，其餘按出現）
   const gset = [];
   cases.forEach((c) => { const g = c.group || ''; if (g && gset.indexOf(g) < 0) gset.push(g); });
   const orderedGroups = [];
   groupOrder.forEach((g) => { if (gset.indexOf(g) >= 0) orderedGroups.push(g); });
   gset.forEach((g) => { if (orderedGroups.indexOf(g) < 0) orderedGroups.push(g); });
   _knownGroups = orderedGroups.slice();
-
-  const rowHtml = (id, name, color, sub) => '<button class="m-case-item" data-open="' + _esc(id) + '">'
-    + '<span class="m-case-swatch" style="background:' + _cardTint(color) + '"></span>'
-    + '<span class="m-case-item-col"><span class="m-case-item-name">' + _esc(name) + '</span>'
-    + (sub ? '<span class="m-case-item-sub">' + _esc(sub) + '</span>' : '') + '</span></button>';
-
-  let html = '<div class="m-case-switch-title">名片夾</div>';
-  html += '<div class="m-case-sortbar"><span class="m-case-sortbar-label">排序</span>'
-    + '<select class="m-case-sort" id="m-case-sort">'
-    + '<option value="created"' + (_caseSort === 'created' ? ' selected' : '') + '>建立時間</option>'
-    + '<option value="updated"' + (_caseSort === 'updated' ? ' selected' : '') + '>修改時間</option>'
-    + '<option value="group"' + (_caseSort === 'group' ? ' selected' : '') + '>分組</option>'
-    + '</select></div>';
-  // 本人固定置頂
-  html += '<div class="m-case-list">' + rowHtml('', selfName, selfColor, '本人') + '</div>';
+  const rowHtml = (c, sub) => '<button class="m-case-item" data-open="' + _esc(c.id) + '"><span class="m-case-swatch" style="background:' + _cardTint(caseColor(c)) + '"></span><span class="m-case-item-col"><span class="m-case-item-name">' + _esc(c.name || '(未命名)') + '</span>' + (sub ? '<span class="m-case-item-sub">' + _esc(sub) + '</span>' : '') + '</span></button>';
 
   if (cases.length === 0) {
-    html += '<div style="color:#a89e92;font-size:13px;padding:8px 2px">還沒有個案，點下方新增</div>';
-  } else if (_caseSort === 'group') {
-    const grouped = {};
-    cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
-    orderedGroups.forEach((g) => {
-      html += '<div class="m-case-group-title">' + _esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>';
-      html += '<div class="m-case-list">' + grouped[g].map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), '')).join('') + '</div>';
-    });
-    if (grouped[''] && grouped[''].length) {
-      html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div>';
-      html += '<div class="m-case-list">' + grouped[''].map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), '')).join('') + '</div>';
-    }
+    body.innerHTML = '<button class="m-mgmt-bigbtn is-primary" id="m-mgmt-add" type="button">＋ 新增個案</button>'
+      + '<button class="m-mgmt-bigbtn is-secondary" id="m-mgmt-groups" type="button">管理個案分組</button>';
   } else {
-    // 依時間：分日期標題（新→舊）
-    const tsOf = (c) => _caseSort === 'updated' ? (c.updatedAt || c.createdAt || '') : (c.createdAt || '');
-    const arr = cases.slice().sort((a, b) => String(tsOf(b)).localeCompare(String(tsOf(a))));
-    const byDate = []; const idx = {};
-    arr.forEach((c) => { const d = String(tsOf(c)).slice(0, 10) || '—'; if (!(d in idx)) { idx[d] = byDate.length; byDate.push({ d: d, items: [] }); } byDate[idx[d]].items.push(c); });
-    byDate.forEach((grp) => {
-      html += '<div class="m-case-group-title">' + _esc(grp.d || '—') + '</div>';
-      html += '<div class="m-case-list">' + grp.items.map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), c.group || '')).join('') + '</div>';
-    });
+    if (barActions) barActions.innerHTML = '<button class="m-mgmt-bar-btn is-primary" id="m-mgmt-add" type="button">＋ 新增</button><button class="m-mgmt-bar-btn" id="m-mgmt-groups" type="button">管理分組</button>';
+    let html = '<div class="m-case-sortbar"><span class="m-case-sortbar-label">排序</span><select class="m-case-sort" id="m-mgmt-sort">'
+      + '<option value="group"' + (_caseSort === 'group' ? ' selected' : '') + '>分組</option>'
+      + '<option value="created"' + (_caseSort === 'created' ? ' selected' : '') + '>建立時間</option>'
+      + '<option value="updated"' + (_caseSort === 'updated' ? ' selected' : '') + '>修改時間</option>'
+      + '</select></div>';
+    if (_caseSort === 'group') {
+      const grouped = {};
+      cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
+      orderedGroups.forEach((g) => { html += '<div class="m-case-group-title">' + _esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div><div class="m-case-list">' + grouped[g].map((c) => rowHtml(c, '')).join('') + '</div>'; });
+      if (grouped[''] && grouped[''].length) html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div><div class="m-case-list">' + grouped[''].map((c) => rowHtml(c, '')).join('') + '</div>';
+    } else {
+      const tsOf = (c) => _caseSort === 'updated' ? _tsStr(c.updatedAt || c.createdAt) : _tsStr(c.createdAt);
+      const arr = cases.slice().sort((a, b) => String(tsOf(b)).localeCompare(String(tsOf(a))));
+      const byDate = []; const idx = {};
+      arr.forEach((c) => { const d = String(tsOf(c)).slice(0, 10) || '—'; if (!(d in idx)) { idx[d] = byDate.length; byDate.push({ d: d, items: [] }); } byDate[idx[d]].items.push(c); });
+      byDate.forEach((grp) => { html += '<div class="m-case-group-title">' + _esc(grp.d || '—') + '</div><div class="m-case-list">' + grp.items.map((c) => rowHtml(c, c.group || '')).join('') + '</div>'; });
+    }
+    body.innerHTML = html;
   }
-  html += '<button class="m-case-add" id="m-case-add-btn">＋ 新增個案</button><div id="m-case-add-formslot"></div>';
-  m2.innerHTML = html;
-
-  const sortSel = m2.querySelector('#m-case-sort');
-  if (sortSel) sortSel.addEventListener('change', (e) => {
-    _caseSort = e.target.value;
-    try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {}
-    _renderCaseList();
-  });
-  m2.querySelectorAll('.m-case-item').forEach((btn) => {
-    btn.addEventListener('click', () => _openCaseDetail(btn.dataset.open || null));
-  });
-  const addBtn = m2.querySelector('#m-case-add-btn');
-  if (addBtn) addBtn.addEventListener('click', _showAddCaseForm);
+  body.querySelectorAll('.m-case-item').forEach((btn) => { btn.onclick = () => _openCaseDetail(btn.dataset.open || null); });
+  const sortSel = body.querySelector('#m-mgmt-sort'); if (sortSel) sortSel.onchange = (e) => { _caseSort = e.target.value; try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {} _renderMgmt(); };
+  const addBtn = document.getElementById('m-mgmt-add'); if (addBtn) addBtn.onclick = _openNewCaseForm;
+  const grpBtn = document.getElementById('m-mgmt-groups'); if (grpBtn) grpBtn.onclick = _openManageGroups;
 }
 
-function _showAddCaseForm() {
-  const slot = _container && _container.querySelector('#m-case-add-formslot');
-  const addBtn = _container && _container.querySelector('#m-case-add-btn');
-  if (!slot) return;
-  if (addBtn) addBtn.style.display = 'none';
+// ---- 新增個案表單（全螢幕）----
+function _openNewCaseForm() {
+  const body = document.getElementById('m-form-body');
+  if (!body) return;
+  _ncColor = CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)]; // 進入建立畫面時隨機派色
   const groupOpts = _knownGroups.map((g) => '<option value="' + _esc(g) + '">').join('');
-  slot.innerHTML = `
-    <div class="m-case-addform">
-      <input type="text" id="m-newcase-name" placeholder="個案姓名" maxlength="20">
-      <select id="m-newcase-gender"><option value="">性別（可不填）</option><option value="男">男</option><option value="女">女</option></select>
-      <input type="date" id="m-newcase-birthday">
-      <input type="text" id="m-newcase-group" placeholder="組別（可不填，選現有或打新組名）" list="m-newcase-grouplist" maxlength="20">
-      <datalist id="m-newcase-grouplist">${groupOpts}</datalist>
-      <div class="m-case-addform-status" id="m-newcase-status"></div>
-      <div class="m-case-addform-btns">
-        <button type="button" class="m-newcase-create" id="m-newcase-create">建立</button>
-        <button type="button" class="m-newcase-cancel" id="m-newcase-cancel">取消</button>
-      </div>
-    </div>
-  `;
-  const nameEl = slot.querySelector('#m-newcase-name');
-  if (nameEl) nameEl.focus();
-  const cancelBtn = slot.querySelector('#m-newcase-cancel');
-  if (cancelBtn) cancelBtn.addEventListener('click', () => { slot.innerHTML = ''; if (addBtn) addBtn.style.display = ''; });
-  const createBtn = slot.querySelector('#m-newcase-create');
-  if (createBtn) createBtn.addEventListener('click', () => _createNewCase(slot, createBtn));
+  body.innerHTML = '<div class="m-home-card m-home-profile">'
+    + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-nc-name" placeholder="必填" maxlength="20"></div>'
+    + '<div class="m-home-profile-row"><label>性別</label><select id="m-nc-gender"><option value="">未填寫</option><option value="男">男</option><option value="女">女</option></select></div>'
+    + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-nc-birthday"></div>'
+    + '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-nc-group" list="m-nc-grouplist" placeholder="可不填"><datalist id="m-nc-grouplist">' + groupOpts + '</datalist></div>'
+    + '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-nc-note" placeholder="可不填"></div>'
+    + '<div class="m-home-profile-row"><label>卡片顏色</label><span class="m-color-dot is-sel" style="background:' + _ncColor + ';cursor:default"></span></div>'
+    + '<div class="m-home-profile-status" id="m-nc-status"></div>'
+    + '<div class="m-case-addform-btns"><button type="button" class="m-newcase-create" id="m-nc-create">建立</button><button type="button" class="m-newcase-cancel" id="m-nc-cancel">取消</button></div>'
+    + '</div>';
+  const ov = document.getElementById('m-case-form'); if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
+  const back = document.getElementById('m-form-back'); if (back) back.onclick = _closeNewCaseForm;
+  const cancel = body.querySelector('#m-nc-cancel'); if (cancel) cancel.onclick = _closeNewCaseForm;
+  const create = body.querySelector('#m-nc-create'); if (create) create.onclick = () => _submitNewCase(create);
+  const nameEl = body.querySelector('#m-nc-name'); if (nameEl) nameEl.focus();
 }
-
-async function _createNewCase(slot, createBtn) {
-  const statusEl = slot.querySelector('#m-newcase-status');
-  const name = (slot.querySelector('#m-newcase-name').value || '').trim();
-  if (!name) { if (statusEl) statusEl.textContent = '請填個案姓名'; return; }
-  const gender = slot.querySelector('#m-newcase-gender').value || '';
-  const birthday = slot.querySelector('#m-newcase-birthday').value || '';
-  const group = (slot.querySelector('#m-newcase-group').value || '').trim();
-  const color = CARD_COLORS[_existingCaseCount % CARD_COLORS.length]; // 自動配色，存進 doc
-  createBtn.disabled = true;
-  const old = createBtn.textContent;
-  createBtn.textContent = '建立中…';
+function _closeNewCaseForm() {
+  const ov = document.getElementById('m-case-form'); if (ov) ov.classList.remove('is-open');
+}
+async function _submitNewCase(createBtn) {
+  const body = document.getElementById('m-form-body');
+  if (!body) return;
+  const statusEl = body.querySelector('#m-nc-status');
+  const name = (body.querySelector('#m-nc-name').value || '').trim();
+  if (!name) { if (statusEl) statusEl.textContent = '請填姓名'; return; }
+  const gender = body.querySelector('#m-nc-gender').value || '';
+  const birthday = body.querySelector('#m-nc-birthday').value || '';
+  const group = (body.querySelector('#m-nc-group').value || '').trim();
+  const note = (body.querySelector('#m-nc-note').value || '').trim();
+  createBtn.disabled = true; const old = createBtn.textContent; createBtn.textContent = '建立中…';
   try {
-    const newId = await createCase({ name, gender, birthday, group, color });
-    _openCaseDetail(newId); // 建立後直接進該個案細節
+    const newId = await createCase({ name: name, gender: gender, birthday: birthday, group: group, note: note, color: _ncColor });
+    _closeNewCaseForm();
+    await _openCaseDetail(newId); // 建立後直接進該個案細節
+    const mg = document.getElementById('m-case-mgmt'); if (mg && mg.classList.contains('is-open')) _renderMgmt();
   } catch (e) {
     debugLog('[Case]', '新增個案失敗', e && e.message ? e.message : e);
     if (statusEl) statusEl.textContent = '建立失敗，請重試';
-    createBtn.disabled = false;
-    createBtn.textContent = old;
+    createBtn.disabled = false; createBtn.textContent = old;
   }
 }
 
-// ---- 全螢幕名片細節 ----
-const _COEFF_PRE = [0, 1, 2, 3, 4, 5], _COEFF_LUCK = [6, 7, 8], _COEFF_POST = [9, 10, 11, 12], _COEFF_ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-function _matrixFilled(a) {
-  if (!Array.isArray(a)) return false;
-  for (let i = 0; i < a.length; i++) { if (Array.isArray(a[i])) { for (let j = 0; j < a[i].length; j++) { if (a[i][j] === 'A' || a[i][j] === 'B') return true; } } }
-  return false;
-}
-// 係數預覽：優先用部位觀察推算矩陣(dataJson)，沒有再用手動矩陣(manualDataJson)
-function _coeffPreview() {
-  const ud = window.__userData || {};
-  let m = null;
-  try { if (ud.dataJson) { const a = JSON.parse(ud.dataJson); if (_matrixFilled(a)) m = a; } } catch (e) {}
-  if (!m) { try { if (ud.manualDataJson) { const a = JSON.parse(ud.manualDataJson); if (_matrixFilled(a)) m = a; } } catch (e) {} }
-  if (!m) return null;
-  return { pre: avgCoeff(m, _COEFF_PRE), luck: avgCoeff(m, _COEFF_LUCK), post: avgCoeff(m, _COEFF_POST), tot: avgCoeff(m, _COEFF_ALL) };
-}
-
+// ---- 全螢幕個案細節（= 個案儀表板）----
 async function _openCaseDetail(idOrEmpty) {
   const caseId = idOrEmpty || null;
   setActiveCase(caseId);
   await refreshUserData();
   try { updateHomeProgress(); } catch (e) {}
   try { updateAnalysisBanner(); } catch (e) {}
-  _detailCaseId = caseId;
   const ud = window.__userData || {};
-  _detailSelColor = caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR);
-  const ov = document.getElementById('m-case-detail');
-  if (ov) ov.style.display = 'flex';
-  _renderCaseDetail();
-  const backBtn = document.getElementById('m-case-detail-back');
-  if (backBtn) backBtn.onclick = _closeCaseDetail;
+  _dashIsCase = !!caseId;
+  _dashEdit = false;
+  _dashPerson = { isCase: !!caseId, id: caseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR), group: ud.group || '', note: ud.note || '', obsJson: ud.obsJson || '', manualJson: ud.manualDataJson || '' };
+  _dashTarget = document.getElementById('m-case-detail-body');
+  const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = _dashPerson.name || '個案';
+  _paintDashboard();
+  const ov = document.getElementById('m-case-detail'); if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
+  const back = document.getElementById('m-case-detail-back'); if (back) back.onclick = _closeCaseDetail;
 }
-
 function _closeCaseDetail() {
-  const ov = document.getElementById('m-case-detail');
-  if (ov) ov.style.display = 'none';
-  _detailCaseId = null;
-  if (_container && _isListMode) _renderList(); // 回清單刷新（姓名/組別/顏色可能改了）
-}
-
-function _renderCaseDetail() {
-  const body = document.getElementById('m-case-detail-body');
-  const titleEl = document.getElementById('m-case-detail-title');
-  if (!body) return;
-  const ud = window.__userData || {};
-  const isCase = !!_detailCaseId;
-  const name = ud.displayName || '';
-  if (titleEl) titleEl.textContent = name || (isCase ? '個案' : '本人');
-  let g = ud.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
-
-  const co = _coeffPreview();
-  const cell = (label, val) => '<div class="m-detail-coeff-cell"><div class="m-detail-coeff-label">' + label + '</div><div class="m-detail-coeff-val">' + val + '</div></div>';
-  const coeffHtml = co
-    ? '<div class="m-detail-coeff">' + cell('先天', co.pre) + cell('運氣', co.luck) + cell('後天', co.post) + cell('總', co.tot) + '</div>'
-    : '<div class="m-detail-coeff"><div class="m-detail-coeff-cell"><div class="m-detail-coeff-val is-empty">尚未填寫部位觀察或手動報告</div></div></div>';
-
-  let html = '';
-  html += coeffHtml;
-  // 報告連結
-  html += '<button class="m-home-bigbtn" data-detail-report="auto">'
-    + '<span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span>'
-    + '<div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div><div class="m-home-bigbtn-sub">填11部位觀察特徵，自動算動/靜產生報告</div></div></button>';
-  html += '<button class="m-home-bigbtn" data-detail-report="manual">'
-    + '<span class="m-home-bigbtn-icon">✎</span>'
-    + '<div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div><div class="m-home-bigbtn-sub">直接輸入形勢、經緯…的動/靜產生報告</div></div></button>';
-  // 流年
-  html += '<div id="m-detail-liunian" class="m-liunian-placeholder">流年載入中…</div>';
-  // 基本資料
-  html += '<div class="m-home-card m-home-profile">'
-    + '<div class="m-home-card-title">基本資料</div>'
-    + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-detail-name" placeholder="未填寫" value="' + _esc(name) + '"></div>'
-    + '<div class="m-home-profile-row"><label>出生年月日</label><input type="date" id="m-detail-birthday" value="' + _esc(ud.birthday || '') + '"></div>'
-    + '<div class="m-home-profile-row"><label>性別</label><select id="m-detail-gender"><option value="">未填寫</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>';
-  if (isCase) {
-    const groupOpts = _knownGroups.map((gg) => '<option value="' + _esc(gg) + '">').join('');
-    html += '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-detail-group" placeholder="未分組" list="m-detail-grouplist" value="' + _esc(ud.group || '') + '"><datalist id="m-detail-grouplist">' + groupOpts + '</datalist></div>';
-    html += '<div class="m-home-card-title" style="margin-top:10px">卡片顏色</div><div class="m-color-grid" id="m-detail-colors">'
-      + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
-      + '</div>';
-  }
-  html += '<div class="m-home-profile-status" id="m-detail-status"></div>'
-    + '<button class="m-home-profile-save-btn" id="m-detail-save" type="button">存檔</button>'
-    + '</div>';
-  if (isCase) html += '<button class="m-detail-delete" id="m-detail-delete" type="button">刪除此個案</button>';
-  body.innerHTML = html;
-  body.scrollTop = 0;
-
-  // 流年
-  renderLiunianBlock().then((h) => { const slot = document.getElementById('m-detail-liunian'); if (slot) slot.outerHTML = h; });
-  // 報告連結
-  const autoBtn = body.querySelector('[data-detail-report="auto"]');
-  if (autoBtn) autoBtn.addEventListener('click', () => { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} _closeCaseDetail(); const t = document.querySelector('.m-tab[data-tab="input"]'); if (t) t.click(); });
-  const manualBtn = body.querySelector('[data-detail-report="manual"]');
-  if (manualBtn) manualBtn.addEventListener('click', () => { try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {} _closeCaseDetail(); const t = document.querySelector('.m-tab[data-tab="manual"]'); if (t) t.click(); });
-  // 色卡
-  if (isCase) {
-    body.querySelectorAll('.m-color-dot').forEach((dot) => {
-      dot.addEventListener('click', () => {
-        _detailSelColor = dot.dataset.color;
-        body.querySelectorAll('.m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot));
-      });
-    });
-    const delBtn = body.querySelector('#m-detail-delete');
-    if (delBtn) delBtn.addEventListener('click', _deleteCurrentCase);
-  }
-  const saveBtn = body.querySelector('#m-detail-save');
-  if (saveBtn) saveBtn.addEventListener('click', _saveDetail);
-}
-
-async function _saveDetail() {
-  const body = document.getElementById('m-case-detail-body');
-  if (!body) return;
-  const statusEl = body.querySelector('#m-detail-status');
-  const setStatus = (t, cls) => { if (statusEl) { statusEl.textContent = t; statusEl.className = 'm-home-profile-status ' + (cls || ''); } };
-  const name = (body.querySelector('#m-detail-name').value || '').trim();
-  const birthday = body.querySelector('#m-detail-birthday').value || '';
-  const gender = body.querySelector('#m-detail-gender').value || '';
-  const isCase = !!_detailCaseId;
-  setStatus('儲存中…', 'is-saving');
-  try {
-    if (isCase) {
-      const group = (body.querySelector('#m-detail-group').value || '').trim();
-      const color = _detailSelColor || '';
-      await updateCase(_detailCaseId, { name: name, gender: gender, birthday: birthday, group: group, color: color });
-      window.__userData = Object.assign(window.__userData || {}, { displayName: name, name: name, gender: gender, birthday: birthday, group: group, color: color });
-    } else {
-      await persistProfile({ displayName: name, birthday: birthday, gender: gender });
-    }
-    try { updateAnalysisBanner(); } catch (e) {}
-    setStatus('已儲存', 'is-saved');
-    setTimeout(() => { if (_detailCaseId !== undefined) _renderCaseDetail(); }, 400); // 重繪刷新流年
-  } catch (e) {
-    debugLog('[Case]', '細節儲存失敗', e && e.message ? e.message : e);
-    setStatus('儲存失敗', 'is-error');
-  }
+  const ov = document.getElementById('m-case-detail'); if (ov) ov.classList.remove('is-open');
 }
 
 async function _deleteCurrentCase() {
-  if (!_detailCaseId) return;
+  if (!_dashIsCase || !_dashPerson || !_dashPerson.id) return;
   if (!confirm('確定刪除此個案？此動作無法復原。')) return;
   try {
-    await deleteCase(_detailCaseId);
+    await deleteCase(_dashPerson.id);
     setActiveCase(null);
     await refreshUserData();
     try { updateHomeProgress(); } catch (e) {}
     try { updateAnalysisBanner(); } catch (e) {}
     _closeCaseDetail();
+    _renderMgmt();
   } catch (e) {
     debugLog('[Case]', '刪除失敗', e && e.message ? e.message : e);
     alert('刪除失敗，請重試');
   }
+}
+
+// 分組管理（新增/改名/拖拉排序/刪除）— Stage B 再做
+function _openManageGroups() {
+  alert('分組管理（新增/改名/拖拉排序/刪除）下一版推出。\n目前可在新增或編輯個案時直接打組別名稱來分組。');
 }
 
 // ===== PNG 全螢幕 overlay：點按鈕後直接顯示 PNG，可 pinch zoom + drag + 分享 =====

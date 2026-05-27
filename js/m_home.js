@@ -38,7 +38,7 @@ export async function persistProfile(d){
 }
 
 // 觀察答題進度：obsData 的答題數 / OBS_PARTS_DATA 題目總數
-function calcObsProgress(){
+export function calcObsProgress(){
   const ud=window.__userData||{};
   let obs={};
   if(ud.obsJson){
@@ -64,7 +64,7 @@ function calcObsProgress(){
 }
 
 // 手動輸入維度進度：manualDataJson 13×9 array 中已填滿 9 cell 的維度數
-function calcManualDimProgress(){
+export function calcManualDimProgress(){
   const ud=window.__userData||{};
   if(!ud.manualDataJson) return 0;
   let arr;
