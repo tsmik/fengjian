@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, setActiveCase, listCases, createCase, updateAnalysisBanner } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateAnalysisBanner } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -79,67 +79,21 @@ export function unmountAutoView() {
 // 自動報告無 draft，保留介面相容（m_main.js confirm 流程仍會呼叫）
 export function discardReportDraft() {}
 
-// 報告 tab list mode：兩份報告卡片（v1.7 階段 12+：沿用首頁 bigbtn 樣式 + once LS 機制）
+// 「我的」tab = 名片夾清單（本人置頂 + 排序 + 名片列）；點名片進全螢幕細節
 function _renderList() {
   if (!_container) return;
   _container.innerHTML = `
     <div class="m-home" style="padding:16px 14px">
       <div class="m-case-switch" id="m-case-switch-mount">
-        <div class="m-case-switch-title">分析對象</div>
-        <div class="m-case-list"><div style="color:#a89e92;font-size:13px;padding:4px 2px">載入中…</div></div>
+        <div class="m-case-switch-title">名片夾</div>
+        <div style="color:#a89e92;font-size:13px;padding:4px 2px">載入中…</div>
       </div>
-      <div class="m-home-card m-home-profile">
-        <div class="m-home-card-title">基本資料</div>
-        <div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-my-profile-name" placeholder="未填寫"></div>
-        <div class="m-home-profile-row"><label>出生年月日</label><input type="date" id="m-my-profile-birthday"></div>
-        <div class="m-home-profile-row"><label>性別</label><select id="m-my-profile-gender"><option value="">未填寫</option><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="m-home-profile-status" id="m-my-profile-status"></div>
-        <button class="m-home-profile-save-btn" id="m-my-profile-save" type="button">存檔</button>
-      </div>
-      <button class="m-home-bigbtn" data-report-card="auto">
-        <span class="m-home-bigbtn-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
-        </span>
-        <div class="m-home-bigbtn-meta">
-          <div class="m-home-bigbtn-title">部位觀察評分報告</div>
-          <div class="m-home-bigbtn-sub">輸入11部位 頭、額、耳、眉…觀察特徵，自動計算動/靜，產生報告</div>
-        </div>
-      </button>
-      <button class="m-home-bigbtn" data-report-card="manual">
-        <span class="m-home-bigbtn-icon">✎</span>
-        <div class="m-home-bigbtn-meta">
-          <div class="m-home-bigbtn-title">手動輸入報告</div>
-          <div class="m-home-bigbtn-sub">直接輸入形勢、經緯、方圓…的動/靜，產生報告</div>
-        </div>
-      </button>
-      <div id="m-liunian-mount" class="m-liunian-placeholder">流年載入中…</div>
     </div>
   `;
-  // v1.7 階段 14：報告 tab 下方 async load 流年參考
-  renderLiunianBlock().then(html => {
-    if (!_container || !_isListMode) return;
-    const slot = _container.querySelector('#m-liunian-mount');
-    if (slot) slot.outerHTML = html;
-  });
-  const autoCard = _container.querySelector('[data-report-card="auto"]');
-  if (autoCard) autoCard.addEventListener('click', () => {
-    // 跳到「部位觀察」tab 的「報告」view（once LS：mount 讀後立刻清，不破壞「點 tab bar 強制 reset 部位」邏輯）
-    try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {}
-    const btn = document.querySelector('.m-tab[data-tab="input"]');
-    if (btn) btn.click();
-  });
-  const manualCard = _container.querySelector('[data-report-card="manual"]');
-  if (manualCard) manualCard.addEventListener('click', () => {
-    try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
-    const btn = document.querySelector('.m-tab[data-tab="manual"]');
-    if (btn) btn.click();
-  });
-  _wireMyProfile();
-  _renderCaseSwitcher();
+  _renderCaseList();
 }
 
-// ===== 分析對象切換（個案管理 M1）=====
-// 比照桌機：本人卡（置頂）＋依組別分區的彩色個案卡；點卡 = 切換分析對象，整塊重繪
+// ===== 名片夾清單 + 全螢幕細節（個案管理）=====
 // 14 色色盤 + 淡化底色（與桌機 case_mgmt.js 一致）
 const CARD_DEFAULT_COLOR = '#D9CBA8';
 const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
@@ -158,15 +112,18 @@ function _autoColor(id) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return CARD_COLORS[h % CARD_COLORS.length];
 }
-let _knownGroups = [];      // 現有組別名（給新增表單 datalist）
+function _esc(s) { return _escHtml(String(s == null ? '' : s)); }
+let _knownGroups = [];      // 現有組別名（給表單 datalist）
 let _existingCaseCount = 0; // 給新個案配色用
+let _caseSort = (function () { try { return localStorage.getItem('m_case_sort') || 'created'; } catch (e) { return 'created'; } })();
+let _detailCaseId = null;   // 目前開啟細節的個案 id（null = 本人）
+let _detailSelColor = '';   // 細節頁色卡暫選
 
-async function _renderCaseSwitcher() {
+// ---- 名片夾清單 ----
+async function _renderCaseList() {
   const mount = _container && _container.querySelector('#m-case-switch-mount');
   if (!mount) return;
   const uid = getEffectiveUid();
-  const activeCaseId = getActiveCaseId();
-  // 本人：從 users/{uid} 讀姓名 / 卡色 / 組別順序（目前 window.__userData 可能是個案，不能用）
   let selfName = '本人', selfColor = CARD_DEFAULT_COLOR, groupOrder = [];
   try {
     const selfSnap = await getDoc(doc(db, 'users', uid));
@@ -179,64 +136,73 @@ async function _renderCaseSwitcher() {
   } catch (e) { debugLog('[Case]', '讀本人資料失敗', e && e.message); }
   let cases = [];
   try { cases = await listCases(); } catch (e) {}
-  // mount 期間可能已離開報告 tab → 不再寫
   if (!_container || !_isListMode) return;
   const m2 = _container.querySelector('#m-case-switch-mount');
   if (!m2) return;
-
   _existingCaseCount = cases.length;
-  const esc = (s) => _escHtml(String(s == null ? '' : s));
+
   const caseColor = (c) => c.color || _autoColor(c.id);
-  const caseMeta = (c) => [c.gender, c.birthday].filter(Boolean).join(' · ');
-  const cardHtml = (c) => '<button class="m-case-item' + (activeCaseId === c.id ? ' is-active' : '')
-    + '" data-case="' + esc(c.id) + '" style="background:' + _cardTint(caseColor(c)) + '">'
-    + '<span class="m-case-item-name">' + esc(c.name || '(未命名)') + '</span>'
-    + (caseMeta(c) ? '<span class="m-case-item-meta">' + esc(caseMeta(c)) + '</span>' : '')
-    + '</button>';
+  // 現有組別順序（本人 groupOrder 優先，其餘按出現）
+  const gset = [];
+  cases.forEach((c) => { const g = c.group || ''; if (g && gset.indexOf(g) < 0) gset.push(g); });
+  const orderedGroups = [];
+  groupOrder.forEach((g) => { if (gset.indexOf(g) >= 0) orderedGroups.push(g); });
+  gset.forEach((g) => { if (orderedGroups.indexOf(g) < 0) orderedGroups.push(g); });
+  _knownGroups = orderedGroups.slice();
 
-  // 依組別分群
-  const grouped = {};
-  cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
-  const named = Object.keys(grouped).filter((g) => g !== '');
-  const orderedNamed = [];
-  groupOrder.forEach((g) => { if (grouped[g]) orderedNamed.push(g); });
-  named.forEach((g) => { if (orderedNamed.indexOf(g) < 0) orderedNamed.push(g); });
-  _knownGroups = orderedNamed.slice();
+  const rowHtml = (id, name, color, sub) => '<button class="m-case-item" data-open="' + _esc(id) + '">'
+    + '<span class="m-case-swatch" style="background:' + _cardTint(color) + '"></span>'
+    + '<span class="m-case-item-col"><span class="m-case-item-name">' + _esc(name) + '</span>'
+    + (sub ? '<span class="m-case-item-sub">' + _esc(sub) + '</span>' : '') + '</span></button>';
 
-  let html = '<div class="m-case-switch-title">分析對象</div>';
-  // 本人卡（自己一區，無組別標題）
-  html += '<div class="m-case-list"><button class="m-case-item' + (activeCaseId ? '' : ' is-active')
-    + '" data-case="" style="background:' + _cardTint(selfColor) + '">'
-    + '<span class="m-case-item-name">' + esc(selfName) + '</span>'
-    + '<span class="m-case-item-tag">本人</span></button></div>';
-  // 各命名組別
-  orderedNamed.forEach((g) => {
-    html += '<div class="m-case-group-title">' + esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>';
-    html += '<div class="m-case-list">' + grouped[g].map(cardHtml).join('') + '</div>';
-  });
-  // 未分組
-  if (grouped[''] && grouped[''].length) {
-    html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div>';
-    html += '<div class="m-case-list">' + grouped[''].map(cardHtml).join('') + '</div>';
+  let html = '<div class="m-case-switch-title">名片夾</div>';
+  html += '<div class="m-case-sortbar"><span class="m-case-sortbar-label">排序</span>'
+    + '<select class="m-case-sort" id="m-case-sort">'
+    + '<option value="created"' + (_caseSort === 'created' ? ' selected' : '') + '>建立時間</option>'
+    + '<option value="updated"' + (_caseSort === 'updated' ? ' selected' : '') + '>修改時間</option>'
+    + '<option value="group"' + (_caseSort === 'group' ? ' selected' : '') + '>分組</option>'
+    + '</select></div>';
+  // 本人固定置頂
+  html += '<div class="m-case-list">' + rowHtml('', selfName, selfColor, '本人') + '</div>';
+
+  if (cases.length === 0) {
+    html += '<div style="color:#a89e92;font-size:13px;padding:8px 2px">還沒有個案，點下方新增</div>';
+  } else if (_caseSort === 'group') {
+    const grouped = {};
+    cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
+    orderedGroups.forEach((g) => {
+      html += '<div class="m-case-group-title">' + _esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>';
+      html += '<div class="m-case-list">' + grouped[g].map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), '')).join('') + '</div>';
+    });
+    if (grouped[''] && grouped[''].length) {
+      html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div>';
+      html += '<div class="m-case-list">' + grouped[''].map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), '')).join('') + '</div>';
+    }
+  } else {
+    // 依時間：分日期標題（新→舊）
+    const tsOf = (c) => _caseSort === 'updated' ? (c.updatedAt || c.createdAt || '') : (c.createdAt || '');
+    const arr = cases.slice().sort((a, b) => String(tsOf(b)).localeCompare(String(tsOf(a))));
+    const byDate = []; const idx = {};
+    arr.forEach((c) => { const d = String(tsOf(c)).slice(0, 10) || '—'; if (!(d in idx)) { idx[d] = byDate.length; byDate.push({ d: d, items: [] }); } byDate[idx[d]].items.push(c); });
+    byDate.forEach((grp) => {
+      html += '<div class="m-case-group-title">' + _esc(grp.d || '—') + '</div>';
+      html += '<div class="m-case-list">' + grp.items.map((c) => rowHtml(c.id, c.name || '(未命名)', caseColor(c), c.group || '')).join('') + '</div>';
+    });
   }
   html += '<button class="m-case-add" id="m-case-add-btn">＋ 新增個案</button><div id="m-case-add-formslot"></div>';
   m2.innerHTML = html;
 
+  const sortSel = m2.querySelector('#m-case-sort');
+  if (sortSel) sortSel.addEventListener('change', (e) => {
+    _caseSort = e.target.value;
+    try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {}
+    _renderCaseList();
+  });
   m2.querySelectorAll('.m-case-item').forEach((btn) => {
-    btn.addEventListener('click', () => _switchCase(btn.dataset.case || null));
+    btn.addEventListener('click', () => _openCaseDetail(btn.dataset.open || null));
   });
   const addBtn = m2.querySelector('#m-case-add-btn');
   if (addBtn) addBtn.addEventListener('click', _showAddCaseForm);
-}
-
-async function _switchCase(caseId) {
-  const cur = getActiveCaseId() || null;
-  if ((caseId || null) === cur) return; // 點目前這人 = 無動作
-  setActiveCase(caseId || null);
-  await refreshUserData();
-  try { updateHomeProgress(); } catch (e) {}
-  try { updateAnalysisBanner(); } catch (e) {}
-  _renderList(); // 整塊重繪：基本資料 / 報告入口 / 流年 / 清單 active 都跟著換
 }
 
 function _showAddCaseForm() {
@@ -244,7 +210,7 @@ function _showAddCaseForm() {
   const addBtn = _container && _container.querySelector('#m-case-add-btn');
   if (!slot) return;
   if (addBtn) addBtn.style.display = 'none';
-  const groupOpts = _knownGroups.map((g) => '<option value="' + _escHtml(String(g)) + '">').join('');
+  const groupOpts = _knownGroups.map((g) => '<option value="' + _esc(g) + '">').join('');
   slot.innerHTML = `
     <div class="m-case-addform">
       <input type="text" id="m-newcase-name" placeholder="個案姓名" maxlength="20">
@@ -254,7 +220,7 @@ function _showAddCaseForm() {
       <datalist id="m-newcase-grouplist">${groupOpts}</datalist>
       <div class="m-case-addform-status" id="m-newcase-status"></div>
       <div class="m-case-addform-btns">
-        <button type="button" class="m-newcase-create" id="m-newcase-create">建立並分析</button>
+        <button type="button" class="m-newcase-create" id="m-newcase-create">建立</button>
         <button type="button" class="m-newcase-cancel" id="m-newcase-cancel">取消</button>
       </div>
     </div>
@@ -280,11 +246,7 @@ async function _createNewCase(slot, createBtn) {
   createBtn.textContent = '建立中…';
   try {
     const newId = await createCase({ name, gender, birthday, group, color });
-    setActiveCase(newId);
-    await refreshUserData();
-    try { updateHomeProgress(); } catch (e) {}
-    try { updateAnalysisBanner(); } catch (e) {}
-    _renderList(); // 新個案建立後直接切成分析對象
+    _openCaseDetail(newId); // 建立後直接進該個案細節
   } catch (e) {
     debugLog('[Case]', '新增個案失敗', e && e.message ? e.message : e);
     if (statusEl) statusEl.textContent = '建立失敗，請重試';
@@ -293,33 +255,157 @@ async function _createNewCase(slot, createBtn) {
   }
 }
 
-// 「我的」分頁基本資料：可編輯 + 按存檔才寫雲端；存檔後重繪以刷新流年
-function _wireMyProfile() {
-  if (!_container) return;
+// ---- 全螢幕名片細節 ----
+const _COEFF_PRE = [0, 1, 2, 3, 4, 5], _COEFF_LUCK = [6, 7, 8], _COEFF_POST = [9, 10, 11, 12], _COEFF_ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+function _matrixFilled(a) {
+  if (!Array.isArray(a)) return false;
+  for (let i = 0; i < a.length; i++) { if (Array.isArray(a[i])) { for (let j = 0; j < a[i].length; j++) { if (a[i][j] === 'A' || a[i][j] === 'B') return true; } } }
+  return false;
+}
+// 係數預覽：優先用部位觀察推算矩陣(dataJson)，沒有再用手動矩陣(manualDataJson)
+function _coeffPreview() {
   const ud = window.__userData || {};
-  const elName = _container.querySelector('#m-my-profile-name');
-  const elBday = _container.querySelector('#m-my-profile-birthday');
-  const elGender = _container.querySelector('#m-my-profile-gender');
-  const elStatus = _container.querySelector('#m-my-profile-status');
-  const elSave = _container.querySelector('#m-my-profile-save');
-  if (!elName || !elSave) return;
-  elName.value = ud.displayName || '';
-  elBday.value = ud.birthday || '';
-  let g = ud.gender || '';
-  if (g === 'M') g = '男'; else if (g === 'F') g = '女';
-  elGender.value = g;
-  elSave.addEventListener('click', async () => {
-    if (elStatus) { elStatus.textContent = '儲存中…'; elStatus.className = 'm-home-profile-status is-saving'; }
-    try {
-      await persistProfile({ displayName: elName.value, birthday: elBday.value, gender: elGender.value });
-      _renderList(); // 重繪：更新流年（生日/性別可能改了）+ 重新填入
-      const st = _container && _container.querySelector('#m-my-profile-status');
-      if (st) { st.textContent = '已儲存'; st.className = 'm-home-profile-status is-saved'; setTimeout(() => { if (st.textContent === '已儲存') st.textContent = ''; }, 1500); }
-    } catch (e) {
-      debugLog('[Profile]', '儲存失敗', e && e.message ? e.message : e);
-      if (elStatus) { elStatus.textContent = '儲存失敗'; elStatus.className = 'm-home-profile-status is-error'; }
+  let m = null;
+  try { if (ud.dataJson) { const a = JSON.parse(ud.dataJson); if (_matrixFilled(a)) m = a; } } catch (e) {}
+  if (!m) { try { if (ud.manualDataJson) { const a = JSON.parse(ud.manualDataJson); if (_matrixFilled(a)) m = a; } } catch (e) {} }
+  if (!m) return null;
+  return { pre: avgCoeff(m, _COEFF_PRE), luck: avgCoeff(m, _COEFF_LUCK), post: avgCoeff(m, _COEFF_POST), tot: avgCoeff(m, _COEFF_ALL) };
+}
+
+async function _openCaseDetail(idOrEmpty) {
+  const caseId = idOrEmpty || null;
+  setActiveCase(caseId);
+  await refreshUserData();
+  try { updateHomeProgress(); } catch (e) {}
+  try { updateAnalysisBanner(); } catch (e) {}
+  _detailCaseId = caseId;
+  const ud = window.__userData || {};
+  _detailSelColor = caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR);
+  const ov = document.getElementById('m-case-detail');
+  if (ov) ov.style.display = 'flex';
+  _renderCaseDetail();
+  const backBtn = document.getElementById('m-case-detail-back');
+  if (backBtn) backBtn.onclick = _closeCaseDetail;
+}
+
+function _closeCaseDetail() {
+  const ov = document.getElementById('m-case-detail');
+  if (ov) ov.style.display = 'none';
+  _detailCaseId = null;
+  if (_container && _isListMode) _renderList(); // 回清單刷新（姓名/組別/顏色可能改了）
+}
+
+function _renderCaseDetail() {
+  const body = document.getElementById('m-case-detail-body');
+  const titleEl = document.getElementById('m-case-detail-title');
+  if (!body) return;
+  const ud = window.__userData || {};
+  const isCase = !!_detailCaseId;
+  const name = ud.displayName || '';
+  if (titleEl) titleEl.textContent = name || (isCase ? '個案' : '本人');
+  let g = ud.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
+
+  const co = _coeffPreview();
+  const cell = (label, val) => '<div class="m-detail-coeff-cell"><div class="m-detail-coeff-label">' + label + '</div><div class="m-detail-coeff-val">' + val + '</div></div>';
+  const coeffHtml = co
+    ? '<div class="m-detail-coeff">' + cell('先天', co.pre) + cell('運氣', co.luck) + cell('後天', co.post) + cell('總', co.tot) + '</div>'
+    : '<div class="m-detail-coeff"><div class="m-detail-coeff-cell"><div class="m-detail-coeff-val is-empty">尚未填寫部位觀察或手動報告</div></div></div>';
+
+  let html = '';
+  html += coeffHtml;
+  // 報告連結
+  html += '<button class="m-home-bigbtn" data-detail-report="auto">'
+    + '<span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span>'
+    + '<div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div><div class="m-home-bigbtn-sub">填11部位觀察特徵，自動算動/靜產生報告</div></div></button>';
+  html += '<button class="m-home-bigbtn" data-detail-report="manual">'
+    + '<span class="m-home-bigbtn-icon">✎</span>'
+    + '<div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div><div class="m-home-bigbtn-sub">直接輸入形勢、經緯…的動/靜產生報告</div></div></button>';
+  // 流年
+  html += '<div id="m-detail-liunian" class="m-liunian-placeholder">流年載入中…</div>';
+  // 基本資料
+  html += '<div class="m-home-card m-home-profile">'
+    + '<div class="m-home-card-title">基本資料</div>'
+    + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-detail-name" placeholder="未填寫" value="' + _esc(name) + '"></div>'
+    + '<div class="m-home-profile-row"><label>出生年月日</label><input type="date" id="m-detail-birthday" value="' + _esc(ud.birthday || '') + '"></div>'
+    + '<div class="m-home-profile-row"><label>性別</label><select id="m-detail-gender"><option value="">未填寫</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>';
+  if (isCase) {
+    const groupOpts = _knownGroups.map((gg) => '<option value="' + _esc(gg) + '">').join('');
+    html += '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-detail-group" placeholder="未分組" list="m-detail-grouplist" value="' + _esc(ud.group || '') + '"><datalist id="m-detail-grouplist">' + groupOpts + '</datalist></div>';
+    html += '<div class="m-home-card-title" style="margin-top:10px">卡片顏色</div><div class="m-color-grid" id="m-detail-colors">'
+      + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
+      + '</div>';
+  }
+  html += '<div class="m-home-profile-status" id="m-detail-status"></div>'
+    + '<button class="m-home-profile-save-btn" id="m-detail-save" type="button">存檔</button>'
+    + '</div>';
+  if (isCase) html += '<button class="m-detail-delete" id="m-detail-delete" type="button">刪除此個案</button>';
+  body.innerHTML = html;
+  body.scrollTop = 0;
+
+  // 流年
+  renderLiunianBlock().then((h) => { const slot = document.getElementById('m-detail-liunian'); if (slot) slot.outerHTML = h; });
+  // 報告連結
+  const autoBtn = body.querySelector('[data-detail-report="auto"]');
+  if (autoBtn) autoBtn.addEventListener('click', () => { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} _closeCaseDetail(); const t = document.querySelector('.m-tab[data-tab="input"]'); if (t) t.click(); });
+  const manualBtn = body.querySelector('[data-detail-report="manual"]');
+  if (manualBtn) manualBtn.addEventListener('click', () => { try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {} _closeCaseDetail(); const t = document.querySelector('.m-tab[data-tab="manual"]'); if (t) t.click(); });
+  // 色卡
+  if (isCase) {
+    body.querySelectorAll('.m-color-dot').forEach((dot) => {
+      dot.addEventListener('click', () => {
+        _detailSelColor = dot.dataset.color;
+        body.querySelectorAll('.m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot));
+      });
+    });
+    const delBtn = body.querySelector('#m-detail-delete');
+    if (delBtn) delBtn.addEventListener('click', _deleteCurrentCase);
+  }
+  const saveBtn = body.querySelector('#m-detail-save');
+  if (saveBtn) saveBtn.addEventListener('click', _saveDetail);
+}
+
+async function _saveDetail() {
+  const body = document.getElementById('m-case-detail-body');
+  if (!body) return;
+  const statusEl = body.querySelector('#m-detail-status');
+  const setStatus = (t, cls) => { if (statusEl) { statusEl.textContent = t; statusEl.className = 'm-home-profile-status ' + (cls || ''); } };
+  const name = (body.querySelector('#m-detail-name').value || '').trim();
+  const birthday = body.querySelector('#m-detail-birthday').value || '';
+  const gender = body.querySelector('#m-detail-gender').value || '';
+  const isCase = !!_detailCaseId;
+  setStatus('儲存中…', 'is-saving');
+  try {
+    if (isCase) {
+      const group = (body.querySelector('#m-detail-group').value || '').trim();
+      const color = _detailSelColor || '';
+      await updateCase(_detailCaseId, { name: name, gender: gender, birthday: birthday, group: group, color: color });
+      window.__userData = Object.assign(window.__userData || {}, { displayName: name, name: name, gender: gender, birthday: birthday, group: group, color: color });
+    } else {
+      await persistProfile({ displayName: name, birthday: birthday, gender: gender });
     }
-  });
+    try { updateAnalysisBanner(); } catch (e) {}
+    setStatus('已儲存', 'is-saved');
+    setTimeout(() => { if (_detailCaseId !== undefined) _renderCaseDetail(); }, 400); // 重繪刷新流年
+  } catch (e) {
+    debugLog('[Case]', '細節儲存失敗', e && e.message ? e.message : e);
+    setStatus('儲存失敗', 'is-error');
+  }
+}
+
+async function _deleteCurrentCase() {
+  if (!_detailCaseId) return;
+  if (!confirm('確定刪除此個案？此動作無法復原。')) return;
+  try {
+    await deleteCase(_detailCaseId);
+    setActiveCase(null);
+    await refreshUserData();
+    try { updateHomeProgress(); } catch (e) {}
+    try { updateAnalysisBanner(); } catch (e) {}
+    _closeCaseDetail();
+  } catch (e) {
+    debugLog('[Case]', '刪除失敗', e && e.message ? e.message : e);
+    alert('刪除失敗，請重試');
+  }
 }
 
 // ===== PNG 全螢幕 overlay：點按鈕後直接顯示 PNG，可 pinch zoom + drag + 分享 =====

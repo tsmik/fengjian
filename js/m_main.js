@@ -13,7 +13,7 @@ import {
   setPersistence, browserLocalPersistence, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, getDocs, addDoc
+  getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, getDocs, addDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome } from "./m_home.js";
@@ -129,6 +129,19 @@ export async function createCase(fields) {
   };
   const ref = await addDoc(collection(db, 'users', uid, 'cases'), payload);
   return ref.id;
+}
+// 更新個案欄位（name/gender/birthday/group/color 等）；merge 寫入 + updatedAt
+export async function updateCase(caseId, fields) {
+  const uid = getEffectiveUid();
+  if (!uid || !caseId) throw new Error('參數不足');
+  const payload = Object.assign({}, fields, { updatedAt: new Date().toISOString() });
+  await setDoc(doc(db, 'users', uid, 'cases', caseId), payload, { merge: true });
+}
+// 刪除個案
+export async function deleteCase(caseId) {
+  const uid = getEffectiveUid();
+  if (!uid || !caseId) throw new Error('參數不足');
+  await deleteDoc(doc(db, 'users', uid, 'cases', caseId));
 }
 // 分析分頁頂部「目前分析：XXX」橫幅名字（讀 window.__userData.displayName）
 export function updateAnalysisBanner() {
