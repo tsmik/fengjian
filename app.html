@@ -125,6 +125,82 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 }
 .m-tab-page.active{display:block}
 
+/* ===== 目前分析橫幅（個案管理 M1）===== */
+.m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid rgba(0,0,0,0.06)}
+.m-analysis-banner-label{color:var(--text-3);font-size:12px;flex-shrink:0}
+.m-analysis-banner-name{flex:1;min-width:0;color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-analysis-back{flex-shrink:0;display:inline-flex;align-items:center;background:rgba(255,255,255,0.75);border:1px solid rgba(0,0,0,0.12);border-radius:14px;padding:4px 11px;font-size:13px;color:#3a3228;font-family:inherit;cursor:pointer;white-space:nowrap}
+.m-analysis-back:active{background:rgba(255,255,255,0.95)}
+
+/* ===== 我的分頁：分析對象切換（個案管理 M1）===== */
+.m-case-switch{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:14px}
+.m-case-switch-title{font-size:13px;color:#888;margin-bottom:10px;font-weight:500}
+.m-case-list{display:flex;flex-direction:column;gap:8px}
+.m-case-item{display:flex;align-items:center;gap:10px;width:100%;background:#faf7f2;border:1px solid #e8e0d4;border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;font-family:inherit}
+.m-case-item:active{background:#f2ebe0}
+.m-case-item.is-active{border-color:var(--active);box-shadow:inset 0 0 0 2px var(--active)}
+.m-case-item-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:#3a3228;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-case-item-meta{font-size:12px;color:#5a5048;flex-shrink:0}
+.m-case-item-tag{font-size:11px;color:#4a4138;background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.08);border-radius:6px;padding:2px 7px;flex-shrink:0}
+.m-case-group-title{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:600;color:#6a6258;margin:14px 2px 6px}
+.m-case-group-title.ungrouped{color:#a89e92}
+.m-case-group-count{font-size:11px;color:#a89e92;font-weight:400}
+.m-case-add{width:100%;margin-top:10px;padding:11px;border:1px dashed #d3c7b6;border-radius:10px;background:#fff;color:var(--text-3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-case-add:active{background:#f5efe6}
+.m-case-addform{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.m-case-addform input,.m-case-addform select{padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+.m-case-addform-btns{display:flex;gap:8px}
+.m-case-addform-btns button{flex:1;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-newcase-create{background:var(--active,#C17A5A);color:#fff}
+.m-newcase-cancel{background:#ece6dd;color:#5a5048}
+.m-case-addform-status{font-size:12px;color:#b04545;min-height:14px}
+/* 排序選單 */
+.m-case-sortbar{display:flex;align-items:center;gap:8px;margin:2px 2px 10px}
+.m-case-sortbar-label{font-size:12px;color:var(--text-3);flex-shrink:0}
+.m-case-sort{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;font-family:inherit;color:#3a3228}
+/* 名片列：色塊 + 姓名 + 分組 */
+.m-case-swatch{flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid rgba(0,0,0,0.08)}
+.m-case-item-sub{font-size:12px;color:#6a6258;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-case-item-col{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* ===== 全螢幕頁（案例管理 / 名片細節 / 新增個案）：nav 下方右側滑入 ===== */
+.m-fullscreen{position:fixed;top:calc(var(--nav-h) + var(--safe-top));left:0;right:0;bottom:0;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;overflow:hidden}
+.m-fullscreen.is-open{transform:translateX(0)}
+.m-fs-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #e8e0d4;min-height:44px}
+.m-fs-back{background:none;border:none;color:var(--active);font-size:16px;font-family:inherit;cursor:pointer;padding:6px 8px;flex-shrink:0}
+.m-fs-title{font-size:16px;font-weight:600;color:#3a3228;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-fs-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px;display:flex;flex-direction:column;gap:14px}
+/* 案例管理 top bar 縮小按鈕（有個案時） */
+.m-mgmt-bar-actions{display:flex;gap:6px;margin-left:auto}
+.m-mgmt-bar-btn{padding:6px 10px;border:1px solid #e0d8cc;border-radius:8px;background:#fff;font-size:13px;font-family:inherit;color:#5a5048;cursor:pointer;white-space:nowrap}
+.m-mgmt-bar-btn.is-primary{background:var(--active);color:#fff;border-color:var(--active)}
+/* 案例管理空狀態兩大按鈕 */
+.m-mgmt-bigbtn{width:100%;padding:22px 16px;border-radius:14px;font-size:17px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer;border:1px solid #e0d8cc}
+.m-mgmt-bigbtn.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}
+.m-mgmt-bigbtn.is-secondary{background:#fff;color:#5a5048}
+/* 名片細節：報告連結右側進度 */
+.m-detail-prog{margin-left:auto;flex-shrink:0;text-align:right}
+.m-detail-prog-pct{font-size:16px;font-weight:700;color:var(--active);font-variant-numeric:tabular-nums}
+.m-detail-prog-label{font-size:11px;color:var(--text-3)}
+/* 基本資料 行內編輯鈕 */
+.m-detail-edit-btn{margin-left:auto;background:none;border:1px solid #ddd;border-radius:7px;padding:4px 10px;font-size:12px;color:#5a5048;font-family:inherit;cursor:pointer}
+.m-detail-info-row{display:flex;align-items:center;gap:10px;font-size:14px;color:#3a3228}
+.m-detail-info-row .m-detail-info-label{color:var(--text-3);font-size:12px;width:64px;flex-shrink:0}
+/* 色卡選擇 */
+.m-color-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.m-color-dot{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.m-color-dot.is-sel{border-color:#3a3228;box-shadow:0 0 0 2px #fff inset}
+.m-detail-delete{margin-top:4px;width:100%;padding:11px;border:1px solid #e0bcbc;border-radius:10px;background:#fff;color:#b04545;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-detail-delete:active{background:#fbeeee}
+/* 儀表板：人物顏色外框包住所有區塊 */
+.m-dash-wrap{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.m-dash-wrap .m-liunian-section{margin-top:0}
+.m-dash-head{display:flex;align-items:center;gap:10px;padding:2px 4px 0}
+.m-dash-head-name{flex:1;min-width:0;font-size:19px;font-weight:700;color:#3a3228;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 個案新增/管理：深色底白字，與上方區隔 */
+.m-dash-mgmt-btn{width:100%;margin-top:4px;padding:14px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-size:15px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer}
+.m-dash-mgmt-btn:active{opacity:0.88}
+
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
 .m-home-hello{font-size:20px;font-weight:600;color:#3a3228;padding:4px 4px 0}
@@ -151,6 +227,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-status.is-saving{color:#c89540}
 .m-home-profile-status.is-saved{color:#5a8a4a}
 .m-home-profile-status.is-error{color:#b04545}
+.m-home-profile-save-btn{margin-top:10px;width:100%;padding:11px;border:none;border-radius:8px;background:var(--active,#C17A5A);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-home-profile-save-btn:active{opacity:0.85}
 /* 首頁兩大按鈕（v1.7 階段 5 / 12+）*/
 .m-home-hint{font-size:14px;color:#5a5048;padding:0 4px 10px;letter-spacing:0.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m-home-bigbtn{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
@@ -307,6 +385,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* 群組 sections：每群可獨立收合 */
 .m-dim-part-body{background:#fff;padding:8px 10px}
 .m-dim-empty{padding:14px;font-size:12px;color:#aaa;font-style:italic;text-align:center}
+.m-dim-subpart{margin-bottom:10px}
+.m-dim-subpart:last-child{margin-bottom:0}
+.m-dim-subpart-title{font-size:13px;font-weight:600;color:#8a5a3a;padding:4px 2px;border-bottom:2px solid #e8ddd0;margin-bottom:4px}
 .m-dim-group{margin-bottom:8px}
 .m-dim-group:last-child{margin-bottom:0}
 .m-dim-group-header{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;border-bottom:1px solid #ede8e0}
@@ -387,6 +468,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-report-link-btn{display:inline-block;padding:14px 36px;background:#C17A5A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:2px;box-shadow:0 2px 6px rgba(193,122,90,0.3);font-family:inherit;border:none;cursor:pointer}
 .m-report-link-btn:active{background:#a76040}
 .m-report-link-tip{font-size:12px;color:#a89e92;margin-top:4px;letter-spacing:1px}
+.m-chart-title{text-align:center;font-size:15px;font-weight:700;color:#5a4f45;letter-spacing:2px;margin-bottom:6px}
 
 /* ===== PNG 全螢幕 overlay（pinch zoom + drag）===== */
 .m-png-overlay{display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column;align-items:stretch;justify-content:stretch}
@@ -463,8 +545,32 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 維度展開新 UI：左部位 / 中 switch / 右結果（取代舊 part tile）===== */
 .m-manual-rows{margin-top:4px}
-.m-manual-row{display:grid;grid-template-columns:36px 56px 1fr;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid #f0ebe0}
+.m-manual-row-wrap{border-bottom:1px solid #f0ebe0}
+.m-manual-row-wrap:last-child{border-bottom:none}
+.m-manual-row{display:grid;grid-template-columns:36px 56px 1fr;gap:8px;align-items:center;padding:7px 2px}
 .m-manual-row:last-child{border-bottom:none}
+/* P1：條件式自動算動靜 */
+.m-manual-cond-btn{display:block;width:100%;margin:0 0 6px;padding:6px;background:#f5efe6;border:1px solid #e3d8c8;border-radius:6px;color:#8a6e54;font-size:12px;font-family:inherit;cursor:pointer;letter-spacing:1px}
+.m-manual-cond-btn.is-open{background:#ece2d4}
+.m-manual-cond-panel{margin:0 0 8px;padding:8px 6px;background:#fcfaf6;border:1px solid #eee3d4;border-radius:8px}
+.m-manual-cond-row{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid #f3ece0}
+.m-manual-cond-row:last-child{border-bottom:none}
+.m-manual-cond-label{flex:1;font-size:13px;color:#3d3b39;line-height:1.4}
+.m-manual-cond-yn{display:flex;gap:0;border:1.5px solid #d0c8be;border-radius:7px;overflow:hidden;flex-shrink:0}
+.m-manual-cond-yn-btn{padding:6px 12px;background:transparent;border:none;font-family:inherit;font-size:13px;color:#7a6e64;cursor:pointer}
+.m-manual-cond-yn-btn.yes{border-right:1px solid #d0c8be}
+.m-manual-cond-yn-btn.yes.is-active{background:#7A9E7E;color:#fff;font-weight:700}
+.m-manual-cond-yn-btn.no.is-active{background:#C17A5A;color:#fff;font-weight:700}
+/* v1.8：條件鈕移到中間欄（取代形/勢色塊）；無條件的部位用空白佔位 */
+.m-manual-cond-btn-mid{width:100%;height:30px;padding:0;background:#f5efe6;border:1px solid #e3d8c8;border-radius:6px;color:#8a6e54;font-size:12px;font-family:inherit;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.m-manual-cond-btn-mid.is-open{background:#ece2d4;color:#6f543c}
+.m-manual-row-midblank{display:block;width:100%;height:30px}
+.m-manual-cond-ref{font-size:12px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 8px;margin-bottom:6px;letter-spacing:1px}
+.m-manual-cond-w{color:#b09a6a;font-size:11px;margin-left:4px}
+.m-manual-cond-grouphd{font-size:13px;font-weight:700;color:#6f543c;padding:7px 2px 3px;border-bottom:1px solid #efe6d6}
+.m-manual-cond-grouphd:first-child{padding-top:2px}
+.m-manual-cond-row .m-manual-cond-label{padding-left:8px}
+.m-manual-cond-formula{font-size:12px;color:#8a8175;line-height:1.5;padding:6px 2px 2px;letter-spacing:0.5px}
 .m-manual-row-part{font-weight:600;color:#3d3b39;text-align:center;font-size:13px}
 .m-manual-row-switch{display:grid;grid-template-columns:1fr 1fr 1fr;border:1.5px solid #d0c8be;border-radius:8px;overflow:hidden;background:#ede8e0}
 .m-manual-sw{padding:8px 2px;background:transparent;border:none;font-family:inherit;font-size:13px;color:#7a6e64;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
@@ -1087,6 +1193,10 @@ body.m-debug-on .m-debug-clear{display:block}
 </header>
 
 <main class="m-main" id="m-main" style="display:none">
+  <div class="m-analysis-banner" id="m-analysis-banner" style="display:none">
+    <span class="m-analysis-banner-name" id="m-analysis-banner-name">—</span>
+    <button class="m-analysis-back" id="m-analysis-back-self" type="button" style="display:none"></button>
+  </div>
   <section class="m-tab-page active" id="m-page-home">
   <div class="m-home">
     <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>
@@ -1137,6 +1247,7 @@ body.m-debug-on .m-debug-clear{display:block}
         </select>
       </div>
       <div class="m-home-profile-status" id="m-home-profile-status"></div>
+      <button class="m-home-profile-save-btn" id="m-home-profile-save" type="button">存檔</button>
     </div>
   </div>
 </section>
@@ -1171,6 +1282,33 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-png-hint">雙指縮放 / 雙擊重置</div>
 </div>
 
+<!-- ===== 案例管理總畫面（全螢幕，nav 下方滑入）===== -->
+<div class="m-fullscreen" id="m-case-mgmt" style="z-index:300">
+  <div class="m-fs-bar">
+    <button class="m-fs-back" id="m-mgmt-back" type="button">‹ 返回</button>
+    <div class="m-mgmt-bar-actions" id="m-mgmt-bar-actions"></div>
+  </div>
+  <div class="m-fs-body" id="m-mgmt-body"></div>
+</div>
+
+<!-- ===== 全螢幕名片細節（個案 / 本人儀表板）===== -->
+<div class="m-fullscreen" id="m-case-detail" style="z-index:320">
+  <div class="m-fs-bar">
+    <button class="m-fs-back" id="m-case-detail-back" type="button">‹ 返回</button>
+    <div class="m-fs-title" id="m-case-detail-title">名片</div>
+  </div>
+  <div class="m-fs-body" id="m-case-detail-body"></div>
+</div>
+
+<!-- ===== 新增個案表單（全螢幕，nav 下方滑入）===== -->
+<div class="m-fullscreen" id="m-case-form" style="z-index:330">
+  <div class="m-fs-bar">
+    <button class="m-fs-back" id="m-form-back" type="button">‹ 返回</button>
+    <div class="m-fs-title">新增個案</div>
+  </div>
+  <div class="m-fs-body" id="m-form-body"></div>
+</div>
+
 <nav class="m-tabbar" id="m-tabbar" style="display:none">
   <button class="m-tab active" data-tab="home">
     <span class="m-tab-icon">⌂</span>
@@ -1187,13 +1325,15 @@ body.m-debug-on .m-debug-clear{display:block}
     <span>手動輸入</span>
   </button>
   <button class="m-tab" data-tab="report">
-    <span class="m-tab-icon">▦</span>
-    <span>報告</span>
+    <span class="m-tab-icon">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </span>
+    <span>我的</span>
   </button>
 </nav>
 
 
-<script type="module" src="js/app_main.js"></script>
+<script type="module" src="js/m_main.js"></script>
 
 </body>
 </html>
