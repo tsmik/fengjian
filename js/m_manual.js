@@ -34,6 +34,7 @@ import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js
 import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
+import { mountBoard, unmountBoard } from './m_board.js';
 import { setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_DIM_IDX = 'm_manual_dim_idx';
@@ -41,13 +42,14 @@ const LS_VIEW = 'm_manual_view';
 
 let _container = null;
 // v1.7 階段 8：拿掉 _view，純用 _manualSubview，segmented 三個 tab
-let _manualSubview = 'input';  // 'input' | 'overview' | 'sens'
+let _manualSubview = 'board';  // 'board'(課程) | 'input'(手動評分) | 'overview'(報告) | 'sens'(參數分析,暫不在 segmented)
 
-// v1.7 階段 8：手動輸入 tab 上方 segmented 三個 tab
+// 上課 tab 上方 segmented：課程(板書) / 手動評分 / 報告。
+// 參數分析(sens) 暫不列入（之後搬到「我的」），但 renderManualSens / 'sens' view 邏輯保留。
 const SUBMODES = [
-  { key: 'input',    label: '輸入' },
+  { key: 'board',    label: '課程' },
+  { key: 'input',    label: '手動評分' },
   { key: 'overview', label: '報告' },
-  { key: 'sens',     label: '參數分析' },
 ];
 let _manualDraft = null;
 let _firestoreBaseline = null;
@@ -118,12 +120,11 @@ function _countAnswered(di) {
 
 export function mountManual(container) {
   _container = container;
-  // v1.7 階段 8：每次進手動輸入 tab 強制回到「輸入」view（不讀 LS）
-  // v1.7 階段 12+：once LS 例外（報告 tab 卡片點擊時 set）
-  _manualSubview = 'input';
+  // 每次進上課 tab 預設回到「課程」(板書)；once LS 例外（報告卡片點擊等指定 view）
+  _manualSubview = 'board';
   try {
     const once = localStorage.getItem('m_manual_view_once');
-    if (once === 'input' || once === 'overview' || once === 'sens') {
+    if (once === 'board' || once === 'input' || once === 'overview' || once === 'sens') {
       _manualSubview = once;
       localStorage.removeItem('m_manual_view_once');
     }
@@ -176,6 +177,7 @@ export function mountManual(container) {
 }
 
 export function unmountManual() {
+  try { unmountBoard(); } catch (e) {}
   if (_container) _container.innerHTML = '';
   _container = null;
 }
@@ -239,11 +241,15 @@ async function exportManualPng(btn) {
 
 function _render() {
   if (!_container) return;
-  // sens view 隱藏儲存按鈕（純看不寫）；其他 view 顯示
+  // sens / board view 隱藏手動儲存按鈕（board 自己 debounce 存筆記）；其他 view 顯示
   const saveZone = document.getElementById('m-save-zone');
-  if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens');
+  if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens' || _manualSubview === 'board');
   _container.innerHTML = _renderManualInput();
   _bindEvents();
+  if (_manualSubview === 'board') {
+    const mount = _container.querySelector('#m-board-mount');
+    if (mount) mountBoard(mount);
+  }
 }
 
 function _renderManualInput() {
@@ -252,9 +258,12 @@ function _renderManualInput() {
     `<button class="m-seg-btn ${_manualSubview === t.key ? 'm-seg-active' : ''}" data-mview="${t.key}">${t.label}</button>`
   ).join('');
   // v1.7 階段 11：頁面頂端 hint + segmented（拿掉 m-manual-view-bar wrapper，跟部位觀察 segmented 寬度一致）
-  const viewToggle = `<div class="m-page-hint">直接輸入13維度的動/靜，產生報告</div><div class="m-segmented" role="tablist">${seg}</div>`;
+  const hint = _manualSubview === 'board' ? '看老師板書、記筆記（選維度看條件）' : '直接輸入13維度的動/靜，產生報告';
+  const viewToggle = `<div class="m-page-hint">${hint}</div><div class="m-segmented" role="tablist">${seg}</div>`;
   let body;
-  if (_manualSubview === 'sens') {
+  if (_manualSubview === 'board') {
+    body = `<div id="m-board-mount"></div>`;
+  } else if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
     // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
@@ -769,7 +778,9 @@ function _renderManualRow(di, pi) {
 function _bindEvents() {
   _container.querySelectorAll('[data-mview]').forEach(btn => {
     btn.addEventListener('click', () => {
+      const prev = _manualSubview;
       _manualSubview = btn.dataset.mview;
+      if (prev === 'board' && _manualSubview !== 'board') { try { unmountBoard(); } catch (e) {} }
       try { localStorage.setItem(LS_VIEW, _manualSubview); } catch (e) {}
       _render();
     });
