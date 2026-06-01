@@ -960,6 +960,22 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-mgrid-coeff-cell.m-mgrid-grp-total{background:var(--grp-total)}
 }
 
+/* ===== P6 RWD（A1 §10）：桌機部位觀察兩欄式 — 左部位清單 + 右題目面板 ===== */
+@media (min-width:1024px){
+  .m-part-layout{display:flex;align-items:flex-start;gap:20px;padding:10px 12px 0}
+  /* 左：11 部位 + 清空 直立成一欄（兩個 .m-input-row 各自垂直堆疊）*/
+  .m-part-list{flex:0 0 260px}
+  .m-part-list .m-input-row{flex-direction:column;padding:0;gap:8px}
+  .m-part-list .m-input-row-6{margin-bottom:8px}
+  .m-part-list .m-tile{flex:0 0 auto;width:100%}
+  .m-part-list .m-eraser-slot{flex:0 0 auto}
+  .m-part-list .m-eraser-btn{min-height:44px}
+  /* 右：題目面板填滿剩餘寬，未選時顯示提示框 */
+  .m-part-panel-wrap{flex:1;min-width:0}
+  .m-part-panel-wrap .m-panel{margin:0}
+  .m-part-panel-hint{display:flex;align-items:center;justify-content:center;min-height:220px;color:#a89e92;font-size:15px;border:1.5px dashed #d3c7b6;border-radius:14px;background:#fafaf8;letter-spacing:1px}
+}
+
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
 .m-debug-toggle,
 .m-debug-panel,
