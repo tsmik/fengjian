@@ -425,21 +425,24 @@ function isPartExpanded(di, pi) {
 function togglePartExpanded(di, pi) {
   // 互斥單選：點同 pi 收合（清掉 key），點別的部位切換
   if (_dimPartExpanded[di] === pi) {
+    if (_isDesktop()) return; // 桌機三欄維持選取、不收合（永遠有內容）
     delete _dimPartExpanded[di];
   } else {
     _dimPartExpanded[di] = pi;
-    // 首次展開時 init：所有 group 預設全部收合（已有狀態則保留）
-    // 頭(pi=0) 改 init 其三個子部位 13/14/15 的群組
-    const _initIdxs = (pi === 0) ? [13, 14, 15] : [pi];
-    _initIdxs.forEach(idx => {
-      const key = _groupKey(di, idx);
-      if (!_dimGroupCollapsed[key]) {
-        const groups = _collectDimPartGroups(di, idx);
-        const labels = groups.map(g => g.label).filter(Boolean);
-        _dimGroupCollapsed[key] = new Set(labels);
-      }
-    });
-    saveDimGroupCollapsed();
+    // 手機：首次展開時所有 group 預設全部收合（避免一長串）；桌機留展開直接看條件
+    if (!_isDesktop()) {
+      // 頭(pi=0) 改 init 其三個子部位 13/14/15 的群組
+      const _initIdxs = (pi === 0) ? [13, 14, 15] : [pi];
+      _initIdxs.forEach(idx => {
+        const key = _groupKey(di, idx);
+        if (!_dimGroupCollapsed[key]) {
+          const groups = _collectDimPartGroups(di, idx);
+          const labels = groups.map(g => g.label).filter(Boolean);
+          _dimGroupCollapsed[key] = new Set(labels);
+        }
+      });
+      saveDimGroupCollapsed();
+    }
   }
   saveDimPartExpanded();
 }
@@ -594,6 +597,14 @@ function renderDimTile(di) {
 function renderDimPanel(di) {
   const dm = DIMS[di];
   if (!dm) return '';
+  // A2（§11）桌機三欄：預設展開第一個「有規則」的部位，右側一進來就看到老師條件
+  if (_dimPartExpanded[di] == null && _isDesktop()) {
+    const firstValid = DIM_PART_ORDER.find(pi => {
+      const cr = condResults[di] && condResults[di][pi];
+      return cr && cr.threshold !== '無規則' && (cr.max || 0) > 0;
+    });
+    if (firstValid != null) _dimPartExpanded[di] = firstValid;
+  }
   // 維度大標題（左：維度名 + 觀點；右：進度 N/M 或結果字）
   const prog = dimProgress(di);
   const completed = prog.total > 0 && prog.done === prog.total;
@@ -634,9 +645,13 @@ function renderDimPanel(di) {
   return `
     <div class="m-panel m-dim-panel" data-dim="${di}">
       ${head}
-      <div class="m-input-row m-dim-part-row m-dim-part-row-6">${partTilesRow1}</div>
-      <div class="m-input-row m-dim-part-row m-dim-part-row-7">${partTilesRow2}</div>
-      ${partContent}
+      <div class="m-dim-sublayout">
+        <div class="m-dim-part-list">
+          <div class="m-input-row m-dim-part-row m-dim-part-row-6">${partTilesRow1}</div>
+          <div class="m-input-row m-dim-part-row m-dim-part-row-7">${partTilesRow2}</div>
+        </div>
+        <div class="m-dim-partcontent-wrap">${partContent || '<div class="m-part-panel-hint">← 點選部位看老師條件</div>'}</div>
+      </div>
     </div>
   `;
 }

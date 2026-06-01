@@ -400,12 +400,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dim-empty{padding:14px;font-size:12px;color:#aaa;font-style:italic;text-align:center}
 .m-dim-subpart{margin-bottom:10px}
 .m-dim-subpart:last-child{margin-bottom:0}
-.m-dim-subpart-title{font-size:13px;font-weight:600;color:#8a5a3a;padding:4px 2px;border-bottom:2px solid #e8ddd0;margin-bottom:4px}
+.m-dim-subpart-title{font-size:15px;font-weight:700;color:#8a5a3a;padding:6px 2px;border-bottom:2px solid #e0d2c0;margin-bottom:8px;letter-spacing:1px}
 .m-dim-group{margin-bottom:8px}
 .m-dim-group:last-child{margin-bottom:0}
-.m-dim-group-header{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;border-bottom:1px solid #ede8e0}
-.m-dim-group-chevron{flex-shrink:0;font-size:10px;color:#716b60;width:12px;text-align:center;line-height:1}
-.m-dim-group-label{font-weight:600;font-size:13px;color:#716b60}
+.m-dim-group-header{display:flex;align-items:center;gap:8px;padding:9px 12px;margin-bottom:8px;cursor:pointer;background:#ece2cf;border-radius:8px;border-left:4px solid #b59a6a}
+.m-dim-group-chevron{flex-shrink:0;font-size:11px;color:#8a7a5a;width:12px;text-align:center;line-height:1}
+.m-dim-group-label{font-weight:700;font-size:15px;color:#4a3d2a;letter-spacing:1px}
 .m-dim-group-body{padding:8px 0 4px}
 /* partResult 結論行（中停/下停常見：「左頭達標」之類純展示，不可答） */
 .m-dim-result-item{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#3d3b39;border-bottom:1px solid #f5efe6}
@@ -992,26 +992,34 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-part-panel-hint{display:flex;align-items:center;justify-content:center;min-height:220px;color:#a89e92;font-size:15px;border:1.5px dashed #d3c7b6;border-radius:14px;background:#fafaf8;letter-spacing:1px}
 }
 
-/* ===== P6b RWD（A2 §11）：桌機維度視角兩欄式 — 左維度清單 + 右作答面板 ===== */
+/* ===== P6b RWD（A2 §11）：桌機維度視角三欄式 — 左維度｜中部位｜右展開內容 ===== */
 @media (min-width:1024px){
   .m-dim-layout{display:flex;align-items:flex-start;gap:20px;padding:10px 12px 0}
-  /* 左：13 維度直立成一欄 */
-  .m-dim-list{flex:0 0 200px}
+  /* 第一欄：13 維度直立成一欄 */
+  .m-dim-list{flex:0 0 180px}
   .m-dim-list .m-dim-row{flex-direction:column;padding:0;gap:8px}
   .m-dim-list .m-dim-row-6{margin-bottom:8px}
   .m-dim-list .m-dim-tile{flex:0 0 auto;width:100%}
   .m-dim-list .m-tile-label{font-size:16px}
-  /* 右：維度面板填滿剩餘寬 */
+  /* 維度面板填滿剩餘寬；維度名標題跨整欄，下方再切「部位｜內容」兩欄 */
   .m-dim-panel-wrap{flex:1;min-width:0}
   .m-dim-panel-wrap .m-panel{margin:0}
-  /* 群組內條件題並排（寬螢幕利用空間；收合的 group-body 有 inline display:none 會蓋過）*/
-  .m-dim-panel-wrap .m-dim-group-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px 14px;align-items:start}
+  .m-dim-sublayout{display:flex;align-items:flex-start;gap:16px}
+  /* 第二欄：部位直立清單 */
+  .m-dim-part-list{flex:0 0 120px}
+  .m-dim-part-list .m-dim-part-row{flex-direction:column;padding:0;gap:6px}
+  .m-dim-part-list .m-dim-part-row-6{margin-bottom:6px}
+  .m-dim-part-list .m-dim-part-tile{flex:0 0 auto;width:100%}
+  /* 第三欄：展開內容 */
+  .m-dim-partcontent-wrap{flex:1;min-width:0}
+  .m-dim-partcontent-wrap .m-dim-part-content{margin-top:0}
+  /* 群組內條件題並排（收合的 group-body 有 inline display:none 會蓋過）*/
+  .m-dim-panel-wrap .m-dim-group-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px 14px;align-items:start}
   .m-dim-panel-wrap .m-q{margin-bottom:0}
   /* 桌機字級放大 */
   .m-dim-panel-wrap .m-q-text{font-size:16px;line-height:1.6}
   .m-dim-panel-wrap .m-opt{font-size:15px;padding:9px 14px}
   .m-dim-panel-wrap .m-opt-v{font-size:15px}
-  .m-dim-panel-wrap .m-dim-group-label{font-size:15px}
   .m-dim-panel-wrap .m-dim-title-name{font-size:22px}
 }
 
