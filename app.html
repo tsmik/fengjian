@@ -992,6 +992,29 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-part-panel-hint{display:flex;align-items:center;justify-content:center;min-height:220px;color:#a89e92;font-size:15px;border:1.5px dashed #d3c7b6;border-radius:14px;background:#fafaf8;letter-spacing:1px}
 }
 
+/* ===== P6b RWD（A2 §11）：桌機維度視角兩欄式 — 左維度清單 + 右作答面板 ===== */
+@media (min-width:1024px){
+  .m-dim-layout{display:flex;align-items:flex-start;gap:20px;padding:10px 12px 0}
+  /* 左：13 維度直立成一欄 */
+  .m-dim-list{flex:0 0 200px}
+  .m-dim-list .m-dim-row{flex-direction:column;padding:0;gap:8px}
+  .m-dim-list .m-dim-row-6{margin-bottom:8px}
+  .m-dim-list .m-dim-tile{flex:0 0 auto;width:100%}
+  .m-dim-list .m-tile-label{font-size:16px}
+  /* 右：維度面板填滿剩餘寬 */
+  .m-dim-panel-wrap{flex:1;min-width:0}
+  .m-dim-panel-wrap .m-panel{margin:0}
+  /* 群組內條件題並排（寬螢幕利用空間；收合的 group-body 有 inline display:none 會蓋過）*/
+  .m-dim-panel-wrap .m-dim-group-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px 14px;align-items:start}
+  .m-dim-panel-wrap .m-q{margin-bottom:0}
+  /* 桌機字級放大 */
+  .m-dim-panel-wrap .m-q-text{font-size:16px;line-height:1.6}
+  .m-dim-panel-wrap .m-opt{font-size:15px;padding:9px 14px}
+  .m-dim-panel-wrap .m-opt-v{font-size:15px}
+  .m-dim-panel-wrap .m-dim-group-label{font-size:15px}
+  .m-dim-panel-wrap .m-dim-title-name{font-size:22px}
+}
+
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
 .m-debug-toggle,
 .m-debug-panel,

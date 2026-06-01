@@ -552,13 +552,19 @@ function _syncRecalc() {
 }
 
 function renderDimMode() {
+  // A2（§11）桌機兩欄：預設展開第一個維度，右側面板一進來就有內容（手機維持收合）
+  if (_dimExpanded == null && _isDesktop()) _dimExpanded = DIM_ROW_1_IDX[0];
   const row1 = DIM_ROW_1_IDX.map(di => renderDimTile(di)).join('');
   const row2 = DIM_ROW_2_IDX.map(di => renderDimTile(di)).join('');
-  const panel = (_dimExpanded != null) ? renderDimPanel(_dimExpanded) : '';
+  const panel = (_dimExpanded != null) ? renderDimPanel(_dimExpanded) : `<div class="m-part-panel-hint">← 點選左側維度開始作答</div>`;
   return `
-    <div class="m-input-row m-dim-row m-dim-row-6">${row1}</div>
-    <div class="m-input-row m-dim-row m-dim-row-7">${row2}</div>
-    ${panel}
+    <div class="m-dim-layout">
+      <div class="m-dim-list">
+        <div class="m-input-row m-dim-row m-dim-row-6">${row1}</div>
+        <div class="m-input-row m-dim-row m-dim-row-7">${row2}</div>
+      </div>
+      <div class="m-dim-panel-wrap">${panel}</div>
+    </div>
   `;
 }
 
@@ -1094,7 +1100,8 @@ function bindEvents() {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
       const wasOpen = _dimExpanded === di;
-      _dimExpanded = wasOpen ? null : di;
+      // 桌機兩欄維持「永遠有面板」：點已開的維度不收合（只有手機收合）
+      _dimExpanded = wasOpen ? (_isDesktop() ? di : null) : di;
       saveDimExpanded();
       // v1.7 階段 16：點開維度 → mark seen
       if (!wasOpen && DIMS[di]) markDimSeen(DIMS[di].dn);
