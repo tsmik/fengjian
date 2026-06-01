@@ -762,6 +762,31 @@ function renderDimPartBody(di, pi, dimPartName) {
   return `<div class="m-dim-part-body">${gh || '<div class="m-dim-empty">（無條件項）</div>'}</div>`;
 }
 
+// A1（§10）：部位視角頂端總計 — 加總 11 部位 done/total（純前台）
+function partGrandTotal() {
+  let done = 0, total = 0;
+  [...PART_ROW_1, ...PART_ROW_2].forEach(k => {
+    const p = partProgress(k);
+    done += p.done; total += p.total;
+  });
+  return { done, total };
+}
+function renderPartSummary() {
+  const { done, total } = partGrandTotal();
+  const pct = total ? Math.round(done / total * 100) : 0;
+  return `
+    <div class="m-part-summary">
+      <div class="m-part-summary-bar"><div class="m-part-summary-fill" style="width:${pct}%"></div></div>
+      <div class="m-part-summary-text">已填 <b>${done}</b>／共 ${total} 題</div>
+    </div>
+  `;
+}
+// A1（§10）：圖例常駐。目前僅 🔴 新題（需作答）；🟡「內容更新 vs 新題」區分需先動 admin computeUpdateLog
+// 記變更類型（§10.3），未經指示先不做 → 暫不顯示 🟡 圖例（避免出現永不亮的記號）。
+function renderPartLegend() {
+  return `<div class="m-part-legend"><span class="m-update-dot-inline"></span>新題目（需作答）</div>`;
+}
+
 function renderPartMode() {
   const row1 = PART_ROW_1.map(k => renderPartTile(k)).join('');
   const row2 = PART_ROW_2.map(k => renderPartTile(k)).join('');
@@ -770,11 +795,17 @@ function renderPartMode() {
     <div class="m-panel" data-panel="${escapeHtml(_expandedKey)}">
       ${renderSections(_expandedKey)}
     </div>
-  ` : '';
+  ` : `<div class="m-part-panel-hint">← 點選左側部位開始觀察</div>`;
   return `
-    <div class="m-input-row m-input-row-6">${row1}</div>
-    <div class="m-input-row m-input-row-5">${row2}${eraser}</div>
-    ${panel}
+    ${renderPartSummary()}
+    ${renderPartLegend()}
+    <div class="m-part-layout">
+      <div class="m-part-list">
+        <div class="m-input-row m-input-row-6">${row1}</div>
+        <div class="m-input-row m-input-row-5">${row2}${eraser}</div>
+      </div>
+      <div class="m-part-panel-wrap">${panel}</div>
+    </div>
   `;
 }
 
@@ -798,12 +829,20 @@ function renderPartTile(key) {
 function renderSections(key) {
   const secs = getSections(key);
   if (secs.length === 0) return `<div class="m-panel-empty">（此部位無題目）</div>`;
-  return secs.map(s => `
+  // A1（§10）：每個 section 小標帶 done/total ＋ section 紅點（聚合該段題目層級更新）。
+  // 對「頭」即為三骨（頂骨/枕骨/華陽骨）各自進度；其餘部位同樣受惠。
+  return secs.map(s => {
+    const qs = s.qs || [];
+    const secDone = qs.filter(isAnswered).length;
+    const secDot = qs.some(q => hasUpdate('q_' + key + '_' + q.id)) ? '<span class="m-update-dot-inline"></span>' : '';
+    const secProg = qs.length ? `<span class="m-section-prog">${secDone}/${qs.length}</span>` : '';
+    return `
     <div class="m-section">
-      ${s.label ? `<div class="m-section-label">${escapeHtml(s.label)}</div>` : ''}
-      ${(s.qs || []).map(q => renderQuestion(q, key)).join('')}
+      ${s.label ? `<div class="m-section-label">${secDot}<span class="m-section-label-text">${escapeHtml(s.label)}</span>${secProg}</div>` : ''}
+      ${qs.map(q => renderQuestion(q, key)).join('')}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderQuestion(q, partName) {

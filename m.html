@@ -314,7 +314,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-panel{background:#fafaf8;border:1px solid #e8e0d4;border-radius:12px;padding:14px 14px;margin:8px 10px 0}
 .m-section{margin-bottom:14px}
 .m-section:last-child{margin-bottom:0}
-.m-section-label{font-size:11px;color:#aaa;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ede8e0}
+.m-section-label{display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ede8e0}
+.m-section-label-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-section-prog{margin-left:auto;flex-shrink:0;color:#a89e92;font-weight:700;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+/* ===== A1（§10）部位視角：頂端總計＋進度條＋圖例＋版面 wrapper ===== */
+.m-part-summary{display:flex;align-items:center;gap:10px;padding:12px 12px 0}
+.m-part-summary-bar{flex:1;height:8px;background:#f0ebe5;border-radius:4px;overflow:hidden}
+.m-part-summary-fill{height:100%;background:linear-gradient(90deg,#d4b896,#8fae7c);border-radius:4px;transition:width .4s}
+.m-part-summary-text{font-size:12px;color:#5a5048;white-space:nowrap;font-variant-numeric:tabular-nums}
+.m-part-summary-text b{color:#3a3228;font-weight:700}
+.m-part-legend{display:flex;align-items:center;gap:5px;padding:8px 12px 0;font-size:12px;color:#7a6e64}
+.m-part-legend .m-update-dot-inline{margin-right:0}
+/* 手機＝清單在上、面板在下（單欄，與原狀一致）；桌機 @media 改兩欄 */
+.m-part-layout{display:block}
+.m-part-panel-hint{display:none}
 .m-q{margin-bottom:14px}
 .m-q:last-child{margin-bottom:0}
 .m-q-todo{background:#fff8d5;padding:8px 10px;border-radius:6px;margin-left:-4px;margin-right:-4px}
