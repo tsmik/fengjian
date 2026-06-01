@@ -787,7 +787,14 @@ function renderPartLegend() {
   return `<div class="m-part-legend"><span class="m-update-dot-inline"></span>新題目（需作答）</div>`;
 }
 
+// A1（§10）桌機兩欄式判斷（與 app.html @media 斷點一致）
+function _isDesktop() {
+  try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; }
+}
+
 function renderPartMode() {
+  // A1（§10）桌機兩欄：預設展開第一個部位，右側面板一進來就有內容（手機維持收合）
+  if (!_expandedKey && _isDesktop()) _expandedKey = PART_ROW_1[0];
   const row1 = PART_ROW_1.map(k => renderPartTile(k)).join('');
   const row2 = PART_ROW_2.map(k => renderPartTile(k)).join('');
   const eraser = `<div class="m-eraser-slot"><button class="m-eraser-btn" data-action="erase-all" aria-label="清空所有觀察資料" title="清空所有觀察資料"><svg class="m-eraser-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg><span class="m-eraser-text">清空</span></button></div>`;
@@ -984,7 +991,8 @@ function bindEvents() {
       const key = btn.dataset.key;
       if (!key) return; // dim tile 由下方 .m-dim-tile handler 處理
       const wasOpen = _expandedKey === key;
-      _expandedKey = wasOpen ? null : key;
+      // 桌機兩欄維持「永遠有面板」：點已開的部位不收合（只有手機收合）
+      _expandedKey = wasOpen ? (_isDesktop() ? key : null) : key;
       // v1.7 階段 16：點開部位 → mark seen
       if (!wasOpen) markPartSeen(key);
       render();
