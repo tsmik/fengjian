@@ -52,9 +52,12 @@ export function unmountBoard() {
 
 async function _ensureData() {
   // 1. 板書講義（settings/board，admin 編，全域唯讀）— 只載一次
+  //    結構同桌機 app.js：doc 有欄位 boardJson（JSON 字串）→ parse 成 {維度名: 講義文字}
   if (!_boardLoaded) {
-    try { const s = await getDoc(doc(db, 'settings', 'board')); if (s.exists()) setBoardText(s.data()); }
-    catch (e) { debugLog('[board]', '載入板書講義失敗', e && e.message); }
+    try {
+      const s = await getDoc(doc(db, 'settings', 'board'));
+      if (s.exists() && s.data().boardJson) setBoardText(JSON.parse(s.data().boardJson));
+    } catch (e) { debugLog('[board]', '載入板書講義失敗', e && e.message); }
     _boardLoaded = true;
   }
   // 2. 我的筆記（目前對象的 boardNotesJson）— 編輯中不覆蓋
