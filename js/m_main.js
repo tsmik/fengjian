@@ -18,7 +18,7 @@ import {
 
 import { initHome, refreshHomeSelf } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
-import { mountReport, unmountReport, discardReportDraft } from "./m_report.js";
+import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft } from "./m_manual.js";
 import { initBadges } from "./m_badge.js";
 
@@ -469,8 +469,10 @@ if (isTeacherMode) {
         discardManualDraft();
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
+      // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
+      const pageKey = (key === 'cases') ? 'report' : key;
       Object.keys(pages).forEach(function(k){
-        pages[k].classList.toggle('active',k===key);
+        pages[k].classList.toggle('active',k===pageKey);
       });
       elMain.scrollTop=0;
       // 切換時顯示/隱藏儲存區
@@ -478,7 +480,7 @@ if (isTeacherMode) {
       // - home / report：無儲存（report 變純看自動報告）→ 隱藏
       const saveZone = document.getElementById('m-save-zone');
       if(saveZone){
-        saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report');
+        saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report' || key === 'cases');
       }
       // 「目前分析：XXX」橫幅：只在分析分頁（部位觀察 / 手動輸入）顯示
       const banner = document.getElementById('m-analysis-banner');
@@ -499,6 +501,11 @@ if (isTeacherMode) {
         unmountInput();
         unmountManual();
         mountReport(pages.report);
+      } else if(key==='cases'){
+        unmountInput();
+        unmountManual();
+        mountReport(pages.report);
+        openCaseMgmtView();
       } else if(key==='manual'){
         unmountInput();
         unmountReport();

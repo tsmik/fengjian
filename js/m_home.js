@@ -123,21 +123,17 @@ export function initHome(displayName){
   // 2. 兩大按鈕進度
   updateHomeProgress();
 
-  // 3. 兩大按鈕點擊：永遠分析「本人」（先把 active 設回本人）→ 跳對應 tab
+  // 3. 四大方塊點擊：先把 active 設回本人 → 跳對應 tab（上課/部位觀察/我的/個案管理）
+  const TAB_FOR={obs:'input',manual:'manual',my:'report',cases:'cases'};
   document.querySelectorAll('[data-go]').forEach(function(btn){
     btn.onclick=async function(){
       const target=btn.dataset.go;
       try{ setActiveCase(null); await refreshUserData(); }catch(e){}
       try{ updateHomeProgress(); }catch(e){}
-      if(target==='obs'){
-        try{ localStorage.setItem('m_input_view','quiz'); }catch(e){}
-        const tabBtn=document.querySelector('.m-tab[data-tab="input"]');
-        if(tabBtn) tabBtn.click();
-      }else if(target==='manual'){
-        try{ localStorage.setItem('m_manual_view','input'); }catch(e){}
-        const tabBtn=document.querySelector('.m-tab[data-tab="manual"]');
-        if(tabBtn) tabBtn.click();
-      }
+      if(target==='obs'){ try{ localStorage.setItem('m_input_view','quiz'); }catch(e){} }
+      else if(target==='manual'){ try{ localStorage.setItem('m_manual_view','input'); }catch(e){} }
+      const tabBtn=document.querySelector('.m-tab[data-tab="'+(TAB_FOR[target]||'home')+'"]');
+      if(tabBtn) tabBtn.click();
     };
   });
 
@@ -149,6 +145,8 @@ export function initHome(displayName){
   const elStatus=document.getElementById('m-home-profile-status');
   const elNavUser=document.getElementById('m-nav-user');
 
+  // 首頁改四方塊後，基本資料表單已搬到「我的」分頁；首頁無此表單時略過
+  if(!elName) return;
   elName.value=ud.displayName||'';
   elBday.value=ud.birthday||'';
   // gender 既有資料 'M'/'F' 自動 migrate 到中文

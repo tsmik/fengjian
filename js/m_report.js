@@ -304,6 +304,19 @@ function _openCaseMgmt() {
 function _closeCaseMgmt() {
   const ov = document.getElementById('m-case-mgmt'); if (ov) ov.classList.remove('is-open');
 }
+// 由「個案管理」tab 進入：開啟案例管理 overlay（底下是已 mount 的「我的」儀表板）；
+// 返回時關 overlay 並把 tab 高亮切回「我的」（report）。
+export function openCaseMgmtView() {
+  _openCaseMgmt();
+  const back = document.getElementById('m-mgmt-back');
+  if (back) back.onclick = () => {
+    _closeCaseMgmt();
+    const myTab = document.querySelector('.m-tab[data-tab="report"]');
+    const caseTab = document.querySelector('.m-tab[data-tab="cases"]');
+    if (caseTab) caseTab.classList.remove('active');
+    if (myTab) myTab.classList.add('active');
+  };
+}
 async function _renderMgmt() {
   const body = document.getElementById('m-mgmt-body');
   const barActions = document.getElementById('m-mgmt-bar-actions');
