@@ -30,6 +30,8 @@ let _boardLoaded = false;   // settings/board 講義只載一次
 let _notesDirty = false;    // 編輯中 → _ensureData 不要用雲端蓋掉
 let _dim = null;            // 目前選的維度 idx（跨 re-render 保留）
 let _saveTimer = null;
+let _noteW = 340;           // 桌機板書筆記欄寬（可拖曳，存 LS）
+try { const _w = parseInt(localStorage.getItem('m_board_note_w'), 10); if (_w >= 160 && _w <= 760) _noteW = _w; } catch (e) {}
 
 function _isDesktop() { try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; } }
 function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -41,7 +43,7 @@ export async function mountBoard(container) {
   }
   await _ensureData();
   if (!_el) return;
-  if (_dim == null && _isDesktop()) _dim = 0;  // 桌機預設展開第一個維度
+  if (_dim == null) _dim = 0;  // 進課程預設顯示第一個維度（形勢）— 手機桌機皆是
   _render();
 }
 
@@ -126,8 +128,11 @@ function _dimContent(i) {
       <div class="m-dim-panel-head"><span class="m-dim-title-name">${_esc(dn)}</span><span class="m-dim-title-view">${_esc(dm.view || '')}</span></div>
       <div class="m-board-lecture-block">
         <div class="m-board-sec-title">板書</div>
-        <div class="m-board-lecture">${lecture ? _esc(lecture) : '（尚未設定板書文字）'}</div>
-        <div class="m-board-note-wrap"><div class="m-board-note-cap">我的板書筆記</div>${_noteEditor(dn, 'board')}</div>
+        <div class="m-board-lecture-wrap">
+          <div class="m-board-lecture-col"><div class="m-board-lecture">${lecture ? _esc(lecture) : '（尚未設定板書文字）'}</div></div>
+          <div class="m-board-drag" data-board-drag title="拖曳調整筆記寬度"></div>
+          <div class="m-board-note-col" style="flex-basis:${_noteW}px"><div class="m-board-note-cap">我的板書筆記</div>${_noteEditor(dn, 'board')}</div>
+        </div>
       </div>
       <div class="m-board-cond-heading">部位判別條件</div>
       <div class="m-board-parts">${boxes}</div>
@@ -157,6 +162,43 @@ function _bind() {
       _scheduleSave();
     });
   });
+  const handle = _el.querySelector('[data-board-drag]');
+  if (handle) _bindDrag(handle);
+}
+
+// 桌機：拖曳板書/筆記中間的把手調整筆記欄寬（支援滑鼠 + 觸控；存 LS）
+function _bindDrag(handle) {
+  const noteCol = handle.parentElement && handle.parentElement.querySelector('.m-board-note-col');
+  if (!noteCol) return;
+  let startX = 0, startW = 0, dragging = false;
+  const px = (e) => (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+  const onMove = (e) => {
+    if (!dragging) return;
+    let w = startW - (px(e) - startX);   // 筆記在右：把手往左拖 → 筆記變寬
+    w = Math.max(160, Math.min(760, w));
+    noteCol.style.flexBasis = w + 'px';
+    _noteW = w;
+    if (e.cancelable) e.preventDefault();
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.userSelect = '';
+    try { localStorage.setItem('m_board_note_w', String(_noteW)); } catch (e) {}
+    window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp);
+    window.removeEventListener('touchmove', onMove); window.removeEventListener('touchend', onUp);
+  };
+  const onDown = (e) => {
+    dragging = true;
+    startX = px(e);
+    startW = noteCol.getBoundingClientRect().width;
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false }); window.addEventListener('touchend', onUp);
+    if (e.cancelable) e.preventDefault();
+  };
+  handle.addEventListener('mousedown', onDown);
+  handle.addEventListener('touchstart', onDown, { passive: false });
 }
 
 function _autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }

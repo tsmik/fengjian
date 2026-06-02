@@ -335,7 +335,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== A3 課程（板書與筆記）m_board：沿用 .m-dim-layout 兩欄 ===== */
 .m-board-lecture-block{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding:14px;margin-bottom:14px}
 .m-board-sec-title{font-size:13px;font-weight:700;color:#8a6e54;letter-spacing:2px;margin-bottom:8px}
-.m-board-lecture{font-size:14px;line-height:1.8;color:#3a3228;white-space:pre-wrap;word-break:break-word}
+.m-board-lecture{font-size:clamp(15px,1.5vw,18px);line-height:1.9;color:#3a3228;white-space:pre-wrap;word-break:break-word}
+/* 板書左 / 筆記右（桌機 flex + 可拖曳把手）；手機維持上下堆疊 */
+.m-board-lecture-wrap{display:block}
+.m-board-lecture-col{min-width:0}
+.m-board-note-col{margin-top:10px;padding-top:10px;border-top:1px dashed #e3d8c8}
+.m-board-drag{display:none}
 .m-board-note-wrap{margin-top:10px;padding-top:10px;border-top:1px dashed #e3d8c8}
 .m-board-note-cap{font-size:12px;color:#a08a6a;font-weight:600;margin-bottom:5px;letter-spacing:1px}
 .m-board-note{width:100%;min-height:42px;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fcfaf6;resize:none;line-height:1.6;color:#3a3228}
