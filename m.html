@@ -366,7 +366,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-dim.m-sv-grp-post{border-left-color:var(--grp-post)}
 .m-sv-dim.is-cur{color:#3a3228;background:#efe7d6}
 .m-sv-main{min-width:0}
-.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:2px 2px 12px;border-bottom:1px solid #d4c9b0;margin-bottom:14px}
+.m-sv-dimhead{border-bottom:1px solid #d4c9b0;margin-bottom:14px;padding-bottom:10px}
+.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:2px 2px 0}
 .m-sv-dimname{font-size:19px;color:#3a3228;letter-spacing:2px}
 .m-sv-dimexp{font-size:15px;color:#7a6e64}
 .m-sv-sub{display:block}
@@ -406,7 +407,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-yn button.is-yes{background:#7A9E7E;color:#fff}
 .m-sv-yn button.is-no{background:#C17A5A;color:#fff}
 /* Stage3：筆記 / 新增移除條件 / 說明編輯 */
-.m-sv-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid #cfc6b6;border-radius:50%;background:none;color:#9a8f7e;font-size:12px;font-family:inherit;cursor:pointer;padding:0;flex-shrink:0}
+.m-sv-ico{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid #cfc6b6;border-radius:50%;background:none;color:#9a8f7e;font-size:12px;font-family:inherit;cursor:pointer;padding:0;flex-shrink:0}
+.m-sv-erase{position:relative}
+.m-score-view [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#3a3228;color:#fff;font-size:12px;white-space:nowrap;padding:3px 8px;border-radius:6px;pointer-events:none;z-index:60}
 .m-sv-ico.is-on{border-color:var(--active);color:var(--active)}
 .m-sv-noteinner{position:relative}
 .m-sv-erase{display:none;align-items:center;margin:3px 0 0;background:none;border:none;color:#b06a5a;cursor:pointer;padding:2px 4px}
@@ -419,7 +422,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-confirm-btns button{padding:8px 20px;border:none;border-radius:9px;font-size:15px;font-family:inherit;cursor:pointer}
 .m-sv-confirm-cancel{background:#ece6dd;color:#5a5048}
 .m-sv-confirm-ok{background:var(--active);color:#fff}
-.m-sv-expnote{padding:8px 2px 0}
+.m-sv-expnote{padding:6px 2px 0}
 .m-sv-notebox{padding:2px 12px 8px}
 .m-sv-pnotebox{padding:0 0 10px}
 .m-sv-note{width:100%;min-height:30px;height:auto;border:1px solid #ddd;border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fcfaf6;resize:vertical;line-height:1.5;color:#3a3228}

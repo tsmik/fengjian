@@ -779,6 +779,7 @@ function _renderManualRow(di, pi) {
 //   形/勢＝該維度兩極（dim.da/db，跟著維度名走）；存 _manualDraft[di][pi]='A'/'B'，再按取消
 // ============================================================
 let _scorePartIdx = 0;
+let _svFocusKey = null;  // 開筆記/新增框後要自動聚焦的目標（data-noteblur 值 或 'add:'+akey）
 function _scoreGrpClass(i) { return i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post')); }
 function _poleOf(dim, ch) {
   if (ch === dim.a) return { val: 'A', tone: dim.aT === '靜' ? 'jing' : 'dong' };
@@ -831,9 +832,9 @@ function _renderScoreView() {
   const defExp = `符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}`;
   const expNote = _scaffold.exp[di] || '';
   const expOpen = _noteOpen['exp' + di];
-  const expBtn = `<button class="m-sv-ico ${expNote || expOpen ? 'is-on' : ''}" data-expedit="${di}" title="加說明筆記">✎</button>`;
+  const expBtn = `<button class="m-sv-ico ${expNote || expOpen ? 'is-on' : ''}" data-expedit="${di}" data-tip="加說明">✎</button>`;
   const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '加上你對這個維度的說明…', 'exp' + di)}</div>` : '';
-  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}</div>${expBox}`;
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}</div>${expBox}</div>`;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
 // ===== A3 #2 Stage3：鷹架持久化（manualScaffoldJson，per 對象）＋筆記/新增/移除/說明 =====
@@ -847,6 +848,8 @@ function _loadScaffold() {
   try { s = ud.manualScaffoldJson ? JSON.parse(ud.manualScaffoldJson) : {}; } catch (e) { s = {}; }
   _scaffold = Object.assign({ cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{} }, s || {});
   ['cond','cnote','pnote','added','removed','exp'].forEach(k => { if (!_scaffold[k] || typeof _scaffold[k] !== 'object') _scaffold[k] = {}; });
+  // added 舊格式 {k:[...]} → 新格式 {k:{gi:[...]}}（per 子部位）
+  Object.keys(_scaffold.added).forEach(k => { if (Array.isArray(_scaffold.added[k])) _scaffold.added[k] = { 0: _scaffold.added[k] }; });
 }
 function _saveScaffold() {
   if (_scaffoldTimer) clearTimeout(_scaffoldTimer);
@@ -872,11 +875,11 @@ function _svConfirm(text, detail, onYes) {
   ov.querySelector('.m-sv-confirm-ok').onclick = () => { close(); if (onYes) onYes(); };
   ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
 }
-// 筆記框：textarea（即打即存、原生 undo、可下拉拉高、寫多少顯多少）＋ 橡皮擦刪除（focus 才現、左下）
+// 筆記框：textarea（rows=1 寫多少顯多少、即打即存、原生 undo、可下拉拉高）＋ 橡皮擦刪除（focus 才現、左下）
 function _noteEl(dataAttr, value, placeholder, ndelKey) {
-  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" ${dataAttr} data-noteblur="${_esc(ndelKey)}" placeholder="${placeholder}">${_esc(value)}</textarea><button class="m-sv-erase" data-ndel="${_esc(ndelKey)}" type="button" title="刪除筆記"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button></div>`;
+  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" rows="1" ${dataAttr} data-noteblur="${_esc(ndelKey)}" placeholder="${placeholder}">${_esc(value)}</textarea><button class="m-sv-erase" data-ndel="${_esc(ndelKey)}" type="button" data-tip="刪除筆記"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button></div>`;
 }
-// 條件筆記列（一條條件 + 符合/不符 + ✎筆記 + ✕移除；added 標「我的補充」）
+// 條件列（條件 + 符合/不符 + ✎筆記；✕ 只給學員自己加的條件，預設條件不提供移除）
 function _condRow(k, c, opt) {
   opt = opt || {};
   const noRule = c.indexOf('待 admin') >= 0;
@@ -885,8 +888,8 @@ function _condRow(k, c, opt) {
   const ck = k + '|' + c;
   const yn = noRule ? '' : `<span class="m-sv-yn"><button class="${yes}" data-ynk="${_esc(ck)}" data-ynv="符合">符合</button><button class="${no}" data-ynk="${_esc(ck)}" data-ynv="不符">不符</button></span>`;
   const nv = cnote[c] || '';
-  const noteBtn = noRule ? '' : `<button class="m-sv-ico ${nv || _noteOpen['c' + ck] ? 'is-on' : ''}" data-cnt="${_esc(ck)}" title="加筆記">✎</button>`;
-  const delBtn = noRule ? '' : `<button class="m-sv-ico" data-cdel="${_esc(ck)}" data-cadd="${opt.added ? '1' : ''}" title="移除條件">✕</button>`;
+  const noteBtn = noRule ? '' : `<button class="m-sv-ico ${nv || _noteOpen['c' + ck] ? 'is-on' : ''}" data-cnt="${_esc(ck)}" data-tip="加筆記">✎</button>`;
+  const delBtn = (opt.added && !noRule) ? `<button class="m-sv-ico" data-cdel="${_esc(ck)}" data-cgi="${opt.gi}" data-tip="移除我加的條件">✕</button>` : '';
   const tag = opt.added ? `<span class="m-sv-mytag">我的補充</span>` : '';
   const noteBox = (!noRule && (_noteOpen['c' + ck] || nv)) ? `<div class="m-sv-notebox">${_noteEl('data-cna="' + _esc(ck) + '"', nv, '這條的筆記…', 'c' + ck)}</div>` : '';
   return `<div class="m-sv-cond ${opt.added ? 'is-mine' : ''}"><span class="m-sv-cond-text">${_esc(c)}${tag}</span>${yn}${noteBtn}${delBtn}</div>${noteBox}`;
@@ -896,23 +899,22 @@ function _renderScoreCond(di, pi) {
   const k = `${di}_${pi}`;
   const bigPart = pi <= 3;  // 頭/上停/中停/下停 才有部位筆記
   const pNote = _scaffold.pnote[k] || '';
-  const pnoteBtn = bigPart ? `<button class="m-sv-ico ${pNote || _noteOpen['p' + k] ? 'is-on' : ''}" data-pnt="${k}" title="部位筆記">✎</button>` : '';
+  const pnoteBtn = bigPart ? `<button class="m-sv-ico ${pNote || _noteOpen['p' + k] ? 'is-on' : ''}" data-pnt="${k}" data-tip="部位筆記">✎</button>` : '';
   const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${model.crit ? `<span class="m-sv-crit">${_esc(model.crit)}</span>` : ''}${pnoteBtn}</div>`;
   const pNoteBox = (bigPart && (_noteOpen['p' + k] || pNote)) ? `<div class="m-sv-notebox m-sv-pnotebox">${_noteEl('data-pna="' + k + '"', pNote, '這個部位的筆記…', 'p' + k)}</div>` : '';
   if (!model.groups.length) return `<div class="m-sv-condwrap">${header}${pNoteBox}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
   const refHtml = model.refNote ? `<div class="m-sv-ref">${_esc(model.refNote)}（依部位觀察既有答案）</div>` : '';
-  const removed = _scaffold.removed[k] || [];
-  const added = _scaffold.added[k] || [];
+  const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {
-    const baseCrits = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).filter(c => removed.indexOf(c) < 0);
-    let rows = baseCrits.map(c => _condRow(k, c)).join('');
-    // 「我的補充」條件（只掛在第一張卡，避免重複）
-    if (gi === 0) rows += added.map(c => _condRow(k, c, { added: true })).join('');
-    const addUi = _addOpen[k + '_' + gi]
-      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${k}" placeholder="輸入新的條件…"><button class="m-sv-addok" data-addok="${k}">加入</button></div>`
-      : `<button class="m-sv-addcond" data-addcond="${k}_${gi}">＋ 新增條件</button>`;
+    let rows = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).map(c => _condRow(k, c)).join('');
+    // 我的補充條件（依子部位 gi 各自掛）
+    rows += (addedAll[gi] || []).map(c => _condRow(k, c, { added: true, gi })).join('');
+    const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
+    const addUi = _addOpen[akey]
+      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${akey}" placeholder="輸入新的條件…"><button class="m-sv-addok" data-addok="${akey}">加入</button></div>`
+      : `<button class="m-sv-addcond" data-addcond="${akey}">＋ 新增條件</button>`;
     const title = g.src === 'master' ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
-    return `<div class="m-sv-subpart">${title}${rows}${gi === 0 ? addUi : ''}</div>`;
+    return `<div class="m-sv-subpart">${title}${rows}${addUi}</div>`;
   }).join('');
   return `<div class="m-sv-condwrap">${header}${pNoteBox}${refHtml}<div class="m-sv-subparts">${cards}</div></div>`;
 }
@@ -1013,8 +1015,8 @@ function _bindEvents() {
     });
   });
   // Stage3：條件/部位筆記展開
-  _container.querySelectorAll('[data-cnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const ck = btn.dataset.cnt; _noteOpen['c' + ck] = !_noteOpen['c' + ck]; _render(); }));
-  _container.querySelectorAll('[data-pnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const k = btn.dataset.pnt; _noteOpen['p' + k] = !_noteOpen['p' + k]; _render(); }));
+  _container.querySelectorAll('[data-cnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const ck = btn.dataset.cnt; const open = !_noteOpen['c' + ck]; _noteOpen['c' + ck] = open; if (open) _svFocusKey = 'c' + ck; _render(); }));
+  _container.querySelectorAll('[data-pnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const k = btn.dataset.pnt; const open = !_noteOpen['p' + k]; _noteOpen['p' + k] = open; if (open) _svFocusKey = 'p' + k; _render(); }));
   // Stage3：筆記 textarea（input 即存）
   _container.querySelectorAll('[data-cna]').forEach(ta => {
     _svGrow(ta);
@@ -1028,11 +1030,10 @@ function _bindEvents() {
   _container.querySelectorAll('[data-cdel]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const ck = btn.dataset.cdel, isAdded = btn.dataset.cadd === '1';
+      const ck = btn.dataset.cdel, gi = btn.dataset.cgi;
       const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
       _svConfirm('確定要刪除這項條件嗎？', c, () => {
-        if (isAdded) _scaffold.added[k] = (_scaffold.added[k] || []).filter(x => x !== c);
-        else { if (!_scaffold.removed[k]) _scaffold.removed[k] = []; if (_scaffold.removed[k].indexOf(c) < 0) _scaffold.removed[k].push(c); }
+        if (_scaffold.added[k] && _scaffold.added[k][gi]) _scaffold.added[k][gi] = _scaffold.added[k][gi].filter(x => x !== c);
         if (_scaffold.cond[k]) delete _scaffold.cond[k][c];
         if (_scaffold.cnote[k]) delete _scaffold.cnote[k][c];
         _saveScaffold(); _render();
@@ -1040,20 +1041,28 @@ function _bindEvents() {
     });
   });
   // Stage3：新增條件（開表單 / 加入）
-  _container.querySelectorAll('[data-addcond]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); _addOpen[btn.dataset.addcond] = true; _render(); }));
+  _container.querySelectorAll('[data-addcond]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const akey = btn.dataset.addcond; _addOpen[akey] = true; _svFocusKey = 'add:' + akey; _render(); }));
   _container.querySelectorAll('[data-addok]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const k = btn.dataset.addok;
-      const inp = _container.querySelector(`[data-addinput="${k}"]`);
+      const akey = btn.dataset.addok;
+      const inp = _container.querySelector(`[data-addinput="${akey}"]`);
       const val = inp ? inp.value.trim() : '';
-      if (val) { if (!_scaffold.added[k]) _scaffold.added[k] = []; _scaffold.added[k].push(val); _saveScaffold(); }
-      Object.keys(_addOpen).forEach(kk => { if (kk.indexOf(k + '_') === 0) delete _addOpen[kk]; });
+      const p = akey.split('_'), k = p[0] + '_' + p[1], gi = p[2];   // akey = di_pi_gi
+      if (val) { if (!_scaffold.added[k]) _scaffold.added[k] = {}; if (!_scaffold.added[k][gi]) _scaffold.added[k][gi] = []; _scaffold.added[k][gi].push(val); _saveScaffold(); }
+      delete _addOpen[akey];
       _render();
     });
   });
+  // 新增條件輸入框：沒寫就點外面 → 收起（不留空框）
+  _container.querySelectorAll('[data-addinput]').forEach(inp => {
+    inp.addEventListener('blur', (e) => {
+      if (e.relatedTarget && e.relatedTarget.classList && e.relatedTarget.classList.contains('m-sv-addok')) return; // 點「加入」不關
+      if (!inp.value.trim()) { delete _addOpen[inp.dataset.addinput]; _render(); }
+    });
+  });
   // Stage3：維度說明筆記（✎ 開合 + textarea 即存）
-  _container.querySelectorAll('[data-expedit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const di = btn.dataset.expedit; _noteOpen['exp' + di] = !_noteOpen['exp' + di]; _render(); }));
+  _container.querySelectorAll('[data-expedit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const di = btn.dataset.expedit; const open = !_noteOpen['exp' + di]; _noteOpen['exp' + di] = open; if (open) _svFocusKey = 'exp' + di; _render(); }));
   _container.querySelectorAll('[data-expinput]').forEach(ta => {
     _svGrow(ta);
     ta.addEventListener('input', () => { const di = ta.dataset.expinput; _scaffold.exp[di] = ta.value; _svGrow(ta); _saveScaffold(); });
@@ -1077,6 +1086,14 @@ function _bindEvents() {
       if (!ta.value.trim()) { _noteOpen[ta.dataset.noteblur] = false; _render(); }
     });
   });
+  // 開筆記/新增框後自動聚焦（讓「沒打字就點外面→收起」生效）
+  if (_svFocusKey) {
+    const key = _svFocusKey; _svFocusKey = null;
+    let el = null;
+    if (key.indexOf('add:') === 0) el = _container.querySelector(`[data-addinput="${key.slice(4)}"]`);
+    else { _container.querySelectorAll('[data-noteblur]').forEach(ta => { if (!el && ta.getAttribute('data-noteblur') === key) el = ta; }); }
+    if (el) { try { el.focus(); } catch (e) {} }
+  }
 }
 
 // v1.7 階段 8：拿掉 _enterSens / _exitSens / _renderSensView
