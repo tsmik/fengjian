@@ -787,26 +787,27 @@ function _poleOf(dim, ch) {
 }
 // 把 local 規格展開成「子部位欄位」清單：權重2＝左右成對(左X/右X)、權重1＝單一(X)。
 // 只給中停/下停用（其子部位 眉眼顴頤 才是左右成對；頭的頂骨/華陽骨非左右，不展開）。
-// 頭/中停/下停 子部位皆左右成對：權重2＝左右(左X/右X)、權重1＝單一(X)。
-// 頭=左頂骨/右頂骨/枕骨/左華陽骨/右華陽骨；中停=左眉/右眉/左眼/右眼/鼻/左顴/右顴；下停=口/人中/地閣/左頤/右頤
-function _expandSlots(local) {
-  const slots = [];
-  const push = (name, w) => { if (w >= 2) { slots.push('左' + name); slots.push('右' + name); } else if (w === 1) slots.push(name); };
+// 頭/中停/下停 子部位皆左右成對：權重2＝左右(左X/右X)同一橫列、權重1＝單一(X)一列。
+// 回傳「每橫列」陣列：頭=[[左頂骨,右頂骨],[枕骨],[左華陽骨,右華陽骨]]；中停=[[左眉,右眉],[左眼,右眼],[鼻],[左顴,右顴]]；下停=[[口],[人中],[地閣],[左頤,右頤]]
+function _expandRows(local) {
+  const rows = [];
+  const push = (name, w) => { if (w >= 2) rows.push(['左' + name, '右' + name]); else if (w === 1) rows.push([name]); };
   (local.refs || []).forEach(r => push(r.label, r.w));
   local.groups.forEach(g => { if (g.w) push(g.name, g.w); });
-  return slots;
+  return rows;
 }
 // 某 (維度,部位) 的條件模型：local（頭/中停/下停 子部位分組＋formula）或 master（規則 groupLabel）
 function _scoreCondModel(di, pi) {
   const local = _localCondSpec(di, pi);
   if (local) {
-    let crit = '', subSlots = [];
+    let crit = '', subRows = [];
     if (local.total) {
       // 三個 local 部位統一寫法：「共N個部位，左X／右X／…　達M個以上符合即為形（不形則勢）」
-      subSlots = _expandSlots(local);
-      crit = `${local.partLabel}共 ${local.total} 個部位，${subSlots.join('／')}　達 ${local.threshold} 個以上符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
+      subRows = _expandRows(local);
+      const flat = subRows.reduce((a, r) => a.concat(r), []);
+      crit = `${local.partLabel}共 ${local.total} 個部位，${flat.join('／')}　達 ${local.threshold} 個以上符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
     }
-    return { kind: 'local', crit, refNote: local.refNote, subSlots, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
+    return { kind: 'local', crit, refNote: local.refNote, subRows, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
   }
   const mg = _partGroups(di, pi);
   if (mg.length) return { kind: 'master', crit: '', refNote: '', groups: [{ title: PART_LABELS[pi], w: 0, crits: mg.map(g => g.label), src: 'master' }] };
@@ -930,19 +931,20 @@ function _renderScoreCond(di, pi) {
   const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${pnoteBtn}${pEraseBtn}</div>${critHtml}`;
   const pNoteBox = pNoteOpen ? `<div class="m-sv-notebox m-sv-pnotebox">${_noteEl('data-pna="' + k + '"', pNote, '這個部位的筆記…', 'p' + k)}</div>` : '';
   if (!model.groups.length) return `<div class="m-sv-condwrap">${header}${pNoteBox}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
-  // 中停/下停：參考子部位「形/勢 左右 bar」——預設未填、手動點選、再按取消、完全不計入計算、不回寫部位觀察
-  const slots = model.subSlots || [];
+  // 頭/中停/下停：參考子部位「形/勢 左右 bar」——同部位左右並排同列；預設未填、手動點、再按取消、不計入計算、不回寫部位觀察
+  const subRows = model.subRows || [];
   let refBars = '';
-  if (slots.length) {
+  if (subRows.length) {
     const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);
     const refMap = _scaffold.ref[k] || {};
-    const rows = slots.map(name => {
+    const cell = (name) => {
       const v = refMap[name];
       const ba = `<button class="m-sv-pole ${v === pa.val ? 'is-' + pa.tone : ''}" data-mref="${k}|${_esc(name)}|${pa.val}">${_esc(dim.da)}</button>`;
       const bb = `<button class="m-sv-pole ${v === pb.val ? 'is-' + pb.tone : ''}" data-mref="${k}|${_esc(name)}|${pb.val}">${_esc(dim.db)}</button>`;
-      return `<div class="m-sv-refrow"><span class="m-sv-refname">${_esc(name)}</span><span class="m-sv-poles">${ba}${bb}</span></div>`;
-    }).join('');
-    refBars = `<div class="m-sv-refbars">${rows}</div>`;
+      return `<span class="m-sv-refcell"><span class="m-sv-refname">${_esc(name)}</span><span class="m-sv-poles">${ba}${bb}</span></span>`;
+    };
+    const rowHtml = subRows.map(r => `<div class="m-sv-refrow">${r.map(cell).join('')}</div>`).join('');
+    refBars = `<div class="m-sv-refbars">${rowHtml}</div>`;
   }
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {

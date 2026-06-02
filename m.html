@@ -394,9 +394,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-crit{font-size:15px;color:#8a7a5a}
 .m-sv-crit2{font-size:15px;color:#463d30;line-height:1.55;margin:-2px 0 12px}
 .m-sv-refbars{background:#faf6ec;border:1px solid #ece3cf;border-radius:9px;padding:4px 12px;margin-bottom:14px}
-.m-sv-refrow{display:flex;align-items:center;gap:14px;padding:7px 0}
+.m-sv-refrow{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;align-items:center;padding:7px 0}
 .m-sv-refrow+.m-sv-refrow{border-top:1px dashed #ece1c8}
-.m-sv-refname{font-size:15px;color:#3a3228;width:48px;flex-shrink:0}
+.m-sv-refcell{display:flex;align-items:center;gap:6px;min-width:0}
+.m-sv-refname{font-size:15px;color:#3a3228;white-space:nowrap}
+.m-sv-refbars .m-sv-poles{flex-shrink:0}
+.m-sv-refbars .m-sv-pole{min-width:32px;font-size:14px}
 .m-sv-ref{font-size:13px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 9px;margin-bottom:10px}
 .m-sv-empty{font-size:13px;color:#aaa;padding:10px 2px}
 .m-sv-subparts{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
