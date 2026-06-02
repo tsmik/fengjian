@@ -258,8 +258,9 @@ function _renderManualInput() {
     `<button class="m-seg-btn ${_manualSubview === t.key ? 'm-seg-active' : ''}" data-mview="${t.key}">${t.label}</button>`
   ).join('');
   // v1.7 階段 11：頁面頂端 hint + segmented（拿掉 m-manual-view-bar wrapper，跟部位觀察 segmented 寬度一致）
-  const hint = _manualSubview === 'board' ? '看老師板書、記筆記（選維度看條件）' : '直接輸入13維度的動/靜，產生報告';
-  const viewToggle = `<div class="m-page-hint">${hint}</div><div class="m-segmented" role="tablist">${seg}</div>`;
+  const hint = _manualSubview === 'board' ? '看老師板書、記筆記（選維度看條件）'
+    : (_manualSubview === 'input' ? '' : '直接輸入13維度的動/靜，產生報告');
+  const viewToggle = `${hint ? `<div class="m-page-hint">${hint}</div>` : ''}<div class="m-segmented" role="tablist">${seg}</div>`;
   let body;
   if (_manualSubview === 'board') {
     body = `<div id="m-board-mount"></div>`;
@@ -269,12 +270,7 @@ function _renderManualInput() {
     // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
     body = `${_renderCoeffSummary()}${_chartsHtml()}${_renderManualPngRow()}`;
   } else {
-    body = `
-      ${_renderDimRow(DIM_ROW_1_IDX, 6)}
-      ${_renderDimRow(DIM_ROW_2_IDX, 7)}
-      ${_manualDimIdx !== null ? _renderDimPanel(_manualDimIdx) : ''}
-      ${_renderClearAllRow()}
-    `;
+    body = _renderScoreView();
   }
   return `${viewToggle}${body}`;
 }
@@ -775,6 +771,94 @@ function _renderManualRow(di, pi) {
   `;
 }
 
+// ============================================================
+// A3 #2 Stage2：v7 手動評分版面（評分在部位欄、條件欄純參考；不自動算動靜）
+//   重用 _partGroups（master 規則組）/ _localCondSpec（頭0/中停2/下停3 子部位＋參考）
+//   形/勢＝該維度兩極（dim.da/db，跟著維度名走）；存 _manualDraft[di][pi]='A'/'B'，再按取消
+// ============================================================
+let _scorePartIdx = 0;
+function _scoreGrpClass(i) { return i <= 5 ? 'm-sv-grp-pre' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post'); }
+function _poleOf(dim, ch) {
+  if (ch === dim.a) return { val: 'A', tone: dim.aT === '靜' ? 'jing' : 'dong' };
+  return { val: 'B', tone: dim.bT === '靜' ? 'jing' : 'dong' };
+}
+// 某 (維度,部位) 的條件模型：local（頭/中停/下停 子部位分組＋formula）或 master（規則 groupLabel）
+function _scoreCondModel(di, pi) {
+  const local = _localCondSpec(di, pi);
+  if (local) {
+    const formula = [...(local.refs || []).map(r => r.label + r.w), ...local.groups.filter(g => g.w).map(g => g.name + g.w)].join('＋');
+    const crit = local.total ? `${formula}　${local.threshold}/${local.total} 符合即為${local.posChar}（不${local.posChar}則${local.negChar}）` : '';
+    return { kind: 'local', crit, refNote: local.refNote, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
+  }
+  const mg = _partGroups(di, pi);
+  if (mg.length) return { kind: 'master', crit: '', refNote: '', groups: [{ title: PART_LABELS[pi], w: 0, crits: mg.map(g => g.label), src: 'master' }] };
+  return { kind: 'none', crit: '', refNote: '', groups: [] };
+}
+function _renderScoreView() {
+  let di = _manualDimIdx; if (di == null || di < 0 || di > 12) di = 0;
+  const dim = DIMS[di];
+  // col1：13 維度（先天/運氣/後天 群組色條）
+  const dtile = (i) => `<button class="m-sv-dim ${_scoreGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-mdim="${i}">${DIMS[i].dn}</button>`;
+  const dimList = `<div class="m-sv-dimlist">${[0,1,2,3,4,5].map(dtile).join('')}${[6,7,8,9,10,11,12].map(dtile).join('')}</div>`;
+  // col2：9 部位 + 形/勢評分鈕（跟著維度名 da/db）
+  const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);
+  const pitem = (pi) => {
+    const v = _manualDraft[di][pi];
+    const ba = `<button class="m-sv-pole ${v === pa.val ? 'is-' + pa.tone : ''}" data-mpole="${di}_${pi}_${pa.val}">${dim.da}</button>`;
+    const bb = `<button class="m-sv-pole ${v === pb.val ? 'is-' + pb.tone : ''}" data-mpole="${di}_${pi}_${pb.val}">${dim.db}</button>`;
+    return `<div class="m-sv-pitem ${pi === _scorePartIdx ? 'is-cur' : ''}" data-mspart="${pi}"><span class="m-sv-pname">${PART_LABELS[pi]}</span><span class="m-sv-poles">${ba}${bb}</span></div>`;
+  };
+  const parts = [0,1,2,3,4,5,6,7,8].map(pitem).join('');
+  // 加總（cntA=da 欄、cntB=db 欄）+ 係數
+  let cntA = 0, cntB = 0, complete = true;
+  for (let pi = 0; pi < 9; pi++) { const v = _manualDraft[di][pi]; if (v === pa.val) cntA++; else if (v === pb.val) cntB++; if (v !== 'A' && v !== 'B') complete = false; }
+  let coeffRow = `<div class="m-sv-trow m-sv-coeff is-even"><span class="m-sv-tlab">係數</span><span class="m-sv-tcell">—</span><span class="m-sv-tcell"></span></div>`;
+  if (complete) {
+    const r = calcDim(_manualDraft, di);
+    if (r) {
+      const coeff = r.coeff.toFixed(2);
+      let word = '平', tone = 'even';
+      if (r.a > r.b) { word = dim.aT; tone = dim.aT === '靜' ? 'jing' : 'dong'; }
+      else if (r.b > r.a) { word = dim.bT; tone = dim.bT === '靜' ? 'jing' : 'dong'; }
+      coeffRow = `<div class="m-sv-trow m-sv-coeff is-${tone}"><span class="m-sv-tlab">係數</span><span class="m-sv-tcell">${word}</span><span class="m-sv-tcell">${coeff}</span></div>`;
+    }
+  }
+  const totals = `<div class="m-sv-trow m-sv-sum"><span class="m-sv-tlab">加總</span><span class="m-sv-tcell">${cntA}</span><span class="m-sv-tcell">${cntB}</span></div>${coeffRow}`;
+  const partCol = `<div class="m-sv-plist">${parts}${totals}</div>`;
+  const condCol = _renderScoreCond(di, _scorePartIdx);
+  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}</span></div>`;
+  return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
+}
+function _renderScoreCond(di, pi) {
+  const model = _scoreCondModel(di, pi);
+  const lans = _localCond[`${di}_${pi}`] || {};
+  const mans = _manualCond[`${di}_${pi}`] || {};
+  const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${model.crit ? `<span class="m-sv-crit">${_esc(model.crit)}</span>` : ''}</div>`;
+  if (!model.groups.length) return `<div class="m-sv-condwrap">${header}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
+  const refHtml = model.refNote ? `<div class="m-sv-ref">${_esc(model.refNote)}（依部位觀察既有答案）</div>` : '';
+  const cards = model.groups.map(g => {
+    const isMaster = g.src === 'master';
+    const crits = g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）'];
+    const rows = crits.map(c => {
+      const noRule = c.indexOf('待 admin') >= 0;
+      let yesAct = '', noAct = '', btns = '';
+      if (noRule) {
+        btns = '';
+      } else if (isMaster) {
+        yesAct = mans[c] === '是' ? 'is-yes' : ''; noAct = mans[c] === '否' ? 'is-no' : '';
+        btns = `<span class="m-sv-yn"><button class="${yesAct}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(c)}" data-mcv="是">符合</button><button class="${noAct}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(c)}" data-mcv="否">不符</button></span>`;
+      } else {
+        yesAct = lans[c] === '符合' ? 'is-yes' : ''; noAct = lans[c] === '不符' ? 'is-no' : '';
+        btns = `<span class="m-sv-yn"><button class="${yesAct}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(c)}" data-mlcv="符合">符合</button><button class="${noAct}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(c)}" data-mlcv="不符">不符</button></span>`;
+      }
+      return `<div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${btns}</div>`;
+    }).join('');
+    const title = isMaster ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
+    return `<div class="m-sv-subpart">${title}${rows}</div>`;
+  }).join('');
+  return `<div class="m-sv-condwrap">${header}${refHtml}<div class="m-sv-subparts">${cards}</div></div>`;
+}
+
 function _bindEvents() {
   _container.querySelectorAll('[data-mview]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -805,10 +889,28 @@ function _bindEvents() {
   _container.querySelectorAll('[data-mdim]').forEach(btn => {
     btn.addEventListener('click', () => {
       const di = parseInt(btn.dataset.mdim, 10);
-      _manualDimIdx = (_manualDimIdx === di) ? null : di;
-      try {
-        localStorage.setItem(LS_DIM_IDX, _manualDimIdx === null ? 'null' : String(_manualDimIdx));
-      } catch (e) {}
+      _manualDimIdx = di;       // v7：永遠選一個維度（不收合）
+      _scorePartIdx = 0;        // 換維度 → 條件欄回到第一個部位
+      try { localStorage.setItem(LS_DIM_IDX, String(di)); } catch (e) {}
+      _render();
+    });
+  });
+  // v7：點部位名 → 條件欄顯示該部位（評分鈕另有 data-mpole 處理，不選部位）
+  _container.querySelectorAll('[data-mspart]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-mpole]')) return;  // 點到形/勢鈕不算選部位
+      _scorePartIdx = parseInt(el.dataset.mspart, 10);
+      _render();
+    });
+  });
+  // v7：形/勢評分鈕（手動決定，再按取消；不自動算）
+  _container.querySelectorAll('[data-mpole]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const parts = btn.dataset.mpole.split('_');
+      const di = parseInt(parts[0], 10), pi = parseInt(parts[1], 10), val = parts[2];
+      _manualDraft[di][pi] = (_manualDraft[di][pi] === val) ? null : val;  // 再按同極＝取消
+      _markDirty();
       _render();
     });
   });
@@ -851,11 +953,7 @@ function _bindEvents() {
       const k = `${di}_${pi}`;
       if (!_manualCond[k]) _manualCond[k] = {};
       _manualCond[k][gl] = (_manualCond[k][gl] === val) ? null : val; // 再點同一個=取消
-      const computed = _condResultOf(di, pi);
-      if (computed === 'A' || computed === 'B') {
-        _manualDraft[di][pi] = computed;
-        _markDirty();
-      }
+      // v7：純鷹架，不自動算動靜（動靜由形/勢鈕手動決定）
       _render();
     });
   });
@@ -869,11 +967,7 @@ function _bindEvents() {
       const k = `${di}_${pi}`;
       if (!_localCond[k]) _localCond[k] = {};
       _localCond[k][key] = (_localCond[k][key] === val) ? null : val; // 再點同一個=取消
-      const computed = _localCondResultOf(di, pi);
-      if (computed === 'A' || computed === 'B') {
-        _manualDraft[di][pi] = computed;
-        _markDirty();
-      }
+      // v7：純鷹架，不自動算動靜（動靜由形/勢鈕手動決定）
       _render();
     });
   });
