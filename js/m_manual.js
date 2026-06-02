@@ -779,7 +779,7 @@ function _renderManualRow(di, pi) {
 //   形/勢＝該維度兩極（dim.da/db，跟著維度名走）；存 _manualDraft[di][pi]='A'/'B'，再按取消
 // ============================================================
 let _scorePartIdx = 0;
-function _scoreGrpClass(i) { return i <= 5 ? 'm-sv-grp-pre' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post'); }
+function _scoreGrpClass(i) { return i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post')); }
 function _poleOf(dim, ch) {
   if (ch === dim.a) return { val: 'A', tone: dim.aT === '靜' ? 'jing' : 'dong' };
   return { val: 'B', tone: dim.bT === '靜' ? 'jing' : 'dong' };
@@ -829,11 +829,11 @@ function _renderScoreView() {
   const partCol = `<div class="m-sv-plist">${parts}${totals}</div>`;
   const condCol = _renderScoreCond(di, _scorePartIdx);
   const defExp = `符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}`;
-  const expVal = (_scaffold.exp[di] != null && _scaffold.exp[di] !== '') ? _scaffold.exp[di] : defExp;
-  const expHtml = _noteOpen['exp' + di]
-    ? `<input class="m-sv-expinput" data-expinput="${di}" value="${_esc(expVal)}"><button class="m-sv-addok" data-expok="${di}">儲存</button>`
-    : `<span class="m-sv-dimexp">${_esc(expVal)}</span><button class="m-sv-ico" data-expedit="${di}" title="編輯說明">✎</button>`;
-  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span>${expHtml}</div>`;
+  const expNote = _scaffold.exp[di] || '';
+  const expOpen = _noteOpen['exp' + di];
+  const expBtn = `<button class="m-sv-ico ${expNote || expOpen ? 'is-on' : ''}" data-expedit="${di}" title="加說明筆記">✎</button>`;
+  const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '加上你對這個維度的說明…', 'exp' + di)}</div>` : '';
+  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}</div>${expBox}`;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
 // ===== A3 #2 Stage3：鷹架持久化（manualScaffoldJson，per 對象）＋筆記/新增/移除/說明 =====
@@ -861,6 +861,10 @@ function _saveScaffold() {
   }, 600);
 }
 function _svGrow(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+// 筆記框：textarea（即打即存、移出/再打開原生 undo）＋ 刪除筆記。ndelKey＝_noteOpen 的鍵（刪除後收起）
+function _noteEl(dataAttr, value, placeholder, ndelKey) {
+  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" ${dataAttr} placeholder="${placeholder}">${_esc(value)}</textarea><button class="m-sv-notedel" data-ndel="${_esc(ndelKey)}" type="button">刪除筆記</button></div>`;
+}
 // 條件筆記列（一條條件 + 符合/不符 + ✎筆記 + ✕移除；added 標「我的補充」）
 function _condRow(k, c, opt) {
   opt = opt || {};
@@ -873,7 +877,7 @@ function _condRow(k, c, opt) {
   const noteBtn = noRule ? '' : `<button class="m-sv-ico ${nv || _noteOpen['c' + ck] ? 'is-on' : ''}" data-cnt="${_esc(ck)}" title="加筆記">✎</button>`;
   const delBtn = noRule ? '' : `<button class="m-sv-ico" data-cdel="${_esc(ck)}" data-cadd="${opt.added ? '1' : ''}" title="移除條件">✕</button>`;
   const tag = opt.added ? `<span class="m-sv-mytag">我的補充</span>` : '';
-  const noteBox = (!noRule && (_noteOpen['c' + ck] || nv)) ? `<div class="m-sv-notebox"><textarea class="m-sv-note" data-cna="${_esc(ck)}" placeholder="這條的筆記…">${_esc(nv)}</textarea></div>` : '';
+  const noteBox = (!noRule && (_noteOpen['c' + ck] || nv)) ? `<div class="m-sv-notebox">${_noteEl('data-cna="' + _esc(ck) + '"', nv, '這條的筆記…', 'c' + ck)}</div>` : '';
   return `<div class="m-sv-cond ${opt.added ? 'is-mine' : ''}"><span class="m-sv-cond-text">${_esc(c)}${tag}</span>${yn}${noteBtn}${delBtn}</div>${noteBox}`;
 }
 function _renderScoreCond(di, pi) {
@@ -883,7 +887,7 @@ function _renderScoreCond(di, pi) {
   const pNote = _scaffold.pnote[k] || '';
   const pnoteBtn = bigPart ? `<button class="m-sv-ico ${pNote || _noteOpen['p' + k] ? 'is-on' : ''}" data-pnt="${k}" title="部位筆記">✎</button>` : '';
   const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${model.crit ? `<span class="m-sv-crit">${_esc(model.crit)}</span>` : ''}${pnoteBtn}</div>`;
-  const pNoteBox = (bigPart && (_noteOpen['p' + k] || pNote)) ? `<div class="m-sv-notebox m-sv-pnotebox"><textarea class="m-sv-note" data-pna="${k}" placeholder="這個部位的筆記…">${_esc(pNote)}</textarea></div>` : '';
+  const pNoteBox = (bigPart && (_noteOpen['p' + k] || pNote)) ? `<div class="m-sv-notebox m-sv-pnotebox">${_noteEl('data-pna="' + k + '"', pNote, '這個部位的筆記…', 'p' + k)}</div>` : '';
   if (!model.groups.length) return `<div class="m-sv-condwrap">${header}${pNoteBox}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
   const refHtml = model.refNote ? `<div class="m-sv-ref">${_esc(model.refNote)}（依部位觀察既有答案）</div>` : '';
   const removed = _scaffold.removed[k] || [];
@@ -894,7 +898,7 @@ function _renderScoreCond(di, pi) {
     // 「我的補充」條件（只掛在第一張卡，避免重複）
     if (gi === 0) rows += added.map(c => _condRow(k, c, { added: true })).join('');
     const addUi = _addOpen[k + '_' + gi]
-      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${k}" placeholder="輸入老師多講的條件…"><button class="m-sv-addok" data-addok="${k}">加入</button></div>`
+      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${k}" placeholder="輸入新的條件…"><button class="m-sv-addok" data-addok="${k}">加入</button></div>`
       : `<button class="m-sv-addcond" data-addcond="${k}_${gi}">＋ 新增條件</button>`;
     const title = g.src === 'master' ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
     return `<div class="m-sv-subpart">${title}${rows}${gi === 0 ? addUi : ''}</div>`;
@@ -1013,6 +1017,7 @@ function _bindEvents() {
   _container.querySelectorAll('[data-cdel]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!confirm('確定要刪除這項條件嗎？')) return;
       const ck = btn.dataset.cdel, isAdded = btn.dataset.cadd === '1';
       const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
       if (isAdded) _scaffold.added[k] = (_scaffold.added[k] || []).filter(x => x !== c);
@@ -1035,15 +1040,21 @@ function _bindEvents() {
       _render();
     });
   });
-  // Stage3：說明編輯
-  _container.querySelectorAll('[data-expedit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); _noteOpen['exp' + btn.dataset.expedit] = true; _render(); }));
-  _container.querySelectorAll('[data-expok]').forEach(btn => {
+  // Stage3：維度說明筆記（✎ 開合 + textarea 即存）
+  _container.querySelectorAll('[data-expedit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const di = btn.dataset.expedit; _noteOpen['exp' + di] = !_noteOpen['exp' + di]; _render(); }));
+  _container.querySelectorAll('[data-expinput]').forEach(ta => {
+    _svGrow(ta);
+    ta.addEventListener('input', () => { const di = ta.dataset.expinput; _scaffold.exp[di] = ta.value; _svGrow(ta); _saveScaffold(); });
+  });
+  // Stage3：刪除筆記（清空對應 textarea → 觸發 input 存空 → 收起該筆記框）
+  _container.querySelectorAll('[data-ndel]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const di = btn.dataset.expok;
-      const inp = _container.querySelector(`[data-expinput="${di}"]`);
-      if (inp) { _scaffold.exp[di] = inp.value.trim(); _saveScaffold(); }
-      _noteOpen['exp' + di] = false; _render();
+      const box = btn.closest('.m-sv-noteinner');
+      const ta = box && box.querySelector('textarea');
+      if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); }
+      _noteOpen[btn.dataset.ndel] = false;
+      _render();
     });
   });
 }
