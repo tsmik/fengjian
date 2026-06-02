@@ -787,6 +787,8 @@ function _poleOf(dim, ch) {
 }
 // 把 local 規格展開成「子部位欄位」清單：權重2＝左右成對(左X/右X)、權重1＝單一(X)。
 // 只給中停/下停用（其子部位 眉眼顴頤 才是左右成對；頭的頂骨/華陽骨非左右，不展開）。
+// 頭/中停/下停 子部位皆左右成對：權重2＝左右(左X/右X)、權重1＝單一(X)。
+// 頭=左頂骨/右頂骨/枕骨/左華陽骨/右華陽骨；中停=左眉/右眉/左眼/右眼/鼻/左顴/右顴；下停=口/人中/地閣/左頤/右頤
 function _expandSlots(local) {
   const slots = [];
   const push = (name, w) => { if (w >= 2) { slots.push('左' + name); slots.push('右' + name); } else if (w === 1) slots.push(name); };
@@ -800,14 +802,9 @@ function _scoreCondModel(di, pi) {
   if (local) {
     let crit = '', subSlots = [];
     if (local.total) {
-      if (pi === 2 || pi === 3) {
-        // 中停/下停：改寫成「共N個部位，左眉／右眉／…　超過M個符合即為形（不形則勢）」
-        subSlots = _expandSlots(local);
-        crit = `${local.partLabel}共 ${local.total} 個部位，${subSlots.join('／')}　超過 ${local.threshold} 個符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
-      } else {
-        const formula = [...(local.refs || []).map(r => r.label + r.w), ...local.groups.filter(g => g.w).map(g => g.name + g.w)].join('＋');
-        crit = `${formula}　${local.threshold}/${local.total} 符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
-      }
+      // 三個 local 部位統一寫法：「共N個部位，左X／右X／…　達M個以上符合即為形（不形則勢）」
+      subSlots = _expandSlots(local);
+      crit = `${local.partLabel}共 ${local.total} 個部位，${subSlots.join('／')}　達 ${local.threshold} 個以上符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
     }
     return { kind: 'local', crit, refNote: local.refNote, subSlots, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
   }
