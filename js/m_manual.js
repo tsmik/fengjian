@@ -138,6 +138,7 @@ export function mountManual(container) {
     }
   } catch (e) {}
   _loadManualDraft();
+  _loadScaffold();  // A3#2 Stage3：載入鷹架（符合不符/筆記/新增移除/說明）
   _baselineFingerprintAtMount = JSON.stringify(_firestoreBaseline);
   _render();
   // v1.8：mount 即載入主規則，讓 master 條件（上停/耳/眉/眼/鼻/口…）不必先儲存就顯示
@@ -172,6 +173,7 @@ export function mountManual(container) {
     try { localStorage.removeItem(_getLsKey()); } catch (e) {}
     setSaveStatus('saved');
     debugLog('[Sync]', 'm_manual：force override with firestore');
+    try { _loadScaffold(); } catch (e) {}  // 跨裝置：一併刷新鷹架
     _render();
   });
 }
@@ -826,37 +828,78 @@ function _renderScoreView() {
   const totals = `<div class="m-sv-trow m-sv-sum"><span class="m-sv-tlab">加總</span><span class="m-sv-tcell">${cntA}</span><span class="m-sv-tcell">${cntB}</span></div>${coeffRow}`;
   const partCol = `<div class="m-sv-plist">${parts}${totals}</div>`;
   const condCol = _renderScoreCond(di, _scorePartIdx);
-  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}</span></div>`;
+  const defExp = `符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}`;
+  const expVal = (_scaffold.exp[di] != null && _scaffold.exp[di] !== '') ? _scaffold.exp[di] : defExp;
+  const expHtml = _noteOpen['exp' + di]
+    ? `<input class="m-sv-expinput" data-expinput="${di}" value="${_esc(expVal)}"><button class="m-sv-addok" data-expok="${di}">儲存</button>`
+    : `<span class="m-sv-dimexp">${_esc(expVal)}</span><button class="m-sv-ico" data-expedit="${di}" title="編輯說明">✎</button>`;
+  const dimbar = `<div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span>${expHtml}</div>`;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
+}
+// ===== A3 #2 Stage3：鷹架持久化（manualScaffoldJson，per 對象）＋筆記/新增/移除/說明 =====
+let _scaffold = { cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{} };
+let _scaffoldTimer = null;
+let _noteOpen = {};   // 筆記框展開（UI 暫態）
+let _addOpen = {};    // 新增條件輸入框展開（UI 暫態）
+function _loadScaffold() {
+  const ud = window.__userData || {};
+  let s = {};
+  try { s = ud.manualScaffoldJson ? JSON.parse(ud.manualScaffoldJson) : {}; } catch (e) { s = {}; }
+  _scaffold = Object.assign({ cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{} }, s || {});
+  ['cond','cnote','pnote','added','removed','exp'].forEach(k => { if (!_scaffold[k] || typeof _scaffold[k] !== 'object') _scaffold[k] = {}; });
+}
+function _saveScaffold() {
+  if (_scaffoldTimer) clearTimeout(_scaffoldTimer);
+  _scaffoldTimer = setTimeout(async () => {
+    _scaffoldTimer = null;
+    try {
+      const ref = getCurrentDocRef();
+      const json = JSON.stringify(_scaffold);
+      await setDoc(ref, { manualScaffoldJson: json, updatedAt: new Date().toISOString() }, { merge: true });
+      if (window.__userData) window.__userData.manualScaffoldJson = json;
+    } catch (e) { debugLog('[scaffold]', '存失敗', e && e.message); }
+  }, 600);
+}
+function _svGrow(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+// 條件筆記列（一條條件 + 符合/不符 + ✎筆記 + ✕移除；added 標「我的補充」）
+function _condRow(k, c, opt) {
+  opt = opt || {};
+  const noRule = c.indexOf('待 admin') >= 0;
+  const cond = _scaffold.cond[k] || {}, cnote = _scaffold.cnote[k] || {};
+  const a = cond[c], yes = a === '符合' ? 'is-yes' : '', no = a === '不符' ? 'is-no' : '';
+  const ck = k + '|' + c;
+  const yn = noRule ? '' : `<span class="m-sv-yn"><button class="${yes}" data-ynk="${_esc(ck)}" data-ynv="符合">符合</button><button class="${no}" data-ynk="${_esc(ck)}" data-ynv="不符">不符</button></span>`;
+  const nv = cnote[c] || '';
+  const noteBtn = noRule ? '' : `<button class="m-sv-ico ${nv || _noteOpen['c' + ck] ? 'is-on' : ''}" data-cnt="${_esc(ck)}" title="加筆記">✎</button>`;
+  const delBtn = noRule ? '' : `<button class="m-sv-ico" data-cdel="${_esc(ck)}" data-cadd="${opt.added ? '1' : ''}" title="移除條件">✕</button>`;
+  const tag = opt.added ? `<span class="m-sv-mytag">我的補充</span>` : '';
+  const noteBox = (!noRule && (_noteOpen['c' + ck] || nv)) ? `<div class="m-sv-notebox"><textarea class="m-sv-note" data-cna="${_esc(ck)}" placeholder="這條的筆記…">${_esc(nv)}</textarea></div>` : '';
+  return `<div class="m-sv-cond ${opt.added ? 'is-mine' : ''}"><span class="m-sv-cond-text">${_esc(c)}${tag}</span>${yn}${noteBtn}${delBtn}</div>${noteBox}`;
 }
 function _renderScoreCond(di, pi) {
   const model = _scoreCondModel(di, pi);
-  const lans = _localCond[`${di}_${pi}`] || {};
-  const mans = _manualCond[`${di}_${pi}`] || {};
-  const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${model.crit ? `<span class="m-sv-crit">${_esc(model.crit)}</span>` : ''}</div>`;
-  if (!model.groups.length) return `<div class="m-sv-condwrap">${header}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
+  const k = `${di}_${pi}`;
+  const bigPart = pi <= 3;  // 頭/上停/中停/下停 才有部位筆記
+  const pNote = _scaffold.pnote[k] || '';
+  const pnoteBtn = bigPart ? `<button class="m-sv-ico ${pNote || _noteOpen['p' + k] ? 'is-on' : ''}" data-pnt="${k}" title="部位筆記">✎</button>` : '';
+  const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${model.crit ? `<span class="m-sv-crit">${_esc(model.crit)}</span>` : ''}${pnoteBtn}</div>`;
+  const pNoteBox = (bigPart && (_noteOpen['p' + k] || pNote)) ? `<div class="m-sv-notebox m-sv-pnotebox"><textarea class="m-sv-note" data-pna="${k}" placeholder="這個部位的筆記…">${_esc(pNote)}</textarea></div>` : '';
+  if (!model.groups.length) return `<div class="m-sv-condwrap">${header}${pNoteBox}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
   const refHtml = model.refNote ? `<div class="m-sv-ref">${_esc(model.refNote)}（依部位觀察既有答案）</div>` : '';
-  const cards = model.groups.map(g => {
-    const isMaster = g.src === 'master';
-    const crits = g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）'];
-    const rows = crits.map(c => {
-      const noRule = c.indexOf('待 admin') >= 0;
-      let yesAct = '', noAct = '', btns = '';
-      if (noRule) {
-        btns = '';
-      } else if (isMaster) {
-        yesAct = mans[c] === '是' ? 'is-yes' : ''; noAct = mans[c] === '否' ? 'is-no' : '';
-        btns = `<span class="m-sv-yn"><button class="${yesAct}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(c)}" data-mcv="是">符合</button><button class="${noAct}" data-mcd="${di}" data-mcp="${pi}" data-mcg="${_esc(c)}" data-mcv="否">不符</button></span>`;
-      } else {
-        yesAct = lans[c] === '符合' ? 'is-yes' : ''; noAct = lans[c] === '不符' ? 'is-no' : '';
-        btns = `<span class="m-sv-yn"><button class="${yesAct}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(c)}" data-mlcv="符合">符合</button><button class="${noAct}" data-mlcd="${di}" data-mlcp="${pi}" data-mlck="${_esc(c)}" data-mlcv="不符">不符</button></span>`;
-      }
-      return `<div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${btns}</div>`;
-    }).join('');
-    const title = isMaster ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
-    return `<div class="m-sv-subpart">${title}${rows}</div>`;
+  const removed = _scaffold.removed[k] || [];
+  const added = _scaffold.added[k] || [];
+  const cards = model.groups.map((g, gi) => {
+    const baseCrits = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).filter(c => removed.indexOf(c) < 0);
+    let rows = baseCrits.map(c => _condRow(k, c)).join('');
+    // 「我的補充」條件（只掛在第一張卡，避免重複）
+    if (gi === 0) rows += added.map(c => _condRow(k, c, { added: true })).join('');
+    const addUi = _addOpen[k + '_' + gi]
+      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${k}" placeholder="輸入老師多講的條件…"><button class="m-sv-addok" data-addok="${k}">加入</button></div>`
+      : `<button class="m-sv-addcond" data-addcond="${k}_${gi}">＋ 新增條件</button>`;
+    const title = g.src === 'master' ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
+    return `<div class="m-sv-subpart">${title}${rows}${gi === 0 ? addUi : ''}</div>`;
   }).join('');
-  return `<div class="m-sv-condwrap">${header}${refHtml}<div class="m-sv-subparts">${cards}</div></div>`;
+  return `<div class="m-sv-condwrap">${header}${pNoteBox}${refHtml}<div class="m-sv-subparts">${cards}</div></div>`;
 }
 
 function _bindEvents() {
@@ -943,32 +986,64 @@ function _bindEvents() {
       _render();
     });
   });
-  // P1：勾條件是/否 → 更新答案 → 自動算動靜填格（可被手動鈕覆蓋）
-  _container.querySelectorAll('[data-mcg]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const di = parseInt(btn.dataset.mcd, 10);
-      const pi = parseInt(btn.dataset.mcp, 10);
-      const gl = btn.dataset.mcg;
-      const val = btn.dataset.mcv;
-      const k = `${di}_${pi}`;
-      if (!_manualCond[k]) _manualCond[k] = {};
-      _manualCond[k][gl] = (_manualCond[k][gl] === val) ? null : val; // 再點同一個=取消
-      // v7：純鷹架，不自動算動靜（動靜由形/勢鈕手動決定）
+  // Stage3：符合/不符 → _scaffold.cond（持久化；純鷹架不算動靜）
+  _container.querySelectorAll('[data-ynk]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ck = btn.dataset.ynk, v = btn.dataset.ynv;
+      const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
+      if (!_scaffold.cond[k]) _scaffold.cond[k] = {};
+      _scaffold.cond[k][c] = (_scaffold.cond[k][c] === v) ? null : v;
+      _saveScaffold(); _render();
+    });
+  });
+  // Stage3：條件/部位筆記展開
+  _container.querySelectorAll('[data-cnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const ck = btn.dataset.cnt; _noteOpen['c' + ck] = !_noteOpen['c' + ck]; _render(); }));
+  _container.querySelectorAll('[data-pnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const k = btn.dataset.pnt; _noteOpen['p' + k] = !_noteOpen['p' + k]; _render(); }));
+  // Stage3：筆記 textarea（input 即存）
+  _container.querySelectorAll('[data-cna]').forEach(ta => {
+    _svGrow(ta);
+    ta.addEventListener('input', () => { const ck = ta.dataset.cna, idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1); if (!_scaffold.cnote[k]) _scaffold.cnote[k] = {}; _scaffold.cnote[k][c] = ta.value; _svGrow(ta); _saveScaffold(); });
+  });
+  _container.querySelectorAll('[data-pna]').forEach(ta => {
+    _svGrow(ta);
+    ta.addEventListener('input', () => { const k = ta.dataset.pna; _scaffold.pnote[k] = ta.value; _svGrow(ta); _saveScaffold(); });
+  });
+  // Stage3：移除條件（✕）
+  _container.querySelectorAll('[data-cdel]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ck = btn.dataset.cdel, isAdded = btn.dataset.cadd === '1';
+      const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
+      if (isAdded) _scaffold.added[k] = (_scaffold.added[k] || []).filter(x => x !== c);
+      else { if (!_scaffold.removed[k]) _scaffold.removed[k] = []; if (_scaffold.removed[k].indexOf(c) < 0) _scaffold.removed[k].push(c); }
+      if (_scaffold.cond[k]) delete _scaffold.cond[k][c];
+      if (_scaffold.cnote[k]) delete _scaffold.cnote[k][c];
+      _saveScaffold(); _render();
+    });
+  });
+  // Stage3：新增條件（開表單 / 加入）
+  _container.querySelectorAll('[data-addcond]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); _addOpen[btn.dataset.addcond] = true; _render(); }));
+  _container.querySelectorAll('[data-addok]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const k = btn.dataset.addok;
+      const inp = _container.querySelector(`[data-addinput="${k}"]`);
+      const val = inp ? inp.value.trim() : '';
+      if (val) { if (!_scaffold.added[k]) _scaffold.added[k] = []; _scaffold.added[k].push(val); _saveScaffold(); }
+      Object.keys(_addOpen).forEach(kk => { if (kk.indexOf(k + '_') === 0) delete _addOpen[kk]; });
       _render();
     });
   });
-  // v1.8：本頁獨立條件 符合/不符 → 自動算形/勢填格（可被手動鈕覆蓋）
-  _container.querySelectorAll('[data-mlck]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const di = parseInt(btn.dataset.mlcd, 10);
-      const pi = parseInt(btn.dataset.mlcp, 10);
-      const key = btn.dataset.mlck;
-      const val = btn.dataset.mlcv;
-      const k = `${di}_${pi}`;
-      if (!_localCond[k]) _localCond[k] = {};
-      _localCond[k][key] = (_localCond[k][key] === val) ? null : val; // 再點同一個=取消
-      // v7：純鷹架，不自動算動靜（動靜由形/勢鈕手動決定）
-      _render();
+  // Stage3：說明編輯
+  _container.querySelectorAll('[data-expedit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); _noteOpen['exp' + btn.dataset.expedit] = true; _render(); }));
+  _container.querySelectorAll('[data-expok]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = btn.dataset.expok;
+      const inp = _container.querySelector(`[data-expinput="${di}"]`);
+      if (inp) { _scaffold.exp[di] = inp.value.trim(); _saveScaffold(); }
+      _noteOpen['exp' + di] = false; _render();
     });
   });
 }
