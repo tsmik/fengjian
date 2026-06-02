@@ -861,9 +861,20 @@ function _saveScaffold() {
   }, 600);
 }
 function _svGrow(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
-// 筆記框：textarea（即打即存、移出/再打開原生 undo）＋ 刪除筆記。ndelKey＝_noteOpen 的鍵（刪除後收起）
+// 自訂確認框（避免 native confirm 的網域列；可帶要刪除的內容）
+function _svConfirm(text, detail, onYes) {
+  const ov = document.createElement('div');
+  ov.className = 'm-sv-confirm-ov';
+  ov.innerHTML = `<div class="m-sv-confirm"><div class="m-sv-confirm-msg">${_esc(text)}</div>${detail ? `<div class="m-sv-confirm-detail">「${_esc(detail)}」</div>` : ''}<div class="m-sv-confirm-btns"><button class="m-sv-confirm-cancel" type="button">取消</button><button class="m-sv-confirm-ok" type="button">確定</button></div></div>`;
+  document.body.appendChild(ov);
+  const close = () => { try { document.body.removeChild(ov); } catch (e) {} };
+  ov.querySelector('.m-sv-confirm-cancel').onclick = close;
+  ov.querySelector('.m-sv-confirm-ok').onclick = () => { close(); if (onYes) onYes(); };
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+}
+// 筆記框：textarea（即打即存、原生 undo、可下拉拉高、寫多少顯多少）＋ 橡皮擦刪除（focus 才現、左下）
 function _noteEl(dataAttr, value, placeholder, ndelKey) {
-  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" ${dataAttr} placeholder="${placeholder}">${_esc(value)}</textarea><button class="m-sv-notedel" data-ndel="${_esc(ndelKey)}" type="button">刪除筆記</button></div>`;
+  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" ${dataAttr} data-noteblur="${_esc(ndelKey)}" placeholder="${placeholder}">${_esc(value)}</textarea><button class="m-sv-erase" data-ndel="${_esc(ndelKey)}" type="button" title="刪除筆記"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button></div>`;
 }
 // 條件筆記列（一條條件 + 符合/不符 + ✎筆記 + ✕移除；added 標「我的補充」）
 function _condRow(k, c, opt) {
@@ -1017,14 +1028,15 @@ function _bindEvents() {
   _container.querySelectorAll('[data-cdel]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (!confirm('確定要刪除這項條件嗎？')) return;
       const ck = btn.dataset.cdel, isAdded = btn.dataset.cadd === '1';
       const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
-      if (isAdded) _scaffold.added[k] = (_scaffold.added[k] || []).filter(x => x !== c);
-      else { if (!_scaffold.removed[k]) _scaffold.removed[k] = []; if (_scaffold.removed[k].indexOf(c) < 0) _scaffold.removed[k].push(c); }
-      if (_scaffold.cond[k]) delete _scaffold.cond[k][c];
-      if (_scaffold.cnote[k]) delete _scaffold.cnote[k][c];
-      _saveScaffold(); _render();
+      _svConfirm('確定要刪除這項條件嗎？', c, () => {
+        if (isAdded) _scaffold.added[k] = (_scaffold.added[k] || []).filter(x => x !== c);
+        else { if (!_scaffold.removed[k]) _scaffold.removed[k] = []; if (_scaffold.removed[k].indexOf(c) < 0) _scaffold.removed[k].push(c); }
+        if (_scaffold.cond[k]) delete _scaffold.cond[k][c];
+        if (_scaffold.cnote[k]) delete _scaffold.cnote[k][c];
+        _saveScaffold(); _render();
+      });
     });
   });
   // Stage3：新增條件（開表單 / 加入）
@@ -1052,9 +1064,17 @@ function _bindEvents() {
       e.stopPropagation();
       const box = btn.closest('.m-sv-noteinner');
       const ta = box && box.querySelector('textarea');
-      if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); }
-      _noteOpen[btn.dataset.ndel] = false;
-      _render();
+      const doDel = () => { if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); } _noteOpen[btn.dataset.ndel] = false; _render(); };
+      if (ta && ta.value.trim()) _svConfirm('確定要刪除筆記嗎？', '', doDel);
+      else doDel();
+    });
+  });
+  // 空筆記移出焦點 → 直接收起（不留空框）；焦點移到同框內(橡皮擦)不關
+  _container.querySelectorAll('[data-noteblur]').forEach(ta => {
+    ta.addEventListener('blur', (e) => {
+      const ni = ta.closest('.m-sv-noteinner');
+      if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.m-sv-noteinner') === ni) return;
+      if (!ta.value.trim()) { _noteOpen[ta.dataset.noteblur] = false; _render(); }
     });
   });
 }

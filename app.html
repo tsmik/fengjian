@@ -359,7 +359,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-score-view{padding:8px 6px 0}
 .m-score-view,.m-score-view *{font-weight:400}
 .m-sv-dimlist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.m-sv-dim{padding:11px 14px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:16px;color:#5a5147;cursor:pointer;border-left-width:3px}
+.m-sv-dim{display:flex;align-items:center;min-height:50px;padding:6px 14px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:16px;color:#5a5147;cursor:pointer;border-left-width:3px}
 .m-sv-dim.m-sv-grp-boss{border-left-color:var(--grp-pre)}
 .m-sv-dim.m-sv-grp-mgr{border-left-color:var(--grp-mgr)}
 .m-sv-dim.m-sv-grp-luck{border-left-color:var(--grp-luck)}
@@ -393,7 +393,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-crit{font-size:15px;color:#8a7a5a}
 .m-sv-ref{font-size:13px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 9px;margin-bottom:10px}
 .m-sv-empty{font-size:13px;color:#aaa;padding:10px 2px}
-.m-sv-subparts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.m-sv-subparts{display:grid;grid-template-columns:1fr;gap:12px}
 .m-sv-subpart{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding-bottom:6px;overflow:hidden}
 .m-sv-subtitle{background:#ede4d2;color:#5a4f42;font-size:15px;padding:7px 12px;border-left:3px solid #c2ab85;letter-spacing:1px}
 .m-sv-w{color:#b09a6a;font-size:12px;margin-left:5px}
@@ -409,11 +409,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid #cfc6b6;border-radius:50%;background:none;color:#9a8f7e;font-size:12px;font-family:inherit;cursor:pointer;padding:0;flex-shrink:0}
 .m-sv-ico.is-on{border-color:var(--active);color:var(--active)}
 .m-sv-noteinner{position:relative}
-.m-sv-notedel{display:block;margin:4px 0 0 auto;background:none;border:none;color:#b06a5a;font-size:12px;font-family:inherit;cursor:pointer;padding:2px 4px}
+.m-sv-erase{display:none;align-items:center;margin:3px 0 0;background:none;border:none;color:#b06a5a;cursor:pointer;padding:2px 4px}
+.m-sv-noteinner:focus-within .m-sv-erase{display:inline-flex}
+.m-sv-confirm-ov{position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:11000;display:flex;align-items:center;justify-content:center;padding:24px}
+.m-sv-confirm{background:#fff;border-radius:14px;padding:20px 22px;max-width:360px;width:100%;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.m-sv-confirm-msg{font-size:16px;color:#3a3228;line-height:1.5}
+.m-sv-confirm-detail{font-size:14px;color:#8a6e54;background:#f6efe2;border-radius:8px;padding:8px 11px;margin-top:10px;word-break:break-word}
+.m-sv-confirm-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.m-sv-confirm-btns button{padding:8px 20px;border:none;border-radius:9px;font-size:15px;font-family:inherit;cursor:pointer}
+.m-sv-confirm-cancel{background:#ece6dd;color:#5a5048}
+.m-sv-confirm-ok{background:var(--active);color:#fff}
 .m-sv-expnote{padding:8px 2px 0}
 .m-sv-notebox{padding:2px 12px 8px}
 .m-sv-pnotebox{padding:0 0 10px}
-.m-sv-note{width:100%;min-height:36px;border:1px solid #ddd;border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fcfaf6;resize:none;line-height:1.5;color:#3a3228}
+.m-sv-note{width:100%;min-height:30px;height:auto;border:1px solid #ddd;border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fcfaf6;resize:vertical;line-height:1.5;color:#3a3228}
 .m-sv-note:focus{outline:none;border-color:#8fae7c;background:#fff}
 .m-sv-mytag{font-size:11px;color:#a08a6a;background:#f1e9da;border-radius:5px;padding:1px 6px;margin-left:6px}
 .m-sv-cond.is-mine{background:#fcfaf4}
@@ -1133,6 +1142,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-sub{display:flex;align-items:flex-start;gap:16px}
   .m-sv-plist{flex:0 0 200px;margin-bottom:0}
   .m-sv-condwrap{flex:1;min-width:0}
+  .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
+  .m-sv-subpart:only-child{grid-column:1/-1}
 }
 
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
