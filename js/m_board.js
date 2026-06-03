@@ -83,24 +83,24 @@ function _render() {
   const tiles1 = DIM_ROW_1.map(_dimTile).join('');
   const tiles2 = DIM_ROW_2.map(_dimTile).join('');
   const content = (_dim != null) ? _dimContent(_dim)
-    : '<div class="m-part-panel-hint">← 點選左側維度看板書與條件</div>';
+    : '<div class="m-part-panel-hint">← 點選維度看板書</div>';
   _el.innerHTML = `
-    <div class="m-dim-layout">
-      <div class="m-dim-list">
-        <div class="m-input-row m-dim-row m-dim-row-6">${tiles1}</div>
-        <div class="m-input-row m-dim-row m-dim-row-7">${tiles2}</div>
+    <div class="m-sv-layout">
+      <div class="m-sv-dimlist">
+        <div class="m-sv-dimrow">${tiles1}</div>
+        <div class="m-sv-dimrow">${tiles2}</div>
       </div>
-      <div class="m-dim-panel-wrap">${content}</div>
+      <div class="m-sv-main">${content}</div>
     </div>`;
   _bind();
 }
 
 function _dimTile(i) {
   const dm = DIMS[i]; if (!dm) return '';
-  let grp = 'm-grp-tile-boss';
-  if (i > 8) grp = 'm-grp-tile-post'; else if (i > 5) grp = 'm-grp-tile-luck'; else if (i > 2) grp = 'm-grp-tile-mgr';
-  const open = _dim === i ? 'm-tile-open' : '';
-  return `<button class="m-tile m-dim-tile ${grp} ${open}" data-bdim="${i}"><span class="m-tile-label">${_esc(dm.dn)}</span></button>`;
+  // 對齊手動評分：.m-sv-dim 群組左色條＋選取淡米底
+  const grp = i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post'));
+  const cur = _dim === i ? 'is-cur' : '';
+  return `<button class="m-sv-dim ${grp} ${cur}" data-bdim="${i}">${_esc(dm.dn)}</button>`;
 }
 
 function _noteEditor(dn, slot) {
@@ -126,17 +126,18 @@ function _dimContent(i) {
     : '<button class="m-board-btn m-board-btn-edit" data-board-editbtn="1">編輯</button>';
   const resetBtn = (hasMine && !_boardEditing)
     ? `<button class="m-board-btn" data-board-reset="${_esc(dn)}">還原成老師版</button>` : '';
+  // 置頂維度 pill：形勢 看 格局（格局比照形勢同樣大字）
+  const view = dm.view || '';
+  const pill = `<div class="m-board-pill"><span class="m-board-pill-name">${_esc(dn)}</span>${view ? `<span class="m-board-pill-see">看</span><span class="m-board-pill-name">${_esc(view)}</span>` : ''}</div>`;
   return `
-    <div class="m-panel m-dim-panel">
-      <div class="m-dim-panel-head"><span class="m-dim-title-name">${_esc(dn)}</span><span class="m-dim-title-view">${_esc(dm.view || '')}</span></div>
-      <div class="m-board-lecture-block">
-        <div class="m-board-head"><span class="m-board-sec-title">板書</span>${badge}<span class="m-board-head-sp"></span>${resetBtn}${editBtn}</div>
-        ${body}
-      </div>
-      <div class="m-board-note-block">
-        <div class="m-board-note-cap">我的心得筆記</div>
-        ${_noteEditor(dn, 'board')}
-      </div>
+    ${pill}
+    <div class="m-board-lecture-block">
+      <div class="m-board-head"><span class="m-board-sec-title">板書</span>${badge}<span class="m-board-head-sp"></span>${resetBtn}${editBtn}</div>
+      ${body}
+    </div>
+    <div class="m-board-note-block">
+      <div class="m-board-head"><span class="m-board-sec-title">我的心得筆記</span></div>
+      ${_noteEditor(dn, 'board')}
     </div>`;
 }
 

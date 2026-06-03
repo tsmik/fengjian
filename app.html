@@ -335,29 +335,25 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-part-layout{display:block}
 .m-part-panel-hint{display:none}
 /* ===== A3 課程（板書與筆記）m_board：沿用 .m-dim-layout 兩欄 ===== */
-.m-board-lecture-block{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding:14px;margin-bottom:14px}
-.m-board-sec-title{font-size:13px;font-weight:700;color:#8a6e54;letter-spacing:2px;margin-bottom:8px}
-.m-board-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.m-board-head .m-board-sec-title{margin-bottom:0}
+/* 維度 pill：形勢 看 格局（格局比照形勢同字級） */
+.m-board-pill{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;background:#e7dcc6;border:1px solid #d3c7b1;border-radius:10px;padding:9px 14px;margin-bottom:14px}
+.m-board-pill-name{font-size:20px;color:#3a3228;letter-spacing:2px}
+.m-board-pill-see{font-size:20px;color:#3a3228;letter-spacing:2px}
+/* 板書 / 心得 卡片：米色標題塊（同手動評分 .m-sv-subhead 家族） */
+.m-board-lecture-block,.m-board-note-block{background:#fff;border:1px solid #e8dfce;border-radius:12px;overflow:hidden;margin-bottom:14px}
+.m-board-head{display:flex;align-items:center;gap:8px;background:#ede4d2;border-left:3px solid #c2ab85;padding:8px 10px 8px 12px;flex-wrap:wrap}
+.m-board-sec-title{font-size:15px;color:#5a4f42;letter-spacing:1px}
 .m-board-head-sp{flex:1;min-width:8px}
 .m-board-ver{font-size:12px;padding:2px 9px;border-radius:10px}
 .m-board-ver-admin{background:#eee6d6;color:#8a7558}
 .m-board-ver-mine{background:#e3eef0;color:#3f6068}
-.m-board-btn{font-family:inherit;font-size:13px;border:1px solid #cfc6b6;background:#fff;color:#6a5f50;border-radius:8px;padding:5px 12px;cursor:pointer;flex-shrink:0}
+.m-board-btn{font-family:inherit;font-size:13px;border:1px solid #cfc6b6;background:#fff;color:#6a5f50;border-radius:8px;padding:4px 11px;cursor:pointer;flex-shrink:0}
 .m-board-btn-edit{background:#7A9E7E;border-color:#7A9E7E;color:#fff}
-.m-board-edit{width:100%;min-height:120px;border:1px solid #cdbf9f;border-radius:8px;padding:10px;font-family:inherit;font-size:clamp(15px,1.5vw,18px);line-height:1.9;color:#3a3228;background:#fffdf6;box-sizing:border-box;resize:none;overflow:hidden}
-.m-board-edit:focus{outline:none;border-color:#8fae7c}
-.m-board-note-block{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding:14px;margin-bottom:14px}
-.m-board-lecture{font-size:clamp(15px,1.5vw,18px);line-height:1.9;color:#3a3228;white-space:pre-wrap;word-break:break-word}
-/* 板書左 / 筆記右（桌機 flex + 可拖曳把手）；手機維持上下堆疊 */
-.m-board-lecture-wrap{display:block}
-.m-board-lecture-col{min-width:0}
-.m-board-note-col{margin-top:10px;padding-top:10px;border-top:1px dashed #e3d8c8}
-.m-board-drag{display:none}
-.m-board-note-wrap{margin-top:10px;padding-top:10px;border-top:1px dashed #e3d8c8}
-.m-board-note-cap{font-size:12px;color:#a08a6a;font-weight:600;margin-bottom:5px;letter-spacing:1px}
-.m-board-note{width:100%;min-height:42px;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fcfaf6;resize:none;line-height:1.6;color:#3a3228}
-.m-board-note:focus{outline:none;border-color:#8fae7c;background:#fff}
+.m-board-lecture{font-size:clamp(15px,1.5vw,18px);line-height:1.9;color:#3a3228;white-space:pre-wrap;word-break:break-word;padding:12px 14px}
+.m-board-edit{width:100%;min-height:120px;border:none;padding:12px 14px;font-family:inherit;font-size:clamp(15px,1.5vw,18px);line-height:1.9;color:#3a3228;background:#fffdf6;box-sizing:border-box;resize:none;overflow:hidden}
+.m-board-edit:focus{outline:none}
+.m-board-note{width:100%;min-height:60px;border:none;padding:10px 14px;font-size:15px;font-family:inherit;background:transparent;resize:none;line-height:1.7;color:#3a3228;box-sizing:border-box;overflow:hidden}
+.m-board-note:focus{outline:none}
 .m-board-cond-heading{font-size:13px;font-weight:700;color:#6f543c;letter-spacing:1px;margin:4px 2px 10px}
 .m-board-parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .m-board-box{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding-bottom:12px;overflow:hidden;display:flex;flex-direction:column}
