@@ -525,9 +525,11 @@ if (isTeacherMode) {
         mountReport(pages.report);
         openCaseMgmtView();
       } else if(key==='manual'){
-        unmountInput();
-        unmountReport();
-        mountManual(pages.manual);
+        if (!isOnManual) {            // 已在上課又點上課 → 不重 mount、不重設子畫面
+          unmountInput();
+          unmountReport();
+          mountManual(pages.manual);
+        }
         renderManualSubnav();
       } else {
         unmountInput();
