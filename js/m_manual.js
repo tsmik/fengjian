@@ -277,8 +277,7 @@ function _renderManualInput() {
     `<button class="m-seg-btn ${_manualSubview === t.key ? 'm-seg-active' : ''}" data-mview="${t.key}">${t.label}</button>`
   ).join('');
   // v1.7 階段 11：頁面頂端 hint + segmented（拿掉 m-manual-view-bar wrapper，跟部位觀察 segmented 寬度一致）
-  const hint = _manualSubview === 'board' ? ''
-    : (_manualSubview === 'input' ? '' : '直接輸入13維度的動/靜，產生報告');
+  const hint = '';
   const viewToggle = `${hint ? `<div class="m-page-hint">${hint}</div>` : ''}<div class="m-segmented m-segmented-sub" role="tablist">${seg}</div>`;
   let body;
   if (_manualSubview === 'board') {
