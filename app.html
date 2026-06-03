@@ -365,6 +365,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-board-box .m-board-note-wrap{margin:8px 12px 0;padding-top:8px}
 /* ===== A3 #2 手動評分鷹架 v7（.m-score-view 內，設計規格：不靠粗體、深米字、綠橘只給訊號）===== */
 .m-score-view{padding:8px 6px 0}
+/* 兵法報告（完整版：三大表＋圖表）*/
+.m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px}
+.m-rep-charts{display:grid;grid-template-columns:1fr;grid-template-areas:"r2" "coef" "sd";gap:14px;padding:12px 4px}
+.m-rep-chart-radar2{grid-area:r2}.m-rep-chart-coef{grid-area:coef}.m-rep-chart-sd{grid-area:sd}
+.m-rep-chart svg{width:100%;height:auto;display:block}
+.rep-chart-title{text-align:center;color:#5a4f45;font-weight:700;margin-bottom:4px}
 .m-score-view,.m-score-view *{font-weight:400}
 .m-sv-dimlist{margin-bottom:12px}
 .m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
@@ -1197,6 +1203,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-condwrap{flex:1;min-width:0}
   .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
   .m-sv-subpart:only-child{grid-column:1/-1}
+  /* 兵法報告圖表桌機：雷達圖左大、長條圖右上、動靜雷達右下（對齊舊桌機排版）*/
+  .m-rep-charts{grid-template-columns:1.4fr 1fr;grid-template-areas:"r2 coef" "r2 sd";align-items:start;gap:18px}
 }
 
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */

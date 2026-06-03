@@ -29,6 +29,7 @@
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
 import { chartsBlockHtml, exportMobileCharts } from './m_report.js';
+import { buildManualReportHtml } from './manual_report.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
@@ -285,8 +286,9 @@ function _renderManualInput() {
   } else if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    // v1.7 階段 14：流年參考搬到報告 tab，這裡不再顯示
-    body = `${_renderCoeffSummary()}${_chartsHtml()}${_renderManualPngRow()}`;
+    // 兵法報告：完整版（移植自舊桌機 manual.js → manual_report.js）：三大係數表 + 圖表；餵自我評分 _manualDraft
+    const _rname = (window.__userData && window.__userData.displayName) || '';
+    body = `<div class="m-manual-fullreport">${buildManualReportHtml(_manualDraft, { name: _rname })}</div>${_renderManualPngRow()}`;
   } else {
     body = _renderScoreView();
   }
