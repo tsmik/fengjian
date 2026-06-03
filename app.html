@@ -379,7 +379,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-condbtn{display:inline-flex;align-items:center;gap:3px;background:#f3ece0;border:1px solid #ddd2bd;border-radius:8px;color:#6a5f50;font-family:inherit;font-size:14px;padding:5px 11px;cursor:pointer;flex-shrink:0}
 .m-sv-condbtn.is-open{background:#e3d6bd;border-color:#cdbf9f;color:#3a3228}
 .m-sv-caret{font-size:10px}
-.m-sv-condinline{margin:-1px 0 9px;padding:12px;background:#fbf7ee;border:1px solid #ece2cd;border-radius:10px;overflow:hidden;animation:svOpen .26s ease}
+.m-sv-condinline{margin:-1px 0 9px;padding:12px;background:#fbf7ee;border:1px solid #ece2cd;border-radius:10px}
+.m-sv-condinline.is-anim{overflow:hidden;animation:svOpen .26s ease}  /* 只在展開那一下播放，後續互動重畫不重播 */
 @keyframes svOpen{from{max-height:0;padding-top:0;padding-bottom:0;opacity:.35}to{max-height:1400px;padding-top:12px;padding-bottom:12px;opacity:1}}
 .m-sv-pname{flex:1;font-size:16px;color:#5a5147}
 .m-sv-pitem.is-cur .m-sv-pname{color:#3a3228}

@@ -784,6 +784,7 @@ function _renderManualRow(di, pi) {
 // ============================================================
 let _scorePartIdx = 0;
 let _scoreCondOpen = null;  // 手機版：目前在部位列下方展開條件的部位 idx（手風琴）；null＝全收合
+let _svJustOpened = false;  // 只在「展開那一下」播放滑開動畫；面板內後續互動重畫不重播（否則畫面會跳）
 function _svIsDesktop() { try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; } }
 // 跨越桌機/手機斷點時，手動評分頁 DOM 結構不同（桌機右側條件欄 vs 手機列內手風琴）→ reflow
 let _svLastDesktop = null;
@@ -844,7 +845,7 @@ function _renderScoreView() {
     // 手機版：每個部位列帶「條件」鈕，點開在該列下方展開該部位條件（手風琴），再點收起；桌機用右側條件欄不需此鈕
     const condBtn = desktop ? '' : `<button class="m-sv-condbtn ${open ? 'is-open' : ''}" data-msvcond="${pi}" type="button">條件<span class="m-sv-caret">${open ? '▴' : '▾'}</span></button>`;
     const row = `<div class="m-sv-pitem ${(desktop && pi === _scorePartIdx) ? 'is-cur' : ''} ${open ? 'is-open' : ''}" data-mspart="${pi}"><span class="m-sv-pname">${PART_LABELS[pi]}</span>${condBtn}<span class="m-sv-poles">${ba}${bb}</span></div>`;
-    const inline = open ? `<div class="m-sv-condinline">${_renderScoreCond(di, pi)}</div>` : '';
+    const inline = open ? `<div class="m-sv-condinline${_svJustOpened ? ' is-anim' : ''}">${_renderScoreCond(di, pi)}</div>` : '';
     return row + inline;
   };
   const parts = [0,1,2,3,4,5,6,7,8].map(pitem).join('');
@@ -1035,13 +1036,16 @@ function _bindEvents() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const pi = parseInt(btn.dataset.msvcond, 10);
+      const opening = (_scoreCondOpen !== pi);
       // #4：記住此列在捲動區的視覺位置，重畫後還原 → 點別的部位時畫面不會突然跳位
       const scroller = (_container.closest && _container.closest('.m-main')) || document.querySelector('.m-main');
       const row = btn.closest('.m-sv-pitem');
       const beforeTop = row ? row.getBoundingClientRect().top : null;
-      _scoreCondOpen = (_scoreCondOpen === pi) ? null : pi;  // 再按同一個＝收起
+      _scoreCondOpen = opening ? pi : null;                  // 再按同一個＝收起
       _scorePartIdx = pi;                                    // 與桌機選取保持一致
+      _svJustOpened = opening;                               // 只有展開這一下播動畫
       _render();
+      _svJustOpened = false;
       if (scroller && beforeTop != null) {
         const newRow = _container.querySelector(`.m-sv-pitem[data-mspart="${pi}"]`);
         if (newRow) scroller.scrollTop += (newRow.getBoundingClientRect().top - beforeTop);
