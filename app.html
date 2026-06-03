@@ -787,6 +787,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   font-size:18px;
 }
 .m-tab.active .m-tab-icon{transform:scale(1.05)}
+.m-tabsub{display:none}  /* 桌機側欄「上課」展開子膠囊；手機用上方 segmented */
 
 /* ===== 登入頁 ===== */
 .m-login{
@@ -985,15 +986,17 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
     padding-right:max(16px,calc((100% - 1600px) / 2));
   }
 
-  /* tabbar → 左側直立側欄 */
+  /* tabbar → 左側直立側欄（180px，較原 200 縮一點） */
   .m-tabbar{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
     left:max(0px,calc((100% - 1600px) / 2));
     right:auto;
-    width:200px;
+    width:180px;
     height:auto;
     flex-direction:column;
+    align-items:stretch;
+    overflow-y:auto;
     border-top:none;
     border-right:1px solid var(--border);
     padding-bottom:0;
@@ -1002,18 +1005,24 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
     flex:0 0 auto;
     flex-direction:row;
     justify-content:flex-start;
-    gap:12px;
-    padding:15px 20px;
+    gap:10px;
+    padding:14px 16px;
     font-size:14px;
   }
   .m-tab-icon{margin-bottom:0}
+  /* 「上課」展開的子膠囊 */
+  .m-tabsub{display:flex;flex-direction:column;gap:6px;padding:2px 12px 8px 34px}
+  .m-tabsub-item{font-family:inherit;font-size:14px;color:#6a5f50;padding:7px 10px;border:1px solid #e0d8ca;border-radius:16px;background:#fff;cursor:pointer;text-align:center;white-space:nowrap}
+  .m-tabsub-item.active{background:#efe7d6;border-color:#d3c7b1;color:#3a3228}
+  /* 桌機改用側欄子膠囊 → 隱藏頁面上方的子畫面 segmented（報告內部 toggle 不受影響） */
+  .m-segmented-sub{display:none}
 
   /* main → 側欄右側。流體寬：≥1600px 置中成 1400；<1600px（如 1280/1440 筆電）
      貼齊右緣不超出 → 修正全螢幕右側被裁切 */
   .m-main{
     top:calc(var(--nav-h) + var(--safe-top));
     bottom:0;
-    left:calc(max(0px,(100% - 1600px) / 2) + 200px);
+    left:calc(max(0px,(100% - 1600px) / 2) + 180px);
     right:max(0px,calc((100% - 1600px) / 2));
     transform:none;
     width:auto;
@@ -1561,6 +1570,7 @@ body.m-debug-on .m-debug-clear{display:block}
     </span>
     <span>上課</span>
   </button>
+  <div class="m-tabsub" id="m-tabsub-manual"></div>
   <button class="m-tab" data-tab="input">
     <span class="m-tab-icon">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>

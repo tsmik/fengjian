@@ -49,8 +49,8 @@ let _manualSubview = 'board';  // 'board'(課程) | 'input'(手動評分) | 'ove
 // 參數分析(sens) 暫不列入（之後搬到「我的」），但 renderManualSens / 'sens' view 邏輯保留。
 const SUBMODES = [
   { key: 'board',    label: '課程' },
-  { key: 'input',    label: '手動評分' },
-  { key: 'overview', label: '報告' },
+  { key: 'input',    label: '自我評分' },
+  { key: 'overview', label: '兵法報告' },
 ];
 let _manualDraft = null;
 let _firestoreBaseline = null;
@@ -189,6 +189,17 @@ export function getManualDirty() {
   return _hasLocalDraft();
 }
 
+// 給桌機側欄子膠囊用：切換子畫面（課程/自我評分/兵法報告），不重新 mount
+export function setManualView(key) {
+  if (!key || !_container) return;
+  const prev = _manualSubview;
+  _manualSubview = key;
+  if (prev === 'board' && key !== 'board') { try { unmountBoard(); } catch (e) {} }
+  try { localStorage.setItem(LS_VIEW, key); } catch (e) {}
+  _render();
+}
+export function getManualView() { return _manualSubview; }
+
 export function discardManualDraft() {
   try { localStorage.removeItem(_getLsKey()); } catch (e) {}
   if (_firestoreBaseline) {
@@ -267,7 +278,7 @@ function _renderManualInput() {
   // v1.7 階段 11：頁面頂端 hint + segmented（拿掉 m-manual-view-bar wrapper，跟部位觀察 segmented 寬度一致）
   const hint = _manualSubview === 'board' ? ''
     : (_manualSubview === 'input' ? '' : '直接輸入13維度的動/靜，產生報告');
-  const viewToggle = `${hint ? `<div class="m-page-hint">${hint}</div>` : ''}<div class="m-segmented" role="tablist">${seg}</div>`;
+  const viewToggle = `${hint ? `<div class="m-page-hint">${hint}</div>` : ''}<div class="m-segmented m-segmented-sub" role="tablist">${seg}</div>`;
   let body;
   if (_manualSubview === 'board') {
     body = `<div id="m-board-mount"></div>`;

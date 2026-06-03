@@ -19,7 +19,22 @@ import {
 import { initHome, refreshHomeSelf } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView } from "./m_report.js";
-import { mountManual, unmountManual, getManualDirty, discardManualDraft } from "./m_manual.js";
+import { mountManual, unmountManual, getManualDirty, discardManualDraft, setManualView, getManualView } from "./m_manual.js";
+
+// 桌機側欄：「上課」展開的子膠囊（課程/自我評分/兵法報告）
+function renderManualSubnav() {
+  const host = document.getElementById('m-tabsub-manual');
+  if (!host) return;
+  const items = [{ key: 'board', label: '課程' }, { key: 'input', label: '自我評分' }, { key: 'overview', label: '兵法報告' }];
+  let cur = 'board';
+  try { cur = getManualView() || 'board'; } catch (e) {}
+  host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-msub="${it.key}">${it.label}</button>`).join('');
+  host.querySelectorAll('[data-msub]').forEach(b => b.addEventListener('click', () => {
+    try { setManualView(b.dataset.msub); } catch (e) {}
+    renderManualSubnav();
+  }));
+}
+function clearManualSubnav() { const h = document.getElementById('m-tabsub-manual'); if (h) h.innerHTML = ''; }
 import { initBadges } from "./m_badge.js";
 
 // ===== Firebase config =====
@@ -194,7 +209,7 @@ async function _backToSelf() {
   const activeTab = document.querySelector('.m-tab.active');
   const key = activeTab && activeTab.dataset.tab;
   if (key === 'input') { try { unmountInput(); } catch (e) {} mountInput(document.getElementById('m-page-input')); }
-  else if (key === 'manual') { try { unmountManual(); } catch (e) {} mountManual(document.getElementById('m-page-manual')); }
+  else if (key === 'manual') { try { unmountManual(); } catch (e) {} mountManual(document.getElementById('m-page-manual')); renderManualSubnav(); }
 }
 
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
@@ -496,24 +511,29 @@ if (isTeacherMode) {
       if(key==='input'){
         unmountReport();
         unmountManual();
+        clearManualSubnav();
         mountInput(pages.input);
       } else if(key==='report'){
         unmountInput();
         unmountManual();
+        clearManualSubnav();
         mountReport(pages.report);
       } else if(key==='cases'){
         unmountInput();
         unmountManual();
+        clearManualSubnav();
         mountReport(pages.report);
         openCaseMgmtView();
       } else if(key==='manual'){
         unmountInput();
         unmountReport();
         mountManual(pages.manual);
+        renderManualSubnav();
       } else {
         unmountInput();
         unmountReport();
         unmountManual();
+        clearManualSubnav();
         // 首頁固定顯示本人（不受目前分析個案影響）
         if (key === 'home') { try { refreshHomeSelf(); } catch (e) {} }
       }
