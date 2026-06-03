@@ -820,7 +820,7 @@ function _scoreCondModel(di, pi) {
     if (local.total) {
       subRows = _expandRows(local);  // 形/勢 bar 仍需左右展開
       // 文字精簡：不再列舉子部位名稱（太長），門檻統一用「符合 N 個（含）以上」
-      crit = `${local.partLabel}共 ${local.total} 個部位，符合 ${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
+      crit = `${local.partLabel}：${local.total} 個部位，${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
     }
     return { kind: 'local', crit, refNote: local.refNote, subRows, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
   }
@@ -877,7 +877,7 @@ function _renderScoreView() {
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
 // ===== A3 #2 Stage3：鷹架持久化（manualScaffoldJson，per 對象）＋筆記/新增/移除/說明 =====
-let _scaffold = { cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{} };
+let _scaffold = { cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{}, snote:{} };
 let _scaffoldTimer = null;
 let _noteOpen = {};   // 筆記框展開（UI 暫態）
 let _addOpen = {};    // 新增條件輸入框展開（UI 暫態）
@@ -885,8 +885,8 @@ function _loadScaffold() {
   const ud = window.__userData || {};
   let s = {};
   try { s = ud.manualScaffoldJson ? JSON.parse(ud.manualScaffoldJson) : {}; } catch (e) { s = {}; }
-  _scaffold = Object.assign({ cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{} }, s || {});
-  ['cond','cnote','pnote','added','removed','exp','ref'].forEach(k => { if (!_scaffold[k] || typeof _scaffold[k] !== 'object') _scaffold[k] = {}; });
+  _scaffold = Object.assign({ cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{}, snote:{} }, s || {});
+  ['cond','cnote','pnote','added','removed','exp','ref','snote'].forEach(k => { if (!_scaffold[k] || typeof _scaffold[k] !== 'object') _scaffold[k] = {}; });
   // added 舊格式 {k:[...]} → 新格式 {k:{gi:[...]}}（per 子部位）
   Object.keys(_scaffold.added).forEach(k => { if (Array.isArray(_scaffold.added[k])) _scaffold.added[k] = { 0: _scaffold.added[k] }; });
 }
@@ -969,7 +969,10 @@ function _renderScoreCond(di, pi) {
   const pEraseBtn = pNoteOpen ? _eraserBtn('p' + k) : '';
   // 部位名＋✎在第一行；評斷標準移到第二行、字體加深(.m-sv-crit2)
   const critHtml = model.crit ? `<div class="m-sv-crit2">${_esc(model.crit)}</div>` : '';
-  const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${pnoteBtn}${pEraseBtn}</div>${critHtml}`;
+  // 單卡片部位(上停/耳/眉/眼/鼻/口)：＋條件放在部位列(筆記✎右邊)；多子部位部位(頭/中停/下停)的＋條件在各子部位標題上
+  const isMaster = model.kind === 'master';
+  const partAddBtn = isMaster ? `<button class="m-sv-addpill" data-addcond="${k}_0" type="button" data-tip="新增條件">＋條件</button>` : '';
+  const header = `<div class="m-sv-parthdr"><span class="m-sv-pn">${PART_LABELS[pi]}</span>${pnoteBtn}${pEraseBtn}${partAddBtn}</div>${critHtml}`;
   const pNoteBox = pNoteOpen ? `<div class="m-sv-notebox m-sv-pnotebox">${_noteEl('data-pna="' + k + '"', pNote, '這個部位的筆記…', 'p' + k)}</div>` : '';
   if (!model.groups.length) return `<div class="m-sv-condwrap">${header}${pNoteBox}<div class="m-sv-empty">（此部位無判別條件）</div></div>`;
   // 頭/中停/下停：參考子部位「形/勢 左右 bar」——同部位左右並排同列；預設未填、手動點、再按取消、不計入計算、不回寫部位觀察
@@ -991,15 +994,28 @@ function _renderScoreCond(di, pi) {
   }
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {
+    const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
     let rows = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).map(c => _condRow(k, c)).join('');
     // 我的補充條件（依子部位 gi 各自掛）
     rows += (addedAll[gi] || []).map(c => _condRow(k, c, { added: true, gi })).join('');
-    const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
-    const addUi = _addOpen[akey]
+    const addForm = _addOpen[akey]
       ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${akey}" placeholder="輸入新的條件…"><button class="m-sv-addok" data-addok="${akey}">加入</button></div>`
-      : `<button class="m-sv-addcond" data-addcond="${akey}">＋ 新增條件</button>`;
-    const title = g.src === 'master' ? '' : `<div class="m-sv-subtitle">${_esc(g.title)}${g.w ? `<span class="m-sv-w">×${g.w}</span>` : ''}</div>`;
-    return `<div class="m-sv-subpart">${title}${rows}${addUi}</div>`;
+      : '';
+    if (g.src === 'master') {
+      // 單卡片(上停/耳/眉/眼/鼻/口)：標題與＋條件在部位列，這裡只放條件＋新增框
+      return `<div class="m-sv-subpart">${rows}${addForm}</div>`;
+    }
+    // 子部位卡片(頂骨/枕骨/華陽骨/顴/人中/地閣/頤)：標題改名(權重2→（左右X）)＋右側 筆記✎ ＋條件；其下子部位筆記框
+    const sk = akey;
+    const sNote = _scaffold.snote[sk] || '';
+    const sOpen = _noteOpen['s' + sk] || sNote;
+    const titleName = (g.w >= 2) ? `${g.title}（左右${g.title}）` : g.title;
+    const sNoteBtn = `<button class="m-sv-ico" data-snt="${sk}" data-tip="子部位筆記">✎</button>`;
+    const sEraseBtn = sOpen ? _eraserBtn('s' + sk) : '';
+    const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
+    const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
+    const sNoteBox = sOpen ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
+    return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}${addForm}</div>`;
   }).join('');
   return `<div class="m-sv-condwrap">${header}${pNoteBox}${refBars}<div class="m-sv-subparts">${cards}</div></div>`;
 }
@@ -1148,6 +1164,7 @@ function _bindEvents() {
   // Stage3：條件/部位筆記展開
   _container.querySelectorAll('[data-cnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const ck = btn.dataset.cnt; const open = !_noteOpen['c' + ck]; _noteOpen['c' + ck] = open; if (open) _svFocusKey = 'c' + ck; _render(); }));
   _container.querySelectorAll('[data-pnt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const k = btn.dataset.pnt; const open = !_noteOpen['p' + k]; _noteOpen['p' + k] = open; if (open) _svFocusKey = 'p' + k; _render(); }));
+  _container.querySelectorAll('[data-snt]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const sk = btn.dataset.snt; const open = !_noteOpen['s' + sk]; _noteOpen['s' + sk] = open; if (open) _svFocusKey = 's' + sk; _render(); }));
   // Stage3：筆記 textarea（input 即存）
   _container.querySelectorAll('[data-cna]').forEach(ta => {
     _svGrow(ta);
@@ -1156,6 +1173,10 @@ function _bindEvents() {
   _container.querySelectorAll('[data-pna]').forEach(ta => {
     _svGrow(ta);
     ta.addEventListener('input', () => { const k = ta.dataset.pna; _scaffold.pnote[k] = ta.value; _svGrow(ta); _saveScaffold(); });
+  });
+  _container.querySelectorAll('[data-sna]').forEach(ta => {
+    _svGrow(ta);
+    ta.addEventListener('input', () => { const sk = ta.dataset.sna; _scaffold.snote[sk] = ta.value; _svGrow(ta); _saveScaffold(); });
   });
   // Stage3：移除條件（✕）
   _container.querySelectorAll('[data-cdel]').forEach(btn => {

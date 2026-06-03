@@ -400,9 +400,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-parthdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .m-sv-pn{font-size:17px;color:#3a3228}
 .m-sv-crit{font-size:15px;color:#8a7a5a}
-.m-sv-crit2{font-size:15px;color:#463d30;line-height:1.55;margin:-2px 0 12px}
+.m-sv-crit2{font-size:14px;color:#463d30;line-height:1.55;margin:-2px 0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m-sv-refbars{background:#faf6ec;border:1px solid #ece3cf;border-radius:9px;padding:4px 12px;margin-bottom:14px}
-.m-sv-refrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:7px 0}
+.m-sv-refrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;padding:7px 0}
 .m-sv-refrow+.m-sv-refrow{border-top:1px dashed #ece1c8}
 .m-sv-refcell{display:flex;align-items:center;gap:5px;min-width:0}
 .m-sv-refname{flex:0 0 var(--rn,4em);font-size:15px;color:#3a3228;white-space:nowrap}
@@ -414,6 +414,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-subpart{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding-bottom:6px}
 .m-sv-subtitle{background:#ede4d2;color:#5a4f42;font-size:15px;padding:7px 12px;border-left:3px solid #c2ab85;letter-spacing:1px;border-radius:9px 9px 0 0}
 .m-sv-w{color:#b09a6a;font-size:12px;margin-left:5px}
+/* #7：子部位標題列(改名＋右側 筆記/＋條件) ＋ ＋條件膠囊 ＋ 子部位筆記框 */
+.m-sv-subhead{display:flex;align-items:center;gap:8px;background:#ede4d2;border-left:3px solid #c2ab85;border-radius:9px 9px 0 0;padding:7px 10px 7px 12px}
+.m-sv-subtitle-name{flex:1;color:#5a4f42;font-size:15px;letter-spacing:1px}
+.m-sv-addpill{display:inline-flex;align-items:center;height:24px;border:1px solid #cfc6b6;border-radius:13px;background:none;color:#9a8f7e;font-size:13px;padding:0 11px;font-family:inherit;cursor:pointer;flex-shrink:0}
+.m-sv-snotebox{padding:6px 12px 4px}
 .m-sv-cond{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f2ece0}
 .m-sv-cond:last-child{border-bottom:none}
 .m-sv-cond-text{flex:1;min-width:0;font-size:15px;color:#3a3228;line-height:1.5}
