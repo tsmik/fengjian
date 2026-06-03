@@ -967,7 +967,7 @@ function _svConfirm(text, detail, onYes) {
 }
 // 筆記框：rows=1 寫多少顯多少、即打即存、原生 undo、可下拉拉高（刪除鈕已移到 ✎ 右邊，不在框內）
 function _noteEl(dataAttr, value, placeholder, ndelKey) {
-  return `<div class="m-sv-noteinner"><textarea class="m-sv-note" rows="1" ${dataAttr} data-noteblur="${_esc(ndelKey)}" placeholder="${placeholder}">${_esc(value)}</textarea></div>`;
+  return `<span class="m-sv-noteico" aria-hidden="true"></span><div class="m-sv-noteinner"><textarea class="m-sv-note" rows="1" ${dataAttr} data-noteblur="${_esc(ndelKey)}" placeholder="${placeholder}">${_esc(value)}</textarea></div>`;
 }
 // 刪除筆記橡皮擦鈕（放在 ✎ 右邊，筆記開啟/有內容時才出現）；key＝_noteOpen 的鍵
 function _eraserBtn(key) {
