@@ -1031,9 +1031,17 @@ function _bindEvents() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const pi = parseInt(btn.dataset.msvcond, 10);
+      // #4：記住此列在捲動區的視覺位置，重畫後還原 → 點別的部位時畫面不會突然跳位
+      const scroller = (_container.closest && _container.closest('.m-main')) || document.querySelector('.m-main');
+      const row = btn.closest('.m-sv-pitem');
+      const beforeTop = row ? row.getBoundingClientRect().top : null;
       _scoreCondOpen = (_scoreCondOpen === pi) ? null : pi;  // 再按同一個＝收起
       _scorePartIdx = pi;                                    // 與桌機選取保持一致
       _render();
+      if (scroller && beforeTop != null) {
+        const newRow = _container.querySelector(`.m-sv-pitem[data-mspart="${pi}"]`);
+        if (newRow) scroller.scrollTop += (newRow.getBoundingClientRect().top - beforeTop);
+      }
     });
   });
   // v7：形/勢評分鈕（手動決定，再按取消；不自動算）
