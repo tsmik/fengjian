@@ -990,9 +990,10 @@ function _condRow(k, c, opt) {
   const noteBox = noteOpenNow ? `<div class="m-sv-notebox">${_noteEl('data-cna="' + _esc(ck) + '"', nv, '這條的筆記…', 'c' + ck)}</div>` : '';
   if (added) {
     const cek = `${_esc(k)}|${_esc(String(opt.gi))}|${_esc(opt.id)}`;
+    const mineIcon = `<span class="m-sv-mineicon" title="我的補充"></span>`;
     const edit = `<textarea class="m-sv-condedit" rows="1" data-cedit="${cek}" placeholder="輸入條件…">${_esc(c)}</textarea>`;
     const delBtn = `<button class="m-sv-ico" data-cdel="${cek}" data-tip="移除這條">✕</button>`;
-    return `<div class="m-sv-cond is-mine">${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}`;
+    return `<div class="m-sv-cond is-mine">${mineIcon}${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}`;
   }
   return `<div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}`;
 }
@@ -1019,16 +1020,17 @@ function _renderScoreCond(di, pi) {
   if (subRows.length) {
     const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);
     const refMap = _scaffold.ref[k] || {};
+    // 子部位名固定寬度（取該部位最長名）→ 各列形/勢 bar 對齊；用行內 width:em（避開 Safari flex+var bug）
+    const maxLen = Math.max(1, ...subRows.reduce((a, r) => a.concat(r), []).map(n => n.length));
+    const rnEm = (maxLen + 0.25).toFixed(2);
     const cell = (name) => {
       const v = refMap[name];
       const ba = `<button class="m-sv-pole ${v === pa.val ? 'is-' + pa.tone : ''}" data-mref="${k}|${_esc(name)}|${pa.val}">${_esc(dim.da)}</button>`;
       const bb = `<button class="m-sv-pole ${v === pb.val ? 'is-' + pb.tone : ''}" data-mref="${k}|${_esc(name)}|${pb.val}">${_esc(dim.db)}</button>`;
-      return `<span class="m-sv-refcell"><span class="m-sv-refname">${_esc(name)}</span><span class="m-sv-poles">${ba}${bb}</span></span>`;
+      return `<span class="m-sv-refcell"><span class="m-sv-refname" style="width:${rnEm}em">${_esc(name)}</span><span class="m-sv-poles">${ba}${bb}</span></span>`;
     };
     const rowHtml = subRows.map(r => `<div class="m-sv-refrow">${r.map(cell).join('')}</div>`).join('');
-    // 子部位名固定寬度（取該部位最長名）→ 各列形/勢 bar 對齊；窄則不浪費空間
-    const maxLen = Math.max(1, ...subRows.reduce((a, r) => a.concat(r), []).map(n => n.length));
-    refBars = `<div class="m-sv-refbars" style="--rn:${(maxLen + 0.2).toFixed(1)}em">${rowHtml}</div>`;
+    refBars = `<div class="m-sv-refbars">${rowHtml}</div>`;
   }
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {

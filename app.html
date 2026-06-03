@@ -405,13 +405,13 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-refrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;padding:7px 0}
 .m-sv-refrow+.m-sv-refrow{border-top:1px dashed #ece1c8}
 .m-sv-refcell{display:flex;align-items:center;gap:5px;min-width:0}
-.m-sv-refname{flex-grow:0;flex-shrink:0;flex-basis:var(--rn,4em);font-size:15px;color:#3a3228;white-space:nowrap}
+.m-sv-refname{flex:none;font-size:15px;color:#3a3228;white-space:nowrap}
 .m-sv-refbars .m-sv-poles{flex-shrink:0}
 .m-sv-refbars .m-sv-pole{min-width:30px;font-size:14px}
 .m-sv-ref{font-size:13px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 9px;margin-bottom:10px}
 .m-sv-empty{font-size:13px;color:#aaa;padding:10px 2px}
 .m-sv-subparts{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
-.m-sv-subpart{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding-bottom:6px}
+.m-sv-subpart{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding-bottom:6px;min-width:0}
 .m-sv-subtitle{background:#ede4d2;color:#5a4f42;font-size:15px;padding:7px 12px;border-left:3px solid #c2ab85;letter-spacing:1px;border-radius:9px 9px 0 0}
 .m-sv-w{color:#b09a6a;font-size:12px;margin-left:5px}
 /* #7：子部位標題列(改名＋右側 筆記/＋條件) ＋ ＋條件膠囊 ＋ 子部位筆記框 */
@@ -448,7 +448,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-note{width:100%;min-height:30px;height:auto;border:1px solid #ddd;border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fcfaf6;resize:vertical;line-height:1.5;color:#3a3228}
 .m-sv-note:focus{outline:none;border-color:#8fae7c;background:#fff}
 .m-sv-mytag{font-size:11px;color:#a08a6a;background:#f1e9da;border-radius:5px;padding:1px 6px;margin-left:6px}
-.m-sv-cond.is-mine{background:#fffdf3;border-left:3px solid #e0bd63}  /* 我的補充：便利貼左色條 */
+.m-sv-cond.is-mine{background:#fffdf3}  /* 我的補充：淡黃底＋便利貼小圖示 */
+.m-sv-mineicon{position:relative;display:inline-block;width:20px;height:20px;flex-shrink:0;background:#ffe08a;border:1px solid #e3c267;border-radius:3px}
+.m-sv-mineicon::after{content:'';position:absolute;right:-1px;top:-1px;border-width:0 7px 7px 0;border-style:solid;border-color:#fff #fff #e3c267 #e3c267}  /* 折角 */
 .m-sv-condedit{flex:1;min-width:0;border:none;background:transparent;resize:none;overflow:hidden;font-family:inherit;font-size:15px;line-height:1.5;color:#3a3228;padding:2px 4px;margin:0}
 .m-sv-condedit:focus{outline:none;background:#fff;border-radius:5px;box-shadow:inset 0 0 0 1px #e0d3b0}
 .m-sv-condedit::placeholder{color:#c2b59a}
