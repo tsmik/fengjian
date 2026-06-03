@@ -1184,11 +1184,13 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== P7 RWD（A3#2）：桌機手動評分三欄（維度｜部位｜條件）===== */
 @media (min-width:1024px){
   .m-sv-layout{display:flex;align-items:flex-start;gap:18px}
-  .m-sv-dimlist{flex:0 0 150px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:7px;margin-bottom:0}
+  .m-sv-dimlist{flex:0 0 150px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:7px;margin-bottom:0;position:sticky;top:0;align-self:flex-start;max-height:calc(100vh - var(--nav-h) - 24px);overflow-y:auto}  /* #5 捲動時 13 維度固定 */
   .m-sv-dimrow{flex-direction:column;gap:7px;margin-bottom:0}
   .m-sv-dim{flex:0 0 auto;width:100%;justify-content:flex-start;text-align:left;padding:6px 14px}
   .m-sv-main{flex:1;min-width:0}
   .m-sv-dimhead{position:static;background:none;border:none;border-bottom:1px solid #d4c9b0;border-radius:0;padding:2px 2px 10px}
+  /* #4 課程維度名稱對齊自我評分：桌機改底線、無底色、同 padding */
+  .m-board-pill{position:static;background:none;border:none;border-bottom:1px solid #d4c9b0;border-radius:0;padding:2px 2px 10px}
   .m-sv-sub{display:flex;align-items:flex-start;gap:16px}
   .m-sv-plist{flex:0 0 200px;margin-bottom:0}
   .m-sv-condwrap{flex:1;min-width:0}
