@@ -449,8 +449,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-note:focus{outline:none;border-color:#8fae7c;background:#fff}
 .m-sv-mytag{font-size:11px;color:#a08a6a;background:#f1e9da;border-radius:5px;padding:1px 6px;margin-left:6px}
 .m-sv-cond.is-mine{background:#fffdf3}  /* 我的補充：淡黃底＋便利貼小圖示 */
-.m-sv-mineicon{position:relative;display:inline-block;width:20px;height:20px;flex-shrink:0;background:#ffe08a;border:1px solid #e3c267;border-radius:3px}
-.m-sv-mineicon::after{content:'';position:absolute;right:-1px;top:-1px;border-width:0 7px 7px 0;border-style:solid;border-color:#fff #fff #e3c267 #e3c267}  /* 折角 */
+.m-sv-mineicon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border:1px solid #e3c267;border-radius:50%;background:none}  /* 黃圈圈，與筆記圈圈同大 */
+.m-sv-mineicon::after{content:'';width:12px;height:12px;background:#ffe08a;border:1px solid #d9b653;border-radius:2px}  /* 內含小 post-it */
 .m-sv-condedit{flex:1;min-width:0;border:none;background:transparent;resize:none;overflow:hidden;font-family:inherit;font-size:15px;line-height:1.5;color:#3a3228;padding:2px 4px;margin:0}
 .m-sv-condedit:focus{outline:none;background:#fff;border-radius:5px;box-shadow:inset 0 0 0 1px #e0d3b0}
 .m-sv-condedit::placeholder{color:#c2b59a}
