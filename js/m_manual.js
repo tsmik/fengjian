@@ -903,6 +903,25 @@ function _saveScaffold() {
   }, 600);
 }
 function _svGrow(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+// 收合條件面板的滑動動畫：先固定到實際高度→過渡到 0→結束後 callback（再重畫移除）
+function _svCollapse(panel, done) {
+  try {
+    panel.style.maxHeight = panel.scrollHeight + 'px';
+    panel.style.overflow = 'hidden';
+    void panel.offsetHeight;  // 強制 reflow，讓起點高度生效
+    panel.style.transition = 'max-height .24s ease, opacity .24s ease, padding .24s ease, margin .24s ease';
+    panel.style.maxHeight = '0';
+    panel.style.opacity = '0';
+    panel.style.paddingTop = '0';
+    panel.style.paddingBottom = '0';
+    panel.style.marginTop = '0';
+    panel.style.marginBottom = '0';
+    let called = false;
+    const finish = () => { if (called) return; called = true; done(); };
+    panel.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, 320);  // 後備：動畫沒觸發也要收尾
+  } catch (e) { done(); }
+}
 // 自訂確認框（避免 native confirm 的網域列；可帶要刪除的內容）
 function _svConfirm(text, detail, onYes) {
   const ov = document.createElement('div');
@@ -1036,14 +1055,24 @@ function _bindEvents() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const pi = parseInt(btn.dataset.msvcond, 10);
-      const opening = (_scoreCondOpen !== pi);
+      const row = btn.closest('.m-sv-pitem');
+      // 收合（再按目前展開的部位）：先播收合動畫，動畫結束再重畫移除
+      if (_scoreCondOpen === pi) {
+        const panel = row ? row.nextElementSibling : null;
+        if (panel && panel.classList && panel.classList.contains('m-sv-condinline')) {
+          _svCollapse(panel, () => { _scoreCondOpen = null; _render(); });
+        } else {
+          _scoreCondOpen = null; _render();
+        }
+        return;
+      }
+      // 展開（含從別的部位切換過來）
       // #4：記住此列在捲動區的視覺位置，重畫後還原 → 點別的部位時畫面不會突然跳位
       const scroller = (_container.closest && _container.closest('.m-main')) || document.querySelector('.m-main');
-      const row = btn.closest('.m-sv-pitem');
       const beforeTop = row ? row.getBoundingClientRect().top : null;
-      _scoreCondOpen = opening ? pi : null;                  // 再按同一個＝收起
+      _scoreCondOpen = pi;
       _scorePartIdx = pi;                                    // 與桌機選取保持一致
-      _svJustOpened = opening;                               // 只有展開這一下播動畫
+      _svJustOpened = true;                                  // 只有展開這一下播動畫
       _render();
       _svJustOpened = false;
       if (scroller && beforeTop != null) {
