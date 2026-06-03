@@ -85,12 +85,14 @@ function _render() {
   const content = (_dim != null) ? _dimContent(_dim)
     : '<div class="m-part-panel-hint">← 點選維度看板書</div>';
   _el.innerHTML = `
-    <div class="m-sv-layout">
-      <div class="m-sv-dimlist">
-        <div class="m-sv-dimrow">${tiles1}</div>
-        <div class="m-sv-dimrow">${tiles2}</div>
+    <div class="m-score-view">
+      <div class="m-sv-layout">
+        <div class="m-sv-dimlist">
+          <div class="m-sv-dimrow">${tiles1}</div>
+          <div class="m-sv-dimrow">${tiles2}</div>
+        </div>
+        <div class="m-sv-main">${content}</div>
       </div>
-      <div class="m-sv-main">${content}</div>
     </div>`;
   _bind();
 }
