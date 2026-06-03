@@ -880,15 +880,46 @@ function _renderScoreView() {
 let _scaffold = { cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{}, snote:{} };
 let _scaffoldTimer = null;
 let _noteOpen = {};   // 筆記框展開（UI 暫態）
-let _addOpen = {};    // 新增條件輸入框展開（UI 暫態）
+let _addOpen = {};    // （已停用：行內編輯取代舊輸入框）
+let _idSeq = 0;
+function _newId() { _idSeq++; return 'a' + Date.now().toString(36) + _idSeq.toString(36); }
+// 移除一條「我的補充」：刪陣列項＋清掉它的 符合/不符、筆記（皆以 @id 當 key）
+function _removeAdded(k, gi, id) {
+  if (_scaffold.added[k] && _scaffold.added[k][gi]) _scaffold.added[k][gi] = _scaffold.added[k][gi].filter(x => x.id !== id);
+  if (_scaffold.cond[k]) delete _scaffold.cond[k]['@' + id];
+  if (_scaffold.cnote[k]) delete _scaffold.cnote[k]['@' + id];
+  delete _noteOpen['c' + k + '|@' + id];
+  _saveScaffold();
+}
+// 清掉所有空白的「我的補充」（換部位/維度時呼叫，避免殘留空框）
+function _pruneEmptyAdded() {
+  let changed = false;
+  Object.keys(_scaffold.added).forEach(k => { const byGi = _scaffold.added[k] || {}; Object.keys(byGi).forEach(gi => { const before = (byGi[gi] || []).length; byGi[gi] = (byGi[gi] || []).filter(it => it && it.text && it.text.trim() !== ''); if (byGi[gi].length !== before) changed = true; }); });
+  if (changed) _saveScaffold();
+}
 function _loadScaffold() {
   const ud = window.__userData || {};
   let s = {};
   try { s = ud.manualScaffoldJson ? JSON.parse(ud.manualScaffoldJson) : {}; } catch (e) { s = {}; }
   _scaffold = Object.assign({ cond:{}, cnote:{}, pnote:{}, added:{}, removed:{}, exp:{}, ref:{}, snote:{} }, s || {});
   ['cond','cnote','pnote','added','removed','exp','ref','snote'].forEach(k => { if (!_scaffold[k] || typeof _scaffold[k] !== 'object') _scaffold[k] = {}; });
-  // added 舊格式 {k:[...]} → 新格式 {k:{gi:[...]}}（per 子部位）
+  // added 舊格式 {k:[...]} → {k:{gi:[...]}}（per 子部位）
   Object.keys(_scaffold.added).forEach(k => { if (Array.isArray(_scaffold.added[k])) _scaffold.added[k] = { 0: _scaffold.added[k] }; });
+  // added 項目：字串 → {id,text}（把該文字既有的 符合/不符、筆記搬到 @id key）；丟掉空白項
+  Object.keys(_scaffold.added).forEach(k => {
+    const byGi = _scaffold.added[k]; if (!byGi || typeof byGi !== 'object') { _scaffold.added[k] = {}; return; }
+    Object.keys(byGi).forEach(gi => {
+      let arr = Array.isArray(byGi[gi]) ? byGi[gi] : [];
+      arr = arr.map(it => {
+        if (it && typeof it === 'object' && it.id) return { id: String(it.id), text: String(it.text || '') };
+        const text = String(it == null ? '' : it), id = _newId();
+        if (_scaffold.cond[k] && _scaffold.cond[k][text] != null) _scaffold.cond[k]['@' + id] = _scaffold.cond[k][text];
+        if (_scaffold.cnote[k] && _scaffold.cnote[k][text] != null) _scaffold.cnote[k]['@' + id] = _scaffold.cnote[k][text];
+        return { id, text };
+      }).filter(it => it.text.trim() !== '');
+      byGi[gi] = arr;
+    });
+  });
 }
 function _saveScaffold() {
   if (_scaffoldTimer) clearTimeout(_scaffoldTimer);
@@ -941,22 +972,29 @@ function _noteEl(dataAttr, value, placeholder, ndelKey) {
 function _eraserBtn(key) {
   return `<button class="m-sv-ico" data-ndel="${_esc(key)}" type="button" data-tip="刪除筆記"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button>`;
 }
-// 條件列（條件 + 符合/不符 + ✎筆記；✕ 只給學員自己加的條件，預設條件不提供移除）
+// 條件列：官方條件＝唯讀文字；「我的補充」＝行內可編輯（便利貼左色條）＋✕刪除。
+// 我的補充用穩定 @id 當 符合/不符與筆記的 key，改字不會跑掉。
 function _condRow(k, c, opt) {
   opt = opt || {};
-  const noRule = c.indexOf('待 admin') >= 0;
+  const added = !!opt.added;
+  const noRule = !added && c.indexOf('待 admin') >= 0;
+  const sufKey = added ? '@' + opt.id : c;          // 狀態 key 後綴
+  const ck = k + '|' + sufKey;
   const cond = _scaffold.cond[k] || {}, cnote = _scaffold.cnote[k] || {};
-  const a = cond[c], yes = a === '符合' ? 'is-yes' : '', no = a === '不符' ? 'is-no' : '';
-  const ck = k + '|' + c;
+  const a = cond[sufKey], yes = a === '符合' ? 'is-yes' : '', no = a === '不符' ? 'is-no' : '';
   const yn = noRule ? '' : `<span class="m-sv-yn"><button class="${yes}" data-ynk="${_esc(ck)}" data-ynv="符合">符合</button><button class="${no}" data-ynk="${_esc(ck)}" data-ynv="不符">不符</button></span>`;
-  const nv = cnote[c] || '';
+  const nv = cnote[sufKey] || '';
   const noteOpenNow = !noRule && (_noteOpen['c' + ck] || nv);
   const noteBtn = noRule ? '' : `<button class="m-sv-ico" data-cnt="${_esc(ck)}" data-tip="加筆記">✎</button>`;
   const eraseBtn = noteOpenNow ? _eraserBtn('c' + ck) : '';
-  const delBtn = (opt.added && !noRule) ? `<button class="m-sv-ico" data-cdel="${_esc(ck)}" data-cgi="${opt.gi}" data-tip="移除我加的條件">✕</button>` : '';
-  const tag = opt.added ? `<span class="m-sv-mytag">我的補充</span>` : '';
   const noteBox = noteOpenNow ? `<div class="m-sv-notebox">${_noteEl('data-cna="' + _esc(ck) + '"', nv, '這條的筆記…', 'c' + ck)}</div>` : '';
-  return `<div class="m-sv-cond ${opt.added ? 'is-mine' : ''}"><span class="m-sv-cond-text">${_esc(c)}${tag}</span>${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}`;
+  if (added) {
+    const cek = `${_esc(k)}|${_esc(String(opt.gi))}|${_esc(opt.id)}`;
+    const edit = `<textarea class="m-sv-condedit" rows="1" data-cedit="${cek}" placeholder="輸入條件…">${_esc(c)}</textarea>`;
+    const delBtn = `<button class="m-sv-ico" data-cdel="${cek}" data-tip="移除這條">✕</button>`;
+    return `<div class="m-sv-cond is-mine">${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}`;
+  }
+  return `<div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}`;
 }
 function _renderScoreCond(di, pi) {
   const model = _scoreCondModel(di, pi);
@@ -997,13 +1035,11 @@ function _renderScoreCond(di, pi) {
     const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
     let rows = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).map(c => _condRow(k, c)).join('');
     // 我的補充條件（依子部位 gi 各自掛）
-    rows += (addedAll[gi] || []).map(c => _condRow(k, c, { added: true, gi })).join('');
-    const addForm = _addOpen[akey]
-      ? `<div class="m-sv-addform"><input class="m-sv-addinput" data-addinput="${akey}" placeholder="輸入新的條件…"><button class="m-sv-addok" data-addok="${akey}">加入</button></div>`
-      : '';
+    // 我的補充：行內可編輯（{id,text}）
+    rows += (addedAll[gi] || []).map(it => _condRow(k, it.text, { added: true, gi, id: it.id })).join('');
     if (g.src === 'master') {
-      // 單卡片(上停/耳/眉/眼/鼻/口)：標題與＋條件在部位列，這裡只放條件＋新增框
-      return `<div class="m-sv-subpart">${rows}${addForm}</div>`;
+      // 單卡片(上停/耳/眉/眼/鼻/口)：標題與＋條件在部位列，這裡只放條件
+      return `<div class="m-sv-subpart">${rows}</div>`;
     }
     // 子部位卡片(頂骨/枕骨/華陽骨/顴/人中/地閣/頤)：標題改名(權重2→（左右X）)＋右側 筆記✎ ＋條件；其下子部位筆記框
     const sk = akey;
@@ -1015,7 +1051,7 @@ function _renderScoreCond(di, pi) {
     const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
     const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
     const sNoteBox = sOpen ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
-    return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}${addForm}</div>`;
+    return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}</div>`;
   }).join('');
   return `<div class="m-sv-condwrap">${header}${pNoteBox}${refBars}<div class="m-sv-subparts">${cards}</div></div>`;
 }
@@ -1053,6 +1089,7 @@ function _bindEvents() {
       _manualDimIdx = di;       // v7：永遠選一個維度（不收合）
       _scorePartIdx = 0;        // 換維度 → 條件欄回到第一個部位
       _scoreCondOpen = null;    // 換維度 → 手機版手風琴全收合
+      _pruneEmptyAdded();       // 清掉沒打字的空條件
       try { localStorage.setItem(LS_DIM_IDX, String(di)); } catch (e) {}
       _render();
     });
@@ -1070,6 +1107,7 @@ function _bindEvents() {
   _container.querySelectorAll('[data-msvcond]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      _pruneEmptyAdded();       // 切換前清掉沒打字的空條件
       const pi = parseInt(btn.dataset.msvcond, 10);
       const row = btn.closest('.m-sv-pitem');
       // 收合（再按目前展開的部位）：先播收合動畫，動畫結束再重畫移除
@@ -1178,39 +1216,40 @@ function _bindEvents() {
     _svGrow(ta);
     ta.addEventListener('input', () => { const sk = ta.dataset.sna; _scaffold.snote[sk] = ta.value; _svGrow(ta); _saveScaffold(); });
   });
-  // Stage3：移除條件（✕）
+  // 移除「我的補充」（✕，id-based）
   _container.querySelectorAll('[data-cdel]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const ck = btn.dataset.cdel, gi = btn.dataset.cgi;
-      const idx = ck.indexOf('|'), k = ck.slice(0, idx), c = ck.slice(idx + 1);
-      _svConfirm('確定要刪除這項條件嗎？', c, () => {
-        if (_scaffold.added[k] && _scaffold.added[k][gi]) _scaffold.added[k][gi] = _scaffold.added[k][gi].filter(x => x !== c);
-        if (_scaffold.cond[k]) delete _scaffold.cond[k][c];
-        if (_scaffold.cnote[k]) delete _scaffold.cnote[k][c];
-        _saveScaffold(); _render();
-      });
+      const seg = btn.dataset.cdel.split('|'), k = seg[0], gi = seg[1], id = seg[2];
+      const arr = (_scaffold.added[k] && _scaffold.added[k][gi]) || [];
+      const it = arr.find(x => x.id === id);
+      _svConfirm('確定要刪除這項條件嗎？', it ? it.text : '', () => { _removeAdded(k, gi, id); _render(); });
     });
   });
-  // Stage3：新增條件（開表單 / 加入）
-  _container.querySelectorAll('[data-addcond]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const akey = btn.dataset.addcond; _addOpen[akey] = true; _svFocusKey = 'add:' + akey; _render(); }));
-  _container.querySelectorAll('[data-addok]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const akey = btn.dataset.addok;
-      const inp = _container.querySelector(`[data-addinput="${akey}"]`);
-      const val = inp ? inp.value.trim() : '';
-      const p = akey.split('_'), k = p[0] + '_' + p[1], gi = p[2];   // akey = di_pi_gi
-      if (val) { if (!_scaffold.added[k]) _scaffold.added[k] = {}; if (!_scaffold.added[k][gi]) _scaffold.added[k][gi] = []; _scaffold.added[k][gi].push(val); _saveScaffold(); }
-      delete _addOpen[akey];
-      _render();
+  // 新增條件：直接長出一列可編輯條件（{id,text:''}）並聚焦；不再用「加入」按鈕
+  _container.querySelectorAll('[data-addcond]').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const akey = btn.dataset.addcond, p = akey.split('_'), k = p[0] + '_' + p[1], gi = p[2];
+    if (!_scaffold.added[k]) _scaffold.added[k] = {};
+    if (!_scaffold.added[k][gi]) _scaffold.added[k][gi] = [];
+    const id = _newId();
+    _scaffold.added[k][gi].push({ id, text: '' });
+    _svFocusKey = 'cedit:' + k + '|' + gi + '|' + id;
+    _saveScaffold(); _render();
+  }));
+  // 條件行內編輯：打字即存；移開時若空白 → 自動移除該列
+  _container.querySelectorAll('[data-cedit]').forEach(ta => {
+    _svGrow(ta);
+    ta.addEventListener('input', () => {
+      const seg = ta.dataset.cedit.split('|'), k = seg[0], gi = seg[1], id = seg[2];
+      const arr = (_scaffold.added[k] && _scaffold.added[k][gi]) || [];
+      const it = arr.find(x => x.id === id);
+      if (it) { it.text = ta.value; _svGrow(ta); _saveScaffold(); }
     });
-  });
-  // 新增條件輸入框：沒寫就點外面 → 收起（不留空框）
-  _container.querySelectorAll('[data-addinput]').forEach(inp => {
-    inp.addEventListener('blur', (e) => {
-      if (e.relatedTarget && e.relatedTarget.classList && e.relatedTarget.classList.contains('m-sv-addok')) return; // 點「加入」不關
-      if (!inp.value.trim()) { delete _addOpen[inp.dataset.addinput]; _render(); }
+    ta.addEventListener('blur', () => {
+      if (ta.value.trim()) return;
+      const seg = ta.dataset.cedit.split('|'), k = seg[0], gi = seg[1], id = seg[2];
+      _removeAdded(k, gi, id); _render();
     });
   });
   // Stage3：維度說明筆記（✎ 開合 + textarea 即存）
@@ -1243,7 +1282,7 @@ function _bindEvents() {
   if (_svFocusKey) {
     const key = _svFocusKey; _svFocusKey = null;
     let el = null;
-    if (key.indexOf('add:') === 0) el = _container.querySelector(`[data-addinput="${key.slice(4)}"]`);
+    if (key.indexOf('cedit:') === 0) { const t = key.slice(6); _container.querySelectorAll('[data-cedit]').forEach(ta => { if (!el && ta.getAttribute('data-cedit') === t) el = ta; }); }
     else { _container.querySelectorAll('[data-noteblur]').forEach(ta => { if (!el && ta.getAttribute('data-noteblur') === key) el = ta; }); }
     if (el) { try { el.focus(); } catch (e) {} }
   }
