@@ -1183,6 +1183,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== P7 RWD（A3#2）：桌機手動評分三欄（維度｜部位｜條件）===== */
 @media (min-width:1024px){
+  /* 把上方 tab-page(20px)＋score-view(8px) 留白收掉 → 維度欄/維度名一開始就貼 nav 下緣固定、不預滑（只影響課程/自我評分，兵法報告不受影響） */
+  .m-score-view{margin-top:-20px;padding-top:0}
   .m-sv-layout{display:flex;align-items:flex-start;gap:18px}
   .m-sv-dimlist{flex:0 0 150px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:7px;margin-bottom:0;position:sticky;top:0;align-self:flex-start;max-height:calc(100vh - var(--nav-h) - 24px);overflow-y:auto}  /* #5 捲動時 13 維度固定 */
   .m-sv-dimrow{flex-direction:column;gap:7px;margin-bottom:0}
