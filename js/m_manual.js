@@ -872,7 +872,7 @@ function _renderScoreView() {
   const expOpen = _noteOpen['exp' + di];
   const expBtn = `<button class="m-sv-ico" data-expedit="${di}" data-tip="加說明">✎</button>`;
   const expEraseBtn = (expOpen || expNote) ? _eraserBtn('exp' + di) : '';
-  const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '加上你對這個維度的說明…', 'exp' + di)}</div>` : '';
+  const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '', 'exp' + di)}</div>` : '';
   const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div>${expBox}</div>`;
   _svLastDesktop = desktop;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
@@ -1052,9 +1052,11 @@ function _renderScoreCond(di, pi) {
     const sNoteBtn = `<button class="m-sv-ico" data-snt="${sk}" data-tip="子部位筆記">✎</button>`;
     const sEraseBtn = sOpen ? _eraserBtn('s' + sk) : '';
     const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
-    const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
+    const subheadRow = `<div class="m-sv-subhead-row"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
     const sNoteBox = sOpen ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
-    return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}</div>`;
+    // 子部位筆記放進米色標題色塊裡（subhead 包住標題列＋筆記）
+    const subhead = `<div class="m-sv-subhead">${subheadRow}${sNoteBox}</div>`;
+    return `<div class="m-sv-subpart">${subhead}${rows}</div>`;
   }).join('');
   return `<div class="m-sv-condwrap">${header}${pNoteBox}${refBars}<div class="m-sv-subparts">${cards}</div></div>`;
 }
