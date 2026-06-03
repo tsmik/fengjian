@@ -431,7 +431,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* Stage3：筆記 / 新增移除條件 / 說明編輯 */
 .m-sv-ico{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid #cfc6b6;border-radius:50%;background:none;color:#9a8f7e;font-size:12px;font-family:inherit;cursor:pointer;padding:0;flex-shrink:0}
 .m-sv-erase{position:relative}
-.m-score-view [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 5px);right:0;background:#3a3228;color:#fff;font-size:12px;white-space:nowrap;padding:3px 8px;border-radius:6px;pointer-events:none;z-index:9999}
+@media (hover:hover){.m-score-view [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 5px);right:0;background:#3a3228;color:#fff;font-size:12px;white-space:nowrap;padding:3px 8px;border-radius:6px;pointer-events:none;z-index:9999}}  /* 提示只在有滑鼠的桌機顯示；觸控不顯示(避免 hover 黏住) */
 .m-sv-noteinner{flex:1;min-width:0;position:relative}
 .m-sv-erase{display:none;align-items:center;margin:3px 0 0;background:none;border:none;color:#b06a5a;cursor:pointer;padding:2px 4px}
 .m-sv-noteinner:focus-within .m-sv-erase{display:inline-flex}

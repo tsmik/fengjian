@@ -873,7 +873,8 @@ function _renderScoreView() {
   const expBtn = `<button class="m-sv-ico" data-expedit="${di}" data-tip="加說明">✎</button>`;
   const expEraseBtn = (expOpen || expNote) ? _eraserBtn('exp' + di) : '';
   const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '', 'exp' + di)}</div>` : '';
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div>${expBox}</div>`;
+  // 維度名置頂(sticky)只包名稱列；維度筆記(expBox)移到 sticky 外，避免打字長高造成游標上下跳
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div></div>${expBox}`;
   _svLastDesktop = desktop;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
