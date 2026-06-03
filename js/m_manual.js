@@ -29,7 +29,7 @@
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
 import { chartsBlockHtml, exportMobileCharts } from './m_report.js';
-import { buildManualReportHtml } from './manual_report.js';
+import { buildManualReportParts } from './manual_report.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
@@ -285,9 +285,26 @@ function _renderManualInput() {
   } else if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    // 兵法報告：完整版（移植自舊桌機 manual.js → manual_report.js）：三大係數表 + 圖表；餵自我評分 _manualDraft
+    // 兵法報告（桌機排版：明細 → 總覽 → 圖像）餵自我評分 _manualDraft；表格可點擊改 A/B 即時重算＋同步自我評分
     const _rname = (window.__userData && window.__userData.displayName) || '';
-    body = `<div class="m-manual-fullreport">${buildManualReportHtml(_manualDraft, { name: _rname })}</div>${_renderManualPngRow()}`;
+    const _rp = buildManualReportParts(_manualDraft, { name: _rname });
+    body = `
+      <div class="m-manual-report">
+        ${_rp.titleHtml}
+        <div class="m-rep-seg-title">明細（點任一格切換 形/靜 → 勢/動 → 未填）</div>
+        <div class="m-manual-fullreport">${_rp.tableHtml}</div>
+        <div class="m-rep-seg-title">總覽</div>
+        <div class="m-rep-overview">
+          <div class="m-rep-summary">${_renderCoeffSummary()}</div>
+          <div class="m-rep-chart m-rep-chart-coef">${_rp.coefHtml}</div>
+        </div>
+        <div class="m-rep-seg-title">圖像</div>
+        <div class="m-rep-figs">
+          <div class="m-rep-chart m-rep-chart-radar2">${_rp.radar2Html}</div>
+          <div class="m-rep-chart m-rep-chart-sd">${_rp.sdHtml}</div>
+        </div>
+      </div>
+      ${_renderManualPngRow()}`;
   } else {
     body = _renderScoreView();
   }
@@ -1159,6 +1176,18 @@ function _bindEvents() {
       const parts = btn.dataset.mpole.split('_');
       const di = parseInt(parts[0], 10), pi = parseInt(parts[1], 10), val = parts[2];
       _manualDraft[di][pi] = (_manualDraft[di][pi] === val) ? null : val;  // 再按同極＝取消
+      _markDirty();
+      _render();
+    });
+  });
+  // 兵法報告表格：點維度格 → 循環 未填→A(形/靜)→B(勢/動)→未填；改的是同一份 _manualDraft，故自我評分同步
+  _container.querySelectorAll('[data-mrcell]').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const seg = cell.dataset.mrcell.split('_');
+      const di = parseInt(seg[0], 10), pi = parseInt(seg[1], 10);
+      const cur = _manualDraft[di][pi];
+      _manualDraft[di][pi] = (cur == null) ? 'A' : (cur === 'A' ? 'B' : null);
       _markDirty();
       _render();
     });

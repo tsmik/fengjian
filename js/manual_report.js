@@ -16,7 +16,7 @@
 import { DIMS, calcDim, avgCoeff } from './core.js';
 import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
 
-export function buildManualReportHtml(matrix, meta) {
+function _buildParts(matrix, meta) {
   meta = meta || {};
   var manualData = matrix; // 唯一資料來源（取代舊全域 manualData）
   var BETA_VISIBLE_DIMS = 13; // 報告顯示全部維度
@@ -234,7 +234,7 @@ export function buildManualReportHtml(matrix, meta) {
   t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
-  // --- R6~R14: 部位資料行（唯讀，無點擊）---
+  // --- R6~R14: 部位資料行（可點擊編輯：點維度格 → 循環 形/靜→勢/動→未填）---
   function renderPartRow(pi, idx){
     var label=partLabels[idx];
     t+='<tr>';
@@ -242,26 +242,32 @@ export function buildManualReportHtml(matrix, meta) {
 
     var preS=0,preD=0,luckS=0,luckD=0,postS=0,postD=0;
 
-    // 先天 visiblePre 維度
-    for(var i=0;i<visiblePre;i++){
+    // 一個維度的兩格（左/右），帶 data-mrc 供 RWD 綁定點擊；唯讀時 cursor 由外層決定
+    function dimCellPair(i){
       var v=manualData[i][pi];
+      var base='background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer';
+      var a=' data-mrcell="'+i+'_'+pi+'"';
       if(v){
         var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
-        var isS=tp==='靜';
-        var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
-        if(goLeft){
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-        }else{
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-        }
-        if(isS)preS++;else preD++;
-      }else{
-        t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-        t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
+        var goLeft=(tp==='靜'&&colLIsS[i])||(tp!=='靜'&&!colLIsS[i]);
+        var cm=checkMark(i);
+        return goLeft
+          ? '<td'+a+' style="'+base+';text-align:center">'+cm+'</td><td'+a+' style="'+base+'"></td>'
+          : '<td'+a+' style="'+base+'"></td><td'+a+' style="'+base+';text-align:center">'+cm+'</td>';
       }
+      return '<td'+a+' style="'+base+'"></td><td'+a+' style="'+base+'"></td>';
     }
+    function tally(i,bucket){
+      var v=manualData[i][pi];
+      if(!v)return;
+      var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+      if(tp==='靜')bucket.s++;else bucket.d++;
+    }
+
+    // 先天 visiblePre 維度
+    var bPre={s:0,d:0};
+    for(var i=0;i<visiblePre;i++){ tally(i,bPre); t+=dimCellPair(i); }
+    preS=bPre.s;preD=bPre.d;
     // 先天動靜分析
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preD+'</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preS+'</td>';
@@ -270,25 +276,9 @@ export function buildManualReportHtml(matrix, meta) {
     if(showLuck){
       // 中部位欄
       t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
-      for(var i=6;i<6+visibleLuck;i++){
-        var v=manualData[i][pi];
-        if(v){
-          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
-          var isS=tp==='靜';
-          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
-          if(goLeft){
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-          }else{
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-          }
-          if(isS)luckS++;else luckD++;
-        }else{
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-        }
-      }
+      var bLuck={s:0,d:0};
+      for(var i=6;i<6+visibleLuck;i++){ tally(i,bLuck); t+=dimCellPair(i); }
+      luckS=bLuck.s;luckD=bLuck.d;
       // 運氣動靜分析
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
@@ -298,25 +288,9 @@ export function buildManualReportHtml(matrix, meta) {
     if(showPost){
       // 右部位欄
       t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
-      for(var i=9;i<9+visiblePost;i++){
-        var v=manualData[i][pi];
-        if(v){
-          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
-          var isS=tp==='靜';
-          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
-          if(goLeft){
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-          }else{
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-            t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center">'+checkMark(i)+'</td>';
-          }
-          if(isS)postS++;else postD++;
-        }else{
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-          t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+'"></td>';
-        }
-      }
+      var bPost={s:0,d:0};
+      for(var i=9;i<9+visiblePost;i++){ tally(i,bPost); t+=dimCellPair(i); }
+      postS=bPost.s;postD=bPost.d;
       // 後天動靜分析
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
       t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
@@ -565,11 +539,27 @@ export function buildManualReportHtml(matrix, meta) {
   var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot});
   var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'人相兵法動靜分布圖'});
 
-  var charts='<div class="m-rep-charts">'
-    + '<div class="m-rep-chart m-rep-chart-radar2">' + _radar2Svg + '</div>'
-    + '<div class="m-rep-chart m-rep-chart-coef">' + _coefSvg + '</div>'
-    + '<div class="m-rep-chart m-rep-chart-sd">' + _sdSvg + '</div>'
-    + '</div>';
+  return {
+    titleHtml: _manualTitleHtml,
+    tableHtml: t,
+    radar2Html: _radar2Svg,
+    coefHtml: _coefSvg,
+    sdHtml: _sdSvg
+  };
+}
 
-  return _manualTitleHtml + t + charts;
+/* 回傳各部分（標題/表格/三張圖 SVG），供 RWD 自行排版 */
+export function buildManualReportParts(matrix, meta) {
+  return _buildParts(matrix, meta);
+}
+
+/* 回傳完整字串（標題 + 表格 + 三圖併排），維持舊用法 */
+export function buildManualReportHtml(matrix, meta) {
+  var p = _buildParts(matrix, meta);
+  var charts = '<div class="m-rep-charts">'
+    + '<div class="m-rep-chart m-rep-chart-radar2">' + p.radar2Html + '</div>'
+    + '<div class="m-rep-chart m-rep-chart-coef">' + p.coefHtml + '</div>'
+    + '<div class="m-rep-chart m-rep-chart-sd">' + p.sdHtml + '</div>'
+    + '</div>';
+  return p.titleHtml + p.tableHtml + charts;
 }
