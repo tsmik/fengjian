@@ -30,6 +30,8 @@ let _boardLoaded = false;   // settings/board 講義只載一次
 let _notesDirty = false;    // 編輯中 → _ensureData 不要用雲端蓋掉
 let _dim = null;            // 目前選的維度 idx（跨 re-render 保留）
 let _saveTimer = null;
+let studentBoard = {};      // 學員自編板書（{維度名:文字}），per 對象；該維度無 key＝沿用老師版
+let _boardEditing = false;  // 目前維度的板書是否在編輯中
 let _noteW = 340;           // 桌機板書筆記欄寬（可拖曳，存 LS）
 try { const _w = parseInt(localStorage.getItem('m_board_note_w'), 10); if (_w >= 160 && _w <= 760) _noteW = _w; } catch (e) {}
 
@@ -62,11 +64,13 @@ async function _ensureData() {
     } catch (e) { debugLog('[board]', '載入板書講義失敗', e && e.message); }
     _boardLoaded = true;
   }
-  // 2. 我的筆記（目前對象的 boardNotesJson）— 編輯中不覆蓋
+  // 2. 我的筆記 + 我自編板書（目前對象）— 編輯中不覆蓋
   if (!_notesDirty) {
     const ud = window.__userData || {};
     try { setBoardNotes(ud.boardNotesJson ? JSON.parse(ud.boardNotesJson) : {}); }
     catch (e) { setBoardNotes({}); }
+    try { studentBoard = ud.studentBoardJson ? JSON.parse(ud.studentBoardJson) : {}; }
+    catch (e) { studentBoard = {}; }
   }
   // 3. 條件分組（recalc condResults 取 groupLabel）
   try { await ensureDimRulesLoaded(); recalcFromObs(); }
@@ -107,35 +111,32 @@ function _noteEditor(dn, slot) {
 function _dimContent(i) {
   const dm = DIMS[i]; if (!dm) return '';
   const dn = dm.dn;
-  const lecture = boardText[dn];
-  const cr = condResults[i] || {};
-  const boxes = BOARD_PARTS.map(bp => {
-    const p = cr[bp.idx];
-    const groups = [];
-    if (p && p.items) p.items.forEach(it => { if (it.groupLabel && groups.indexOf(it.groupLabel) < 0) groups.push(it.groupLabel); });
-    const condHtml = groups.length
-      ? groups.map(g => `<div class="m-board-cond-line">${_esc(g)}</div>`).join('')
-      : '<div class="m-board-empty">（此維度無此部位的條件分組）</div>';
-    return `
-      <div class="m-board-box">
-        <div class="m-board-box-head">${_esc(bp.label)}</div>
-        <div class="m-board-box-conds">${condHtml}</div>
-        <div class="m-board-note-wrap"><div class="m-board-note-cap">我的筆記</div>${_noteEditor(dn, bp.idx)}</div>
-      </div>`;
-  }).join('');
+  const admin = boardText[dn] || '';
+  const hasMine = (studentBoard[dn] != null);        // 有 key＝學員已自編
+  const shown = hasMine ? studentBoard[dn] : admin;
+  const badge = hasMine
+    ? '<span class="m-board-ver m-board-ver-mine">我的版本</span>'
+    : '<span class="m-board-ver m-board-ver-admin">老師版</span>';
+  // 板書本體：唯讀(可按編輯) / 編輯中(textarea 自動長高)
+  const body = _boardEditing
+    ? `<textarea class="m-board-edit" data-board-edit="${_esc(dn)}" placeholder="輸入板書內容…">${_esc(shown)}</textarea>`
+    : `<div class="m-board-lecture">${shown ? _esc(shown) : '（尚未設定板書文字）'}</div>`;
+  const editBtn = _boardEditing
+    ? '<button class="m-board-btn m-board-btn-edit" data-board-done="1">完成</button>'
+    : '<button class="m-board-btn m-board-btn-edit" data-board-editbtn="1">編輯</button>';
+  const resetBtn = (hasMine && !_boardEditing)
+    ? `<button class="m-board-btn" data-board-reset="${_esc(dn)}">還原成老師版</button>` : '';
   return `
     <div class="m-panel m-dim-panel">
       <div class="m-dim-panel-head"><span class="m-dim-title-name">${_esc(dn)}</span><span class="m-dim-title-view">${_esc(dm.view || '')}</span></div>
       <div class="m-board-lecture-block">
-        <div class="m-board-sec-title">板書</div>
-        <div class="m-board-lecture-wrap">
-          <div class="m-board-lecture-col"><div class="m-board-lecture">${lecture ? _esc(lecture) : '（尚未設定板書文字）'}</div></div>
-          <div class="m-board-drag" data-board-drag title="拖曳調整筆記寬度"></div>
-          <div class="m-board-note-col" style="flex-basis:${_noteW}px"><div class="m-board-note-cap">我的板書筆記</div>${_noteEditor(dn, 'board')}</div>
-        </div>
+        <div class="m-board-head"><span class="m-board-sec-title">板書</span>${badge}<span class="m-board-head-sp"></span>${resetBtn}${editBtn}</div>
+        ${body}
       </div>
-      <div class="m-board-cond-heading">部位判別條件</div>
-      <div class="m-board-parts">${boxes}</div>
+      <div class="m-board-note-block">
+        <div class="m-board-note-cap">我的心得筆記</div>
+        ${_noteEditor(dn, 'board')}
+      </div>
     </div>`;
 }
 
@@ -146,9 +147,11 @@ function _bind() {
     btn.addEventListener('click', () => {
       const i = parseInt(btn.dataset.bdim, 10);
       _dim = (_dim === i && !_isDesktop()) ? null : i;  // 桌機不收合
+      _boardEditing = false;                            // 換維度 → 退出板書編輯
       _render();
     });
   });
+  // 我的心得筆記
   _el.querySelectorAll('.m-board-note').forEach(ta => {
     _autoGrow(ta);
     ta.addEventListener('input', () => {
@@ -162,8 +165,41 @@ function _bind() {
       _scheduleSave();
     });
   });
-  const handle = _el.querySelector('[data-board-drag]');
-  if (handle) _bindDrag(handle);
+  // 板書：編輯 / 完成 / 還原成老師版 / 內容輸入
+  const eb = _el.querySelector('[data-board-editbtn]');
+  if (eb) eb.addEventListener('click', () => { _boardEditing = true; _render(); });
+  const done = _el.querySelector('[data-board-done]');
+  if (done) done.addEventListener('click', () => { _boardEditing = false; _render(); });
+  const rb = _el.querySelector('[data-board-reset]');
+  if (rb) rb.addEventListener('click', () => {
+    const dn = rb.dataset.boardReset;
+    _bConfirm('確定要還原成老師的板書嗎？', '你自己編輯的這份板書會被清掉，無法復原。', () => {
+      delete studentBoard[dn]; _boardEditing = false; _notesDirty = true; _scheduleSave(); _render();
+    });
+  });
+  const ed = _el.querySelector('[data-board-edit]');
+  if (ed) {
+    _autoGrow(ed);
+    ed.addEventListener('input', () => {
+      const dn = ed.getAttribute('data-board-edit');
+      studentBoard[dn] = ed.value;          // 一旦編輯即 fork 成個人版（不動老師版）
+      _notesDirty = true;
+      _autoGrow(ed);
+      _scheduleSave();
+    });
+    try { ed.focus(); ed.setSelectionRange(ed.value.length, ed.value.length); } catch (e) {}
+  }
+}
+// 還原確認框（沿用 m.html/app.html 既有的 .m-sv-confirm-* 樣式）
+function _bConfirm(text, detail, onYes) {
+  const ov = document.createElement('div');
+  ov.className = 'm-sv-confirm-ov';
+  ov.innerHTML = `<div class="m-sv-confirm"><div class="m-sv-confirm-msg">${_esc(text)}</div>${detail ? `<div class="m-sv-confirm-detail">${_esc(detail)}</div>` : ''}<div class="m-sv-confirm-btns"><button class="m-sv-confirm-cancel" type="button">取消</button><button class="m-sv-confirm-ok" type="button">確定</button></div></div>`;
+  document.body.appendChild(ov);
+  const close = () => { try { document.body.removeChild(ov); } catch (e) {} };
+  ov.querySelector('.m-sv-confirm-cancel').onclick = close;
+  ov.querySelector('.m-sv-confirm-ok').onclick = () => { close(); if (onYes) onYes(); };
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
 }
 
 // 桌機：拖曳板書/筆記中間的把手調整筆記欄寬（支援滑鼠 + 觸控；存 LS）
@@ -210,8 +246,9 @@ async function _flushSave() {
   try {
     const ref = getCurrentDocRef();
     const json = JSON.stringify(boardNotes);
-    await setDoc(ref, { boardNotesJson: json, updatedAt: new Date().toISOString() }, { merge: true });
-    if (window.__userData) window.__userData.boardNotesJson = json;
+    const sbJson = JSON.stringify(studentBoard);
+    await setDoc(ref, { boardNotesJson: json, studentBoardJson: sbJson, updatedAt: new Date().toISOString() }, { merge: true });
+    if (window.__userData) { window.__userData.boardNotesJson = json; window.__userData.studentBoardJson = sbJson; }
     _notesDirty = false;
   } catch (e) { debugLog('[board]', '筆記儲存失敗', e && e.message); }
 }
