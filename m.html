@@ -358,8 +358,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== A3 #2 手動評分鷹架 v7（.m-score-view 內，設計規格：不靠粗體、深米字、綠橘只給訊號）===== */
 .m-score-view{padding:8px 6px 0}
 .m-score-view,.m-score-view *{font-weight:400}
-.m-sv-dimlist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.m-sv-dim{display:flex;align-items:center;min-height:50px;padding:6px 14px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:16px;color:#5a5147;cursor:pointer;border-left-width:3px}
+.m-sv-dimlist{margin-bottom:12px}
+.m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
+.m-sv-dim{flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;min-height:48px;padding:6px 3px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:16px;color:#5a5147;cursor:pointer;border-left-width:3px}
 .m-sv-dim.m-sv-grp-boss{border-left-color:var(--grp-pre)}
 .m-sv-dim.m-sv-grp-mgr{border-left-color:var(--grp-mgr)}
 .m-sv-dim.m-sv-grp-luck{border-left-color:var(--grp-luck)}
@@ -402,7 +403,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-refrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:7px 0}
 .m-sv-refrow+.m-sv-refrow{border-top:1px dashed #ece1c8}
 .m-sv-refcell{display:flex;align-items:center;gap:5px;min-width:0}
-.m-sv-refname{font-size:15px;color:#3a3228;white-space:nowrap}
+.m-sv-refname{flex:0 0 var(--rn,4em);font-size:15px;color:#3a3228;white-space:nowrap}
 .m-sv-refbars .m-sv-poles{flex-shrink:0}
 .m-sv-refbars .m-sv-pole{min-width:30px;font-size:14px}
 .m-sv-ref{font-size:13px;color:#9a7d54;background:#f6efe2;border-radius:6px;padding:5px 9px;margin-bottom:10px}

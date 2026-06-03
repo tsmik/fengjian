@@ -813,10 +813,9 @@ function _scoreCondModel(di, pi) {
   if (local) {
     let crit = '', subRows = [];
     if (local.total) {
-      // 三個 local 部位統一寫法：「共N個部位，左X／右X／…　達M個以上符合即為形（不形則勢）」
-      subRows = _expandRows(local);
-      const flat = subRows.reduce((a, r) => a.concat(r), []);
-      crit = `${local.partLabel}共 ${local.total} 個部位，${flat.join('／')}　達 ${local.threshold} 個以上符合即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
+      subRows = _expandRows(local);  // 形/勢 bar 仍需左右展開
+      // 文字精簡：不再列舉子部位名稱（太長），門檻統一用「符合 N 個（含）以上」
+      crit = `${local.partLabel}共 ${local.total} 個部位，符合 ${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
     }
     return { kind: 'local', crit, refNote: local.refNote, subRows, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
   }
@@ -829,7 +828,7 @@ function _renderScoreView() {
   const dim = DIMS[di];
   // col1：13 維度（先天/運氣/後天 群組色條）
   const dtile = (i) => `<button class="m-sv-dim ${_scoreGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-mdim="${i}">${DIMS[i].dn}</button>`;
-  const dimList = `<div class="m-sv-dimlist">${[0,1,2,3,4,5].map(dtile).join('')}${[6,7,8,9,10,11,12].map(dtile).join('')}</div>`;
+  const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${[0,1,2,3,4,5].map(dtile).join('')}</div><div class="m-sv-dimrow">${[6,7,8,9,10,11,12].map(dtile).join('')}</div></div>`;
   // col2：9 部位 + 形/勢評分鈕（跟著維度名 da/db）
   const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);
   const desktop = _svIsDesktop();
@@ -962,7 +961,9 @@ function _renderScoreCond(di, pi) {
       return `<span class="m-sv-refcell"><span class="m-sv-refname">${_esc(name)}</span><span class="m-sv-poles">${ba}${bb}</span></span>`;
     };
     const rowHtml = subRows.map(r => `<div class="m-sv-refrow">${r.map(cell).join('')}</div>`).join('');
-    refBars = `<div class="m-sv-refbars">${rowHtml}</div>`;
+    // 子部位名固定寬度（取該部位最長名）→ 各列形/勢 bar 對齊；窄則不浪費空間
+    const maxLen = Math.max(1, ...subRows.reduce((a, r) => a.concat(r), []).map(n => n.length));
+    refBars = `<div class="m-sv-refbars" style="--rn:${(maxLen + 0.2).toFixed(1)}em">${rowHtml}</div>`;
   }
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {
