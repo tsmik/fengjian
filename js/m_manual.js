@@ -779,6 +779,17 @@ function _renderManualRow(di, pi) {
 //   形/勢＝該維度兩極（dim.da/db，跟著維度名走）；存 _manualDraft[di][pi]='A'/'B'，再按取消
 // ============================================================
 let _scorePartIdx = 0;
+let _scoreCondOpen = null;  // 手機版：目前在部位列下方展開條件的部位 idx（手風琴）；null＝全收合
+function _svIsDesktop() { try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; } }
+// 跨越桌機/手機斷點時，手動評分頁 DOM 結構不同（桌機右側條件欄 vs 手機列內手風琴）→ reflow
+let _svLastDesktop = null;
+function _svOnResize() {
+  if (!_container || _manualSubview !== 'input') return;
+  const d = _svIsDesktop();
+  if (_svLastDesktop === null) { _svLastDesktop = d; return; }
+  if (d !== _svLastDesktop) { _svLastDesktop = d; _render(); }
+}
+try { window.addEventListener('resize', _svOnResize); } catch (e) {}
 let _svFocusKey = null;  // 開筆記/新增框後要自動聚焦的目標（data-noteblur 值 或 'add:'+akey）
 function _scoreGrpClass(i) { return i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post')); }
 function _poleOf(dim, ch) {
@@ -821,11 +832,17 @@ function _renderScoreView() {
   const dimList = `<div class="m-sv-dimlist">${[0,1,2,3,4,5].map(dtile).join('')}${[6,7,8,9,10,11,12].map(dtile).join('')}</div>`;
   // col2：9 部位 + 形/勢評分鈕（跟著維度名 da/db）
   const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);
+  const desktop = _svIsDesktop();
   const pitem = (pi) => {
     const v = _manualDraft[di][pi];
     const ba = `<button class="m-sv-pole ${v === pa.val ? 'is-' + pa.tone : ''}" data-mpole="${di}_${pi}_${pa.val}">${dim.da}</button>`;
     const bb = `<button class="m-sv-pole ${v === pb.val ? 'is-' + pb.tone : ''}" data-mpole="${di}_${pi}_${pb.val}">${dim.db}</button>`;
-    return `<div class="m-sv-pitem ${pi === _scorePartIdx ? 'is-cur' : ''}" data-mspart="${pi}"><span class="m-sv-pname">${PART_LABELS[pi]}</span><span class="m-sv-poles">${ba}${bb}</span></div>`;
+    const open = (!desktop && pi === _scoreCondOpen);
+    // 手機版：每個部位列帶「條件」鈕，點開在該列下方展開該部位條件（手風琴），再點收起；桌機用右側條件欄不需此鈕
+    const condBtn = desktop ? '' : `<button class="m-sv-condbtn ${open ? 'is-open' : ''}" data-msvcond="${pi}" type="button">條件<span class="m-sv-caret">${open ? '▴' : '▾'}</span></button>`;
+    const row = `<div class="m-sv-pitem ${(desktop && pi === _scorePartIdx) ? 'is-cur' : ''} ${open ? 'is-open' : ''}" data-mspart="${pi}"><span class="m-sv-pname">${PART_LABELS[pi]}</span>${condBtn}<span class="m-sv-poles">${ba}${bb}</span></div>`;
+    const inline = open ? `<div class="m-sv-condinline">${_renderScoreCond(di, pi)}</div>` : '';
+    return row + inline;
   };
   const parts = [0,1,2,3,4,5,6,7,8].map(pitem).join('');
   // 加總（cntA=da 欄、cntB=db 欄）+ 係數
@@ -844,7 +861,7 @@ function _renderScoreView() {
   }
   const totals = `<div class="m-sv-trow m-sv-sum"><span class="m-sv-tlab">加總</span><span class="m-sv-tcell">${cntA}</span><span class="m-sv-tcell">${cntB}</span></div>${coeffRow}`;
   const partCol = `<div class="m-sv-plist">${parts}${totals}</div>`;
-  const condCol = _renderScoreCond(di, _scorePartIdx);
+  const condCol = desktop ? _renderScoreCond(di, _scorePartIdx) : '';   // 手機版條件改在部位列內手風琴展開
   const defExp = `符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}`;
   const expNote = _scaffold.exp[di] || '';
   const expOpen = _noteOpen['exp' + di];
@@ -852,6 +869,7 @@ function _renderScoreView() {
   const expEraseBtn = (expOpen || expNote) ? _eraserBtn('exp' + di) : '';
   const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '加上你對這個維度的說明…', 'exp' + di)}</div>` : '';
   const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div>${expBox}</div>`;
+  _svLastDesktop = desktop;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
 // ===== A3 #2 Stage3：鷹架持久化（manualScaffoldJson，per 對象）＋筆記/新增/移除/說明 =====
@@ -993,6 +1011,7 @@ function _bindEvents() {
       const di = parseInt(btn.dataset.mdim, 10);
       _manualDimIdx = di;       // v7：永遠選一個維度（不收合）
       _scorePartIdx = 0;        // 換維度 → 條件欄回到第一個部位
+      _scoreCondOpen = null;    // 換維度 → 手機版手風琴全收合
       try { localStorage.setItem(LS_DIM_IDX, String(di)); } catch (e) {}
       _render();
     });
@@ -1000,8 +1019,19 @@ function _bindEvents() {
   // v7：點部位名 → 條件欄顯示該部位（評分鈕另有 data-mpole 處理，不選部位）
   _container.querySelectorAll('[data-mspart]').forEach(el => {
     el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-mpole]')) return;  // 點到形/勢鈕不算選部位
+      if (e.target.closest('[data-mpole]')) return;       // 點到形/勢鈕不算選部位
+      if (e.target.closest('[data-msvcond]')) return;     // 點到「條件」鈕由手風琴處理
       _scorePartIdx = parseInt(el.dataset.mspart, 10);
+      _render();
+    });
+  });
+  // 手機版手風琴：部位列的「條件」鈕 → 在該列下方展開/收起該部位條件
+  _container.querySelectorAll('[data-msvcond]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pi = parseInt(btn.dataset.msvcond, 10);
+      _scoreCondOpen = (_scoreCondOpen === pi) ? null : pi;  // 再按同一個＝收起
+      _scorePartIdx = pi;                                    // 與桌機選取保持一致
       _render();
     });
   });
