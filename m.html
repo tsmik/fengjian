@@ -130,6 +130,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid rgba(0,0,0,0.06)}
 .m-analysis-banner-label{color:var(--text-3);font-size:12px;flex-shrink:0}
 .m-analysis-banner-name{flex:1;min-width:0;color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-analysis-banner{display:none!important}  /* #6：先拿掉「現在做誰的報告」橫幅，待個案管理另做提醒；刪此行即可恢復 */
 .m-analysis-back{flex-shrink:0;display:inline-flex;align-items:center;background:rgba(255,255,255,0.75);border:1px solid rgba(0,0,0,0.12);border-radius:14px;padding:4px 11px;font-size:13px;color:#3a3228;font-family:inherit;cursor:pointer;white-space:nowrap}
 .m-analysis-back:active{background:rgba(255,255,255,0.95)}
 
@@ -367,9 +368,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-dim.m-sv-grp-post{border-left-color:var(--grp-post)}
 .m-sv-dim.is-cur{color:#3a3228;background:#efe7d6}
 .m-sv-main{min-width:0}
-.m-sv-dimhead{border-bottom:1px solid #d4c9b0;margin-bottom:14px;padding-bottom:10px}
-.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:2px 2px 0}
-.m-sv-dimname{font-size:19px;color:#3a3228;letter-spacing:2px}
+.m-sv-dimhead{position:sticky;top:0;z-index:15;margin-bottom:14px;padding:9px 12px;background:#e7dcc6;border:1px solid #d3c7b1;border-radius:10px}
+.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0}
+.m-sv-dimname{font-size:20px;color:#3a3228;letter-spacing:2px}
 .m-sv-dimexp{font-size:15px;color:#7a6e64}
 .m-sv-sub{display:block}
 .m-sv-plist{margin-bottom:14px}
