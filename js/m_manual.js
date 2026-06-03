@@ -820,7 +820,7 @@ function _scoreCondModel(di, pi) {
     if (local.total) {
       subRows = _expandRows(local);  // 形/勢 bar 仍需左右展開
       // 文字精簡：不再列舉子部位名稱（太長），門檻統一用「符合 N 個（含）以上」
-      crit = `${local.partLabel}：${local.total} 個部位，${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
+      crit = `${local.total} 個部位，${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
     }
     return { kind: 'local', crit, refNote: local.refNote, subRows, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
   }
