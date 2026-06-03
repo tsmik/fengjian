@@ -246,8 +246,12 @@ function _render() {
   // sens / board view 隱藏手動儲存按鈕（board 自己 debounce 存筆記）；其他 view 顯示
   const saveZone = document.getElementById('m-save-zone');
   if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens' || _manualSubview === 'board');
+  // #1：重畫前後保留捲動位置 → 點任何鈕（形/勢、符合/不符…）畫面都不會跳動
+  const _scroller = (_container.closest && _container.closest('.m-main')) || document.querySelector('.m-main');
+  const _keepTop = _scroller ? _scroller.scrollTop : 0;
   _container.innerHTML = _renderManualInput();
   _bindEvents();
+  if (_scroller) _scroller.scrollTop = _keepTop;
   if (_manualSubview === 'board') {
     const mount = _container.querySelector('#m-board-mount');
     if (mount) mountBoard(mount);
@@ -861,7 +865,7 @@ function _renderScoreView() {
   const totals = `<div class="m-sv-trow m-sv-sum"><span class="m-sv-tlab">加總</span><span class="m-sv-tcell">${cntA}</span><span class="m-sv-tcell">${cntB}</span></div>${coeffRow}`;
   const partCol = `<div class="m-sv-plist">${parts}${totals}</div>`;
   const condCol = desktop ? _renderScoreCond(di, _scorePartIdx) : '';   // 手機版條件改在部位列內手風琴展開
-  const defExp = `符合條件為${dim.a}，${dim.a}為${dim.aT}，${dim.b}為${dim.bT}`;
+  const defExp = `符合條件為${dim.a}`;
   const expNote = _scaffold.exp[di] || '';
   const expOpen = _noteOpen['exp' + di];
   const expBtn = `<button class="m-sv-ico" data-expedit="${di}" data-tip="加說明">✎</button>`;
@@ -938,7 +942,7 @@ function _renderScoreCond(di, pi) {
   const model = _scoreCondModel(di, pi);
   const dim = DIMS[di] || {};
   const k = `${di}_${pi}`;
-  const bigPart = pi <= 3;  // 頭/上停/中停/下停 才有部位筆記
+  const bigPart = true;  // #6：9 個部位都可加部位筆記（原本只有頭/上停/中停/下停）
   const pNote = _scaffold.pnote[k] || '';
   const pNoteOpen = bigPart && (_noteOpen['p' + k] || pNote);
   const pnoteBtn = bigPart ? `<button class="m-sv-ico" data-pnt="${k}" data-tip="部位筆記">✎</button>` : '';
