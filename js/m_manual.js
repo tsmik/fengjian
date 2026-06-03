@@ -995,9 +995,9 @@ function _condRow(k, c, opt) {
     const mineIcon = `<span class="m-sv-mineicon" title="我的補充"></span>`;
     const edit = `<textarea class="m-sv-condedit" rows="1" data-cedit="${cek}" placeholder="輸入條件…">${_esc(c)}</textarea>`;
     const delBtn = `<button class="m-sv-ico" data-cdel="${cek}" data-tip="移除這條">✕</button>`;
-    return `<div class="m-sv-cond is-mine">${mineIcon}${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}`;
+    return `<div class="m-sv-condgroup"><div class="m-sv-cond is-mine">${mineIcon}${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}</div>`;
   }
-  return `<div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}`;
+  return `<div class="m-sv-condgroup"><div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}</div>`;
 }
 function _renderScoreCond(di, pi) {
   const model = _scoreCondModel(di, pi);
@@ -1053,11 +1053,10 @@ function _renderScoreCond(di, pi) {
     const sNoteBtn = `<button class="m-sv-ico" data-snt="${sk}" data-tip="子部位筆記">✎</button>`;
     const sEraseBtn = sOpen ? _eraserBtn('s' + sk) : '';
     const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
-    const subheadRow = `<div class="m-sv-subhead-row"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
+    const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
     const sNoteBox = sOpen ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
-    // 子部位筆記放進米色標題色塊裡（subhead 包住標題列＋筆記）
-    const subhead = `<div class="m-sv-subhead">${subheadRow}${sNoteBox}</div>`;
-    return `<div class="m-sv-subpart">${subhead}${rows}</div>`;
+    // 子部位筆記＝與維度/部位筆記一致樣式（在標題色塊下、白底區、無底色）
+    return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}</div>`;
   }).join('');
   return `<div class="m-sv-condwrap">${header}${pNoteBox}${refBars}<div class="m-sv-subparts">${cards}</div></div>`;
 }
