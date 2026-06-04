@@ -326,7 +326,7 @@ function _renderManualInput() {
       <div class="m-manual-report">
         ${_rp.titleHtml}
         ${_lnBlock}
-        <div class="m-rep-edit-hint">👆 點表格任一格可改動靜，係數即時更新</div>
+        <div class="m-rep-edit-hint">↓ 點表格任一格可改動靜，係數即時更新</div>
         <div class="m-manual-fullreport">${_rp.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
