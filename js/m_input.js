@@ -657,21 +657,54 @@ function _syncRecalc() {
   } catch (e) {}
 }
 
+// 維度視角左欄群組色（比照自我評分 _scoreGrpClass）
+function _dimGrpClass(i) { return i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post')); }
+// 極字 → A/B + tone（比照自我評分 _poleOf）
+function _dimPoleOf(dim, ch) {
+  if (ch === dim.a) return { val: 'A', tone: dim.aT === '靜' ? 'jing' : 'dong' };
+  return { val: 'B', tone: dim.bT === '靜' ? 'jing' : 'dong' };
+}
+// 維度視角：比照自我評分版型(.m-sv-*)。左維度欄｜中部位欄(唯讀形/勢 bar)｜右條件欄(保留觀察題)
+// 底部加總/係數 Mike 先不顯示（加總基礎待定）
 function renderDimMode() {
-  // A2（§11）桌機兩欄：預設展開第一個維度，右側面板一進來就有內容（手機維持收合）
-  if (_dimExpanded == null && _isDesktop()) _dimExpanded = DIM_ROW_1_IDX[0];
-  const row1 = DIM_ROW_1_IDX.map(di => renderDimTile(di)).join('');
-  const row2 = DIM_ROW_2_IDX.map(di => renderDimTile(di)).join('');
-  const panel = (_dimExpanded != null) ? renderDimPanel(_dimExpanded) : `<div class="m-part-panel-hint">← 點選左側維度開始作答</div>`;
-  return `
-    <div class="m-dim-layout">
-      <div class="m-dim-list">
-        <div class="m-input-row m-dim-row m-dim-row-6">${row1}</div>
-        <div class="m-input-row m-dim-row m-dim-row-7">${row2}</div>
-      </div>
-      <div class="m-dim-panel-wrap">${panel}</div>
-    </div>
-  `;
+  if (_dimExpanded == null) _dimExpanded = DIM_ROW_1_IDX[0];
+  let di = _dimExpanded; if (di == null || di < 0 || di > 12) di = 0;
+  const dim = DIMS[di];
+  // 左：13 維度（兩排 6+7，群組左色線、is-cur）
+  const dtile = (i) => {
+    const dm = DIMS[i]; if (!dm) return '';
+    const dot = hasDimUpdate(dm.dn) ? '<span class="m-update-dot"></span>' : '';
+    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-dim="${i}">${dot}${escapeHtml(dm.dn)}</button>`;
+  };
+  const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
+  // 標題：維度名 + 「符合條件為X」（不放筆記）
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">符合條件為${escapeHtml(dim.a)}</span></div></div>`;
+  // 桌機預設選第一個有規則的部位
+  if (_dimPartExpanded[di] == null && _isDesktop()) {
+    const firstValid = DIM_PART_ORDER.find(pi => { const cr = condResults[di] && condResults[di][pi]; return cr && cr.threshold !== '無規則' && (cr.max || 0) > 0; });
+    if (firstValid != null) _dimPartExpanded[di] = firstValid;
+  }
+  const selPi = _dimPartExpanded[di];
+  const pa = _dimPoleOf(dim, dim.da), pb = _dimPoleOf(dim, dim.db);
+  // 中：13 部位（維度視角順序）+ 唯讀形/勢 bar（算出來的；未答完/無規則→空）
+  const pitem = (pi, label) => {
+    const cr = condResults[di] && condResults[di][pi];
+    const noRule = !cr || cr.threshold === '無規則' || (cr.max || 0) === 0;
+    const ppr = dimPartProgress(di, pi);
+    const complete = ppr.total > 0 && ppr.done === ppr.total;
+    const resultVal = (!noRule && complete) ? (cr.pass ? 'A' : 'B') : null;
+    const ba = `<span class="m-sv-pole ${resultVal === pa.val ? 'is-' + pa.tone : ''}">${escapeHtml(dim.da)}</span>`;
+    const bb = `<span class="m-sv-pole ${resultVal === pb.val ? 'is-' + pb.tone : ''}">${escapeHtml(dim.db)}</span>`;
+    return `<div class="m-sv-pitem ${pi === selPi ? 'is-cur' : ''} ${noRule ? 'm-sv-pitem-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-sv-pname">${escapeHtml(label)}</span><span class="m-sv-poles">${ba}${bb}</span></div>`;
+  };
+  const parts = DIM_PART_ORDER.map((pi, i) => pitem(pi, DIM_PART_LABELS[i])).join('');
+  const partCol = `<div class="m-sv-plist">${parts}</div>`;
+  // 右：條件欄（保留觀察題；樣式比照自我評分）
+  const condInner = (selPi != null)
+    ? renderDimPartContent(di, selPi, DIM_PART_LABELS[DIM_PART_ORDER.indexOf(selPi)])
+    : '<div class="m-sv-empty">← 點選部位看條件</div>';
+  const condCol = `<div class="m-sv-condwrap">${condInner}</div>`;
+  return `<div class="m-score-view m-dim-scoreview"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
 
 function renderDimTile(di) {
@@ -1205,27 +1238,27 @@ function bindEvents() {
   });
 
   // 維度 tile：點切換展開（同 idx 再點收合，互斥單選）
-  _root.querySelectorAll('.m-dim-tile').forEach(btn => {
+  // 維度視角左欄：點維度切換（比照自我評分，一律選一個、不收合）
+  _root.querySelectorAll('.m-sv-dim').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
-      const wasOpen = _dimExpanded === di;
-      // 桌機兩欄維持「永遠有面板」：點已開的維度不收合（只有手機收合）
-      _dimExpanded = wasOpen ? (_isDesktop() ? di : null) : di;
+      const wasCur = _dimExpanded === di;
+      _dimExpanded = di;
       saveDimExpanded();
-      // v1.7 階段 16：點開維度 → mark seen
-      if (!wasOpen && DIMS[di]) markDimSeen(DIMS[di].dn);
+      if (!wasCur && DIMS[di]) markDimSeen(DIMS[di].dn);
       render();
     });
   });
 
-  // 維度視角部位 tile：點切換展開（互斥單選；同 pi 再點收合，點別的部位切換）
-  _root.querySelectorAll('.m-dim-part-tile').forEach(btn => {
+  // 維度視角中欄：點部位列 → 右側顯示該部位條件（桌機一律選取不收合；手機切換）
+  _root.querySelectorAll('.m-sv-pitem').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
       const pi = parseInt(btn.dataset.pi, 10);
-      togglePartExpanded(di, pi);
+      if (_isDesktop()) { _dimPartExpanded[di] = pi; saveDimPartExpanded && saveDimPartExpanded(); }
+      else { togglePartExpanded(di, pi); }
       render();
     });
   });
