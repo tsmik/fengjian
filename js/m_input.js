@@ -27,9 +27,11 @@ import { updateHomeProgress } from './m_home.js';
 import { mountAutoView, unmountAutoView } from './m_report.js';
 import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, markQuestionSeen, onBadgeRefresh } from './m_badge.js';
 
-// v1.7 階段 8：上層 segmented [部位 | 報告 | 參數分析]；部位內部 part/dim 視角切換
+// 重整（比照上課過程）：部位視角 / 維度視角 / 報告 / 參數分析 四個子 tab。
+// part/dim 升級成正式子 tab（內部仍走 _view='quiz' + _quizMode，降風險不動 renderPartMode/renderDimMode）。
 const SUBMODES = [
-  { key: 'quiz',   label: '部位' },
+  { key: 'part',   label: '部位視角' },
+  { key: 'dim',    label: '維度視角' },
   { key: 'report', label: '報告' },
   { key: 'sens',   label: '參數分析' },
 ];
@@ -318,14 +320,13 @@ function render() {
 
 function renderQuizView() {
   const seg = renderSegmented();
-  const viewBar = renderQuizViewBar();
   let content = '';
   if (_quizMode === 'part') content = renderPartMode();
   else if (_quizMode === 'dim') content = renderDimMode();
+  // 部位視角/維度視角 已升級為正式子 tab，移除原本的 ⇄ 切換鈕
   _root.innerHTML = `
     <div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>
     <div class="m-segmented">${seg}</div>
-    ${viewBar}
     <div class="m-submode-content">${content}</div>
   `;
   bindEvents();
@@ -346,8 +347,10 @@ function renderAutoView(initView) {
 }
 
 function renderSegmented() {
+  // 部位視角/維度視角 同屬 quiz，用 _quizMode 判斷哪個 active；報告/參數分析直接看 _view
+  const cur = (_view === 'quiz') ? _quizMode : _view;
   return SUBMODES.map(m => `
-    <button class="m-seg-btn ${_view === m.key ? 'm-seg-active' : ''}" data-submode="${m.key}">
+    <button class="m-seg-btn ${cur === m.key ? 'm-seg-active' : ''}" data-submode="${m.key}">
       ${escapeHtml(m.label)}
     </button>
   `).join('');
@@ -984,14 +987,22 @@ function renderPairedQuestion(q, partName) {
 function bindEvents() {
   if (!_root) return;
 
-  // 上層 segmented：答題 / 報告 切換
+  // 上層 segmented：部位視角 / 維度視角 / 報告 / 參數分析
   _root.querySelectorAll('.m-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const key = btn.dataset.submode;
-      if (_view === key) return;
-      // 從 auto view（report/sens）切到 quiz 時，主動 unmount m_report
-      if ((_view === 'report' || _view === 'sens') && key === 'quiz') unmountAutoView();
-      _view = key;
+      const key = btn.dataset.submode;                 // 'part' | 'dim' | 'report' | 'sens'
+      const isQuiz = (key === 'part' || key === 'dim');
+      const cur = (_view === 'quiz') ? _quizMode : _view;
+      if (cur === key) return;
+      // 離開 auto view（report/sens）切到答題 → 主動 unmount m_report
+      if ((_view === 'report' || _view === 'sens') && isQuiz) unmountAutoView();
+      if (isQuiz) {
+        _view = 'quiz';
+        _quizMode = key;
+        try { localStorage.setItem('m_input_submode', _quizMode); } catch (e) {}
+      } else {
+        _view = key;
+      }
       try { localStorage.setItem('m_input_view', _view); } catch (e) {}
       render();
     });
