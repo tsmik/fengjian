@@ -24,7 +24,9 @@ import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, 
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
-import { mountAutoView, unmountAutoView } from './m_report.js';
+import { mountAutoView, unmountAutoView, generatePng, exportMobileCharts, isLiunianReady, ensureLiunianLoaded } from './m_report.js';
+import { buildManualReportParts } from './manual_report.js';
+import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, markQuestionSeen, onBadgeRefresh } from './m_badge.js';
 
 // 重整（比照上課過程）：部位視角 / 維度視角 / 報告 / 參數分析 四個子 tab。
@@ -311,8 +313,10 @@ function escapeHtml(s) {
 
 function render() {
   if (!_root) return;
-  if (_view === 'report' || _view === 'sens') {
-    renderAutoView(_view);
+  if (_view === 'report') {
+    renderObsReport();          // 比照兵法報告（唯讀大表＋4 圖＋虛歲流年），餵觀察算出的矩陣
+  } else if (_view === 'sens') {
+    renderAutoView('sens');     // 參數分析維持原 m_report 掛載
   } else {
     renderQuizView();
   }
@@ -344,6 +348,83 @@ function renderAutoView(initView) {
   bindEvents();
   const container = _root.querySelector('#m-input-report-mount');
   if (container) mountAutoView(container, initView);
+}
+
+// ---------- 報告子 tab：比照兵法報告（唯讀），餵觀察算出的矩陣 ----------
+// 把當前觀察草稿 _draft 同步進 core 並重算，回傳 13×9 'A'/'B'/null 矩陣（= core.js data）
+function _obsReportMatrix() {
+  try {
+    setObsData(JSON.parse(JSON.stringify(_draft)));
+    recalcFromObs();
+  } catch (e) { debugLog('[m_input]', '報告 recalc 失敗', e && e.message); }
+  return coreData;
+}
+// 流年八格（固定一塊，順序同兵法報告：三停 五官 九執 七十五 ／ 耳鼻 親族 子女 業務）
+function _buildObsLiunianRow(ln) {
+  if (!ln) return '';
+  const cell = (l, v) => '<div class="m-rep-ln-cell"><span class="m-rep-ln-l">' + l + '</span><span class="m-rep-ln-v">' + (v || '—') + '</span></div>';
+  const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
+  return '<div class="m-rep-liunian">'
+    + cell('三停', ln.santing) + cell('五官', ln.wuguan) + cell('九執', ln.jiuzhi) + cell('七十五', v75)
+    + cell('耳鼻', ln.erbei) + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('業務', ln.yewu)
+    + '</div>';
+}
+function _renderObsReportShareRow() {
+  return `
+    <div class="m-report-link-wrap" style="padding:20px 16px 8px">
+      <div class="m-report-link-row">
+        <button class="m-report-link-btn" data-obspng="1">分享表格報告</button>
+        <button class="m-report-link-btn" data-obscharts="1">分享圖表</button>
+        <button class="m-report-link-btn" data-obsrc="1">分享表格報告＋圖表</button>
+      </div>
+      <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
+    </div>`;
+}
+function renderObsReport() {
+  const seg = renderSegmented();
+  unmountAutoView();                       // 清掉前一個 sens 掛載
+  const matrix = _obsReportMatrix();
+  const ud = window.__userData || {};
+  const meta = { name: ud.displayName || '' };
+  let lnBlock = '';
+  if (ud.gender && ud.birthday) {
+    if (isLiunianReady()) {
+      const lnInfo = getLiunianInfoFor(ud.gender, ud.birthday);
+      if (lnInfo) { meta.liunianTitleHtml = buildLiunianTitleHtml(lnInfo); lnBlock = _buildObsLiunianRow(lnInfo.ln); }
+    } else {
+      ensureLiunianLoaded().then(() => { if (_view === 'report') render(); }).catch(() => {});
+    }
+  }
+  const p = buildManualReportParts(matrix, meta);
+  _root.innerHTML = `
+    <div class="m-segmented">${seg}</div>
+    <div class="m-submode-content">
+      <div class="m-manual-report m-obs-report">
+        ${p.titleHtml}
+        ${lnBlock}
+        <div class="m-manual-fullreport">${p.tableHtml}</div>
+        <div class="m-rep-seg-title">分析圖</div>
+        <div class="m-rep-figs">
+          <div class="m-rep-chart m-rep-chart-radar2">${p.radar2Html}</div>
+          <div class="m-rep-chart m-rep-chart-sd">${p.sdHtml}</div>
+        </div>
+        <div class="m-rep-overview">
+          <div class="m-rep-chart m-rep-chart-coef">${p.coefHtml}</div>
+          <div class="m-rep-chart m-rep-chart-sd2">${p.sdPairHtml}</div>
+        </div>
+      </div>
+      ${_renderObsReportShareRow()}
+    </div>
+  `;
+  bindEvents();
+  // 分享鈕：餵觀察矩陣；4 張圖跟畫面同份 SVG（與兵法報告一致）
+  _root.querySelectorAll('[data-obspng]').forEach(b => b.addEventListener('click', () =>
+    generatePng({ srcData: _obsReportMatrix(), drawOpts: { checkComplete: true }, filenameSuffix: '_觀察', btn: b })));
+  const _obsSvgs = () => { const q = buildManualReportParts(_obsReportMatrix(), {}); return { radar2: q.radar2Html, sd: q.sdHtml, coef: q.coefHtml, sdPair: q.sdPairHtml }; };
+  _root.querySelectorAll('[data-obscharts]').forEach(b => b.addEventListener('click', () =>
+    exportMobileCharts({ mode: 'charts', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
+  _root.querySelectorAll('[data-obsrc]').forEach(b => b.addEventListener('click', () =>
+    exportMobileCharts({ mode: 'all', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
 }
 
 function renderSegmented() {

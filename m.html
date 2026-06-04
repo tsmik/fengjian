@@ -392,6 +392,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-report-link-row .m-report-link-btn:active{background:#f3ebe1}
 /* #5 表格可編輯提示：滑過格子描邊(僅有 hover 的裝置，避免觸控黏著) */
 @media(hover:hover){.m-manual-fullreport td[data-mrcell]:hover{outline:2px solid #C17A5A;outline-offset:-2px}}
+/* 部位觀察報告唯讀：沿用兵法報告版面但去掉可編輯感（不可點、無 hover 描邊）*/
+.m-obs-report .m-manual-fullreport td[data-mrcell]{cursor:default!important}
+@media(hover:hover){.m-obs-report .m-manual-fullreport td[data-mrcell]:hover{outline:none}}
 .m-score-view,.m-score-view *{font-weight:400}
 .m-sv-dimlist{margin-bottom:12px}
 .m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
