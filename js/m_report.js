@@ -589,6 +589,8 @@ function _initPngOverlay() {
 
 // 流年表 lazy load（從 settings/liunian Firestore doc）
 let _liunianLoaded = false;
+export function isLiunianReady() { return _liunianLoaded; }
+export async function ensureLiunianLoaded() { return _ensureLiunianLoaded(); }
 async function _ensureLiunianLoaded() {
   if (_liunianLoaded) return;
   try {
@@ -806,6 +808,25 @@ async function _buildChartsRow(svgs, totalW) {
   ctx.drawImage(col2, 0, 0); ctx.drawImage(col3, chartW + gap, 0);
   return { canvas: out, titleFs: titleFs };
 }
+// 兵法報告專用：4 張圖排 2×2（上排 係數圖｜動靜圖；下排 係數總覽｜動靜總覽）。
+// 各圖標題已畫在 SVG 內，直接點陣化原圖。svgs={radar2,sd,coef,sdPair}
+async function _buildFourChartsCanvas(svgs, totalW) {
+  var gap = Math.round(totalW * 0.02);
+  var colW = Math.floor((totalW - gap) / 2);
+  var rowGap = Math.round(totalW * 0.015);
+  var r2 = await _svgToCanvas(svgs.radar2, colW);
+  var sd = await _svgToCanvas(svgs.sd, colW);
+  var coef = await _svgToCanvas(svgs.coef, colW);
+  var sdp = await _svgToCanvas(svgs.sdPair, colW);
+  var topH = Math.max(r2.height, sd.height);
+  var botH = Math.max(coef.height, sdp.height);
+  var W = colW * 2 + gap, H = topH + rowGap + botH;
+  var out = document.createElement('canvas'); out.width = W; out.height = H;
+  var ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(r2, 0, 0); ctx.drawImage(sd, colW + gap, 0);
+  ctx.drawImage(coef, 0, topH + rowGap); ctx.drawImage(sdp, colW + gap, topH + rowGap);
+  return { canvas: out, titleFs: 14 * colW / 360 };
+}
 
 export async function exportMobileCharts(opts) {
   opts = opts || {};
@@ -827,17 +848,21 @@ export async function exportMobileCharts(opts) {
     var matrix = srcData;
     if (!srcData) { if (ud.obsJson) { try { setObsData(JSON.parse(ud.obsJson)); } catch (e) {} } recalcFromObs(); matrix = data; }
     var SC = 3;
-    var svgs = buildMobileChartSvgs(matrix);
+    // 兵法報告（手動）傳 chartSvgs → 4 張圖(係數圖/動靜圖/係數總覽/動靜總覽)2×2，跟畫面一致；
+    // 自動報告(「我的」)不帶 → 維持原兩雷達
+    var useFour = !!opts.chartSvgs;
     var out;
     if (mode === 'charts') {
-      // 姓名（只要姓名，不要虛歲/流年）+ 兩圖左右並列
-      var row = await _buildChartsRow(svgs, 1600);
+      // 姓名（只要姓名，不要虛歲/流年）+ 圖
+      var row = useFour ? await _buildFourChartsCanvas(opts.chartSvgs, 1600)
+                        : await _buildChartsRow(buildMobileChartSvgs(matrix), 1600);
       var hdr = _nameHeaderCanvas(displayName, row.canvas.width, row.titleFs);
       out = _stackV([hdr, row.canvas], Math.round(row.titleFs * 0.6));
     } else {
-      // 完整表格 + 兩圖左右並列（兩圖總寬＝表格寬）
+      // 完整表格 + 圖（圖總寬＝表格寬）
       var tableCanvas = drawReportCanvas(srcData, { checkComplete: true, scale: SC });
-      var row2 = await _buildChartsRow(svgs, tableCanvas.width);
+      var row2 = useFour ? await _buildFourChartsCanvas(opts.chartSvgs, tableCanvas.width)
+                         : await _buildChartsRow(buildMobileChartSvgs(matrix), tableCanvas.width);
       out = _stackV([tableCanvas, row2.canvas], Math.round(CHART_GAP * SC));
     }
     var blob = await new Promise(function (r) { out.toBlob(r, 'image/png'); });

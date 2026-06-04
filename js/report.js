@@ -1163,15 +1163,16 @@ export function drawReportCanvas(srcData, opts){
   // --- 2. 流年（flex 色塊）---
   if(hasLn){
     var ln=lnInfo.ln;
+    // 順序對齊手機畫面（兩排攤平）：三停 五官 九執 七十五 ｜ 耳鼻 親族 子女 業務
     var items=[
-      {label:'七十五', value:(ln.name75||'')+(ln.area75?'／'+ln.area75:'')},
+      {label:'三停', value:ln.santing||''},
+      {label:'五官', value:ln.wuguan||''},
       {label:'九執', value:ln.jiuzhi||''},
-      {label:'業務', value:ln.yewu||''},
+      {label:'七十五', value:(ln.name75||'')+(ln.area75?'／'+ln.area75:'')},
+      {label:'耳鼻', value:ln.erbei||''},
       {label:'親族', value:ln.qinzu||''},
       {label:'子女', value:ln.zinv||''},
-      {label:'耳鼻', value:ln.erbei||''},
-      {label:'五官', value:ln.wuguan||''},
-      {label:'三停', value:ln.santing||''}
+      {label:'業務', value:ln.yewu||''}
     ];
     var lnTotalW=contentW;
     var lnItemW=Math.floor(lnTotalW/items.length);

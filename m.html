@@ -369,6 +369,17 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-rep-seg-title{font-size:15px;color:#6a5f50;letter-spacing:2px;margin:24px 4px 12px;border-bottom:1px solid #e3dccb;padding:0 0 6px 12px;position:relative}
 .m-rep-seg-title::before{content:"";position:absolute;left:0;top:2px;width:4px;height:16px;background:#C17A5A;border-radius:2px}
 .m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px}
+/* 手機保留大表只做微縮：整張表 zoom 縮一截，少左右捲動（桌機 @media 還原 1）*/
+.m-manual-fullreport table{zoom:0.9}
+/* 標題姓名 + 流年八格 左對齊「分析圖」的分（seg-title 文字起點 16px）；桌機 @media 還原 0 */
+.m-rep-title{padding-left:16px}
+/* 流年八格：固定一塊（在大表外，不跟表格左右捲動）；手機 4 欄＝兩排 */
+.m-rep-liunian{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-left:16px;margin:0 4px 12px 0}
+.m-rep-ln-cell{background:#E8E4DF;border-radius:4px;padding:5px 8px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.m-rep-ln-l{font-size:11px;color:#8a7f70;letter-spacing:1px}
+.m-rep-ln-v{font-size:13px;color:#3a3228;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 手機提示：可點表格改動靜（桌機改用 hover 描邊，@media 隱藏此行）*/
+.m-rep-edit-hint{font-size:12px;color:#a8917a;letter-spacing:.5px;padding:0 4px 6px 16px}
 .m-rep-overview,.m-rep-figs{display:grid;grid-template-columns:1fr;gap:16px;padding:4px}
 .m-rep-chart-coef,.m-rep-chart-sd2{width:100%}
 .m-rep-chart svg{width:100%;height:auto;display:block}

@@ -28,8 +28,9 @@
 // ============================================================
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
-import { chartsBlockHtml, exportMobileCharts } from './m_report.js';
+import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoaded } from './m_report.js';
 import { buildManualReportParts } from './manual_report.js';
+import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { evaluatePart } from './rule_engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
@@ -271,6 +272,24 @@ function _render() {
   }
 }
 
+// 流年八格（固定區塊，不跟大表左右捲動）。手機 4 欄→兩排：
+//   第一排 三停 五官 九執 七十五 ｜ 第二排 耳鼻 親族 子女 業務
+function _buildLiunianRow(ln) {
+  if (!ln) return '';
+  const cell = (l, v) => '<div class="m-rep-ln-cell"><span class="m-rep-ln-l">' + l + '</span><span class="m-rep-ln-v">' + (v || '—') + '</span></div>';
+  const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
+  return '<div class="m-rep-liunian">'
+    + cell('三停', ln.santing) + cell('五官', ln.wuguan) + cell('九執', ln.jiuzhi) + cell('七十五', v75)
+    + cell('耳鼻', ln.erbei) + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('業務', ln.yewu)
+    + '</div>';
+}
+
+// 分享圖表用：4 張圖 SVG（與畫面同一份）給匯出排 2×2
+function _manualChartSvgs() {
+  const p = buildManualReportParts(_manualDraft, {});
+  return { radar2: p.radar2Html, sd: p.sdHtml, coef: p.coefHtml, sdPair: p.sdPairHtml };
+}
+
 function _renderManualInput() {
   // v1.7 階段 8：上方 segmented 三個 tab（輸入 / 報告 / 參數分析）
   const seg = SUBMODES.map(t =>
@@ -286,11 +305,28 @@ function _renderManualInput() {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
     // 兵法報告（桌機排版：明細 → 圖像 → 係數總覽）餵自我評分 _manualDraft；表格可點擊改 A/B 即時重算＋同步自我評分
-    const _rname = (window.__userData && window.__userData.displayName) || '';
-    const _rp = buildManualReportParts(_manualDraft, { name: _rname });
+    const _ud = window.__userData || {};
+    const _rname = _ud.displayName || '';
+    // 標題虛歲（接姓名後）+ 流年八格（固定一塊，不跟表格左右捲動）；流年表 lazy load，載好後重繪一次
+    const _meta = { name: _rname };
+    let _lnBlock = '';
+    if (_ud.gender && _ud.birthday) {
+      if (isLiunianReady()) {
+        const _ln = getLiunianInfoFor(_ud.gender, _ud.birthday);
+        if (_ln) {
+          _meta.liunianTitleHtml = buildLiunianTitleHtml(_ln);
+          _lnBlock = _buildLiunianRow(_ln.ln);
+        }
+      } else {
+        ensureLiunianLoaded().then(() => { if (_manualSubview === 'overview') _render(); }).catch(() => {});
+      }
+    }
+    const _rp = buildManualReportParts(_manualDraft, _meta);
     body = `
       <div class="m-manual-report">
         ${_rp.titleHtml}
+        ${_lnBlock}
+        <div class="m-rep-edit-hint">👆 點表格任一格可改動靜，係數即時更新</div>
         <div class="m-manual-fullreport">${_rp.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
@@ -1104,10 +1140,10 @@ function _bindEvents() {
     btn.addEventListener('click', () => exportManualPng(btn));
   });
   _container.querySelectorAll('[data-mcharts]').forEach(btn => {
-    btn.addEventListener('click', () => exportMobileCharts({ mode: 'charts', srcData: _manualDraft, btn: btn }));
+    btn.addEventListener('click', () => exportMobileCharts({ mode: 'charts', srcData: _manualDraft, chartSvgs: _manualChartSvgs(), btn: btn }));
   });
   _container.querySelectorAll('[data-mrc]').forEach(btn => {
-    btn.addEventListener('click', () => exportMobileCharts({ mode: 'all', srcData: _manualDraft, btn: btn }));
+    btn.addEventListener('click', () => exportMobileCharts({ mode: 'all', srcData: _manualDraft, chartSvgs: _manualChartSvgs(), btn: btn }));
   });
   _container.querySelectorAll('[data-mclear-all]').forEach(btn => {
     btn.addEventListener('click', () => {

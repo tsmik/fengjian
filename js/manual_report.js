@@ -29,7 +29,7 @@ function _buildParts(matrix, meta) {
   }
   var _liunianTitleHtml = meta.liunianTitleHtml ? meta.liunianTitleHtml : '';
   // 姓名＝課程板書維度名字級(20px #3a3228 ls2)；「人相兵法係數報告」接在後面＝自我評分「符合條件為形」字級(15px #7a6e64)
-  var _manualTitleHtml = '<div style="margin-bottom:12px">'
+  var _manualTitleHtml = '<div class="m-rep-title" style="margin-bottom:12px">'
     + '<span style="font-size:20px;color:#3a3228;letter-spacing:2px">' + _displayName + '</span>'
     + _ageHtml + _liunianTitleHtml
     + '<span style="font-size:15px;color:#7a6e64;margin-left:12px">人相兵法係數報告</span>'
@@ -542,7 +542,8 @@ function _buildParts(matrix, meta) {
   // 係數總覽米白底下緣 y：cTop(4+FS+8)+PAD(8)+Σ列高+列間距+PAD；供動靜總覽米白底向下對齊
   var _coefHs=[_COEF_H['總係數'],_COEF_H['先天'],_COEF_H['老闆'],_COEF_H['主管'],_COEF_H['運氣'],_COEF_H['後天']];
   var _coefBeigeBot=(4+(10.8+8))+8 + _coefHs.reduce(function(a,b){return a+b;},0) + (_coefHs.length-1)*9.6 + 8;
-  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'動靜圖',viewBox:_RVB});
+  // fsNum 10.5：動靜圖外圍係數數字 = 係數圖(radar2)的數字字級一致（維度名兩圖同為 10.8）
+  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'動靜圖',viewBox:_RVB,fsNum:10.5});
 
   // 動靜總覽：逐部位 動|靜 比例 bar，左組 頭/上停/中停/下停、右組 耳/眉/眼/鼻/口
   // x 對齊上方動靜圖：標題動=16；左組右緣=後天天(172.7)；右組文字左=先天先(188.5)、右緣=方圓圓(345.1)
