@@ -182,6 +182,56 @@ export function buildCoefSVG(opts){
   return `<svg viewBox="0 0 ${vbW} ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
 
+// ===== 動靜總覽（兩組逐部位 動|靜 比例 bar，左右並列，一個標題）=====
+// opts.cols = [{labelX, barLeft, barRight, rows:[{label,d,s}]}, ...]
+// 左段＝動(R0_A)、右段＝靜(R0_S)；x 由外部依雷達字位算好(對齊用)
+export function buildSDPairSVG(opts){
+  opts=opts||{};
+  const FS=+opts.fs||10.8, barH=+opts.barH||12.6, gap=+opts.gap||9.6, vbW=+opts.vbW||360;
+  const numFs=+opts.numFs||9, PAD=8;                       // 數字略小於 bar→不貼上下緣
+  const aCol=opts.aCol||R0_A, sCol=opts.sCol||R0_S;
+  const title=opts.title||'', titleX=opts.titleX!=null?opts.titleX:16;
+  const cols=opts.cols||[];
+  // 垂直結構比照 buildCoefSVG(標題gap+PAD)→第一列(頭/耳)與係數總覽的總係數同高
+  const titleFs=FS, titleGap=title?titleFs+8:0, cTop=4+titleGap, stackTop=cTop+PAD, prr=Math.min(3,barH/2);
+  const TOTAL=+opts.total||13;                              // 完整＝動+靜=13(全部位填完)
+  let maxRows=0; cols.forEach(c=>{if(c.rows.length>maxRows)maxRows=c.rows.length;});
+  const stackBot=stackTop+maxRows*(barH+gap)-gap, ownCBot=stackBot+PAD;
+  const beigeBot=opts.beigeBottom!=null?Math.max(opts.beigeBottom,ownCBot):ownCBot; // 米白底下緣可對齊係數總覽
+  let s='';
+  if(title) s+=`<text x="${titleX}" y="${titleFs.toFixed(1)}" font-size="${titleFs}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(title)}</text>`;
+  // 圖例（右上：動/靜 色塊）
+  if(opts.legend){
+    const ly=titleFs, sw=9; let lx=vbW-72;
+    s+=`<rect x="${lx.toFixed(1)}" y="${(ly-8).toFixed(1)}" width="${sw}" height="${sw}" rx="2" fill="${aCol}" fill-opacity="0.85"/>`+`<text x="${(lx+sw+3).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${FS}" fill="#6a6458">動</text>`;
+    lx+=sw+3+FS+10;
+    s+=`<rect x="${lx.toFixed(1)}" y="${(ly-8).toFixed(1)}" width="${sw}" height="${sw}" rx="2" fill="${sCol}" fill-opacity="0.85"/>`+`<text x="${(lx+sw+3).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${FS}" fill="#6a6458">靜</text>`;
+  }
+  // 米色底（每組一塊、等高協調，只墊在 bar 區、不含左側文字；下緣延伸到 beigeBot）
+  cols.forEach(c=>{ s+=`<rect x="${(c.barLeft-4).toFixed(1)}" y="${cTop.toFixed(1)}" width="${(c.barRight-c.barLeft+8).toFixed(1)}" height="${(beigeBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`; });
+  // 各列
+  cols.forEach(c=>{
+    const barW=c.barRight-c.barLeft;
+    c.rows.forEach((r,i)=>{
+      const y=stackTop+i*(barH+gap), cyy=y+barH/2, realTot=(r.d||0)+(r.s||0);
+      s+=`<text x="${c.labelX.toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="start" dominant-baseline="central" fill="#6a6458" font-weight="700">${esc(r.label)}</text>`;
+      if(realTot!==TOTAL){
+        // 未填完：淡灰底 + 深灰「未填完」
+        s+=`<rect x="${c.barLeft.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="${prr}" fill="#e7e3dc"/>`;
+        s+=`<text x="${(c.barLeft+barW/2).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${numFs}" text-anchor="middle" dominant-baseline="central" fill="#a89e92">未填完</text>`;
+      }else{
+        const dW=barW*r.d/TOTAL;
+        s+=`<path d="${_bL(c.barLeft,y,dW,barH,prr)}" fill="${aCol}" fill-opacity="0.85"/>`;
+        s+=`<path d="${_bR(c.barLeft+dW,y,barW-dW,barH,prr)}" fill="${sCol}" fill-opacity="0.85"/>`;
+        if(r.d>0 && dW>12) s+=`<text x="${(c.barLeft+dW-4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${numFs}" text-anchor="end" dominant-baseline="central" fill="#fff">${r.d}</text>`;
+        if(r.s>0 && (barW-dW)>12) s+=`<text x="${(c.barLeft+dW+4).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${numFs}" text-anchor="start" dominant-baseline="central" fill="#fff">${r.s}</text>`;
+      }
+    });
+  });
+  const vbH=Math.ceil(beigeBot+4);
+  return `<svg viewBox="0 0 ${vbW} ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
 // ===== 總動靜（逐部位 10 條，無標題）=====
 export function buildSDSVG(opts){
   opts=opts||{};

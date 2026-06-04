@@ -299,6 +299,7 @@ function _renderManualInput() {
         </div>
         <div class="m-rep-overview">
           <div class="m-rep-chart m-rep-chart-coef">${_rp.coefHtml}</div>
+          <div class="m-rep-chart m-rep-chart-sd2">${_rp.sdPairHtml}</div>
         </div>
       </div>
       ${_renderManualPngRow()}`;
