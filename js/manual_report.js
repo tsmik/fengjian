@@ -28,9 +28,11 @@ function _buildParts(matrix, meta) {
     _ageHtml = '<span style="font-size:14px;color:#9a8f7e;font-family:sans-serif;margin-left:10px">' + String(meta.age) + '</span>';
   }
   var _liunianTitleHtml = meta.liunianTitleHtml ? meta.liunianTitleHtml : '';
+  // 姓名＝課程板書維度名字級(20px #3a3228 ls2)；「人相兵法係數報告」接在後面＝自我評分「符合條件為形」字級(15px #7a6e64)
   var _manualTitleHtml = '<div style="margin-bottom:12px">'
-    + '<div style="font-size:24px;font-weight:500;color:#3a3228;letter-spacing:1px;line-height:1.3">' + _displayName + _ageHtml + _liunianTitleHtml + '</div>'
-    + '<div style="font-size:15px;color:#8a7e70;letter-spacing:2px;margin-top:2px">人相兵法係數報告</div>'
+    + '<span style="font-size:20px;color:#3a3228;letter-spacing:2px">' + _displayName + '</span>'
+    + _ageHtml + _liunianTitleHtml
+    + '<span style="font-size:15px;color:#7a6e64;margin-left:12px">人相兵法係數報告</span>'
     + '</div>';
 
   // R1 流年（由外部 meta.liunianHtml 提供）
@@ -531,7 +533,7 @@ function _buildParts(matrix, meta) {
   var _RVB='20 16 360 384';
   var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:'係數圖',viewBox:_RVB});
   // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
-  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['先天','運氣','後天']});
+  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10});
   var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'動靜圖',viewBox:_RVB});
 
   return {

@@ -75,7 +75,7 @@ export function buildRadar2SVG(opts){
      +`<text x="${cx}" y="${(cy-3).toFixed(1)}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
      +`<text x="${cx}" y="${(cy+9).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${(totV==null?'--':totV.toFixed(2))}</text>`;}
   // 標題（選填，字級＝維度字 FSD，與 radar3 一致；僅在有傳 title 時畫）
-  if(opts.title){svg+=`<text x="${cx}" y="36" font-size="${FSD}" text-anchor="middle" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
+  if(opts.title){svg+=`<text x="${opts.titleX!=null?opts.titleX:30}" y="36" font-size="${FSD}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
   const VB=opts.viewBox||'20 40 360 360';
   return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
@@ -144,18 +144,33 @@ export function buildCoefSVG(opts){
   const order=opts.order||['preV','bossV','mgrV','luckV','postV','totV'];
   const big=opts.big||[];
   const ROWS=order.map(k=>MAP[k]).filter(Boolean);
-  const X0=R0_X0,BAR_H=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,LP=4,TRACKW=R0_TW,COEF_OP=0.7;
+  // vbW/x0/trackW 可調(RWD 用 360 以與雷達同 viewBox 寬→同螢幕字級)；不傳＝legacy 400/74/300
+  const vbW=+opts.vbW||400;
+  const X0=opts.x0!=null?opts.x0:R0_X0, BAR_H=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,LP=4, TRACKW=opts.trackW!=null?opts.trackW:R0_TW, COEF_OP=0.7;
+  // 全圖字級統一(opts.fs)＝標題/標籤/數字一致；主次靠「縮排＋條粗細」分，不靠字級
+  // big＝主列(總/先天/運氣/後天)：條較粗＋標籤向左外凸半字；small＝次列(老闆/主管)：條較窄
+  const small=opts.small||[];
+  const inB=nm=>big.indexOf(nm)>=0, inS=nm=>small.indexOf(nm)>=0;
+  const FS=+opts.fs||12;
+  const rowH=nm=>inS(nm)?9:(inB(nm)?14:BAR_H);
+  const HALF=FS*0.55;                       // 主列向左外凸約半個中文字，分主次
+  const labelX=nm=>inB(nm)?(X0-8-HALF):(X0-8);
   const xOf=v=>X0+(Math.min(1,(v==null?0:v)/R0_CMAX))*TRACKW;
-  const n=ROWS.length, cTop=4, stackTop=cTop+PAD, stackBot=stackTop+n*(BAR_H+GAP)-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
+  const titleFs=FS, titleGap=opts.title?titleFs+8:0, cTop=4+titleGap, stackTop=cTop+PAD;
+  const heights=ROWS.map(r=>rowH(r.name));
+  const ys=[]; let _cur=stackTop;
+  for(let _i=0;_i<ROWS.length;_i++){ ys.push(_cur); _cur+=heights[_i]+GAP; }
+  const stackBot=_cur-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
   let s='';
+  if(opts.title) s+=`<text x="${opts.titleX!=null?opts.titleX:20}" y="${titleFs}" font-size="${titleFs}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;
   s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
-  ROWS.forEach((r,i)=>{const y=stackTop+i*(BAR_H+GAP);const cyy=y+BAR_H/2;
-    if(r.v!=null)s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,BAR_H,Math.min(3,BAR_H/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
-    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${big.indexOf(r.name)>=0?14:12}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
-    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
+  ROWS.forEach((r,i)=>{const h=heights[i],y=ys[i],cyy=y+h/2;
+    if(r.v!=null)s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,h,Math.min(3,h/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
+    s+=`<text x="${labelX(r.name).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
+    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
   if(totV!=null)s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${R0_TOT}" stroke-width="1.5"/>`;
   const vbH=Math.ceil(cBot+LP+4);
-  return `<svg viewBox="0 0 400 ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  return `<svg viewBox="0 0 ${vbW} ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
 
 // ===== 總動靜（逐部位 10 條，無標題）=====
@@ -233,7 +248,7 @@ export function buildRadar3SVG(opts){
   // 中央 先天/運氣/後天 文字（深米色）
   R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsCore*0.3).toFixed(1)}" font-size="${fsCore}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
   // 標題（畫在預設 viewBox 上方留白處，貼近圖頂、字級＝維度字；僅桌機用，手機版 viewBox 較窄不傳）
-  if(opts.title){svg+=`<text x="${cx}" y="36" font-size="${fsName}" text-anchor="middle" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
+  if(opts.title){svg+=`<text x="${opts.titleX!=null?opts.titleX:36}" y="36" font-size="${fsName}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
   const VB=opts.viewBox||'0 -34 400 458'; // 手機版傳 "20 40 360 360" 使 13 邊形與 radar2 同大
   return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }

@@ -292,12 +292,11 @@ function _renderManualInput() {
       <div class="m-manual-report">
         ${_rp.titleHtml}
         <div class="m-manual-fullreport">${_rp.tableHtml}</div>
-        <div class="m-rep-seg-title">圖像</div>
+        <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
           <div class="m-rep-chart m-rep-chart-radar2">${_rp.radar2Html}</div>
           <div class="m-rep-chart m-rep-chart-sd">${_rp.sdHtml}</div>
         </div>
-        <div class="m-rep-seg-title">係數總覽</div>
         <div class="m-rep-overview">
           <div class="m-rep-chart m-rep-chart-coef">${_rp.coefHtml}</div>
         </div>
