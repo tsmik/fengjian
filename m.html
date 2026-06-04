@@ -376,6 +376,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-rep-chart svg text:not([font-family]){font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
 .rep-chart-title{text-align:center;color:#5a4f45;font-weight:700;margin-bottom:4px}
 .m-report-link-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+/* #6 分享鈕：次要樣式(描邊淺底)，把視覺重量讓回報告本身 */
+.m-report-link-row .m-report-link-btn{padding:8px 18px;background:#fff;color:#a86a48;border:1px solid #dcc3ab;border-radius:18px;font-size:13px;font-weight:500;box-shadow:none}
+.m-report-link-row .m-report-link-btn:active{background:#f3ebe1}
+/* #5 表格可編輯提示：滑過格子描邊(僅有 hover 的裝置，避免觸控黏著) */
+@media(hover:hover){.m-manual-fullreport td[data-mrcell]:hover{outline:2px solid #C17A5A;outline-offset:-2px}}
 .m-score-view,.m-score-view *{font-weight:400}
 .m-sv-dimlist{margin-bottom:12px}
 .m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
