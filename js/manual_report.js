@@ -39,7 +39,7 @@ function _buildParts(matrix, meta) {
   var visiblePost = Math.max(0, Math.min(4, BETA_VISIBLE_DIMS - 9));
   var showLuck = visibleLuck > 0;
   var showPost = visiblePost > 0;
-  var totalCols = 1 + visiblePre*2 + 3 + (showLuck ? 1 + visibleLuck*2 + 3 : 0) + (showPost ? 1 + visiblePost*2 + 3 : 0) + 3 + 1;
+  var totalCols = 1 + visiblePre*2 + 3 + (showLuck ? 1 + visibleLuck*2 + 3 : 0) + (showPost ? 1 + visiblePost*2 + 3 : 0) + 3;
   var visibleDimIds = [];
   for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
 
@@ -148,7 +148,7 @@ function _buildParts(matrix, meta) {
     t+='<td style="padding:2px 4px"></td>';
     t+='<td colspan="'+(visiblePost*2+3)+'" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天指數</td>';
   }
-  t+='<td colspan="4" style="padding:2px 4px"></td>';
+  t+='<td colspan="3" style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R3: 維度名 + 動靜分析 + 總動靜分析 ---
@@ -176,7 +176,6 @@ function _buildParts(matrix, meta) {
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   }
   t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">總動靜分析</td>';
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R4: 維度描述 ---
@@ -197,7 +196,6 @@ function _buildParts(matrix, meta) {
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
     }
   }
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R5: 靜/動標頭 ---
@@ -231,7 +229,6 @@ function _buildParts(matrix, meta) {
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">動</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">靜</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R6~R14: 部位資料行（可點擊編輯：點維度格 → 循環 形/靜→勢/動→未填）---
@@ -303,8 +300,6 @@ function _buildParts(matrix, meta) {
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allS+'</td>';
     t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(allD,allS)+'</td>';
 
-    // 最右部位欄
-    t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
     t+='</tr>';
   }
 
@@ -357,7 +352,6 @@ function _buildParts(matrix, meta) {
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.d+'</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.s+'</td>';
   t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(sdAll.d,sdAll.s)+'</td>';
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R16: 屬性行 ---
@@ -403,7 +397,6 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R17: 係數行 ---
@@ -446,7 +439,6 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
-  t+='<td style="padding:2px 4px"></td>';
   t+='</tr>';
 
   // --- R18: 老闆係數 + 主管係數 ---
@@ -473,7 +465,6 @@ function _buildParts(matrix, meta) {
       t+='<td colspan="3" style="padding:2px 4px"></td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
   }
 
@@ -509,7 +500,6 @@ function _buildParts(matrix, meta) {
       t+='<td colspan="3" style="padding:2px 4px"></td>';
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
   }
 
@@ -523,7 +513,6 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
     if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
     t+='<td colspan="3" style="padding:2px 4px"></td>';
-    t+='<td style="padding:2px 4px"></td>';
     t+='</tr>';
   }
 
@@ -535,9 +524,12 @@ function _buildParts(matrix, meta) {
   var _gv=function(ids,v){return groupComplete(ids)?(v==null?null:v):null;};
   var _pre=_gv([0,1,2,3,4,5],vPre),_boss=_gv([0,1,2],vLead),_mgr=_gv([3,4,5],vSub),_luck=_gv([6,7,8],vLuck),_post=_gv([9,10,11,12],vPost),_tot=_gv([0,1,2,3,4,5,6,7,8,9,10,11,12],vTotal);
 
-  var _radar2Svg='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot});
-  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot});
-  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'人相兵法動靜分布圖'});
+  // 兩張雷達同 viewBox（一樣大）；標題畫在 SVG 內、字級＝維度字（一致）
+  var _RVB='20 16 360 384';
+  var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:'係數圖',viewBox:_RVB});
+  // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
+  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['先天','運氣','後天']});
+  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'動靜圖',viewBox:_RVB});
 
   return {
     titleHtml: _manualTitleHtml,

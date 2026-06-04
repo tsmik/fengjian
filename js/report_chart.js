@@ -74,7 +74,10 @@ export function buildRadar2SVG(opts){
    svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
      +`<text x="${cx}" y="${(cy-3).toFixed(1)}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
      +`<text x="${cx}" y="${(cy+9).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${(totV==null?'--':totV.toFixed(2))}</text>`;}
-  return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  // 標題（選填，字級＝維度字 FSD，與 radar3 一致；僅在有傳 title 時畫）
+  if(opts.title){svg+=`<text x="${cx}" y="36" font-size="${FSD}" text-anchor="middle" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
+  const VB=opts.viewBox||'20 40 360 360';
+  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
 // ===== 係數雷達 手機版（radar2_m）=====
@@ -129,10 +132,18 @@ export function buildCoefSVG(opts){
   opts=opts||{};
   const nv=x=>(x==null?null:(+x||0));
   const preV=nv(opts.preV),bossV=nv(opts.bossV),mgrV=nv(opts.mgrV),luckV=nv(opts.luckV),postV=nv(opts.postV),totV=nv(opts.totV);
-  const ROWS=[
-    {name:'先天',v:preV,col:'#8E4B50'},{name:'老闆',v:bossV,col:'#936A78'},{name:'主管',v:mgrV,col:'#876D4F'},
-    {name:'運氣',v:luckV,col:'#546D77'},{name:'後天',v:postV,col:'#797181'},{name:'總係數',v:totV,col:R0_TOT}
-  ];
+  // 列順序/強調可由 opts 覆寫；不傳則維持舊版順序（保留 legacy 行為）
+  const MAP={
+    preV:{name:'先天',v:preV,col:'#8E4B50'},
+    bossV:{name:'老闆',v:bossV,col:'#936A78'},
+    mgrV:{name:'主管',v:mgrV,col:'#876D4F'},
+    luckV:{name:'運氣',v:luckV,col:'#546D77'},
+    postV:{name:'後天',v:postV,col:'#797181'},
+    totV:{name:'總係數',v:totV,col:R0_TOT}
+  };
+  const order=opts.order||['preV','bossV','mgrV','luckV','postV','totV'];
+  const big=opts.big||[];
+  const ROWS=order.map(k=>MAP[k]).filter(Boolean);
   const X0=R0_X0,BAR_H=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,LP=4,TRACKW=R0_TW,COEF_OP=0.7;
   const xOf=v=>X0+(Math.min(1,(v==null?0:v)/R0_CMAX))*TRACKW;
   const n=ROWS.length, cTop=4, stackTop=cTop+PAD, stackBot=stackTop+n*(BAR_H+GAP)-GAP, cBot=stackBot+PAD, tEdge=xOf(totV);
@@ -140,7 +151,7 @@ export function buildCoefSVG(opts){
   s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   ROWS.forEach((r,i)=>{const y=stackTop+i*(BAR_H+GAP);const cyy=y+BAR_H/2;
     if(r.v!=null)s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,BAR_H,Math.min(3,BAR_H/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
-    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="12" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
+    s+=`<text x="${(X0-8).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${big.indexOf(r.name)>=0?14:12}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="11" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
   if(totV!=null)s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${R0_TOT}" stroke-width="1.5"/>`;
   const vbH=Math.ceil(cBot+LP+4);

@@ -285,23 +285,21 @@ function _renderManualInput() {
   } else if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {
-    // 兵法報告（桌機排版：明細 → 總覽 → 圖像）餵自我評分 _manualDraft；表格可點擊改 A/B 即時重算＋同步自我評分
+    // 兵法報告（桌機排版：明細 → 圖像 → 係數總覽）餵自我評分 _manualDraft；表格可點擊改 A/B 即時重算＋同步自我評分
     const _rname = (window.__userData && window.__userData.displayName) || '';
     const _rp = buildManualReportParts(_manualDraft, { name: _rname });
     body = `
       <div class="m-manual-report">
         ${_rp.titleHtml}
-        <div class="m-rep-seg-title">明細（點任一格切換 形/靜 → 勢/動 → 未填）</div>
         <div class="m-manual-fullreport">${_rp.tableHtml}</div>
-        <div class="m-rep-seg-title">總覽</div>
-        <div class="m-rep-overview">
-          <div class="m-rep-summary">${_renderCoeffSummary()}</div>
-          <div class="m-rep-chart m-rep-chart-coef">${_rp.coefHtml}</div>
-        </div>
         <div class="m-rep-seg-title">圖像</div>
         <div class="m-rep-figs">
           <div class="m-rep-chart m-rep-chart-radar2">${_rp.radar2Html}</div>
           <div class="m-rep-chart m-rep-chart-sd">${_rp.sdHtml}</div>
+        </div>
+        <div class="m-rep-seg-title">係數總覽</div>
+        <div class="m-rep-overview">
+          <div class="m-rep-chart m-rep-chart-coef">${_rp.coefHtml}</div>
         </div>
       </div>
       ${_renderManualPngRow()}`;
@@ -425,9 +423,11 @@ function _chartsHtml() {
 function _renderManualPngRow() {
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
-      <button class="m-report-link-btn" data-mpng="1">產生詳盡報告（手動版PNG）</button>
-      <button class="m-report-link-btn" data-mcharts="1">產生圖表(PNG)</button>
-      <button class="m-report-link-btn" data-mrc="1">產生報告＋圖表</button>
+      <div class="m-report-link-row">
+        <button class="m-report-link-btn" data-mpng="1">分享表格報告</button>
+        <button class="m-report-link-btn" data-mcharts="1">分享圖表</button>
+        <button class="m-report-link-btn" data-mrc="1">分享表格報告＋圖表</button>
+      </div>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>
   `;
