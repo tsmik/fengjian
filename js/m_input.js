@@ -322,6 +322,25 @@ function render() {
   }
 }
 
+// 目前子 tab key（部位視角/維度視角 同屬 quiz，用 _quizMode 區分）
+export function getInputView() { return (_view === 'quiz') ? _quizMode : _view; }
+// 設定子 tab：part/dim → quiz+_quizMode；report/sens → _view（給桌機側欄 subnav + 手機 segmented 共用）
+export function setInputView(key) {
+  const isQuiz = (key === 'part' || key === 'dim');
+  const cur = (_view === 'quiz') ? _quizMode : _view;
+  if (cur === key) return;
+  if ((_view === 'report' || _view === 'sens') && isQuiz) unmountAutoView();
+  if (isQuiz) {
+    _view = 'quiz';
+    _quizMode = key;
+    try { localStorage.setItem('m_input_submode', _quizMode); } catch (e) {}
+  } else {
+    _view = key;
+  }
+  try { localStorage.setItem('m_input_view', _view); } catch (e) {}
+  render();
+}
+
 function renderQuizView() {
   const seg = renderSegmented();
   let content = '';
@@ -330,7 +349,7 @@ function renderQuizView() {
   // 部位視角/維度視角 已升級為正式子 tab，移除原本的 ⇄ 切換鈕
   _root.innerHTML = `
     <div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>
-    <div class="m-segmented">${seg}</div>
+    <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content">${content}</div>
   `;
   bindEvents();
@@ -342,7 +361,7 @@ function renderAutoView(initView) {
   unmountAutoView();
   _root.innerHTML = `
     <div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>
-    <div class="m-segmented">${seg}</div>
+    <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content"><div id="m-input-report-mount"></div></div>
   `;
   bindEvents();
@@ -397,7 +416,7 @@ function renderObsReport() {
   }
   const p = buildManualReportParts(matrix, meta);
   _root.innerHTML = `
-    <div class="m-segmented">${seg}</div>
+    <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content">
       <div class="m-manual-report m-obs-report">
         ${p.titleHtml}
@@ -1068,25 +1087,9 @@ function renderPairedQuestion(q, partName) {
 function bindEvents() {
   if (!_root) return;
 
-  // 上層 segmented：部位視角 / 維度視角 / 報告 / 參數分析
+  // 上層 segmented（手機顯示；桌機改用左側欄 subnav，同 setInputView 邏輯）
   _root.querySelectorAll('.m-seg-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.submode;                 // 'part' | 'dim' | 'report' | 'sens'
-      const isQuiz = (key === 'part' || key === 'dim');
-      const cur = (_view === 'quiz') ? _quizMode : _view;
-      if (cur === key) return;
-      // 離開 auto view（report/sens）切到答題 → 主動 unmount m_report
-      if ((_view === 'report' || _view === 'sens') && isQuiz) unmountAutoView();
-      if (isQuiz) {
-        _view = 'quiz';
-        _quizMode = key;
-        try { localStorage.setItem('m_input_submode', _quizMode); } catch (e) {}
-      } else {
-        _view = key;
-      }
-      try { localStorage.setItem('m_input_view', _view); } catch (e) {}
-      render();
-    });
+    btn.addEventListener('click', () => setInputView(btn.dataset.submode));
   });
 
   // 答題 view 內：視角切換（部位 ↔ 維度）

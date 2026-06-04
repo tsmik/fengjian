@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { initHome, refreshHomeSelf } from "./m_home.js";
-import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded } from "./m_input.js";
+import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded, setInputView, getInputView } from "./m_input.js";
 import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft, setManualView, getManualView } from "./m_manual.js";
 
@@ -35,6 +35,21 @@ function renderManualSubnav() {
   }));
 }
 function clearManualSubnav() { const h = document.getElementById('m-tabsub-manual'); if (h) h.innerHTML = ''; }
+
+// 桌機側欄：「部位觀察」展開的子膠囊（部位視角/維度視角/報告/參數分析）— 比照上課
+function renderInputSubnav() {
+  const host = document.getElementById('m-tabsub-input');
+  if (!host) return;
+  const items = [{ key: 'part', label: '部位視角' }, { key: 'dim', label: '維度視角' }, { key: 'report', label: '報告' }, { key: 'sens', label: '參數分析' }];
+  let cur = 'part';
+  try { cur = getInputView() || 'part'; } catch (e) {}
+  host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
+  host.querySelectorAll('[data-isub]').forEach(b => b.addEventListener('click', () => {
+    try { setInputView(b.dataset.isub); } catch (e) {}
+    renderInputSubnav();
+  }));
+}
+function clearInputSubnav() { const h = document.getElementById('m-tabsub-input'); if (h) h.innerHTML = ''; }
 import { initBadges } from "./m_badge.js";
 
 // ===== Firebase config =====
@@ -208,7 +223,7 @@ async function _backToSelf() {
   updateAnalysisBanner();
   const activeTab = document.querySelector('.m-tab.active');
   const key = activeTab && activeTab.dataset.tab;
-  if (key === 'input') { try { unmountInput(); } catch (e) {} mountInput(document.getElementById('m-page-input')); }
+  if (key === 'input') { try { unmountInput(); } catch (e) {} mountInput(document.getElementById('m-page-input')); renderInputSubnav(); }
   else if (key === 'manual') { try { unmountManual(); } catch (e) {} mountManual(document.getElementById('m-page-manual')); renderManualSubnav(); }
 }
 
@@ -513,13 +528,16 @@ if (isTeacherMode) {
         unmountManual();
         clearManualSubnav();
         mountInput(pages.input);
+        renderInputSubnav();
       } else if(key==='report'){
         unmountInput();
+        clearInputSubnav();
         unmountManual();
         clearManualSubnav();
         mountReport(pages.report);
       } else if(key==='cases'){
         unmountInput();
+        clearInputSubnav();
         unmountManual();
         clearManualSubnav();
         mountReport(pages.report);
@@ -527,12 +545,14 @@ if (isTeacherMode) {
       } else if(key==='manual'){
         if (!isOnManual) {            // 已在上課又點上課 → 不重 mount、不重設子畫面
           unmountInput();
+          clearInputSubnav();
           unmountReport();
           mountManual(pages.manual);
         }
         renderManualSubnav();
       } else {
         unmountInput();
+        clearInputSubnav();
         unmountReport();
         unmountManual();
         clearManualSubnav();
