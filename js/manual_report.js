@@ -21,14 +21,17 @@ function _buildParts(matrix, meta) {
   var manualData = matrix; // 唯一資料來源（取代舊全域 manualData）
   var BETA_VISIBLE_DIMS = 13; // 報告顯示全部維度
 
-  // === 標題（由 meta 組成，比照舊 _manualTitleHtml 內聯樣式）===
+  // === 標題：姓名＝大標(繼承 WenKai)；下方「人相兵法係數報告」＝副標；年齡數字維持 sans ===
   var _displayName = (meta.name != null && String(meta.name) !== '') ? String(meta.name) : '未命名';
   var _ageHtml = '';
   if (meta.age != null && String(meta.age) !== '') {
-    _ageHtml = '<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">' + String(meta.age) + '</span>';
+    _ageHtml = '<span style="font-size:14px;color:#9a8f7e;font-family:sans-serif;margin-left:10px">' + String(meta.age) + '</span>';
   }
   var _liunianTitleHtml = meta.liunianTitleHtml ? meta.liunianTitleHtml : '';
-  var _manualTitleHtml = '<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">' + _displayName + '</span>' + _ageHtml + _liunianTitleHtml + '<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
+  var _manualTitleHtml = '<div style="margin-bottom:12px">'
+    + '<div style="font-size:24px;font-weight:500;color:#3a3228;letter-spacing:1px;line-height:1.3">' + _displayName + _ageHtml + _liunianTitleHtml + '</div>'
+    + '<div style="font-size:15px;color:#8a7e70;letter-spacing:2px;margin-top:2px">人相兵法係數報告</div>'
+    + '</div>';
 
   // R1 流年（由外部 meta.liunianHtml 提供）
   var _manualLnHtml = meta.liunianHtml ? meta.liunianHtml : '';
