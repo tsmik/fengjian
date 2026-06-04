@@ -533,7 +533,10 @@ function _buildParts(matrix, meta) {
   var _RVB='20 16 360 384';
   var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:'係數圖',viewBox:_RVB});
   // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
-  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10});
+  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,
+    totLabelCol:'#5a4f45',                                  // 總係數三個字＝標題色(不要黑)
+    heights:{'總係數':14,'先天':12.6,'運氣':12.6,'後天':12.6,'老闆':9,'主管':9}, // 先天/運氣/後天 條高 -10%
+    groupLine:{top:'先天',bot:'主管',color:'#8E4B50'}});      // 先天/老闆/主管 左側括線(先天色)
   var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'動靜圖',viewBox:_RVB});
 
   return {

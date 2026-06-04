@@ -152,7 +152,7 @@ export function buildCoefSVG(opts){
   const small=opts.small||[];
   const inB=nm=>big.indexOf(nm)>=0, inS=nm=>small.indexOf(nm)>=0;
   const FS=+opts.fs||12;
-  const rowH=nm=>inS(nm)?9:(inB(nm)?14:BAR_H);
+  const rowH=nm=>(opts.heights&&opts.heights[nm]!=null)?opts.heights[nm]:(inS(nm)?9:(inB(nm)?14:BAR_H));
   const HALF=FS*0.55;                       // 主列向左外凸約半個中文字，分主次
   const labelX=nm=>inB(nm)?(X0-8-HALF):(X0-8);
   const xOf=v=>X0+(Math.min(1,(v==null?0:v)/R0_CMAX))*TRACKW;
@@ -166,9 +166,18 @@ export function buildCoefSVG(opts){
   s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   ROWS.forEach((r,i)=>{const h=heights[i],y=ys[i],cyy=y+h/2;
     if(r.v!=null)s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,h,Math.min(3,h/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
-    s+=`<text x="${labelX(r.name).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="end" dominant-baseline="central" fill="${r.col}" font-weight="700">${r.name}</text>`;
+    s+=`<text x="${labelX(r.name).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="end" dominant-baseline="central" fill="${(r.name==='總係數'&&opts.totLabelCol)?opts.totLabelCol:r.col}" font-weight="700">${r.name}</text>`;
     s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
   if(totV!=null)s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${R0_TOT}" stroke-width="1.5"/>`;
+  // 群組線：top..bot 幾列在左側用一條直線連起來(色＝先天)，凸顯「先天＝老闆+主管」這一群
+  // 線位於「字」與「圖(條)」之間的正中：gx=X0-4＝(標籤右緣 X0-8 與 條左緣 X0) 的中點 → 左右等寬；不加上下凸出小線
+  if(opts.groupLine){
+    const gi0=ROWS.findIndex(r=>r.name===opts.groupLine.top), gi1=ROWS.findIndex(r=>r.name===opts.groupLine.bot);
+    if(gi0>=0&&gi1>=0){
+      const gx=X0-4, gy0=ys[gi0], gy1=ys[gi1]+heights[gi1], gc=opts.groupLine.color||'#888';
+      s+=`<line x1="${gx.toFixed(1)}" y1="${gy0.toFixed(1)}" x2="${gx.toFixed(1)}" y2="${gy1.toFixed(1)}" stroke="${gc}" stroke-width="1.5" stroke-linecap="round"/>`;
+    }
+  }
   const vbH=Math.ceil(cBot+LP+4);
   return `<svg viewBox="0 0 ${vbW} ${vbH}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 }
