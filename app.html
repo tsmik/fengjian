@@ -1304,7 +1304,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   /* 部位視角比照維度視角：部位欄 sticky 固定(滑條件欄不動)+padding-top:28→頭對齊維度視角形勢top；
      部位名(無維度標題列)黏 top:28 跟頭同高；條件題依 section 並排(比照自我評分)；section 標題放大 */
   .m-partv .m-dimv-partnav{position:sticky;top:0;align-self:flex-start;padding-top:28px}
-  .m-partv .m-dimv-parthead{top:28px}
+  /* 部位名比照維度標題列(dimbar)：sticky top:0+padding-top:28 → 部位名落 28(跟維度名同線)，整塊不透明覆蓋 0~28(滑動不穿透、不蓋子部位框) */
+  .m-partv .m-dimv-parthead{top:0;padding-top:28px}
   .m-partv .m-dimv-condcol .m-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px 14px;align-items:start}
   .m-partv .m-dimv-condcol .m-section-label{grid-column:1/-1;font-size:17px}
   /* 兵法報告桌機：分析圖=兩張雷達 並排(等大)；係數總覽=子彈圖放左欄(同雷達寬→同字級，總對齊係數圖的奇) */
