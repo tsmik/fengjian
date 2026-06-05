@@ -323,6 +323,13 @@ function render() {
   }
 }
 
+// 維度視角桌機：選部位後把 .m-main 捲回頂端，條件欄頂端的部位名＋條件就直接看得到
+function _scrollDimvTop() {
+  if (!_isDesktop()) return;
+  const sc = (_root && _root.closest && _root.closest('.m-main')) || document.querySelector('.m-main');
+  if (sc) sc.scrollTop = 0;
+}
+
 // 目前子 tab key（部位視角/維度視角 同屬 quiz，用 _quizMode 區分）
 export function getInputView() { return (_view === 'quiz') ? _quizMode : _view; }
 // 設定子 tab：part/dim → quiz+_quizMode；report/sens → _view（給桌機側欄 subnav + 手機 segmented 共用）
@@ -1349,6 +1356,7 @@ function bindEvents() {
       if (_isDesktop()) { _dimPartExpanded[di] = pi; saveDimPartExpanded && saveDimPartExpanded(); }
       else { togglePartExpanded(di, pi); }
       render();
+      _scrollDimvTop();   // 選部位後捲回頂端 → 條件欄頂端的部位名＋條件直接看得到
     });
   });
 
@@ -1362,6 +1370,7 @@ function bindEvents() {
       _dimPartExpanded[di] = pi;
       saveDimPartExpanded();
       render();
+      _scrollDimvTop();
     });
   });
 
