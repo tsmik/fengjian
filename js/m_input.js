@@ -691,7 +691,7 @@ function renderDimMode() {
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目（需作答）</span></div></div>`;
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -956,8 +956,9 @@ function _renderRelatedParts(di, partResults) {
     let units;
     if (g.L || g.R) units = (g.L ? unit(g.L, '左') : '') + (g.R ? unit(g.R, '右') : '');
     else units = unit(g.single, '');
-    const link = refPi >= 0 ? `<button class="m-dimv-reflink" data-dim-jump="${refPi}" data-dim="${di}">→ ${escapeHtml(pn)}部觀察</button>` : '';
-    return `<div class="m-dimv-refrow"><div class="m-dimv-refgrp">${units}</div>${link}</div>`;
+    // 左右並列在第一行；快速鍵放第二行
+    const linkRow = refPi >= 0 ? `<div class="m-dimv-reflinkrow"><button class="m-dimv-reflink" data-dim-jump="${refPi}" data-dim="${di}">→ ${escapeHtml(pn)}部觀察</button></div>` : '';
+    return `<div class="m-dimv-refrow"><div class="m-dimv-refgrp">${units}</div>${linkRow}</div>`;
   }).join('');
 }
 

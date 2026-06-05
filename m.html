@@ -118,6 +118,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   bottom:calc(var(--tab-h) + var(--safe-bottom));
   left:0;right:0;
   overflow-y:auto;
+  overscroll-behavior:none;  /* 拿掉捲到頂/底的回彈(rubber-band)，減少視覺干擾 */
   -webkit-overflow-scrolling:touch;
 }
 .m-tab-page{
@@ -487,12 +488,13 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* 未填完係數框（灰底） */
 .m-dimv-pv-coeff.is-wait{background:#e7e3dc;color:#a89e92;justify-content:center;font-size:15px}
 /* 關聯部位（中停/下停）：L/R 唯讀動靜 bar + 「→X部觀察」快速鍵 */
-.m-dimv-refrow{display:flex;align-items:center;gap:10px;background:#fbf7ee;border:1px solid #ece2cd;border-radius:10px;padding:10px 14px;margin-bottom:8px}
-.m-dimv-refgrp{display:flex;align-items:center;gap:16px;flex:1;flex-wrap:wrap;min-width:0}
+.m-dimv-refrow{display:flex;flex-direction:column;align-items:stretch;gap:8px;background:#fbf7ee;border:1px solid #ece2cd;border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.m-dimv-refgrp{display:flex;align-items:center;gap:20px;flex-wrap:wrap;min-width:0}
 .m-dimv-refunit{display:flex;align-items:center;gap:7px}
-.m-dimv-refname{font-size:15px;color:#5a5147}
+.m-dimv-refname{width:3em;flex-shrink:0;font-size:15px;color:#5a5147}
 .m-dimv-refbar{padding:6px 16px;border-radius:8px;background:#e7e3dc;color:#a89e92;font-size:13px}
-.m-dimv-reflink{margin-left:auto;display:inline-flex;align-items:center;gap:4px;background:#f3ece0;border:1px solid #ddd2bd;border-radius:8px;color:#6a5f50;font-family:inherit;font-size:13px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.m-dimv-reflinkrow{display:flex;justify-content:flex-end}
+.m-dimv-reflink{display:inline-flex;align-items:center;gap:4px;background:#f3ece0;border:1px solid #ddd2bd;border-radius:8px;color:#6a5f50;font-family:inherit;font-size:13px;padding:6px 11px;cursor:pointer;white-space:nowrap}
 .m-dimv-reflink:active{background:#e3d6bd}
 .m-sv-subparts{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
 .m-sv-subpart{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding-bottom:6px;min-width:0}
