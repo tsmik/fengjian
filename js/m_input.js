@@ -669,11 +669,11 @@ function _dimPoleOf(dim, ch) {
 // 部位門檻敘述（如「7 個部位，4 個（含）以上即為形（不形則勢）」）
 function _dimPartThreshDesc(cr, dim) {
   if (!cr || cr.threshold === '無規則') return '';
-  const th = cr.threshold, mx = cr.max;
-  if (typeof th === 'number' && typeof mx === 'number' && mx > 0) {
-    return `${mx} 個部位，${th} 個（含）以上即為${dim.a}（不${dim.a}則${dim.b}）`;
+  // COUNT 型用「X 個部位，Y 個（含）以上即為形（不形則勢）」；其他用引擎門檻字串
+  if (cr.op === 'COUNT' && typeof cr.min === 'number' && cr.max > 0) {
+    return `${cr.max} 個部位，${cr.min} 個（含）以上即為${dim.a}（不${dim.a}則${dim.b}）`;
   }
-  return '';
+  return (typeof cr.threshold === 'string') ? cr.threshold : '';
 }
 
 // 維度視角：4 欄（維度｜部位導覽｜條件欄｜整體動靜預覽）。比照自我評分 .m-sv-* 風格
@@ -691,7 +691,7 @@ function renderDimMode() {
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">輸入部位觀察特徵，自動計算係數</span></div></div>`;
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -711,7 +711,7 @@ function renderDimMode() {
     return `<button class="m-dimv-part ${pi === selPi ? 'is-cur' : ''} ${doneCls} ${noRule ? 'is-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-dimv-part-name">${escapeHtml(label)}</span>${badge ? `<span class="m-dimv-part-prog">${badge}</span>` : ''}</button>`;
   }).join('');
   const dprog = dimProgress(di);
-  const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${dprog.done}／${dprog.total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有選擇</button></div>`;
+  const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${dprog.done}／${dprog.total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
 
   // ── 第3欄：條件欄（sticky 部位名 + 門檻 + 觀察題）
   let condCol;
@@ -742,7 +742,7 @@ function renderDimMode() {
   if (r) { cVal = r.coeff.toFixed(2); if (r.a > r.b) { cWord = dim.aT; cTone = dim.aT === '靜' ? 'jing' : 'dong'; } else if (r.b > r.a) { cWord = dim.bT; cTone = dim.bT === '靜' ? 'jing' : 'dong'; } else cWord = '平'; }
   const pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
-  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card"><div class="m-dimv-pv-title">整體動靜預覽</div>${pvHead}${pvRows}${pvCoeff}</div></div>`;
+  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvHead}${pvRows}${pvCoeff}</div></div>`;
 
   return `<div class="m-score-view m-dim-scoreview m-dimv"><div class="m-dimv-row1">${dimList}<div class="m-dimv-main">${dimbar}<div class="m-dimv-body">${partNav}${condCol}${preview}</div></div></div></div>`;
 }

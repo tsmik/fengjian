@@ -470,13 +470,13 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dimv-pv-colhead{display:flex;margin:0 0 8px 52px}
 .m-dimv-pv-colhead span{flex:1;text-align:center;font-size:15px}
 .m-dimv-pv-colhead .h-jing{color:#6f9072}.m-dimv-pv-colhead .h-dong{color:#a76040}
-.m-dimv-pv-row{display:flex;align-items:center;margin-bottom:7px}
+.m-dimv-pv-row{display:flex;align-items:center;margin-bottom:6px}
 .m-dimv-pv-name{flex-shrink:0;width:52px;font-size:16px;color:#3a3228}
 .m-dimv-pv-poles{flex:1;display:flex;gap:8px}
-.m-dimv-pv-pole{flex:1;text-align:center;padding:12px 0;font-size:16px;border-radius:9px;background:#eceadf;color:transparent}
+.m-dimv-pv-pole{flex:1;text-align:center;padding:10px 0;font-size:15px;border-radius:9px;background:#eceadf;color:transparent}
 .m-dimv-pv-pole.is-jing{background:#7A9E7E;color:#fff}
 .m-dimv-pv-pole.is-dong{background:#C17A5A;color:#fff}
-.m-dimv-pv-coeff{display:flex;align-items:center;margin-top:12px;padding:13px 16px;border-radius:12px;font-size:17px;color:#fff;background:#b8ae9e}
+.m-dimv-pv-coeff{display:flex;align-items:center;margin-top:10px;padding:11px 15px;border-radius:12px;font-size:16px;color:#fff;background:#b8ae9e}
 .m-dimv-pv-coeff.is-dong{background:#C17A5A}.m-dimv-pv-coeff.is-jing{background:#7A9E7E}
 .m-dimv-pv-coeff .r{margin-left:auto;font-size:16px}
 .m-sv-subparts{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
@@ -1269,7 +1269,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-dimv-body{display:flex;align-items:flex-start;gap:16px}
   .m-dimv-partnav{flex:0 0 168px}
   .m-dimv-condcol{flex:1;min-width:0}
-  .m-dimv-prevcol{flex:0 0 240px}
+  /* 整體動靜預覽：固定住，上緣靠頭框、捲動部位/條件時不動（top 約等於維度標題高，可微調） */
+  .m-dimv-prevcol{flex:0 0 240px;align-self:flex-start;position:sticky;top:64px}
   /* 條件欄觀察題字級/並排比照自我評分 */
   .m-dimv-condcol .m-dim-group-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px 14px;align-items:start}
   .m-dimv-condcol .m-q{margin-bottom:0}

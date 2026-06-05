@@ -412,5 +412,5 @@ export function _buildPartCond(ruleNode,partDef,partName,dimIdx,partIdx,pos,qMap
   var threshold=_makeThreshold(ruleNode,pos,items);
   var pass=(partIdx<=8)?data[dimIdx][partIdx]==='A':false;
 
-  return {items:items,score:score,max:max,pass:pass,threshold:threshold};
+  return {items:items,score:score,max:max,pass:pass,threshold:threshold,op:ruleNode.op,min:(ruleNode.op==='COUNT'?(ruleNode.min||0):null)};
 }
