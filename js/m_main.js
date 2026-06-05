@@ -227,6 +227,96 @@ async function _backToSelf() {
   else if (key === 'manual') { try { unmountManual(); } catch (e) {} mountManual(document.getElementById('m-page-manual')); renderManualSubnav(); }
 }
 
+// ============================================================
+// 桌機個案工作區（側欄「個案管理」下方展開：被分析者名稱 ＋ ✕ ＋ 四分頁）
+//   - 一次一個個案；上方「上課/部位觀察/我的/首頁」永遠是本人
+//   - 進入某分頁 → active=該個案 + 整頁染個案卡片色淡版
+//   - 桌機限定（手機無側欄，沿用既有「個案管理→細節→報告連結」流程）
+// ============================================================
+export function isDesktopSidebar() {
+  try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; }
+}
+let _wsCase = null;     // {id,name,color}
+let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
+let _wsRouting = false; // 工作區內部驅動的 tab.click()，讓上方分頁的「鎖本人」邏輯跳過
+const WS_SUBS = [
+  { key: 'obs', label: '部位觀察分析', tab: 'input' },
+  { key: 'obs-report', label: '報告', tab: 'input' },
+  { key: 'manual', label: '手動評分分析', tab: 'manual' },
+  { key: 'manual-report', label: '報告', tab: 'manual' }
+];
+function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function _renderWorkspace() {
+  const host = document.getElementById('m-ws');
+  if (!host) return;
+  if (!_wsCase) { host.innerHTML = ''; host.style.display = 'none'; host.style.background = ''; return; }
+  host.style.display = '';
+  host.style.background = _bannerTint(_wsCase.color);
+  const items = WS_SUBS.map(function (s) {
+    return '<button class="m-ws-item' + (s.key === _wsSub ? ' active' : '') + '" data-ws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
+  }).join('');
+  host.innerHTML =
+    '<div class="m-ws-head"><span class="m-ws-dot"></span><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
+    '<button class="m-ws-close" id="m-ws-close" title="關閉，回到本人">✕</button></div>' +
+    '<div class="m-ws-items">' + items + '</div>';
+  const cl = host.querySelector('#m-ws-close'); if (cl) cl.onclick = closeCaseWorkspace;
+  host.querySelectorAll('[data-ws]').forEach(function (b) { b.addEventListener('click', function () { selectWorkspaceSub(b.dataset.ws); }); });
+}
+// 開啟某個案的工作區（取代既有的；一次一個），預設停在 subKey（不給 → 部位觀察分析）
+export function openCaseWorkspace(caseObj, subKey) {
+  if (!caseObj || !caseObj.id) return;
+  _wsCase = { id: caseObj.id, name: caseObj.name || '個案', color: caseObj.color || '' };
+  _wsSub = null;
+  _renderWorkspace();
+  selectWorkspaceSub(subKey || 'obs');
+}
+// 切到工作區某分頁：設 active=個案、掛對應分析頁、染色、保持側欄高亮
+export function selectWorkspaceSub(key) {
+  if (!_wsCase) return;
+  const sub = WS_SUBS.find(function (s) { return s.key === key; });
+  if (!sub) return;
+  const prevActive = getActiveCaseId();
+  setActiveCase(_wsCase.id);
+  // 進入後的子畫面：靠 once-LS 讓 mount 第一畫面正確（part 為預設不需 once）
+  if (sub.tab === 'input') {
+    if (key === 'obs-report') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} }
+  } else {
+    try { localStorage.setItem('m_manual_view_once', key === 'manual-report' ? 'overview' : 'input'); } catch (e) {}
+  }
+  _wsRouting = true;
+  const tb = document.querySelector('.m-tab[data-tab="' + sub.tab + '"]');
+  if (tb) tb.click();
+  _wsRouting = false;
+  // 切換可能被「未儲存」提示擋下 → 目標分頁沒 active 就還原
+  if (!tb || !tb.classList.contains('active')) { setActiveCase(prevActive); return; }
+  // 已 mount 的情況補強子畫面（manual 已在 manual / input 已在 input 時 once 不會被讀）
+  try {
+    if (sub.tab === 'input') setInputView(key === 'obs-report' ? 'report' : 'part');
+    else setManualView(key === 'manual-report' ? 'overview' : 'input');
+  } catch (e) {}
+  _wsSub = key;
+  document.body.classList.add('m-ws-active');
+  document.body.style.setProperty('--ws-tint', _bannerTint(_wsCase.color));
+  _renderWorkspace();
+  // 視圖已正確（once 被 mount 消費，或上面 setInputView/setManualView 補強）→ 清掉殘留 once，避免之後本人重掛時誤讀
+  try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
+}
+// ✕：關閉工作區、回到本人「我的」
+export function closeCaseWorkspace() {
+  _wsCase = null; _wsSub = null;
+  document.body.classList.remove('m-ws-active');
+  _renderWorkspace();
+  setActiveCase(null);
+  _wsRouting = false;
+  const tb = document.querySelector('.m-tab[data-tab="report"]'); if (tb) tb.click();
+}
+// 點上方分頁時：取消工作區的染色/高亮，但側欄工作區仍保留（個案還釘在那）
+function _exitWorkspaceActive() {
+  _wsSub = null;
+  document.body.classList.remove('m-ws-active');
+  _renderWorkspace();
+}
+
 // ===== Cross-device sync：抓最新 firestore user doc 更新 window.__userData =====
 // v1.7 階段 A：mountInput / mountManual / mountReport 進來時呼叫，桌機改的資料手機看得到
 // 用 getDocFromServer 強制從 server 拿（避免 firebase SDK 預設 cache 拿到舊資料）
@@ -471,7 +561,7 @@ if (isTeacherMode) {
     report:document.getElementById('m-page-report')
   };
   tabs.forEach(function(btn){
-    btn.addEventListener('click',function(){
+    btn.addEventListener('click',async function(){
       const key=btn.dataset.tab;
       // 兩個工作區獨立 confirm：
       //   觀察工作區 = input ↔ report（內部切換不 confirm）
@@ -497,6 +587,17 @@ if (isTeacherMode) {
       if (isOnManual && key !== 'manual' && getManualDirty()) {
         if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return;
         discardManualDraft();
+      }
+      // 桌機：點上方分頁一律切回本人（個案分析走側欄工作區）。
+      // 工作區仍釘在側欄，僅取消染色/高亮；_wsRouting 時（工作區自己驅動的 click）跳過。
+      let _forcedSelf = false;
+      if (!_wsRouting) {
+        if (isDesktopSidebar() && getActiveCaseId()) {
+          setActiveCase(null);
+          try { await refreshUserData(); } catch (e) {}
+          _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
+        }
+        if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
@@ -543,7 +644,7 @@ if (isTeacherMode) {
         mountReport(pages.report);
         openCaseMgmtView();
       } else if(key==='manual'){
-        if (!isOnManual) {            // 已在上課又點上課 → 不重 mount、不重設子畫面
+        if (!isOnManual || _forcedSelf) {   // 已在上課又點上課 → 不重 mount；但「強制切回本人」要重掛換資料
           unmountInput();
           clearInputSubnav();
           unmountReport();

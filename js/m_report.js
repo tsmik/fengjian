@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -219,6 +219,8 @@ function _paintDashboard() {
   }
   // 流年（縮兩行）
   inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
+  // 個案：開始分析（桌機→進側欄工作區；手機→沿用既有報告流程）
+  if (p.isCase) inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
   // 報告連結 + 進度
   inner += '<button class="m-home-bigbtn" data-dash-report="auto"><span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察評分報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + obs.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
   inner += '<button class="m-home-bigbtn" data-dash-report="manual"><span class="m-home-bigbtn-icon">✎</span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">手動輸入報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + man.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
@@ -241,6 +243,7 @@ function _paintDashboard() {
       dot.onclick = () => { _detailSelColor = dot.dataset.color; t.querySelectorAll('#m-dash-colors .m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot)); };
     });
   }
+  const anaBtn = t.querySelector('[data-dash-analyze]'); if (anaBtn) anaBtn.onclick = _startAnalyze;
   const aBtn = t.querySelector('[data-dash-report="auto"]'); if (aBtn) aBtn.onclick = () => _gotoReport('auto');
   const mBtn = t.querySelector('[data-dash-report="manual"]'); if (mBtn) mBtn.onclick = () => _gotoReport('manual');
   const delBtn = t.querySelector('#m-dash-delete'); if (delBtn) delBtn.onclick = _deleteCurrentCase;
@@ -284,6 +287,14 @@ async function _saveDashboardEdit() {
 
 // 從儀表板報告連結進入：把這人設成目前分析 → 切到對應分頁
 async function _gotoReport(kind) {
+  // 桌機 + 個案：改走側欄「個案工作區」（上方分頁留給本人），不跳上面的部位觀察/手動分頁
+  if (_dashIsCase && _dashPerson && isDesktopSidebar()) {
+    const sub = (kind === 'manual') ? 'manual-report' : 'obs-report';
+    _closeCaseDetail();
+    _closeCaseMgmt();
+    openCaseWorkspace({ id: _dashPerson.id, name: _dashPerson.name, color: _dashPerson.color }, sub);
+    return;
+  }
   setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
   await refreshUserData();
   try { updateHomeProgress(); } catch (e) {}
@@ -292,6 +303,18 @@ async function _gotoReport(kind) {
   _closeCaseMgmt();
   if (kind === 'auto') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click(); }
   else { try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
+}
+
+// 個案細節頁「開始分析」：桌機→側欄工作區（部位觀察分析）；手機→沿用既有報告流程
+function _startAnalyze() {
+  if (!_dashPerson) return;
+  if (isDesktopSidebar()) {
+    _closeCaseDetail();
+    _closeCaseMgmt();
+    openCaseWorkspace({ id: _dashPerson.id, name: _dashPerson.name, color: _dashPerson.color }, 'obs');
+  } else {
+    _gotoReport('auto');
+  }
 }
 
 // ---- 案例管理總畫面 ----
