@@ -1124,10 +1124,7 @@ function renderOptions(qid, curVal, opts) {
     const hint = o.hint || '';
     const sel = curVal === v ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}">
-        <span class="m-opt-v">${escapeHtml(v)}</span>
-        ${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}
-      </button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }
@@ -1177,10 +1174,7 @@ function _renderSyncOptions(qid, opts, vL, vR) {
     const hint = o.hint || '';
     const sel = (v === vL || v === vR) ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}">
-        <span class="m-opt-v">${escapeHtml(v)}</span>
-        ${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}
-      </button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }
