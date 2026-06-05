@@ -1280,17 +1280,16 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
   .m-sv-subpart:only-child{grid-column:1/-1}
   /* ===== 維度視角 4 欄桌機：維度｜部位導覽｜條件欄｜整體動靜預覽 ===== */
-  /* 中和上課用負邊距(上方有 page-hint 已移除)；下方收掉 tab-page/submode padding → 去掉「還能上滑一小段」溢出 */
-  .m-dim-scoreview{margin-top:0;margin-bottom:-28px}
+  /* 完全比照自我評分：margin-top:-20 抵銷 tab-page 上 padding(內容貼頂、版面上提)；
+     不加 max-height/margin-bottom 補丁 → 維度欄用自我評分設定，13 維度照原高度全顯示不內捲 */
+  .m-dim-scoreview{margin-top:-20px;padding-top:0}
   .m-dimv-row1{display:flex;align-items:flex-start;gap:18px}
   .m-dimv-main{flex:1;min-width:0}
   .m-dimv-body{display:flex;align-items:flex-start;gap:16px}
-  /* 部位導覽過高時內部捲動(不撐高整頁)；維度欄 max-height 同理扣掉 page padding */
-  .m-dimv-partnav{flex:0 0 168px;max-height:calc(100vh - var(--nav-h) - 150px);overflow-y:auto}
-  .m-dimv .m-sv-dimlist{max-height:calc(100vh - var(--nav-h) - 60px)}
+  .m-dimv-partnav{flex:0 0 168px}
   .m-dimv-condcol{flex:1;min-width:0}
-  /* 整體動靜預覽：固定住，上緣對齊維度欄「經緯」上緣、捲動時不動（top≈維度標題+形勢框高，可微調） */
-  .m-dimv-prevcol{flex:0 0 240px;align-self:flex-start;position:sticky;top:95px}
+  /* 整體動靜預覽：固定住，上緣對齊維度欄「經緯」上緣(隨內容上移 20→top 95→75，可微調) */
+  .m-dimv-prevcol{flex:0 0 240px;align-self:flex-start;position:sticky;top:75px}
   /* 條件欄觀察題字級/並排比照自我評分 */
   .m-dimv-condcol .m-dim-group-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px 14px;align-items:start}
   .m-dimv-condcol .m-q{margin-bottom:0}
