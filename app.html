@@ -489,9 +489,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dimv-pv-coeff.is-wait{background:#e7e3dc;color:#a89e92;justify-content:center;font-size:15px}
 /* 關聯部位（中停/下停）：L/R 唯讀動靜 bar + 「→X部觀察」快速鍵 */
 .m-dimv-refrow{display:flex;flex-direction:column;align-items:stretch;gap:8px;background:#fbf7ee;border:1px solid #ece2cd;border-radius:10px;padding:10px 14px;margin-bottom:8px}
-.m-dimv-refgrp{display:flex;align-items:center;gap:20px;flex-wrap:wrap;min-width:0}
-.m-dimv-refunit{display:flex;align-items:center;gap:7px}
-.m-dimv-refname{width:3em;flex-shrink:0;font-size:15px;color:#5a5147}
+.m-dimv-refgrp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.m-dimv-refunit{display:flex;align-items:center;gap:3px}
+.m-dimv-refname{width:2.6em;flex-shrink:0;font-size:15px;color:#5a5147}
 .m-dimv-refbar{padding:6px 16px;border-radius:8px;background:#e7e3dc;color:#a89e92;font-size:13px}
 .m-dimv-reflinkrow{display:flex;justify-content:flex-end}
 .m-dimv-reflink{display:inline-flex;align-items:center;gap:4px;background:#f3ece0;border:1px solid #ddd2bd;border-radius:8px;color:#6a5f50;font-family:inherit;font-size:13px;padding:6px 11px;cursor:pointer;white-space:nowrap}
@@ -1280,11 +1280,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
   .m-sv-subpart:only-child{grid-column:1/-1}
   /* ===== 維度視角 4 欄桌機：維度｜部位導覽｜條件欄｜整體動靜預覽 ===== */
-  .m-dim-scoreview{margin-top:0}
+  /* 中和上課用負邊距(上方有 page-hint 已移除)；下方收掉 tab-page/submode padding → 去掉「還能上滑一小段」溢出 */
+  .m-dim-scoreview{margin-top:0;margin-bottom:-28px}
   .m-dimv-row1{display:flex;align-items:flex-start;gap:18px}
   .m-dimv-main{flex:1;min-width:0}
   .m-dimv-body{display:flex;align-items:flex-start;gap:16px}
-  .m-dimv-partnav{flex:0 0 168px}
+  /* 部位導覽過高時內部捲動(不撐高整頁)；維度欄 max-height 同理扣掉 page padding */
+  .m-dimv-partnav{flex:0 0 168px;max-height:calc(100vh - var(--nav-h) - 150px);overflow-y:auto}
+  .m-dimv .m-sv-dimlist{max-height:calc(100vh - var(--nav-h) - 60px)}
   .m-dimv-condcol{flex:1;min-width:0}
   /* 整體動靜預覽：固定住，上緣對齊維度欄「經緯」上緣、捲動時不動（top≈維度標題+形勢框高，可微調） */
   .m-dimv-prevcol{flex:0 0 240px;align-self:flex-start;position:sticky;top:95px}
