@@ -1284,6 +1284,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
      不加 max-height/margin-bottom 補丁 → 維度欄用自我評分設定，13 維度照原高度全顯示不內捲 */
   .m-dim-scoreview{margin-top:-20px;padding-top:0}
   .m-dimv-row1{display:flex;align-items:flex-start;gap:18px}
+  /* 維度欄釘死：拿掉內捲(13 維度本來就放得下) → 滑條件欄時不再小動；維度標題名稱改 top 對齊→形勢框上緣對齊維度名上緣 */
+  .m-dimv .m-sv-dimlist{max-height:none;overflow:visible}
+  .m-dimv .m-sv-dimbar{align-items:flex-start}
   .m-dimv-main{flex:1;min-width:0}
   .m-dimv-body{display:flex;align-items:flex-start;gap:16px}
   .m-dimv-partnav{flex:0 0 168px}
