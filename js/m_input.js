@@ -690,8 +690,8 @@ function renderDimMode() {
     return `<button class="m-sv-dim ${_dimGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-dim="${i}">${dot}${escapeHtml(dm.dn)}</button>`;
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
-  // 維度大標題（跨欄、sticky）：維度名 + 動作說明
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span></div></div>`;
+  // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目（需作答）</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -749,10 +749,17 @@ function renderDimMode() {
   }).join('');
   // 加總（形X/勢Y，9 主部位）放在係數上方
   const pvSum = `<div class="m-dimv-pv-row m-dimv-pv-sumrow"><span class="m-dimv-pv-name">加總</span><span class="m-dimv-pv-poles"><span class="m-dimv-pv-num">${pvA}</span><span class="m-dimv-pv-num">${pvB}</span></span></div>`;
-  const r = calcDim(coreData, di);
-  let cWord = '—', cVal = '', cTone = 'even';
-  if (r) { cVal = r.coeff.toFixed(2); if (r.a > r.b) { cWord = dim.aT; cTone = dim.aT === '靜' ? 'jing' : 'dong'; } else if (r.b > r.a) { cWord = dim.bT; cTone = dim.bT === '靜' ? 'jing' : 'dong'; } else cWord = '平'; }
-  const pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
+  // 未填完（9 主部位有任一未算出）→ 係數框改灰底「未填完」，不顯示動 係數=
+  const dimComplete = PREV_LABELS.every((_, pi) => { const v = coreData[di] && coreData[di][pi]; return v === 'A' || v === 'B'; });
+  let pvCoeff;
+  if (!dimComplete) {
+    pvCoeff = `<div class="m-dimv-pv-coeff is-wait">未填完</div>`;
+  } else {
+    const r = calcDim(coreData, di);
+    let cWord = '—', cVal = '', cTone = 'even';
+    if (r) { cVal = r.coeff.toFixed(2); if (r.a > r.b) { cWord = dim.aT; cTone = dim.aT === '靜' ? 'jing' : 'dong'; } else if (r.b > r.a) { cWord = dim.bT; cTone = dim.bT === '靜' ? 'jing' : 'dong'; } else cWord = '平'; }
+    pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
+  }
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
   const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
 
@@ -914,7 +921,47 @@ function _collectDimPartGroups(di, pi) {
 // 頭的 3 個子部位（題庫中是頭底下的 section，規則引擎中是獨立 part 13/14/15）
 const HEAD_SUBPARTS = [[13, '頂骨'], [14, '枕骨'], [15, '華陽骨']];
 
-// 渲染某 (維度,部位idx) 的所有群組（可填題目 + partResult 結論行）
+// 關聯部位（中停/下停常見）：列 眉/眼/鼻/顴 等引用部位的 L/R 唯讀動靜 bar + 「→X部觀察」快速鍵
+// 未填完該部位 → 整條淡灰「請填答」；顴等只顯示動靜、不放觀察選項（選項在該部位填）
+function _renderRelatedParts(di, partResults) {
+  if (!partResults || !partResults.length) return '';
+  const dim = DIMS[di];
+  const pa = _dimPoleOf(dim, dim.da), pb = _dimPoleOf(dim, dim.db);
+  const order = [], byPart = {};
+  partResults.forEach(it => {
+    const pn = it.partN || it.label || '';
+    if (!byPart[pn]) { byPart[pn] = { L: null, R: null, single: null }; order.push(pn); }
+    if (it.side === 'L') byPart[pn].L = it;
+    else if (it.side === 'R') byPart[pn].R = it;
+    else byPart[pn].single = it;
+  });
+  return order.map(pn => {
+    const g = byPart[pn];
+    const refPi = DIM_PART_LABELS.indexOf(pn);
+    let refDone = false;
+    if (refPi >= 0) { const p = dimPartProgress(di, refPi); refDone = p.total > 0 && p.done === p.total; }
+    const unit = (it, sideLabel) => {
+      const name = (sideLabel || '') + pn;
+      let bar;
+      if (!refDone) {
+        bar = `<span class="m-dimv-refbar is-wait">請填答</span>`;
+      } else {
+        const resultVal = it && it.ok ? 'A' : 'B';   // 符合條件＝形＝dim.a 側
+        const ba = `<span class="m-sv-pole ${resultVal === pa.val ? 'is-' + pa.tone : ''}">${escapeHtml(dim.da)}</span>`;
+        const bb = `<span class="m-sv-pole ${resultVal === pb.val ? 'is-' + pb.tone : ''}">${escapeHtml(dim.db)}</span>`;
+        bar = `<span class="m-sv-poles">${ba}${bb}</span>`;
+      }
+      return `<span class="m-dimv-refunit"><span class="m-dimv-refname">${escapeHtml(name)}</span>${bar}</span>`;
+    };
+    let units;
+    if (g.L || g.R) units = (g.L ? unit(g.L, '左') : '') + (g.R ? unit(g.R, '右') : '');
+    else units = unit(g.single, '');
+    const link = refPi >= 0 ? `<button class="m-dimv-reflink" data-dim-jump="${refPi}" data-dim="${di}">→ ${escapeHtml(pn)}部觀察</button>` : '';
+    return `<div class="m-dimv-refrow"><div class="m-dimv-refgrp">${units}</div>${link}</div>`;
+  }).join('');
+}
+
+// 渲染某 (維度,部位idx) 的所有群組（可填題目 + partResult 關聯部位）
 function _renderDimGroupsHtml(di, partIdx) {
   const groups = _collectDimPartGroups(di, partIdx);
   if (groups.length === 0) return '';
@@ -928,17 +975,8 @@ function _renderDimGroupsHtml(di, partIdx) {
         const q = _findQById(qid);
         return q ? renderQuestion(q) : '';
       }).filter(Boolean).join('');
-      // partResult 結論行（中停/下停常見：純展示不可答）
-      const prHtml = g.partResults.map(it => {
-        const okCls = it.ok ? 'ok' : 'ng';
-        const mark = it.ok ? '✓' : '✗';
-        return `
-          <div class="m-dim-result-item ${okCls}">
-            <span class="m-dim-result-mark ${okCls}">${mark}</span>
-            <span class="m-dim-result-label">${escapeHtml(it.label || '(空)')}</span>
-          </div>
-        `;
-      }).join('');
+      // partResult → 關聯部位（L/R 唯讀動靜 bar + 快速鍵）
+      const prHtml = _renderRelatedParts(di, g.partResults);
       bodyHtml = qsHtml + prHtml;
     }
     return `
@@ -1309,6 +1347,19 @@ function bindEvents() {
       const pi = parseInt(btn.dataset.pi, 10);
       if (_isDesktop()) { _dimPartExpanded[di] = pi; saveDimPartExpanded && saveDimPartExpanded(); }
       else { togglePartExpanded(di, pi); }
+      render();
+    });
+  });
+
+  // 關聯部位快速鍵：「→X部觀察」→ 維度視角內切到該部位
+  _root.querySelectorAll('[data-dim-jump]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const di = parseInt(btn.dataset.dim, 10);
+      const pi = parseInt(btn.dataset.dimJump, 10);
+      if (isNaN(di) || isNaN(pi)) return;
+      _dimPartExpanded[di] = pi;
+      saveDimPartExpanded();
       render();
     });
   });

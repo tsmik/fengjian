@@ -180,7 +180,7 @@ function _flattenItem(node,side,qMap,partResults){
       ok=partResults[pr]?(partResults[pr].result==='positive'):false;
       label=pr+'達標';
     }
-    return {label:label,ok:ok,ids:[],side:dotIdx>=0?pr.substring(dotIdx+1):null,val:null,wt:1};
+    return {label:label,ok:ok,ids:[],side:dotIdx>=0?pr.substring(dotIdx+1):null,partN:(dotIdx>=0?pr.substring(0,dotIdx):pr),val:null,wt:1};
   }
   if(node.op==='NOT'){
     var inner=_flattenItem(node.item,side,qMap,partResults);
