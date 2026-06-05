@@ -519,7 +519,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-opt-hint-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:14px;color:#a89e92;cursor:pointer;border-radius:50%;flex-shrink:0;line-height:1}
 .m-opt-hint-icon:active{background:#e8e0d4;color:#3a3228}
 .m-opt-selected .m-opt-hint-icon{color:#7aaa58}
-.m-opt-hint{display:block;font-size:11px;color:#5a5048;font-weight:400;line-height:1.6;padding:6px 8px;background:#fafaf8;border-left:2px solid #C17A5A;border-radius:4px;text-align:left}
+/* hint 用上課筆記格式（字體/大小/顏色一致）：透明底、無邊框，只 ⓘ 當 icon */
+.m-opt-hint{display:block;font-size:15px;color:#3a3228;font-weight:400;line-height:1.7;background:transparent;border:none;border-radius:0;padding:4px 0 0;text-align:left}
 .m-opt-hint.is-hidden{display:none}
 .m-opt-hint-i{color:#a89e92;margin-right:5px;font-style:normal}
 .m-paired-toggle{padding:3px 10px;border:1px solid #c89540;border-radius:12px;font-size:12px;color:#c89540;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0}
