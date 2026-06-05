@@ -246,12 +246,13 @@ const WS_SUBS = [
   { key: 'manual-report', label: '報告', tab: 'manual' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-// 整頁淡染：個案色低透明度，蓋過所有欄位/標題（部位欄、維度欄、標題列都一起染），但只到「看得出不一樣」的程度
+// 整頁淡染：個案色低透明度，蓋過所有欄位/標題（部位欄、維度欄、標題列都一起染）。
+// 0.10 太淡、第一版不透明 40% 混色太濃 → 取中間 0.20（要再調改這個數字）
 function _wsWash(hex) {
-  if (!hex || hex.charAt(0) !== '#' || hex.length < 7) return 'rgba(150,135,105,0.07)';
+  if (!hex || hex.charAt(0) !== '#' || hex.length < 7) return 'rgba(150,135,105,0.14)';
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-  if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(150,135,105,0.07)';
-  return 'rgba(' + r + ',' + g + ',' + b + ',0.10)';
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(150,135,105,0.14)';
+  return 'rgba(' + r + ',' + g + ',' + b + ',0.20)';
 }
 function _renderWorkspace() {
   const host = document.getElementById('m-ws');
@@ -277,43 +278,56 @@ export function openCaseWorkspace(caseObj, subKey) {
   _renderWorkspace();
   selectWorkspaceSub(subKey || 'obs');
 }
-// 切到工作區某分頁：設 active=個案、掛對應分析頁、染色、保持側欄高亮
+// 切到工作區某分頁：設 active=個案、「直接」掛對應分析頁（不透過上方分頁 click，
+// 避免上方 部位觀察/上課 被高亮、也不顯示它們的子膠囊）。個案分析完全走側欄工作區。
 export function selectWorkspaceSub(key) {
   if (!_wsCase) return;
   const sub = WS_SUBS.find(function (s) { return s.key === key; });
   if (!sub) return;
-  const prevActive = getActiveCaseId();
+  // 離開目前內容的未存提示（目前可能在某個分析頁）
+  const pInput = document.getElementById('m-page-input');
+  const pManual = document.getElementById('m-page-manual');
+  const pReport = document.getElementById('m-page-report');
+  const pHome = document.getElementById('m-page-home');
+  const curInputActive = pInput && pInput.classList.contains('active');
+  const curManualActive = pManual && pManual.classList.contains('active');
+  if (curInputActive && getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
+  if (curManualActive && getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
+
   setActiveCase(_wsCase.id);
-  // 進入後的子畫面：靠 once-LS 讓 mount 第一畫面正確（part 為預設不需 once）
+  // 上方分頁全部取消高亮、清掉上方子膠囊（個案分析不碰上方選項）
+  document.querySelectorAll('.m-tab').forEach(function (b) { b.classList.remove('active'); });
+  clearInputSubnav(); clearManualSubnav();
+  [pInput, pManual, pReport, pHome].forEach(function (p) { if (p) p.classList.remove('active'); });
+
   if (sub.tab === 'input') {
+    if (pInput) pInput.classList.add('active');
+    unmountReport(); unmountManual();
     if (key === 'obs-report') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} }
+    mountInput(pInput);
+    try { setInputView(key === 'obs-report' ? 'report' : 'part'); } catch (e) {}
   } else {
+    if (pManual) pManual.classList.add('active');
+    unmountInput(); unmountReport();
     try { localStorage.setItem('m_manual_view_once', key === 'manual-report' ? 'overview' : 'input'); } catch (e) {}
+    mountManual(pManual);
+    try { setManualView(key === 'manual-report' ? 'overview' : 'input'); } catch (e) {}
   }
-  _wsRouting = true;
-  const tb = document.querySelector('.m-tab[data-tab="' + sub.tab + '"]');
-  if (tb) tb.click();
-  _wsRouting = false;
-  // 切換可能被「未儲存」提示擋下 → 目標分頁沒 active 就還原
-  if (!tb || !tb.classList.contains('active')) { setActiveCase(prevActive); return; }
-  // 已 mount 的情況補強子畫面（manual 已在 manual / input 已在 input 時 once 不會被讀）
-  try {
-    if (sub.tab === 'input') setInputView(key === 'obs-report' ? 'report' : 'part');
-    else setManualView(key === 'manual-report' ? 'overview' : 'input');
-  } catch (e) {}
+  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
+  try { localStorage.setItem('m_active_tab', 'cases'); } catch (e) {}
   _wsSub = key;
   document.body.classList.add('m-ws-active');
   document.body.style.setProperty('--ws-tint', _wsWash(_wsCase.color));
   _renderWorkspace();
-  // 視圖已正確（once 被 mount 消費，或上面 setInputView/setManualView 補強）→ 清掉殘留 once，避免之後本人重掛時誤讀
   try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
 }
 // ✕：關閉工作區、回到「個案管理」清單（工作區消失）
 export function closeCaseWorkspace() {
+  if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
+  if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
   _wsCase = null; _wsSub = null;
   document.body.classList.remove('m-ws-active');
   setActiveCase(null);
-  _wsRouting = false;
   _renderWorkspace();
   const tb = document.querySelector('.m-tab[data-tab="cases"]'); if (tb) tb.click();
 }
@@ -594,6 +608,11 @@ if (isTeacherMode) {
       if (isOnManual && key !== 'manual' && getManualDirty()) {
         if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return;
         discardManualDraft();
+      }
+      // 從個案工作區（側欄）點上方分頁離開 → 未存提示（工作區的 active 不在上方 .m-tab，上面兩個判斷抓不到）
+      if (document.body.classList.contains('m-ws-active')) {
+        if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
+        if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
       }
       // 桌機：點上方分頁一律切回本人（個案分析走側欄工作區）。
       // 工作區仍釘在側欄，僅取消染色/高亮；_wsRouting 時（工作區自己驅動的 click）跳過。

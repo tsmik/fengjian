@@ -1123,6 +1123,8 @@ body.m-ws-active #m-ws-tint{display:block}
   body.m-ws-active .m-tab.active{color:var(--text-3);font-weight:400}
   body.m-ws-active .m-tab.active::after{background:transparent}
   body.m-ws-active .m-tab.active .m-tab-icon{transform:none}
+  /* 工作區的「部位觀察分析」：恢復頁內 部位視角/維度視角 切換條（桌機平常用上方子膠囊、這裡不顯示子膠囊所以改用頁內）*/
+  body.m-ws-active #m-page-input .m-segmented-sub{display:flex}
 
   /* ===== 個案管理 Finder 三欄（桌機；渲染進 m-page-report，左側欄不消失）===== */
   .m-finder{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px)}
