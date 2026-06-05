@@ -708,7 +708,8 @@ function renderDimMode() {
     const ppr = dimPartProgress(di, pi);
     const badge = ppr.total > 0 ? `${ppr.done}/${ppr.total}` : '';
     const doneCls = (ppr.total > 0 && ppr.done === ppr.total) ? 'is-done' : (ppr.done > 0 ? 'is-partial' : '');
-    return `<button class="m-dimv-part ${pi === selPi ? 'is-cur' : ''} ${doneCls} ${noRule ? 'is-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-dimv-part-name">${escapeHtml(label)}</span>${badge ? `<span class="m-dimv-part-prog">${badge}</span>` : ''}</button>`;
+    const dot = hasPartUpdate(label) ? '<span class="m-update-dot-inline"></span>' : '';
+    return `<button class="m-dimv-part ${pi === selPi ? 'is-cur' : ''} ${doneCls} ${noRule ? 'is-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-dimv-part-name">${dot}${escapeHtml(label)}</span>${badge ? `<span class="m-dimv-part-prog">${badge}</span>` : ''}</button>`;
   }).join('');
   const dprog = dimProgress(di);
   const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${dprog.done}／${dprog.total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
@@ -728,21 +729,32 @@ function renderDimMode() {
     condCol = `<div class="m-dimv-condcol">${head}${body}</div>`;
   }
 
-  // ── 第4欄：整體動靜預覽（9 主部位形/勢 + 係數，唯讀，白底）
+  // ── 第4欄：整體動靜預覽（9 主部位形/勢 + 加總 + 係數，唯讀，白底）
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+  let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = coreData[di] && coreData[di][pi];
     const aOn = v === pa.val, bOn = v === pb.val, wait = (v !== 'A' && v !== 'B');
-    const ba = `<span class="m-dimv-pv-pole ${aOn ? 'is-' + pa.tone : ''}">${aOn ? escapeHtml(dim.da) : ''}</span>`;
-    const bb = `<span class="m-dimv-pv-pole ${bOn ? 'is-' + pb.tone : ''}">${bOn ? escapeHtml(dim.db) : ''}</span>`;
-    return `<div class="m-dimv-pv-row"><span class="m-dimv-pv-name">${escapeHtml(label)}</span><span class="m-dimv-pv-poles ${wait ? 'is-wait' : ''}">${ba}${bb}</span></div>`;
+    if (aOn) pvA++; else if (bOn) pvB++;
+    let poles;
+    if (wait) {
+      // 未填完：整條淡灰「請填答」，跟有算出形勢的列一樣高
+      poles = `<span class="m-dimv-pv-poles"><span class="m-dimv-pv-wait">請填答</span></span>`;
+    } else {
+      const ba = `<span class="m-dimv-pv-pole ${aOn ? 'is-' + pa.tone : ''}">${aOn ? escapeHtml(dim.da) : '&nbsp;'}</span>`;
+      const bb = `<span class="m-dimv-pv-pole ${bOn ? 'is-' + pb.tone : ''}">${bOn ? escapeHtml(dim.db) : '&nbsp;'}</span>`;
+      poles = `<span class="m-dimv-pv-poles">${ba}${bb}</span>`;
+    }
+    return `<div class="m-dimv-pv-row"><span class="m-dimv-pv-name">${escapeHtml(label)}</span>${poles}</div>`;
   }).join('');
+  // 加總（形X/勢Y，9 主部位）放在係數上方
+  const pvSum = `<div class="m-dimv-pv-row m-dimv-pv-sumrow"><span class="m-dimv-pv-name">加總</span><span class="m-dimv-pv-poles"><span class="m-dimv-pv-num">${pvA}</span><span class="m-dimv-pv-num">${pvB}</span></span></div>`;
   const r = calcDim(coreData, di);
   let cWord = '—', cVal = '', cTone = 'even';
   if (r) { cVal = r.coeff.toFixed(2); if (r.a > r.b) { cWord = dim.aT; cTone = dim.aT === '靜' ? 'jing' : 'dong'; } else if (r.b > r.a) { cWord = dim.bT; cTone = dim.bT === '靜' ? 'jing' : 'dong'; } else cWord = '平'; }
   const pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
-  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvHead}${pvRows}${pvCoeff}</div></div>`;
+  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
 
   return `<div class="m-score-view m-dim-scoreview m-dimv"><div class="m-dimv-row1">${dimList}<div class="m-dimv-main">${dimbar}<div class="m-dimv-body">${partNav}${condCol}${preview}</div></div></div></div>`;
 }
