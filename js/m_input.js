@@ -1063,7 +1063,7 @@ function renderPartMode() {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
     // 條件欄頂：sticky 部位名(20px) + 說明字 + 最右紅點圖例
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">輸入部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
