@@ -981,9 +981,9 @@ function _renderDimGroupsHtml(di, partIdx) {
         const q = _findQById(qid);
         return q ? renderQuestion(q) : '';
       }).filter(Boolean).join('');
-      // partResult → 關聯部位（L/R 唯讀動靜 bar + 快速鍵）
+      // partResult → 關聯部位（L/R 唯讀動靜 bar + 快速鍵）；不進瀑布流
       const prHtml = _renderRelatedParts(di, g.partResults);
-      bodyHtml = qsHtml + prHtml;
+      bodyHtml = (qsHtml ? `<div class="m-q-cols">${qsHtml}</div>` : '') + prHtml;
     }
     return `
       <div class="m-dim-group">
@@ -1099,7 +1099,7 @@ function renderSections(key) {
     return `
     <div class="m-section">
       ${s.label ? `<div class="m-section-label">${secDot}<span class="m-section-label-text">${escapeHtml(s.label)}</span>${secProg}</div>` : ''}
-      ${qs.map(q => renderQuestion(q, key)).join('')}
+      <div class="m-q-cols">${qs.map(q => renderQuestion(q, key)).join('')}</div>
     </div>
   `;
   }).join('');
