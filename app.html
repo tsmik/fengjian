@@ -1301,6 +1301,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-dimv-condcol .m-q-text{font-size:16px;line-height:1.6}
   .m-dimv-condcol .m-opt{font-size:15px;padding:9px 14px}
   .m-dimv-condcol .m-opt-v{font-size:15px}
+  /* 部位視角：無維度標題列 → 部位名黏頂端 top:0；條件題依 section 並排(比照自我評分)；section 標題放大 */
+  .m-partv .m-dimv-parthead{top:0}
+  .m-partv .m-dimv-condcol .m-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px 14px;align-items:start}
+  .m-partv .m-dimv-condcol .m-section-label{grid-column:1/-1;font-size:17px}
   /* 兵法報告桌機：分析圖=兩張雷達 並排(等大)；係數總覽=子彈圖放左欄(同雷達寬→同字級，總對齊係數圖的奇) */
   .m-rep-figs,.m-rep-overview{grid-template-columns:1fr 1fr;align-items:start;gap:20px}
   /* 桌機還原表格 zoom（手機微縮不影響桌機）*/

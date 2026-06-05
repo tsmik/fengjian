@@ -354,10 +354,8 @@ function renderQuizView() {
   let content = '';
   if (_quizMode === 'part') content = renderPartMode();
   else if (_quizMode === 'dim') content = renderDimMode();
-  // 維度視角版面上提（不顯示 page-hint，比照自我評分）；部位視角暫保留 hint
-  const hint = (_quizMode === 'dim') ? '' : '<div class="m-page-hint">輸入11部位觀察特徵，自動計算動/靜</div>';
+  // 部位視角/維度視角 都比照自我評分版面上提（不顯示 page-hint；說明字已在條件欄部位名旁）
   _root.innerHTML = `
-    ${hint}
     <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content">${content}</div>
   `;
@@ -1048,27 +1046,27 @@ function _isDesktop() {
 }
 
 function renderPartMode() {
-  // A1（§10）桌機兩欄：預設展開第一個部位，右側面板一進來就有內容（手機維持收合）
+  // 部位視角：比照維度視角版型（部位導覽欄 ｜ 條件欄），沿用 .m-dimv-* 零件（無維度欄/維度標題列）
   if (!_expandedKey && _isDesktop()) _expandedKey = PART_ROW_1[0];
-  const row1 = PART_ROW_1.map(k => renderPartTile(k)).join('');
-  const row2 = PART_ROW_2.map(k => renderPartTile(k)).join('');
-  const eraser = `<div class="m-eraser-slot"><button class="m-eraser-btn" data-action="erase-all" aria-label="清空所有觀察資料" title="清空所有觀察資料"><svg class="m-eraser-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg><span class="m-eraser-text">清空</span></button></div>`;
-  const panel = _expandedKey ? `
-    <div class="m-panel" data-panel="${escapeHtml(_expandedKey)}">
-      ${renderSections(_expandedKey)}
-    </div>
-  ` : `<div class="m-part-panel-hint">← 點選左側部位開始觀察</div>`;
-  return `
-    ${renderPartSummary()}
-    ${renderPartLegend()}
-    <div class="m-part-layout">
-      <div class="m-part-list">
-        <div class="m-input-row m-input-row-6">${row1}</div>
-        <div class="m-input-row m-input-row-5">${row2}${eraser}</div>
-      </div>
-      <div class="m-part-panel-wrap">${panel}</div>
-    </div>
-  `;
+  const allParts = PART_ROW_1.concat(PART_ROW_2);   // 11 題庫部位
+  const navTiles = allParts.map(key => {
+    const prog = partProgress(key);
+    const badge = prog.status === 'full' ? '✓' : (prog.done > 0 ? `${prog.done}/${prog.total}` : '');
+    const doneCls = prog.status === 'full' ? 'is-done' : (prog.done > 0 ? 'is-partial' : '');
+    const dot = hasPartUpdate(key) ? '<span class="m-update-dot-inline"></span>' : '';
+    return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(key)}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
+  }).join('');
+  const { done, total } = partGrandTotal();
+  const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
+  let condCol;
+  if (!_expandedKey) {
+    condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
+  } else {
+    // 條件欄頂：sticky 部位名(20px) + 說明字 + 最右紅點圖例
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">輸入部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div>`;
+    condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
+  }
+  return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
 }
 
 function renderPartTile(key) {
@@ -1348,7 +1346,7 @@ function bindEvents() {
   });
 
   // 維度視角部位導覽：點部位 → 右側顯示該部位條件（桌機一律選取不收合；手機切換）
-  _root.querySelectorAll('.m-dimv-part').forEach(btn => {
+  _root.querySelectorAll('.m-dimv-part[data-pi]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);
@@ -1357,6 +1355,20 @@ function bindEvents() {
       else { togglePartExpanded(di, pi); }
       render();
       _scrollDimvTop();   // 選部位後捲回頂端 → 條件欄頂端的部位名＋條件直接看得到
+    });
+  });
+
+  // 部位視角部位導覽：點部位 → 條件欄顯示該部位觀察題（比照維度視角）
+  _root.querySelectorAll('.m-dimv-part[data-key]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      if (!key) return;
+      const wasCur = _expandedKey === key;
+      _expandedKey = _isDesktop() ? key : (wasCur ? null : key);
+      if (!wasCur) markPartSeen(key);
+      render();
+      _scrollDimvTop();
     });
   });
 
