@@ -1170,31 +1170,50 @@ function _renderPairedColumnOpts(qid, side, opts) {
     `;
   }).join('');
 }
+// 單排選項（左右收合態）：data-qid=qid+'__sync'（點任一→寫 _L=_R=val 視為左右一致）；左或右選到此值→淡綠底
+function _renderSyncOptions(qid, opts, vL, vR) {
+  return (opts || []).map(o => {
+    const v = o.v;
+    const hint = o.hint || '';
+    const sel = (v === vL || v === vR) ? 'm-opt-selected' : '';
+    return `
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}">
+        <span class="m-opt-v">${escapeHtml(v)}</span>
+        ${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}
+      </button>
+    `;
+  }).join('');
+}
 function renderPairedQuestion(q, partName) {
   const isOpen = !!_splitOpen[q.id];
   const _todoCls = isAnswered(q) ? '' : ' m-q-todo';
-  const chip = _pairedConclusionChip(q.id);
   const dot = _questionDot(partName, q.id);
+  // 有效左右值（相容：分左右用 _L/_R；左右一致只寫主值 q.id）
+  const vL = _draft[q.id + '_L'] != null ? _draft[q.id + '_L'] : _draft[q.id];
+  const vR = _draft[q.id + '_R'] != null ? _draft[q.id + '_R'] : _draft[q.id];
+  const isDiff = (vL != null && vR != null && vL !== vR);
+  // 左右不一致提示（放展開/收合鈕右邊）；左右一致時不顯示
+  const diffHint = isDiff ? `<span class="m-q-tag m-q-tag-diff">左${escapeHtml(vL)}　右${escapeHtml(vR)}</span>` : '';
   if (!isOpen) {
-    // closed：sync 單排選項保留快速答題（直接點同步答 _L _R）+ 結論 chip
+    // 左右收合：單排選項（不一致時左右兩個選到的都淡綠底；點任一→視為左右一致）+「左右展開」鈕 + 不一致提示
     return `
       <div class="m-q m-q-paired${_todoCls}">
         <div class="m-q-head">
           <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
-          <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左/右</button>
-          ${chip}
+          <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左右展開</button>
+          ${diffHint}
         </div>
-        <div class="m-q-opts">${renderOptions(q.id + '__sync', _draft[q.id + '_L'] != null ? _draft[q.id + '_L'] : _draft[q.id], q.opts)}</div>
+        <div class="m-q-opts">${_renderSyncOptions(q.id, q.opts, vL, vR)}</div>
       </div>
     `;
   }
-  // open：兩欄並排，每欄選項上下列出（無 hint）
+  // 左右展開：兩欄左右選項 +「左右收合」鈕 + 不一致提示
   return `
     <div class="m-q m-q-paired m-q-paired-open${_todoCls}">
       <div class="m-q-head">
         <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
-        <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左/右</button>
-        ${chip}
+        <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左右收合</button>
+        ${diffHint}
       </div>
       <div class="m-q-paired-cols">
         <div class="m-q-paired-col">
