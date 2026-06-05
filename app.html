@@ -1291,8 +1291,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-dimv-body{display:flex;align-items:flex-start;gap:16px}
   .m-dimv-partnav{flex:0 0 168px}
   .m-dimv-condcol{flex:1;min-width:0}
-  /* 條件欄「部位名」那行：黏在維度標題列(dimbar)下方固定，下滑填條件時知道在填哪個部位 */
-  .m-dimv-parthead{top:66px}
+  /* 條件欄「部位名」那行：黏在所屬捲動容器頂端 */
+  .m-dimv-parthead{top:0}
+  /* 維度視角：①條件欄單欄(不瀑布流→減少空白) ②部位欄/條件欄各自內部捲動(拆開上下滑、互不影響) */
+  .m-dimv:not(.m-partv) .m-dimv-condcol .m-q-cols{column-count:1;column-width:auto}
+  .m-dimv:not(.m-partv) .m-dimv-partnav{max-height:calc(100vh - var(--nav-h) - 100px);overflow-y:auto}
+  .m-dimv:not(.m-partv) .m-dimv-condcol{max-height:calc(100vh - var(--nav-h) - 100px);overflow-y:auto}
   /* 整體動靜預覽：固定住，上緣對齊維度欄「經緯」上緣(隨內容上移 20→top 95→75，可微調) */
   .m-dimv-prevcol{flex:0 0 240px;align-self:flex-start;position:sticky;top:75px}
   /* 條件欄觀察題：群組內「欄式瀑布流」(.m-q-cols column-width)→高度參差的卡片包更緊、減少留白；群組順序保留 */

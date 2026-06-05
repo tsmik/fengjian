@@ -1444,14 +1444,9 @@ function bindEvents() {
 export async function mountInput(rootEl) {
   _root = rootEl;
 
-  // 第一次載入題目時顯示 placeholder（後續 mount 已快取，瞬間出現）
-  if (!_questionsLoaded) {
-    _root.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;">載入題目中…</div>';
-  }
-  await ensureQuestionsLoaded();
-
   // v1.7 階段 8：每次進部位觀察 tab 強制回到「答題 + 部位視角」（不讀 LS）
-  // v1.7 階段 12+：唯一例外是「once LS」（報告 tab 卡片點擊時 set），mount 讀後立刻清
+  // ⚠️ 必須在 await 之前同步重置 → m_main 緊接呼叫的 renderInputSubnav 才會 mark 在正確的「部位視角」
+  // 唯一例外是「once LS」（報告 tab 卡片點擊時 set），mount 讀後立刻清
   _view = 'quiz';
   _quizMode = 'part';
   try {
@@ -1461,6 +1456,12 @@ export async function mountInput(rootEl) {
       localStorage.removeItem('m_input_view_once');
     }
   } catch (e) {}
+
+  // 第一次載入題目時顯示 placeholder（後續 mount 已快取，瞬間出現）
+  if (!_questionsLoaded) {
+    _root.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;">載入題目中…</div>';
+  }
+  await ensureQuestionsLoaded();
 
   // 維度視角的展開狀態（哪維度展開、各部位群組收合）
   loadDimState();
