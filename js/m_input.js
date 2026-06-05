@@ -1022,17 +1022,15 @@ function _questionDot(partName, qid) {
 }
 
 function renderOptions(qid, curVal, opts) {
+  // 說明(hint)常駐顯示在選項下方（上課筆記款），ⓘ 當 icon、不再點開收合（避免與選取誤觸衝突）
   return (opts || []).map(o => {
     const v = o.v;
     const hint = o.hint || '';
     const sel = curVal === v ? 'm-opt-selected' : '';
     return `
       <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}">
-        <span class="m-opt-row">
-          <span class="m-opt-v">${escapeHtml(v)}</span>
-          ${hint ? `<span class="m-opt-hint-icon" data-hint-toggle="1" aria-label="說明">ⓘ</span>` : ''}
-        </span>
-        ${hint ? `<span class="m-opt-hint is-hidden">${escapeHtml(hint)}</span>` : ''}
+        <span class="m-opt-v">${escapeHtml(v)}</span>
+        ${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}
       </button>
     `;
   }).join('');
