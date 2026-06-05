@@ -649,8 +649,9 @@ if (isTeacherMode) {
         clearInputSubnav();
         unmountManual();
         clearManualSubnav();
-        mountReport(pages.report);
-        openCaseMgmtView();
+        // 桌機：直接渲染三欄 Finder 進 report 容器（不先掛本人儀表板，避免閃一下）；手機：掛儀表板＋overlay
+        if (isDesktopSidebar()) { unmountReport(); openCaseMgmtView(); }
+        else { mountReport(pages.report); openCaseMgmtView(); }
       } else if(key==='manual'){
         if (!isOnManual || _forcedSelf) {   // 已在上課又點上課 → 不重 mount；但「強制切回本人」要重掛換資料
           unmountInput();

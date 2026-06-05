@@ -1124,6 +1124,47 @@ body.m-ws-active #m-ws-tint{display:block}
   body.m-ws-active .m-tab.active::after{background:transparent}
   body.m-ws-active .m-tab.active .m-tab-icon{transform:none}
 
+  /* ===== 個案管理 Finder 三欄（桌機；渲染進 m-page-report，左側欄不消失）===== */
+  .m-finder{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px)}
+  .m-finder-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 14px;border-bottom:1px solid var(--border)}
+  .m-finder-title{font-size:18px;font-weight:600;color:#3a3228;letter-spacing:2px}
+  .m-finder-bar-btns{display:flex;gap:8px}
+  .m-finder-bar-btn{font-family:inherit;font-size:13px;color:#3a3228;background:#efe7d6;border:1px solid #d3c7b1;border-radius:8px;padding:8px 14px;cursor:pointer}
+  .m-finder-bar-btn:hover{background:#e7dcc6}
+  .m-finder-cols{display:grid;grid-template-columns:180px 1fr 300px;gap:14px;flex:1;min-height:0;margin-top:14px}
+  .m-finder-c1,.m-finder-c2,.m-finder-c3{overflow-y:auto;min-height:0}
+  .m-finder-c1{border-right:1px solid var(--border);padding-right:10px;display:flex;flex-direction:column;gap:4px}
+  .m-finder-c1item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:inherit;font-size:14px;color:#5a5147;background:transparent;border:none;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left}
+  .m-finder-c1item:hover{background:#efe7d6}
+  .m-finder-c1item.active{background:#e7dcc6;color:#3a3228;font-weight:600}
+  .m-finder-c1count{font-size:12px;color:#a89e92;font-weight:400}
+  .m-finder-c2{border-right:1px solid var(--border);padding-right:12px}
+  .m-finder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;align-content:start}
+  .m-finder-card{position:relative;display:flex;flex-direction:column;gap:5px;border:1.5px solid #e3dccb;border-radius:12px;padding:13px 12px;cursor:pointer;text-align:left;min-height:70px;font-family:inherit}
+  .m-finder-card.active{border-color:#c47a3d;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+  .m-finder-card-dot{width:9px;height:9px;border-radius:50%}
+  .m-finder-card-name{font-size:15px;color:#3a3228;font-weight:600}
+  .m-finder-card-grp{font-size:12px;color:#7a6e64}
+  .m-finder-empty{color:#a89e92;font-size:14px;padding:30px 10px;text-align:center}
+  .m-finder-preview{display:flex;flex-direction:column;gap:14px}
+  .m-finder-pv-head{border-radius:10px;padding:13px 14px}
+  .m-finder-pv-name{font-size:18px;font-weight:600;color:#3a3228}
+  .m-finder-pv-info{display:flex;flex-direction:column;gap:6px}
+  .m-finder-pv-row{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#3a3228;border-bottom:1px solid #efe7d6;padding-bottom:6px}
+  .m-finder-pv-row span:first-child{color:#a89e92}
+  .m-finder-coeff-title{font-size:13px;color:#7a6e64;margin-bottom:6px}
+  .m-finder-coeff-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .m-finder-coeff-src{flex:0 0 28px;font-size:12px;color:#7a6e64}
+  .m-finder-coeff-cell{flex:1;display:flex;flex-direction:column;align-items:center;background:#f3eee4;border-radius:8px;padding:5px 2px}
+  .m-finder-coeff-cell b{font-size:15px;color:#3a3228;font-weight:600}
+  .m-finder-coeff-cell i{font-size:11px;color:#a89e92;font-style:normal}
+  .m-finder-pv-chart{display:flex;align-items:center;justify-content:center;min-height:110px;background:#f7f4ef;border:1px dashed #d4c9b0;border-radius:10px}
+  .m-finder-chart-ph{font-size:13px;color:#a89e92}
+  .m-finder-pv-actions{display:flex;flex-direction:column;gap:8px}
+  .m-finder-act{font-family:inherit;font-size:14px;padding:11px;border-radius:10px;border:1px solid #d3c7b1;background:#fff;color:#3a3228;cursor:pointer}
+  .m-finder-act.is-primary{background:#3a3228;color:#fff;border-color:#3a3228;font-weight:600}
+  .m-finder-act.is-danger{color:#b5482e;border-color:#e3c3b8}
+
   /* main → 側欄右側。流體寬：≥1600px 置中成 1400；<1600px（如 1280/1440 筆電）
      貼齊右緣不超出 → 修正全螢幕右側被裁切 */
   .m-main{
