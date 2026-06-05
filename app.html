@@ -875,6 +875,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-tab.active .m-tab-icon{transform:scale(1.05)}
 .m-tabsub{display:none}  /* 桌機側欄「上課」展開子膠囊；手機用上方 segmented */
 .m-ws{display:none}      /* 個案工作區：桌機側欄限定；手機永遠隱藏（個案分析走細節頁報告流程）*/
+#m-ws-tint{display:none;position:fixed;pointer-events:none;z-index:30;background:var(--ws-tint,transparent)}
+body.m-ws-active #m-ws-tint{display:block}
 
 /* ===== 登入頁 ===== */
 .m-login{
@@ -1116,8 +1118,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-ws-item:hover{background:rgba(255,255,255,0.85)}
   .m-ws-item.active{background:#fff;border-color:#c47a3d;color:#3a3228;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.10)}
 
-  /* 工作區啟用：整頁染個案卡片色淡版 ＋ 中和上方分頁的選取高亮（表示「不在上面分頁」）*/
-  body.m-ws-active .m-main{background:var(--ws-tint,#fbf7f0)}
+  /* 工作區啟用：整頁淡染（上層蓋一層低透明度個案色，連欄位/標題列一起染）＋ 中和上方分頁高亮 */
+  #m-ws-tint{top:calc(var(--nav-h) + var(--safe-top));bottom:0;left:calc(max(0px,(100% - 1600px) / 2) + 180px);right:max(0px,(100% - 1600px) / 2)}
   body.m-ws-active .m-tab.active{color:var(--text-3);font-weight:400}
   body.m-ws-active .m-tab.active::after{background:transparent}
   body.m-ws-active .m-tab.active .m-tab-icon{transform:none}
@@ -1742,6 +1744,7 @@ body.m-debug-on .m-debug-clear{display:block}
   </button>
   <div class="m-ws" id="m-ws" style="display:none"></div>
 </nav>
+<div id="m-ws-tint" aria-hidden="true"></div>
 
 
 <script type="module" src="js/m_main.js"></script>

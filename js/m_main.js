@@ -246,6 +246,13 @@ const WS_SUBS = [
   { key: 'manual-report', label: '報告', tab: 'manual' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+// 整頁淡染：個案色低透明度，蓋過所有欄位/標題（部位欄、維度欄、標題列都一起染），但只到「看得出不一樣」的程度
+function _wsWash(hex) {
+  if (!hex || hex.charAt(0) !== '#' || hex.length < 7) return 'rgba(150,135,105,0.07)';
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(150,135,105,0.07)';
+  return 'rgba(' + r + ',' + g + ',' + b + ',0.10)';
+}
 function _renderWorkspace() {
   const host = document.getElementById('m-ws');
   if (!host) return;
@@ -296,19 +303,19 @@ export function selectWorkspaceSub(key) {
   } catch (e) {}
   _wsSub = key;
   document.body.classList.add('m-ws-active');
-  document.body.style.setProperty('--ws-tint', _bannerTint(_wsCase.color));
+  document.body.style.setProperty('--ws-tint', _wsWash(_wsCase.color));
   _renderWorkspace();
   // 視圖已正確（once 被 mount 消費，或上面 setInputView/setManualView 補強）→ 清掉殘留 once，避免之後本人重掛時誤讀
   try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
 }
-// ✕：關閉工作區、回到本人「我的」
+// ✕：關閉工作區、回到「個案管理」清單（工作區消失）
 export function closeCaseWorkspace() {
   _wsCase = null; _wsSub = null;
   document.body.classList.remove('m-ws-active');
-  _renderWorkspace();
   setActiveCase(null);
   _wsRouting = false;
-  const tb = document.querySelector('.m-tab[data-tab="report"]'); if (tb) tb.click();
+  _renderWorkspace();
+  const tb = document.querySelector('.m-tab[data-tab="cases"]'); if (tb) tb.click();
 }
 // 點上方分頁時：取消工作區的染色/高亮，但側欄工作區仍保留（個案還釘在那）
 function _exitWorkspaceActive() {
@@ -592,12 +599,13 @@ if (isTeacherMode) {
       // 工作區仍釘在側欄，僅取消染色/高亮；_wsRouting 時（工作區自己驅動的 click）跳過。
       let _forcedSelf = false;
       if (!_wsRouting) {
+        // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點上方分頁會殘留個案染色）
+        if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
         if (isDesktopSidebar() && getActiveCaseId()) {
           setActiveCase(null);
           try { await refreshUserData(); } catch (e) {}
           _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
         }
-        if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
