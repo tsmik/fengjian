@@ -8,6 +8,14 @@ import { DIMS as CORE_DIMS } from './core.js';
 
 const S='#7A9E7E', A='#C17A5A';
 const CRBG='#f0e9dc', CRT='#7d6643';
+// 雷達圖「沒有任何數值」時鋪一層米底（非透明）；有資料則不鋪。VB=viewBox 字串
+const RADAR_EMPTY_BG='#f5efe4';
+function _emptyBgRect(vb,isEmpty){
+  if(!isEmpty)return '';
+  const p=String(vb).trim().split(/\s+/).map(Number);
+  if(p.length<4||p.some(n=>isNaN(n)))return '';
+  return `<rect x="${p[0]}" y="${p[1]}" width="${p[2]}" height="${p[3]}" fill="${RADAR_EMPTY_BG}"/>`;
+}
 const DIMTXT=['#4A6B3A','#3A5E54','#6A6458','#7A5A38','#7A4858','#7A6A38','#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
 const COEF_MAX=0.8, STEP=360/13;
 const cx=200,cy=215,U=150/9,rIn=4*U,rOut=9*U,H=rOut-rIn;
@@ -77,7 +85,7 @@ export function buildRadar2SVG(opts){
   // 標題（選填，字級＝維度字 FSD，與 radar3 一致；僅在有傳 title 時畫）
   if(opts.title){svg+=`<text x="${opts.titleX!=null?opts.titleX:30}" y="36" font-size="${FSD}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
   const VB=opts.viewBox||'20 40 360 360';
-  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${_emptyBgRect(VB,!DIM.some(d=>d.c!=null))}${svg}</svg>`;
 }
 
 // ===== 係數雷達 手機版（radar2_m）=====
@@ -118,7 +126,7 @@ export function buildRadar2MSVG(opts){
    svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
      +`<text x="${cx}" y="${(cy-3*totS).toFixed(1)}" font-size="${lfs.toFixed(1)}" text-anchor="middle" fill="#fff">總係數</text>`
      +`<text x="${cx}" y="${(cy+9*totS).toFixed(1)}" font-size="${vfs.toFixed(1)}" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${(totV==null?'--':totV.toFixed(2))}</text>`;}
-  return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  return `<svg viewBox="20 40 360 360" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${_emptyBgRect('20 40 360 360',!DIM.some(d=>d.c!=null))}${svg}</svg>`;
 }
 
 // ===== 子彈/動靜 共用 bar 形 =====
@@ -309,5 +317,5 @@ export function buildRadar3SVG(opts){
   // 標題（畫在預設 viewBox 上方留白處，貼近圖頂、字級＝維度字；僅桌機用，手機版 viewBox 較窄不傳）
   if(opts.title){svg+=`<text x="${opts.titleX!=null?opts.titleX:36}" y="36" font-size="${fsName}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
   const VB=opts.viewBox||'0 -34 400 458'; // 手機版傳 "20 40 360 360" 使 13 邊形與 radar2 同大
-  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+  return `<svg viewBox="${VB}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${_emptyBgRect(VB,!coeff.some(c=>c!=null))}${svg}</svg>`;
 }
