@@ -1,5 +1,14 @@
 # 第 0 階段 — 需要人在 Console 做的部分（Claude Code 做不了的）
 
+> 📍 **進度更新（2026-06-06）**：專案已建立、web app config 已抓好並填進 `js/m_main.js`。
+> - 實際專案 ID：**`rbf2app`（正式）/ `rbf2app-staging`（測試）**（原定 `rbf2` 因 GCP 要求 ID ≥6 字而改名）。
+> - 下面步驟 1a/1b/1c **已由 CLI 完成**，可略過。
+> - **你現在只需做**：步驟 1d（開 Google 登入）、1e（建 Firestore）——已整理成更白話的
+>   **`p2_seed/我要在後台點的步驟.md`**，照那份點即可。步驟 3（Cloudflare）之後再做。
+> - 以下保留原始技術版供參考。
+
+
+
 > Claude Code 已自動完成：① 開 `p2-staging` 分支 ② 唯讀匯出 rbf1 settings 到 `p2_seed/`
 > ③ `js/m_main.js` 加好 rbf2 環境切換（config 先放 PLACEHOLDER）。
 >
