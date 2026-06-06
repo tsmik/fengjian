@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>觀察庫編輯器 — admin2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f1e9; --panel:#fbf8f2; --panel2:#f1ead7; --bd:#e3d9c8; --bd2:#d8ccb6;
+    --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A;
+    --sel:#efe7d6; --shadow:0 1px 2px rgba(90,75,50,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
+  header{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);position:sticky;top:0;z-index:5;flex-wrap:wrap;}
+  header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.5px;}
+  .grow{flex:1;}
+  #status{font-size:12px;color:var(--sub);}
+  .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);box-shadow:var(--shadow);}
+  .btn:hover{background:var(--sel);}
+  .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
+  .btn.primary[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn.sm{padding:3px 9px;font-size:12px;}
+  .btn.xs{padding:1px 7px;font-size:12px;border-radius:6px;}
+  .btn.danger{color:#a8503a;}
+  .wrap{display:grid;grid-template-columns:180px 1fr 340px;height:calc(100vh - 53px);}
+  .col{overflow:auto;padding:10px;border-right:1px solid var(--bd);}
+  .col-title{font-size:12px;color:var(--sub);margin:2px 2px 8px;letter-spacing:.5px;}
+  .prow{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;cursor:pointer;}
+  .prow:hover{background:var(--sel);}
+  .prow.sel{background:var(--sel);font-weight:600;}
+  .prow .cnt{font-size:11px;color:var(--sub);}
+  /* sections */
+  .section{border:1px solid var(--bd);border-radius:10px;margin:0 0 12px;background:var(--panel);box-shadow:var(--shadow);overflow:hidden;}
+  .sec-head{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f0e8d8;border-bottom:1px solid var(--bd);}
+  .sec-label{font-weight:600;font-size:14px;color:var(--ink);}
+  .sec-label .pen{opacity:0;margin-left:4px;font-size:11px;color:var(--sub);}
+  .sec-head:hover .pen{opacity:1;}
+  .sec-body{padding:6px 8px;}
+  .qrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;}
+  .qrow:hover{background:var(--sel);}
+  .qrow.sel{background:#fff;border-color:var(--bd2);}
+  .qrow .qid{font-size:11px;color:var(--sub);font-family:ui-monospace,monospace;min-width:34px;}
+  .qrow .qtext{flex:1;}
+  .qrow .qopts{font-size:11px;color:var(--sub);}
+  .badge{font-size:10px;padding:1px 6px;border-radius:9px;background:var(--static);color:#fff;}
+  .badge.zero{background:#cdbfa6;}
+  .empty{color:var(--sub);font-size:12px;padding:10px;}
+  /* editor */
+  #ed{padding:12px;}
+  .ed-card{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:12px;box-shadow:var(--shadow);}
+  .fl{display:block;font-size:11px;color:var(--sub);margin:10px 0 3px;letter-spacing:.5px;}
+  .fl:first-child{margin-top:0;}
+  input.t,select.t,textarea.t{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 9px;background:#fffdf9;color:var(--ink);}
+  textarea.t{resize:vertical;min-height:38px;}
+  .inline{display:inline-flex;align-items:center;gap:5px;font-size:13px;}
+  .rowflex{display:flex;gap:8px;align-items:center;}
+  .opt{display:flex;gap:6px;align-items:flex-start;margin:6px 0;}
+  .opt .v{flex:0 0 38%;}
+  .opt .h{flex:1;}
+  .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+  .tag{font-size:11px;border:1px solid var(--bd2);border-radius:9px;padding:1px 8px;background:#fffdf9;color:var(--sub);}
+  .protect{font-size:11px;color:#a8503a;margin-top:6px;line-height:1.5;}
+  .qid-big{font-family:ui-monospace,monospace;color:var(--sub);font-size:12px;}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#4a443b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;}
+  .dirtydot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dynamic);margin-left:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>觀察庫編輯器</h1>
+  <span id="dirtywrap" style="font-size:12px;color:var(--sub)"></span>
+  <button class="btn sm primary" id="btn-save">儲存到 staging</button>
+  <span class="grow"></span>
+  <span id="status"></span>
+  <button class="btn sm" id="btn-login">Google 登入</button>
+  <button class="btn sm" id="btn-logout" style="display:none">登出</button>
+</header>
+
+<div class="wrap">
+  <div class="col" id="col-parts"></div>
+  <div class="col" id="col-sections"></div>
+  <div class="col" id="ed"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="js/questions_layout.js"></script>
+<script src="js/observations_data.js"></script>
+<script src="js/ref_dims.js"></script>
+<script src="js/paired_map.js"></script>
+<script type="module" src="js/obs_editor.js"></script>
+</body>
+</html>
