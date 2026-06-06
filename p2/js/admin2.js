@@ -29,7 +29,7 @@ let state = {
   ruleSet: { id: 'test-' + nowStamp(), name: '測試套裝', note: '', basedOn: null, status: 'draft', createdAt: new Date().toISOString() },
   dims: {},                                  // {dimIndex: {parts:{partName:def}}}
   spice: { levels: ['大辣', '中辣', '小辣'], rounding: 'B', ratios: { 大辣: '', 中辣: '', 小辣: '' } },
-  curDim: 0, curPart: null,
+  curDim: 0, curPart: null, curGroup: null,  // curGroup = 選中的敘述分組 id
   active: null                               // {part, cardId, comboIdx} 供「點 observation 加入」用
 };
 let auth = null, db = null, user = null, role = null, fbOK = false;
@@ -178,19 +178,66 @@ function renderParts() {
 }
 function partRow(name, sub) {
   const has = partHasContent(state.curDim, name);
-  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : ''), onclick: () => { state.curPart = name; state.active = null; renderEditor(); renderPalette(); renderParts(); } }, [
+  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } }, [
     el('span', { class: 'lr-name', text: (has ? '● ' : '○ ') + name }),
     el('span', { class: 'lr-sub', text: sub })
   ]);
 }
 
-function renderEditor() {
-  const box = $('col-editor'); box.innerHTML = '';
-  if (!state.curPart) { box.appendChild(el('div', { class: 'hint', text: '← 選一個部位開始編輯' })); return; }
+function renderEditor() { renderGroupsCol(); renderCardsCol(); }
+
+// 第 3 欄：敘述分組（含部位層 目標極/左右模式；聚合部位則放聚合編輯器）
+function renderGroupsCol() {
+  const box = $('col-groups'); box.innerHTML = '';
+  if (!state.curPart) { box.appendChild(el('div', { class: 'col-title', text: '敘述分組' })); box.appendChild(el('div', { class: 'hint', text: '← 選部位' })); return; }
   const pm = partMeta(state.curPart);
-  box.appendChild(el('div', { class: 'ed-title', text: 'dim' + state.curDim + ' / ' + state.curPart + '（' + (pm.kind === 'aggregate' ? '聚合部位' : '葉部位') + '）' }));
-  if (pm.kind === 'aggregate') renderAggEditor(box, getPart(state.curDim, state.curPart, true), pm);
-  else renderLeafEditor(box, getPart(state.curDim, state.curPart, true), pm);
+  box.appendChild(el('div', { class: 'col-title', text: state.curPart + (pm.kind === 'aggregate' ? '（聚合）' : '（葉）') }));
+  if (pm.kind === 'aggregate') { renderAggEditor(box, getPart(state.curDim, state.curPart, true), pm); return; }
+  const def = getPart(state.curDim, state.curPart, true);
+  box.appendChild(poleRadios(def, saveDraft));
+  const lrWrap = el('div', { class: 'field' }, [el('label', { class: 'fl', text: '左右模式' })]);
+  [['both', '都要'], ['either', '任一'], ['none', '不分']].forEach(([v, label]) => {
+    const r = el('input', { type: 'radio', name: 'lr-' + state.curDim + '-' + state.curPart });
+    r.checked = def.lrMode === v;
+    r.addEventListener('change', () => { def.lrMode = v; saveDraft(); });
+    lrWrap.appendChild(el('label', { class: 'inline' }, [r, ' ' + label]));
+  });
+  box.appendChild(lrWrap);
+  box.appendChild(el('div', { class: 'cards-head' }, [
+    el('span', { text: '敘述分組（老師的話）' }),
+    el('button', { class: 'btn xs', text: '＋', title: '新增敘述分組', onclick: () => addGroup(def) })
+  ]));
+  if (!def.groups.length) box.appendChild(el('div', { class: 'hint', text: '＋ 先新增敘述分組' }));
+  def.groups.forEach((g, gi) => box.appendChild(renderGroupRow(def, g, gi)));
+}
+
+function renderGroupRow(def, g, gi) {
+  const sel = state.curGroup === g.id;
+  return el('div', { class: 'grp-row' + (sel ? ' sel' : ''), onclick: () => { state.curGroup = g.id; state.active = null; renderGroupsCol(); renderCardsCol(); } }, [
+    el('span', { class: 'gr-name', text: g.label || '（未填敘述）' }),
+    el('span', { class: 'gr-cnt', text: g.cards.length + '卡' }),
+    el('button', { class: 'btn xs', text: '▲', onclick: (e) => { e.stopPropagation(); moveGroup(def, gi, -1); } }),
+    el('button', { class: 'btn xs', text: '▼', onclick: (e) => { e.stopPropagation(); moveGroup(def, gi, 1); } }),
+    el('button', { class: 'btn xs', text: '✎', onclick: (e) => { e.stopPropagation(); renameGroup(g); } }),
+    el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); deleteGroup(def, g); } })
+  ]);
+}
+
+// 第 4 欄：選中敘述分組的卡片 → combo → 葉
+function renderCardsCol() {
+  const box = $('col-cards'); box.innerHTML = '';
+  if (!state.curPart) { box.appendChild(el('div', { class: 'hint', text: '← 選部位 → 敘述分組' })); return; }
+  const pm = partMeta(state.curPart);
+  if (pm.kind === 'aggregate') { box.appendChild(el('div', { class: 'hint', text: '聚合部位沒有卡片：請在左欄勾子部位＋設固定門檻。' })); return; }
+  const def = getPart(state.curDim, state.curPart, true);
+  const g = def.groups.find(x => x.id === state.curGroup);
+  if (!g) { box.appendChild(el('div', { class: 'hint', text: '← 在左欄選一個敘述分組' })); return; }
+  box.appendChild(el('div', { class: 'cards-head' }, [
+    el('span', { text: '「' + (g.label || '未填敘述') + '」的卡片（卡間＝或；卡內 combo＝或；combo 內葉＝而且）' }),
+    el('button', { class: 'btn sm', text: '＋新增卡片', onclick: () => { g.cards.push({ id: uid(), role: null, combos: [[]] }); renderCardsCol(); renderGroupsCol(); renderParts(); saveDraft(); } })
+  ]));
+  if (!g.cards.length) box.appendChild(el('div', { class: 'hint', text: '尚無卡片。＋新增卡片後，把右側 observation 拖進 combo。' }));
+  g.cards.forEach((card, ci) => box.appendChild(renderCard(def, g, card, ci)));
 }
 
 function poleRadios(def, onchange) {
@@ -203,42 +250,6 @@ function poleRadios(def, onchange) {
     r.addEventListener('change', () => { def.targetPole = label; onchange(); });
     wrap.appendChild(el('label', { class: 'inline' }, [r, ' ' + label]));
   });
-  return wrap;
-}
-
-function renderLeafEditor(box, def, pm) {
-  box.appendChild(poleRadios(def, saveDraft));
-  // lrMode
-  const lrWrap = el('div', { class: 'field' }, [el('label', { class: 'fl', text: '左右模式' })]);
-  [['both', '都要(左右都成立)'], ['either', '任一(左或右)'], ['none', '不分左右']].forEach(([v, label]) => {
-    const r = el('input', { type: 'radio', name: 'lr-' + state.curDim + '-' + state.curPart });
-    r.checked = def.lrMode === v;
-    r.addEventListener('change', () => { def.lrMode = v; saveDraft(); });
-    lrWrap.appendChild(el('label', { class: 'inline' }, [r, ' ' + label]));
-  });
-  box.appendChild(lrWrap);
-
-  box.appendChild(el('div', { class: 'cards-head' }, [
-    el('span', { text: '敘述分組（老師的話）→ 卡片 → combo → 葉。敘述分組只分群顯示，不影響辣度計數。' }),
-    el('button', { class: 'btn sm', text: '＋新增敘述分組', onclick: () => addGroup(def) })
-  ]));
-  if (!def.groups.length) box.appendChild(el('div', { class: 'hint', text: '尚無敘述分組。先「＋新增敘述分組」，再在它底下加卡片。' }));
-  def.groups.forEach((g, gi) => box.appendChild(renderGroup(def, g, gi)));
-}
-
-function renderGroup(def, g, gi) {
-  const wrap = el('div', { class: 'grp' });
-  const label = el('span', { class: 'grp-label', onclick: () => renameGroup(g) }, [g.label || '（未填敘述）', el('span', { class: 'pen', text: ' ✎' })]);
-  wrap.appendChild(el('div', { class: 'grp-head' }, [
-    el('span', { class: 'grp-tag', text: '敘述分組' }), label,
-    el('span', { class: 'spacer' }),
-    el('button', { class: 'btn xs', text: '▲', onclick: () => moveGroup(def, gi, -1) }),
-    el('button', { class: 'btn xs', text: '▼', onclick: () => moveGroup(def, gi, 1) }),
-    el('button', { class: 'btn xs', text: '＋卡片', onclick: () => { g.cards.push({ id: uid(), role: null, combos: [[]] }); renderEditor(); renderParts(); saveDraft(); } }),
-    el('button', { class: 'btn xs danger', text: '✕', onclick: () => deleteGroup(def, g) })
-  ]));
-  if (!g.cards.length) wrap.appendChild(el('div', { class: 'hint', text: '（此敘述分組尚無卡片）' }));
-  g.cards.forEach((card, ci) => wrap.appendChild(renderCard(def, g, card, ci)));
   return wrap;
 }
 
@@ -270,7 +281,8 @@ function renderCard(def, g, card, ci) {
 function addGroup(def) {
   const name = prompt('敘述分組敘述文字（老師的話，可留空之後再填）：', '');
   if (name == null) return;
-  def.groups.push({ id: uidG(), label: name, cards: [] });
+  const ng = { id: uidG(), label: name, cards: [] };
+  def.groups.push(ng); state.curGroup = ng.id;
   renderEditor(); renderParts(); saveDraft();
 }
 function renameGroup(g) {
@@ -279,7 +291,9 @@ function renameGroup(g) {
 }
 function deleteGroup(def, g) {
   if (g.cards.length) return alert('此敘述分組還有卡片，請先把卡片搬走或刪除');
-  def.groups = def.groups.filter(x => x !== g); renderEditor(); renderParts(); saveDraft();
+  def.groups = def.groups.filter(x => x !== g);
+  if (state.curGroup === g.id) state.curGroup = null;
+  renderEditor(); renderParts(); saveDraft();
 }
 function moveGroup(def, gi, d) {
   const j = gi + d; if (j < 0 || j >= def.groups.length) return;
@@ -359,12 +373,14 @@ function renderAggEditor(box, def, pm) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'col-title', text: '辣度劇本（骨架）' }));
-  box.appendChild(el('div', { class: 'hint', text: '取整機制＝B（輔門檻可低到 0）。三格 ratio 先留空，之後再填數字。輔門檻＝round(ratio × 輔卡數)。' }));
+  box.appendChild(el('div', { class: 'sb-title', text: '辣度劇本（拖曳 bar，10% 一格）｜輔門檻＝round(ratio × 輔卡數)，取整＝B' }));
   state.spice.levels.forEach(lv => {
-    const inp = el('input', { class: 'num', type: 'number', step: '0.05', min: '0', max: '1', placeholder: '(待填)', value: state.spice.ratios[lv] === '' ? '' : String(state.spice.ratios[lv]) });
-    inp.addEventListener('change', () => { state.spice.ratios[lv] = inp.value === '' ? '' : parseFloat(inp.value); saveDraft(); });
-    box.appendChild(el('div', { class: 'spice-row' }, [el('span', { class: 'spice-lv', text: lv }), el('span', { text: 'ratio =' }), inp]));
+    const empty = state.spice.ratios[lv] === '' || state.spice.ratios[lv] == null;
+    const cur = empty ? 0 : Math.round(state.spice.ratios[lv] * 100);
+    const valSpan = el('span', { class: 'spice-val', text: empty ? '—' : cur + '%' });
+    const range = el('input', { type: 'range', min: '0', max: '100', step: '10', value: String(cur) });
+    range.addEventListener('input', () => { const pct = parseInt(range.value, 10); state.spice.ratios[lv] = pct / 100; valSpan.textContent = pct + '%'; saveDraft(); });
+    box.appendChild(el('div', { class: 'spice-row' }, [el('span', { class: 'spice-lv', text: lv }), range, valSpan]));
   });
 }
 
