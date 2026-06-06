@@ -1,0 +1,728 @@
+{
+  "dimIndex": 5,
+  "dimName": "dim5",
+  "positiveType": "靜",
+  "negativeType": "動",
+  "_source": "translated from p2_seed/rbf1_settings_rules.json (rule1 baseline, faithful)",
+  "parts": {
+    "上停": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 4,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e1",
+                "match": "額高"
+              }
+            ]
+          ],
+          "note": "額不短"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e3",
+                "match": "額寬"
+              }
+            ]
+          ],
+          "note": "額不狹窄"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e6",
+                "match": "額隆"
+              }
+            ]
+          ],
+          "note": "額有弧度"
+        },
+        {
+          "id": "c4",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e13",
+                "match": "不清晰"
+              }
+            ]
+          ],
+          "note": "日月角不凸露"
+        }
+      ]
+    },
+    "耳": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 3,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er8",
+                "match": "有輪有廓"
+              }
+            ]
+          ],
+          "note": "輪廓分明"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er9",
+                "match": [
+                  "輪包廓",
+                  "輪不包廓/廓稍微凸出"
+                ]
+              }
+            ]
+          ],
+          "note": "輪包廓"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er4",
+                "match": [
+                  "耳圓",
+                  "耳直"
+                ]
+              }
+            ]
+          ],
+          "note": "形圓順"
+        }
+      ]
+    },
+    "眉": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 8,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br2",
+                "match": [
+                  "眉形細",
+                  "眉型適中"
+                ]
+              }
+            ]
+          ],
+          "note": "眉細"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br1",
+                "match": "眉長過目"
+              }
+            ]
+          ],
+          "note": "眉長"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br18",
+                "match": "毛不過短"
+              }
+            ]
+          ],
+          "note": "眉毛長"
+        },
+        {
+          "id": "c4",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br22",
+                "match": "眉毛細"
+              }
+            ]
+          ],
+          "note": "眉毛細軟"
+        },
+        {
+          "id": "c5",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br15",
+                "match": "柔順"
+              }
+            ]
+          ],
+          "note": "眉毛細軟"
+        },
+        {
+          "id": "c6",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br12",
+                "match": "退印"
+              }
+            ]
+          ],
+          "note": "眉不沖印"
+        },
+        {
+          "id": "c7",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br11",
+                "match": "不壓眼"
+              }
+            ]
+          ],
+          "note": "眉不壓眼"
+        },
+        {
+          "id": "c8",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br7",
+                "match": "無"
+              }
+            ]
+          ],
+          "note": "眉不濃"
+        }
+      ]
+    },
+    "眼": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 3,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey1",
+                "match": "眼長"
+              },
+              {
+                "ref": "ey2",
+                "match": "眼細"
+              }
+            ]
+          ],
+          "note": "眼細長"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey5",
+                "match": "正常"
+              }
+            ]
+          ],
+          "note": "眼不凸"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey13",
+                "match": "單眼皮"
+              }
+            ]
+          ],
+          "note": "單眼皮"
+        }
+      ]
+    },
+    "鼻": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 3,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n10",
+                "match": [
+                  "肉多於骨",
+                  "骨肉勻稱"
+                ]
+              }
+            ]
+          ],
+          "note": "鼻不露骨"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n1",
+                "match": "鼻長"
+              }
+            ]
+          ],
+          "note": "鼻不短"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n11",
+                "match": "無起節"
+              }
+            ]
+          ],
+          "note": "鼻不起節"
+        }
+      ]
+    },
+    "口": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 4,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "m4",
+                "match": [
+                  "嘴角朝上",
+                  "嘴角水平"
+                ]
+              }
+            ]
+          ],
+          "note": "口角不下垂"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "m8",
+                "match": [
+                  "唇一般",
+                  "唇明顯厚"
+                ]
+              }
+            ]
+          ],
+          "note": "唇不薄"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "m1",
+                "match": [
+                  "口適中",
+                  "口小"
+                ]
+              }
+            ]
+          ],
+          "note": "口不過大"
+        },
+        {
+          "id": "c4",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "m7",
+                "match": "閉合線密"
+              }
+            ]
+          ],
+          "note": "口閉緊"
+        }
+      ]
+    },
+    "中停": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 4,
+      "children": [
+        {
+          "part": "眉",
+          "side": "L"
+        },
+        {
+          "part": "眉",
+          "side": "R"
+        },
+        {
+          "part": "眼",
+          "side": "L"
+        },
+        {
+          "part": "眼",
+          "side": "R"
+        },
+        {
+          "part": "鼻"
+        },
+        {
+          "part": "顴",
+          "side": "L"
+        },
+        {
+          "part": "顴",
+          "side": "R"
+        }
+      ]
+    },
+    "下停": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 3,
+      "children": [
+        {
+          "part": "口"
+        },
+        {
+          "part": "人中"
+        },
+        {
+          "part": "地閣"
+        },
+        {
+          "part": "頤",
+          "side": "L"
+        },
+        {
+          "part": "頤",
+          "side": "R"
+        }
+      ]
+    },
+    "人中": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "p2",
+                "match": [
+                  "人中長",
+                  "人中很長"
+                ]
+              }
+            ]
+          ],
+          "note": "人中比較長"
+        }
+      ]
+    },
+    "地閣": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 3,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "c2",
+                "match": [
+                  "地閣平",
+                  "地閣圓"
+                ]
+              }
+            ]
+          ],
+          "note": "地閣圓或平"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "c4",
+                "match": "地閣寬"
+              }
+            ]
+          ],
+          "note": "地閣寬大"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "c1",
+                "match": "地閣起"
+              }
+            ]
+          ],
+          "note": "地閣不凸不退縮"
+        }
+      ]
+    },
+    "頤": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 2,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "y2",
+                "match": [
+                  "頤豐",
+                  "頤有肉"
+                ]
+              }
+            ]
+          ],
+          "note": "頤有肉"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "y1",
+                "match": [
+                  "頤寬(角度明顯)",
+                  "頤很寬(角度有點大 接近方)"
+                ]
+              }
+            ]
+          ],
+          "note": "頤有角度"
+        }
+      ]
+    },
+    "顴": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 3,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "q1",
+                "match": [
+                  "顴高且隆",
+                  "顴有而不明"
+                ]
+              }
+            ]
+          ],
+          "note": "有顴"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "q3",
+                "match": "顴有肉"
+              }
+            ]
+          ],
+          "note": "顴有肉包"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "q4",
+                "match": [
+                  "顴柄平",
+                  "無明顯顴柄"
+                ]
+              }
+            ]
+          ],
+          "note": "權柄不大不明顯"
+        }
+      ]
+    },
+    "頂骨": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h1",
+                "match": [
+                  "龜背",
+                  "圓",
+                  "平寬"
+                ]
+              }
+            ]
+          ],
+          "note": "頂骨寬或平或圓"
+        }
+      ]
+    },
+    "枕骨": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h6",
+                "match": "順無凹凸"
+              }
+            ]
+          ],
+          "note": "枕骨寬或圓或平"
+        }
+      ]
+    },
+    "華陽骨": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h11",
+                "match": [
+                  "圓隆",
+                  "平直"
+                ]
+              }
+            ]
+          ],
+          "note": "華陽骨寬或圓或平"
+        }
+      ]
+    },
+    "頭": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 3,
+      "children": [
+        {
+          "part": "頂骨",
+          "side": "L"
+        },
+        {
+          "part": "頂骨",
+          "side": "R"
+        },
+        {
+          "part": "枕骨"
+        },
+        {
+          "part": "華陽骨",
+          "side": "L"
+        },
+        {
+          "part": "華陽骨",
+          "side": "R"
+        }
+      ]
+    }
+  }
+}

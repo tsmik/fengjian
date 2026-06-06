@@ -18,6 +18,13 @@ import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dir, '..', '..');
 const live = JSON.parse(readFileSync(join(REPO, 'p2_seed', 'rbf1_settings_rules.json'), 'utf8'));
+const questions = JSON.parse(readFileSync(join(REPO, 'p2_seed', 'rbf1_settings_questions.json'), 'utf8'));
+
+// ref → 全選項清單（NOT 轉「反向選項」complement 用）
+const refOptions = {};
+for (const pn of Object.keys(questions))
+  for (const sec of questions[pn].sections)
+    for (const q of sec.qs) refOptions[q.id] = q.opts.map(o => o.v);
 
 function toCombos(node) {
   if (node == null) throw new Error('null unit');
@@ -39,6 +46,19 @@ function toCombos(node) {
     let out = [];
     node.items.forEach(it => { out = out.concat(toCombos(it)); });
     return out;
+  }
+  // NOT：新文法用「反向選項」（§4.5），把 NOT(ref=X) 轉成 ref ∈ (全選項 ∖ X)。
+  // 等價性：答案已填時 !(ans∈X) ⇔ ans∈complement；未填時兩邊都因部位前置檢查回 null。
+  if (node.op === 'NOT') {
+    const inner = node.item;
+    if (!inner || inner.ref === undefined)
+      throw new Error('NOT wraps non-ref (需 De Morgan，本資料未出現): ' + JSON.stringify(node).slice(0, 100));
+    const opts = refOptions[inner.ref];
+    if (!opts) throw new Error('NOT ref 不在 questions，無法取反向選項: ' + inner.ref);
+    const matchArr = Array.isArray(inner.match) ? inner.match : [inner.match];
+    const complement = opts.filter(o => matchArr.indexOf(o) < 0);
+    const leaf = { ref: inner.ref, match: complement, _from: 'NOT(' + JSON.stringify(inner.match) + ')' };
+    return [[leaf]];
   }
   throw new Error('unsupported unit node: ' + JSON.stringify(node).slice(0, 100));
 }
@@ -78,7 +98,13 @@ function buildLeaf(node) {
   return { kind: 'leaf', lrMode, passPole: 'positive', auxThreshold: inner.min, cards };
 }
 
-function buildPart(node) { return isAggregate(node) ? buildAgg(node) : buildLeaf(node); }
+function buildPart(node) {
+  // 解開 {rule:...} 外殼（dim9 的 8 個部位用這種包法；無 op/partResult/ref 時）
+  if (node && node.rule !== undefined && node.op === undefined && node.partResult === undefined && node.ref === undefined) {
+    return buildPart(node.rule);
+  }
+  return isAggregate(node) ? buildAgg(node) : buildLeaf(node);
+}
 
 function buildDim(d) {
   const parts = {};
@@ -93,7 +119,7 @@ function buildDim(d) {
   };
 }
 
-const TARGET = [0, 2];
+const TARGET = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 mkdirSync(__dir, { recursive: true });
 for (const di of TARGET) {
   const fix = buildDim(live[di]);

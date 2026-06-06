@@ -1,0 +1,541 @@
+{
+  "dimIndex": 10,
+  "dimName": "dim10",
+  "positiveType": "動",
+  "negativeType": "靜",
+  "_source": "translated from p2_seed/rbf1_settings_rules.json (rule1 baseline, faithful)",
+  "parts": {
+    "上停": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e14",
+                "match": "日月角開"
+              },
+              {
+                "ref": "e13",
+                "match": "日月角起"
+              },
+              {
+                "ref": "e15",
+                "match": "骨感明顯"
+              }
+            ]
+          ],
+          "note": "有日月角 分開且明顯"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e16",
+                "match": "有輔角骨"
+              }
+            ]
+          ],
+          "note": "有輔角骨"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "e17",
+                "match": "有佐串骨"
+              }
+            ]
+          ],
+          "note": "有佐串骨"
+        }
+      ]
+    },
+    "眉": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br4",
+                "match": "有鷹角"
+              }
+            ]
+          ],
+          "note": "有鷹角"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br8",
+                "match": "眉尾有揚"
+              }
+            ]
+          ],
+          "note": "眉尾朝上"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "br7",
+                "match": "將軍眉"
+              }
+            ]
+          ],
+          "note": "眉尾朝上"
+        }
+      ]
+    },
+    "眼": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey6",
+                "match": "有眼鉤"
+              },
+              {
+                "ref": "ey7",
+                "match": "有刀裁"
+              }
+            ]
+          ],
+          "note": "眼有鉤且有刀裁"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey8",
+                "match": "有較硬轉角"
+              }
+            ]
+          ],
+          "note": "三角眼"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "ey4",
+                "match": "眼尾朝上"
+              }
+            ]
+          ],
+          "note": "眼尾朝上"
+        }
+      ]
+    },
+    "鼻": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n14",
+                "match": "山根高"
+              }
+            ]
+          ],
+          "note": "山根高"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n11",
+                "match": "有起節突露"
+              }
+            ]
+          ],
+          "note": "鼻起節"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "n5",
+                "match": "鼻準尖"
+              }
+            ]
+          ],
+          "note": "準頭尖"
+        }
+      ]
+    },
+    "口": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "m5",
+                "match": "水星明顯"
+              }
+            ]
+          ],
+          "note": "水星V形明顯"
+        }
+      ]
+    },
+    "中停": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 4,
+      "children": [
+        {
+          "part": "眉",
+          "side": "L"
+        },
+        {
+          "part": "眉",
+          "side": "R"
+        },
+        {
+          "part": "眼",
+          "side": "L"
+        },
+        {
+          "part": "眼",
+          "side": "R"
+        },
+        {
+          "part": "鼻"
+        },
+        {
+          "part": "顴",
+          "side": "L"
+        },
+        {
+          "part": "顴",
+          "side": "R"
+        }
+      ]
+    },
+    "下停": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 3,
+      "children": [
+        {
+          "part": "口"
+        },
+        {
+          "part": "人中"
+        },
+        {
+          "part": "地閣"
+        },
+        {
+          "part": "頤",
+          "side": "L"
+        },
+        {
+          "part": "頤",
+          "side": "R"
+        }
+      ]
+    },
+    "顴": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "q4",
+                "match": "顴柄插天"
+              }
+            ]
+          ],
+          "note": "權柄插天"
+        }
+      ]
+    },
+    "人中": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "p1",
+                "match": "人中深"
+              },
+              {
+                "ref": "p2",
+                "match": [
+                  "人中長",
+                  "人中很長"
+                ]
+              }
+            ]
+          ],
+          "note": "人中深長"
+        }
+      ]
+    },
+    "地閣": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "c4",
+                "match": "地閣窄尖"
+              }
+            ]
+          ],
+          "note": "下巴窄/尖/短"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "c3",
+                "match": "地閣短"
+              }
+            ]
+          ],
+          "note": "下巴窄/尖/短"
+        }
+      ]
+    },
+    "頤": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "y1",
+                "match": "頤削(角度太小)"
+              }
+            ]
+          ],
+          "note": "頤削"
+        }
+      ]
+    },
+    "耳": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er16",
+                "match": "耳高過眉"
+              }
+            ]
+          ],
+          "note": "耳高或齊於眉"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er17",
+                "match": "耳輪有缺"
+              }
+            ]
+          ],
+          "note": "耳形有缺"
+        },
+        {
+          "id": "c3",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "er5",
+                "match": "招風耳"
+              }
+            ]
+          ],
+          "note": "招風耳"
+        }
+      ]
+    },
+    "頂骨": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h2",
+                "match": "突起"
+              }
+            ]
+          ],
+          "note": "頂骨中央凸起"
+        }
+      ]
+    },
+    "枕骨": {
+      "kind": "leaf",
+      "lrMode": "none",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h6",
+                "match": "有凹凸"
+              }
+            ]
+          ],
+          "note": "枕骨有凹凸或自剋骨"
+        },
+        {
+          "id": "c2",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h7",
+                "match": "有明顯自剋骨"
+              }
+            ]
+          ],
+          "note": "枕骨有凹凸或自剋骨"
+        }
+      ]
+    },
+    "華陽骨": {
+      "kind": "leaf",
+      "lrMode": "both",
+      "passPole": "positive",
+      "auxThreshold": 1,
+      "cards": [
+        {
+          "id": "c1",
+          "role": "aux",
+          "combos": [
+            [
+              {
+                "ref": "h18",
+                "match": "華陽骨順斜上往頂骨中央"
+              }
+            ]
+          ],
+          "note": "華陽斜上往中央長"
+        }
+      ]
+    },
+    "頭": {
+      "kind": "aggregate",
+      "passPole": "positive",
+      "threshold": 3,
+      "children": [
+        {
+          "part": "頂骨",
+          "side": "L"
+        },
+        {
+          "part": "頂骨",
+          "side": "R"
+        },
+        {
+          "part": "枕骨"
+        },
+        {
+          "part": "華陽骨",
+          "side": "L"
+        },
+        {
+          "part": "華陽骨",
+          "side": "R"
+        }
+      ]
+    }
+  }
+}
