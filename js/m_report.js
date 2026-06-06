@@ -522,9 +522,9 @@ function _gmRenderRows() {
   if (_gmRows.length === 0) { box.innerHTML = '<div class="m-gm-empty">尚無分組，點下方「＋ 新增分組」建立。</div>'; return; }
   const last = _gmRows.length - 1;
   box.innerHTML = _gmRows.map((r, i) =>
-    '<div class="m-gm-row" data-i="' + i + '">'
+    '<div class="m-gm-row" data-i="' + i + '" data-orig="' + _esc(r.orig || '') + '">'
     + '<textarea class="m-gm-name" rows="1" placeholder="分組名稱">' + _esc(r.name || '') + '</textarea>'
-    + '<input class="m-gm-desc" value="' + _esc(r.desc || '') + '" placeholder="說明（選填）" maxlength="60">'
+    + '<textarea class="m-gm-desc" rows="1" placeholder="說明（選填）">' + _esc(r.desc || '') + '</textarea>'
     + '<span class="m-gm-arrows"><button type="button" class="m-gm-arrow" data-dir="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>▲</button>'
     + '<button type="button" class="m-gm-arrow" data-dir="down" data-i="' + i + '"' + (i === last ? ' disabled' : '') + '>▼</button></span>'
     + '<button type="button" class="m-gm-del" data-i="' + i + '" title="刪除分組">✕</button>'
@@ -666,7 +666,7 @@ function _renderFinderCol1() {
   let h = item('__all__', '所有個案', _finderCases.length, '');
   _finderGroups.forEach((g) => {
     const n = _finderCases.filter((c) => (c.group || '') === g).length;
-    const desc = _finderGroupDescs[g] || '';
+    const desc = (_finderGroupDescs[g] || '').trim();
     h += item(g, _esc(_truncGroupName(g)), n, desc ? _esc(desc) : '');
   });
   const un = _finderCases.filter((c) => !(c.group || '')).length;
@@ -753,7 +753,7 @@ function _renderFinderCol3() {
 
   el.innerHTML = '<div class="m-finder-preview">'
     + '<div class="m-finder-pv-bar" style="background:' + _finderColor(c) + '"></div>'
-    + '<div class="m-finder-pv-edittoggle">' + (editing ? '' : '<button type="button" class="m-fd-pencil" id="m-fd-pencil" title="編輯資料">✎</button>') + '</div>'
+    + '<div class="m-finder-pv-edittoggle">' + (editing ? '' : '<button type="button" class="m-fd-pencil" id="m-fd-pencil"><span class="m-fd-pencil-ico">✎</span>編輯資訊</button>') + '</div>'
     + fields
     + '<div class="m-finder-pv-coeff"><div class="m-finder-coeff-title">係數摘要</div>' + coeffRow('手動', man) + coeffRow('觀察', obs) + '</div>'
     + '<div class="m-finder-pv-actions4">'
