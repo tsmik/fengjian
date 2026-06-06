@@ -143,7 +143,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-note-fab{position:fixed;right:22px;bottom:22px;z-index:8000;display:none;align-items:center;gap:7px;background:#3a3228;color:#fff;border:none;border-radius:22px;padding:11px 18px;font-family:inherit;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
 .m-note-fab:hover{background:#2c251d}
 .m-note-fab.is-open{background:#5a5147}
-.m-note-fab-ico{font-size:15px}
+.m-note-fab-ico{width:24px;height:24px;border-radius:50%;background:#fbf8f2;color:#3a3228;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto}
 .m-note-panel{position:fixed;right:22px;bottom:74px;z-index:8000;display:none;flex-direction:column;background:#fbf8f2;border:1px solid #d4c9b0;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.22)}
 .m-note-panel.is-open{display:flex}
 .m-note-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e6ddc9;background:#f3ecdd;border-radius:12px 12px 0 0}
@@ -1852,7 +1852,7 @@ body.m-debug-on .m-debug-clear{display:block}
 </nav>
 
 <!-- 桌機浮動筆記（報告頁：上課兵法報告 / 部位觀察報告 / 個案工作區報告）-->
-<button id="m-note-fab" class="m-note-fab" type="button" style="display:none"><span class="m-note-fab-ico">✏️</span><span>筆記</span></button>
+<button id="m-note-fab" class="m-note-fab" type="button" style="display:none"><span class="m-note-fab-ico">✎</span><span>筆記</span></button>
 <div id="m-note-panel" class="m-note-panel">
   <div class="m-note-head"><span class="m-note-title">我的上課筆記</span><span id="m-note-status" class="m-note-status"></span><button id="m-note-close" class="m-note-close" type="button">✕</button></div>
   <textarea id="m-note-text" class="m-note-text" placeholder="上課時在這裡記筆記…（自動儲存，可拖右下角放大）"></textarea>
