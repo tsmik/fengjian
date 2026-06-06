@@ -56,8 +56,27 @@ import { initBadges } from "./m_badge.js";
 const PROD_FIREBASE_CONFIG={apiKey:"AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8",authDomain:"renxiangbingfa.firebaseapp.com",projectId:"renxiangbingfa",storageBucket:"renxiangbingfa.firebasestorage.app",messagingSenderId:"912262878667",appId:"1:912262878667:web:cd7a74f1378221dbe3524e"};
 const STAGING_FIREBASE_CONFIG={apiKey:"AIzaSyDSEQuEZ_5JhzcJ9olK6bk-t2UdsYU09dU",authDomain:"renxiangbingfa-staging.firebaseapp.com",projectId:"renxiangbingfa-staging",storageBucket:"renxiangbingfa-staging.firebasestorage.app",messagingSenderId:"8463681855",appId:"1:8463681855:web:069ca7428c4015eaa0eb8a"};
 
+// ===== P2（rbf2）config — 第 0 階段 scaffold =====
+// ⚠️ 以下值為 PLACEHOLDER。rbf2 / rbf2-staging 專案建立後，用
+//    `firebase apps:sdkconfig web --project rbf2`（與 rbf2-staging）的輸出
+//    整段取代下面兩個物件。見 p2_seed/STAGE0_RUNBOOK.md 步驟 1。
+const RBF2_PROD_CONFIG={apiKey:"FILL_AFTER_RBF2_CREATED",authDomain:"rbf2.firebaseapp.com",projectId:"rbf2",storageBucket:"rbf2.firebasestorage.app",messagingSenderId:"FILL_AFTER_RBF2_CREATED",appId:"FILL_AFTER_RBF2_CREATED"};
+const RBF2_STAGING_CONFIG={apiKey:"FILL_AFTER_RBF2_STAGING_CREATED",authDomain:"rbf2-staging.firebaseapp.com",projectId:"rbf2-staging",storageBucket:"rbf2-staging.firebasestorage.app",messagingSenderId:"FILL_AFTER_RBF2_STAGING_CREATED",appId:"FILL_AFTER_RBF2_STAGING_CREATED"};
+
 function getFirebaseConfig(){
   const host=window.location.hostname;
+  // --- P2（rbf2）：換引擎新系統，與 P1 完全分開（hostname 與 fengjian 不重疊）---
+  if(host==='rbf2-staging.pages.dev'||/\.rbf2-staging\.pages\.dev$/.test(host)){
+    debugLog('[Firebase]','Using RBF2-STAGING config');
+    if(RBF2_STAGING_CONFIG.apiKey.indexOf('FILL_')===0)debugLog('[Firebase]','⚠️ rbf2-staging config 尚未填入，見 p2_seed/STAGE0_RUNBOOK.md');
+    return RBF2_STAGING_CONFIG;
+  }
+  if(host==='rbf2.pages.dev'||/\.rbf2\.pages\.dev$/.test(host)){
+    debugLog('[Firebase]','Using RBF2-PROD config');
+    if(RBF2_PROD_CONFIG.apiKey.indexOf('FILL_')===0)debugLog('[Firebase]','⚠️ rbf2 config 尚未填入，見 p2_seed/STAGE0_RUNBOOK.md');
+    return RBF2_PROD_CONFIG;
+  }
+  // --- P1（renxiangbingfa）：不動 ---
   if(host==='staging.fengjian.pages.dev'||/^[a-z0-9-]+\.fengjian\.pages\.dev$/.test(host)){
     debugLog('[Firebase]','Using STAGING config');
     return STAGING_FIREBASE_CONFIG;
