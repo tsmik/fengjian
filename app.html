@@ -482,8 +482,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dimv-part{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:8px 14px;margin-bottom:7px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;cursor:pointer}
 .m-dimv-part.is-cur{background:#efe7d6;border-color:#d3c7b1}
 .m-dimv-part-name{font-size:16px;color:#5a5147}
-/* 個案工作區：部位導覽欄頂端的個案姓名（字頂對齊條件欄部位名）；字級比照報告頁姓名 20px */
-.m-partnav-casename{display:flex;align-items:flex-start;min-height:48px;padding:10px 14px 8px;margin-bottom:7px;font-size:20px;font-weight:400;line-height:1;color:#3a3228;letter-spacing:2px;white-space:nowrap;overflow:hidden}
+/* 個案工作區：部位導覽欄頂端的個案姓名。box 比照條件欄部位名列(.m-dimv-parthead：padding-top28/bottom10+border1+margin12)
+   → 姓名字頂對齊「頭」字頂、且整塊同高，使下面第一個部位格(頭)對齊第一個條件框(頂骨) */
+.m-partnav-casename{display:flex;align-items:flex-start;padding:28px 14px 10px;margin-bottom:12px;border-bottom:1px solid transparent;font-size:20px;font-weight:400;line-height:1.2;color:#3a3228;letter-spacing:2px;white-space:nowrap;overflow:hidden}
 .m-dimv-part.is-cur .m-dimv-part-name{color:#3a3228}
 .m-dimv-part-prog{font-size:13px;color:#a89e92}
 .m-dimv-part.is-done .m-dimv-part-prog{color:#5a8a5a}
