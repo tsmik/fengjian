@@ -1045,6 +1045,19 @@ function _isDesktop() {
   try { return window.matchMedia('(min-width:1024px)').matches; } catch (e) { return false; }
 }
 
+// 個案工作區（桌機＋分析個案中）：部位導覽欄頂端放個案姓名，導覽往下移一格
+function _wsCaseNameHeader() {
+  try {
+    if (!getActiveCaseId()) return '';
+    if (!window.matchMedia('(min-width:1024px)').matches) return '';
+    let nm = (window.__userData && window.__userData.displayName) || '';
+    nm = String(nm).replace(/\s+/g, ' ').trim();
+    if (!nm) return '';
+    if (nm.length > 5) nm = nm.slice(0, 5) + '…';   // 超過 5 字 → 第六字起以 … 代
+    return `<div class="m-partnav-casename">${escapeHtml(nm)}</div>`;
+  } catch (e) { return ''; }
+}
+
 function renderPartMode() {
   // 部位視角：比照維度視角版型（部位導覽欄 ｜ 條件欄），沿用 .m-dimv-* 零件（無維度欄/維度標題列）
   if (!_expandedKey && _isDesktop()) _expandedKey = PART_ROW_1[0];
@@ -1057,7 +1070,7 @@ function renderPartMode() {
     return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(key)}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
   }).join('');
   const { done, total } = partGrandTotal();
-  const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
+  const partNav = `<div class="m-dimv-partnav">${_wsCaseNameHeader()}${navTiles}<div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
   let condCol;
   if (!_expandedKey) {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;

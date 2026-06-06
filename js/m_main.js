@@ -247,9 +247,7 @@ let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
 const WS_SUBS = [
   { key: 'obs', label: '部位觀察分析', tab: 'input' },
-  { key: 'obs-report', label: '報告', tab: 'input' },
-  { key: 'manual', label: '手動評分分析', tab: 'manual' },
-  { key: 'manual-report', label: '報告', tab: 'manual' }
+  { key: 'obs-report', label: '報告', tab: 'input' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 // 把個案色淡淡混進某個底色。f 越大越濃。
