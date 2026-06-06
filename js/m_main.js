@@ -160,6 +160,7 @@ export async function createCase(fields) {
     group: fields.group || '',
     color: fields.color || '',
     note: fields.note || '',
+    createDate: fields.createDate || new Date().toISOString().slice(0, 10), // 建立日期（可編輯，預設今天）
     createdAt: new Date().toISOString()
   };
   const ref = await addDoc(collection(db, 'users', uid, 'cases'), payload);
@@ -246,13 +247,17 @@ const WS_SUBS = [
   { key: 'manual-report', label: '報告', tab: 'manual' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-// 整頁淡染：個案色低透明度，蓋過所有欄位/標題（部位欄、維度欄、標題列都一起染）。
-// 0.10 太淡、第一版不透明 40% 混色太濃 → 取中間 0.20（要再調改這個數字）
+// 整頁淡染：把個案色「淡淡混進頁底色」當 .m-main 背景（在內容底下，不是蓋在上面）。
+// f=0.15（要再調濃淡改這個數字；0=純頁底、1=純個案色）
 function _wsWash(hex) {
-  if (!hex || hex.charAt(0) !== '#' || hex.length < 7) return 'rgba(150,135,105,0.14)';
-  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-  if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(150,135,105,0.14)';
-  return 'rgba(' + r + ',' + g + ',' + b + ',0.20)';
+  const base = [247, 244, 239]; // #f7f4ef 頁底色 --bg
+  let r = 154, g = 138, b = 110;
+  if (hex && hex.charAt(0) === '#' && hex.length >= 7) {
+    const rr = parseInt(hex.slice(1, 3), 16), gg = parseInt(hex.slice(3, 5), 16), bb = parseInt(hex.slice(5, 7), 16);
+    if (!isNaN(rr) && !isNaN(gg) && !isNaN(bb)) { r = rr; g = gg; b = bb; }
+  }
+  const f = 0.15;
+  return 'rgb(' + Math.round(base[0] * (1 - f) + r * f) + ',' + Math.round(base[1] * (1 - f) + g * f) + ',' + Math.round(base[2] * (1 - f) + b * f) + ')';
 }
 function _renderWorkspace() {
   const host = document.getElementById('m-ws');

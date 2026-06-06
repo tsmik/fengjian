@@ -501,13 +501,23 @@ function _refreshCaseMgmt() { if (isDesktopSidebar()) mountFinderDesktop(); else
 // ============================================================
 let _finderSel = '__all__';   // col1：'__all__' | '__ungrouped__' | 群組名
 let _finderCaseId = null;     // col3 選的個案
-let _finderEdit = false;      // col3 是否編輯模式
+let _finderEditing = false;   // col3 是否在編輯（預設唯讀，點鉛筆才編輯）
 let _finderCases = [];
 let _finderGroups = [];
 let _finderEditColor = '';
 
 const _C_TOT = [0,1,2,3,4,5,6,7,8,9,10,11,12], _C_PRE = [0,1,2,3,4,5], _C_POST = [9,10,11,12], _C_LUCK = [6,7,8];
 function _finderColor(c) { return c.color || _autoColor(c.id); }
+// 第二欄卡片底色：比 _cardTint(0.40) 更淡（要再調濃淡改這個 f；0=純白、1=純色）
+function _cardTintLight(hex) {
+  hex = hex || '#D9CBA8';
+  if (hex.charAt(0) !== '#' || hex.length < 7) return '#ffffff';
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
+  const f = 0.20;
+  return 'rgb(' + Math.round(r * f + 255 * (1 - f)) + ',' + Math.round(g * f + 255 * (1 - f)) + ',' + Math.round(b * f + 255 * (1 - f)) + ')';
+}
+function _finderCreateDateStr(c) { return c.createDate || (_tsStr(c.createdAt) || '').slice(0, 10) || ''; }
 function _parseMatrix(jsonStr) { if (!jsonStr) return null; try { const a = JSON.parse(jsonStr); return Array.isArray(a) ? a : null; } catch (e) { return null; } }
 function _hasMatrix(arr) { if (!Array.isArray(arr)) return false; for (let i = 0; i < arr.length; i++) { const r = arr[i]; if (Array.isArray(r)) { for (let j = 0; j < r.length; j++) if (r[j]) return true; } } return false; }
 function _coeffSet(matrix) {
@@ -547,7 +557,7 @@ function _renderFinderCol1() {
   const un = _finderCases.filter((c) => !(c.group || '')).length;
   if (un > 0) h += '<button class="m-finder-c1item' + (_finderSel === '__ungrouped__' ? ' active' : '') + '" data-sel="__ungrouped__"><span>未分組</span><span class="m-finder-c1count">' + un + '</span></button>';
   el.innerHTML = h;
-  el.querySelectorAll('[data-sel]').forEach((b) => { b.onclick = () => { _finderSel = b.dataset.sel; _finderCaseId = null; _finderEdit = false; _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3(); }; });
+  el.querySelectorAll('[data-sel]').forEach((b) => { b.onclick = () => { _finderSel = b.dataset.sel; _finderCaseId = null; _finderEditing = false; _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3(); }; });
 }
 
 function _finderVisibleCases() {
@@ -560,60 +570,93 @@ function _renderFinderCol2() {
   const el = document.getElementById('m-finder-c2'); if (!el) return;
   const list = _finderVisibleCases();
   if (list.length === 0) { el.innerHTML = '<div class="m-finder-empty">這個分組還沒有個案</div>'; return; }
-  el.innerHTML = '<div class="m-finder-grid">' + list.map((c) =>
-    '<button class="m-finder-card' + (_finderCaseId === c.id ? ' active' : '') + '" data-case="' + _esc(c.id) + '" style="background:' + _cardTint(_finderColor(c)) + '">'
-    + '<span class="m-finder-card-dot" style="background:' + _finderColor(c) + '"></span>'
-    + '<span class="m-finder-card-name">' + _esc(c.name || '(未命名)') + '</span>'
-    + (c.group ? '<span class="m-finder-card-grp">' + _esc(c.group) + '</span>' : '') + '</button>'
-  ).join('') + '</div>';
-  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = () => { _finderCaseId = b.dataset.case; _finderEdit = false; _renderFinderCol2(); _renderFinderCol3(); }; });
+  el.innerHTML = '<div class="m-finder-grid">' + list.map((c) => {
+    const gd = c.gender === 'M' ? '男' : (c.gender === 'F' ? '女' : (c.gender || ''));
+    const by = (c.birthday || '').slice(0, 4);
+    const cd = _finderCreateDateStr(c);
+    const cym = cd ? cd.slice(0, 7).replace('-', '/') : '';
+    const meta = [gd, by, cym].filter(Boolean).join(' · ');
+    return '<button class="m-finder-card' + (_finderCaseId === c.id ? ' active' : '') + '" data-case="' + _esc(c.id) + '" style="background:' + _cardTintLight(_finderColor(c)) + '">'
+      + '<span class="m-finder-card-name">' + _esc(c.name || '(未命名)') + '</span>'
+      + '<span class="m-finder-card-meta">' + _esc(meta) + '</span>'
+      + (c.note ? '<span class="m-finder-card-note">' + _esc(c.note) + '</span>' : '') + '</button>';
+  }).join('') + '</div>';
+  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = () => { _finderCaseId = b.dataset.case; _finderEditing = false; _renderFinderCol2(); _renderFinderCol3(); }; });
 }
 
 function _renderFinderCol3() {
   const el = document.getElementById('m-finder-c3'); if (!el) return;
   const c = _finderCases.find((x) => x.id === _finderCaseId);
-  if (!c) { el.innerHTML = '<div class="m-finder-empty">點一個個案，或按「新增個案」</div>'; return; }
+  if (!c) { el.innerHTML = '<div class="m-finder-empty">點一個個案，或按「新增個案」</div>'; _finderEditing = false; return; }
   let g = c.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   _finderEditColor = _finderColor(c);
+  const editing = _finderEditing;
   const man = _coeffSet(_parseMatrix(c.manualDataJson));
   const obs = _coeffSet(_parseMatrix(c.dataJson));
+  const createD = _finderCreateDateStr(c);
   const coeffRow = (label, s) => '<div class="m-finder-coeff-row"><span class="m-finder-coeff-src">' + label + '</span>'
     + '<span class="m-finder-coeff-cell"><b>' + (s ? s.tot : '--') + '</b><i>總</i></span>'
     + '<span class="m-finder-coeff-cell"><b>' + (s ? s.pre : '--') + '</b><i>先天</i></span>'
     + '<span class="m-finder-coeff-cell"><b>' + (s ? s.post : '--') + '</b><i>後天</i></span>'
     + '<span class="m-finder-coeff-cell"><b>' + (s ? s.luck : '--') + '</b><i>運氣</i></span></div>';
-  const inGroup = c.group || '';
-  let groupOpts = '<option value=""' + (inGroup === '' ? ' selected' : '') + '>未分組</option>';
-  _finderGroups.forEach((gg) => { groupOpts += '<option value="' + _esc(gg) + '"' + (gg === inGroup ? ' selected' : '') + '>' + _esc(gg) + '</option>'; });
-  groupOpts += '<option value="__new__">＋ 建立新組別…</option>';
-  el.innerHTML = '<div class="m-finder-preview">'
-    + '<div class="m-finder-pv-head" style="background:' + _cardTint(_finderColor(c)) + '"><span class="m-finder-pv-name">個案資料</span></div>'
-    + '<div class="m-home-card m-home-profile" style="box-shadow:none;background:transparent;padding:4px 0">'
-      + '<div class="m-home-profile-row"><label>姓名</label><input type="text" id="m-fe-name" value="' + _esc(c.name || '') + '" maxlength="20" placeholder="輸入姓名"></div>'
-      + '<div class="m-home-profile-row"><label>性別</label><select id="m-fe-gender"><option value="">未填寫</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>'
-      + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-fe-birthday" value="' + _esc(c.birthday || '') + '"></div>'
-      + '<div class="m-home-profile-row"><label>組別</label><select id="m-fe-group">' + groupOpts + '</select></div>'
-      + '<div class="m-home-profile-row" id="m-fe-newgrp-row" style="display:none"><label>新組別</label><input type="text" id="m-fe-newgroup" placeholder="輸入新組別名稱" maxlength="30"></div>'
-      + '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-fe-note" value="' + _esc(c.note || '') + '" placeholder="可不填"></div>'
-      + '<div class="m-home-card-title" style="margin-top:6px">卡片顏色</div><div class="m-color-grid" id="m-fe-colors">'
-      + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _finderEditColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('') + '</div>'
+
+  let fields;
+  if (editing) {
+    const inGroup = c.group || '';
+    let gOpts = '<option value=""' + (inGroup === '' ? ' selected' : '') + '>未分組</option>';
+    _finderGroups.forEach((gg) => { gOpts += '<option value="' + _esc(gg) + '"' + (gg === inGroup ? ' selected' : '') + '>' + _esc(gg) + '</option>'; });
+    gOpts += '<option value="__new__">＋ 建立新組別…</option>';
+    const cOpts = CARD_COLORS.slice(0, 8).map((hex, i) => '<option value="' + hex + '"' + (hex === _finderEditColor ? ' selected' : '') + '>顏色 ' + (i + 1) + '</option>').join('');
+    fields = '<div class="m-fd-edit">'
+      + '<div class="m-fd-row"><span class="m-fd-label">姓名</span><input type="text" id="m-fe-name" value="' + _esc(c.name || '') + '" maxlength="20" placeholder="輸入姓名"></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">性別</span><select id="m-fe-gender"><option value="">未填</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">生日</span><input type="date" id="m-fe-birthday" value="' + _esc(c.birthday || '') + '"></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">組別</span><select id="m-fe-group">' + gOpts + '</select></div>'
+      + '<div class="m-fd-row" id="m-fe-newgrp-row" style="display:none"><span class="m-fd-label">新組別</span><input type="text" id="m-fe-newgroup" maxlength="30" placeholder="輸入新組別名稱"></div>'
+      + '<div class="m-fd-row m-fd-row-note"><span class="m-fd-label">備註</span><textarea id="m-fe-note" rows="3" placeholder="可多行">' + _esc(c.note || '') + '</textarea></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">建立日期</span><input type="date" id="m-fe-createdate" value="' + _esc(createD) + '"></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">卡片顏色</span><span class="m-fd-colorpick"><select id="m-fe-color">' + cOpts + '</select><span class="m-fd-swatch" id="m-fe-swatch" style="background:' + _finderEditColor + '"></span></span></div>'
       + '<div class="m-home-profile-status" id="m-fe-status"></div>'
-      + '<button type="button" class="m-finder-act is-primary" id="m-fe-save">儲存</button>'
-    + '</div>'
+      + '</div>';
+  } else {
+    const vrow = (label, val) => '<div class="m-fd-row"><span class="m-fd-label">' + label + '</span><span class="m-fd-val">' + (val || '—') + '</span></div>';
+    fields = '<div class="m-fd-view">'
+      + vrow('姓名', _esc(c.name || ''))
+      + vrow('性別', g)
+      + vrow('生日', _esc(c.birthday || ''))
+      + vrow('組別', _esc(c.group || '未分組'))
+      + '<div class="m-fd-row m-fd-row-note"><span class="m-fd-label">備註</span><span class="m-fd-val m-fd-note">' + (c.note ? _esc(c.note) : '—') + '</span></div>'
+      + vrow('建立日期', _esc(createD))
+      + '</div>';
+  }
+
+  el.innerHTML = '<div class="m-finder-preview">'
+    + '<div class="m-finder-pv-bar" style="background:' + _finderColor(c) + '"></div>'
+    + '<div class="m-finder-pv-edittoggle">' + (editing ? '' : '<button type="button" class="m-fd-pencil" id="m-fd-pencil" title="編輯資料">✎</button>') + '</div>'
+    + fields
     + '<div class="m-finder-pv-coeff"><div class="m-finder-coeff-title">係數摘要</div>' + coeffRow('手動', man) + coeffRow('觀察', obs) + '</div>'
-    + '<div class="m-finder-pv-chart"><div class="m-finder-chart-ph">13 維度雷達圖縮圖（下一版）</div></div>'
-    + '<div class="m-finder-pv-actions"><button type="button" class="m-finder-act is-primary" id="m-finder-analyze">開始分析 ▸</button>'
-      + '<button type="button" class="m-finder-act is-danger" id="m-finder-del">刪除</button></div>'
-    + '</div>';
-  el.querySelectorAll('#m-fe-colors .m-color-dot').forEach((dot) => { dot.onclick = () => { _finderEditColor = dot.dataset.color; el.querySelectorAll('#m-fe-colors .m-color-dot').forEach((d) => d.classList.toggle('is-sel', d === dot)); }; });
-  const grpSel = document.getElementById('m-fe-group'); const newRow = document.getElementById('m-fe-newgrp-row');
-  if (grpSel) grpSel.onchange = () => { const isNew = grpSel.value === '__new__'; if (newRow) newRow.style.display = isNew ? '' : 'none'; if (isNew) { const ni = document.getElementById('m-fe-newgroup'); if (ni) ni.focus(); } };
-  const saveBtn = document.getElementById('m-fe-save'); if (saveBtn) saveBtn.onclick = () => _finderSave(c);
-  const ab = document.getElementById('m-finder-analyze'); if (ab) ab.onclick = () => openCaseWorkspace({ id: c.id, name: c.name, color: _finderColor(c) }, 'obs');
-  const db2 = document.getElementById('m-finder-del'); if (db2) db2.onclick = () => _finderDelete(c);
+    + '<div class="m-finder-pv-actions4">'
+      + '<button type="button" class="m-finder-act is-primary" id="m-finder-open">打開</button>'
+      + '<button type="button" class="m-finder-act" id="m-finder-save">儲存</button>'
+      + '<button type="button" class="m-finder-act is-danger" id="m-finder-del">刪除</button>'
+      + '<button type="button" class="m-finder-act" id="m-finder-cancel">取消</button>'
+    + '</div></div>';
+
+  const pencil = document.getElementById('m-fd-pencil'); if (pencil) pencil.onclick = () => { _finderEditing = true; _renderFinderCol3(); };
+  if (editing) {
+    const grpSel = document.getElementById('m-fe-group'); const newRow = document.getElementById('m-fe-newgrp-row');
+    if (grpSel) grpSel.onchange = () => { const isNew = grpSel.value === '__new__'; if (newRow) newRow.style.display = isNew ? '' : 'none'; if (isNew) { const ni = document.getElementById('m-fe-newgroup'); if (ni) ni.focus(); } };
+    const colorSel = document.getElementById('m-fe-color'); const swatch = document.getElementById('m-fe-swatch');
+    if (colorSel) colorSel.onchange = () => { _finderEditColor = colorSel.value; if (swatch) swatch.style.background = colorSel.value; };
+  }
+  const openBtn = document.getElementById('m-finder-open'); if (openBtn) openBtn.onclick = () => openCaseWorkspace({ id: c.id, name: c.name, color: _finderColor(c) }, 'obs');
+  const saveBtn = document.getElementById('m-finder-save'); if (saveBtn) saveBtn.onclick = () => _finderSave(c);
+  const delBtn = document.getElementById('m-finder-del'); if (delBtn) delBtn.onclick = () => _finderDelete(c);
+  const cancelBtn = document.getElementById('m-finder-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _finderEditing = false; _renderFinderCol3(); };
 }
 
 async function _finderSave(c) {
+  if (!_finderEditing) return; // 唯讀模式按儲存 = 無事可做（用鉛筆進編輯才會有輸入框）
   const name = (document.getElementById('m-fe-name').value || '').trim();
   const gender = document.getElementById('m-fe-gender').value || '';
   const birthday = document.getElementById('m-fe-birthday').value || '';
@@ -621,26 +664,29 @@ async function _finderSave(c) {
   let group = grpSel ? grpSel.value : '';
   if (group === '__new__') group = (document.getElementById('m-fe-newgroup').value || '').trim();
   const note = (document.getElementById('m-fe-note').value || '').trim();
+  const createDate = document.getElementById('m-fe-createdate').value || '';
   const color = _finderEditColor || '';
   const st = document.getElementById('m-fe-status');
   if (!name) { if (st) { st.textContent = '請填姓名'; st.className = 'm-home-profile-status is-error'; } return; }
   if (st) { st.textContent = '儲存中…'; st.className = 'm-home-profile-status is-saving'; }
   try {
-    await updateCase(c.id, { name: name, gender: gender, birthday: birthday, group: group, note: note, color: color });
-    Object.assign(c, { name: name, gender: gender, birthday: birthday, group: group, note: note, color: color });
+    await updateCase(c.id, { name: name, gender: gender, birthday: birthday, group: group, note: note, createDate: createDate, color: color });
+    Object.assign(c, { name: name, gender: gender, birthday: birthday, group: group, note: note, createDate: createDate, color: color });
+    _finderEditing = false;
     await _finderLoad();
     _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
   } catch (e) { if (st) { st.textContent = '儲存失敗，請重試'; st.className = 'm-home-profile-status is-error'; } }
 }
 
-// 「新增個案」：直接建一個未分組空個案，選進第三欄讓使用者輸入後按儲存
+// 「新增個案」：直接建一個未分組空個案（建立日期＝今天），選進第三欄並進入編輯讓使用者輸入
 async function _finderNewCase() {
   try {
-    const color = CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)];
+    const color = CARD_COLORS[Math.floor(Math.random() * 8)]; // 前 8 色
     const id = await createCase({ name: '', gender: '', birthday: '', group: '', note: '', color: color });
     await _finderLoad();
     _finderSel = '__all__';
     _finderCaseId = id;
+    _finderEditing = true;
     _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
     setTimeout(() => { const n = document.getElementById('m-fe-name'); if (n) n.focus(); }, 30);
   } catch (e) { alert('新增失敗，請重試'); }
