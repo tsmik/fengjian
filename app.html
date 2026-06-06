@@ -482,8 +482,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dimv-part{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:8px 14px;margin-bottom:7px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;cursor:pointer}
 .m-dimv-part.is-cur{background:#efe7d6;border-color:#d3c7b1}
 .m-dimv-part-name{font-size:16px;color:#5a5147}
-/* 個案工作區：部位導覽欄頂端的個案姓名（與部位格同高，讓導覽往下移一格）；字級比照報告頁姓名 20px */
-.m-partnav-casename{display:flex;align-items:center;min-height:48px;padding:8px 14px;margin-bottom:7px;font-size:20px;font-weight:400;color:#3a3228;letter-spacing:2px;white-space:nowrap;overflow:hidden}
+/* 個案工作區：部位導覽欄頂端的個案姓名（字頂對齊條件欄部位名）；字級比照報告頁姓名 20px */
+.m-partnav-casename{display:flex;align-items:flex-start;min-height:48px;padding:10px 14px 8px;margin-bottom:7px;font-size:20px;font-weight:400;line-height:1;color:#3a3228;letter-spacing:2px;white-space:nowrap;overflow:hidden}
 .m-dimv-part.is-cur .m-dimv-part-name{color:#3a3228}
 .m-dimv-part-prog{font-size:13px;color:#a89e92}
 .m-dimv-part.is-done .m-dimv-part-prog{color:#5a8a5a}
@@ -1423,6 +1423,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   /* 部位視角比照維度視角：部位欄 sticky 固定(滑條件欄不動)+padding-top:28→頭對齊維度視角形勢top；
      部位名(無維度標題列)黏 top:28 跟頭同高；條件題依 section 並排(比照自我評分)；section 標題放大 */
   .m-partv .m-dimv-partnav{position:sticky;top:0;align-self:flex-start;padding-top:28px}
+  /* 個案工作區：部位欄頂端有個案姓名 → 拿掉 28 padding，讓姓名字頂對齊條件欄部位名(10px) */
+  body.m-ws-active .m-partv .m-dimv-partnav{padding-top:0}
   /* 部位名比照維度標題列(dimbar)：sticky top:0+padding-top:28 → 部位名落 28(跟維度名同線)，整塊不透明覆蓋 0~28(滑動不穿透、不蓋子部位框) */
   .m-partv .m-dimv-parthead{top:0;padding-top:28px}
   .m-partv .m-dimv-condcol .m-section{display:block}
