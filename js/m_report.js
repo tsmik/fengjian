@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -485,9 +485,90 @@ async function _deleteCurrentCase() {
   }
 }
 
-// 分組管理（新增/改名/拖拉排序/刪除）— Stage 2 再做
+// ============ 管理個案分組視窗（新增/改名/加說明/拖曳排序/刪除）============
 function _openManageGroups() {
-  alert('分組管理（新增/改名/拖拉排序/刪除）下一版推出。\n目前可在新增或編輯個案時直接打組別名稱來分組。');
+  // 工作列：現有分組（含空分組）＋說明
+  _gmRows = _finderGroups.map((n) => ({ orig: n, name: n, desc: _finderGroupDescs[n] || '' }));
+  let ov = document.getElementById('m-gm-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'm-gm-overlay';
+    ov.className = 'm-gm-overlay';
+    ov.innerHTML = '<div class="m-gm-modal">'
+      + '<div class="m-gm-title">管理個案分組</div>'
+      + '<div class="m-gm-hint">可新增、改名、加說明、拖曳排序、刪除分組。刪除分組時，底下的個案會變成「未分組」（個案本身不會被刪）。</div>'
+      + '<div class="m-gm-list" id="m-gm-list"></div>'
+      + '<button type="button" class="m-gm-add" id="m-gm-add">＋ 新增分組</button>'
+      + '<div class="m-gm-actions"><button type="button" class="m-gm-cancel" id="m-gm-cancel">取消</button><button type="button" class="m-gm-save" id="m-gm-save">儲存</button></div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', (e) => { if (e.target === ov) _closeManageGroups(); });
+    ov.querySelector('#m-gm-add').onclick = () => { _gmSyncFromDom(); _gmRows.push({ orig: null, name: '', desc: '' }); _gmRenderRows(); };
+    ov.querySelector('#m-gm-cancel').onclick = _closeManageGroups;
+    ov.querySelector('#m-gm-save').onclick = _gmSave;
+  }
+  _gmRenderRows();
+  ov.style.display = 'flex';
+}
+function _closeManageGroups() { const ov = document.getElementById('m-gm-overlay'); if (ov) ov.style.display = 'none'; }
+function _gmSyncFromDom() {
+  const rows = document.querySelectorAll('#m-gm-list .m-gm-row');
+  const arr = [];
+  rows.forEach((el) => arr.push({ orig: el.getAttribute('data-orig') || null, name: el.querySelector('.m-gm-name').value, desc: el.querySelector('.m-gm-desc').value }));
+  _gmRows = arr;
+}
+function _gmRenderRows() {
+  const box = document.getElementById('m-gm-list'); if (!box) return;
+  if (_gmRows.length === 0) { box.innerHTML = '<div class="m-gm-empty">尚無分組，點下方「＋ 新增分組」建立。</div>'; return; }
+  box.innerHTML = _gmRows.map((r, i) =>
+    '<div class="m-gm-row" draggable="true" data-i="' + i + '" data-orig="' + _esc(r.orig || '') + '">'
+    + '<span class="m-gm-handle" title="拖曳排序">⠿</span>'
+    + '<input class="m-gm-name" value="' + _esc(r.name || '') + '" placeholder="分組名稱" maxlength="30">'
+    + '<input class="m-gm-desc" value="' + _esc(r.desc || '') + '" placeholder="說明（選填）" maxlength="60">'
+    + '<button type="button" class="m-gm-del" data-i="' + i + '" title="刪除分組">✕</button>'
+    + '</div>'
+  ).join('');
+  box.querySelectorAll('.m-gm-row').forEach((row) => {
+    row.addEventListener('dragstart', (e) => { _gmSyncFromDom(); _gmDragFrom = parseInt(row.dataset.i, 10); if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(_gmDragFrom)); } catch (_) {} } });
+    row.addEventListener('dragover', (e) => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; });
+    row.addEventListener('drop', (e) => { e.preventDefault(); const to = parseInt(row.dataset.i, 10); if (_gmDragFrom == null || _gmDragFrom === to) { _gmDragFrom = null; return; } _gmSyncFromDom(); const moved = _gmRows.splice(_gmDragFrom, 1)[0]; _gmRows.splice(to, 0, moved); _gmDragFrom = null; _gmRenderRows(); });
+  });
+  // 拖曳時不要從 input 觸發（input 內可選字）→ 只有 handle 區塊啟動拖曳
+  box.querySelectorAll('.m-gm-name,.m-gm-desc').forEach((inp) => { inp.addEventListener('mousedown', (e) => { e.stopPropagation(); const row = inp.closest('.m-gm-row'); if (row) row.draggable = false; }); inp.addEventListener('blur', () => { const row = inp.closest('.m-gm-row'); if (row) row.draggable = true; }); });
+  box.querySelectorAll('.m-gm-del').forEach((b) => { b.onclick = () => {
+    _gmSyncFromDom();
+    const i = parseInt(b.dataset.i, 10); const r = _gmRows[i];
+    if (r && (r.name || r.orig)) { if (!confirm('確定刪除分組「' + (r.name || r.orig) + '」？該分組底下的個案會變成「未分組」。')) return; }
+    _gmRows.splice(i, 1); _gmRenderRows();
+  }; });
+}
+async function _gmSave() {
+  _gmSyncFromDom();
+  const seen = {}, order = [], descs = {};
+  for (let i = 0; i < _gmRows.length; i++) {
+    const nm = (_gmRows[i].name || '').trim();
+    if (!nm) { alert('分組名稱不能空白'); return; }
+    if (seen[nm]) { alert('分組名稱重複：' + nm); return; }
+    seen[nm] = 1; order.push(nm); descs[nm] = (_gmRows[i].desc || '').trim();
+  }
+  // 改名 / 刪除 → 傳播到個案 group
+  const renameMap = {}, keptOrig = {};
+  _gmRows.forEach((r) => { const nm = (r.name || '').trim(); if (r.orig) { keptOrig[r.orig] = 1; if (r.orig !== nm) renameMap[r.orig] = nm; } });
+  const saveBtn = document.getElementById('m-gm-save'); if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; }
+  try {
+    for (const c of _finderCases) {
+      const g = c.group || '';
+      if (g && renameMap[g]) await updateCase(c.id, { group: renameMap[g] });
+      else if (g && !keptOrig[g]) await updateCase(c.id, { group: '' }); // 被刪的分組 → 未分組
+    }
+    await saveGroups(order, descs);
+    _closeManageGroups();
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
+    _refreshCaseMgmt(); // 桌機→重繪 Finder、手機→重繪 overlay 清單
+  } catch (e) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
+    alert('儲存失敗，請重試');
+  }
 }
 
 // 新增/刪除個案後刷新案例管理畫面（桌機 Finder / 手機 overlay 清單）
@@ -506,6 +587,9 @@ let _finderCases = [];
 let _finderGroups = [];
 let _finderEditColor = '';
 let _finderIsNew = false;     // 目前第三欄是不是「剛新增、還沒存過」的案 → 取消要刪掉
+let _finderGroupDescs = {};   // {分組名: 說明}
+let _gmRows = [];             // 管理分組視窗工作列 [{orig,name,desc}]
+let _gmDragFrom = null;
 
 // Finder 色卡：比原 CARD_COLORS 亮/淡一些的 8 色（太深就調這組）
 const FINDER_COLORS = ['#C9B98E', '#8FB081', '#79A597', '#ADA59B', '#C2A07F', '#BE94A2', '#BCAD78', '#84A6C0'];
@@ -552,12 +636,21 @@ export async function mountFinderDesktop() {
 
 async function _finderLoad() {
   const uid = getEffectiveUid();
-  let groupOrder = [];
-  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists() && Array.isArray(s.data().groupOrder)) groupOrder = s.data().groupOrder; } catch (e) {}
+  let groupOrder = []; _finderGroupDescs = {};
+  try {
+    const s = await getDoc(doc(db, 'users', uid));
+    if (s.exists()) {
+      const d = s.data();
+      if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder;
+      if (d.groupDescs && typeof d.groupDescs === 'object') _finderGroupDescs = d.groupDescs;
+    }
+  } catch (e) {}
   let cases = []; try { cases = await listCases(); } catch (e) {}
   _finderCases = cases;
   const gset = []; cases.forEach((c) => { const g = c.group || ''; if (g && gset.indexOf(g) < 0) gset.push(g); });
   const ordered = []; groupOrder.forEach((g) => { if (gset.indexOf(g) >= 0) ordered.push(g); }); gset.forEach((g) => { if (ordered.indexOf(g) < 0) ordered.push(g); });
+  // 把「沒有個案、但有設定排序」的空分組也保留（讓剛建立還沒指派個案的分組不消失）
+  groupOrder.forEach((g) => { if (g && ordered.indexOf(g) < 0) ordered.push(g); });
   _finderGroups = ordered; _knownGroups = ordered.slice();
 }
 

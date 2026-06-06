@@ -186,6 +186,12 @@ export async function updateSelfCard(fields) {
   await setDoc(doc(db, 'users', uid), Object.assign({}, fields, { profileUpdatedAt: new Date().toISOString() }), { merge: true });
   window.__userData = Object.assign(window.__userData || {}, fields);
 }
+// 儲存分組設定（順序＋說明）到 users/{uid}
+export async function saveGroups(groupOrder, groupDescs) {
+  const uid = getEffectiveUid();
+  if (!uid) throw new Error('未登入');
+  await setDoc(doc(db, 'users', uid), { groupOrder: groupOrder || [], groupDescs: groupDescs || {}, updatedAt: new Date().toISOString() }, { merge: true });
+}
 // 分析分頁頂部橫幅：「{姓名} 的 人相兵法」＋整列底色＝該對象顏色
 const _BANNER_DEFAULT_COLOR = '#D9CBA8';
 function _bannerTint(hex) {
