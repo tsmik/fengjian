@@ -247,30 +247,32 @@ const WS_SUBS = [
   { key: 'manual-report', label: '報告', tab: 'manual' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-// 整頁淡染：把個案色「淡淡混進頁底色」當 .m-main 背景（在內容底下，不是蓋在上面）。
-// f=0.15（要再調濃淡改這個數字；0=純頁底、1=純個案色）
-function _wsWash(hex) {
-  const base = [247, 244, 239]; // #f7f4ef 頁底色 --bg
+// 把個案色淡淡混進某個底色。f 越大越濃。
+function _wsBlend(base, hex, f) {
   let r = 154, g = 138, b = 110;
   if (hex && hex.charAt(0) === '#' && hex.length >= 7) {
     const rr = parseInt(hex.slice(1, 3), 16), gg = parseInt(hex.slice(3, 5), 16), bb = parseInt(hex.slice(5, 7), 16);
     if (!isNaN(rr) && !isNaN(gg) && !isNaN(bb)) { r = rr; g = gg; b = bb; }
   }
-  const f = 0.15;
   return 'rgb(' + Math.round(base[0] * (1 - f) + r * f) + ',' + Math.round(base[1] * (1 - f) + g * f) + ',' + Math.round(base[2] * (1 - f) + b * f) + ')';
 }
+// 整頁淡染（在內容底下）：個案色混進頁底色 #f7f4ef，f=0.11（要調改這數字）
+function _wsWash(hex) { return _wsBlend([247, 244, 239], hex, 0.11); }
+// 部位名/維度名 標題列：混進原標題米色 #e7dcc6，稍濃 f=0.20，讓標題列跟著染色又能微微凸顯
+function _wsWash2(hex) { return _wsBlend([231, 220, 198], hex, 0.20); }
 function _renderWorkspace() {
   const host = document.getElementById('m-ws');
   if (!host) return;
   if (!_wsCase) { host.innerHTML = ''; host.style.display = 'none'; host.style.background = ''; return; }
   host.style.display = '';
-  host.style.background = _bannerTint(_wsCase.color);
+  host.style.background = '';  // 這一區不放底色
   const items = WS_SUBS.map(function (s) {
     return '<button class="m-ws-item' + (s.key === _wsSub ? ' active' : '') + '" data-ws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
   }).join('');
   host.innerHTML =
-    '<div class="m-ws-head"><span class="m-ws-dot"></span><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
-    '<button class="m-ws-close" id="m-ws-close" title="關閉，回到本人">✕</button></div>' +
+    '<div class="m-ws-head"><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
+    '<button class="m-ws-close" id="m-ws-close" title="退出 ' + _wsEsc(_wsCase.name) + '">✕</button></div>' +
+    '<div class="m-ws-bar" style="background:' + (_wsCase.color || '#c9b98e') + '"></div>' +
     '<div class="m-ws-items">' + items + '</div>';
   const cl = host.querySelector('#m-ws-close'); if (cl) cl.onclick = closeCaseWorkspace;
   host.querySelectorAll('[data-ws]').forEach(function (b) { b.addEventListener('click', function () { selectWorkspaceSub(b.dataset.ws); }); });
@@ -323,6 +325,7 @@ export function selectWorkspaceSub(key) {
   _wsSub = key;
   document.body.classList.add('m-ws-active');
   document.body.style.setProperty('--ws-tint', _wsWash(_wsCase.color));
+  document.body.style.setProperty('--ws-tint2', _wsWash2(_wsCase.color));
   _renderWorkspace();
   try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
 }

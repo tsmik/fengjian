@@ -1104,20 +1104,22 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   /* 桌機改用側欄子膠囊 → 隱藏頁面上方的子畫面 segmented（報告內部 toggle 不受影響） */
   .m-segmented-sub{display:none}
 
-  /* ===== 個案工作區（側欄「個案管理」下方展開：名字＋✕＋四分頁）===== */
-  .m-ws{display:flex;flex-direction:column;gap:6px;margin:2px 12px 12px;padding:10px 10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,0.07)}
-  .m-ws-head{display:flex;align-items:center;gap:7px;padding:1px 2px 9px;border-bottom:1px solid rgba(0,0,0,0.07)}
-  .m-ws-dot{width:8px;height:8px;border-radius:50%;background:#c47a3d;flex:0 0 auto}
-  .m-ws-name{flex:1;min-width:0;font-size:14px;font-weight:600;color:#3a3228;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ===== 個案工作區（側欄「個案管理」下方：個案名＋✕＋名下顏色bar＋四分頁；此區不放底色）===== */
+  .m-ws{display:flex;flex-direction:column;gap:4px;margin:2px 12px 12px;padding:8px 6px 10px}
+  .m-ws-head{display:flex;align-items:center;gap:7px;padding:1px 2px 4px}
+  .m-ws-name{flex:1;min-width:0;font-size:14px;font-weight:400;color:#3a3228;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .m-ws-close{flex:0 0 auto;border:none;background:transparent;color:#8a7e6e;font-size:13px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px}
   .m-ws-close:hover{background:rgba(0,0,0,0.09);color:#3a3228}
-  .m-ws-items{display:flex;flex-direction:column;gap:6px;padding:8px 0 0 12px}
-  .m-ws-item{font-family:inherit;font-size:13px;color:#6a5f50;padding:7px 11px;border:1px solid rgba(0,0,0,0.10);border-radius:14px;background:rgba(255,255,255,0.55);cursor:pointer;text-align:left;white-space:nowrap}
+  .m-ws-bar{height:4px;border-radius:2px;margin:0 2px 4px}
+  .m-ws-items{display:flex;flex-direction:column;gap:6px;padding:6px 0 0 12px}
+  .m-ws-item{font-family:inherit;font-size:13px;font-weight:400;color:#6a5f50;padding:7px 11px;border:1px solid rgba(0,0,0,0.10);border-radius:14px;background:rgba(255,255,255,0.55);cursor:pointer;text-align:left;white-space:nowrap}
   .m-ws-item:hover{background:rgba(255,255,255,0.85)}
-  .m-ws-item.active{background:#fff;border-color:#c47a3d;color:#3a3228;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.10)}
+  .m-ws-item.active{background:#fff;border-color:#c47a3d;color:#3a3228;font-weight:400;box-shadow:0 1px 3px rgba(0,0,0,0.10)}
 
-  /* 工作區啟用：個案色淡淡混進頁底色（在內容底下，不是蓋在上面）＋ 中和上方分頁高亮 */
+  /* 工作區啟用：個案色淡淡混進頁底色（在內容底下）；部位名/維度名標題列跟著染色（稍濃）＋ 中和上方分頁高亮 */
   body.m-ws-active .m-main{background:var(--ws-tint, #f7f4ef)}
+  body.m-ws-active .m-sv-dimhead,
+  body.m-ws-active .m-dimv-parthead{background:var(--ws-tint2, #e7dcc6)}
   body.m-ws-active .m-tab.active{color:var(--text-3);font-weight:400}
   body.m-ws-active .m-tab.active::after{background:transparent}
   body.m-ws-active .m-tab.active .m-tab-icon{transform:none}
@@ -1125,7 +1127,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   /* ===== 個案管理 Finder 三欄（桌機；渲染進 m-page-report，左側欄不消失）===== */
   .m-finder{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px)}
   .m-finder-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 14px;border-bottom:1px solid var(--border)}
-  .m-finder-title{font-size:22px;font-weight:700;color:#3d3b39;letter-spacing:2px}  /* 比照 形勢/格局 標題字 */
+  .m-finder-title{font-size:22px;font-weight:400;color:#3d3b39;letter-spacing:2px}  /* 比照 形勢/格局 標題字（不粗體）*/
   .m-finder-bar-btns{display:flex;gap:8px}
   .m-finder-bar-btn{font-family:inherit;font-size:13px;color:#3a3228;background:#efe7d6;border:1px solid #d3c7b1;border-radius:8px;padding:8px 14px;cursor:pointer}
   .m-finder-bar-btn:hover{background:#e7dcc6}
@@ -1142,8 +1144,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-finder-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-height:118px;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .15s,box-shadow .15s}
   .m-finder-card:hover{border-color:#cdbfa3}
   .m-finder-card.active{border-color:#c47a3d;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
-  .m-finder-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .m-finder-card-meta{font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:auto}
+  .m-finder-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-finder-card-meta{font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:3px}
+  .m-finder-card-join{font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:auto}
   .m-finder-card-note{font-size:12px;font-weight:400;color:var(--text-3);margin-top:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .m-finder-empty{color:#a89e92;font-size:14px;padding:30px 10px;text-align:center}
   /* 第三欄預覽 */
@@ -1159,8 +1162,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-fd-note{white-space:pre-wrap}
   .m-fd-row input,.m-fd-row select,.m-fd-row textarea{flex:1;min-width:0;box-sizing:border-box;font-family:inherit;font-size:14px;border:1px solid #d4c9b0;border-radius:7px;padding:7px 9px;background:#fff;color:#3a3228}
   .m-fd-row textarea{resize:vertical;min-height:60px;line-height:1.5}
-  .m-fd-colorpick{flex:1;display:flex;align-items:center;gap:8px}
-  .m-fd-swatch{width:24px;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,0.15);flex:0 0 auto}
+  .m-fd-colorcircle{width:20px;height:20px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);flex:0 0 auto;display:inline-block}
+  .m-fd-swatches{flex:1;display:flex;flex-wrap:wrap;gap:8px}
+  .m-fd-swatch-btn{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 1px rgba(0,0,0,0.12)}
+  .m-fd-swatch-btn.is-sel{border-color:#3a3228}
   .m-finder-coeff-title{font-size:13px;color:#7a6e64;margin-bottom:6px}
   .m-finder-coeff-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
   .m-finder-coeff-src{flex:0 0 28px;font-size:12px;color:#7a6e64}

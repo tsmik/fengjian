@@ -505,9 +505,20 @@ let _finderEditing = false;   // col3 是否在編輯（預設唯讀，點鉛筆
 let _finderCases = [];
 let _finderGroups = [];
 let _finderEditColor = '';
+let _finderIsNew = false;     // 目前第三欄是不是「剛新增、還沒存過」的案 → 取消要刪掉
+
+// Finder 色卡：比原 CARD_COLORS 亮/淡一些的 8 色（太深就調這組）
+const FINDER_COLORS = ['#C9B98E', '#8FB081', '#79A597', '#ADA59B', '#C2A07F', '#BE94A2', '#BCAD78', '#84A6C0'];
 
 const _C_TOT = [0,1,2,3,4,5,6,7,8,9,10,11,12], _C_PRE = [0,1,2,3,4,5], _C_POST = [9,10,11,12], _C_LUCK = [6,7,8];
 function _finderColor(c) { return c.color || _autoColor(c.id); }
+// 虛歲 = 今年 - 出生年 + 1
+function _xusuiOf(birthday) {
+  const by = parseInt((birthday || '').slice(0, 4), 10);
+  if (!by || isNaN(by)) return '';
+  const x = new Date().getFullYear() - by + 1;
+  return (x > 0 && x < 150) ? x : '';
+}
 // 第二欄卡片底色：比 _cardTint(0.40) 更淡（要再調濃淡改這個 f；0=純白、1=純色）
 function _cardTintLight(hex) {
   hex = hex || '#D9CBA8';
@@ -557,7 +568,7 @@ function _renderFinderCol1() {
   const un = _finderCases.filter((c) => !(c.group || '')).length;
   if (un > 0) h += '<button class="m-finder-c1item' + (_finderSel === '__ungrouped__' ? ' active' : '') + '" data-sel="__ungrouped__"><span>未分組</span><span class="m-finder-c1count">' + un + '</span></button>';
   el.innerHTML = h;
-  el.querySelectorAll('[data-sel]').forEach((b) => { b.onclick = () => { _finderSel = b.dataset.sel; _finderCaseId = null; _finderEditing = false; _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3(); }; });
+  el.querySelectorAll('[data-sel]').forEach((b) => { b.onclick = () => { _finderSel = b.dataset.sel; _finderCaseId = null; _finderEditing = false; _finderIsNew = false; _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3(); }; });
 }
 
 function _finderVisibleCases() {
@@ -573,15 +584,18 @@ function _renderFinderCol2() {
   el.innerHTML = '<div class="m-finder-grid">' + list.map((c) => {
     const gd = c.gender === 'M' ? '男' : (c.gender === 'F' ? '女' : (c.gender || ''));
     const by = (c.birthday || '').slice(0, 4);
+    const xs = _xusuiOf(c.birthday);
+    const line2 = [gd, xs ? ('虛歲' + xs + '歲') : '', by ? (by + '年出生') : ''].filter(Boolean).join(', ');
     const cd = _finderCreateDateStr(c);
     const cym = cd ? cd.slice(0, 7).replace('-', '/') : '';
-    const meta = [gd, by, cym].filter(Boolean).join(' · ');
+    const line3 = cym ? (cym + ' 建立個案') : '';
     return '<button class="m-finder-card' + (_finderCaseId === c.id ? ' active' : '') + '" data-case="' + _esc(c.id) + '" style="background:' + _cardTintLight(_finderColor(c)) + '">'
       + '<span class="m-finder-card-name">' + _esc(c.name || '(未命名)') + '</span>'
-      + '<span class="m-finder-card-meta">' + _esc(meta) + '</span>'
+      + (line2 ? '<span class="m-finder-card-meta">' + _esc(line2) + '</span>' : '')
+      + (line3 ? '<span class="m-finder-card-join">' + _esc(line3) + '</span>' : '')
       + (c.note ? '<span class="m-finder-card-note">' + _esc(c.note) + '</span>' : '') + '</button>';
   }).join('') + '</div>';
-  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = () => { _finderCaseId = b.dataset.case; _finderEditing = false; _renderFinderCol2(); _renderFinderCol3(); }; });
+  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = () => { _finderCaseId = b.dataset.case; _finderEditing = false; _finderIsNew = false; _renderFinderCol2(); _renderFinderCol3(); }; });
 }
 
 function _renderFinderCol3() {
@@ -606,7 +620,7 @@ function _renderFinderCol3() {
     let gOpts = '<option value=""' + (inGroup === '' ? ' selected' : '') + '>未分組</option>';
     _finderGroups.forEach((gg) => { gOpts += '<option value="' + _esc(gg) + '"' + (gg === inGroup ? ' selected' : '') + '>' + _esc(gg) + '</option>'; });
     gOpts += '<option value="__new__">＋ 建立新組別…</option>';
-    const cOpts = CARD_COLORS.slice(0, 8).map((hex, i) => '<option value="' + hex + '"' + (hex === _finderEditColor ? ' selected' : '') + '>顏色 ' + (i + 1) + '</option>').join('');
+    const swatches = FINDER_COLORS.map((hex) => '<button type="button" class="m-fd-swatch-btn' + (hex.toLowerCase() === (_finderEditColor || '').toLowerCase() ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></button>').join('');
     fields = '<div class="m-fd-edit">'
       + '<div class="m-fd-row"><span class="m-fd-label">姓名</span><input type="text" id="m-fe-name" value="' + _esc(c.name || '') + '" maxlength="20" placeholder="輸入姓名"></div>'
       + '<div class="m-fd-row"><span class="m-fd-label">性別</span><select id="m-fe-gender"><option value="">未填</option><option value="男"' + (g === '男' ? ' selected' : '') + '>男</option><option value="女"' + (g === '女' ? ' selected' : '') + '>女</option></select></div>'
@@ -615,7 +629,7 @@ function _renderFinderCol3() {
       + '<div class="m-fd-row" id="m-fe-newgrp-row" style="display:none"><span class="m-fd-label">新組別</span><input type="text" id="m-fe-newgroup" maxlength="30" placeholder="輸入新組別名稱"></div>'
       + '<div class="m-fd-row m-fd-row-note"><span class="m-fd-label">備註</span><textarea id="m-fe-note" rows="3" placeholder="可多行">' + _esc(c.note || '') + '</textarea></div>'
       + '<div class="m-fd-row"><span class="m-fd-label">建立日期</span><input type="date" id="m-fe-createdate" value="' + _esc(createD) + '"></div>'
-      + '<div class="m-fd-row"><span class="m-fd-label">卡片顏色</span><span class="m-fd-colorpick"><select id="m-fe-color">' + cOpts + '</select><span class="m-fd-swatch" id="m-fe-swatch" style="background:' + _finderEditColor + '"></span></span></div>'
+      + '<div class="m-fd-row"><span class="m-fd-label">卡片顏色</span><span class="m-fd-swatches" id="m-fe-swatches">' + swatches + '</span></div>'
       + '<div class="m-home-profile-status" id="m-fe-status"></div>'
       + '</div>';
   } else {
@@ -627,6 +641,7 @@ function _renderFinderCol3() {
       + vrow('組別', _esc(c.group || '未分組'))
       + '<div class="m-fd-row m-fd-row-note"><span class="m-fd-label">備註</span><span class="m-fd-val m-fd-note">' + (c.note ? _esc(c.note) : '—') + '</span></div>'
       + vrow('建立日期', _esc(createD))
+      + '<div class="m-fd-row"><span class="m-fd-label">卡片顏色</span><span class="m-fd-colorcircle" style="background:' + _finderColor(c) + '"></span></div>'
       + '</div>';
   }
 
@@ -646,13 +661,13 @@ function _renderFinderCol3() {
   if (editing) {
     const grpSel = document.getElementById('m-fe-group'); const newRow = document.getElementById('m-fe-newgrp-row');
     if (grpSel) grpSel.onchange = () => { const isNew = grpSel.value === '__new__'; if (newRow) newRow.style.display = isNew ? '' : 'none'; if (isNew) { const ni = document.getElementById('m-fe-newgroup'); if (ni) ni.focus(); } };
-    const colorSel = document.getElementById('m-fe-color'); const swatch = document.getElementById('m-fe-swatch');
-    if (colorSel) colorSel.onchange = () => { _finderEditColor = colorSel.value; if (swatch) swatch.style.background = colorSel.value; };
+    const sw = document.getElementById('m-fe-swatches');
+    if (sw) sw.querySelectorAll('.m-fd-swatch-btn').forEach((b) => { b.onclick = () => { _finderEditColor = b.dataset.color; sw.querySelectorAll('.m-fd-swatch-btn').forEach((x) => x.classList.toggle('is-sel', x === b)); }; });
   }
   const openBtn = document.getElementById('m-finder-open'); if (openBtn) openBtn.onclick = () => openCaseWorkspace({ id: c.id, name: c.name, color: _finderColor(c) }, 'obs');
   const saveBtn = document.getElementById('m-finder-save'); if (saveBtn) saveBtn.onclick = () => _finderSave(c);
   const delBtn = document.getElementById('m-finder-del'); if (delBtn) delBtn.onclick = () => _finderDelete(c);
-  const cancelBtn = document.getElementById('m-finder-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _finderEditing = false; _renderFinderCol3(); };
+  const cancelBtn = document.getElementById('m-finder-cancel'); if (cancelBtn) cancelBtn.onclick = () => _finderCancel(c);
 }
 
 async function _finderSave(c) {
@@ -673,20 +688,40 @@ async function _finderSave(c) {
     await updateCase(c.id, { name: name, gender: gender, birthday: birthday, group: group, note: note, createDate: createDate, color: color });
     Object.assign(c, { name: name, gender: gender, birthday: birthday, group: group, note: note, createDate: createDate, color: color });
     _finderEditing = false;
+    _finderIsNew = false;
     await _finderLoad();
     _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
   } catch (e) { if (st) { st.textContent = '儲存失敗，請重試'; st.className = 'm-home-profile-status is-error'; } }
 }
 
+// 取消：新增中→確認後刪掉這個空案；編輯中→確認後放棄變更回唯讀
+async function _finderCancel(c) {
+  if (_finderIsNew) {
+    if (!confirm('確定不新增這個個案嗎？剛剛填的內容不會留存。')) return;
+    _finderIsNew = false; _finderEditing = false;
+    try { await deleteCase(c.id); } catch (e) {}
+    _finderCaseId = null;
+    await _finderLoad();
+    _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
+  } else if (_finderEditing) {
+    if (!confirm('確定不儲存編輯內容嗎？變更會被捨棄。')) return;
+    _finderEditing = false;
+    _renderFinderCol3(); // c 仍是存檔前的值（沒 Object.assign）→ 回唯讀即還原
+  } else {
+    _renderFinderCol3();
+  }
+}
+
 // 「新增個案」：直接建一個未分組空個案（建立日期＝今天），選進第三欄並進入編輯讓使用者輸入
 async function _finderNewCase() {
   try {
-    const color = CARD_COLORS[Math.floor(Math.random() * 8)]; // 前 8 色
+    const color = FINDER_COLORS[Math.floor(Math.random() * FINDER_COLORS.length)];
     const id = await createCase({ name: '', gender: '', birthday: '', group: '', note: '', color: color });
     await _finderLoad();
     _finderSel = '__all__';
     _finderCaseId = id;
     _finderEditing = true;
+    _finderIsNew = true;
     _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
     setTimeout(() => { const n = document.getElementById('m-fe-name'); if (n) n.focus(); }, 30);
   } catch (e) { alert('新增失敗，請重試'); }
