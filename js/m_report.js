@@ -534,7 +534,14 @@ function _gmRenderRows() {
     row.addEventListener('drop', (e) => { e.preventDefault(); const to = parseInt(row.dataset.i, 10); if (_gmDragFrom == null || _gmDragFrom === to) { _gmDragFrom = null; return; } _gmSyncFromDom(); const moved = _gmRows.splice(_gmDragFrom, 1)[0]; _gmRows.splice(to, 0, moved); _gmDragFrom = null; _gmRenderRows(); });
   });
   // 拖曳時不要從 input 觸發（input 內可選字）→ 只有 handle 區塊啟動拖曳
-  box.querySelectorAll('.m-gm-name,.m-gm-desc').forEach((inp) => { inp.addEventListener('mousedown', (e) => { e.stopPropagation(); const row = inp.closest('.m-gm-row'); if (row) row.draggable = false; }); inp.addEventListener('blur', () => { const row = inp.closest('.m-gm-row'); if (row) row.draggable = true; }); });
+  box.querySelectorAll('.m-gm-name,.m-gm-desc').forEach((inp) => {
+    const row = inp.closest('.m-gm-row');
+    const off = () => { if (row) row.draggable = false; };  // 在 input 上互動時暫停整列拖曳（才能選字）
+    const on = () => { if (row) row.draggable = true; };
+    inp.addEventListener('mousedown', (e) => { e.stopPropagation(); off(); });
+    inp.addEventListener('mouseup', on);
+    inp.addEventListener('blur', on);
+  });
   box.querySelectorAll('.m-gm-del').forEach((b) => { b.onclick = () => {
     _gmSyncFromDom();
     const i = parseInt(b.dataset.i, 10); const r = _gmRows[i];

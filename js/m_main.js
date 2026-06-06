@@ -245,7 +245,6 @@ export function isDesktopSidebar() {
 }
 let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
-let _wsRouting = false; // 工作區內部驅動的 tab.click()，讓上方分頁的「鎖本人」邏輯跳過
 const WS_SUBS = [
   { key: 'obs', label: '部位觀察分析', tab: 'input' },
   { key: 'obs-report', label: '報告', tab: 'input' },
@@ -626,17 +625,14 @@ if (isTeacherMode) {
         if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
         if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
       }
-      // 桌機：點上方分頁一律切回本人（個案分析走側欄工作區）。
-      // 工作區仍釘在側欄，僅取消染色/高亮；_wsRouting 時（工作區自己驅動的 click）跳過。
+      // 桌機：點上方分頁一律切回本人（個案分析走側欄工作區）。工作區仍釘在側欄，僅取消染色/高亮。
       let _forcedSelf = false;
-      if (!_wsRouting) {
-        // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點上方分頁會殘留個案染色）
-        if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
-        if (isDesktopSidebar() && getActiveCaseId()) {
-          setActiveCase(null);
-          try { await refreshUserData(); } catch (e) {}
-          _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
-        }
+      // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點上方分頁會殘留個案染色）
+      if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
+      if (isDesktopSidebar() && getActiveCaseId()) {
+        setActiveCase(null);
+        try { await refreshUserData(); } catch (e) {}
+        _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
