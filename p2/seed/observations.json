@@ -1,0 +1,2111 @@
+[
+  {
+    "obsId": "h1",
+    "part": "頭",
+    "section": "頂骨",
+    "label": "頂骨龜背/圓/平/凹凸",
+    "options": [
+      "龜背",
+      "圓",
+      "平寬",
+      "有凹凸不平",
+      "側看 向上先隆起 再接頭頂/囟門"
+    ],
+    "note": "",
+    "sourceQid": "h1",
+    "optionHints": {
+      "龜背": "無凹凸，緩緩向中間隆起",
+      "圓": "往下側偏圓弧",
+      "平寬": "往外側平展才向下",
+      "有凹凸不平": "頂骨有凹凸不平",
+      "側看 向上先隆起 再接頭頂/囟門": "非龜背緩升"
+    }
+  },
+  {
+    "obsId": "h2",
+    "part": "頭",
+    "section": "頂骨",
+    "label": "頂骨中央接合",
+    "options": [
+      "突起",
+      "平順",
+      "凹陷"
+    ],
+    "note": "",
+    "sourceQid": "h2"
+  },
+  {
+    "obsId": "h4",
+    "part": "頭",
+    "section": "頂骨",
+    "label": "頂骨中線直/不直",
+    "options": [
+      "中線直",
+      "中線斜/彎"
+    ],
+    "note": "",
+    "sourceQid": "h4",
+    "optionHints": {
+      "中線直": "百會穴為起點，矢狀縫中線向前為直線到髮際中央"
+    }
+  },
+  {
+    "obsId": "h16",
+    "part": "頭",
+    "section": "頂骨",
+    "label": "頂骨大小",
+    "options": [
+      "頂骨面積大",
+      "頂骨面積較小"
+    ],
+    "note": "",
+    "sourceQid": "h16"
+  },
+  {
+    "obsId": "h3",
+    "part": "頭",
+    "section": "頂骨",
+    "label": "頂骨左右一致性",
+    "options": [
+      "左右一致",
+      "左右不一致"
+    ],
+    "note": "",
+    "sourceQid": "h3",
+    "optionHints": {
+      "左右一致": "大小、高低、凹凸、坡度一致"
+    }
+  },
+  {
+    "obsId": "h5",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨圓/平",
+    "options": [
+      "後腦圓",
+      "後腦平"
+    ],
+    "note": "",
+    "sourceQid": "h5"
+  },
+  {
+    "obsId": "h6",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨有/無凹凸",
+    "options": [
+      "順無凹凸",
+      "有凹凸"
+    ],
+    "note": "",
+    "sourceQid": "h6"
+  },
+  {
+    "obsId": "h7",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨有/無自剋骨",
+    "options": [
+      "有明顯自剋骨",
+      "微/較平緩自剋骨",
+      "無自刻骨"
+    ],
+    "note": "",
+    "sourceQid": "h7",
+    "optionHints": {
+      "有明顯自剋骨": "後端有圓或尖突起"
+    }
+  },
+  {
+    "obsId": "h8",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨有/無橫條骨",
+    "options": [
+      "有橫條骨",
+      "無橫條骨"
+    ],
+    "note": "",
+    "sourceQid": "h8",
+    "optionHints": {
+      "有橫條骨": "有明顯橫向骨突起"
+    }
+  },
+  {
+    "obsId": "h9",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨中線直/不直",
+    "options": [
+      "中線直",
+      "中線斜/彎"
+    ],
+    "note": "",
+    "sourceQid": "h9",
+    "optionHints": {
+      "中線直": "百會穴為起點到枕骨下緣中點為直線"
+    }
+  },
+  {
+    "obsId": "h10",
+    "part": "頭",
+    "section": "枕骨",
+    "label": "枕骨左右一致性",
+    "options": [
+      "兩側一致",
+      "兩側不一致"
+    ],
+    "note": "",
+    "sourceQid": "h10"
+  },
+  {
+    "obsId": "h11",
+    "part": "頭",
+    "section": "華陽骨",
+    "label": "華陽骨隆/直/凸/凹",
+    "options": [
+      "圓隆",
+      "平直",
+      "凸露",
+      "凹陷"
+    ],
+    "note": "",
+    "sourceQid": "h11",
+    "optionHints": {
+      "圓隆": "圓隆起不過低",
+      "平直": "不隆不凹",
+      "凸露": "有明顯突起骨"
+    }
+  },
+  {
+    "obsId": "h12",
+    "part": "頭",
+    "section": "華陽骨",
+    "label": "華陽骨接頂骨順/轉折",
+    "options": [
+      "順接",
+      "有轉折起伏"
+    ],
+    "note": "",
+    "sourceQid": "h12",
+    "optionHints": {
+      "順接": "與頂骨間無太大轉折起伏，順著銜接"
+    }
+  },
+  {
+    "obsId": "h18",
+    "part": "頭",
+    "section": "華陽骨",
+    "label": "華陽骨斜上 往頭中央長",
+    "options": [
+      "華陽骨順斜上往頂骨中央",
+      "華陽骨偏直線向上"
+    ],
+    "note": "",
+    "sourceQid": "h18",
+    "optionHints": {
+      "華陽骨順斜上往頂骨中央": "有一點上窄下寬感"
+    }
+  },
+  {
+    "obsId": "h19",
+    "part": "頭",
+    "section": "華陽骨",
+    "label": "華陽骨在上方高處轉折接頂骨",
+    "options": [
+      "華陽和頂骨明顯轉折 在較高的位置",
+      "華陽和頂骨明顯轉折 在中間/較低的位置",
+      "華陽和頂骨交接無明顯轉折"
+    ],
+    "note": "",
+    "sourceQid": "h19"
+  },
+  {
+    "obsId": "h13",
+    "part": "頭",
+    "section": "華陽骨",
+    "label": "華陽骨左右一致性",
+    "options": [
+      "左右一致",
+      "左右不一致"
+    ],
+    "note": "",
+    "sourceQid": "h13",
+    "optionHints": {
+      "左右一致": "大小、高低等一致"
+    }
+  },
+  {
+    "obsId": "e1",
+    "part": "額",
+    "section": "額型",
+    "label": "額高低(眉到髮際)",
+    "options": [
+      "額高",
+      "額低"
+    ],
+    "note": "",
+    "sourceQid": "e1",
+    "optionHints": {
+      "額高": "眉到髮際長度佔臉 1/3 或以上"
+    }
+  },
+  {
+    "obsId": "e3",
+    "part": "額",
+    "section": "額型",
+    "label": "額寬窄",
+    "options": [
+      "額寬",
+      "額窄"
+    ],
+    "note": "",
+    "sourceQid": "e3",
+    "optionHints": {
+      "額寬": "兩側寬闊"
+    }
+  },
+  {
+    "obsId": "e4",
+    "part": "額",
+    "section": "額型",
+    "label": "額平整",
+    "options": [
+      "額平",
+      "額不平"
+    ],
+    "note": "",
+    "sourceQid": "e4",
+    "optionHints": {
+      "額平": "正面看無凹凸、高低不平"
+    }
+  },
+  {
+    "obsId": "e5",
+    "part": "額",
+    "section": "額型",
+    "label": "額乾淨",
+    "options": [
+      "額淨",
+      "額有缺陷"
+    ],
+    "note": "",
+    "sourceQid": "e5",
+    "optionHints": {
+      "額淨": "無痕紋痣疤疵陷"
+    }
+  },
+  {
+    "obsId": "e6",
+    "part": "額",
+    "section": "額型",
+    "label": "額隆起",
+    "options": [
+      "額隆",
+      "額均",
+      "額陷"
+    ],
+    "note": "",
+    "sourceQid": "e6",
+    "optionHints": {
+      "額隆": "側面看有隆起弧度",
+      "額均": "側面較平"
+    }
+  },
+  {
+    "obsId": "e7",
+    "part": "額",
+    "section": "額型",
+    "label": "額立斜(側看垂直/斜上)",
+    "options": [
+      "額立",
+      "額斜",
+      "額一般"
+    ],
+    "note": "",
+    "sourceQid": "e7",
+    "optionHints": {
+      "額立": "側面偏直上",
+      "額斜": "側面斜上",
+      "額一般": "側看不太斜但不直立"
+    }
+  },
+  {
+    "obsId": "e8",
+    "part": "額",
+    "section": "額型",
+    "label": "額寬/方",
+    "options": [
+      "額寬 寬>高",
+      "額方 寬=<高"
+    ],
+    "note": "",
+    "sourceQid": "e8",
+    "optionHints": {
+      "額寬 寬>高": "兩眼角距離大於眉到髮際距離",
+      "額方 寬=<高": "兩眼角距離約等於/小於眉到髮際距離"
+    }
+  },
+  {
+    "obsId": "e11",
+    "part": "額",
+    "section": "額型",
+    "label": "大/小天庭",
+    "options": [
+      "大天庭",
+      "小天庭",
+      "無"
+    ],
+    "note": "",
+    "sourceQid": "e11",
+    "optionHints": {
+      "大天庭": "額頭整體隆起",
+      "小天庭": "額頭中間區域較隆起，兩側不特別寬",
+      "無": "整體偏平"
+    }
+  },
+  {
+    "obsId": "e19",
+    "part": "額",
+    "section": "額型",
+    "label": "遷移宮隆起",
+    "options": [
+      "髮際左上右上角有隆起",
+      "髮際左上右上角有凹陷",
+      "髮際左上右上角有平"
+    ],
+    "note": "",
+    "sourceQid": "e19"
+  },
+  {
+    "obsId": "e22",
+    "part": "額",
+    "section": "額型",
+    "label": "額中央為直線",
+    "options": [
+      "天中-印堂連線為垂直線",
+      "天中-印堂連線有歪斜"
+    ],
+    "note": "",
+    "sourceQid": "e22"
+  },
+  {
+    "obsId": "e12",
+    "part": "額",
+    "section": "髮際線",
+    "label": "美人尖",
+    "options": [
+      "有美人尖",
+      "無美人尖"
+    ],
+    "note": "",
+    "sourceQid": "e12",
+    "optionHints": {
+      "有美人尖": "髮際中央有向下突出"
+    }
+  },
+  {
+    "obsId": "e18",
+    "part": "額",
+    "section": "髮際線",
+    "label": "髮際邊線整齊/無雜毛",
+    "options": [
+      "髮際整齊",
+      "髮際有凹凸鋸齒狀",
+      "髮際有雜毛"
+    ],
+    "note": "",
+    "sourceQid": "e18",
+    "optionHints": {
+      "髮際整齊": "髮際邊線整齊",
+      "髮際有凹凸鋸齒狀": "髮際形狀不齊",
+      "髮際有雜毛": "髪際線有雜毛/胎毛"
+    }
+  },
+  {
+    "obsId": "e23",
+    "part": "額",
+    "section": "髮際線",
+    "label": "髮腳侵額/不侵額",
+    "options": [
+      "髮腳不侵額",
+      "髮腳侵額"
+    ],
+    "note": "",
+    "sourceQid": "e23",
+    "optionHints": {
+      "髮腳侵額": "左/右側髮腳內長侵額"
+    }
+  },
+  {
+    "obsId": "e13",
+    "part": "額",
+    "section": "額內部位",
+    "label": "日月角隆",
+    "options": [
+      "日月角起",
+      "不清晰"
+    ],
+    "note": "",
+    "sourceQid": "e13",
+    "optionHints": {
+      "日月角起": "上方髮際兩側下方有明顯隆起"
+    }
+  },
+  {
+    "obsId": "e20",
+    "part": "額",
+    "section": "額內部位",
+    "label": "日月角位置高/低",
+    "options": [
+      "日月角高",
+      "日月角不高"
+    ],
+    "note": "",
+    "sourceQid": "e20",
+    "optionHints": {
+      "日月角高": "日月角貼近上方髮際",
+      "日月角不高": "日月角位置較靠近眉骨"
+    }
+  },
+  {
+    "obsId": "e14",
+    "part": "額",
+    "section": "額內部位",
+    "label": "日月角開合",
+    "options": [
+      "日月角開",
+      "日月角合"
+    ],
+    "note": "",
+    "sourceQid": "e14",
+    "optionHints": {
+      "日月角開": "兩側偏外，靠近邊城方向",
+      "日月角合": "較靠近中線"
+    }
+  },
+  {
+    "obsId": "e15",
+    "part": "額",
+    "section": "額內部位",
+    "label": "日月角骨肉",
+    "options": [
+      "有肉包",
+      "骨感明顯"
+    ],
+    "note": "",
+    "sourceQid": "e15",
+    "optionHints": {
+      "有肉包": "肉感為主，骨不凸",
+      "骨感明顯": "骨較突出"
+    }
+  },
+  {
+    "obsId": "e16",
+    "part": "額",
+    "section": "額內部位",
+    "label": "輔角骨",
+    "options": [
+      "有輔角骨",
+      "不明顯"
+    ],
+    "note": "",
+    "sourceQid": "e16",
+    "optionHints": {
+      "有輔角骨": "眉尾上方外側到髮際線有隆起"
+    }
+  },
+  {
+    "obsId": "e17",
+    "part": "額",
+    "section": "額內部位",
+    "label": "佐串骨",
+    "options": [
+      "有佐串骨",
+      "不明顯"
+    ],
+    "note": "",
+    "sourceQid": "e17",
+    "optionHints": {
+      "有佐串骨": "接近髮際角落轉折處有隆起"
+    }
+  },
+  {
+    "obsId": "er1",
+    "part": "耳",
+    "section": "耳形",
+    "label": "耳長/短",
+    "options": [
+      "耳長",
+      "耳短"
+    ],
+    "note": "",
+    "sourceQid": "er1",
+    "optionHints": {
+      "耳長": "長度超過眼到鼻準底的 2/3",
+      "耳短": "長度不及眼到鼻準底的 2/3"
+    }
+  },
+  {
+    "obsId": "er2",
+    "part": "耳",
+    "section": "耳形",
+    "label": "耳大/小",
+    "options": [
+      "耳大",
+      "耳適中",
+      "耳小"
+    ],
+    "note": "",
+    "sourceQid": "er2"
+  },
+  {
+    "obsId": "er3",
+    "part": "耳",
+    "section": "耳形",
+    "label": "耳直立/耳提",
+    "options": [
+      "耳直立",
+      "耳提",
+      "耳提強"
+    ],
+    "note": "",
+    "sourceQid": "er3",
+    "optionHints": {
+      "耳直立": "耳上端與耳垂中央一直線，接近垂直",
+      "耳提": "朝前傾，不垂直",
+      "耳提強": "朝前約 30 度以上"
+    }
+  },
+  {
+    "obsId": "er5",
+    "part": "耳",
+    "section": "耳形",
+    "label": "耳貼/耳招風",
+    "options": [
+      "貼耳",
+      "一般",
+      "招風耳"
+    ],
+    "note": "",
+    "sourceQid": "er5",
+    "optionHints": {
+      "貼耳": "夾角偏小，幾乎貼頭顱",
+      "招風耳": "夾角 > 40 度，正面超出臉廓"
+    }
+  },
+  {
+    "obsId": "er6",
+    "part": "耳",
+    "section": "耳形",
+    "label": "耳孔大/小",
+    "options": [
+      "耳孔大",
+      "耳孔小"
+    ],
+    "note": "",
+    "sourceQid": "er6",
+    "optionHints": {
+      "耳孔大": "盆地範圍 ≥ 耳面積 1/2"
+    }
+  },
+  {
+    "obsId": "er7",
+    "part": "耳",
+    "section": "耳位置",
+    "label": "耳高/低於眼",
+    "options": [
+      "耳高",
+      "耳低"
+    ],
+    "note": "",
+    "sourceQid": "er7",
+    "optionHints": {
+      "耳高": "上緣在眼以上",
+      "耳低": "上緣低於眼"
+    }
+  },
+  {
+    "obsId": "er16",
+    "part": "耳",
+    "section": "耳位置",
+    "label": "耳高/低於眉",
+    "options": [
+      "耳高過眉",
+      "耳不高於眉"
+    ],
+    "note": "",
+    "sourceQid": "er16",
+    "optionHints": {
+      "耳高過眉": "耳高於或齊於眉"
+    }
+  },
+  {
+    "obsId": "er8",
+    "part": "耳",
+    "section": "輪廓",
+    "label": "耳輪廓有無",
+    "options": [
+      "有輪有廓",
+      "有輪無廓",
+      "無輪有廓"
+    ],
+    "note": "",
+    "sourceQid": "er8",
+    "optionHints": {
+      "有輪有廓": "輪廓分明"
+    }
+  },
+  {
+    "obsId": "er9",
+    "part": "耳",
+    "section": "輪廓",
+    "label": "耳輪包廓/不包廓/耳反",
+    "options": [
+      "輪包廓",
+      "輪不包廓/廓稍微凸出",
+      "耳反"
+    ],
+    "note": "",
+    "sourceQid": "er9",
+    "optionHints": {
+      "輪包廓": "耳廓不擋耳輪，耳輪確實包住",
+      "輪不包廓/廓稍微凸出": "耳廓外露稍微擋輪或重合",
+      "耳反": "耳廓超出耳輪，耳後都可以見廓"
+    }
+  },
+  {
+    "obsId": "er4",
+    "part": "耳",
+    "section": "輪廓",
+    "label": "耳輪圓/尖/直",
+    "options": [
+      "耳圓",
+      "耳尖",
+      "耳直"
+    ],
+    "note": "",
+    "sourceQid": "er4",
+    "optionHints": {
+      "耳圓": "圓弧完整，耳輪無凹陷波浪，上耳輪不往內翻",
+      "耳尖": "上耳輪形尖起，耳輪無凹陷波浪，上耳輪不往內翻",
+      "耳直": "耳輪上段圓弧較小，中段直線偏長"
+    }
+  },
+  {
+    "obsId": "er17",
+    "part": "耳",
+    "section": "輪廓",
+    "label": "耳輪完整/有缺",
+    "options": [
+      "耳輪有缺",
+      "耳輪無缺"
+    ],
+    "note": "",
+    "sourceQid": "er17",
+    "optionHints": {
+      "耳輪有缺": "耳輪圓弧不圓，有凹凸起伏，或上耳輪往內翻",
+      "耳輪無缺": "耳輪完整"
+    }
+  },
+  {
+    "obsId": "er10",
+    "part": "耳",
+    "section": "耳質",
+    "label": "耳厚薄",
+    "options": [
+      "耳厚",
+      "耳正常",
+      "耳薄"
+    ],
+    "note": "",
+    "sourceQid": "er10",
+    "optionHints": {
+      "耳厚": "耳肉多",
+      "耳薄": "薄如紙"
+    }
+  },
+  {
+    "obsId": "er11",
+    "part": "耳",
+    "section": "耳質",
+    "label": "耳質硬軟",
+    "options": [
+      "耳堅",
+      "耳硬",
+      "耳軟"
+    ],
+    "note": "",
+    "sourceQid": "er11",
+    "optionHints": {
+      "耳堅": "有硬度不軟",
+      "耳硬": "中段偏硬"
+    }
+  },
+  {
+    "obsId": "er12",
+    "part": "耳",
+    "section": "垂珠",
+    "label": "垂珠",
+    "options": [
+      "有垂珠",
+      "無垂珠"
+    ],
+    "note": "",
+    "sourceQid": "er12",
+    "optionHints": {
+      "有垂珠": "耳垂大小明顯，且耳垂上有凸起耳珠"
+    }
+  },
+  {
+    "obsId": "er13",
+    "part": "耳",
+    "section": "垂珠",
+    "label": "耳垂方向",
+    "options": [
+      "耳垂朝口",
+      "耳垂朝下",
+      "其他"
+    ],
+    "note": "",
+    "sourceQid": "er13"
+  },
+  {
+    "obsId": "er14",
+    "part": "耳",
+    "section": "一致性",
+    "label": "雙耳一致性",
+    "options": [
+      "雙耳一致",
+      "雙耳不一致"
+    ],
+    "note": "",
+    "sourceQid": "er14",
+    "optionHints": {
+      "雙耳一致": "大小、形狀、高低一致"
+    }
+  },
+  {
+    "obsId": "br1",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉長過目/不及目",
+    "options": [
+      "眉長過目",
+      "眉不及目"
+    ],
+    "note": "",
+    "sourceQid": "br1",
+    "optionHints": {
+      "眉長過目": "眉長超過眼尾位置",
+      "眉不及目": "眉短不及目"
+    }
+  },
+  {
+    "obsId": "br2",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉形粗/細",
+    "options": [
+      "眉形細",
+      "眉型適中",
+      "眉型粗"
+    ],
+    "note": "",
+    "sourceQid": "br2"
+  },
+  {
+    "obsId": "br3",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉形彎/平",
+    "options": [
+      "眉彎",
+      "眉平",
+      "八字眉"
+    ],
+    "note": "",
+    "sourceQid": "br3",
+    "optionHints": {
+      "眉彎": "尾 1/3 處有彎朝下",
+      "眉平": "眉形呈一條線，無彎"
+    }
+  },
+  {
+    "obsId": "br4",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉有/無鷹角",
+    "options": [
+      "有鷹角",
+      "無鷹角"
+    ],
+    "note": "",
+    "sourceQid": "br4",
+    "optionHints": {
+      "有鷹角": "眉 2/3 處上緣有明顯轉折"
+    }
+  },
+  {
+    "obsId": "br5",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉毛有無中斷",
+    "options": [
+      "無中斷",
+      "有中斷"
+    ],
+    "note": "",
+    "sourceQid": "br5",
+    "optionHints": {
+      "有中斷": "有空隙"
+    }
+  },
+  {
+    "obsId": "br6",
+    "part": "眉",
+    "section": "眉型",
+    "label": "眉尾聚/不聚",
+    "options": [
+      "有聚",
+      "散"
+    ],
+    "note": "",
+    "sourceQid": "br6",
+    "optionHints": {
+      "有聚": "眉尾收攏不散",
+      "散": "眉尾散開"
+    }
+  },
+  {
+    "obsId": "br7",
+    "part": "眉",
+    "section": "眉型",
+    "label": "特殊眉型 短粗眉/將軍眉",
+    "options": [
+      "短粗眉",
+      "將軍眉",
+      "無"
+    ],
+    "note": "",
+    "sourceQid": "br7",
+    "optionHints": {
+      "短粗眉": "眉型粗且短濃",
+      "將軍眉": "眉尾大幅飛揚朝斜上"
+    }
+  },
+  {
+    "obsId": "br9",
+    "part": "眉",
+    "section": "眉勢",
+    "label": "眉頭 沖/不沖 山根",
+    "options": [
+      "眉不沖根",
+      "眉沖根"
+    ],
+    "note": "",
+    "sourceQid": "br9",
+    "optionHints": {
+      "眉不沖根": "眉頭方向不朝山根延伸"
+    }
+  },
+  {
+    "obsId": "br8",
+    "part": "眉",
+    "section": "眉勢",
+    "label": "眉尾 方向",
+    "options": [
+      "眉尾有揚",
+      "眉尾平",
+      "眉尾往下"
+    ],
+    "note": "",
+    "sourceQid": "br8",
+    "optionHints": {
+      "眉尾有揚": "眉尾往上"
+    }
+  },
+  {
+    "obsId": "br11",
+    "part": "眉",
+    "section": "眉位",
+    "label": "眉壓眼/不壓眼",
+    "options": [
+      "不壓眼",
+      "壓眼"
+    ],
+    "note": "",
+    "sourceQid": "br11",
+    "optionHints": {
+      "不壓眼": "眉眼間距一指幅以上",
+      "壓眼": "間距不足一指幅"
+    }
+  },
+  {
+    "obsId": "br12",
+    "part": "眉",
+    "section": "眉位",
+    "label": "眉頭退印/不退印/鎖印",
+    "options": [
+      "退印",
+      "眉長長到印堂有雜毛",
+      "眉鎖印"
+    ],
+    "note": "",
+    "sourceQid": "br12",
+    "optionHints": {
+      "退印": "眉頭不蓋到印堂",
+      "眉長長到印堂有雜毛": "印堂有雜毛",
+      "眉鎖印": "眉毛長到印堂中"
+    }
+  },
+  {
+    "obsId": "br13",
+    "part": "眉",
+    "section": "眉位",
+    "label": "眉附骨位/骨位以下",
+    "options": [
+      "眉附骨位",
+      "一般位：眉在眉骨以下"
+    ],
+    "note": "",
+    "sourceQid": "br13",
+    "optionHints": {
+      "眉附骨位": "眉毛長在眉骨上",
+      "一般位：眉在眉骨以下": "眉毛蓋一部分或低於眉骨"
+    }
+  },
+  {
+    "obsId": "br21",
+    "part": "眉",
+    "section": "眉位",
+    "label": "眉高居額/一般位額以下",
+    "options": [
+      "眉高居額 ",
+      "眉一般位在額以下"
+    ],
+    "note": "",
+    "sourceQid": "br21",
+    "optionHints": {
+      "眉高居額 ": "田宅宮很寬 眉毛很高",
+      "眉一般位在額以下": "在眉骨或眉骨以下"
+    }
+  },
+  {
+    "obsId": "br15",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉質硬/軟",
+    "options": [
+      "柔順",
+      "質硬"
+    ],
+    "note": "",
+    "sourceQid": "br15",
+    "optionHints": {
+      "質硬": "粗硬不柔順"
+    }
+  },
+  {
+    "obsId": "br22",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉質粗/細",
+    "options": [
+      "眉毛粗",
+      "眉毛細"
+    ],
+    "note": "",
+    "sourceQid": "br22"
+  },
+  {
+    "obsId": "br16",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉毛多/少",
+    "options": [
+      "眉毛多",
+      "眉毛稀少"
+    ],
+    "note": "",
+    "sourceQid": "br16",
+    "optionHints": {
+      "眉毛多": "量足",
+      "眉毛稀少": "稀疏或無眉"
+    }
+  },
+  {
+    "obsId": "br18",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉毛長/短",
+    "options": [
+      "毛不過短",
+      "眉毛短"
+    ],
+    "note": "",
+    "sourceQid": "br18",
+    "optionHints": {
+      "眉毛短": "毛短，不長，蓋不住"
+    }
+  },
+  {
+    "obsId": "br17",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉毛根根見肉",
+    "options": [
+      "毛距相等，根根見肉",
+      "一般"
+    ],
+    "note": "",
+    "sourceQid": "br17"
+  },
+  {
+    "obsId": "br14",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉身鋪陳有緻 毛順/亂",
+    "options": [
+      "眉順",
+      "眉亂/逆生/交叉"
+    ],
+    "note": "",
+    "sourceQid": "br14",
+    "optionHints": {
+      "眉順": "毛向一致，不逆生",
+      "眉亂/逆生/交叉": "有逆生或雜亂"
+    }
+  },
+  {
+    "obsId": "br24",
+    "part": "眉",
+    "section": "眉質",
+    "label": "眉濃淡均/不均",
+    "options": [
+      "眉濃淡均勻",
+      "眉前濃後淡",
+      "眉前淡後濃"
+    ],
+    "note": "",
+    "sourceQid": "br24"
+  },
+  {
+    "obsId": "br20",
+    "part": "眉",
+    "section": "一致性",
+    "label": "雙眉一致性",
+    "options": [
+      "雙眉一致",
+      "雙眉不一致"
+    ],
+    "note": "",
+    "sourceQid": "br20",
+    "optionHints": {
+      "雙眉一致": "大小、高低一致"
+    }
+  },
+  {
+    "obsId": "br23",
+    "part": "眉",
+    "section": "眉骨",
+    "label": "眉骨凸/平/凹",
+    "options": [
+      "眉骨凸",
+      "眉骨平",
+      "眉骨凹"
+    ],
+    "note": "",
+    "sourceQid": "br23",
+    "optionHints": {
+      "眉骨凸": "側看明顯前凸",
+      "眉骨平": "一般眉骨平或微隆",
+      "眉骨凹": "側看眉骨凹陷"
+    }
+  },
+  {
+    "obsId": "ey1",
+    "part": "眼",
+    "section": "眼型",
+    "label": "眼長/眼短",
+    "options": [
+      "眼長",
+      "眼短"
+    ],
+    "note": "",
+    "sourceQid": "ey1",
+    "optionHints": {
+      "眼長": "眼長度 ≥ 眼距，或極寸約 3.3 公分",
+      "眼短": "眼長度 < 眼距"
+    }
+  },
+  {
+    "obsId": "ey2",
+    "part": "眼",
+    "section": "眼型",
+    "label": "眼大/眼細",
+    "options": [
+      "眼大",
+      "眼細"
+    ],
+    "note": "",
+    "sourceQid": "ey2",
+    "optionHints": {
+      "眼大": "眼寬可見 80% 以上黑睛"
+    }
+  },
+  {
+    "obsId": "ey3",
+    "part": "眼",
+    "section": "眼型",
+    "label": "眼圓/杏仁眼",
+    "options": [
+      "眼不圓(一般的杏仁眼）",
+      "眼圓"
+    ],
+    "note": "",
+    "sourceQid": "ey3",
+    "optionHints": {
+      "眼不圓(一般的杏仁眼）": "眼長 至少 > 2 倍眼寬",
+      "眼圓": "眼長 眼寬 相對接近 偏圓形"
+    }
+  },
+  {
+    "obsId": "ey4",
+    "part": "眼",
+    "section": "眼型",
+    "label": "眼尾方向",
+    "options": [
+      "眼尾平",
+      "眼尾朝上",
+      "眼尾朝下"
+    ],
+    "note": "",
+    "sourceQid": "ey4"
+  },
+  {
+    "obsId": "ey5",
+    "part": "眼",
+    "section": "眼型",
+    "label": "睛凸",
+    "options": [
+      "睛凸",
+      "正常"
+    ],
+    "note": "",
+    "sourceQid": "ey5",
+    "optionHints": {
+      "睛凸": "眼球較突出眼瞼"
+    }
+  },
+  {
+    "obsId": "ey13",
+    "part": "眼",
+    "section": "眼型",
+    "label": "單/雙眼皮",
+    "options": [
+      "雙眼皮",
+      "單眼皮",
+      "多層眼皮"
+    ],
+    "note": "",
+    "sourceQid": "ey13"
+  },
+  {
+    "obsId": "ey6",
+    "part": "眼",
+    "section": "眼輪廓",
+    "label": "眼鉤",
+    "options": [
+      "有眼鉤",
+      "無眼鉤"
+    ],
+    "note": "",
+    "sourceQid": "ey6",
+    "optionHints": {
+      "有眼鉤": "眼頭有鉤，前眥鉤曲如鳥嘴"
+    }
+  },
+  {
+    "obsId": "ey7",
+    "part": "眼",
+    "section": "眼輪廓",
+    "label": "刀裁",
+    "options": [
+      "有刀裁",
+      "無刀裁"
+    ],
+    "note": "",
+    "sourceQid": "ey7",
+    "optionHints": {
+      "有刀裁": "眼尾如刀裁收緊，後眥平整"
+    }
+  },
+  {
+    "obsId": "ey8",
+    "part": "眼",
+    "section": "眼輪廓",
+    "label": "上眼瞼",
+    "options": [
+      "眼上弧",
+      "有較硬轉角"
+    ],
+    "note": "",
+    "sourceQid": "ey8",
+    "optionHints": {
+      "眼上弧": "上眼瞼有弧度",
+      "有較硬轉角": "偏三角兩邊感"
+    }
+  },
+  {
+    "obsId": "ey9",
+    "part": "眼",
+    "section": "眼輪廓",
+    "label": "下眼瞼",
+    "options": [
+      "下眼瞼平直",
+      "下眼瞼有弧"
+    ],
+    "note": "",
+    "sourceQid": "ey9"
+  },
+  {
+    "obsId": "ey10",
+    "part": "眼",
+    "section": "睛瞳",
+    "label": "黑睛大小",
+    "options": [
+      "睛大",
+      "適中",
+      "睛小"
+    ],
+    "note": "",
+    "sourceQid": "ey10",
+    "optionHints": {
+      "適中": "約眼長 1/3–1/2"
+    }
+  },
+  {
+    "obsId": "ey11",
+    "part": "眼",
+    "section": "睛瞳",
+    "label": "眼白",
+    "options": [
+      "上下不白",
+      "上三白",
+      "下三白",
+      "四白"
+    ],
+    "note": "",
+    "sourceQid": "ey11",
+    "optionHints": {
+      "上下不白": "黑睛遮住上下眼白",
+      "上三白": "黑睛下移，上方露白",
+      "下三白": "黑睛上移，下方露白",
+      "四白": "黑睛居中，上下皆露白"
+    }
+  },
+  {
+    "obsId": "ey12",
+    "part": "眼",
+    "section": "一致性",
+    "label": "雙眼一致性",
+    "options": [
+      "雙眼一致",
+      "雙眼不一致"
+    ],
+    "note": "",
+    "sourceQid": "ey12",
+    "optionHints": {
+      "雙眼一致": "大小、形狀、高低一致"
+    }
+  },
+  {
+    "obsId": "n1",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻長/短",
+    "options": [
+      "鼻長",
+      "鼻短"
+    ],
+    "note": "",
+    "sourceQid": "n1",
+    "optionHints": {
+      "鼻長": "山根到鼻準，與鼻準到下巴接近或更長，與印堂到髮際線接近或更長"
+    }
+  },
+  {
+    "obsId": "n2",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻高/低(鼻樑高或低)",
+    "options": [
+      "鼻高",
+      "鼻低"
+    ],
+    "note": "",
+    "sourceQid": "n2",
+    "optionHints": {
+      "鼻高": "鼻樑年壽夠突起"
+    }
+  },
+  {
+    "obsId": "n3",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻直/曲",
+    "options": [
+      "鼻直",
+      "鼻曲"
+    ],
+    "note": "",
+    "sourceQid": "n3",
+    "optionHints": {
+      "鼻直": "山根到鼻準與中線重合"
+    }
+  },
+  {
+    "obsId": "n4",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻寬/窄",
+    "options": [
+      "鼻寬",
+      "鼻窄小"
+    ],
+    "note": "",
+    "sourceQid": "n4",
+    "optionHints": {
+      "鼻窄小": "鼻翼寬度小於眼距"
+    }
+  },
+  {
+    "obsId": "n5",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻準圓/尖",
+    "options": [
+      "鼻準圓",
+      "鼻準尖"
+    ],
+    "note": "",
+    "sourceQid": "n5",
+    "optionHints": {
+      "鼻準圓": "不尖，形圓有肉"
+    }
+  },
+  {
+    "obsId": "n6",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻順(側看準-鼻樑-山根平順)",
+    "options": [
+      "鼻順",
+      "鼻不順"
+    ],
+    "note": "",
+    "sourceQid": "n6",
+    "optionHints": {
+      "鼻順": "山根年壽鼻準側面順接，不折不凹凸"
+    }
+  },
+  {
+    "obsId": "n7",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻接印(側看準-鼻樑-山根-印堂連線)",
+    "options": [
+      "鼻接印",
+      "鼻不接印"
+    ],
+    "note": "",
+    "sourceQid": "n7",
+    "optionHints": {
+      "鼻接印": "山根隆起上接印堂、下接年壽"
+    }
+  },
+  {
+    "obsId": "n8",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "鼻橫張",
+    "options": [
+      "有橫張",
+      "無橫張"
+    ],
+    "note": "",
+    "sourceQid": "n8",
+    "optionHints": {
+      "有橫張": "年壽寬度接近鼻翼寬度"
+    }
+  },
+  {
+    "obsId": "n9",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "山根寬/窄",
+    "options": [
+      "山根寬",
+      "山根窄"
+    ],
+    "note": "",
+    "sourceQid": "n9",
+    "optionHints": {
+      "山根窄": "明顯短於鼻樑鼻準"
+    }
+  },
+  {
+    "obsId": "n14",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "山根高/低",
+    "options": [
+      "山根高",
+      "山根一般",
+      "山根低"
+    ],
+    "note": "",
+    "sourceQid": "n14",
+    "optionHints": {
+      "山根高": "略低於或接近印堂",
+      "山根一般": "有山根不太高",
+      "山根低": "接近兩眼直線"
+    }
+  },
+  {
+    "obsId": "n13",
+    "part": "鼻",
+    "section": "鼻型",
+    "label": "井灶(鼻孔) 露/不露",
+    "options": [
+      "井灶(鼻孔)有昂露",
+      "井灶(鼻孔)不昂不露",
+      "井灶(鼻孔)一般"
+    ],
+    "note": "",
+    "sourceQid": "n13",
+    "optionHints": {
+      "井灶(鼻孔)有昂露": "正面清楚看到幾乎全部鼻孔",
+      "井灶(鼻孔)不昂不露": "正面看不太到或完全看不到鼻孔",
+      "井灶(鼻孔)一般": "正面看到不多鼻孔"
+    }
+  },
+  {
+    "obsId": "n10",
+    "part": "鼻",
+    "section": "鼻骨肉",
+    "label": "鼻骨肉比",
+    "options": [
+      "肉多於骨",
+      "骨肉勻稱",
+      "骨多於肉"
+    ],
+    "note": "",
+    "sourceQid": "n10",
+    "optionHints": {
+      "骨多於肉": "骨感強"
+    }
+  },
+  {
+    "obsId": "n11",
+    "part": "鼻",
+    "section": "鼻骨肉",
+    "label": "鼻起節",
+    "options": [
+      "無起節",
+      "有起節突露"
+    ],
+    "note": "",
+    "sourceQid": "n11"
+  },
+  {
+    "obsId": "n12",
+    "part": "鼻",
+    "section": "鼻骨肉",
+    "label": "鼻準聚/散",
+    "options": [
+      "鼻聚",
+      "鼻散"
+    ],
+    "note": "",
+    "sourceQid": "n12",
+    "optionHints": {
+      "鼻聚": "準頭聚，跟鼻樑寬度差不多"
+    }
+  },
+  {
+    "obsId": "q1",
+    "part": "顴",
+    "section": "顴形",
+    "label": "顴骨形態",
+    "options": [
+      "顴高且隆",
+      "顴有而不明",
+      "顴平"
+    ],
+    "note": "",
+    "sourceQid": "q1",
+    "optionHints": {
+      "顴高且隆": "位置在眼和鼻準間，有明顯隆起感",
+      "顴有而不明": "稍看得出，摸得到凸起",
+      "顴平": "無明顯隆起"
+    }
+  },
+  {
+    "obsId": "q2",
+    "part": "顴",
+    "section": "顴形",
+    "label": "顴骨大小",
+    "options": [
+      "顴大",
+      "顴不過大",
+      "顴小尖"
+    ],
+    "note": "",
+    "sourceQid": "q2"
+  },
+  {
+    "obsId": "q3",
+    "part": "顴",
+    "section": "顴骨肉",
+    "label": "顴骨肉比",
+    "options": [
+      "顴有肉",
+      "顴無肉少肉"
+    ],
+    "note": "",
+    "sourceQid": "q3",
+    "optionHints": {
+      "顴有肉": "肉多於骨，感覺有肉包起",
+      "顴無肉少肉": "骨感明顯堅硬，或小塊突起"
+    }
+  },
+  {
+    "obsId": "q4",
+    "part": "顴",
+    "section": "顴柄",
+    "label": "顴柄走向",
+    "options": [
+      "顴柄插天",
+      "顴柄平",
+      "無明顯顴柄"
+    ],
+    "note": "",
+    "sourceQid": "q4",
+    "optionHints": {
+      "顴柄插天": "明顯，尾端朝上往太陽穴方向延伸",
+      "顴柄平": "隱約不明顯，平不起不凹"
+    }
+  },
+  {
+    "obsId": "q7",
+    "part": "顴",
+    "section": "顴柄",
+    "label": "顴柄有肉/無肉",
+    "options": [
+      "顴柄有肉",
+      "顴柄凸露"
+    ],
+    "note": "",
+    "sourceQid": "q7"
+  },
+  {
+    "obsId": "q9",
+    "part": "顴",
+    "section": "顴柄",
+    "label": "鼻顴的高低相配",
+    "options": [
+      "鼻高顴高",
+      "鼻高顴低",
+      "鼻低顴高",
+      "鼻低顴低"
+    ],
+    "note": "",
+    "sourceQid": "q9"
+  },
+  {
+    "obsId": "q5",
+    "part": "顴",
+    "section": "顴整體",
+    "label": "顴鼻相稱",
+    "options": [
+      "相稱",
+      "不相稱"
+    ],
+    "note": "",
+    "sourceQid": "q5",
+    "optionHints": {
+      "相稱": "顴高鼻高，或顴低鼻低"
+    }
+  },
+  {
+    "obsId": "q6",
+    "part": "顴",
+    "section": "顴整體",
+    "label": "雙顴一致性",
+    "options": [
+      "雙顴一致",
+      "雙顴不一致"
+    ],
+    "note": "",
+    "sourceQid": "q6"
+  },
+  {
+    "obsId": "m1",
+    "part": "口",
+    "section": "口型",
+    "label": "口 大小",
+    "options": [
+      "口開大合小",
+      "口適中",
+      "口小"
+    ],
+    "note": "",
+    "sourceQid": "m1",
+    "optionHints": {
+      "口開大合小": "合起大於鼻翼/眼頭，開時超過瞳孔",
+      "口適中": "口寬過鼻翼，寬度在兩瞳孔距離之內",
+      "口小": "合起約等於或小於鼻翼"
+    }
+  },
+  {
+    "obsId": "m2",
+    "part": "口",
+    "section": "口型",
+    "label": "口 涯岸分明/唇緣不明顯",
+    "options": [
+      "涯岸分明",
+      "唇緣較不明顯"
+    ],
+    "note": "",
+    "sourceQid": "m2",
+    "optionHints": {
+      "涯岸分明": "唇邊界明顯，唇線清晰"
+    }
+  },
+  {
+    "obsId": "m3",
+    "part": "口",
+    "section": "口型",
+    "label": "嘴角收斂/較鬆",
+    "options": [
+      "嘴角收",
+      "嘴角不收"
+    ],
+    "note": "",
+    "sourceQid": "m3",
+    "optionHints": {
+      "嘴角收": "嘴角明顯有收緊"
+    }
+  },
+  {
+    "obsId": "m4",
+    "part": "口",
+    "section": "口型",
+    "label": "嘴角朝上/平/朝下",
+    "options": [
+      "嘴角朝上",
+      "嘴角水平",
+      "嘴角朝下"
+    ],
+    "note": "",
+    "sourceQid": "m4"
+  },
+  {
+    "obsId": "m6",
+    "part": "口",
+    "section": "口型",
+    "label": "口閉合線 平/有弓形",
+    "options": [
+      "閉合線平",
+      "閉合線有曲度"
+    ],
+    "note": "",
+    "sourceQid": "m6",
+    "optionHints": {
+      "閉合線平": "口闔時接合線水平",
+      "閉合線有曲度": "有弓線"
+    }
+  },
+  {
+    "obsId": "m7",
+    "part": "口",
+    "section": "口型",
+    "label": "口閉合 緊/鬆/見齒",
+    "options": [
+      "閉合線密",
+      "閉合線較鬆",
+      "放鬆見齒"
+    ],
+    "note": "",
+    "sourceQid": "m7",
+    "optionHints": {
+      "閉合線密": "雙唇放鬆緊密，無明顯間隙"
+    }
+  },
+  {
+    "obsId": "m8",
+    "part": "口",
+    "section": "唇型",
+    "label": "唇厚度一般/厚/薄",
+    "options": [
+      "唇一般",
+      "唇明顯厚",
+      "唇薄"
+    ],
+    "note": "",
+    "sourceQid": "m8"
+  },
+  {
+    "obsId": "m9",
+    "part": "口",
+    "section": "唇型",
+    "label": "上下唇厚均勻/不均",
+    "options": [
+      "唇厚平均",
+      "唇厚不均"
+    ],
+    "note": "",
+    "sourceQid": "m9",
+    "optionHints": {
+      "唇厚平均": "上下唇厚度差不多，上唇可略厚於下唇"
+    }
+  },
+  {
+    "obsId": "m10",
+    "part": "口",
+    "section": "唇型",
+    "label": "唇起 側看嘴唇有點翹",
+    "options": [
+      "唇凸",
+      "唇不凸"
+    ],
+    "note": "",
+    "sourceQid": "m10",
+    "optionHints": {
+      "唇凸": "嘴唇往外突出或翹起明顯"
+    }
+  },
+  {
+    "obsId": "m11",
+    "part": "口",
+    "section": "唇型",
+    "label": "上唇中央有無垂珠",
+    "options": [
+      "有唇珠",
+      "無唇珠"
+    ],
+    "note": "",
+    "sourceQid": "m11",
+    "optionHints": {
+      "有唇珠": "上嘴唇與人中間有小顆突起",
+      "無唇珠": "上嘴唇與人中間沒有小顆突起"
+    }
+  },
+  {
+    "obsId": "m5",
+    "part": "口",
+    "section": "唇型",
+    "label": "上唇V形清晰/較不明",
+    "options": [
+      "水星明顯",
+      "水星不明顯"
+    ],
+    "note": "",
+    "sourceQid": "m5",
+    "optionHints": {
+      "水星明顯": "上嘴唇與人中間的 V 形明顯"
+    }
+  },
+  {
+    "obsId": "m12",
+    "part": "口",
+    "section": "一致性",
+    "label": "口中線位於臉中線",
+    "options": [
+      "口位置適中",
+      "口位置不中"
+    ],
+    "note": "",
+    "sourceQid": "m12",
+    "optionHints": {
+      "口位置適中": "口中線在臉的中線上"
+    }
+  },
+  {
+    "obsId": "m13",
+    "part": "口",
+    "section": "一致性",
+    "label": "口兩邊對稱/左右不均",
+    "options": [
+      "口對稱",
+      "口不對稱"
+    ],
+    "note": "",
+    "sourceQid": "m13",
+    "optionHints": {
+      "口對稱": "口不歪斜，左右對稱"
+    }
+  },
+  {
+    "obsId": "m14",
+    "part": "口",
+    "section": "齒",
+    "label": "齒整/不整",
+    "options": [
+      "齒排列偏向整齊或者一般",
+      "齒排列過於不整"
+    ],
+    "note": "",
+    "sourceQid": "m14"
+  },
+  {
+    "obsId": "m15",
+    "part": "口",
+    "section": "齒",
+    "label": "齒大小",
+    "options": [
+      "齒大",
+      "齒不大不小",
+      "齒偏小"
+    ],
+    "note": "",
+    "sourceQid": "m15"
+  },
+  {
+    "obsId": "p1",
+    "part": "人中",
+    "section": "人中",
+    "label": "人中深淺",
+    "options": [
+      "人中深",
+      "人中淺"
+    ],
+    "note": "",
+    "sourceQid": "p1",
+    "optionHints": {
+      "人中深": "溝深，如剖竹狀",
+      "人中淺": "溝淺或無明顯溝"
+    }
+  },
+  {
+    "obsId": "p2",
+    "part": "人中",
+    "section": "人中",
+    "label": "人中長短",
+    "options": [
+      "人中長",
+      "人中短",
+      "人中很長"
+    ],
+    "note": "",
+    "sourceQid": "p2",
+    "optionHints": {
+      "人中長": "至少食指寬",
+      "人中短": "短於食指寬",
+      "人中很長": "鼻準到地閣長度一半或以上"
+    }
+  },
+  {
+    "obsId": "p3",
+    "part": "人中",
+    "section": "人中",
+    "label": "人中寬窄",
+    "options": [
+      "人中寬度適中",
+      "人中窄"
+    ],
+    "note": "",
+    "sourceQid": "p3"
+  },
+  {
+    "obsId": "p4",
+    "part": "人中",
+    "section": "人中",
+    "label": "人中方向",
+    "options": [
+      "人中直",
+      "人中不直"
+    ],
+    "note": "",
+    "sourceQid": "p4",
+    "optionHints": {
+      "人中直": "人中到口連線垂直不歪"
+    }
+  },
+  {
+    "obsId": "p5",
+    "part": "人中",
+    "section": "人中",
+    "label": "人中的邊線兩邊一致",
+    "options": [
+      "人中邊線兩邊長短一致",
+      "人中左右長短不一"
+    ],
+    "note": "",
+    "sourceQid": "p5"
+  },
+  {
+    "obsId": "c1",
+    "part": "地閣",
+    "section": "地閣型",
+    "label": "地閣朝",
+    "options": [
+      "地閣起",
+      "地閣凸",
+      "地閣縮"
+    ],
+    "note": "",
+    "sourceQid": "c1",
+    "optionHints": {
+      "地閣起": "承漿凹，朝拱，凸起適中",
+      "地閣凸": "下巴尖端超過嘴唇垂直線",
+      "地閣縮": "側面下巴尖端短於嘴唇垂直線"
+    }
+  },
+  {
+    "obsId": "c2",
+    "part": "地閣",
+    "section": "地閣型",
+    "label": "地閣平",
+    "options": [
+      "地閣平",
+      "地閣圓",
+      "地閣凹"
+    ],
+    "note": "",
+    "sourceQid": "c2",
+    "optionHints": {
+      "地閣平": "無凹凸",
+      "地閣圓": "下巴骨圓",
+      "地閣凹": "中間有凹如 W 型"
+    }
+  },
+  {
+    "obsId": "c3",
+    "part": "地閣",
+    "section": "地閣大小",
+    "label": "地閣長短",
+    "options": [
+      "地閣長",
+      "地閣適中",
+      "地閣短"
+    ],
+    "note": "",
+    "sourceQid": "c3",
+    "optionHints": {
+      "地閣長": "長過鼻準到下巴的1/2 ",
+      "地閣短": "短於鼻準到下巴的 1/2"
+    }
+  },
+  {
+    "obsId": "c4",
+    "part": "地閣",
+    "section": "地閣大小",
+    "label": "地閣寬窄",
+    "options": [
+      "地閣寬",
+      "地閣窄尖"
+    ],
+    "note": "",
+    "sourceQid": "c4",
+    "optionHints": {
+      "地閣寬": "約等口寬或更寬",
+      "地閣窄尖": "寬度等於或小於鼻翼"
+    }
+  },
+  {
+    "obsId": "c5",
+    "part": "地閣",
+    "section": "地閣位置",
+    "label": "地閣位置",
+    "options": [
+      "地閣置中",
+      "地閣歪"
+    ],
+    "note": "",
+    "sourceQid": "c5",
+    "optionHints": {
+      "地閣置中": "地閣中線與臉部中線重合"
+    }
+  },
+  {
+    "obsId": "c6",
+    "part": "地閣",
+    "section": "地閣骨肉",
+    "label": "地閣骨肉",
+    "options": [
+      "地閣有肉",
+      "地閣無肉"
+    ],
+    "note": "",
+    "sourceQid": "c6",
+    "optionHints": {
+      "地閣有肉": "肉包起不露骨",
+      "地閣無肉": "骨感明顯"
+    }
+  },
+  {
+    "obsId": "y1",
+    "part": "頤",
+    "section": "頤",
+    "label": "頤角度",
+    "options": [
+      "頤寬(角度明顯)",
+      "頤平(角度不明顯)",
+      "頤削(角度太小)",
+      "頤很寬(角度有點大 接近方)"
+    ],
+    "note": "",
+    "sourceQid": "y1",
+    "optionHints": {
+      "頤寬(角度明顯)": "耳下到下巴連線角度清晰，腮角明顯",
+      "頤平(角度不明顯)": "角度適中不太小",
+      "頤削(角度太小)": "角度小，趨近垂直線",
+      "頤很寬(角度有點大 接近方)": "類似方臉"
+    }
+  },
+  {
+    "obsId": "y2",
+    "part": "頤",
+    "section": "頤",
+    "label": "頤肉量",
+    "options": [
+      "頤豐",
+      "頤有肉",
+      "頤露尖"
+    ],
+    "note": "",
+    "sourceQid": "y2",
+    "optionHints": {
+      "頤豐": "頤骨豐隆有肉，弧度飽滿",
+      "頤有肉": "有肉但不過豐",
+      "頤露尖": "肉少或尖，視覺上薄"
+    }
+  },
+  {
+    "obsId": "y3",
+    "part": "頤",
+    "section": "頤",
+    "label": "頤長短",
+    "options": [
+      "頤長度正常",
+      "頤短"
+    ],
+    "note": "",
+    "sourceQid": "y3"
+  },
+  {
+    "obsId": "y4",
+    "part": "頤",
+    "section": "頤",
+    "label": "雙頤一致性",
+    "options": [
+      "雙頤一致",
+      "雙頤不一致"
+    ],
+    "note": "",
+    "sourceQid": "y4"
+  }
+]

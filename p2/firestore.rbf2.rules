@@ -1,0 +1,55 @@
+rules_version = '2';
+// P2 (rbf2 / rbf2-staging) Security Rules — 依設計規格 v0.6 §D。
+// 與 P1(renxiangbingfa) 的 firestore.rules 無關、獨立一份。
+// 原則：無任何 `if true`、無 mobileUsers/getRules/teacher-shared 後門。
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function roleOf()     { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
+    function isStaff()    { return isSignedIn() && (roleOf() == 'admin' || roleOf() == 'teacher'); }
+    function isAdmin()    { return isSignedIn() && roleOf() == 'admin'; }
+
+    // 規則資料：登入可讀；teacher/admin 可寫
+    match /observations/{obsId} {
+      allow read:  if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /ruleSets/{setId} {
+      allow read:  if isSignedIn();
+      allow write: if isStaff();
+      match /dims/{dimId} {
+        allow read:  if isSignedIn();
+        allow write: if isStaff();
+      }
+    }
+    match /spiceScript/{docId} {
+      allow read:  if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /config/{docId} {
+      allow read:  if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 使用者主檔＋底下全部（reports / cases / cases/**/reports）：限本人。
+    // 老師＝不同 uid → 對他人 cases 無任何權限（符合 §D「老師對 cases 無權」）。
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      match /{document=**} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+    }
+
+    // 白名單：登入可讀；只有 admin 可寫
+    match /allowedUsers/{email} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // 其餘一律拒絕（無全開放 collection）
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
