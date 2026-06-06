@@ -520,32 +520,28 @@ function _gmSyncFromDom() {
 function _gmRenderRows() {
   const box = document.getElementById('m-gm-list'); if (!box) return;
   if (_gmRows.length === 0) { box.innerHTML = '<div class="m-gm-empty">尚無分組，點下方「＋ 新增分組」建立。</div>'; return; }
+  const last = _gmRows.length - 1;
   box.innerHTML = _gmRows.map((r, i) =>
-    '<div class="m-gm-row" draggable="true" data-i="' + i + '" data-orig="' + _esc(r.orig || '') + '">'
-    + '<span class="m-gm-handle" title="拖曳排序">⠿</span>'
-    + '<input class="m-gm-name" value="' + _esc(r.name || '') + '" placeholder="分組名稱" maxlength="30">'
+    '<div class="m-gm-row" data-i="' + i + '">'
+    + '<textarea class="m-gm-name" rows="1" placeholder="分組名稱">' + _esc(r.name || '') + '</textarea>'
     + '<input class="m-gm-desc" value="' + _esc(r.desc || '') + '" placeholder="說明（選填）" maxlength="60">'
+    + '<span class="m-gm-arrows"><button type="button" class="m-gm-arrow" data-dir="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>▲</button>'
+    + '<button type="button" class="m-gm-arrow" data-dir="down" data-i="' + i + '"' + (i === last ? ' disabled' : '') + '>▼</button></span>'
     + '<button type="button" class="m-gm-del" data-i="' + i + '" title="刪除分組">✕</button>'
     + '</div>'
   ).join('');
-  box.querySelectorAll('.m-gm-row').forEach((row) => {
-    row.addEventListener('dragstart', (e) => { _gmSyncFromDom(); _gmDragFrom = parseInt(row.dataset.i, 10); if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(_gmDragFrom)); } catch (_) {} } });
-    row.addEventListener('dragover', (e) => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; });
-    row.addEventListener('drop', (e) => { e.preventDefault(); const to = parseInt(row.dataset.i, 10); if (_gmDragFrom == null || _gmDragFrom === to) { _gmDragFrom = null; return; } _gmSyncFromDom(); const moved = _gmRows.splice(_gmDragFrom, 1)[0]; _gmRows.splice(to, 0, moved); _gmDragFrom = null; _gmRenderRows(); });
-  });
-  // 拖曳時不要從 input 觸發（input 內可選字）→ 只有 handle 區塊啟動拖曳
-  box.querySelectorAll('.m-gm-name,.m-gm-desc').forEach((inp) => {
-    const row = inp.closest('.m-gm-row');
-    const off = () => { if (row) row.draggable = false; };  // 在 input 上互動時暫停整列拖曳（才能選字）
-    const on = () => { if (row) row.draggable = true; };
-    inp.addEventListener('mousedown', (e) => { e.stopPropagation(); off(); });
-    inp.addEventListener('mouseup', on);
-    inp.addEventListener('blur', on);
-  });
+  box.querySelectorAll('.m-gm-arrow').forEach((b) => { b.onclick = () => {
+    _gmSyncFromDom();
+    const i = parseInt(b.dataset.i, 10);
+    const j = b.dataset.dir === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= _gmRows.length) return;
+    const t = _gmRows[i]; _gmRows[i] = _gmRows[j]; _gmRows[j] = t;
+    _gmRenderRows();
+  }; });
   box.querySelectorAll('.m-gm-del').forEach((b) => { b.onclick = () => {
     _gmSyncFromDom();
     const i = parseInt(b.dataset.i, 10); const r = _gmRows[i];
-    if (r && (r.name || r.orig)) { if (!confirm('確定刪除分組「' + (r.name || r.orig) + '」？該分組底下的個案會變成「未分組」。')) return; }
+    if (r && (r.name || r.orig)) { if (!confirm('確定刪除分組「' + (r.name || r.orig).replace(/\s+/g, ' ').trim() + '」？該分組底下的個案會變成「未分組」。')) return; }
     _gmRows.splice(i, 1); _gmRenderRows();
   }; });
 }
@@ -596,7 +592,6 @@ let _finderEditColor = '';
 let _finderIsNew = false;     // 目前第三欄是不是「剛新增、還沒存過」的案 → 取消要刪掉
 let _finderGroupDescs = {};   // {分組名: 說明}
 let _gmRows = [];             // 管理分組視窗工作列 [{orig,name,desc}]
-let _gmDragFrom = null;
 
 // Finder 色卡：比原 CARD_COLORS 亮/淡一些的 8 色（太深就調這組）
 const FINDER_COLORS = ['#C9B98E', '#8FB081', '#79A597', '#ADA59B', '#C2A07F', '#BE94A2', '#BCAD78', '#84A6C0'];
@@ -632,14 +627,15 @@ export async function mountFinderDesktop() {
   if (!root) return;
   root.innerHTML = '<div class="m-finder">'
     + '<div class="m-finder-bar"><div class="m-finder-title">個案管理</div>'
-    + '<div class="m-finder-bar-btns"><button type="button" class="m-finder-bar-btn" id="m-finder-newcase">＋新增個案</button>'
-    + '<button type="button" class="m-finder-bar-btn" id="m-finder-groups">＋新增 / 管理群組</button></div></div>'
+    + '<div class="m-finder-bar-btns"><button type="button" class="m-finder-bar-btn" id="m-finder-newcase">＋新增個案</button></div></div>'
     + '<div class="m-finder-cols"><div class="m-finder-c1" id="m-finder-c1"></div><div class="m-finder-c2" id="m-finder-c2"></div><div class="m-finder-c3" id="m-finder-c3"></div></div></div>';
   const nb = document.getElementById('m-finder-newcase'); if (nb) nb.onclick = _finderNewCase;
-  const gb = document.getElementById('m-finder-groups'); if (gb) gb.onclick = _openManageGroups;
   await _finderLoad();
   _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
 }
+
+// 左欄群組名顯示：去換行、超過 8 中文字截斷加 …
+function _truncGroupName(s) { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > 8 ? (s.slice(0, 8) + '…') : s; }
 
 async function _finderLoad() {
   const uid = getEffectiveUid();
@@ -663,12 +659,22 @@ async function _finderLoad() {
 
 function _renderFinderCol1() {
   const el = document.getElementById('m-finder-c1'); if (!el) return;
-  let h = '<button class="m-finder-c1item' + (_finderSel === '__all__' ? ' active' : '') + '" data-sel="__all__"><span>所有個案</span><span class="m-finder-c1count">' + _finderCases.length + '</span></button>';
-  _finderGroups.forEach((g) => { const n = _finderCases.filter((c) => (c.group || '') === g).length; h += '<button class="m-finder-c1item' + (_finderSel === g ? ' active' : '') + '" data-sel="' + _esc(g) + '"><span>' + _esc(g) + '</span><span class="m-finder-c1count">' + n + '</span></button>'; });
+  const item = (sel, nameHtml, count, descHtml) =>
+    '<button class="m-finder-c1item' + (_finderSel === sel ? ' active' : '') + '" data-sel="' + _esc(sel) + '">'
+    + '<span class="m-finder-c1main"><span class="m-finder-c1name">' + nameHtml + '</span>' + (descHtml ? '<span class="m-finder-c1desc">' + descHtml + '</span>' : '') + '</span>'
+    + '<span class="m-finder-c1count">' + count + '</span></button>';
+  let h = item('__all__', '所有個案', _finderCases.length, '');
+  _finderGroups.forEach((g) => {
+    const n = _finderCases.filter((c) => (c.group || '') === g).length;
+    const desc = _finderGroupDescs[g] || '';
+    h += item(g, _esc(_truncGroupName(g)), n, desc ? _esc(desc) : '');
+  });
   const un = _finderCases.filter((c) => !(c.group || '')).length;
-  if (un > 0) h += '<button class="m-finder-c1item' + (_finderSel === '__ungrouped__' ? ' active' : '') + '" data-sel="__ungrouped__"><span>未分組</span><span class="m-finder-c1count">' + un + '</span></button>';
+  if (un > 0) h += item('__ungrouped__', '未分組', un, '');
+  h += '<button type="button" class="m-finder-c1-foot" id="m-finder-groups">＋ 新增 / 管理群組</button>';
   el.innerHTML = h;
   el.querySelectorAll('[data-sel]').forEach((b) => { b.onclick = () => { _finderSel = b.dataset.sel; _finderCaseId = null; _finderEditing = false; _finderIsNew = false; _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3(); }; });
+  const gb = document.getElementById('m-finder-groups'); if (gb) gb.onclick = _openManageGroups;
 }
 
 function _finderVisibleCases() {

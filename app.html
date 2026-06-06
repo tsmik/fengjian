@@ -146,11 +146,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-gm-hint{font-size:12px;color:#7a6e64;line-height:1.5;margin-bottom:14px}
 .m-gm-list{display:flex;flex-direction:column;gap:8px}
 .m-gm-empty{color:#a89e92;font-size:13px;padding:12px 2px}
-.m-gm-row{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e6e3dd;border-radius:9px;padding:8px 10px}
-.m-gm-handle{cursor:grab;color:#b3a994;font-size:16px;flex:0 0 auto;user-select:none}
-.m-gm-name{flex:0 0 36%;min-width:0;box-sizing:border-box;font-family:inherit;font-size:14px;border:1px solid #d4c9b0;border-radius:6px;padding:6px 8px;background:#fff;color:#3a3228}
-.m-gm-desc{flex:1;min-width:0;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid #e0d8ca;border-radius:6px;padding:6px 8px;background:#fff;color:#5a5147}
-.m-gm-del{flex:0 0 auto;border:none;background:transparent;color:#b09a8a;font-size:14px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.m-gm-row{display:flex;align-items:flex-start;gap:8px;background:#fff;border:1px solid #e6e3dd;border-radius:9px;padding:8px 10px}
+.m-gm-name{flex:0 0 34%;min-width:0;box-sizing:border-box;font-family:inherit;font-size:14px;line-height:1.4;border:1px solid #d4c9b0;border-radius:6px;padding:6px 8px;background:#fff;color:#3a3228;resize:vertical;min-height:34px}
+.m-gm-desc{flex:1;min-width:0;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid #e0d8ca;border-radius:6px;padding:6px 8px;background:#fff;color:#5a5147;align-self:center}
+.m-gm-arrows{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;align-self:center}
+.m-gm-arrow{border:1px solid #d4c9b0;background:#fbf8f2;color:#7a6e64;font-size:10px;line-height:1;cursor:pointer;border-radius:4px;padding:2px 5px}
+.m-gm-arrow:hover{background:#efe7d6;color:#3a3228}
+.m-gm-arrow:disabled{opacity:.35;cursor:default}
+.m-gm-del{flex:0 0 auto;align-self:center;border:none;background:transparent;color:#b09a8a;font-size:14px;cursor:pointer;padding:4px 6px;border-radius:6px}
 .m-gm-del:hover{background:rgba(181,72,46,0.1);color:#b5482e}
 .m-gm-add{margin:12px 0 0;width:100%;font-family:inherit;font-size:14px;color:#3a3228;background:#efe7d6;border:1px solid #d3c7b1;border-radius:9px;padding:10px;cursor:pointer}
 .m-gm-actions{display:flex;gap:10px;margin-top:16px}
@@ -1156,20 +1159,26 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-finder-cols{display:grid;grid-template-columns:170px 1fr 345px;gap:14px;flex:1;min-height:0;margin-top:14px}  /* 第三欄 +15%(300→345) */
   .m-finder-c1,.m-finder-c2,.m-finder-c3{overflow-y:auto;min-height:0}
   .m-finder-c1{border-right:1px solid var(--border);padding-right:10px;display:flex;flex-direction:column;gap:4px}
-  .m-finder-c1item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:inherit;font-size:14px;color:#5a5147;background:transparent;border:none;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left}
+  .m-finder-c1item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;font-family:inherit;color:#5a5147;background:transparent;border:none;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left}
   .m-finder-c1item:hover{background:#efe7d6}
   .m-finder-c1item.active{background:#e7dcc6;color:#3a3228}  /* 選到只給底色、不加粗 */
-  .m-finder-c1count{font-size:12px;color:#a89e92;font-weight:400}
+  .m-finder-c1main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+  .m-finder-c1name{font-size:14px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .m-finder-c1desc{font-size:14px;line-height:1.55;color:#a89e92;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .m-finder-c1count{font-size:12px;color:#a89e92;font-weight:400;flex:0 0 auto;padding-top:3px}
+  .m-finder-c1-foot{margin-top:auto;font-family:inherit;font-size:13px;color:#3a3228;background:#efe7d6;border:1px solid #d3c7b1;border-radius:8px;padding:9px;cursor:pointer;text-align:center}
+  .m-finder-c1-foot:hover{background:#e7dcc6}
   .m-finder-c2{border-right:1px solid var(--border);padding-right:12px}
-  .m-finder-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start}  /* 第二欄三欄卡片 */
-  /* 卡片大小/字體比照 index_desktop 的 .case-card：name 18px/400、meta 13px、note 12px */
-  .m-finder-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-height:118px;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+  .m-finder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-content:start}  /* 第二欄三欄卡片；minmax(0,1fr) 讓長字不撐寬 */
+  /* 卡片大小/字體比照 index_desktop 的 .case-card：name 18px/400、meta 13px、note 12px；寫死寬度(grid)＋超出用 … */
+  .m-finder-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;overflow:hidden;min-height:118px;border:1px solid #e6e3dd;border-radius:10px;padding:15px 16px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .15s,box-shadow .15s}
   .m-finder-card:hover{border-color:#cdbfa3}
   .m-finder-card.active{border-color:#c47a3d;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
-  .m-finder-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-finder-card>span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-finder-card-name{font-size:18px;font-weight:400;color:var(--text);margin-bottom:5px}
   .m-finder-card-meta{font-size:13px;font-weight:400;color:var(--text-3);margin-bottom:3px}
   .m-finder-card-join{font-size:12px;font-weight:400;color:var(--text-3);margin-bottom:auto}
-  .m-finder-card-note{font-size:12px;font-weight:400;color:var(--text-3);margin-top:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-finder-card-note{font-size:12px;font-weight:400;color:var(--text-3);margin-top:10px}
   .m-finder-empty{color:#a89e92;font-size:14px;padding:30px 10px;text-align:center}
   /* 第三欄預覽 */
   .m-finder-preview{display:flex;flex-direction:column;gap:12px;position:relative}
