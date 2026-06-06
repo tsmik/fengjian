@@ -32,7 +32,7 @@ import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoade
 import { buildManualReportParts } from './manual_report.js';
 import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { evaluatePart } from './rule_engine.js';
-import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
 import { generatePng } from './m_report.js';
@@ -270,6 +270,8 @@ function _render() {
     const mount = _container.querySelector('#m-board-mount');
     if (mount) mountBoard(mount);
   }
+  // 兵法報告(overview) → 浮動筆記；其餘子畫面收起
+  try { if (_manualSubview === 'overview') showReportNote(); else hideReportNote(); } catch (e) {}
 }
 
 // 流年八格（固定區塊，不跟大表左右捲動）。手機 4 欄→兩排：

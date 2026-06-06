@@ -20,7 +20,7 @@
 // ============================================================
 
 import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
-import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { updateHomeProgress } from './m_home.js';
@@ -316,10 +316,13 @@ function render() {
   if (!_root) return;
   if (_view === 'report') {
     renderObsReport();          // 比照兵法報告（唯讀大表＋4 圖＋虛歲流年），餵觀察算出的矩陣
+    try { showReportNote(); } catch (e) {}   // 報告頁 → 浮動筆記
   } else if (_view === 'sens') {
     renderAutoView('sens');     // 參數分析維持原 m_report 掛載
+    try { hideReportNote(); } catch (e) {}
   } else {
     renderQuizView();
+    try { hideReportNote(); } catch (e) {}
   }
 }
 

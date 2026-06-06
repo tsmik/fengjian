@@ -139,6 +139,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dash-analyze{display:block;width:100%;box-sizing:border-box;margin:4px 0 12px;padding:13px 16px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:2px;cursor:pointer}
 .m-dash-analyze:active{background:#2c251d}
 
+/* 桌機浮動筆記（報告頁）：固定右下角，跟著畫面捲動；面板可由 textarea 右下角拖拉放大 */
+.m-note-fab{position:fixed;right:22px;bottom:22px;z-index:8000;display:none;align-items:center;gap:7px;background:#3a3228;color:#fff;border:none;border-radius:22px;padding:11px 18px;font-family:inherit;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
+.m-note-fab:hover{background:#2c251d}
+.m-note-fab.is-open{background:#5a5147}
+.m-note-fab-ico{font-size:15px}
+.m-note-panel{position:fixed;right:22px;bottom:74px;z-index:8000;display:none;flex-direction:column;background:#fbf8f2;border:1px solid #d4c9b0;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.22)}
+.m-note-panel.is-open{display:flex}
+.m-note-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e6ddc9;background:#f3ecdd;border-radius:12px 12px 0 0}
+.m-note-title{font-size:13px;color:#3a3228;flex:1}
+.m-note-status{font-size:12px;color:#a89e92;white-space:nowrap}
+.m-note-close{border:none;background:transparent;color:#8a7e6e;font-size:14px;cursor:pointer;padding:2px 6px;border-radius:6px}
+.m-note-close:hover{background:rgba(0,0,0,0.08);color:#3a3228}
+.m-note-text{resize:both;width:340px;height:220px;min-width:240px;min-height:120px;max-width:calc(100vw - 60px);max-height:72vh;box-sizing:border-box;border:none;outline:none;padding:12px;font-family:inherit;font-size:14px;line-height:1.6;color:#3a3228;background:transparent;border-radius:0 0 12px 12px}
+
 /* 管理個案分組視窗（桌機/手機共用）*/
 .m-gm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center;padding:20px}
 .m-gm-modal{background:#fbf8f2;border-radius:14px;padding:22px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
@@ -1836,6 +1850,13 @@ body.m-debug-on .m-debug-clear{display:block}
   </button>
   <div class="m-ws" id="m-ws" style="display:none"></div>
 </nav>
+
+<!-- 桌機浮動筆記（報告頁：上課兵法報告 / 部位觀察報告 / 個案工作區報告）-->
+<button id="m-note-fab" class="m-note-fab" type="button" style="display:none"><span class="m-note-fab-ico">✏️</span><span>筆記</span></button>
+<div id="m-note-panel" class="m-note-panel">
+  <div class="m-note-head"><span class="m-note-title">我的上課筆記</span><span id="m-note-status" class="m-note-status"></span><button id="m-note-close" class="m-note-close" type="button">✕</button></div>
+  <textarea id="m-note-text" class="m-note-text" placeholder="上課時在這裡記筆記…（自動儲存，可拖右下角放大）"></textarea>
+</div>
 
 
 <script type="module" src="js/m_main.js"></script>

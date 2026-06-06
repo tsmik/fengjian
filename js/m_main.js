@@ -192,6 +192,52 @@ export async function saveGroups(groupOrder, groupDescs) {
   if (!uid) throw new Error('未登入');
   await setDoc(doc(db, 'users', uid), { groupOrder: groupOrder || [], groupDescs: groupDescs || {}, updatedAt: new Date().toISOString() }, { merge: true });
 }
+
+// ===== 桌機浮動筆記（上課兵法報告 / 部位觀察報告 / 個案工作區報告 共用；存目前對象的 reportNote）=====
+let _noteWired = false;
+let _noteSaveTimer = null;
+function _wireReportNote() {
+  if (_noteWired) return;
+  const fab = document.getElementById('m-note-fab');
+  const panel = document.getElementById('m-note-panel');
+  const closeB = document.getElementById('m-note-close');
+  const ta = document.getElementById('m-note-text');
+  if (!fab || !panel || !ta) return;
+  _noteWired = true;
+  fab.addEventListener('click', function () {
+    const open = panel.classList.toggle('is-open');
+    fab.classList.toggle('is-open', open);
+    if (open) { ta.value = (window.__userData && window.__userData.reportNote) || ''; ta.focus(); }
+  });
+  if (closeB) closeB.addEventListener('click', function () { panel.classList.remove('is-open'); fab.classList.remove('is-open'); });
+  ta.addEventListener('input', function () {
+    const st = document.getElementById('m-note-status'); if (st) st.textContent = '輸入中…';
+    if (_noteSaveTimer) clearTimeout(_noteSaveTimer);
+    const val = ta.value;
+    _noteSaveTimer = setTimeout(async function () {
+      try {
+        const ref = getCurrentDocRef(); if (!ref) return;
+        await setDoc(ref, { reportNote: val }, { merge: true });
+        window.__userData = Object.assign(window.__userData || {}, { reportNote: val });
+        const s = document.getElementById('m-note-status'); if (s) s.textContent = '已儲存 ✓';
+      } catch (e) {
+        const s = document.getElementById('m-note-status'); if (s) s.textContent = '儲存失敗';
+      }
+    }, 700);
+  });
+}
+export function showReportNote() {
+  if (!isDesktopSidebar()) { hideReportNote(); return; }   // 桌機限定
+  _wireReportNote();
+  const fab = document.getElementById('m-note-fab'); if (fab) fab.style.display = 'inline-flex';
+  // 載入目前對象的筆記（使用者沒在打字才覆寫，避免蓋掉輸入中內容）
+  const ta = document.getElementById('m-note-text');
+  if (ta && document.activeElement !== ta) ta.value = (window.__userData && window.__userData.reportNote) || '';
+}
+export function hideReportNote() {
+  const fab = document.getElementById('m-note-fab'); if (fab) fab.style.display = 'none';
+  const panel = document.getElementById('m-note-panel'); if (panel) panel.classList.remove('is-open');
+}
 // 分析分頁頂部橫幅：「{姓名} 的 人相兵法」＋整列底色＝該對象顏色
 const _BANNER_DEFAULT_COLOR = '#D9CBA8';
 function _bannerTint(hex) {
@@ -655,6 +701,8 @@ if (isTeacherMode) {
       }
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
+      // 浮動筆記預設收起；若接著掛到「報告」子畫面，m_input/m_manual 的 render 會再叫出來
+      hideReportNote();
       // v1.7 階段 3：先 unmount 對方再 mount 自己
       // （m_input 內部會在報告 view mount m_report；mount 順序錯了會被外層 unmount 蓋掉）
       if(key==='input'){
