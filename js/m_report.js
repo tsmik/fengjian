@@ -634,9 +634,6 @@ export async function mountFinderDesktop() {
   _renderFinderCol1(); _renderFinderCol2(); _renderFinderCol3();
 }
 
-// 左欄群組名顯示：去換行、超過 8 中文字截斷加 …
-function _truncGroupName(s) { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > 8 ? (s.slice(0, 8) + '…') : s; }
-
 async function _finderLoad() {
   const uid = getEffectiveUid();
   let groupOrder = []; _finderGroupDescs = {};
@@ -667,7 +664,7 @@ function _renderFinderCol1() {
   _finderGroups.forEach((g) => {
     const n = _finderCases.filter((c) => (c.group || '') === g).length;
     const desc = (_finderGroupDescs[g] || '').trim();
-    h += item(g, _esc(_truncGroupName(g)), n, desc ? _esc(desc) : '');
+    h += item(g, _esc((g || '').replace(/\s+/g, ' ').trim()), n, desc ? _esc(desc) : '');
   });
   const un = _finderCases.filter((c) => !(c.group || '')).length;
   if (un > 0) h += item('__ungrouped__', '未分組', un, '');
