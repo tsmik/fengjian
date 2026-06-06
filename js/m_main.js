@@ -256,10 +256,8 @@ function _wsBlend(base, hex, f) {
   }
   return 'rgb(' + Math.round(base[0] * (1 - f) + r * f) + ',' + Math.round(base[1] * (1 - f) + g * f) + ',' + Math.round(base[2] * (1 - f) + b * f) + ')';
 }
-// 整頁淡染（在內容底下）：個案色混進頁底色 #f7f4ef，f=0.11（要調改這數字）
-function _wsWash(hex) { return _wsBlend([247, 244, 239], hex, 0.11); }
-// 部位名/維度名 標題列：混進原標題米色 #e7dcc6，稍濃 f=0.20，讓標題列跟著染色又能微微凸顯
-function _wsWash2(hex) { return _wsBlend([231, 220, 198], hex, 0.20); }
+// 整頁淡染（在內容底下）：個案色混進頁底色 #f7f4ef，f=0.12（要調改這數字）
+function _wsWash(hex) { return _wsBlend([247, 244, 239], hex, 0.12); }
 function _renderWorkspace() {
   const host = document.getElementById('m-ws');
   if (!host) return;
@@ -271,7 +269,8 @@ function _renderWorkspace() {
   }).join('');
   host.innerHTML =
     '<div class="m-ws-head"><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
-    '<button class="m-ws-close" id="m-ws-close" title="退出 ' + _wsEsc(_wsCase.name) + '">✕</button></div>' +
+    '<span class="m-ws-close-wrap"><button class="m-ws-close" id="m-ws-close">✕</button>' +
+    '<span class="m-ws-close-tip">退出 ' + _wsEsc(_wsCase.name) + '</span></span></div>' +
     '<div class="m-ws-bar" style="background:' + (_wsCase.color || '#c9b98e') + '"></div>' +
     '<div class="m-ws-items">' + items + '</div>';
   const cl = host.querySelector('#m-ws-close'); if (cl) cl.onclick = closeCaseWorkspace;
@@ -325,7 +324,6 @@ export function selectWorkspaceSub(key) {
   _wsSub = key;
   document.body.classList.add('m-ws-active');
   document.body.style.setProperty('--ws-tint', _wsWash(_wsCase.color));
-  document.body.style.setProperty('--ws-tint2', _wsWash2(_wsCase.color));
   _renderWorkspace();
   try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
 }

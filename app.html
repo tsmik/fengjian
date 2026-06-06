@@ -1108,18 +1108,21 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-ws{display:flex;flex-direction:column;gap:4px;margin:2px 12px 12px;padding:8px 6px 10px}
   .m-ws-head{display:flex;align-items:center;gap:7px;padding:1px 2px 4px}
   .m-ws-name{flex:1;min-width:0;font-size:14px;font-weight:400;color:#3a3228;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .m-ws-close{flex:0 0 auto;border:none;background:transparent;color:#8a7e6e;font-size:13px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px}
+  .m-ws-close-wrap{position:relative;flex:0 0 auto;display:inline-flex}
+  .m-ws-close{border:none;background:transparent;color:#8a7e6e;font-size:13px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px}
   .m-ws-close:hover{background:rgba(0,0,0,0.09);color:#3a3228}
+  .m-ws-close-tip{display:none;position:absolute;top:50%;right:calc(100% + 6px);transform:translateY(-50%);white-space:nowrap;background:#3a3228;color:#fff;font-size:12px;padding:4px 8px;border-radius:6px;pointer-events:none;z-index:50}
+  .m-ws-close-wrap:hover .m-ws-close-tip{display:block}
   .m-ws-bar{height:4px;border-radius:2px;margin:0 2px 4px}
   .m-ws-items{display:flex;flex-direction:column;gap:6px;padding:6px 0 0 12px}
   .m-ws-item{font-family:inherit;font-size:13px;font-weight:400;color:#6a5f50;padding:7px 11px;border:1px solid rgba(0,0,0,0.10);border-radius:14px;background:rgba(255,255,255,0.55);cursor:pointer;text-align:left;white-space:nowrap}
   .m-ws-item:hover{background:rgba(255,255,255,0.85)}
   .m-ws-item.active{background:#fff;border-color:#c47a3d;color:#3a3228;font-weight:400;box-shadow:0 1px 3px rgba(0,0,0,0.10)}
 
-  /* 工作區啟用：個案色淡淡混進頁底色（在內容底下）；部位名/維度名標題列跟著染色（稍濃）＋ 中和上方分頁高亮 */
+  /* 工作區啟用：個案色淡淡混進頁底色（在內容底下）；部位名/維度名標題列＝同一個染色色（看起來跟底色一致）＋ 中和上方分頁高亮 */
   body.m-ws-active .m-main{background:var(--ws-tint, #f7f4ef)}
   body.m-ws-active .m-sv-dimhead,
-  body.m-ws-active .m-dimv-parthead{background:var(--ws-tint2, #e7dcc6)}
+  body.m-ws-active .m-dimv-parthead{background:var(--ws-tint, #f7f4ef)}
   body.m-ws-active .m-tab.active{color:var(--text-3);font-weight:400}
   body.m-ws-active .m-tab.active::after{background:transparent}
   body.m-ws-active .m-tab.active .m-tab-icon{transform:none}
