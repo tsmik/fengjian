@@ -34,6 +34,19 @@
   .grp-row.sel { background:var(--sel); }
   .gr-name { flex:1; font-size:13px; }
   .gr-cnt { font-size:11px; color:var(--sub); }
+  /* 敘述分組＝卡片 管理列（col3） */
+  .cardrow { border:1px solid var(--bd2); border-radius:9px; margin:7px 0; padding:6px; background:#fbf7ef; }
+  .cr-top { display:flex; align-items:center; gap:4px; }
+  .cr-name { flex:1; min-width:0; font-family:inherit; font-size:13px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; }
+  .cr-role { font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:3px; }
+  .cr-note { width:100%; margin-top:5px; resize:vertical; min-height:30px; font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; color:var(--ink); }
+  /* col4 卡片標頭 */
+  .role-badge { font-size:10px; color:#fff; background:#C17A5A; border-radius:9px; padding:1px 7px; }
+  .role-badge.none { background:#cdbfa6; }
+  .combo-head { display:flex; align-items:center; gap:6px; }
+  /* 可拖欄寬分隔線 */
+  .splitter { position:fixed; top:52px; bottom:0; width:8px; margin-left:-4px; cursor:col-resize; z-index:8; }
+  .splitter:hover, .splitter.drag { background:rgba(122,158,126,.3); }
   #col-editor { background:#fff; }
   .col-title { font-weight:600; font-size:13px; margin:2px 0 8px; color:var(--ink); }
   .group-label { font-size:11px; color:var(--sub); margin:10px 0 4px; border-top:1px dashed var(--bd); padding-top:6px; }
@@ -105,16 +118,44 @@
   <button class="btn sm" id="btn-logout" style="display:none">登出</button>
 </header>
 
-<div class="wrap">
+<div class="wrap" id="wrap">
   <div class="col" id="col-dims"></div>
   <div class="col" id="col-parts"></div>
   <div class="col" id="col-groups"></div>
-  <div class="col-cards-wrap">
+  <div class="col-cards-wrap" id="col-cards-wrap">
     <div id="col-cards"></div>
     <div id="spice-box" class="spice-bar"></div>
   </div>
   <div class="col" id="palette"><div id="palette-inner"></div></div>
 </div>
+<div class="splitter" id="split-a"></div>
+<div class="splitter" id="split-b"></div>
+<script>
+  // 可拖三欄寬（敘述分組 col3 / observation col5；葉 col4 = 中間自動填滿）
+  (function () {
+    var wrap = document.getElementById('wrap');
+    var cw; try { cw = JSON.parse(localStorage.getItem('admin2_colw') || 'null'); } catch (e) {}
+    if (!cw) cw = { w3: 188, w5: 270 };
+    function apply() { wrap.style.gridTemplateColumns = '128px 138px ' + cw.w3 + 'px minmax(0,1fr) ' + cw.w5 + 'px'; place(); }
+    function place() {
+      document.getElementById('split-a').style.left = document.getElementById('col-groups').getBoundingClientRect().right + 'px';
+      document.getElementById('split-b').style.left = document.getElementById('col-cards-wrap').getBoundingClientRect().right + 'px';
+    }
+    function drag(handle, onMove) {
+      handle.addEventListener('mousedown', function (e) {
+        e.preventDefault(); handle.classList.add('drag');
+        var sx = e.clientX, s3 = cw.w3, s5 = cw.w5;
+        function mm(ev) { onMove(ev.clientX - sx, s3, s5); apply(); }
+        function mu() { handle.classList.remove('drag'); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); try { localStorage.setItem('admin2_colw', JSON.stringify(cw)); } catch (e) {} }
+        document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+      });
+    }
+    drag(document.getElementById('split-a'), function (dx, s3) { cw.w3 = Math.max(120, Math.min(480, s3 + dx)); });
+    drag(document.getElementById('split-b'), function (dx, s3, s5) { cw.w5 = Math.max(160, Math.min(560, s5 - dx)); });
+    window.addEventListener('resize', place);
+    apply();
+  })();
+</script>
 
 <div class="modal" id="export-modal">
   <div class="modal-box">

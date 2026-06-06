@@ -60,35 +60,40 @@ function partMeta(name) {
 }
 function ensureDim(di) { if (!state.dims[di]) state.dims[di] = { parts: {} }; return state.dims[di]; }
 function uidG() { return 'g' + Math.random().toString(36).slice(2, 7); }
-// 敘述分組層（v0.7 §2）：葉部位的卡片掛在「敘述分組」下（老師的話）。
-// 舊草稿（直接 cards、無 groups）自動包成一個無名敘述分組，向後相容。
-function ensureGroups(def) {
-  if (!def.groups) def.groups = def.cards ? [{ id: uidG(), label: '', cards: def.cards }] : [];
-  delete def.cards;
-  def.groups.forEach(g => { if (!g.id) g.id = uidG(); if (!g.cards) g.cards = []; });
+// 敘述分組 ≡ 卡片（1:1）：每張卡片有 簡稱(label)、註解(note，會顯示在部位觀察頁)、主/輔(role)、combos。
+// 舊草稿（groups 容器 / 更舊的扁平 cards）自動攤平成卡片清單，向後相容。
+function ensureCards(def) {
+  if (def.groups) {
+    const flat = [];
+    def.groups.forEach(g => (g.cards || []).forEach(c => flat.push({ id: c.id || uidG(), label: c.label || g.label || '', note: c.note || '', role: c.role || null, combos: (c.combos && c.combos.length) ? c.combos : [[]] })));
+    def.cards = flat; delete def.groups;
+  }
+  if (!def.cards) def.cards = [];
+  def.cards.forEach(c => { if (!c.id) c.id = uidG(); if (!('label' in c)) c.label = ''; if (!('note' in c)) c.note = ''; if (!('role' in c)) c.role = null; if (!c.combos || !c.combos.length) c.combos = [[]]; });
 }
 function getPart(di, name, createDefault) {
   const d = ensureDim(di);
   if (!d.parts[name] && createDefault) {
     const pm = partMeta(name);
     if (pm.kind === 'aggregate') d.parts[name] = { kind: 'aggregate', targetPole: null, threshold: 1, children: [] };
-    else d.parts[name] = { kind: 'leaf', targetPole: null, lrMode: pm.leaf && pm.leaf.paired ? 'both' : 'none', groups: [] };
+    else d.parts[name] = { kind: 'leaf', targetPole: null, lrMode: pm.leaf && pm.leaf.paired ? 'both' : 'none', cards: [] };
   }
-  if (d.parts[name] && d.parts[name].kind === 'leaf') ensureGroups(d.parts[name]);
+  if (d.parts[name] && d.parts[name].kind === 'leaf') ensureCards(d.parts[name]);
   return d.parts[name];
 }
 function partHasContent(di, name) {
   const p = state.dims[di] && state.dims[di].parts[name];
   if (!p) return false;
   if (p.kind === 'aggregate') return p.children.length > 0;
-  const groups = p.groups || (p.cards ? [{ cards: p.cards }] : []);
-  return groups.some(g => (g.cards || []).length > 0);
+  if (p.cards) return p.cards.length > 0;
+  if (p.groups) return p.groups.some(g => (g.cards || []).length > 0);
+  return false;
 }
 
 // ---------- persistence ----------
 function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} }
 function migrateAllLeaves() {
-  Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => { if (p.kind === 'leaf') ensureGroups(p); }));
+  Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => { if (p.kind === 'leaf') ensureCards(p); }));
 }
 function loadDraft() {
   try {
@@ -101,7 +106,7 @@ function serialize() {
   Object.keys(state.dims).forEach(di => {
     const parts = {};
     const dp = state.dims[di].parts;
-    Object.keys(dp).forEach(pn => { if (dp[pn].kind === 'leaf') ensureGroups(dp[pn]); if (partHasContent(di, pn)) parts[pn] = dp[pn]; });
+    Object.keys(dp).forEach(pn => { if (dp[pn].kind === 'leaf') ensureCards(dp[pn]); if (partHasContent(di, pn)) parts[pn] = dp[pn]; });
     if (Object.keys(parts).length) {
       out.dims[di] = { dimIndex: +di, dimName: META.dims[di].name, positiveType: META.dims[di].positiveType, negativeType: META.dims[di].negativeType, parts };
     }
@@ -184,10 +189,11 @@ function partRow(name, sub) {
   ]);
 }
 
-function renderEditor() { renderGroupsCol(); renderCardsCol(); }
+let focusCardId = null;
+function renderEditor() { renderCardsListCol(); renderLeavesCol(); }
 
-// 第 3 欄：敘述分組（含部位層 目標極/左右模式；聚合部位則放聚合編輯器）
-function renderGroupsCol() {
+// 第 3 欄：敘述分組＝卡片管理（簡稱/主輔/註解/數量）。含部位層 目標極/左右模式。聚合→聚合編輯器。
+function renderCardsListCol() {
   const box = $('col-groups'); box.innerHTML = '';
   if (!state.curPart) { box.appendChild(el('div', { class: 'col-title', text: '敘述分組' })); box.appendChild(el('div', { class: 'hint', text: '← 選部位' })); return; }
   const pm = partMeta(state.curPart);
@@ -204,40 +210,49 @@ function renderGroupsCol() {
   });
   box.appendChild(lrWrap);
   box.appendChild(el('div', { class: 'cards-head' }, [
-    el('span', { text: '敘述分組（老師的話）' }),
-    el('button', { class: 'btn xs', text: '＋', title: '新增敘述分組', onclick: () => addGroup(def) })
+    el('span', { text: '敘述分組＝卡片' }),
+    el('button', { class: 'btn xs', text: '＋', title: '新增敘述分組（卡片）', onclick: () => addCard(def) })
   ]));
-  if (!def.groups.length) box.appendChild(el('div', { class: 'hint', text: '＋ 先新增敘述分組' }));
-  def.groups.forEach((g, gi) => box.appendChild(renderGroupRow(def, g, gi)));
+  if (!def.cards.length) box.appendChild(el('div', { class: 'hint', text: '＋ 新增一個敘述分組（＝一張卡片）' }));
+  def.cards.forEach((card, ci) => box.appendChild(renderCardRow(def, card, ci)));
 }
 
-function renderGroupRow(def, g, gi) {
-  const sel = state.curGroup === g.id;
-  return el('div', { class: 'grp-row' + (sel ? ' sel' : ''), onclick: () => { state.curGroup = g.id; state.active = null; renderGroupsCol(); renderCardsCol(); } }, [
-    el('span', { class: 'gr-name', text: g.label || '（未填敘述）' }),
-    el('span', { class: 'gr-cnt', text: g.cards.length + '卡' }),
-    el('button', { class: 'btn xs', text: '▲', onclick: (e) => { e.stopPropagation(); moveGroup(def, gi, -1); } }),
-    el('button', { class: 'btn xs', text: '▼', onclick: (e) => { e.stopPropagation(); moveGroup(def, gi, 1); } }),
-    el('button', { class: 'btn xs', text: '✎', onclick: (e) => { e.stopPropagation(); renameGroup(g); } }),
-    el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); deleteGroup(def, g); } })
-  ]);
+function renderCardRow(def, card, ci) {
+  const wrap = el('div', { class: 'cardrow' });
+  const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
+  name.addEventListener('input', () => { card.label = name.value; saveDraft(); syncLeafHeader(card); });
+  if (focusCardId === card.id) { focusCardId = null; setTimeout(() => name.focus(), 0); }
+  const roleSel = el('select', { class: 'cr-role', onchange: (e) => { card.role = e.target.value || null; saveDraft(); syncLeafHeader(card); } });
+  [['', '未標'], ['main', '主'], ['aux', '輔']].forEach(([v, t]) => { const o = el('option', { value: v, text: t }); if ((card.role || '') === v) o.selected = true; roleSel.appendChild(o); });
+  wrap.appendChild(el('div', { class: 'cr-top' }, [
+    name, roleSel,
+    el('button', { class: 'btn xs', text: '▲', onclick: () => moveCard(def, ci, -1) }),
+    el('button', { class: 'btn xs', text: '▼', onclick: () => moveCard(def, ci, 1) }),
+    el('button', { class: 'btn xs danger', text: '✕', onclick: () => deleteCard(def, ci) })
+  ]));
+  const note = el('textarea', { class: 'cr-note', placeholder: '註解 hint（會出現在部位觀察頁）' }); note.value = card.note || '';
+  note.addEventListener('input', () => { card.note = note.value; saveDraft(); });
+  wrap.appendChild(note);
+  return wrap;
 }
 
-// 第 4 欄：選中敘述分組的卡片 → combo → 葉
-function renderCardsCol() {
+// 第 4 欄：所有卡片展開（combo→葉）。卡片可在此上下移動。
+function renderLeavesCol() {
   const box = $('col-cards'); box.innerHTML = '';
-  if (!state.curPart) { box.appendChild(el('div', { class: 'hint', text: '← 選部位 → 敘述分組' })); return; }
+  if (!state.curPart) { box.appendChild(el('div', { class: 'hint', text: '← 選部位' })); return; }
   const pm = partMeta(state.curPart);
   if (pm.kind === 'aggregate') { box.appendChild(el('div', { class: 'hint', text: '聚合部位沒有卡片：請在左欄勾子部位＋設固定門檻。' })); return; }
   const def = getPart(state.curDim, state.curPart, true);
-  const g = def.groups.find(x => x.id === state.curGroup);
-  if (!g) { box.appendChild(el('div', { class: 'hint', text: '← 在左欄選一個敘述分組' })); return; }
-  box.appendChild(el('div', { class: 'cards-head' }, [
-    el('span', { text: '「' + (g.label || '未填敘述') + '」的卡片（卡間＝或；卡內 combo＝或；combo 內葉＝而且）' }),
-    el('button', { class: 'btn sm', text: '＋新增卡片', onclick: () => { g.cards.push({ id: uid(), role: null, combos: [[]] }); renderCardsCol(); renderGroupsCol(); renderParts(); saveDraft(); } })
-  ]));
-  if (!g.cards.length) box.appendChild(el('div', { class: 'hint', text: '尚無卡片。＋新增卡片後，把右側 observation 拖進 combo。' }));
-  g.cards.forEach((card, ci) => box.appendChild(renderCard(def, g, card, ci)));
+  box.appendChild(el('div', { class: 'cards-head' }, [el('span', { text: '卡片內容（卡間＝或；卡內 combo＝或；combo 內葉＝而且）。點 combo → 右欄點/拖 observation 加葉。' })]));
+  if (!def.cards.length) box.appendChild(el('div', { class: 'hint', text: '左欄＋新增敘述分組後，這裡會出現對應卡片。' }));
+  def.cards.forEach((card, ci) => box.appendChild(renderCard(def, card, ci)));
+}
+
+function syncLeafHeader(card) {
+  const c = document.querySelector('#col-cards .card[data-cid="' + card.id + '"]');
+  if (!c) return;
+  const tag = c.querySelector('.card-tag'); if (tag) tag.textContent = card.label || '（未命名敘述分組）';
+  const badge = c.querySelector('.role-badge'); if (badge) { badge.textContent = card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標'); badge.className = 'role-badge' + (card.role ? '' : ' none'); }
 }
 
 function poleRadios(def, onchange) {
@@ -253,58 +268,40 @@ function poleRadios(def, onchange) {
   return wrap;
 }
 
-function renderCard(def, g, card, ci) {
-  const wrap = el('div', { class: 'card' });
-  const roleSel = el('select', { class: 'role-sel', onchange: (e) => { card.role = e.target.value || null; saveDraft(); renderParts(); } });
-  [['', '未標'], ['main', '主'], ['aux', '輔']].forEach(([v, t]) => { const o = el('option', { value: v, text: t }); if ((card.role || '') === v) o.selected = true; roleSel.appendChild(o); });
-  // 移到別的敘述分組
-  const grpSel = el('select', { class: 'role-sel', onchange: (e) => moveCardToGroup(def, g, card, e.target.value) });
-  def.groups.forEach(gg => { const o = el('option', { value: gg.id, text: gg.label || '（未填敘述）' }); if (gg.id === g.id) o.selected = true; grpSel.appendChild(o); });
+function renderCard(def, card, ci) {
+  const wrap = el('div', { class: 'card', 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
-    el('span', { class: 'card-tag', text: '卡片 ' + (ci + 1) }),
-    el('label', { class: 'inline', text: '標記：' }), roleSel,
-    el('label', { class: 'inline', text: '敘述分組：' }), grpSel,
+    el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
+    el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
     el('span', { class: 'spacer' }),
-    el('button', { class: 'btn xs', text: '▲', onclick: () => { if (ci > 0) { [g.cards[ci - 1], g.cards[ci]] = [g.cards[ci], g.cards[ci - 1]]; renderEditor(); saveDraft(); } } }),
-    el('button', { class: 'btn xs', text: '▼', onclick: () => { if (ci < g.cards.length - 1) { [g.cards[ci + 1], g.cards[ci]] = [g.cards[ci], g.cards[ci + 1]]; renderEditor(); saveDraft(); } } }),
-    el('button', { class: 'btn xs danger', text: '✕', onclick: () => { g.cards.splice(ci, 1); renderEditor(); renderParts(); saveDraft(); } })
+    el('button', { class: 'btn xs', text: '▲', onclick: () => moveCard(def, ci, -1) }),
+    el('button', { class: 'btn xs', text: '▼', onclick: () => moveCard(def, ci, 1) })
   ]));
   card.combos.forEach((combo, cj) => {
     if (cj > 0) wrap.appendChild(el('div', { class: 'or-sep', text: '— 或 —' }));
     wrap.appendChild(renderCombo(card, combo, cj));
   });
-  wrap.appendChild(el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEditor(); saveDraft(); } }));
+  wrap.appendChild(el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderLeavesCol(); saveDraft(); } }));
   return wrap;
 }
 
-// ---- 敘述分組操作 ----
-function addGroup(def) {
-  const name = prompt('敘述分組敘述文字（老師的話，可留空之後再填）：', '');
-  if (name == null) return;
-  const ng = { id: uidG(), label: name, cards: [] };
-  def.groups.push(ng); state.curGroup = ng.id;
-  renderEditor(); renderParts(); saveDraft();
+// ---- 卡片（＝敘述分組）操作 ----
+function addCard(def) {
+  const c = { id: uidG(), label: '', note: '', role: null, combos: [[]] };
+  def.cards.push(c); focusCardId = c.id;
+  renderCardsListCol(); renderLeavesCol(); renderParts(); saveDraft();
 }
-function renameGroup(g) {
-  const name = prompt('改敘述分組文字：', g.label || '');
-  if (name == null) return; g.label = name; renderEditor(); saveDraft();
+function moveCard(def, ci, d) {
+  const j = ci + d; if (j < 0 || j >= def.cards.length) return;
+  [def.cards[ci], def.cards[j]] = [def.cards[j], def.cards[ci]];
+  renderCardsListCol(); renderLeavesCol(); saveDraft();
 }
-function deleteGroup(def, g) {
-  if (g.cards.length) return alert('此敘述分組還有卡片，請先把卡片搬走或刪除');
-  def.groups = def.groups.filter(x => x !== g);
-  if (state.curGroup === g.id) state.curGroup = null;
-  renderEditor(); renderParts(); saveDraft();
-}
-function moveGroup(def, gi, d) {
-  const j = gi + d; if (j < 0 || j >= def.groups.length) return;
-  [def.groups[gi], def.groups[j]] = [def.groups[j], def.groups[gi]]; renderEditor(); saveDraft();
-}
-function moveCardToGroup(def, fromG, card, toGid) {
-  if (toGid === fromG.id) return;
-  const target = def.groups.find(x => x.id === toGid); if (!target) return;
-  fromG.cards = fromG.cards.filter(c => c !== card);
-  target.cards.push(card);
-  renderEditor(); saveDraft();
+function deleteCard(def, ci) {
+  const c = def.cards[ci];
+  const hasContent = c.label || c.note || c.combos.some(cb => cb.length);
+  if (hasContent && !confirm('刪除敘述分組（卡片）「' + (c.label || '未命名') + '」？')) return;
+  def.cards.splice(ci, 1);
+  renderCardsListCol(); renderLeavesCol(); renderParts(); saveDraft();
 }
 
 function renderCombo(card, combo, cj) {
@@ -314,10 +311,15 @@ function renderCombo(card, combo, cj) {
     ondragover: (e) => { e.preventDefault(); drop.classList.add('dragover'); },
     ondragleave: () => drop.classList.remove('dragover'),
     ondrop: (e) => { e.preventDefault(); drop.classList.remove('dragover'); const id = e.dataTransfer.getData('text/obsid'); if (id) addLeaf(card, combo, id); },
-    onclick: () => { state.active = { part: state.curPart, cardId: card.id, comboIdx: cj }; renderEditor(); }
+    onclick: () => { state.active = { part: state.curPart, cardId: card.id, comboIdx: cj }; renderLeavesCol(); }
   });
-  drop.appendChild(el('span', { class: 'combo-tag', text: (isActive ? '◉ ' : '') + 'combo' + (cj + 1) + '（而且）' }));
-  if (!combo.length) drop.appendChild(el('span', { class: 'hint', text: '拖 / 點 observation 進來' }));
+  const head = el('div', { class: 'combo-head' }, [
+    el('span', { class: 'combo-tag', text: (isActive ? '◉ ' : '') + 'combo' + (cj + 1) + '（而且）' }),
+    el('span', { class: 'spacer' })
+  ]);
+  if (card.combos.length > 1) head.appendChild(el('button', { class: 'btn xs danger', text: '✕ 刪 combo', onclick: (e) => { e.stopPropagation(); card.combos.splice(cj, 1); if (state.active && state.active.cardId === card.id) state.active = null; renderLeavesCol(); saveDraft(); } }));
+  drop.appendChild(head);
+  if (!combo.length) drop.appendChild(el('span', { class: 'hint', text: '點此 combo（會標 ◉）再點右欄 observation，或拖進來' }));
   combo.forEach((leaf, li) => drop.appendChild(renderLeaf(card, combo, leaf, li)));
   return drop;
 }
@@ -327,13 +329,13 @@ function renderLeaf(card, combo, leaf, li) {
   const wrap = el('div', { class: 'leaf' });
   wrap.appendChild(el('div', { class: 'leaf-head' }, [
     el('span', { class: 'leaf-label', text: (o ? o.label : leaf.ref) + '  〔' + leaf.ref + '〕' }),
-    el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEditor(); saveDraft(); } })
+    el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderLeavesCol(); saveDraft(); } })
   ]));
   const opts = (o ? o.options : []);
   const optBox = el('div', { class: 'opts' });
   opts.forEach(v => {
     const on = leaf.match.indexOf(v) >= 0;
-    const chip = el('span', { class: 'opt' + (on ? ' on' : ''), text: v, onclick: (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderEditor(); saveDraft(); } });
+    const chip = el('span', { class: 'opt' + (on ? ' on' : ''), text: v, onclick: (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderLeavesCol(); saveDraft(); } });
     optBox.appendChild(chip);
   });
   wrap.appendChild(optBox);
@@ -344,7 +346,7 @@ function renderLeaf(card, combo, leaf, li) {
 function addLeaf(card, combo, obsId) {
   if (combo.some(l => l.ref === obsId)) return;
   combo.push({ ref: obsId, match: [] });
-  renderEditor(); saveDraft();
+  renderLeavesCol(); saveDraft();
 }
 
 function renderAggEditor(box, def, pm) {
@@ -404,7 +406,7 @@ function renderPalette() {
       const item = el('div', {
         class: 'pal-item', draggable: true,
         ondragstart: (e) => e.dataTransfer.setData('text/obsid', o.obsId),
-        onclick: () => { if (!state.active) return alert('先點一個 combo 當作加入目標（會標 ◉）'); const def = getPart(state.curDim, state.curPart, true); let card = null; (def.groups || []).forEach(g => { const c = g.cards.find(c => c.id === state.active.cardId); if (c) card = c; }); if (card) addLeaf(card, card.combos[state.active.comboIdx], o.obsId); }
+        onclick: () => { if (!state.active) return alert('先點一個 combo 當作加入目標（會標 ◉）'); const def = getPart(state.curDim, state.curPart, true); const card = (def.cards || []).find(c => c.id === state.active.cardId); if (card) addLeaf(card, card.combos[state.active.comboIdx], o.obsId); }
       }, [el('span', { class: 'pi-label', text: o.label }), el('span', { class: 'pi-id', text: o.part + '·' + o.obsId })]);
       listBox.appendChild(item);
     });
