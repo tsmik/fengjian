@@ -7,7 +7,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc }
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc, writeBatch }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { AGG_FIXED } from './engine.js';
 
@@ -451,6 +451,114 @@ function exportJSON() {
   $('export-modal').style.display = 'flex';
 }
 
+// ================= 套裝管理（ruleSets） =================
+function openRsManager() { $('rs-modal').style.display = 'flex'; loadRsList(); }
+function closeRsModal() { $('rs-modal').style.display = 'none'; }
+
+async function loadRsList() {
+  const box = $('rs-list'); box.innerHTML = '';
+  if (!fbOK || !user) { box.appendChild(el('div', { class: 'hint', text: '請先用 Google 登入(admin/teacher)才能管理 staging 套裝。目前可用上方「新套裝/匯出/存到 staging」管理本機草稿。' })); return; }
+  box.appendChild(el('div', { class: 'hint', text: '讀取中…' }));
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets'));
+    const sets = []; snap.forEach(d => sets.push({ id: d.id, ...d.data() }));
+    let active = null; try { const a = await getDoc(doc(db, 'config', 'active')); if (a.exists()) active = a.data(); } catch (e) {}
+    renderRsList(sets, active);
+  } catch (e) { box.innerHTML = ''; box.appendChild(el('div', { class: 'hint', text: '讀取失敗：' + (e.code || e.message) })); }
+}
+
+function renderRsList(sets, active) {
+  const box = $('rs-list'); box.innerHTML = '';
+  const activeId = active && active.activeRuleSetId;
+  const prevId = active && active.previousActiveRuleSetId;
+  box.appendChild(el('div', { class: 'hint', text: '上線中：' + (activeId || '（無）') + (prevId ? '　上一版：' + prevId : '') }));
+  if (!sets.length) { box.appendChild(el('div', { class: 'hint', text: '尚無套裝。按「＋新套裝」建立，編完按「存到 staging」。' })); return; }
+  sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  sets.forEach(s => {
+    const isActive = s.id === activeId, editing = s.id === state.ruleSet.id;
+    box.appendChild(el('div', { class: 'rs-row' }, [
+      el('div', { class: 'rs-main' }, [
+        el('div', { class: 'rs-name2' }, [s.name || '(未命名)', isActive ? el('span', { class: 'rs-badge act', text: '上線中' }) : null, editing ? el('span', { class: 'rs-badge edit', text: '編輯中' }) : null]),
+        el('div', { class: 'rs-sub', text: s.id + (s.note ? '　' + s.note : '') + '　' + (s.createdAt ? s.createdAt.slice(0, 10) : '') })
+      ]),
+      el('div', { class: 'rs-acts' }, [
+        el('button', { class: 'btn xs', text: '編輯', onclick: () => loadRsIntoEditor(s.id) }),
+        el('button', { class: 'btn xs', text: '複製', onclick: () => copyRs(s.id) }),
+        el('button', { class: 'btn xs', text: '改名', onclick: () => renameRs(s.id, s) }),
+        el('button', { class: 'btn xs primary', text: isActive ? '已上線' : '設上線', onclick: () => { if (!isActive) setActiveRs(s.id); } })
+      ])
+    ]));
+  });
+}
+
+// 從 Firestore 形狀還原回編輯器 state（poleFlip/tgt 由 targetPoleName 反推）
+function applyRuleSet(meta, dimDocs) {
+  state.ruleSet = { id: meta.id, name: meta.name || '', note: meta.note || '', basedOn: meta.basedOn || null, status: meta.status || 'draft', createdAt: meta.createdAt || new Date().toISOString() };
+  state.dims = {};
+  dimDocs.forEach(dd => {
+    const di = +dd.dimIndex; const m = META.dims[di];
+    const tgt = (m && dd.targetPoleName && dd.targetPoleName === m.b) ? 'b' : 'a';
+    state.dims[di] = { parts: dd.parts || {}, poleFlip: !!dd.poleFlip, tgt };
+  });
+  state.curPart = null; state.curGroup = null; state.active = null;
+  migrateAllLeaves(); renderAll();
+}
+
+async function loadRsIntoEditor(id) {
+  try {
+    const metaSnap = await getDoc(doc(db, 'ruleSets', id));
+    const dimsSnap = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+    const dimDocs = []; dimsSnap.forEach(d => dimDocs.push(d.data()));
+    applyRuleSet({ id, ...(metaSnap.exists() ? metaSnap.data() : {}) }, dimDocs);
+    closeRsModal();
+  } catch (e) { alert('載入失敗：' + (e.code || e.message)); }
+}
+
+async function copyRs(id) {
+  if (!isStaff()) return alert('需 admin/teacher 才能複製');
+  try {
+    const metaSnap = await getDoc(doc(db, 'ruleSets', id));
+    const dimsSnap = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+    const meta = metaSnap.exists() ? metaSnap.data() : {};
+    const newId = 'set-' + nowStamp();
+    await setDoc(doc(db, 'ruleSets', newId), { name: (meta.name || '套裝') + ' 複本', note: meta.note || '', basedOn: id, status: 'draft', createdAt: new Date().toISOString() });
+    const batch = writeBatch(db); dimsSnap.forEach(d => batch.set(doc(db, 'ruleSets', newId, 'dims', d.id), d.data())); await batch.commit();
+    loadRsList();
+  } catch (e) { alert('複製失敗：' + (e.code || e.message)); }
+}
+
+async function renameRs(id, s) {
+  if (!isStaff()) return alert('需 admin/teacher');
+  const name = prompt('套裝名稱：', s.name || ''); if (name == null) return;
+  const note = prompt('註解：', s.note || ''); if (note == null) return;
+  try {
+    await setDoc(doc(db, 'ruleSets', id), { name, note }, { merge: true });
+    if (state.ruleSet.id === id) { state.ruleSet.name = name; state.ruleSet.note = note; renderHeader(); }
+    loadRsList();
+  } catch (e) { alert('改名失敗：' + (e.code || e.message)); }
+}
+
+async function setActiveRs(id) {
+  if (!isStaff()) return alert('需 admin/teacher');
+  try {
+    let prev = null; const a = await getDoc(doc(db, 'config', 'active')); if (a.exists()) prev = a.data().activeRuleSetId || null;
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '中辣', updatedAt: new Date().toISOString() });
+    loadRsList();
+  } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
+}
+
+async function rollbackActive() {
+  if (!isStaff()) return alert('需 admin/teacher');
+  try {
+    const a = await getDoc(doc(db, 'config', 'active'));
+    if (!a.exists() || !a.data().previousActiveRuleSetId) return alert('沒有上一版可回滾');
+    const cur = a.data().activeRuleSetId, prev = a.data().previousActiveRuleSetId;
+    if (!confirm('把上線版從「' + cur + '」回滾到「' + prev + '」？')) return;
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: prev, previousActiveRuleSetId: cur, defaultSpice: a.data().defaultSpice || '中辣', updatedAt: new Date().toISOString() });
+    loadRsList();
+  } catch (e) { alert('回滾失敗：' + (e.code || e.message)); }
+}
+
 // ---------- boot ----------
 function boot() {
   loadDraft();
@@ -461,6 +569,11 @@ function boot() {
   $('btn-save').addEventListener('click', saveToStaging);
   $('rs-name').addEventListener('change', (e) => { state.ruleSet.name = e.target.value; saveDraft(); });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
+  $('btn-rs').addEventListener('click', openRsManager);
+  $('rs-close').addEventListener('click', closeRsModal);
+  $('rs-new').addEventListener('click', () => { newRuleSet(); closeRsModal(); });
+  $('rs-refresh').addEventListener('click', loadRsList);
+  $('rs-rollback').addEventListener('click', rollbackActive);
   $('export-dl').addEventListener('click', () => {
     const blob = new Blob([$('export-ta').value], { type: 'application/json' });
     const a = el('a', { href: URL.createObjectURL(blob), download: state.ruleSet.id + '.json' }); document.body.appendChild(a); a.click(); a.remove();

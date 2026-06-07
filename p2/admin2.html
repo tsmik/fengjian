@@ -78,6 +78,15 @@
   .sn-cell { display:flex; align-items:center; gap:3px; font-size:12px; }
   .sn-lv { color:var(--sub); }
   .sn-num { width:42px; border:1px solid var(--bd2); border-radius:6px; padding:3px 5px; font-family:inherit; }
+  /* 套裝管理 */
+  .rs-row { display:flex; align-items:center; gap:8px; padding:8px 6px; border-bottom:1px solid var(--bd); }
+  .rs-main { flex:1; min-width:0; }
+  .rs-name2 { font-size:14px; display:flex; align-items:center; gap:6px; }
+  .rs-sub { font-size:11px; color:var(--sub); }
+  .rs-acts { display:flex; gap:4px; }
+  .rs-badge { font-size:10px; border-radius:8px; padding:1px 7px; color:#fff; }
+  .rs-badge.act { background:var(--static); }
+  .rs-badge.edit { background:var(--accent); }
   /* 可拖欄寬分隔線 */
   .splitter { position:fixed; top:52px; bottom:0; width:8px; margin-left:-4px; cursor:col-resize; z-index:8; }
   .splitter:hover, .splitter.drag { background:rgba(122,158,126,.3); }
@@ -143,6 +152,7 @@
   <h1>admin2 條件編輯器</h1>
   <span class="hint" style="padding:0">套裝：</span>
   <input class="rs" id="rs-name" value="測試套裝">
+  <button class="btn sm" id="btn-rs">套裝管理</button>
   <button class="btn sm" id="btn-new">新套裝</button>
   <button class="btn sm" id="btn-export">匯出 JSON</button>
   <button class="btn sm primary" id="btn-save">存到 staging</button>
@@ -199,6 +209,19 @@
       <button class="btn" id="export-dl">下載 .json</button>
       <button class="btn" id="export-close">關閉</button>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="rs-modal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-weight:600;flex:1">套裝管理（rbf2app-staging · ruleSets）</div>
+      <button class="btn sm" id="rs-new">＋ 新套裝</button>
+      <button class="btn sm" id="rs-rollback" title="把上線版回滾到上一版">⟲ 一鍵回滾</button>
+      <button class="btn sm" id="rs-refresh">重新整理</button>
+    </div>
+    <div id="rs-list" style="overflow:auto;max-height:56vh"></div>
+    <div class="modal-foot"><button class="btn" id="rs-close">關閉</button></div>
   </div>
 </div>
 
