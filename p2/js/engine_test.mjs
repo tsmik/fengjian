@@ -49,7 +49,7 @@ eq('右眉 一定過 (3/3)', scoreLeafPart(眉, obs, isPaired, 1.0).Rpass, true)
 // ---- 聚合：中停只看 眉.L / 眉.R（示意）----
 console.log('--- 聚合（中停只放 眉.L、眉.R 示意；ratio=0.5 → 2 側都算）---');
 const pr = { '眉': scoreLeafPart(眉, obs, isPaired, 0.5) };
-const agg = scoreAggregate({ kind: 'aggregate', children: [{ part: '眉', side: 'L' }, { part: '眉', side: 'R' }] }, pr, 0.5);
+const agg = scoreAggregate({ threshold: 2, children: [{ part: '眉', side: 'L' }, { part: '眉', side: 'R' }] }, pr);
 eq('中停(眉L+眉R) 過關側數', [agg.passed, agg.total], [2, 2]);   // L過(67%≥50) R過(100%)
 
 // ---- 混合 combo 邊角：一張卡 combo = 眉長過目(左右題) 而且 雙眉一致(非左右題) ----

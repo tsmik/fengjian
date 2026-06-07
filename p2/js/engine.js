@@ -72,18 +72,25 @@ export function scoreLeafPart(leafDef, obs, isPaired, ratio) {
   return { result: 'leaf', L, R, Lpass, Rpass, standalonePass, combined: { main: mainC, mainMax: mainMaxC, aux: auxC, auxMax: auxMaxC } };
 }
 
-// 聚合部位：children=[{part, side?}]。過關子側數 ÷ 子側總數 ≥ ratio。
-export function scoreAggregate(aggDef, partResults, ratio) {
+// 聚合部位＝固定骨架（頭/中停/下停，13 維皆同；門檻固定、不受辣度）。
+// 它是「一種引用其他部位逐側過關結果的部位」：數過關子側 ≥ 固定門檻即成立。
+// 辣度只作用在「被引用的那些普通部位」內部（其輔門檻），聚合本身不受辣度。
+export const AGG_FIXED = {
+  '頭': { threshold: 3, children: [{ part: '頂骨', side: 'L' }, { part: '頂骨', side: 'R' }, { part: '枕骨' }, { part: '華陽骨', side: 'L' }, { part: '華陽骨', side: 'R' }] },
+  '中停': { threshold: 4, children: [{ part: '眉', side: 'L' }, { part: '眉', side: 'R' }, { part: '眼', side: 'L' }, { part: '眼', side: 'R' }, { part: '鼻' }, { part: '顴', side: 'L' }, { part: '顴', side: 'R' }] },
+  '下停': { threshold: 3, children: [{ part: '口' }, { part: '人中' }, { part: '地閣' }, { part: '頤', side: 'L' }, { part: '頤', side: 'R' }] }
+};
+export function scoreAggregate(aggDef, partResults) {
   let total = 0, passed = 0;
   for (const ch of (aggDef.children || [])) {
     const pr = partResults[ch.part];
-    if (!pr || pr.result === null || pr.result === undefined) return { result: null }; // 子部位未算/未填 → 聚合 null（同舊引擎）
+    if (!pr || pr.result === null || pr.result === undefined) return { result: null }; // 子部位未算/未填 → 聚合 null
     total++;
     const p = ch.side ? (ch.side === 'L' ? pr.Lpass : pr.Rpass) : pr.standalonePass;
     if (p) passed++;
   }
-  const pass = total > 0 && (passed / total >= ratio);
-  return { result: 'agg', pass, passed, total };
+  const pass = passed >= (aggDef.threshold || 0);
+  return { result: 'agg', pass, passed, total, threshold: aggDef.threshold };
 }
 
 const SCORE_PARTS = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '中停', '下停'];
@@ -91,11 +98,13 @@ const PART_IDX = { '頭': 0, '上停': 1, '中停': 2, '下停': 3, '耳': 4, '�
 
 export function evaluateDimension(dimDef, obs, isPaired, ratio) {
   const partResults = {};
-  // 1) 葉部位
+  // 1) 所有葉部位（含 頂骨/枕骨/華陽骨/顴/人中/地閣/頤 等只餵聚合的子部位）
   Object.keys(dimDef.parts).forEach(pn => { const pd = dimDef.parts[pn]; if (pd.kind !== 'aggregate') partResults[pn] = scoreLeafPart(pd, obs, isPaired, ratio); });
-  // 2) 聚合部位
-  Object.keys(dimDef.parts).forEach(pn => { const pd = dimDef.parts[pn]; if (pd.kind === 'aggregate') partResults[pn] = scoreAggregate(pd, partResults, ratio); });
-  // 3) 計分（9 個計分部位）
+  // 2) 聚合部位＝固定骨架（不從 dimDef 讀，門檻固定、不受辣度）
+  Object.keys(AGG_FIXED).forEach(pn => { partResults[pn] = scoreAggregate(AGG_FIXED[pn], partResults); });
+  // 3) 計分（9 個計分部位）。目標極＝維度可設（dimDef.targetPole）
+  const target = dimDef.targetPole || dimDef.positiveType;
+  const other = (target === dimDef.positiveType) ? dimDef.negativeType : dimDef.positiveType;
   const dataVec = [null, null, null, null, null, null, null, null, null];
   let pos = 0, neg = 0;
   SCORE_PARTS.forEach(sp => {
@@ -104,7 +113,7 @@ export function evaluateDimension(dimDef, obs, isPaired, ratio) {
     const pass = pr.result === 'agg' ? pr.pass : pr.standalonePass;
     if (pass) { pos++; dataVec[idx] = 'A'; } else { neg++; dataVec[idx] = 'B'; }
   });
-  const attribute = pos > neg ? dimDef.positiveType : dimDef.negativeType;
+  const attribute = pos > neg ? target : other;
   const coefficient = (pos + neg > 0 && Math.max(pos, neg) > 0) ? Math.min(pos, neg) / Math.max(pos, neg) : 0;
   return { parts: partResults, dataVec, positiveCount: pos, negativeCount: neg, attribute, coefficient };
 }
