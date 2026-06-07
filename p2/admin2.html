@@ -152,8 +152,6 @@
   <h1>admin2 條件編輯器</h1>
   <span class="hint" style="padding:0">套裝：</span>
   <input class="rs" id="rs-name" value="測試套裝">
-  <button class="btn sm" id="btn-rs">套裝管理</button>
-  <button class="btn sm" id="btn-new">新套裝</button>
   <button class="btn sm" id="btn-export">匯出 JSON</button>
   <button class="btn sm primary" id="btn-save">存到 staging</button>
   <span class="grow"></span>
@@ -212,18 +210,6 @@
   </div>
 </div>
 
-<div class="modal" id="rs-modal">
-  <div class="modal-box">
-    <div style="display:flex;align-items:center;gap:8px">
-      <div style="font-weight:600;flex:1">套裝管理（rbf2app-staging · ruleSets）</div>
-      <button class="btn sm" id="rs-new">＋ 新套裝</button>
-      <button class="btn sm" id="rs-rollback" title="把上線版回滾到上一版">⟲ 一鍵回滾</button>
-      <button class="btn sm" id="rs-refresh">重新整理</button>
-    </div>
-    <div id="rs-list" style="overflow:auto;max-height:56vh"></div>
-    <div class="modal-foot"><button class="btn" id="rs-close">關閉</button></div>
-  </div>
-</div>
 
 <script src="js/dims_meta.js"></script>
 <script src="js/observations_data.js"></script>
