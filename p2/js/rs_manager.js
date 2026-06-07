@@ -57,6 +57,28 @@ function renderList(sets, active) {
   sets.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
 }
 
+// 點文字才出現編輯框、移開(blur)就收回成文字
+function inlineField(get, save, opts) {
+  const wrap = el('span', { class: 'inline-field' + (opts.multiline ? ' ml' : '') });
+  function showText() {
+    wrap.innerHTML = '';
+    const v = get();
+    const t = el(opts.multiline ? 'div' : 'span', { class: 'if-text ' + (opts.cls || '') + (v ? '' : ' empty'), text: v || opts.placeholder });
+    t.addEventListener('click', showEdit);
+    wrap.appendChild(t);
+  }
+  function showEdit() {
+    wrap.innerHTML = '';
+    const inp = opts.multiline ? el('textarea', { class: 'if-input ' + (opts.cls || '') }) : el('input', { class: 'if-input ' + (opts.cls || '') });
+    inp.value = get();
+    inp.addEventListener('blur', () => { save(inp.value); showText(); });
+    if (!opts.multiline) inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+    wrap.appendChild(inp); inp.focus();
+  }
+  showText();
+  return wrap;
+}
+
 function renderCard(s, isActive, isEditing) {
   const card = el('div', { class: 'rs-card' });
   let saveTimer = null;
@@ -69,23 +91,16 @@ function renderCard(s, isActive, isEditing) {
       catch (e) { savedTag.textContent = '存失敗：' + (e.code || e.message); }
     }, 600);
   };
-  // 名稱 + 時期 + 標記
-  const name = el('input', { class: 'f-name', value: s.name || '' });
-  name.addEventListener('input', () => { s.name = name.value; pushMeta({ name: name.value }); });
+  const nameF = inlineField(() => s.name, v => { s.name = v; pushMeta({ name: v }); }, { placeholder: '（未命名，點此改名）', cls: 'f-name' });
   const period = el('input', { class: 'f-period', type: 'month', value: s.period || '' });
   period.addEventListener('change', () => { s.period = period.value; pushMeta({ period: period.value }); });
-  // 說明（拉開的文字框，比照筆記）
-  const note = el('textarea', { class: 'f-note', value: s.note || '' });
-  const noteBtn = el('button', { class: 'btn xs note-toggle' + (s.note ? ' has' : ''), text: '✎ 說明', title: '點開編輯說明' });
-  noteBtn.addEventListener('click', () => { const show = note.style.display === 'none' || !note.style.display; note.style.display = show ? 'block' : 'none'; if (show) note.focus(); });
-  note.addEventListener('input', () => { s.note = note.value; noteBtn.classList.toggle('has', !!note.value); pushMeta({ note: note.value }); });
 
-  const top = el('div', { class: 'rs-top' }, [name, el('span', { text: '時期' }), period, noteBtn, savedTag]);
+  const top = el('div', { class: 'rs-top' }, [nameF, el('span', { class: 'lbl', text: '時期' }), period, savedTag]);
   if (isActive) top.appendChild(el('span', { class: 'badge act', text: '上線中' }));
   if (isEditing) top.appendChild(el('span', { class: 'badge edit', text: '編輯中' }));
   card.appendChild(top);
   card.appendChild(el('div', { class: 'rs-id', text: s.id + (s.basedOn ? '（複製自 ' + s.basedOn + '）' : '') + (s.createdAt ? '　建立 ' + s.createdAt.slice(0, 10) : '') }));
-  card.appendChild(note);
+  card.appendChild(el('div', { class: 'note-line' }, [el('span', { class: 'lbl', text: '說明' }), inlineField(() => s.note, v => { s.note = v; pushMeta({ note: v }); }, { multiline: true, placeholder: '（點此加說明…）', cls: 'f-note2' })]));
   card.appendChild(el('div', { class: 'rs-acts' }, [
     el('button', { class: 'btn xs primary', text: '編輯內容', onclick: () => editContent(s.id) }),
     el('button', { class: 'btn xs', text: '複製', onclick: () => copySet(s.id) }),

@@ -134,6 +134,7 @@ function initFirebase() {
       user = u; role = null;
       if (u) { try { const s = await getDoc(doc(db, 'users', u.uid)); if (s.exists()) role = s.data().role || null; } catch (e) {} }
       renderHeader();
+      renderRsSelect();
       if (u) checkEditSignal();   // 登入後若「套裝」分頁指定了要編的套裝，就載入
     });
   } catch (e) { fbOK = false; renderHeader(); }
@@ -153,6 +154,7 @@ async function saveToStaging() {
       await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'dims', String(di)), data.dims[di]);
     }
     alert('已存到 rbf2app-staging：ruleSets/' + state.ruleSet.id + '（' + Object.keys(data.dims).length + ' 維有內容）');
+    renderRsSelect();
   } catch (e) { alert('存檔失敗：' + (e.code || e.message)); }
 }
 
@@ -169,7 +171,6 @@ function renderHeader() {
   h.textContent = txt;
   $('btn-login').style.display = (fbOK && !user) ? '' : 'none';
   $('btn-logout').style.display = (fbOK && user) ? '' : 'none';
-  $('rs-name').value = state.ruleSet.name;
 }
 
 // 每維度的極性設定：poleFlip（動靜對應）＋ tgt（符合為哪一極 a/b）
@@ -463,7 +464,7 @@ function applyRuleSet(meta, dimDocs) {
     state.dims[di] = { parts: dd.parts || {}, poleFlip: !!dd.poleFlip, tgt };
   });
   state.curPart = null; state.curGroup = null; state.active = null;
-  migrateAllLeaves(); renderAll();
+  migrateAllLeaves(); renderAll(); renderRsSelect();
 }
 
 async function loadRsIntoEditor(id) {
@@ -482,6 +483,23 @@ function checkEditSignal() {
   if (sig && sig.id && user && sig.id !== state.ruleSet.id) loadRsIntoEditor(sig.id);
 }
 
+// 上方「套裝」下拉：選哪一份套裝來編（套裝在「套裝」分頁建立/改名）
+async function renderRsSelect() {
+  const sel = $('rs-select'); if (!sel) return;
+  const cur = state.ruleSet.id, curName = state.ruleSet.name || '(未命名)';
+  if (!fbOK || !user) { sel.innerHTML = ''; const o = el('option', { value: '', text: curName + '（本機草稿）' }); o.selected = true; sel.appendChild(o); return; }
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets'));
+    const sets = []; snap.forEach(d => sets.push({ id: d.id, ...d.data() }));
+    sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    sel.innerHTML = '';
+    if (!sets.length) { sel.appendChild(el('option', { value: '', text: '（尚無套裝→到「套裝」分頁新增）' })); return; }
+    let found = false;
+    sets.forEach(s => { const o = el('option', { value: s.id, text: s.name || s.id }); if (s.id === cur) { o.selected = true; found = true; } sel.appendChild(o); });
+    if (!found) { const o = el('option', { value: cur, text: curName + '（未存）' }); sel.insertBefore(o, sel.firstChild); o.selected = true; }
+  } catch (e) { sel.innerHTML = ''; sel.appendChild(el('option', { value: '', text: '讀取失敗' })); }
+}
+
 // ---------- boot ----------
 function boot() {
   loadDraft();
@@ -489,7 +507,7 @@ function boot() {
   $('btn-logout').addEventListener('click', logout);
   $('btn-export').addEventListener('click', exportJSON);
   $('btn-save').addEventListener('click', saveToStaging);
-  $('rs-name').addEventListener('change', (e) => { state.ruleSet.name = e.target.value; saveDraft(); });
+  $('rs-select').addEventListener('change', (e) => { if (e.target.value && e.target.value !== state.ruleSet.id) loadRsIntoEditor(e.target.value); });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
   $('export-dl').addEventListener('click', () => {
@@ -498,5 +516,6 @@ function boot() {
   });
   initFirebase();
   renderAll();
+  renderRsSelect();
 }
 boot();
