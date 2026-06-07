@@ -24,14 +24,16 @@ function leafMatch(leaf, obs, side, isPaired) {
   if (ans === '' || ans == null) return false;
   return Array.isArray(leaf.match) ? leaf.match.indexOf(ans) >= 0 : ans === leaf.match;
 }
+// combo 在記憶體是陣列 [leaf,...]；存進 Firestore 包成 {leaves:[...]}（Firestore 不接受巢狀陣列）。兩種都吃。
+function comboLeaves(combo) { return Array.isArray(combo) ? combo : (combo && Array.isArray(combo.leaves)) ? combo.leaves : []; }
 // 一張卡片在某側是否得分：任一 combo 成立（combo＝其葉在該側全中 AND）
 function cardFiresSide(card, obs, side, isPaired) {
-  return (card.combos || []).some(combo => combo.length > 0 && combo.every(leaf => leafMatch(leaf, obs, side, isPaired)));
+  return (card.combos || []).some(combo => { const lv = comboLeaves(combo); return lv.length > 0 && lv.every(leaf => leafMatch(leaf, obs, side, isPaired)); });
 }
 
 function refsOfLeaf(leafDef) {
   const s = new Set();
-  (leafDef.cards || []).forEach(c => (c.combos || []).forEach(cb => cb.forEach(l => s.add(l.ref))));
+  (leafDef.cards || []).forEach(c => (c.combos || []).forEach(cb => comboLeaves(cb).forEach(l => s.add(l.ref))));
   return [...s];
 }
 // 該部位引用的觀察題是否都已填（左右題要左右都填）；否則部位回 null（不計分）

@@ -126,7 +126,9 @@ function serialize() {
       const p = dp[pn];
       if (p.kind === 'leaf') { ensureCards(p); delete p.targetPole; delete p.lrMode; }     // universal 化：目標極跟維度、左右由觀察題
       if (p.kind === 'aggregate') { delete p.threshold; delete p.targetPole; }              // 門檻 universal（辣度連動）
-      if (partHasContent(di, pn)) parts[pn] = p;
+      if (partHasContent(di, pn)) parts[pn] = (p.kind === 'leaf')
+        ? { ...p, cards: (p.cards || []).map(c => ({ ...c, combos: (c.combos || []).map(cb => ({ leaves: cb })) })) }   // combo 包成 {leaves:[]}：Firestore 不接受巢狀陣列
+        : p;
     });
     if (Object.keys(parts).length) {
       out.dims[di] = { dimIndex: +di, dimName: META.dims[di].name, positiveType: META.dims[di].positiveType, negativeType: META.dims[di].negativeType, targetPole: dimTargetPole(+di), targetPoleName: dimTargetName(+di), poleFlip: dimPoleFlip(+di), parts };
@@ -164,7 +166,7 @@ async function saveToStaging() {
     // 只 merge 內容相關的 meta（名稱/時期/說明 由「套裝」分頁管理，不覆蓋）＋ 完整度摘要 給套裝列表用
     await setDoc(doc(db, 'ruleSets', state.ruleSet.id), { name: state.ruleSet.name, status: state.ruleSet.status || 'draft', savedAt: new Date().toISOString(), dimsAuthored, partsAuthored }, { merge: true });
     for (const di of Object.keys(data.dims)) {
-      await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'dims', String(di)), data.dims[di]);
+      await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'dims', String(di)), JSON.parse(JSON.stringify(data.dims[di])));  // 去掉 undefined
     }
     lastSavedJson = snap; lastSavedAt = new Date().toTimeString().slice(0, 5);
     renderSaveStatus(); renderRsSelect();
@@ -474,7 +476,9 @@ function applyRuleSet(meta, dimDocs) {
   dimDocs.forEach(dd => {
     const di = +dd.dimIndex; const m = META.dims[di];
     const tgt = (m && dd.targetPoleName && dd.targetPoleName === m.b) ? 'b' : 'a';
-    state.dims[di] = { parts: dd.parts || {}, poleFlip: !!dd.poleFlip, tgt };
+    const parts = dd.parts || {};   // 把 {leaves:[]} 還原回記憶體用的陣列 combo
+    Object.keys(parts).forEach(pn => { const pp = parts[pn]; if (pp && Array.isArray(pp.cards)) pp.cards.forEach(c => { if (Array.isArray(c.combos)) c.combos = c.combos.map(cb => Array.isArray(cb) ? cb : (cb && cb.leaves) ? cb.leaves : []); }); });
+    state.dims[di] = { parts, poleFlip: !!dd.poleFlip, tgt };
   });
   state.curPart = null; state.curGroup = null; state.active = null;
   migrateAllLeaves(); renderAll();
@@ -514,6 +518,21 @@ async function renderRsSelect() {
   } catch (e) { sel.innerHTML = ''; sel.appendChild(el('option', { value: '', text: '讀取失敗' })); }
 }
 
+// 在編輯器分頁直接把目前套裝設為上線（有確認＋未存/空套裝護欄）
+async function setActiveFromEditor() {
+  if (!fbOK || !user) return alert('請先用 Google 登入');
+  if (!isStaff()) return alert('需 admin/teacher 才能設為上線');
+  if (isDirty()) return alert('目前有未儲存的變更，請先按「儲存」再設為上線。');
+  const dn = Object.keys(serialize().dims).length;
+  if (dn === 0 && !confirm('此套裝尚無內容（0 維），設為上線後學員會讀到空規則。確定？')) return;
+  if (!confirm('把目前套裝《' + (state.ruleSet.name || state.ruleSet.id) + '》設為上線（＝學員看到的版本）？')) return;
+  try {
+    let prev = null; const a = await getDoc(doc(db, 'config', 'active')); if (a.exists()) prev = a.data().activeRuleSetId || null;
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: state.ruleSet.id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '中辣', updatedAt: new Date().toISOString() });
+    alert('已設為上線：' + (state.ruleSet.name || state.ruleSet.id));
+  } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
+}
+
 // ---------- boot ----------
 function boot() {
   loadDraft();
@@ -521,6 +540,7 @@ function boot() {
   $('btn-logout').addEventListener('click', logout);
   $('btn-export').addEventListener('click', exportJSON);
   $('btn-save').addEventListener('click', saveToStaging);
+  $('btn-setlive').addEventListener('click', setActiveFromEditor);
   $('rs-select').addEventListener('change', (e) => {
     const v = e.target.value;
     if (!v || v === state.ruleSet.id) return;

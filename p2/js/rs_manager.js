@@ -53,15 +53,19 @@ function renderList(sets, active) {
   const an = sets.find(x => x.id === activeId), pn = sets.find(x => x.id === prevId);
   $('active-line').textContent = '上線中：' + (an ? an.name || activeId : (activeId || '（無）')) + (prevId ? '　｜上一版：' + (pn ? pn.name || prevId : prevId) : '');
   if (!sets.length) { box.appendChild(el('div', { class: 'hint', text: '尚無套裝。按「＋新套裝」建立。' })); return; }
-  sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const edId = editingId();
+  sets.sort((a, b) => {                                    // 編輯中的排最上面，其餘日期降冪
+    const ae = a.id === edId ? 1 : 0, be = b.id === edId ? 1 : 0;
+    if (ae !== be) return be - ae;
+    return (b.createdAt || '').localeCompare(a.createdAt || '');
+  });
   const live = sets.filter(s => s.status !== 'archived'), archived = sets.filter(s => s.status === 'archived');
-  live.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
+  live.forEach((s, i) => box.appendChild(renderCard(s, s.id === activeId, s.id === edId, i + 1)));
   if (archived.length) {
     const t = el('div', { class: 'arch-toggle', text: (showArchived ? '▾ 隱藏封存' : '▸ 顯示封存') + '（' + archived.length + '）' });
     t.addEventListener('click', () => { showArchived = !showArchived; renderList(sets, active); });
     box.appendChild(t);
-    if (showArchived) archived.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
+    if (showArchived) archived.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId, null)));
   }
 }
 
@@ -87,7 +91,7 @@ function inlineField(get, save, opts) {
   return wrap;
 }
 
-function renderCard(s, isActive, isEditing) {
+function renderCard(s, isActive, isEditing, n) {
   const card = el('div', { class: 'rs-card' });
   let saveTimer = null;
   const savedTag = el('span', { class: 'saved', text: '' });
@@ -104,13 +108,16 @@ function renderCard(s, isActive, isEditing) {
   period.addEventListener('change', () => { s.period = period.value; pushMeta({ period: period.value }); });
 
   const isArch = s.status === 'archived';
-  const top = el('div', { class: 'rs-top' }, [nameF, el('span', { class: 'lbl', text: '時期' }), period, savedTag]);
+  const top = el('div', { class: 'rs-top' }, [
+    n ? el('span', { class: 'rs-num', text: '#' + n }) : null,
+    nameF, el('span', { class: 'lbl', text: '時期' }), period, savedTag
+  ]);
   top.appendChild(el('span', { class: 'badge ' + (isActive ? 'act' : isArch ? 'arch' : 'draft'), text: isActive ? '上線中' : isArch ? '封存' : '草稿' }));
   if (isEditing) top.appendChild(el('span', { class: 'badge edit', text: '編輯中' }));
   card.appendChild(top);
-  const saved = s.savedAt ? s.savedAt.slice(0, 16).replace('T', ' ') : '尚未存內容';
-  card.appendChild(el('div', { class: 'rs-id', text: s.id + (s.basedOn ? '（複製自 ' + s.basedOn + '）' : '') + '　最後儲存 ' + saved + '　已編 ' + (s.dimsAuthored || 0) + ' 維 / ' + (s.partsAuthored || 0) + ' 部位' }));
   card.appendChild(el('div', { class: 'note-line' }, [el('span', { class: 'lbl', text: '說明' }), inlineField(() => s.note, v => { s.note = v; pushMeta({ note: v }); }, { multiline: true, placeholder: '（點此加說明…）', cls: 'f-note2' })]));
+  const saved = s.savedAt ? s.savedAt.slice(0, 16).replace('T', ' ') : '尚未存內容';
+  card.appendChild(el('div', { class: 'rs-meta', text: '最後儲存 ' + saved + '　·　已編 ' + (s.dimsAuthored || 0) + ' 維 / ' + (s.partsAuthored || 0) + ' 部位' }));
   let acts;
   if (isArch) {
     acts = [
