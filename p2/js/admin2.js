@@ -119,7 +119,7 @@ function serialize() {
       if (partHasContent(di, pn)) parts[pn] = p;
     });
     if (Object.keys(parts).length) {
-      out.dims[di] = { dimIndex: +di, dimName: META.dims[di].name, positiveType: META.dims[di].positiveType, negativeType: META.dims[di].negativeType, targetPole: dimTargetPole(+di), parts };
+      out.dims[di] = { dimIndex: +di, dimName: META.dims[di].name, positiveType: META.dims[di].positiveType, negativeType: META.dims[di].negativeType, targetPole: dimTargetPole(+di), targetPoleName: dimTargetName(+di), poleFlip: dimPoleFlip(+di), parts };
     }
   });
   return out;
@@ -171,28 +171,41 @@ function renderHeader() {
   $('rs-name').value = state.ruleSet.name;
 }
 
-function dimTargetPole(di) { return (state.dims[di] && state.dims[di].targetPole) || META.dims[di].positiveType; }
+// 每維度的極性設定：poleFlip（動靜對應）＋ tgt（符合為哪一極 a/b）
+function dimPoleFlip(di) { return !!(state.dims[di] && state.dims[di].poleFlip); }
+function dimTgt(di) { return (state.dims[di] && state.dims[di].tgt) || 'a'; }
+function poleDong(di, ab) { const d = META.dims[di], f = dimPoleFlip(di); return ab === 'a' ? (f ? d.bT : d.aT) : (f ? d.aT : d.bT); }
+function dimTargetName(di) { const d = META.dims[di]; return dimTgt(di) === 'a' ? d.a : d.b; }   // 目標極名（形/勢）
+function dimTargetPole(di) { return poleDong(di, dimTgt(di)); }                                    // 目標極動靜（給引擎）
 function renderDims() {
   const box = $('col-dims'); box.innerHTML = '';
   box.appendChild(el('div', { class: 'col-title', text: '維度' }));
   META.dims.forEach(d => {
     const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
-    row.appendChild(el('span', { class: 'dim-name', text: d.name }));
-    const cur = dimTargetPole(d.index);
-    const pole = el('span', { class: 'dim-pole', onclick: (e) => e.stopPropagation() }, [el('span', { class: 'dp-label', text: '符合為' })]);
-    [d.positiveType, d.negativeType].forEach(p => {
-      const r = el('input', { type: 'radio', name: 'dpole-' + d.index }); r.checked = cur === p;
-      r.addEventListener('change', () => { ensureDim(d.index).targetPole = p; saveDraft(); });
-      pole.appendChild(el('label', { class: 'dp-opt' }, [r, p]));
-    });
-    row.appendChild(pole);
+    row.appendChild(el('span', { class: 'dim-name', text: d.name + '　符合為' + dimTargetName(d.index) }));
     box.appendChild(row);
   });
 }
 
 function renderParts() {
   const box = $('col-parts'); box.innerHTML = '';
-  box.appendChild(el('div', { class: 'col-title', text: META.dims[state.curDim].name + '：部位' }));
+  const dm = META.dims[state.curDim];
+  box.appendChild(el('div', { class: 'col-title', text: dm.name + '：部位' }));
+  // 維度極性設定：動靜對應 ＋ 符合為
+  const ctrl = el('div', { class: 'pole-ctrl' });
+  [[false, dm.a + ' ' + dm.aT + '｜' + dm.b + ' ' + dm.bT], [true, dm.a + ' ' + dm.bT + '｜' + dm.b + ' ' + dm.aT]].forEach(([flip, label]) => {
+    const r = el('input', { type: 'radio', name: 'pflip-' + state.curDim }); r.checked = dimPoleFlip(state.curDim) === flip;
+    r.addEventListener('change', () => { ensureDim(state.curDim).poleFlip = flip; saveDraft(); renderDims(); });
+    ctrl.appendChild(el('label', { class: 'pole-opt' }, [r, ' ' + label]));
+  });
+  const tg = el('div', { class: 'pole-tgt' }, [el('span', { class: 'fl', text: '符合為' })]);
+  [['a', dm.a], ['b', dm.b]].forEach(([ab, name]) => {
+    const r = el('input', { type: 'radio', name: 'ptgt-' + state.curDim }); r.checked = dimTgt(state.curDim) === ab;
+    r.addEventListener('change', () => { ensureDim(state.curDim).tgt = ab; saveDraft(); renderDims(); });
+    tg.appendChild(el('label', { class: 'pole-opt' }, [r, ' ' + name]));
+  });
+  ctrl.appendChild(tg);
+  box.appendChild(ctrl);
   box.appendChild(el('div', { class: 'group-label', text: '葉部位' }));
   META.leafParts.forEach(lf => box.appendChild(partRow(lf.name, lf.paired ? '可左右' : '', false)));
   box.appendChild(el('div', { class: 'group-label', text: '聚合部位' }));

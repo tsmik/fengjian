@@ -37,6 +37,8 @@ const PART_TO_OBSPART = {
 const dims = DIMS.map((d, i) => ({
   index: i,
   name: d.dn,
+  a: d.a, b: d.b,           // 兩極名（形/勢…）
+  aT: d.aT, bT: d.bT,       // 各極的動靜（預設：a=aT、b=bT）
   positiveType: live[i].positiveType,
   negativeType: live[i].negativeType,
   category: d.cat,

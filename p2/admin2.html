@@ -19,7 +19,7 @@
   .btn.sm { padding:3px 8px; font-size:12px; }
   .btn.xs { padding:1px 6px; font-size:12px; }
   .btn.danger { color:#a33; }
-  .wrap { display:grid; grid-template-columns:128px 138px 188px minmax(0,1fr) 270px; gap:0; height:calc(100vh - 52px); }
+  .wrap { display:grid; grid-template-columns:168px 158px 188px minmax(0,1fr) 270px; gap:0; height:calc(100vh - 52px); }
   .col { border-right:1px solid var(--bd); overflow:auto; padding:8px; }
   .col-cards-wrap { display:flex; flex-direction:column; overflow:hidden; padding:0; background:#fff; }
   #col-cards { flex:1; overflow:auto; padding:10px; }
@@ -44,13 +44,15 @@
   .role-badge { font-size:10px; color:#fff; background:#C17A5A; border-radius:9px; padding:1px 7px; }
   .role-badge.none { background:#cdbfa6; }
   .combo-head { display:flex; align-items:center; gap:6px; }
-  /* col1 維度：一行，內含目標極 radio */
-  .dim-row { display:flex; align-items:center; justify-content:space-between; gap:4px; }
-  .dim-name { font-size:14px; }
-  .dim-pole { display:flex; align-items:center; gap:3px; font-size:11px; color:var(--sub); }
-  .dp-label { margin-right:1px; }
-  .dp-opt { display:inline-flex; align-items:center; gap:1px; cursor:pointer; }
-  .dp-opt input { margin:0; }
+  /* col1 維度：一行（名稱＋符合為X） */
+  .dim-row { display:flex; align-items:center; }
+  .dim-name { font-size:14px; white-space:nowrap; }
+  /* col2 維度極性設定 */
+  .pole-ctrl { border:1px solid var(--bd); border-radius:8px; padding:6px 8px; margin:4px 0 10px; background:#fbf8f2; display:flex; flex-direction:column; gap:3px; }
+  .pole-opt { display:inline-flex; align-items:center; gap:3px; font-size:12px; cursor:pointer; margin-right:8px; }
+  .pole-opt input { margin:0; }
+  .pole-tgt { display:flex; align-items:center; gap:4px; border-top:1px dashed var(--bd); margin-top:4px; padding-top:5px; }
+  .pole-tgt .fl { margin:0; }
   /* col2 部位 inline 小字 */
   .pr-sub { font-size:11px; color:var(--sub); }
   /* col3 標題副粗體（敘述分組＝卡片）＋ 卡片管理列 */
@@ -162,7 +164,7 @@
     var wrap = document.getElementById('wrap');
     var cw; try { cw = JSON.parse(localStorage.getItem('admin2_colw') || 'null'); } catch (e) {}
     if (!cw) cw = { w3: 188, w5: 270 };
-    function apply() { wrap.style.gridTemplateColumns = '128px 138px ' + cw.w3 + 'px minmax(0,1fr) ' + cw.w5 + 'px'; place(); }
+    function apply() { wrap.style.gridTemplateColumns = '168px 158px ' + cw.w3 + 'px minmax(0,1fr) ' + cw.w5 + 'px'; place(); }
     function place() {
       document.getElementById('split-a').style.left = document.getElementById('col-groups').getBoundingClientRect().right + 'px';
       document.getElementById('split-b').style.left = document.getElementById('col-cards-wrap').getBoundingClientRect().right + 'px';
