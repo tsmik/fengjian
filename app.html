@@ -419,7 +419,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-rep-ln-cell{background:#E8E4DF;border-radius:4px;padding:4px 9px;display:flex;flex-direction:row;align-items:baseline;gap:2px;min-width:0}
 .m-rep-ln-l{font-size:14px;color:#8a7f70;letter-spacing:1px}
 .m-rep-ln-l::after{content:'｜';color:#b3a994}
-.m-rep-ln-v{font-size:14px;color:#3a3228;font-weight:500;white-space:nowrap}
+.m-rep-ln-v{font-size:14px;color:#3a3228;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 手機提示：可點表格改動靜（桌機改用 hover 描邊，@media 隱藏此行）*/
 .m-rep-edit-hint{font-size:12px;color:#a8917a;letter-spacing:.5px;padding:0 4px 6px 16px}
 .m-rep-overview,.m-rep-figs{display:grid;grid-template-columns:1fr;gap:16px;padding:4px}
@@ -1451,7 +1451,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-manual-fullreport table{zoom:1}
   /* 桌機還原標題/流年左對齊（手機才縮排對齊分析圖）；流年八格桌機排成一列；hover 已有描邊→隱藏點格提示 */
   .m-rep-title{padding-left:0}
-  .m-rep-liunian{padding-left:0;margin-right:0}
+  .m-rep-liunian{flex-wrap:nowrap;gap:5px;justify-content:space-between;padding-left:0;margin-right:0}
   .m-rep-edit-hint{display:none}
 }
 
