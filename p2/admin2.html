@@ -44,6 +44,9 @@
   .role-badge { font-size:10px; color:#fff; background:#C17A5A; border-radius:9px; padding:1px 7px; }
   .role-badge.none { background:#cdbfa6; }
   .combo-head { display:flex; align-items:center; gap:6px; }
+  .save-status { font-size:12px; }
+  .save-status.dirty { color:var(--dynamic); }
+  .save-status.ok { color:var(--static); }
   /* col1 維度：一行（名稱＋符合為X） */
   .dim-row { display:flex; align-items:center; }
   .dim-name { font-size:14px; white-space:nowrap; }
@@ -153,7 +156,8 @@
   <span class="hint" style="padding:0">套裝：</span>
   <select class="rs" id="rs-select" title="選擇要編輯的套裝（在「套裝」分頁建立/改名）"></select>
   <button class="btn sm" id="btn-export">匯出 JSON</button>
-  <button class="btn sm primary" id="btn-save">存到 staging</button>
+  <button class="btn sm primary" id="btn-save">儲存</button>
+  <span class="save-status" id="save-status"></span>
   <span class="grow"></span>
   <span id="hdr-status"></span>
   <button class="btn sm" id="btn-login">Google 登入</button>

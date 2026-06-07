@@ -39,6 +39,7 @@ let state = {
   active: null                               // {part, cardId, comboIdx} 供「點 observation 加入」用
 };
 let auth = null, db = null, user = null, role = null, fbOK = false;
+let lastSavedJson = null, lastSavedAt = null;   // 已儲存到 staging 的內容快照 + 時間，用來算「未儲存」
 
 function nowStamp() { const d = new Date(); return d.toISOString().slice(0, 19).replace(/[-:T]/g, ''); }
 function uid() { return 'c' + Math.random().toString(36).slice(2, 8); }
@@ -97,7 +98,16 @@ function partHasContent(di, name) {
 }
 
 // ---------- persistence ----------
-function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} }
+function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} renderSaveStatus(); }
+function curJson() { try { return JSON.stringify(serialize()); } catch (e) { return ''; } }
+function isDirty() { return !!user && curJson() !== lastSavedJson; }
+function renderSaveStatus() {
+  const s = $('save-status'); if (!s) return;
+  if (!fbOK || !user) { s.textContent = '（未登入：只存本機草稿，按「儲存」前請先登入）'; s.className = 'save-status'; return; }
+  const dirty = curJson() !== lastSavedJson;
+  s.textContent = dirty ? '● 尚未儲存到套裝（編輯會自動留草稿；按「儲存」才寫進套裝＝學員看的版本）' : ('已儲存 ✓' + (lastSavedAt ? ' ' + lastSavedAt : ''));
+  s.className = 'save-status ' + (dirty ? 'dirty' : 'ok');
+}
 function migrateAllLeaves() {
   Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => { if (p.kind === 'leaf') ensureCards(p); }));
 }
@@ -146,15 +156,18 @@ function isStaff() { return !!user && (role === 'admin' || role === 'teacher'); 
 async function saveToStaging() {
   if (!fbOK || !user) return alert('請先用 Google 登入');
   if (!isStaff()) return alert('此帳號角色＝' + (role || '（無）') + '，需 admin/teacher 才能存到 staging。\n你的 UID：' + user.uid + '\n（請先把這個 UID 設成 admin/teacher）');
+  const snap = curJson();
   const data = serialize();
+  const dimsAuthored = Object.keys(data.dims).length;
+  let partsAuthored = 0; Object.values(data.dims).forEach(d => partsAuthored += Object.keys(d.parts || {}).length);
   try {
-    // 只 merge 內容相關的 meta；名稱/時期/說明 由「套裝」分頁管理，不覆蓋
-    await setDoc(doc(db, 'ruleSets', state.ruleSet.id), { name: state.ruleSet.name, status: state.ruleSet.status || 'draft', savedAt: new Date().toISOString() }, { merge: true });
+    // 只 merge 內容相關的 meta（名稱/時期/說明 由「套裝」分頁管理，不覆蓋）＋ 完整度摘要 給套裝列表用
+    await setDoc(doc(db, 'ruleSets', state.ruleSet.id), { name: state.ruleSet.name, status: state.ruleSet.status || 'draft', savedAt: new Date().toISOString(), dimsAuthored, partsAuthored }, { merge: true });
     for (const di of Object.keys(data.dims)) {
       await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'dims', String(di)), data.dims[di]);
     }
-    alert('已存到 rbf2app-staging：ruleSets/' + state.ruleSet.id + '（' + Object.keys(data.dims).length + ' 維有內容）');
-    renderRsSelect();
+    lastSavedJson = snap; lastSavedAt = new Date().toTimeString().slice(0, 5);
+    renderSaveStatus(); renderRsSelect();
   } catch (e) { alert('存檔失敗：' + (e.code || e.message)); }
 }
 
@@ -464,7 +477,8 @@ function applyRuleSet(meta, dimDocs) {
     state.dims[di] = { parts: dd.parts || {}, poleFlip: !!dd.poleFlip, tgt };
   });
   state.curPart = null; state.curGroup = null; state.active = null;
-  migrateAllLeaves(); renderAll(); renderRsSelect();
+  migrateAllLeaves(); renderAll();
+  lastSavedJson = curJson(); lastSavedAt = '（剛載入）'; renderSaveStatus(); renderRsSelect();
 }
 
 async function loadRsIntoEditor(id) {
@@ -507,7 +521,13 @@ function boot() {
   $('btn-logout').addEventListener('click', logout);
   $('btn-export').addEventListener('click', exportJSON);
   $('btn-save').addEventListener('click', saveToStaging);
-  $('rs-select').addEventListener('change', (e) => { if (e.target.value && e.target.value !== state.ruleSet.id) loadRsIntoEditor(e.target.value); });
+  $('rs-select').addEventListener('change', (e) => {
+    const v = e.target.value;
+    if (!v || v === state.ruleSet.id) return;
+    if (isDirty() && !confirm('目前套裝有未儲存變更，切換會丟掉這些變更（本機草稿仍保留）。確定切換？')) { renderRsSelect(); return; }
+    loadRsIntoEditor(v);
+  });
+  window.addEventListener('beforeunload', (e) => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
   $('export-dl').addEventListener('click', () => {

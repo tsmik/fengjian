@@ -3,7 +3,7 @@
 // 列出/新增/複製/設上線(config/active)/一鍵回滾/刪除；「編輯內容」→ 切到條件編輯器分頁載入該套裝。
 import { fbOK, onUser, login, logout, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from './fb.js';
 
-let user = null, role = null;
+let user = null, role = null, showArchived = false;
 const isStaff = () => !!user && (role === 'admin' || role === 'teacher');
 const EDIT_KEY = 'admin2_edit_set';
 
@@ -50,11 +50,19 @@ function renderList(sets, active) {
     el('div', { text: '解法：Firebase console → rbf2app-staging → Firestore → 建/開 users/' + user.uid + ' → 加欄位 role = admin（字串）→ 回來「重新整理」。' })
   ]));
   const activeId = active && active.activeRuleSetId, prevId = active && active.previousActiveRuleSetId;
-  $('active-line').textContent = '上線中：' + (activeId || '（無）') + (prevId ? '　｜上一版：' + prevId : '');
+  const an = sets.find(x => x.id === activeId), pn = sets.find(x => x.id === prevId);
+  $('active-line').textContent = '上線中：' + (an ? an.name || activeId : (activeId || '（無）')) + (prevId ? '　｜上一版：' + (pn ? pn.name || prevId : prevId) : '');
   if (!sets.length) { box.appendChild(el('div', { class: 'hint', text: '尚無套裝。按「＋新套裝」建立。' })); return; }
   sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const edId = editingId();
-  sets.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
+  const live = sets.filter(s => s.status !== 'archived'), archived = sets.filter(s => s.status === 'archived');
+  live.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
+  if (archived.length) {
+    const t = el('div', { class: 'arch-toggle', text: (showArchived ? '▾ 隱藏封存' : '▸ 顯示封存') + '（' + archived.length + '）' });
+    t.addEventListener('click', () => { showArchived = !showArchived; renderList(sets, active); });
+    box.appendChild(t);
+    if (showArchived) archived.forEach(s => box.appendChild(renderCard(s, s.id === activeId, s.id === edId)));
+  }
 }
 
 // 點文字才出現編輯框、移開(blur)就收回成文字
@@ -95,19 +103,38 @@ function renderCard(s, isActive, isEditing) {
   const period = el('input', { class: 'f-period', type: 'month', value: s.period || '' });
   period.addEventListener('change', () => { s.period = period.value; pushMeta({ period: period.value }); });
 
+  const isArch = s.status === 'archived';
   const top = el('div', { class: 'rs-top' }, [nameF, el('span', { class: 'lbl', text: '時期' }), period, savedTag]);
-  if (isActive) top.appendChild(el('span', { class: 'badge act', text: '上線中' }));
+  top.appendChild(el('span', { class: 'badge ' + (isActive ? 'act' : isArch ? 'arch' : 'draft'), text: isActive ? '上線中' : isArch ? '封存' : '草稿' }));
   if (isEditing) top.appendChild(el('span', { class: 'badge edit', text: '編輯中' }));
   card.appendChild(top);
-  card.appendChild(el('div', { class: 'rs-id', text: s.id + (s.basedOn ? '（複製自 ' + s.basedOn + '）' : '') + (s.createdAt ? '　建立 ' + s.createdAt.slice(0, 10) : '') }));
+  const saved = s.savedAt ? s.savedAt.slice(0, 16).replace('T', ' ') : '尚未存內容';
+  card.appendChild(el('div', { class: 'rs-id', text: s.id + (s.basedOn ? '（複製自 ' + s.basedOn + '）' : '') + '　最後儲存 ' + saved + '　已編 ' + (s.dimsAuthored || 0) + ' 維 / ' + (s.partsAuthored || 0) + ' 部位' }));
   card.appendChild(el('div', { class: 'note-line' }, [el('span', { class: 'lbl', text: '說明' }), inlineField(() => s.note, v => { s.note = v; pushMeta({ note: v }); }, { multiline: true, placeholder: '（點此加說明…）', cls: 'f-note2' })]));
-  card.appendChild(el('div', { class: 'rs-acts' }, [
-    el('button', { class: 'btn xs primary', text: '編輯內容', onclick: () => editContent(s.id) }),
-    el('button', { class: 'btn xs', text: '複製', onclick: () => copySet(s.id) }),
-    el('button', { class: 'btn xs', text: isActive ? '已上線' : '設為上線', onclick: () => { if (!isActive) setActive(s.id); } }),
-    el('button', { class: 'btn xs danger', text: '刪除', onclick: () => deleteSet(s) })
-  ]));
+  let acts;
+  if (isArch) {
+    acts = [
+      el('button', { class: 'btn xs', text: '還原', onclick: () => setStatus(s, 'draft') }),
+      el('button', { class: 'btn xs', text: '複製', onclick: () => copySet(s.id) }),
+      el('button', { class: 'btn xs danger', text: '永久刪除', onclick: () => deleteSet(s, isActive) })
+    ];
+  } else {
+    acts = [
+      el('button', { class: 'btn xs primary', text: '編輯內容', onclick: () => editContent(s.id) }),
+      el('button', { class: 'btn xs', text: '複製', onclick: () => copySet(s.id) }),
+      el('button', { class: 'btn xs', text: isActive ? '已上線' : '設為上線', onclick: () => { if (isActive) return; if (!(s.dimsAuthored > 0) && !confirm('此套裝尚無內容（' + (s.partsAuthored || 0) + ' 部位），設為上線後學員會讀到空規則。確定設上線？')) return; setActive(s.id); } }),
+      el('button', { class: 'btn xs', text: '封存', title: isActive ? '上線中的套裝不能封存' : '', onclick: () => { if (isActive) return alert('這是「上線中」的套裝，不能封存。請先把別份設為上線或回滾。'); setStatus(s, 'archived'); } })
+    ];
+  }
+  card.appendChild(el('div', { class: 'rs-acts' }, acts));
   return card;
+}
+
+async function setStatus(s, status) {
+  if (!isStaff()) return alert('需 admin/teacher');
+  if (status === 'archived' && !confirm('封存套裝「' + (s.name || s.id) + '」？封存後預設會收起來（可還原，不會刪資料）。')) return;
+  try { await setDoc(doc(db, 'ruleSets', s.id), { status }, { merge: true }); loadList(); }
+  catch (e) { alert('操作失敗：' + (e.code || e.message)); }
 }
 
 // 「編輯內容」→ 寫信號 + 切到條件編輯器分頁（外殼接 hash）
@@ -151,8 +178,9 @@ async function rollback() {
     loadList();
   } catch (e) { alert('回滾失敗：' + (e.code || e.message)); }
 }
-async function deleteSet(s) {
+async function deleteSet(s, isActive) {
   if (!isStaff()) return alert('需 admin/teacher');
+  if (isActive) return alert('這是「上線中」的套裝，不能刪除。');
   if (!confirm('永久刪除套裝「' + (s.name || s.id) + '」及其全部維度內容？此動作不可復原。')) return;
   try {
     const dims = await getDocs(collection(db, 'ruleSets', s.id, 'dims'));
