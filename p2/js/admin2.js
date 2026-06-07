@@ -230,6 +230,7 @@ function renderCardsListCol() {
   box.appendChild(el('div', { class: 'col-title', text: state.curPart + (pm.kind === 'aggregate' ? '（聚合）' : '（葉）') }));
   if (pm.kind === 'aggregate') { renderAggReadonly(box); return; }
   const def = getPart(state.curDim, state.curPart, true);
+  renderPartSpice(box, def);
   box.appendChild(el('div', { class: 'col-title sub' }, [
     document.createTextNode('敘述分組＝卡片'),
     el('button', { class: 'btn xs add-card', text: '＋', title: '新增敘述分組（卡片）', onclick: () => addCard(def) })
@@ -250,6 +251,25 @@ function renderAggReadonly(box) {
     el('div', { class: 'fl', text: '引用子部位（逐側）' }),
     ...agg.children.map(c => el('div', { class: 'agg-ro-row', text: '· ' + c.part + (c.side ? '（' + c.side + '）' : '') }))
   ]));
+}
+
+// 每部位辣度門檻：大/中/小辣 各「要中幾個輔」（主一律必中）
+function renderPartSpice(box, def) {
+  const auxCount = (def.cards || []).filter(c => c.role !== 'main').length;
+  const wrap = el('div', { class: 'spice-need' }, [el('div', { class: 'fl', text: '辣度門檻：要中幾個輔（共 ' + auxCount + ' 輔；主必中）' })]);
+  const row = el('div', { class: 'spice-need-row' });
+  ['大辣', '中辣', '小辣'].forEach(lv => {
+    const cur = (def.spice && def.spice[lv] != null) ? Math.min(def.spice[lv], auxCount) : auxCount;
+    const inp = el('input', { type: 'number', class: 'sn-num', min: '0', max: String(auxCount), value: String(cur) });
+    inp.addEventListener('change', () => {
+      if (!def.spice) def.spice = {};
+      let v = parseInt(inp.value || '0', 10); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(v, auxCount));
+      def.spice[lv] = v; inp.value = String(v); saveDraft();
+    });
+    row.appendChild(el('label', { class: 'sn-cell' }, [el('span', { class: 'sn-lv', text: lv }), inp]));
+  });
+  wrap.appendChild(row);
+  box.appendChild(wrap);
 }
 
 function renderCardRow(def, card, ci) {
@@ -380,15 +400,7 @@ function addLeaf(card, combo, obsId) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'sb-title', text: '辣度劇本（拖曳 bar，10% 一格）｜輔門檻＝輔得分÷輔滿分 ≥ 此比例；聚合門檻同此比例（主一律必中）' }));
-  state.spice.levels.forEach(lv => {
-    const empty = state.spice.ratios[lv] === '' || state.spice.ratios[lv] == null;
-    const cur = empty ? 0 : Math.round(state.spice.ratios[lv] * 100);
-    const valSpan = el('span', { class: 'spice-val', text: empty ? '—' : cur + '%' });
-    const range = el('input', { type: 'range', min: '0', max: '100', step: '10', value: String(cur) });
-    range.addEventListener('input', () => { const pct = parseInt(range.value, 10); state.spice.ratios[lv] = pct / 100; valSpan.textContent = pct + '%'; saveDraft(); });
-    box.appendChild(el('div', { class: 'spice-row' }, [el('span', { class: 'spice-lv', text: lv }), range, valSpan]));
-  });
+  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「大/中/小辣 要中幾個輔」（在第三欄部位上方設定，主一律必中）。學員看報告時選大/中/小辣;聚合門檻固定、不受辣度。' }));
 }
 
 function renderPalette() {

@@ -55,21 +55,25 @@ function sideScore(leafDef, obs, side, isPaired) {
   });
   return { main, mainMax, aux, auxMax };
 }
-// 某側是否過關：主全中 ＋ 輔達辣度%
-function sidePass(sc, ratio) {
-  return sc.main === sc.mainMax && (sc.auxMax === 0 || sc.aux / sc.auxMax >= ratio);
+// 辣度＝每部位各自設「該層級要中幾個輔」(數量)。leafDef.spice = {大辣,中辣,小辣}。
+// 未設則預設全中(=輔卡數)。需要的輔數夾在 [0, 輔卡數]。
+function auxNeed(leafDef, auxMax, level) {
+  if (!leafDef.spice || leafDef.spice[level] == null) return auxMax;
+  return Math.max(0, Math.min(leafDef.spice[level], auxMax));
+}
+// 某側是否過關：主全中 ＋ 該側輔得分 ≥ 需要的輔數
+function sidePass(sc, need) {
+  return sc.main === sc.mainMax && (sc.auxMax === 0 || sc.aux >= need);
 }
 
-export function scoreLeafPart(leafDef, obs, isPaired, ratio) {
+export function scoreLeafPart(leafDef, obs, isPaired, level) {
   if (!partFilled(leafDef, obs, isPaired)) return { result: null };
   const L = sideScore(leafDef, obs, 'L', isPaired);
   const R = sideScore(leafDef, obs, 'R', isPaired);
-  const Lpass = sidePass(L, ratio), Rpass = sidePass(R, ratio);
-  // 部位當計分部位：左右合起來算
-  const mainC = L.main + R.main, mainMaxC = L.mainMax + R.mainMax;
-  const auxC = L.aux + R.aux, auxMaxC = L.auxMax + R.auxMax;
-  const standalonePass = (mainC === mainMaxC) && (auxMaxC === 0 || auxC / auxMaxC >= ratio);
-  return { result: 'leaf', L, R, Lpass, Rpass, standalonePass, combined: { main: mainC, mainMax: mainMaxC, aux: auxC, auxMax: auxMaxC } };
+  const need = auxNeed(leafDef, L.auxMax, level);              // L.auxMax === R.auxMax === 輔卡數
+  const Lpass = sidePass(L, need), Rpass = sidePass(R, need);
+  const standalonePass = Lpass && Rpass;                       // 部位當計分部位＝左右兩側都過（與 rbf1 merge=all 一致）
+  return { result: 'leaf', L, R, Lpass, Rpass, standalonePass, need };
 }
 
 // 聚合部位＝固定骨架（頭/中停/下停，13 維皆同；門檻固定、不受辣度）。
@@ -96,10 +100,10 @@ export function scoreAggregate(aggDef, partResults) {
 const SCORE_PARTS = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '中停', '下停'];
 const PART_IDX = { '頭': 0, '上停': 1, '中停': 2, '下停': 3, '耳': 4, '眉': 5, '眼': 6, '鼻': 7, '口': 8 };
 
-export function evaluateDimension(dimDef, obs, isPaired, ratio) {
+export function evaluateDimension(dimDef, obs, isPaired, level) {
   const partResults = {};
   // 1) 所有葉部位（含 頂骨/枕骨/華陽骨/顴/人中/地閣/頤 等只餵聚合的子部位）
-  Object.keys(dimDef.parts).forEach(pn => { const pd = dimDef.parts[pn]; if (pd.kind !== 'aggregate') partResults[pn] = scoreLeafPart(pd, obs, isPaired, ratio); });
+  Object.keys(dimDef.parts).forEach(pn => { const pd = dimDef.parts[pn]; if (pd.kind !== 'aggregate') partResults[pn] = scoreLeafPart(pd, obs, isPaired, level); });
   // 2) 聚合部位＝固定骨架（不從 dimDef 讀，門檻固定、不受辣度）
   Object.keys(AGG_FIXED).forEach(pn => { partResults[pn] = scoreAggregate(AGG_FIXED[pn], partResults); });
   // 3) 計分（9 個計分部位）。目標極＝維度可設（dimDef.targetPole）
