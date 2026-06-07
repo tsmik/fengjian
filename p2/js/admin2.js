@@ -75,8 +75,8 @@ function getPart(di, name, createDefault) {
   const d = ensureDim(di);
   if (!d.parts[name] && createDefault) {
     const pm = partMeta(name);
-    if (pm.kind === 'aggregate') d.parts[name] = { kind: 'aggregate', targetPole: null, threshold: 1, children: [] };
-    else d.parts[name] = { kind: 'leaf', targetPole: null, lrMode: pm.leaf && pm.leaf.paired ? 'both' : 'none', cards: [] };
+    if (pm.kind === 'aggregate') d.parts[name] = { kind: 'aggregate', children: [] };       // 門檻 universal（辣度連動），不存在 part 上
+    else d.parts[name] = { kind: 'leaf', cards: [] };                                        // 目標極跟維度、左右由觀察題、無 lrMode
   }
   if (d.parts[name] && d.parts[name].kind === 'leaf') ensureCards(d.parts[name]);
   return d.parts[name];
@@ -106,7 +106,12 @@ function serialize() {
   Object.keys(state.dims).forEach(di => {
     const parts = {};
     const dp = state.dims[di].parts;
-    Object.keys(dp).forEach(pn => { if (dp[pn].kind === 'leaf') ensureCards(dp[pn]); if (partHasContent(di, pn)) parts[pn] = dp[pn]; });
+    Object.keys(dp).forEach(pn => {
+      const p = dp[pn];
+      if (p.kind === 'leaf') { ensureCards(p); delete p.targetPole; delete p.lrMode; }     // universal 化：目標極跟維度、左右由觀察題
+      if (p.kind === 'aggregate') { delete p.threshold; delete p.targetPole; }              // 門檻 universal（辣度連動）
+      if (partHasContent(di, pn)) parts[pn] = p;
+    });
     if (Object.keys(parts).length) {
       out.dims[di] = { dimIndex: +di, dimName: META.dims[di].name, positiveType: META.dims[di].positiveType, negativeType: META.dims[di].negativeType, parts };
     }
@@ -200,15 +205,12 @@ function renderCardsListCol() {
   box.appendChild(el('div', { class: 'col-title', text: state.curPart + (pm.kind === 'aggregate' ? '（聚合）' : '（葉）') }));
   if (pm.kind === 'aggregate') { renderAggEditor(box, getPart(state.curDim, state.curPart, true), pm); return; }
   const def = getPart(state.curDim, state.curPart, true);
-  box.appendChild(poleRadios(def, saveDraft));
-  const lrWrap = el('div', { class: 'field' }, [el('label', { class: 'fl', text: '左右模式' })]);
-  [['both', '都要'], ['either', '任一'], ['none', '不分']].forEach(([v, label]) => {
-    const r = el('input', { type: 'radio', name: 'lr-' + state.curDim + '-' + state.curPart });
-    r.checked = def.lrMode === v;
-    r.addEventListener('change', () => { def.lrMode = v; saveDraft(); });
-    lrWrap.appendChild(el('label', { class: 'inline' }, [r, ' ' + label]));
-  });
-  box.appendChild(lrWrap);
+  // 目標極＝跟著維度（唯讀）；左右＝由觀察題的左右題屬性自動帶入（不再每部位設）
+  box.appendChild(el('div', { class: 'field' }, [
+    el('div', { class: 'fl', text: '目標極（跟著維度）' }),
+    el('div', { text: '此維度：判到「' + META.dims[state.curDim].positiveType + '」算過' }),
+    el('div', { class: 'fl', text: '左右＝由觀察題自動帶入（左右題分兩側計分）' })
+  ]));
   box.appendChild(el('div', { class: 'cards-head' }, [
     el('span', { text: '敘述分組＝卡片' }),
     el('button', { class: 'btn xs', text: '＋', title: '新增敘述分組（卡片）', onclick: () => addCard(def) })
@@ -255,18 +257,6 @@ function syncLeafHeader(card) {
   const badge = c.querySelector('.role-badge'); if (badge) { badge.textContent = card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標'); badge.className = 'role-badge' + (card.role ? '' : ' none'); }
 }
 
-function poleRadios(def, onchange) {
-  const dm = META.dims[state.curDim];
-  const wrap = el('div', { class: 'field' }, [el('label', { class: 'fl', text: '目標極（達標時判到哪一極）' })]);
-  [['pos', dm.positiveType], ['neg', dm.negativeType]].forEach(([k, label]) => {
-    const id = 'pole-' + k;
-    const r = el('input', { type: 'radio', name: 'pole-' + state.curDim + '-' + state.curPart, id });
-    r.checked = def.targetPole === label;
-    r.addEventListener('change', () => { def.targetPole = label; onchange(); });
-    wrap.appendChild(el('label', { class: 'inline' }, [r, ' ' + label]));
-  });
-  return wrap;
-}
 
 function renderCard(def, card, ci) {
   const wrap = el('div', { class: 'card', 'data-cid': card.id });
@@ -350,12 +340,12 @@ function addLeaf(card, combo, obsId) {
 }
 
 function renderAggEditor(box, def, pm) {
-  box.appendChild(poleRadios(def, saveDraft));
   box.appendChild(el('div', { class: 'field' }, [
-    el('label', { class: 'fl', text: '固定門檻（幾個子部位判到目標極才算成立；不受辣度影響）' }),
-    (() => { const i = el('input', { type: 'number', min: '0', class: 'num', value: String(def.threshold) }); i.addEventListener('change', () => { def.threshold = Math.max(0, parseInt(i.value || '0', 10)); saveDraft(); }); return i; })()
+    el('div', { class: 'fl', text: '目標極（跟著維度）' }),
+    el('div', { text: '此維度：判到「' + META.dims[state.curDim].positiveType + '」算過' }),
+    el('div', { class: 'fl', text: '門檻＝辣度連動（過關子側數 ÷ 子側數 ≥ 辣度%），不用設' })
   ]));
-  box.appendChild(el('div', { class: 'cards-head' }, [el('span', { text: '子部位（勾選要納入計數的；paired 子部位可選左右）' })]));
+  box.appendChild(el('div', { class: 'cards-head' }, [el('span', { text: '子部位（勾選要納入計數的；左右題子部位可選左右）' })]));
   pm.agg.children.forEach(childName => {
     const cm = partMeta(childName);
     const paired = cm.kind === 'leaf' && cm.leaf && cm.leaf.paired;
@@ -375,7 +365,7 @@ function renderAggEditor(box, def, pm) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'sb-title', text: '辣度劇本（拖曳 bar，10% 一格）｜輔門檻＝round(ratio × 輔卡數)，取整＝B' }));
+  box.appendChild(el('div', { class: 'sb-title', text: '辣度劇本（拖曳 bar，10% 一格）｜輔門檻＝輔得分÷輔滿分 ≥ 此比例；聚合門檻同此比例（主一律必中）' }));
   state.spice.levels.forEach(lv => {
     const empty = state.spice.ratios[lv] === '' || state.spice.ratios[lv] == null;
     const cur = empty ? 0 : Math.round(state.spice.ratios[lv] * 100);
