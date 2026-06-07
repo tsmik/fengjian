@@ -44,6 +44,11 @@ async function loadList() {
 
 function renderList(sets, active) {
   const box = $('list'); box.innerHTML = '';
+  if (!isStaff()) box.appendChild(el('div', { class: 'role-warn' }, [
+    el('div', { text: '⚠️ 已登入，但角色不是 admin/teacher → 不能新增/修改套裝(以下唯讀)。' }),
+    el('div', { text: '你的 UID：' + user.uid }),
+    el('div', { text: '解法：Firebase console → rbf2app-staging → Firestore → 建/開 users/' + user.uid + ' → 加欄位 role = admin（字串）→ 回來「重新整理」。' })
+  ]));
   const activeId = active && active.activeRuleSetId, prevId = active && active.previousActiveRuleSetId;
   $('active-line').textContent = '上線中：' + (activeId || '（無）') + (prevId ? '　｜上一版：' + prevId : '');
   if (!sets.length) { box.appendChild(el('div', { class: 'hint', text: '尚無套裝。按「＋新套裝」建立。' })); return; }
