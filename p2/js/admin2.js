@@ -26,8 +26,10 @@ const RBF2_STAGING = {
 };
 
 const META = window.DIMS_META;
-const OBS = window.OBSERVATIONS || [];
-const OBS_BY_ID = {}; OBS.forEach(o => { OBS_BY_ID[o.obsId] = o; });
+let OBS = window.OBSERVATIONS || [];                 // 靜態快照當後備；登入後改讀 live Firestore
+const OBS_BY_ID = {};
+function indexObs() { for (const k in OBS_BY_ID) delete OBS_BY_ID[k]; OBS.forEach(o => { OBS_BY_ID[o.obsId] = o; }); }
+indexObs();
 
 // ---------- state ----------
 const LS_KEY = 'admin2_draft_v1';
@@ -205,6 +207,27 @@ function buildMarkdown() {
 }
 function exportMarkdown() { _exportFmt = 'md'; $('export-ta').value = buildMarkdown(); $('export-title').textContent = '維度 Markdown（人看的摘要）'; $('export-modal').style.display = 'flex'; }
 
+// ---------- observations 即時讀取（登入後改用 live Firestore，讓觀察庫新增/改的題目馬上可用）----------
+let _lastObs = 0;
+function _obsSig(arr) { return arr.map(o => o.obsId + ':' + (o.label || '') + ':' + (o.options || []).join(',')).join('|'); }
+async function loadLiveObs(force) {
+  if (!fbOK || !db || !user) return;                       // 沒登入讀不到（規則限登入），維持靜態後備
+  if (!force && Date.now() - _lastObs < 8000) return;      // 節流：聚焦時最多 8 秒抓一次
+  _lastObs = Date.now();
+  try {
+    const snap = await getDocs(collection(db, 'observations'));
+    const live = {}; snap.forEach(d => { const o = d.data(); if (o && o.obsId) live[o.obsId] = o; });
+    if (!Object.keys(live).length) return;                 // 沒讀到就不動
+    // 以靜態順序為主套用 live 版本（反映編輯）；live 有靜態沒有的新題接在後面；靜態有 live 沒有的(已刪)去掉
+    const order = (window.OBSERVATIONS || []).map(o => o.obsId);
+    const next = []; order.forEach(id => { if (live[id]) { next.push(live[id]); delete live[id]; } });
+    Object.keys(live).forEach(id => next.push(live[id]));
+    if (_obsSig(next) === _obsSig(OBS)) return;             // 沒變就不重畫，避免打斷正在編輯
+    OBS = next; indexObs();
+    renderPalette(); renderEditor();                       // 重畫用到題目的欄位（observation 欄＋葉條件）
+  } catch (e) { /* 讀失敗：維持目前 OBS */ }
+}
+
 // ---------- Firebase ----------
 function initFirebase() {
   try {
@@ -220,7 +243,7 @@ function initFirebase() {
       }
       renderHeader();
       renderRsSelect();
-      if (u) checkEditSignal();   // 登入後若「套裝」分頁指定了要編的套裝，就載入
+      if (u) { checkEditSignal(); loadLiveObs(true); }   // 登入後：載入指定套裝、並抓 live 題庫
     });
   } catch (e) { fbOK = false; renderHeader(); }
 }
@@ -640,6 +663,7 @@ function boot() {
   window.addEventListener('beforeunload', (e) => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
+  window.addEventListener('focus', () => loadLiveObs(false));   // 從觀察庫切回來/重新聚焦時，刷新 live 題庫
   $('export-dl').addEventListener('click', () => {
     const md = _exportFmt === 'md';
     const blob = new Blob([$('export-ta').value], { type: md ? 'text/markdown' : 'application/json' });
