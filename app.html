@@ -243,6 +243,24 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* 個案新增/管理：深色底白字，與上方區隔 */
 .m-dash-mgmt-btn{width:100%;margin-top:4px;padding:14px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-size:15px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer}
 .m-dash-mgmt-btn:active{opacity:0.88}
+/* 儀表板報告區塊：雷達縮圖 + 四係數摘要 + 參數分析/看報告 */
+.m-dash-report{background:#fff;border:1px solid #e0d8cc;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px}
+.m-dash-report-head{display:flex;align-items:center;gap:10px}
+.m-dash-report-titles{flex:1;min-width:0}
+.m-dash-report-title{font-size:16px;font-weight:600;color:#3a3228;letter-spacing:1px}
+.m-dash-report-sub{font-size:11px;color:#7a6e64;margin-top:2px}
+.m-dash-report-body{display:flex;align-items:center;gap:14px}
+.m-dash-report-radar{flex:0 0 132px;width:132px}
+.m-dash-report-radar-empty{display:flex;align-items:center;justify-content:center;height:100px;background:#f7f3ec;border-radius:10px;color:#a89e92;font-size:13px}
+.m-dash-coeff{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
+.m-dash-coeff-cell{background:#f0ebe0;border-radius:8px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.m-dash-coeff-cell b{font-size:18px;font-weight:700;color:#3a3228;font-variant-numeric:tabular-nums}
+.m-dash-coeff-cell i{font-size:11px;color:#7a6e64;font-style:normal;letter-spacing:1px}
+.m-dash-report-acts{display:flex;gap:8px}
+.m-dash-report-act{flex:1;padding:11px;border:1px solid #d8cdb8;border-radius:10px;background:#fff;color:#5a5048;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.m-dash-report-act:active{background:#f5efe6}
+.m-dash-report-act.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}
+.m-dash-report-act.is-primary:active{opacity:0.88}
 
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
