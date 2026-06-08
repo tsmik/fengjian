@@ -659,6 +659,14 @@ function boot() {
     if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
     else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
   });
+  $('btn-reload').addEventListener('click', async () => {
+    if (!fbOK || !user) return alert('請先用 Google 登入');
+    const id = state.ruleSet.id;
+    let exists = false; try { exists = (await getDoc(doc(db, 'ruleSets', id))).exists(); } catch (e) {}
+    if (!exists) return alert('目前選的不是「套裝」分頁裡的套裝（可能是本機草稿），沒有可重載的內容。\n請從上方下拉選一份已存在的套裝。');
+    if (isDirty() && !confirm('目前有未儲存變更，重載會丟掉這些變更（本機草稿仍保留）。確定重載最新版？')) return;
+    loadRsIntoEditor(id);
+  });
   $('rs-select').addEventListener('change', (e) => {
     const v = e.target.value;
     if (!v || v === state.ruleSet.id) return;
