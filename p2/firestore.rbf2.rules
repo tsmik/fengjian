@@ -6,9 +6,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isSignedIn() { return request.auth != null; }
-    function roleOf()     { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
-    function isStaff()    { return isSignedIn() && (roleOf() == 'admin' || roleOf() == 'teacher'); }
-    function isAdmin()    { return isSignedIn() && roleOf() == 'admin'; }
+    function emailOf()    { return request.auth.token.email; }
+    // role 來源＝白名單 allowedUsers/{email}（只有 admin 可寫）。
+    // 不再讀 users/{uid}.role（本人可寫 → 會被自封 admin）。修補「role 自我升權洞」(v0.7 §6)。
+    function wlRole()     { return exists(/databases/$(database)/documents/allowedUsers/$(emailOf()))
+                              ? get(/databases/$(database)/documents/allowedUsers/$(emailOf())).data.role : null; }
+    // bootstrap：擁有者 email 永遠是 admin，防止白名單設錯把自己鎖死（別人無法冒充此 Google email）。
+    function isBootstrapAdmin() { return isSignedIn() && emailOf() == 'chaojentseng@gmail.com'; }
+    function isStaff()    { return isBootstrapAdmin() || (isSignedIn() && (wlRole() == 'admin' || wlRole() == 'teacher')); }
+    function isAdmin()    { return isBootstrapAdmin() || (isSignedIn() && wlRole() == 'admin'); }
 
     // 規則資料：登入可讀；teacher/admin 可寫
     match /observations/{obsId} {

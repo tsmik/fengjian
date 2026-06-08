@@ -144,7 +144,12 @@ function initFirebase() {
     auth = getAuth(app); db = getFirestore(app); fbOK = true;
     onAuthStateChanged(auth, async (u) => {
       user = u; role = null;
-      if (u) { try { const s = await getDoc(doc(db, 'users', u.uid)); if (s.exists()) role = s.data().role || null; } catch (e) {} }
+      // role 來源＝白名單 allowedUsers/{email}（admin 才可寫）；不再讀本人可寫的 users/{uid}.role。
+      if (u) {
+        const email = (u.email || '').toLowerCase();
+        try { if (email) { const s = await getDoc(doc(db, 'allowedUsers', email)); if (s.exists()) role = s.data().role || null; } } catch (e) {}
+        if (email === 'chaojentseng@gmail.com') role = 'admin';   // bootstrap：與規則一致，防鎖死
+      }
       renderHeader();
       renderRsSelect();
       if (u) checkEditSignal();   // 登入後若「套裝」分頁指定了要編的套裝，就載入

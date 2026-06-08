@@ -25,7 +25,12 @@ export function onUser(cb) {
   if (!_fbOK) { cb(null, null); return; }
   onAuthStateChanged(auth, async (u) => {
     let role = null;
-    if (u) { try { const s = await getDoc(doc(db, 'users', u.uid)); if (s.exists()) role = s.data().role || null; } catch (e) {} }
+    // role 來源＝白名單 allowedUsers/{email}（admin 才可寫）；不再讀本人可寫的 users/{uid}.role。
+    if (u) {
+      const email = (u.email || '').toLowerCase();
+      try { if (email) { const s = await getDoc(doc(db, 'allowedUsers', email)); if (s.exists()) role = s.data().role || null; } } catch (e) {}
+      if (email === 'chaojentseng@gmail.com') role = 'admin';   // bootstrap：與規則一致，防鎖死
+    }
     cb(u, role);
   });
 }
