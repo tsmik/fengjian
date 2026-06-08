@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>匯入 P1 白名單 → P2（一次性工具）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
+  header{padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);}
+  header h1{font-size:17px;margin:0;font-weight:600;}
+  .wrap{max-width:760px;margin:0 auto;padding:16px;}
+  .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:7px 13px;cursor:pointer;font-size:14px;color:var(--ink);}
+  .btn:hover{background:var(--sel);}
+  .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .step{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+  .step h2{font-size:15px;margin:0 0 8px;font-weight:600;}
+  .step.done{border-color:var(--static);}
+  .num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--sel);color:var(--ink);align-items:center;justify-content:center;font-size:12px;margin-right:8px;font-weight:600;}
+  .step.done .num{background:var(--static);color:#fff;}
+  .stat{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.7;}
+  .stat.ok{color:var(--static);} .stat.err{color:#a8503a;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd);word-break:break-all;}
+  th{color:var(--sub);font-weight:500;}
+  .note{font-size:12px;color:var(--sub);line-height:1.8;margin-top:6px;}
+  code{background:var(--sel);padding:1px 5px;border-radius:4px;font-size:12px;}
+</style>
+</head>
+<body>
+<header><h1>匯入 P1 白名單 → P2　<span style="font-size:12px;color:#9a8f7d;font-weight:400;">一次性工具</span></h1></header>
+<div class="wrap">
+  <div class="note">
+    這支工具把 <b>P1（renxiangbingfa，正式）</b> 的 <code>allowedUsers</code> 整批複製到
+    <b>P2（rbf2app-staging）</b>。流程：① 登入 P1 → ② 讀取＋預覽 → ③ 登入 P2 → ④ 匯入。<br>
+    寫入用 <code>merge</code>：若 P2 已有同一 email（且已填姓名/期間等），<b>不會覆蓋</b>你在 P2 補的資料，只補上 P1 帶來的欄位。
+  </div>
+
+  <div class="step" id="s1">
+    <h2><span class="num">1</span>登入 P1（來源 · renxiangbingfa）</h2>
+    <button class="btn primary" id="b1">用 Google 登入 P1</button>
+    <button class="btn" id="b1out" style="display:none">登出 P1</button>
+    <div class="stat" id="st1">尚未登入。</div>
+  </div>
+
+  <div class="step" id="s2">
+    <h2><span class="num">2</span>讀取 P1 白名單並預覽</h2>
+    <button class="btn primary" id="b2" disabled>讀取 P1 allowedUsers</button>
+    <div class="stat" id="st2">請先完成步驟 1。</div>
+    <div id="preview"></div>
+  </div>
+
+  <div class="step" id="s3">
+    <h2><span class="num">3</span>登入 P2（目的 · rbf2app-staging）</h2>
+    <button class="btn primary" id="b3">用 Google 登入 P2</button>
+    <button class="btn" id="b3out" style="display:none">登出 P2</button>
+    <div class="stat" id="st3">尚未登入。你在 P2 必須是 admin 才能寫入。</div>
+  </div>
+
+  <div class="step" id="s4">
+    <h2><span class="num">4</span>匯入到 P2</h2>
+    <button class="btn primary" id="b4" disabled>把上面 N 筆寫入 P2</button>
+    <div class="stat" id="st4">請先完成步驟 2 與 3。</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, collection, getDocs, writeBatch }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const P1_CFG = { apiKey:'AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8', authDomain:'renxiangbingfa.firebaseapp.com', projectId:'renxiangbingfa', storageBucket:'renxiangbingfa.firebasestorage.app', messagingSenderId:'912262878667', appId:'1:912262878667:web:cd7a74f1378221dbe3524e' };
+const P2_CFG = { apiKey:'AIzaSyDZ3z9LV1g3rnhO0QjmYOfipUGMtD1cq7g', authDomain:'rbf2app-staging.firebaseapp.com', projectId:'rbf2app-staging', storageBucket:'rbf2app-staging.firebasestorage.app', messagingSenderId:'565853308902', appId:'1:565853308902:web:8a7a3e63df1291124df827' };
+
+const app1 = initializeApp(P1_CFG, 'p1'), auth1 = getAuth(app1), db1 = getFirestore(app1);
+const app2 = initializeApp(P2_CFG, 'p2'), auth2 = getAuth(app2), db2 = getFirestore(app2);
+
+const $ = id => document.getElementById(id);
+let u1 = null, u2 = null, rows = [];
+
+function refresh() {
+  // 步驟 1
+  $('b1').style.display = u1 ? 'none' : ''; $('b1out').style.display = u1 ? '' : 'none';
+  $('st1').textContent = u1 ? ('已登入 P1：' + (u1.email || u1.uid)) : '尚未登入。';
+  $('s1').classList.toggle('done', !!u1);
+  $('b2').disabled = !u1;
+  if (!u1) { $('st2').textContent = '請先完成步驟 1。'; }
+  // 步驟 3
+  $('b3').style.display = u2 ? 'none' : ''; $('b3out').style.display = u2 ? '' : 'none';
+  $('st3').textContent = u2 ? ('已登入 P2：' + (u2.email || u2.uid) + '（寫入需 admin 權限）') : '尚未登入。你在 P2 必須是 admin 才能寫入。';
+  $('s3').classList.toggle('done', !!u2);
+  // 步驟 4
+  const ready = rows.length && u2;
+  $('b4').disabled = !ready;
+  $('b4').textContent = '把上面 ' + rows.length + ' 筆寫入 P2';
+  if (!ready) $('st4').textContent = '請先完成步驟 2 與 3。';
+}
+
+$('b1').onclick = () => signInWithPopup(auth1, new GoogleAuthProvider()).catch(e => $('st1').textContent = '登入失敗：' + (e.code || e.message));
+$('b1out').onclick = () => signOut(auth1);
+$('b3').onclick = () => signInWithPopup(auth2, new GoogleAuthProvider()).catch(e => $('st3').textContent = '登入失敗：' + (e.code || e.message));
+$('b3out').onclick = () => signOut(auth2);
+onAuthStateChanged(auth1, u => { u1 = u; refresh(); });
+onAuthStateChanged(auth2, u => { u2 = u; refresh(); });
+
+$('b2').onclick = async () => {
+  $('st2').className = 'stat'; $('st2').textContent = '讀取中…'; $('preview').innerHTML = '';
+  try {
+    const snap = await getDocs(collection(db1, 'allowedUsers'));
+    rows = []; snap.forEach(d => rows.push({ _id: d.id, ...d.data() }));
+    rows.sort((a, b) => ((a.email || a._id) + '').localeCompare((b.email || b._id) + ''));
+    $('st2').className = 'stat ok';
+    $('st2').textContent = '讀到 ' + rows.length + ' 筆。下面預覽要寫入 P2 的內容（含 P1 帶來的所有欄位）。';
+    renderPreview();
+  } catch (e) {
+    rows = []; $('st2').className = 'stat err';
+    $('st2').textContent = '讀取失敗：' + (e.code || e.message) + '（若是權限問題，請確認登入 P1 的帳號在 P1 有讀 allowedUsers 的權限）';
+  }
+  refresh();
+};
+
+function renderPreview() {
+  if (!rows.length) { $('preview').innerHTML = '<div class="stat">（P1 白名單是空的，沒有東西可匯入。）</div>'; return; }
+  // 收集所有出現過的欄位（除了 _id）
+  const keys = []; rows.forEach(r => Object.keys(r).forEach(k => { if (k !== '_id' && !keys.includes(k)) keys.push(k); }));
+  const head = '<tr><th>P2 文件 id (email)</th>' + keys.map(k => '<th>' + k + '</th>').join('') + '</tr>';
+  const body = rows.map(r => {
+    const id = ((r.email || r._id) + '').toLowerCase();
+    const cells = keys.map(k => '<td>' + fmt(r[k]) + '</td>').join('');
+    return '<tr><td><b>' + id + '</b></td>' + cells + '</tr>';
+  }).join('');
+  $('preview').innerHTML = '<table>' + head + body + '</table>';
+}
+function fmt(v) {
+  if (v == null) return '<span style="color:#bbb">—</span>';
+  if (typeof v === 'object') return JSON.stringify(v);
+  const s = String(v);
+  return s.length > 60 ? s.slice(0, 60) + '…' : s;
+}
+
+$('b4').onclick = async () => {
+  if (!rows.length || !u2) return;
+  if (!confirm('把 ' + rows.length + ' 筆寫入 P2（rbf2app-staging）的 allowedUsers？\n已存在的 email 會用 merge 補欄位、不覆蓋你在 P2 補的資料。')) return;
+  $('b4').disabled = true; $('st4').className = 'stat'; $('st4').textContent = '寫入中…';
+  const nowISO = new Date().toISOString();
+  try {
+    let done = 0;
+    // Firestore 單一 batch 上限 500，分批寫
+    for (let i = 0; i < rows.length; i += 400) {
+      const slice = rows.slice(i, i + 400);
+      const batch = writeBatch(db2);
+      slice.forEach(r => {
+        const id = ((r.email || r._id) + '').toLowerCase();
+        const data = { ...r };
+        delete data._id;
+        data.email = id;
+        if (!data.addedAt) data.addedAt = nowISO;
+        data.importedFrom = 'P1'; data.importedAt = nowISO;
+        batch.set(doc(db2, 'allowedUsers', id), data, { merge: true });
+      });
+      await batch.commit();
+      done += slice.length;
+      $('st4').textContent = '寫入中… ' + done + ' / ' + rows.length;
+    }
+    $('st4').className = 'stat ok';
+    $('st4').textContent = '✓ 完成，已寫入 ' + done + ' 筆。回「使用者」分頁按重新整理就會看到。';
+    $('s4').classList.add('done');
+  } catch (e) {
+    $('st4').className = 'stat err';
+    $('st4').textContent = '寫入失敗：' + (e.code || e.message) + '（若是權限問題，請確認登入 P2 的帳號是 admin）';
+    $('b4').disabled = false;
+  }
+};
+
+refresh();
+</script>
+</body>
+</html>

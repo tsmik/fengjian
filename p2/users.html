@@ -19,19 +19,48 @@
   .btn.sm{padding:4px 10px;font-size:12px;}
   .btn.xs{padding:2px 8px;font-size:12px;border-radius:6px;}
   .btn.danger{color:#a8503a;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
   .wrap{max-width:760px;margin:0 auto;padding:16px;}
   .me{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.8;}
   .me b{font-weight:600;}
   .addbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
   .addbar input{font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;min-width:240px;}
   select{font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:6px 8px;background:#fffdf9;}
-  .row{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd);}
-  .row .em{flex:1;min-width:0;word-break:break-all;}
-  .badge{font-size:10px;color:#fff;border-radius:9px;padding:1px 8px;}
+  .badge{font-size:10px;color:#fff;border-radius:9px;padding:1px 8px;white-space:nowrap;}
   .badge.admin{background:#a8503a;} .badge.teacher{background:var(--accent);} .badge.student{background:#b8a888;}
   .hint{color:var(--sub);font-size:13px;padding:12px 4px;line-height:1.7;}
   .role-warn{border:1px solid #e0b48a;background:#fbf1e4;border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.8;color:#7a5230;}
   .note-line{font-size:12px;color:var(--sub);margin:14px 4px;line-height:1.7;}
+
+  /* ── 學員卡片 ── */
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+  .card.open{border-color:var(--bd2);box-shadow:0 1px 4px rgba(74,68,59,.07);}
+  .card-head{display:flex;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;}
+  .card-head:hover{background:#fcfaf4;}
+  .avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 42px;background:var(--sel);border:1px solid var(--bd);}
+  .avatar.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:17px;font-weight:600;}
+  .card-main{flex:1;min-width:0;}
+  .card-name{font-size:15px;font-weight:600;line-height:1.4;word-break:break-all;}
+  .card-name .em-sub{font-size:11px;color:var(--sub);font-weight:400;margin-left:6px;word-break:break-all;}
+  .card-meta{font-size:12px;color:var(--sub);margin-top:2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .chev{flex:0 0 auto;color:var(--sub);font-size:12px;transition:transform .15s;}
+  .card.open .chev{transform:rotate(90deg);}
+
+  .card-body{display:none;padding:4px 14px 14px;border-top:1px solid var(--bd);}
+  .card.open .card-body{display:block;}
+  .fld{margin-top:12px;}
+  .fld > label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;}
+  .fld input[type=text], .fld textarea, .fld select{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;color:var(--ink);}
+  .fld textarea{min-height:64px;resize:vertical;line-height:1.6;}
+  .fld.ro{color:var(--ink);}
+  .fld.ro .v{font-size:14px;padding:2px 0;word-break:break-all;}
+  .photo-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .photo-prev{width:80px;height:80px;border-radius:10px;object-fit:cover;background:var(--sel);border:1px solid var(--bd);}
+  .photo-prev.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;}
+  .card-foot{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .save-state{font-size:12px;color:var(--sub);}
+  .save-state.ok{color:var(--static);}
+  .save-state.err{color:#a8503a;}
 </style>
 </head>
 <body>
