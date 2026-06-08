@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>使用者 / 白名單 — admin2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
+  header{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);position:sticky;top:0;z-index:5;flex-wrap:wrap;}
+  header h1{font-size:17px;margin:0;font-weight:600;}
+  .grow{flex:1;}
+  #status{font-size:12px;color:var(--sub);}
+  .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .btn:hover{background:var(--sel);}
+  .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
+  .btn.sm{padding:4px 10px;font-size:12px;}
+  .btn.xs{padding:2px 8px;font-size:12px;border-radius:6px;}
+  .btn.danger{color:#a8503a;}
+  .wrap{max-width:760px;margin:0 auto;padding:16px;}
+  .me{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.8;}
+  .me b{font-weight:600;}
+  .addbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .addbar input{font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;min-width:240px;}
+  select{font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:6px 8px;background:#fffdf9;}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd);}
+  .row .em{flex:1;min-width:0;word-break:break-all;}
+  .badge{font-size:10px;color:#fff;border-radius:9px;padding:1px 8px;}
+  .badge.admin{background:#a8503a;} .badge.teacher{background:var(--accent);} .badge.student{background:#b8a888;}
+  .hint{color:var(--sub);font-size:13px;padding:12px 4px;line-height:1.7;}
+  .role-warn{border:1px solid #e0b48a;background:#fbf1e4;border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.8;color:#7a5230;}
+  .note-line{font-size:12px;color:var(--sub);margin:14px 4px;line-height:1.7;}
+</style>
+</head>
+<body>
+<header>
+  <h1>使用者 / 白名單</h1>
+  <button class="btn sm" id="btn-refresh">重新整理</button>
+  <span class="grow"></span>
+  <span id="status"></span>
+  <button class="btn sm" id="btn-login">Google 登入</button>
+  <button class="btn sm" id="btn-logout" style="display:none">登出</button>
+</header>
+<div class="wrap">
+  <div id="me" class="me"></div>
+  <div id="warn"></div>
+  <div class="addbar">
+    <input id="add-email" type="email" placeholder="輸入 email 加入白名單…" autocomplete="off">
+    <select id="add-role"><option value="student">學員</option><option value="teacher">老師(teacher)</option><option value="admin">管理員(admin)</option></select>
+    <button class="btn sm primary" id="add-btn">＋ 加入</button>
+  </div>
+  <div id="list"></div>
+  <div class="note-line" id="effect-note"></div>
+</div>
+<script type="module" src="js/users_admin.js"></script>
+</body>
+</html>
