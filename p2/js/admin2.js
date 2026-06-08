@@ -297,7 +297,7 @@ function renderDims() {
   const box = $('col-dims'); box.innerHTML = '';
   box.appendChild(el('div', { class: 'col-title', text: '維度' }));
   META.dims.forEach(d => {
-    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
+    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimHasIncomplete(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
     row.appendChild(el('span', { class: 'dim-name', text: d.name + '　符合為' + dimTargetName(d.index) }));
     box.appendChild(row);
   });
@@ -337,7 +337,7 @@ function partRow(name, sub, isAgg) {
     el('span', { class: 'spacer' }),
     cnt > 0 ? el('span', { class: 'pr-cnt', text: cnt + '卡' }) : null
   ]);
-  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
+  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : '') + (partHasIncomplete(state.curDim, name) ? ' incomplete' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
     [inner]);
 }
 
@@ -356,6 +356,20 @@ function partCardCount(name) {
   const p = d && d.parts && d.parts[name];
   return (p && p.kind !== 'aggregate' && Array.isArray(p.cards)) ? p.cards.length : 0;
 }
+// 部位是否有「未完成卡片」→ 部位也淡黃
+function partHasIncomplete(di, name) {
+  const d = state.dims[di];
+  const p = d && d.parts && d.parts[name];
+  return !!(p && p.kind !== 'aggregate' && Array.isArray(p.cards) && p.cards.some(cardIncomplete));
+}
+// 維度是否有任一部位含未完成卡片 → 維度也淡黃
+function dimHasIncomplete(di) {
+  const d = state.dims[di];
+  if (!d || !d.parts) return false;
+  return Object.keys(d.parts).some(pn => partHasIncomplete(di, pn));
+}
+// 改條件後要連帶刷新 col1(維度黃)＋col2(部位黃/計數)＋col3/4
+function renderEdit() { renderDims(); renderParts(); renderEditor(); }
 
 // 第 3 欄：敘述分組＝卡片管理（簡稱/主輔/註解/數量）。含部位層 目標極/左右模式。聚合→聚合編輯器。
 function renderCardsListCol() {
@@ -434,7 +448,7 @@ function enableCardDrag(list, def) {
     row.addEventListener('dragend', () => { row.draggable = false; row.classList.remove('dragging'); from = null; });
     row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('drop-into'); });
     row.addEventListener('dragleave', () => row.classList.remove('drop-into'));
-    row.addEventListener('drop', (e) => { e.preventDefault(); row.classList.remove('drop-into'); if (from == null || from === ci) return; const [m] = def.cards.splice(from, 1); def.cards.splice(ci, 0, m); renderCardsListCol(); renderEditor(); saveDraft(); });
+    row.addEventListener('drop', (e) => { e.preventDefault(); row.classList.remove('drop-into'); if (from == null || from === ci) return; const [m] = def.cards.splice(from, 1); def.cards.splice(ci, 0, m); renderCardsListCol(); renderEdit(); saveDraft(); });
   });
 }
 
@@ -464,7 +478,7 @@ function renderCard(def, card, ci) {
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
     el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
     el('span', { class: 'spacer' }),
-    el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEditor(); saveDraft(); } })
+    el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEdit(); saveDraft(); } })
   ]));
   card.combos.forEach((combo, cj) => {
     if (cj > 0) wrap.appendChild(el('div', { class: 'or-sep', text: '— 或 —' }));
@@ -477,14 +491,14 @@ function renderCard(def, card, ci) {
 function addCard(def) {
   const c = { id: uidG(), label: '', note: '', role: null, combos: [[]] };
   def.cards.push(c); focusCardId = c.id;
-  renderCardsListCol(); renderLeavesCol(); renderParts(); saveDraft();
+  renderEdit(); saveDraft();
 }
 function deleteCard(def, ci) {
   const c = def.cards[ci];
   const hasContent = c.label || c.note || c.combos.some(cb => cb.length);
   if (hasContent && !confirm('刪除敘述分組（卡片）「' + (c.label || '未命名') + '」？')) return;
   def.cards.splice(ci, 1);
-  renderCardsListCol(); renderLeavesCol(); renderParts(); saveDraft();
+  renderEdit(); saveDraft();
 }
 
 function renderCombo(card, combo, cj) {
@@ -500,7 +514,7 @@ function renderCombo(card, combo, cj) {
     el('span', { class: 'combo-tag', text: (isActive ? '◉ ' : '') + 'combo' + (cj + 1) + '（而且）' }),
     el('span', { class: 'spacer' })
   ]);
-  if (card.combos.length > 1) head.appendChild(el('button', { class: 'btn xs danger', text: '✕ 刪 combo', onclick: (e) => { e.stopPropagation(); card.combos.splice(cj, 1); if (state.active && state.active.cardId === card.id) state.active = null; renderEditor(); saveDraft(); } }));
+  if (card.combos.length > 1) head.appendChild(el('button', { class: 'btn xs danger', text: '✕ 刪 combo', onclick: (e) => { e.stopPropagation(); card.combos.splice(cj, 1); if (state.active && state.active.cardId === card.id) state.active = null; renderEdit(); saveDraft(); } }));
   drop.appendChild(head);
   if (!combo.length) drop.appendChild(el('span', { class: 'hint', text: '點此 combo（會標 ◉）再點右欄 observation，或拖進來' }));
   combo.forEach((leaf, li) => drop.appendChild(renderLeaf(card, combo, leaf, li)));
@@ -516,14 +530,14 @@ function renderLeaf(card, combo, leaf, li) {
   ]);
   if (!leaf.match.length) head.appendChild(el('span', { class: 'undef', text: '尚未定義條件' }));
   head.appendChild(el('span', { class: 'spacer' }));
-  head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEditor(); saveDraft(); } }));
+  head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEdit(); saveDraft(); } }));
   wrap.appendChild(head);
   const optBox = el('div', { class: 'opts' });
   const hints = (o && o.optionHints) || {};
   (o ? o.options : []).forEach(v => {
     const on = leaf.match.indexOf(v) >= 0;
     const hint = hints[v] || '';
-    const toggle = (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderEditor(); saveDraft(); };
+    const toggle = (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderEdit(); saveDraft(); };
     const chip = el('span', { class: 'opt' + (on ? ' on' : ''), text: v, title: hint || v, onclick: toggle });
     if (hint) optBox.appendChild(el('span', { class: 'opt-wrap' }, [chip, el('span', { class: 'opt-hint', title: hint, onclick: toggle }, [hint]) ]));
     else optBox.appendChild(chip);
@@ -535,7 +549,7 @@ function renderLeaf(card, combo, leaf, li) {
 function addLeaf(card, combo, obsId) {
   if (combo.some(l => l.ref === obsId)) return;
   combo.push({ ref: obsId, match: [] });
-  renderEditor(); saveDraft();
+  renderEdit(); saveDraft();
 }
 
 function renderSpice() {

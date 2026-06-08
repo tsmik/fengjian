@@ -110,6 +110,9 @@
   .list-row { display:flex; flex-direction:column; padding:6px 8px; border-radius:6px; cursor:pointer; }
   .list-row:hover { background:var(--sel); }
   .list-row.sel { background:var(--sel); }
+  /* 維度/部位含未完成卡片 → 淡黃；選中且未完成 → 較深黃（仍看得出選中）*/
+  .list-row.incomplete { background:#fcf4d2; }
+  .list-row.sel.incomplete { background:#f1e3a8; }
   .lr-name { font-size:13px; }
   .lr-sub { font-size:11px; color:var(--sub); }
   .hint { color:var(--sub); font-size:12px; padding:8px 4px; }
