@@ -618,7 +618,7 @@ async function renderRsSelect() {
     sel.innerHTML = '';
     if (!sets.length) { sel.appendChild(el('option', { value: '', text: '（尚無套裝→到「套裝」分頁新增）' })); return; }
     let found = false;
-    sets.forEach(s => { const o = el('option', { value: s.id, text: s.name || s.id }); if (s.id === cur) { o.selected = true; found = true; } sel.appendChild(o); });
+    sets.forEach(s => { const o = el('option', { value: s.id, text: (s.name || s.id) + (s.status === 'archived' ? '（封存）' : '') }); if (s.id === cur) { o.selected = true; found = true; } sel.appendChild(o); });
     if (!found) { const o = el('option', { value: cur, text: curName + '（不在套裝清單）' }); sel.insertBefore(o, sel.firstChild); o.selected = true; }
   } catch (e) { sel.innerHTML = ''; sel.appendChild(el('option', { value: '', text: '讀取失敗' })); }
 }
