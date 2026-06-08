@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>匯入 rbf1 敘述分組 → P2 套裝（一次性工具）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
+  header{padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);}
+  header h1{font-size:17px;margin:0;font-weight:600;}
+  .wrap{max-width:820px;margin:0 auto;padding:16px;}
+  .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:7px 13px;cursor:pointer;font-size:14px;color:var(--ink);}
+  .btn:hover{background:var(--sel);}
+  .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  select{font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:6px 9px;background:#fffdf9;color:var(--ink);max-width:100%;}
+  .step{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+  .step h2{font-size:15px;margin:0 0 8px;font-weight:600;}
+  .step.done{border-color:var(--static);}
+  .num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--sel);color:var(--ink);align-items:center;justify-content:center;font-size:12px;margin-right:8px;font-weight:600;}
+  .step.done .num{background:var(--static);color:#fff;}
+  .stat{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.7;}
+  .stat.ok{color:var(--static);} .stat.err{color:#a8503a;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+  th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd);}
+  th{color:var(--sub);font-weight:500;}
+  td.r,th.r{text-align:right;}
+  .note{font-size:12px;color:var(--sub);line-height:1.8;margin-top:6px;}
+  code{background:var(--sel);padding:1px 5px;border-radius:4px;font-size:12px;}
+  b.big{font-size:16px;color:var(--ink);}
+</style>
+</head>
+<body>
+<header><h1>匯入 rbf1 敘述分組 → P2 套裝　<span style="font-size:12px;color:#9a8f7d;font-weight:400;">一次性工具</span></h1></header>
+<div class="wrap">
+  <div class="note">
+    把 <b>rbf1（renxiangbingfa）</b> 各維度/部位底下的<b>敘述分組名稱</b>，建成 P2 某個套裝裡的<b>空白「輔」卡片</b>（依維度＋部位歸位）。<br>
+    <b>只帶名稱</b>，不帶條件/門檻/左右；<b>合併不覆蓋</b>：同部位同名分組不重複建、你已填的卡片不動，可重複執行。
+  </div>
+
+  <div class="step" id="s1">
+    <h2><span class="num">1</span>讀取 rbf1 規則並整理分組</h2>
+    <button class="btn" id="b1">重新讀取 rbf1</button>
+    <div class="stat" id="st1">讀取中…</div>
+  </div>
+
+  <div class="step" id="s2">
+    <h2><span class="num">2</span>登入 P2（rbf2app-staging）</h2>
+    <button class="btn primary" id="b2">用 Google 登入</button>
+    <button class="btn" id="b2out" style="display:none">登出</button>
+    <div class="stat" id="st2">尚未登入。你必須是 admin/teacher 才能寫入。</div>
+  </div>
+
+  <div class="step" id="s3">
+    <h2><span class="num">3</span>選目標套裝</h2>
+    <select id="rs-sel"><option>（先登入）</option></select>
+    <div class="stat" id="st3">登入後選一份套裝（預設挑名稱含「202605 / 人相兵法」的）。</div>
+  </div>
+
+  <div class="step" id="s4">
+    <h2><span class="num">4</span>預覽要建立的卡片</h2>
+    <button class="btn" id="b4" disabled>計算預覽</button>
+    <div class="stat" id="st4">請先完成 1–3。</div>
+    <div id="preview"></div>
+  </div>
+
+  <div class="step" id="s5">
+    <h2><span class="num">5</span>匯入</h2>
+    <button class="btn primary" id="b5" disabled>確認匯入</button>
+    <div class="stat" id="st5">請先看過預覽。</div>
+  </div>
+</div>
+
+<script src="js/dims_meta.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const P2_CFG = { apiKey:'AIzaSyDZ3z9LV1g3rnhO0QjmYOfipUGMtD1cq7g', authDomain:'rbf2app-staging.firebaseapp.com', projectId:'rbf2app-staging', storageBucket:'rbf2app-staging.firebasestorage.app', messagingSenderId:'565853308902', appId:'1:565853308902:web:8a7a3e63df1291124df827' };
+const app = initializeApp(P2_CFG, 'imp'), auth = getAuth(app), db = getFirestore(app);
+const P1_URL = 'https://firestore.googleapis.com/v1/projects/renxiangbingfa/databases/(default)/documents/settings/rules?key=AIzaSyCZUzTOaCtbzXuX_mz5VoFvZ2Sva1Obza8';
+
+const META = (window.DIMS_META && window.DIMS_META.dims) || [];
+const P2_LEAF = new Set(['頂骨','枕骨','華陽骨','上停','耳','眉','眼','鼻','口','顴','人中','地閣','頤']);
+const $ = id => document.getElementById(id);
+
+let plan = null;     // { di: { partName: [group labels] } }
+let user = null, role = null, sets = [], preview = null;
+
+// ---- 步驟 1：讀 P1，整理 plan ----
+function collectGroups(node, acc) {
+  if (Array.isArray(node)) { node.forEach(n => collectGroups(n, acc)); }
+  else if (node && typeof node === 'object') {
+    if (node.group) acc.push(node.group);
+    Object.values(node).forEach(v => collectGroups(v, acc));
+  }
+}
+async function loadP1() {
+  $('st1').className = 'stat'; $('st1').textContent = '讀取中…';
+  try {
+    const r = await fetch(P1_URL); const d = await r.json();
+    const R = JSON.parse(d.fields.rulesJson.stringValue);
+    plan = {}; let totalGroups = 0, dimCount = 0;
+    R.forEach(dim => {
+      const di = dim.dimIndex; const parts = dim.parts || {}; const pp = {};
+      Object.keys(parts).forEach(pn => {
+        if (!P2_LEAF.has(pn)) return;               // 只取葉部位（聚合不放卡片）
+        const g = []; collectGroups(parts[pn], g);
+        const uniq = [...new Set(g)];
+        if (uniq.length) { pp[pn] = uniq; totalGroups += uniq.length; }
+      });
+      if (Object.keys(pp).length) { plan[di] = pp; dimCount++; }
+    });
+    $('st1').className = 'stat ok';
+    $('st1').textContent = '✓ 讀到 ' + dimCount + ' 個維度、共 ' + totalGroups + ' 個敘述分組（葉部位）。';
+    $('s1').classList.add('done');
+  } catch (e) {
+    plan = null; $('st1').className = 'stat err'; $('st1').textContent = '讀取失敗：' + (e.message || e);
+  }
+  refresh();
+}
+
+// ---- 步驟 2/3：登入 + 套裝清單 ----
+$('b2').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => $('st2').textContent = '登入失敗：' + (e.code || e.message));
+$('b2out').onclick = () => signOut(auth);
+onAuthStateChanged(auth, async u => {
+  user = u; role = null;
+  if (u) {
+    const email = (u.email || '').toLowerCase();
+    try { const s = await getDoc(doc(db, 'allowedUsers', email)); if (s.exists()) role = s.data().role || null; } catch (e) {}
+    if (email === 'chaojentseng@gmail.com') role = 'admin';
+    await loadSets();
+  } else { sets = []; }
+  refresh();
+});
+async function loadSets() {
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets'));
+    sets = []; snap.forEach(d => sets.push({ id: d.id, ...d.data() }));
+    sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const sel = $('rs-sel'); sel.innerHTML = '';
+    if (!sets.length) { sel.appendChild(new Option('（尚無套裝→先到套裝分頁新增）', '')); return; }
+    sets.forEach(s => sel.appendChild(new Option((s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''), s.id)));
+    const pick = sets.find(s => /202605|人相兵法/.test(s.name || '')) || sets[0];
+    sel.value = pick.id;
+  } catch (e) { $('st3').className = 'stat err'; $('st3').textContent = '讀套裝失敗：' + (e.code || e.message); }
+}
+
+function isStaff() { return role === 'admin' || role === 'teacher'; }
+function refresh() {
+  $('b2').style.display = user ? 'none' : ''; $('b2out').style.display = user ? '' : 'none';
+  $('st2').className = 'stat' + (user && !isStaff() ? ' err' : (user ? ' ok' : ''));
+  $('st2').textContent = user ? ('已登入：' + (user.email || user.uid) + '｜角色：' + (role || '（無）') + (isStaff() ? '' : '（需 admin/teacher 才能寫入）')) : '尚未登入。你必須是 admin/teacher 才能寫入。';
+  $('s2').classList.toggle('done', !!user);
+  $('b4').disabled = !(plan && user && isStaff() && $('rs-sel').value);
+}
+$('b1').onclick = loadP1;
+$('rs-sel').onchange = () => { preview = null; $('preview').innerHTML = ''; $('b5').disabled = true; $('st5').textContent = '請先看過預覽。'; };
+
+// ---- 步驟 4：預覽（讀現有 dims，算出要新增 vs 跳過）----
+$('b4').onclick = async () => {
+  const setId = $('rs-sel').value; if (!setId || !plan) return;
+  $('st4').className = 'stat'; $('st4').textContent = '計算中（讀取套裝現有內容）…'; $('preview').innerHTML = '';
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets', setId, 'dims'));
+    const existing = {}; snap.forEach(d => existing[d.id] = d.data());
+    let toAdd = 0, skip = 0; const rows = [];
+    Object.keys(plan).map(Number).sort((a, b) => a - b).forEach(di => {
+      const dd = existing[di] || {}; const eparts = dd.parts || {};
+      let dimAdd = 0, dimSkip = 0; const partBits = [];
+      Object.keys(plan[di]).forEach(pn => {
+        const have = new Set(((eparts[pn] && eparts[pn].cards) || []).map(c => c.label));
+        const news = plan[di][pn].filter(g => !have.has(g));
+        const sk = plan[di][pn].length - news.length;
+        toAdd += news.length; skip += sk; dimAdd += news.length; dimSkip += sk;
+        if (news.length) partBits.push(pn + '+' + news.length);
+      });
+      const m = META[di] || {};
+      rows.push('<tr><td>dim' + di + ' ' + (m.name || '') + '</td><td>' + (partBits.join('、') || '（無新增）') + '</td><td class="r">' + dimAdd + '</td><td class="r">' + dimSkip + '</td></tr>');
+    });
+    preview = { setId, toAdd };
+    const setName = (sets.find(s => s.id === setId) || {}).name || setId;
+    $('preview').innerHTML =
+      '<div class="note" style="margin-top:10px">目標套裝：<b class="big">' + setName + '</b><br>將新增 <b class="big">' + toAdd + '</b> 張「輔」卡片；已存在跳過 ' + skip + ' 張。</div>' +
+      '<table><tr><th>維度</th><th>部位＋新增數</th><th class="r">新增</th><th class="r">跳過</th></tr>' + rows.join('') + '</table>';
+    $('st4').className = 'stat ok'; $('st4').textContent = '✓ 預覽完成。確認沒問題再按下方「確認匯入」。';
+    $('s4').classList.add('done');
+    $('b5').disabled = toAdd === 0;
+    $('st5').textContent = toAdd === 0 ? '沒有要新增的卡片（可能已匯入過）。' : '會寫入 ' + toAdd + ' 張卡片到《' + setName + '》。';
+  } catch (e) { $('st4').className = 'stat err'; $('st4').textContent = '預覽失敗：' + (e.code || e.message); }
+};
+
+// ---- 步驟 5：匯入（read-modify-write 各維度 dim 文件）----
+const uid = () => 'g' + Math.random().toString(36).slice(2, 8);
+$('b5').onclick = async () => {
+  if (!preview || !preview.toAdd) return;
+  const setId = preview.setId;
+  const setName = (sets.find(s => s.id === setId) || {}).name || setId;
+  if (!confirm('把 ' + preview.toAdd + ' 張「輔」卡片寫入《' + setName + '》？\n（合併、不覆蓋你已填的內容）')) return;
+  $('b5').disabled = true; $('st5').className = 'stat'; $('st5').textContent = '寫入中…';
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets', setId, 'dims'));
+    const existing = {}; snap.forEach(d => existing[d.id] = d.data());
+    let wrote = 0, dimsWithContent = 0, partsTotal = 0;
+    const dis = Object.keys(plan).map(Number).sort((a, b) => a - b);
+    for (const di of dis) {
+      const m = META[di] || {};
+      const dd = existing[di] || {};
+      const parts = dd.parts || {};
+      Object.keys(plan[di]).forEach(pn => {
+        const part = parts[pn] && parts[pn].kind === 'leaf' ? parts[pn] : { kind: 'leaf', cards: [] };
+        if (!Array.isArray(part.cards)) part.cards = [];
+        const have = new Set(part.cards.map(c => c.label));
+        plan[di][pn].forEach(g => {
+          if (have.has(g)) return;
+          part.cards.push({ id: uid(), label: g, note: '', role: 'aux', combos: [{ leaves: [] }] });
+          have.add(g); wrote++;
+        });
+        parts[pn] = part;
+      });
+      // 維度 meta：沿用既有，缺的補預設（符合為 a 極、不翻轉）
+      const dimDoc = {
+        dimIndex: di,
+        dimName: dd.dimName || m.name || ('dim' + di),
+        positiveType: dd.positiveType || m.positiveType,
+        negativeType: dd.negativeType || m.negativeType,
+        poleFlip: !!dd.poleFlip,
+        targetPoleName: dd.targetPoleName || m.a,
+        targetPole: dd.targetPole || m.aT,
+        parts
+      };
+      await setDoc(doc(db, 'ruleSets', setId, 'dims', String(di)), dimDoc);
+      if (Object.keys(parts).length) dimsWithContent++;
+      partsTotal += Object.keys(parts).length;
+    }
+    // 更新套裝完整度摘要（不動名稱/狀態）
+    await setDoc(doc(db, 'ruleSets', setId), { savedAt: new Date().toISOString(), dimsAuthored: dimsWithContent, partsAuthored: partsTotal }, { merge: true });
+    $('st5').className = 'stat ok';
+    $('st5').textContent = '✓ 完成，寫入 ' + wrote + ' 張卡片。到條件編輯器選《' + setName + '》就會看到（全部是空白「輔」卡片，待你填條件）。';
+    $('s5').classList.add('done');
+    preview = null;
+  } catch (e) { $('st5').className = 'stat err'; $('st5').textContent = '寫入失敗：' + (e.code || e.message); $('b5').disabled = false; }
+};
+
+loadP1();
+refresh();
+</script>
+</body>
+</html>
