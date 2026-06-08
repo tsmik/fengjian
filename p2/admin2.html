@@ -4,24 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>admin2 條件編輯器 — P2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bd:#d9d2c7; --bd2:#cbbfa8; --bg:#faf7f2; --sel:#e8eef2; --ink:#3a352e; --sub:#8a8378; --accent:#3b6ea5; --static:#7A9E7E; --dynamic:#C17A5A; }
+  :root { --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif; color:var(--ink); background:var(--bg); font-size:14px; }
-  header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--bd); background:#fff; flex-wrap:wrap; position:sticky; top:0; z-index:5; }
+  body { margin:0; font-family:"Noto Serif TC",serif; color:var(--ink); background:var(--bg); font-size:14px; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--bd2); background:var(--panel); flex-wrap:wrap; position:sticky; top:0; z-index:5; }
   header h1 { font-size:16px; margin:0; font-weight:600; }
   header .grow { flex:1; }
   #hdr-status { font-size:12px; color:var(--sub); }
   input.rs { border:1px solid var(--bd); border-radius:6px; padding:4px 8px; font-size:13px; }
-  .btn { border:1px solid var(--bd); background:#fff; border-radius:6px; padding:5px 10px; cursor:pointer; font-size:13px; }
-  .btn:hover { background:#f0ece5; }
-  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn { border:1px solid var(--bd2); background:var(--panel); border-radius:8px; padding:5px 10px; cursor:pointer; font-size:13px; color:var(--ink); }
+  .btn:hover { background:var(--sel); }
+  .btn.primary { background:var(--static); color:#fff; border-color:var(--static); }
   .btn.sm { padding:3px 8px; font-size:12px; }
   .btn.xs { padding:1px 6px; font-size:12px; }
   .btn.danger { color:#a33; }
   .wrap { display:grid; grid-template-columns:168px 158px 188px minmax(0,1fr) 270px; gap:0; height:calc(100vh - 52px); }
   .col { border-right:1px solid var(--bd); overflow:auto; padding:8px; }
-  .col-cards-wrap { display:flex; flex-direction:column; overflow:hidden; padding:0; background:#fff; }
+  .col-cards-wrap { display:flex; flex-direction:column; overflow:hidden; padding:0; background:var(--panel); }
   #col-cards { flex:1; overflow:auto; padding:10px; }
   .spice-bar { border-top:1px solid var(--bd2); background:#f7f2ea; padding:8px 12px 10px; }
   .spice-bar .sb-title { font-size:12px; color:var(--sub); margin-bottom:2px; }
@@ -30,7 +31,7 @@
   .spice-row input[type=range] { flex:1; accent-color:#C17A5A; height:6px; }
   .spice-val { width:42px; text-align:right; font-size:13px; }
   .grp-row { display:flex; align-items:center; gap:3px; padding:6px 7px; border-radius:7px; cursor:pointer; }
-  .grp-row:hover { background:#f0ece5; }
+  .grp-row:hover { background:var(--sel); }
   .grp-row.sel { background:var(--sel); }
   .gr-name { flex:1; font-size:13px; }
   .gr-cnt { font-size:11px; color:var(--sub); }
@@ -93,11 +94,11 @@
   /* 可拖欄寬分隔線 */
   .splitter { position:fixed; top:52px; bottom:0; width:8px; margin-left:-4px; cursor:col-resize; z-index:8; }
   .splitter:hover, .splitter.drag { background:rgba(122,158,126,.3); }
-  #col-editor { background:#fff; }
+  #col-editor { background:var(--panel); }
   .col-title { font-weight:600; font-size:13px; margin:2px 0 8px; color:var(--ink); }
   .group-label { font-size:11px; color:var(--sub); margin:10px 0 4px; border-top:1px dashed var(--bd); padding-top:6px; }
   .list-row { display:flex; flex-direction:column; padding:6px 8px; border-radius:6px; cursor:pointer; }
-  .list-row:hover { background:#f0ece5; }
+  .list-row:hover { background:var(--sel); }
   .list-row.sel { background:var(--sel); }
   .lr-name { font-size:13px; }
   .lr-sub { font-size:11px; color:var(--sub); }
@@ -134,7 +135,7 @@
   .opt.on { background:var(--accent); color:#fff; border-color:var(--accent); }
   .warn { color:#b06a00; font-size:11px; margin-top:3px; }
   .agg-row { display:flex; align-items:center; gap:6px; padding:4px 2px; font-size:13px; }
-  #palette { background:#fbf9f5; }
+  #palette { background:var(--panel); }
   .pal-ctrl { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
   .search { border:1px solid var(--bd); border-radius:6px; padding:4px 8px; }
   .pal-list { display:flex; flex-direction:column; gap:3px; }
