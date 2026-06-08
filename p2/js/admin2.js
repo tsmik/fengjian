@@ -254,13 +254,16 @@ function isStaff() { return !!user && (role === 'admin' || role === 'teacher'); 
 async function saveToStaging() {
   if (!fbOK || !user) return alert('請先用 Google 登入');
   if (!isStaff()) return alert('此帳號角色＝' + (role || '（無）') + '，需 admin/teacher 才能存到 staging。\n你的 UID：' + user.uid + '\n（請先把這個 UID 設成 admin/teacher）');
+  // 護欄：套裝必須在「套裝」分頁存在才能存（避免用 setDoc 把已刪/不存在的套裝復活）
+  let exists = false; try { exists = (await getDoc(doc(db, 'ruleSets', state.ruleSet.id))).exists(); } catch (e) {}
+  if (!exists) { renderRsSelect(); return alert('這份套裝在「套裝」分頁不存在（可能已被刪除）。\n請到「套裝」分頁新增或選一份，按「編輯內容」進來再存。'); }
   const snap = curJson();
   const data = serialize();
   const dimsAuthored = Object.keys(data.dims).length;
   let partsAuthored = 0; Object.values(data.dims).forEach(d => partsAuthored += Object.keys(d.parts || {}).length);
   try {
-    // 只 merge 內容相關的 meta（名稱/時期/說明 由「套裝」分頁管理，不覆蓋）＋ 完整度摘要 給套裝列表用
-    await setDoc(doc(db, 'ruleSets', state.ruleSet.id), { name: state.ruleSet.name, status: state.ruleSet.status || 'draft', savedAt: new Date().toISOString(), dimsAuthored, partsAuthored }, { merge: true });
+    // meta（名稱/時期/說明/狀態）一律由「套裝」分頁管理，這裡只更新「內容完整度」，不覆蓋 meta（避免蓋掉那邊的改名）
+    await setDoc(doc(db, 'ruleSets', state.ruleSet.id), { savedAt: new Date().toISOString(), dimsAuthored, partsAuthored }, { merge: true });
     for (const di of Object.keys(data.dims)) {
       await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'dims', String(di)), JSON.parse(JSON.stringify(data.dims[di])));  // 去掉 undefined
     }
@@ -616,7 +619,7 @@ async function renderRsSelect() {
     if (!sets.length) { sel.appendChild(el('option', { value: '', text: '（尚無套裝→到「套裝」分頁新增）' })); return; }
     let found = false;
     sets.forEach(s => { const o = el('option', { value: s.id, text: s.name || s.id }); if (s.id === cur) { o.selected = true; found = true; } sel.appendChild(o); });
-    if (!found) { const o = el('option', { value: cur, text: curName + '（未存）' }); sel.insertBefore(o, sel.firstChild); o.selected = true; }
+    if (!found) { const o = el('option', { value: cur, text: curName + '（不在套裝清單）' }); sel.insertBefore(o, sel.firstChild); o.selected = true; }
   } catch (e) { sel.innerHTML = ''; sel.appendChild(el('option', { value: '', text: '讀取失敗' })); }
 }
 
@@ -625,6 +628,8 @@ async function setActiveFromEditor() {
   if (!fbOK || !user) return alert('請先用 Google 登入');
   if (!isStaff()) return alert('需 admin/teacher 才能設為上線');
   if (isDirty()) return alert('目前有未儲存的變更，請先按「儲存」再設為上線。');
+  let exists = false; try { exists = (await getDoc(doc(db, 'ruleSets', state.ruleSet.id))).exists(); } catch (e) {}
+  if (!exists) { renderRsSelect(); return alert('這份套裝在「套裝」分頁不存在（可能已被刪除），無法設為上線。'); }
   const dn = Object.keys(serialize().dims).length;
   if (dn === 0 && !confirm('此套裝尚無內容（0 維），設為上線後學員會讀到空規則。確定？')) return;
   if (!confirm('把目前套裝《' + (state.ruleSet.name || state.ruleSet.id) + '》設為上線（＝學員看到的版本）？')) return;
@@ -663,7 +668,7 @@ function boot() {
   window.addEventListener('beforeunload', (e) => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
-  window.addEventListener('focus', () => loadLiveObs(false));   // 從觀察庫切回來/重新聚焦時，刷新 live 題庫
+  window.addEventListener('focus', () => { loadLiveObs(false); if (user) renderRsSelect(); });   // 切回來時刷新 live 題庫＋套裝清單
   $('export-dl').addEventListener('click', () => {
     const md = _exportFmt === 'md';
     const blob = new Blob([$('export-ta').value], { type: md ? 'text/markdown' : 'application/json' });
