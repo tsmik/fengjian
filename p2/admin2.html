@@ -45,7 +45,7 @@
   .role-badge { font-size:10px; color:#fff; background:#C17A5A; border-radius:9px; padding:1px 7px; }
   .role-badge.none { background:#cdbfa6; }
   .combo-head { display:flex; align-items:center; gap:6px; }
-  .save-status { font-size:12px; }
+  .save-status { font-size:12px; white-space:nowrap; cursor:help; }
   .save-status.dirty { color:var(--dynamic); }
   .save-status.ok { color:var(--static); }
   /* col1 維度：一行（名稱＋符合為X）；靠左對齊，與「維度」標題同左邊界 */
@@ -140,6 +140,8 @@
   .pal-ctrl { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
   .search { border:1px solid var(--bd); border-radius:6px; padding:4px 8px; }
   .pal-list { display:flex; flex-direction:column; gap:3px; }
+  .pal-sec { font-size:11px; font-weight:600; color:var(--sub); margin:9px 2px 2px; border-top:1px dashed var(--bd); padding-top:6px; }
+  .pal-sec:first-child { border-top:0; margin-top:2px; padding-top:0; }
   .pal-item { border:1px solid var(--bd); border-radius:6px; padding:5px 7px; background:#fff; cursor:grab; display:flex; flex-direction:column; }
   .pal-item:hover { background:#eef5ff; border-color:var(--accent); }
   .pi-label { font-size:13px; }

@@ -103,9 +103,11 @@ function curJson() { try { return JSON.stringify(serialize()); } catch (e) { ret
 function isDirty() { return !!user && curJson() !== lastSavedJson; }
 function renderSaveStatus() {
   const s = $('save-status'); if (!s) return;
-  if (!fbOK || !user) { s.textContent = '（未登入：只存本機草稿，按「儲存」前請先登入）'; s.className = 'save-status'; return; }
+  // 短文字＋完整說明放 title（滑鼠移上去才顯示），避免長文字撐寬整行擋到分頁列。
+  if (!fbOK || !user) { s.textContent = '本機草稿'; s.title = '未登入：編輯只存在本機草稿，按「儲存」前請先登入'; s.className = 'save-status'; return; }
   const dirty = curJson() !== lastSavedJson;
-  s.textContent = dirty ? '● 尚未儲存到套裝（編輯會自動留草稿；按「儲存」才寫進套裝＝學員看的版本）' : ('已儲存 ✓' + (lastSavedAt ? ' ' + lastSavedAt : ''));
+  s.textContent = dirty ? '● 未儲存' : ('已儲存 ✓' + (lastSavedAt ? ' ' + lastSavedAt : ''));
+  s.title = dirty ? '尚未儲存到套裝（編輯會自動留本機草稿；按「儲存」才寫進套裝＝學員看的版本）' : '已寫進套裝（＝學員看的版本）';
   s.className = 'save-status ' + (dirty ? 'dirty' : 'ok');
 }
 function migrateAllLeaves() {
@@ -508,8 +510,9 @@ function renderPalette() {
     let items = OBS;
     if (onlyRel.checked) items = items.filter(o => o.part === filt[0] && (!filt[1] || o.section === filt[1]));
     if (q) items = items.filter(o => (o.label + o.obsId).toLowerCase().indexOf(q.toLowerCase()) >= 0);
-    items.slice(0, 200).forEach(o => {
-      const item = el('div', {
+    items = items.slice(0, 200);
+    function obsItem(o) {
+      return el('div', {
         class: 'pal-item', draggable: true,
         ondragstart: (e) => e.dataTransfer.setData('text/obsid', o.obsId),
         onclick: () => { if (!state.active) return alert('先點一個 combo 當作加入目標（會標 ◉）'); const def = getPart(state.curDim, state.curPart, true); const card = (def.cards || []).find(c => c.id === state.active.cardId); if (card) addLeaf(card, card.combos[state.active.comboIdx], o.obsId); }
@@ -517,8 +520,11 @@ function renderPalette() {
         el('span', { class: 'pi-label', text: o.label }),
         el('span', { class: 'pi-row' }, [el('span', { class: 'pi-id', text: o.obsId }), el('span', { class: 'lr-tag', text: pairedOf(o.obsId) ? 'L/R' : '非L/R' })])
       ]);
-      listBox.appendChild(item);
-    });
+    }
+    // 依 section（部位題目的分類，如 頂骨/枕骨/華陽骨）分組顯示
+    const groups = [];
+    items.forEach(o => { const sec = o.section || '（未分類）'; let g = groups.find(x => x.sec === sec); if (!g) { g = { sec, list: [] }; groups.push(g); } g.list.push(o); });
+    groups.forEach(g => { listBox.appendChild(el('div', { class: 'pal-sec', text: g.sec })); g.list.forEach(o => listBox.appendChild(obsItem(o))); });
     if (!items.length) listBox.appendChild(el('div', { class: 'hint', text: '無符合' }));
   }
   renderList('');
