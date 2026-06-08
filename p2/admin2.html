@@ -48,8 +48,9 @@
   .save-status { font-size:12px; }
   .save-status.dirty { color:var(--dynamic); }
   .save-status.ok { color:var(--static); }
-  /* col1 維度：一行（名稱＋符合為X） */
+  /* col1 維度：一行（名稱＋符合為X）；靠左對齊，與「維度」標題同左邊界 */
   .dim-row { display:flex; align-items:center; }
+  #col-dims .list-row { align-items:flex-start; padding-left:0; }
   .dim-name { font-size:14px; white-space:nowrap; }
   /* col2 維度極性設定 */
   .pole-ctrl { border:1px solid var(--bd); border-radius:8px; padding:6px 8px; margin:4px 0 10px; background:#fbf8f2; display:flex; flex-direction:column; gap:3px; }
