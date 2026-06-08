@@ -1,12 +1,13 @@
 // p2/js/users_admin.js — 使用者 / 白名單管理（rbf2app-staging）。三欄式：分組｜名片卡｜預覽編輯。
 // allowedUsers/{email} = { email, role, name, period, note, photo, group, addedAt, updatedAt }。
 //   group=分組名稱(字串，空=未分組)；photo=大頭照縮圖(base64 jpeg, 最長邊≤200px)。
-// 分組清單存在保留文件 allowedUsers/__groups__ = { groups:[...], _meta:true }（避免新 collection 被規則擋）。
+// 分組清單存在 allowedUsers/_groups_meta = { groups:[...], _meta:true }（避免新 collection 被規則擋）。
+//   ⚠ 不可用 __groups__ 之類「前後雙底線」id：Firestore 保留 __.*__ 文件 id，寫入會 invalid-argument。
 //   白名單＝可登入名單；admin 可寫、登入者可讀。
 // 註：users/{uid} 只能本人讀寫，所以「角色實際生效」需登入流程把 allowedUsers.role 帶進 users/{uid}（之後接報告/部署時做）。
 import { fbOK, onUser, login, logout, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from './fb.js';
 
-const GROUPS_DOC = '__groups__';
+const GROUPS_DOC = '_groups_meta';   // 注意：不可用 __x__（Firestore 保留 id）
 const NONE = '__none__';      // 未分組 filter
 const ALL = '__all__';        // 全部 filter
 
