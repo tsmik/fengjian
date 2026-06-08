@@ -8,59 +8,79 @@
 <style>
   :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
-  header{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);position:sticky;top:0;z-index:5;flex-wrap:wrap;}
-  header h1{font-size:17px;margin:0;font-weight:600;}
+  html,body{height:100%;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  header{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);flex:0 0 auto;flex-wrap:wrap;}
+  header h1{font-size:16px;margin:0;font-weight:600;}
   .grow{flex:1;}
   #status{font-size:12px;color:var(--sub);}
   .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);}
   .btn:hover{background:var(--sel);}
   .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
   .btn.sm{padding:4px 10px;font-size:12px;}
-  .btn.xs{padding:2px 8px;font-size:12px;border-radius:6px;}
+  .btn.xs{padding:2px 7px;font-size:11px;border-radius:6px;}
   .btn.danger{color:#a8503a;}
   .btn:disabled{opacity:.5;cursor:not-allowed;}
-  .wrap{max-width:760px;margin:0 auto;padding:16px;}
-  .me{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.8;}
-  .me b{font-weight:600;}
-  .addbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
-  .addbar input{font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;min-width:240px;}
-  select{font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:6px 8px;background:#fffdf9;}
+  input,select,textarea{font-family:inherit;color:var(--ink);}
   .badge{font-size:10px;color:#fff;border-radius:9px;padding:1px 8px;white-space:nowrap;}
   .badge.admin{background:#a8503a;} .badge.teacher{background:var(--accent);} .badge.student{background:#b8a888;}
-  .hint{color:var(--sub);font-size:13px;padding:12px 4px;line-height:1.7;}
-  .role-warn{border:1px solid #e0b48a;background:#fbf1e4;border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.8;color:#7a5230;}
-  .note-line{font-size:12px;color:var(--sub);margin:14px 4px;line-height:1.7;}
+  .role-warn{flex:0 0 auto;border-bottom:1px solid #e0b48a;background:#fbf1e4;padding:7px 16px;font-size:12px;color:#7a5230;}
 
-  /* ── 學員卡片 ── */
-  .card{background:var(--panel);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden;}
-  .card.open{border-color:var(--bd2);box-shadow:0 1px 4px rgba(74,68,59,.07);}
-  .card-head{display:flex;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;}
-  .card-head:hover{background:#fcfaf4;}
-  .avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 42px;background:var(--sel);border:1px solid var(--bd);}
-  .avatar.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:17px;font-weight:600;}
-  .card-main{flex:1;min-width:0;}
-  .card-name{font-size:15px;font-weight:600;line-height:1.4;word-break:break-all;}
-  .card-name .em-sub{font-size:11px;color:var(--sub);font-weight:400;margin-left:6px;word-break:break-all;}
-  .card-meta{font-size:12px;color:var(--sub);margin-top:2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .chev{flex:0 0 auto;color:var(--sub);font-size:12px;transition:transform .15s;}
-  .card.open .chev{transform:rotate(90deg);}
+  /* ── 三欄 ── */
+  .cols{flex:1;display:flex;min-height:0;}
+  .col{height:100%;overflow:auto;}
+  .col-groups{flex:0 0 196px;border-right:1px solid var(--bd2);background:var(--panel);display:flex;flex-direction:column;}
+  .col-cards{flex:0 0 312px;border-right:1px solid var(--bd2);display:flex;flex-direction:column;}
+  .col-detail{flex:1;min-width:0;background:var(--panel);}
+  .col-title{font-size:12px;color:var(--sub);padding:10px 14px 6px;font-weight:600;letter-spacing:.04em;}
 
-  .card-body{display:none;padding:4px 14px 14px;border-top:1px solid var(--bd);}
-  .card.open .card-body{display:block;}
-  .fld{margin-top:12px;}
-  .fld > label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;}
-  .fld input[type=text], .fld textarea, .fld select{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;color:var(--ink);}
-  .fld textarea{min-height:64px;resize:vertical;line-height:1.6;}
-  .fld.ro{color:var(--ink);}
-  .fld.ro .v{font-size:14px;padding:2px 0;word-break:break-all;}
-  .photo-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .photo-prev{width:80px;height:80px;border-radius:10px;object-fit:cover;background:var(--sel);border:1px solid var(--bd);}
-  .photo-prev.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;}
-  .card-foot{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  /* 左欄：分組 */
+  .glist{flex:1;overflow:auto;}
+  .grow-spacer{flex:1;}
+  .g-item{display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;border-left:3px solid transparent;font-size:14px;}
+  .g-item:hover{background:var(--sel);}
+  .g-item.sel{background:var(--sel);border-left-color:var(--static);font-weight:600;}
+  .g-item .g-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .g-item .g-cnt{font-size:11px;color:var(--sub);}
+  .g-item .g-ops{display:none;gap:2px;}
+  .g-item:hover .g-ops{display:flex;}
+  .g-add{border-top:1px solid var(--bd);padding:10px 12px;display:flex;gap:6px;flex-direction:column;}
+  .g-add input{font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:6px 9px;background:#fffdf9;width:100%;}
+  .g-note{font-size:11px;color:var(--sub);padding:9px 12px;line-height:1.7;border-top:1px solid var(--bd);}
+
+  /* 中欄：名片卡 */
+  .addbar{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;gap:6px;flex-wrap:wrap;}
+  .addbar input{font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:6px 9px;background:#fffdf9;flex:1;min-width:120px;}
+  .addbar select{font-size:12px;border:1px solid var(--bd2);border-radius:8px;padding:6px 7px;background:#fffdf9;}
+  .clist{flex:1;overflow:auto;padding:8px;}
+  .ncard{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--panel);}
+  .ncard:hover{background:#fcfaf4;border-color:var(--bd2);}
+  .ncard.sel{border-color:var(--static);box-shadow:0 0 0 1px var(--static) inset;}
+  .av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 38px;background:var(--sel);border:1px solid var(--bd);}
+  .av.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:15px;font-weight:600;}
+  .ncard-main{flex:1;min-width:0;}
+  .ncard-name{font-size:14px;font-weight:600;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ncard-note{font-size:12px;color:var(--sub);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+
+  /* 右欄：預覽 / 編輯 */
+  .detail-wrap{max-width:520px;padding:20px 22px;}
+  .d-empty{color:var(--sub);font-size:14px;padding:40px 22px;line-height:1.9;}
+  .d-photo-row{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .d-photo{width:104px;height:104px;border-radius:14px;object-fit:cover;background:var(--sel);border:1px solid var(--bd);}
+  .d-photo.ph{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px;text-align:center;}
+  .fld{margin-top:13px;}
+  .fld>label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;}
+  .fld input[type=text],.fld textarea,.fld select{width:100%;font-size:14px;border:1px solid var(--bd2);border-radius:8px;padding:7px 10px;background:#fffdf9;}
+  .fld textarea{min-height:80px;resize:vertical;line-height:1.6;}
+  .fld.ro .v{font-size:14px;padding:2px 0;word-break:break-all;color:var(--ink);}
+  .d-foot{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap;}
   .save-state{font-size:12px;color:var(--sub);}
-  .save-state.ok{color:var(--static);}
-  .save-state.err{color:#a8503a;}
+  .save-state.ok{color:var(--static);} .save-state.err{color:#a8503a;}
+  .hint{color:var(--sub);font-size:13px;padding:14px;line-height:1.7;}
+
+  @media(max-width:780px){
+    .col-groups{flex-basis:140px;} .col-cards{flex-basis:210px;}
+  }
 </style>
 </head>
 <body>
@@ -69,19 +89,23 @@
   <button class="btn sm" id="btn-refresh">重新整理</button>
   <span class="grow"></span>
   <span id="status"></span>
+  <span id="me-badge"></span>
   <button class="btn sm" id="btn-login">Google 登入</button>
   <button class="btn sm" id="btn-logout" style="display:none">登出</button>
 </header>
-<div class="wrap">
-  <div id="me" class="me"></div>
-  <div id="warn"></div>
-  <div class="addbar">
-    <input id="add-email" type="email" placeholder="輸入 email 加入白名單…" autocomplete="off">
-    <select id="add-role"><option value="student">學員</option><option value="teacher">老師(teacher)</option><option value="admin">管理員(admin)</option></select>
-    <button class="btn sm primary" id="add-btn">＋ 加入</button>
+<div id="warn"></div>
+<div class="cols">
+  <div class="col col-groups">
+    <div class="col-title">分組</div>
+    <div class="glist" id="glist"></div>
+    <div class="g-add" id="g-add"></div>
+    <div class="g-note" id="g-note"></div>
   </div>
-  <div id="list"></div>
-  <div class="note-line" id="effect-note"></div>
+  <div class="col col-cards">
+    <div class="addbar" id="addbar"></div>
+    <div class="clist" id="clist"></div>
+  </div>
+  <div class="col col-detail" id="detail"></div>
 </div>
 <script type="module" src="js/users_admin.js"></script>
 </body>
