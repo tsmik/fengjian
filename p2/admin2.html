@@ -157,7 +157,10 @@
   <h1>admin2 條件編輯器</h1>
   <span class="hint" style="padding:0">套裝：</span>
   <select class="rs" id="rs-select" title="選擇要編輯的套裝（在「套裝」分頁建立/改名）"></select>
+  <button class="btn sm" id="btn-undo" title="復原 (⌘/Ctrl+Z)" disabled>↶ 復原</button>
+  <button class="btn sm" id="btn-redo" title="重做 (⌘/Ctrl+Shift+Z)" disabled>↷ 重做</button>
   <button class="btn sm" id="btn-export">匯出 JSON</button>
+  <button class="btn sm" id="btn-export-md" title="把各維度條件匯出成人看的 Markdown">匯出 MD</button>
   <button class="btn sm primary" id="btn-save">儲存</button>
   <button class="btn sm" id="btn-setlive" title="把目前套裝設為學員看到的版本">設為上線</button>
   <span class="save-status" id="save-status"></span>
@@ -208,7 +211,7 @@
 
 <div class="modal" id="export-modal">
   <div class="modal-box">
-    <div style="font-weight:600">套裝 JSON（v0.6 §A.2 形狀）</div>
+    <div style="font-weight:600" id="export-title">套裝 JSON（v0.6 §A.2 形狀）</div>
     <textarea id="export-ta" readonly></textarea>
     <div class="modal-foot">
       <button class="btn" id="export-dl">下載 .json</button>

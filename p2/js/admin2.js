@@ -98,7 +98,7 @@ function partHasContent(di, name) {
 }
 
 // ---------- persistence ----------
-function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} renderSaveStatus(); }
+function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} renderSaveStatus(); recordHistory(); }
 function curJson() { try { return JSON.stringify(serialize()); } catch (e) { return ''; } }
 function isDirty() { return !!user && curJson() !== lastSavedJson; }
 function renderSaveStatus() {
@@ -136,6 +136,72 @@ function serialize() {
   });
   return out;
 }
+
+// ---------- undo / redo（快照 ruleSet/dims/spice；不含選取狀態）----------
+let _hist = [], _hi = -1, _restoring = false;
+function _snap() { try { return JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice }); } catch (e) { return ''; } }
+function recordHistory() {
+  if (_restoring) return;
+  const s = _snap(); if (!s) return;
+  if (_hi >= 0 && _hist[_hi] === s) return;          // 無實質變化（如純選取）不記
+  _hist = _hist.slice(0, _hi + 1); _hist.push(s); _hi = _hist.length - 1;
+  if (_hist.length > 100) { _hist.shift(); _hi--; }  // 上限 100 步
+  renderUndoBtns();
+}
+function resetHistory() { _hist = [_snap()]; _hi = 0; renderUndoBtns(); }   // 載入新套裝後重設基準
+function _applySnap(s) {
+  let j; try { j = JSON.parse(s); } catch (e) { return; }
+  state.ruleSet = j.ruleSet; state.dims = j.dims; state.spice = j.spice || state.spice;
+  state.curPart = null; state.curGroup = null; state.active = null;
+  _restoring = true; migrateAllLeaves(); renderAll(); _restoring = false;
+  renderUndoBtns();
+}
+function undo() { if (_hi > 0) { _hi--; _applySnap(_hist[_hi]); } }
+function redo() { if (_hi < _hist.length - 1) { _hi++; _applySnap(_hist[_hi]); } }
+function renderUndoBtns() { const u = $('btn-undo'), r = $('btn-redo'); if (u) u.disabled = _hi <= 0; if (r) r.disabled = _hi >= _hist.length - 1; }
+
+// ---------- 匯出維度為 Markdown（人看的摘要）----------
+let _exportFmt = 'json';
+function _roleZh(r) { return r === 'main' ? '主' : r === 'aux' ? '輔' : '未標'; }
+function _leafText(leaf) {
+  const o = OBS_BY_ID[leaf.ref]; const name = o ? o.label : leaf.ref;
+  return (!leaf.match || !leaf.match.length) ? (name + '（未定義條件）') : (name + '＝' + leaf.match.join('／'));
+}
+function buildMarkdown() {
+  const L = [];
+  L.push('# 條件編輯器匯出（維度）— ' + (state.ruleSet.name || '(未命名套裝)'));
+  L.push('');
+  L.push('> 匯出時間：' + new Date().toLocaleString('zh-Hant'));
+  const dimsWith = META.dims.filter(d => Object.keys((state.dims[d.index] && state.dims[d.index].parts) || {}).some(pn => partHasContent(d.index, pn)));
+  L.push('> 有內容的維度：' + dimsWith.length + ' / ' + META.dims.length);
+  L.push('');
+  META.dims.forEach(d => {
+    const di = d.index, dim = state.dims[di], parts = (dim && dim.parts) || {};
+    const partNames = Object.keys(parts).filter(pn => partHasContent(di, pn));
+    if (!partNames.length) return;
+    L.push('## ' + d.name + '（符合為「' + dimTargetName(di) + '」）');
+    partNames.forEach(pn => {
+      const p = parts[pn];
+      if (p.kind === 'aggregate') {
+        L.push('### ' + pn + '（聚合部位）');
+        (p.children || []).forEach(c => L.push('- ' + c.part + (c.side ? '（' + c.side + '）' : '')));
+      } else {
+        L.push('### ' + pn);
+        (p.cards || []).forEach(c => {
+          const note = c.note ? '　＿註：' + c.note.replace(/\s+/g, ' ').trim() : '';
+          L.push('- **' + (c.label || '(未命名卡片)') + '**〔' + _roleZh(c.role) + '〕' + note);
+          const combos = (c.combos || []).filter(cb => cb.length);
+          if (!combos.length) { L.push('  - （尚無條件）'); return; }
+          if (combos.length === 1) L.push('  - 條件（皆須符合）：' + combos[0].map(_leafText).join('；'));
+          else { L.push('  - 符合下列任一組：'); combos.forEach((cb, i) => L.push('    - 組' + (i + 1) + '（皆須）：' + cb.map(_leafText).join('；'))); }
+        });
+      }
+    });
+    L.push('');
+  });
+  return L.join('\n');
+}
+function exportMarkdown() { _exportFmt = 'md'; $('export-ta').value = buildMarkdown(); $('export-title').textContent = '維度 Markdown（人看的摘要）'; $('export-modal').style.display = 'flex'; }
 
 // ---------- Firebase ----------
 function initFirebase() {
@@ -467,9 +533,10 @@ function newRuleSet() {
   renderAll();
 }
 function exportJSON() {
+  _exportFmt = 'json';
   const data = serialize();
-  const txt = JSON.stringify(data, null, 2);
-  $('export-ta').value = txt;
+  $('export-ta').value = JSON.stringify(data, null, 2);
+  $('export-title').textContent = '套裝 JSON（v0.6 §A.2 形狀）';
   $('export-modal').style.display = 'flex';
 }
 
@@ -488,6 +555,7 @@ function applyRuleSet(meta, dimDocs) {
   state.curPart = null; state.curGroup = null; state.active = null;
   migrateAllLeaves(); renderAll();
   lastSavedJson = curJson(); lastSavedAt = '（剛載入）'; renderSaveStatus(); renderRsSelect();
+  resetHistory();   // 載入新套裝＝新的 undo 基準（不可往上一份套裝 undo）
 }
 
 async function loadRsIntoEditor(id) {
@@ -544,8 +612,19 @@ function boot() {
   $('btn-login').addEventListener('click', login);
   $('btn-logout').addEventListener('click', logout);
   $('btn-export').addEventListener('click', exportJSON);
+  $('btn-export-md').addEventListener('click', exportMarkdown);
   $('btn-save').addEventListener('click', saveToStaging);
   $('btn-setlive').addEventListener('click', setActiveFromEditor);
+  $('btn-undo').addEventListener('click', undo);
+  $('btn-redo').addEventListener('click', redo);
+  document.addEventListener('keydown', (e) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;   // 在輸入框內讓瀏覽器原生 undo 文字
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+  });
   $('rs-select').addEventListener('change', (e) => {
     const v = e.target.value;
     if (!v || v === state.ruleSet.id) return;
@@ -556,11 +635,13 @@ function boot() {
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
   $('export-dl').addEventListener('click', () => {
-    const blob = new Blob([$('export-ta').value], { type: 'application/json' });
-    const a = el('a', { href: URL.createObjectURL(blob), download: state.ruleSet.id + '.json' }); document.body.appendChild(a); a.click(); a.remove();
+    const md = _exportFmt === 'md';
+    const blob = new Blob([$('export-ta').value], { type: md ? 'text/markdown' : 'application/json' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: state.ruleSet.id + (md ? '.md' : '.json') }); document.body.appendChild(a); a.click(); a.remove();
   });
   initFirebase();
   renderAll();
   renderRsSelect();
+  resetHistory();   // 初始 undo 基準
 }
 boot();
