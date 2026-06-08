@@ -33,7 +33,7 @@
   <button class="tab" data-tab="obs">觀察庫</button>
   <button class="tab" data-tab="rs">套裝</button>
   <button class="tab" data-tab="lect">講義</button>
-  <button class="tab soon" disabled title="之後做">流年</button>
+  <button class="tab" data-tab="liu">流年</button>
   <button class="tab soon" disabled title="之後做">使用者</button>
   <button class="tab soon" disabled title="之後做">發布</button>
   <span class="grow"></span>
@@ -45,15 +45,17 @@
   <iframe id="f-obs" src="observations.html" title="觀察庫"></iframe>
   <iframe id="f-rs" src="rulesets.html" title="套裝管理"></iframe>
   <iframe id="f-lect" src="lectures.html" title="講義編輯器"></iframe>
+  <iframe id="f-liu" src="liunian.html" title="流年表編輯器"></iframe>
 </div>
 <script>
-  var TABS = ['cond', 'obs', 'rs', 'lect'];
+  var TABS = ['cond', 'obs', 'rs', 'lect', 'liu'];
   function show(tab){
     if (TABS.indexOf(tab) < 0) tab = 'cond';
     document.getElementById('f-cond').classList.toggle('hidden', tab !== 'cond');
     document.getElementById('f-obs').classList.toggle('hidden', tab !== 'obs');
     document.getElementById('f-rs').classList.toggle('hidden', tab !== 'rs');
     document.getElementById('f-lect').classList.toggle('hidden', tab !== 'lect');
+    document.getElementById('f-liu').classList.toggle('hidden', tab !== 'liu');
     Array.prototype.forEach.call(document.querySelectorAll('.tab[data-tab]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-tab') === tab);
     });

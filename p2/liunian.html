@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>流年表編輯器 — admin2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --dynamic:#C17A5A; --sel:#efe7d6; --accent:#3b6ea5; --chg:#fdf3d0; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);font-size:14px;}
+  header{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--bd2);position:sticky;top:0;z-index:6;flex-wrap:wrap;}
+  header h1{font-size:17px;margin:0;font-weight:600;}
+  .grow{flex:1;}
+  #status{font-size:12px;color:var(--sub);}
+  .save-status{font-size:12px;} .save-status.dirty{color:var(--dynamic);} .save-status.ok{color:var(--static);}
+  .btn{font-family:inherit;border:1px solid var(--bd2);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .btn:hover{background:var(--sel);}
+  .btn.primary{background:var(--static);color:#fff;border-color:var(--static);}
+  .btn.sm{padding:4px 10px;font-size:12px;}
+  .subbar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--bd);position:sticky;top:49px;z-index:5;flex-wrap:wrap;}
+  .gbtn{font-family:inherit;border:1px solid var(--bd2);background:#fffdf9;border-radius:20px;padding:4px 16px;cursor:pointer;font-size:14px;}
+  .gbtn.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .chgcount{font-size:12px;color:var(--sub);}
+  .role-warn{margin:12px 16px;border:1px solid #e0b48a;background:#fbf1e4;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.7;color:#7a5230;}
+  .tbl-wrap{padding:10px 16px 40px;overflow:auto;}
+  table{border-collapse:collapse;font-size:13px;}
+  thead th{position:sticky;top:0;background:var(--panel);border:1px solid var(--bd2);padding:4px 6px;font-weight:600;z-index:1;white-space:nowrap;}
+  td{border:1px solid var(--bd);padding:1px;}
+  td.age{text-align:center;color:var(--sub);padding:0 6px;font-variant-numeric:tabular-nums;}
+  tr.gate td.age{font-weight:700;color:var(--dynamic);}
+  td input.c{width:74px;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-family:inherit;font-size:13px;background:transparent;color:var(--ink);}
+  td input.c:focus{border-color:var(--accent);background:#fff;outline:none;}
+  td.changed input.c{background:var(--chg);}
+  td.changed{background:var(--chg);}
+  select.mk{font-family:inherit;font-size:13px;border:1px solid transparent;border-radius:4px;padding:2px;background:transparent;}
+  select.mk.has{color:var(--dynamic);font-weight:700;}
+  td.rst{text-align:center;}
+  .rbtn{cursor:pointer;color:var(--sub);font-size:13px;padding:2px 5px;}
+  .rbtn:hover{color:var(--dynamic);}
+  .hint{color:var(--sub);font-size:13px;padding:14px 16px;line-height:1.7;}
+</style>
+</head>
+<body>
+<header>
+  <h1>流年表編輯器</h1>
+  <button class="btn sm primary" id="btn-save">儲存</button>
+  <span class="save-status" id="save-status"></span>
+  <span class="grow"></span>
+  <span id="status"></span>
+  <button class="btn sm" id="btn-login">Google 登入</button>
+  <button class="btn sm" id="btn-logout" style="display:none">登出</button>
+</header>
+<div class="subbar">
+  <button class="gbtn on" id="g-male" data-g="男">男</button>
+  <button class="gbtn" id="g-female" data-g="女">女</button>
+  <span class="chgcount" id="chgcount"></span>
+  <span class="grow"></span>
+  <button class="btn sm" id="btn-reset-all">本性別全部重置為預設</button>
+</div>
+<div id="warn"></div>
+<div class="tbl-wrap"><div id="tbl"></div></div>
+<script src="js/liunian_default.js"></script>
+<script type="module" src="js/liunian.js"></script>
+</body>
+</html>
