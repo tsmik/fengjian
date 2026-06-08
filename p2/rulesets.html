@@ -21,8 +21,24 @@
   .btn.sm{padding:4px 10px;font-size:12px;}
   .btn.xs{padding:2px 8px;font-size:12px;border-radius:6px;}
   .btn.danger{color:#a8503a;}
-  .wrap{max-width:880px;margin:0 auto;padding:16px;}
-  .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+  .cols{display:flex;gap:18px;align-items:flex-start;padding:16px;}
+  .col-left{flex:0 0 460px;max-width:48%;}
+  .col-right{flex:1;min-width:0;border-left:1px solid var(--bd);padding-left:18px;position:sticky;top:60px;}
+  @media(max-width:900px){.cols{flex-direction:column;}.col-left{max-width:none;flex:1;width:100%;}.col-right{border-left:none;padding-left:0;border-top:1px solid var(--bd);padding-top:14px;position:static;}}
+  .an-title{font-size:15px;font-weight:600;margin-bottom:10px;}
+  .an-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .an-ctrl select{font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:5px 8px;background:#fffdf9;max-width:170px;}
+  .gran{font-size:13px;color:var(--ink);display:flex;align-items:center;gap:4px;margin-left:6px;}
+  .diff-out{font-size:13px;line-height:1.7;}
+  .ds{margin:0 0 16px;}
+  .ds-head{font-weight:600;font-size:14px;border-bottom:1px solid var(--bd);padding-bottom:4px;margin-bottom:6px;}
+  .ds-row{padding:3px 0;}
+  .d-tag{font-weight:700;font-size:12px;border-radius:6px;padding:1px 6px;margin-right:4px;color:#fff;}
+  .d-add .d-tag{background:var(--static);} .d-remove .d-tag{background:#b5573f;} .d-change .d-tag{background:var(--accent);}
+  .d-detail{color:var(--sub);font-size:12px;padding-left:14px;}
+  .more{cursor:pointer;color:var(--accent);font-size:13px;padding:6px 0;}
+  .more:hover{text-decoration:underline;}
+  .ov-rel{font-weight:600;}
   .active-line{font-size:13px;color:var(--sub);margin-bottom:10px;}
   .rs-card{border:1px solid var(--bd);border-radius:12px;background:var(--panel);padding:12px;margin:10px 0;box-shadow:0 1px 2px rgba(90,75,50,.05);}
   .rs-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -66,9 +82,21 @@
   <button class="btn sm" id="btn-login">Google 登入</button>
   <button class="btn sm" id="btn-logout" style="display:none">登出</button>
 </header>
-<div class="wrap">
-  <div class="active-line" id="active-line"></div>
-  <div id="list"></div>
+<div class="cols">
+  <section class="col-left">
+    <div class="active-line" id="active-line"></div>
+    <div id="list"></div>
+  </section>
+  <section class="col-right">
+    <div class="an-title">版本比較</div>
+    <div class="an-ctrl">
+      <label class="lbl">基準 A</label><select id="cmp-a"></select>
+      <label class="lbl">對照 B</label><select id="cmp-b"></select>
+      <button class="btn sm primary" id="cmp-run">比較</button>
+      <label class="gran"><input type="checkbox" id="cmp-obs"> 拆到觀察題</label>
+    </div>
+    <div id="diff-out" class="diff-out"><div class="hint">選兩個版本，按「比較」。</div></div>
+  </section>
 </div>
 <script src="js/paired_map.js"></script>
 <script type="module" src="js/rs_manager.js"></script>

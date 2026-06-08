@@ -2,8 +2,10 @@
 // 每套裝：名稱(name)、時期(period, YYYY-MM)、說明(note，可拉開的文字框)。
 // 列出/新增/複製/設上線(config/active)/一鍵回滾/刪除；「編輯內容」→ 切到條件編輯器分頁載入該套裝。
 import { fbOK, onUser, login, logout, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from './fb.js';
+import { diffSets } from './rs_diff.js';
 
 let user = null, role = null, showArchived = false;
+let lastDiff = null, diffObsMode = false, showAllCond = false;
 const isStaff = () => !!user && (role === 'admin' || role === 'teacher');
 const EDIT_KEY = 'admin2_edit_set';
 
@@ -59,6 +61,7 @@ function renderList(sets, active) {
     if (ae !== be) return be - ae;
     return (b.createdAt || '').localeCompare(a.createdAt || '');
   });
+  renderDiffControls(sets);
   const live = sets.filter(s => s.status !== 'archived'), archived = sets.filter(s => s.status === 'archived');
   live.forEach((s, i) => box.appendChild(renderCard(s, s.id === activeId, s.id === edId, i + 1)));
   if (archived.length) {
@@ -196,12 +199,89 @@ async function deleteSet(s, isActive) {
   } catch (e) { alert('刪除失敗：' + (e.code || e.message)); }
 }
 
+// ===== 版本比較（右欄）=====
+function renderDiffControls(sets) {
+  const a = $('cmp-a'), b = $('cmp-b'); if (!a || !b) return;
+  const pa = a.value, pb = b.value;
+  const fill = sel => { sel.innerHTML = ''; sets.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = (s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''); sel.appendChild(o); }); };
+  fill(a); fill(b);
+  if (pa) a.value = pa; if (pb) b.value = pb;
+  if (!a.value && sets[0]) a.value = sets[0].id;
+  if (!b.value) b.value = (sets[1] || sets[0] || {}).id || '';
+}
+
+async function loadSetFull(id) {
+  const m = await getDoc(doc(db, 'ruleSets', id));
+  const ds = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+  const dims = {}; ds.forEach(x => { const dd = x.data(); dims[+dd.dimIndex] = dd; });
+  const meta = m.exists() ? m.data() : {};
+  return { id, name: meta.name || id, basedOn: meta.basedOn || null, dims };
+}
+
+async function runCompare() {
+  const aId = $('cmp-a').value, bId = $('cmp-b').value;
+  const out = $('diff-out'); out.innerHTML = '';
+  if (!aId || !bId) { out.appendChild(el('div', { class: 'hint', text: '請先選兩個版本。' })); return; }
+  if (aId === bId) { out.appendChild(el('div', { class: 'hint', text: '請選兩個「不同」的版本。' })); return; }
+  out.appendChild(el('div', { class: 'hint', text: '比較中…' }));
+  try {
+    const [A, B] = await Promise.all([loadSetFull(aId), loadSetFull(bId)]);
+    lastDiff = diffSets(A, B); lastDiff._a = A.name; lastDiff._b = B.name; showAllCond = false;
+    renderDiffReport();
+  } catch (e) { out.innerHTML = ''; out.appendChild(el('div', { class: 'hint', text: '比較失敗：' + (e.code || e.message) })); }
+}
+
+function renderDiffRow(r) {
+  const tag = r.type === 'add' ? '＋新增' : r.type === 'remove' ? '－刪除' : '✎修改';
+  const cls = r.type === 'add' ? 'd-add' : r.type === 'remove' ? 'd-remove' : 'd-change';
+  const main = diffObsMode
+    ? (r.dim + '›' + r.part + '›' + r.card + '：' + r.cond)
+    : (r.dim + '›' + r.part + '›「' + r.label + '」' + (r.role ? '（' + r.role + '）' : ''));
+  const row = el('div', { class: 'ds-row ' + cls }, [el('span', { class: 'd-tag', text: tag }), el('span', { text: ' ' + main })]);
+  if (!diffObsMode && r.type === 'change' && r.detail) row.appendChild(el('div', { class: 'd-detail', text: r.detail }));
+  return row;
+}
+
+function renderDiffReport() {
+  const box = $('diff-out'); box.innerHTML = ''; if (!lastDiff) return;
+  const d = lastDiff, s = d.summary;
+  const ov = el('div', { class: 'ds' }, [
+    el('div', { class: 'ds-head', text: '關係與總覽' }),
+    el('div', { class: 'ov-rel', text: '• ' + d.relationship }),
+    el('div', { text: '• 規則差異：共 ' + (s.cardsAdded + s.cardsRemoved + s.cardsChanged) + ' 條（＋新增' + s.cardsAdded + '、－刪除' + s.cardsRemoved + '、✎修改' + s.cardsChanged + '）' }),
+    el('div', { text: '• 辣度差異：' + s.spiceDiffs + ' 個部位設定不同' }),
+    el('div', { text: '• 目標極差異：' + s.poleDiffs + ' 個維度不同' }),
+    el('div', { text: '• 規模：A「' + d._a + '」' + s.aCount + ' 條 / ' + s.aParts + ' 部位　B「' + d._b + '」' + s.bCount + ' 條 / ' + s.bParts + ' 部位' })
+  ]);
+  box.appendChild(ov);
+
+  const cd = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: diffObsMode ? '條件差異（觀察題層級）' : '條件差異（卡片層級）' })]);
+  const rows = diffObsMode ? d.obsDiffs : d.conditionDiffs;
+  if (!rows.length) cd.appendChild(el('div', { class: 'hint', text: '兩版本一致，沒有差異。' }));
+  (showAllCond ? rows : rows.slice(0, 10)).forEach(r => cd.appendChild(renderDiffRow(r)));
+  if (rows.length > 10 && !showAllCond) { const more = el('div', { class: 'more', text: '顯示全部（共 ' + rows.length + ' 條）' }); more.addEventListener('click', () => { showAllCond = true; renderDiffReport(); }); cd.appendChild(more); }
+  box.appendChild(cd);
+
+  if (d.spiceDiffs.length) {
+    const sp = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '辣度設定差別' })]);
+    d.spiceDiffs.forEach(x => sp.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '›' + x.part + '　' + x.level + '　' + x.from + ' → ' + x.to })));
+    box.appendChild(sp);
+  }
+  if (d.poleDiffs.length) {
+    const po = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '目標極差別' })]);
+    d.poleDiffs.forEach(x => po.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '　符合為 ' + x.from + ' → ' + x.to })));
+    box.appendChild(po);
+  }
+}
+
 function boot() {
   $('btn-login').addEventListener('click', () => login().catch(e => alert('登入失敗：' + (e.code || e.message))));
   $('btn-logout').addEventListener('click', () => logout());
   $('btn-new').addEventListener('click', newSet);
   $('btn-rollback').addEventListener('click', rollback);
   $('btn-refresh').addEventListener('click', loadList);
+  $('cmp-run').addEventListener('click', runCompare);
+  $('cmp-obs').addEventListener('change', () => { diffObsMode = $('cmp-obs').checked; showAllCond = false; if (lastDiff) renderDiffReport(); });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) loadList(); });  // 編輯中標記跟著變
   renderHeader();
   onUser((u, r) => { user = u; role = r; loadList(); });
