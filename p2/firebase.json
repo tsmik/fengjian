@@ -1,5 +1,16 @@
 {
   "firestore": {
     "rules": "firestore.rbf2.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/*.rules",
+      "**/*.md",
+      "**/node_modules/**"
+    ]
   }
 }

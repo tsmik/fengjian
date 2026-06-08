@@ -150,11 +150,13 @@ async function deleteGroup(name) {
 function renderAddbar() {
   const bar = $('addbar'); bar.innerHTML = '';
   if (!isAdmin()) return;
-  const email = el('input', { type: 'email', placeholder: 'email 加入白名單…', autocomplete: 'off' });
+  const email = el('input', { type: 'email', placeholder: 'email…', autocomplete: 'off' });
+  const nameI = el('input', { type: 'text', placeholder: '姓名（可留空）', autocomplete: 'off' });
   const rsel = el('select', {}, ['student', 'teacher', 'admin'].map(v => el('option', { value: v, text: roleZh(v) })));
-  const btn = el('button', { class: 'btn sm primary', text: '＋ 加入', onclick: () => addUser(email, rsel) });
-  email.addEventListener('keydown', e => { if (e.key === 'Enter') addUser(email, rsel); });
-  bar.appendChild(email); bar.appendChild(rsel); bar.appendChild(btn);
+  const btn = el('button', { class: 'btn sm primary', text: '＋ 加入', onclick: () => addUser(email, nameI, rsel) });
+  const onEnter = e => { if (e.key === 'Enter') addUser(email, nameI, rsel); };
+  email.addEventListener('keydown', onEnter); nameI.addEventListener('keydown', onEnter);
+  bar.appendChild(email); bar.appendChild(nameI); bar.appendChild(rsel); bar.appendChild(btn);
 }
 function filtered() {
   if (selGroup === ALL) return users;
@@ -279,16 +281,17 @@ function fileToThumb(file, max) {
   });
 }
 
-async function addUser(emailInp, roleSel) {
+async function addUser(emailInp, nameInp, roleSel) {
   if (!isAdmin()) return alert('只有 admin 能新增白名單。');
   const email = (emailInp.value || '').trim().toLowerCase();
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('請輸入有效 email。');
   if (email === GROUPS_DOC) return alert('這個 email 是保留字。');
   const data = { email, role: roleSel.value, addedAt: new Date().toISOString() };
+  const nm = (nameInp.value || '').trim(); if (nm) data.name = nm;     // 一併寫入姓名（可留空）
   if (selGroup !== ALL && selGroup !== NONE) data.group = selGroup;   // 在某分組內加人 → 直接歸該組
   try {
     await setDoc(doc(db, 'allowedUsers', email), data, { merge: true });
-    emailInp.value = ''; selId = email; await loadAll();
+    emailInp.value = ''; nameInp.value = ''; selId = email; await loadAll();
   } catch (e) { alert('新增失敗：' + (e.code || e.message)); }
 }
 
