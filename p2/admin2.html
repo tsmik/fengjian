@@ -44,8 +44,9 @@
   .pr-line { display:flex; align-items:center; width:100%; }
   .pr-cnt { font-size:11px; color:var(--sub); margin-left:6px; white-space:nowrap; }
   /* col4 條件選項的 hint（顯示在選項下方小灰字） */
-  .opt-wrap { display:inline-flex; flex-direction:column; align-items:flex-start; gap:1px; max-width:170px; vertical-align:top; }
-  .opt-hint { font-size:10px; color:var(--sub); line-height:1.3; cursor:pointer; }
+  /* 條件 + hint 橫向並排：條件 hint 條件 hint…；hint 字級同條件 */
+  .opt-wrap { display:inline-flex; flex-direction:row; align-items:center; gap:4px; vertical-align:top; }
+  .opt-hint { font-size:12px; color:var(--sub); cursor:pointer; }
   .cr-top { display:flex; align-items:center; gap:4px; }
   .cr-name { flex:1; min-width:0; font-family:inherit; font-size:13px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; }
   .cr-role { font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:3px; }
@@ -143,7 +144,7 @@
   .leaf { border:1px solid #e6e0d6; border-radius:6px; padding:5px 6px; margin:4px 0; background:#faf8f4; }
   .leaf-head { display:flex; align-items:center; justify-content:space-between; }
   .leaf-label { font-size:13px; }
-  .opts { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  .opts { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:4px; align-items:center; }
   .opt { font-size:12px; border:1px solid var(--bd); border-radius:12px; padding:1px 8px; cursor:pointer; background:#fff; }
   .opt.on { background:var(--accent); color:#fff; border-color:var(--accent); }
   .warn { color:#b06a00; font-size:11px; margin-top:3px; }
