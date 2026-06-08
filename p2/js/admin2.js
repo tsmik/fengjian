@@ -331,12 +331,31 @@ function partRow(name, sub, isAgg) {
   const has = !isAgg && partHasContent(state.curDim, name);
   const kids = [document.createTextNode((isAgg ? '' : (has ? '● ' : '○ ')) + name)];
   if (sub) kids.push(el('span', { class: 'pr-sub', text: '　' + sub }));
+  const cnt = partCardCount(name);
+  const inner = el('div', { class: 'pr-line' }, [
+    el('span', { class: 'lr-name' }, kids),
+    el('span', { class: 'spacer' }),
+    cnt > 0 ? el('span', { class: 'pr-cnt', text: cnt + '卡' }) : null
+  ]);
   return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
-    [el('span', { class: 'lr-name' }, kids)]);
+    [inner]);
 }
 
 let focusCardId = null;
 function renderEditor() { renderCardsListCol(); renderLeavesCol(); }
+
+// 卡片「未完成」：沒有題目(無葉) 或 有題目但有葉沒設條件(match 空) → 淡黃底提示
+function cardIncomplete(card) {
+  const leaves = (card.combos || []).reduce((a, cb) => a.concat(cb), []);
+  if (!leaves.length) return true;
+  return leaves.some(l => !l.match || !l.match.length);
+}
+// 某部位(目前維度)的卡片數
+function partCardCount(name) {
+  const d = state.dims[state.curDim];
+  const p = d && d.parts && d.parts[name];
+  return (p && p.kind !== 'aggregate' && Array.isArray(p.cards)) ? p.cards.length : 0;
+}
 
 // 第 3 欄：敘述分組＝卡片管理（簡稱/主輔/註解/數量）。含部位層 目標極/左右模式。聚合→聚合編輯器。
 function renderCardsListCol() {
@@ -389,7 +408,7 @@ function renderPartSpice(box, def) {
 }
 
 function renderCardRow(def, card, ci) {
-  const wrap = el('div', { class: 'cardrow', 'data-cid': card.id });
+  const wrap = el('div', { class: 'cardrow' + (cardIncomplete(card) ? ' incomplete' : ''), 'data-cid': card.id });
   const handle = el('span', { class: 'drag-h', text: '⠿', title: '拖曳排序' });
   const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
   name.addEventListener('input', () => { card.label = name.value; saveDraft(); syncLeafHeader(card); });
@@ -415,7 +434,7 @@ function enableCardDrag(list, def) {
     row.addEventListener('dragend', () => { row.draggable = false; row.classList.remove('dragging'); from = null; });
     row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('drop-into'); });
     row.addEventListener('dragleave', () => row.classList.remove('drop-into'));
-    row.addEventListener('drop', (e) => { e.preventDefault(); row.classList.remove('drop-into'); if (from == null || from === ci) return; const [m] = def.cards.splice(from, 1); def.cards.splice(ci, 0, m); renderCardsListCol(); renderLeavesCol(); saveDraft(); });
+    row.addEventListener('drop', (e) => { e.preventDefault(); row.classList.remove('drop-into'); if (from == null || from === ci) return; const [m] = def.cards.splice(from, 1); def.cards.splice(ci, 0, m); renderCardsListCol(); renderEditor(); saveDraft(); });
   });
 }
 
@@ -440,12 +459,12 @@ function syncLeafHeader(card) {
 
 
 function renderCard(def, card, ci) {
-  const wrap = el('div', { class: 'card', 'data-cid': card.id });
+  const wrap = el('div', { class: 'card' + (cardIncomplete(card) ? ' incomplete' : ''), 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
     el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
     el('span', { class: 'spacer' }),
-    el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderLeavesCol(); saveDraft(); } })
+    el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEditor(); saveDraft(); } })
   ]));
   card.combos.forEach((combo, cj) => {
     if (cj > 0) wrap.appendChild(el('div', { class: 'or-sep', text: '— 或 —' }));
@@ -481,7 +500,7 @@ function renderCombo(card, combo, cj) {
     el('span', { class: 'combo-tag', text: (isActive ? '◉ ' : '') + 'combo' + (cj + 1) + '（而且）' }),
     el('span', { class: 'spacer' })
   ]);
-  if (card.combos.length > 1) head.appendChild(el('button', { class: 'btn xs danger', text: '✕ 刪 combo', onclick: (e) => { e.stopPropagation(); card.combos.splice(cj, 1); if (state.active && state.active.cardId === card.id) state.active = null; renderLeavesCol(); saveDraft(); } }));
+  if (card.combos.length > 1) head.appendChild(el('button', { class: 'btn xs danger', text: '✕ 刪 combo', onclick: (e) => { e.stopPropagation(); card.combos.splice(cj, 1); if (state.active && state.active.cardId === card.id) state.active = null; renderEditor(); saveDraft(); } }));
   drop.appendChild(head);
   if (!combo.length) drop.appendChild(el('span', { class: 'hint', text: '點此 combo（會標 ◉）再點右欄 observation，或拖進來' }));
   combo.forEach((leaf, li) => drop.appendChild(renderLeaf(card, combo, leaf, li)));
@@ -497,12 +516,17 @@ function renderLeaf(card, combo, leaf, li) {
   ]);
   if (!leaf.match.length) head.appendChild(el('span', { class: 'undef', text: '尚未定義條件' }));
   head.appendChild(el('span', { class: 'spacer' }));
-  head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderLeavesCol(); saveDraft(); } }));
+  head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEditor(); saveDraft(); } }));
   wrap.appendChild(head);
   const optBox = el('div', { class: 'opts' });
+  const hints = (o && o.optionHints) || {};
   (o ? o.options : []).forEach(v => {
     const on = leaf.match.indexOf(v) >= 0;
-    optBox.appendChild(el('span', { class: 'opt' + (on ? ' on' : ''), text: v, onclick: (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderLeavesCol(); saveDraft(); } }));
+    const hint = hints[v] || '';
+    const toggle = (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderEditor(); saveDraft(); };
+    const chip = el('span', { class: 'opt' + (on ? ' on' : ''), text: v, title: hint || v, onclick: toggle });
+    if (hint) optBox.appendChild(el('span', { class: 'opt-wrap' }, [chip, el('span', { class: 'opt-hint', title: hint, onclick: toggle }, [hint]) ]));
+    else optBox.appendChild(chip);
   });
   wrap.appendChild(optBox);
   return wrap;
@@ -511,7 +535,7 @@ function renderLeaf(card, combo, leaf, li) {
 function addLeaf(card, combo, obsId) {
   if (combo.some(l => l.ref === obsId)) return;
   combo.push({ ref: obsId, match: [] });
-  renderLeavesCol(); saveDraft();
+  renderEditor(); saveDraft();
 }
 
 function renderSpice() {
