@@ -685,6 +685,60 @@ async function setActiveFromEditor() {
   } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
 }
 
+// ---------- 鍵盤導覽（Finder 欄位式：↑↓ 欄內移動、←→ 換欄、Enter/空白 動作）----------
+// 五欄：維度 / 部位 / 卡片 / 條件選項 / observations。輸入框(input/textarea/select)內不攔截，讓鍵盤正常打字。
+const NAV_COLS = [
+  { box: 'col-dims', sel: '.dim-row', auto: true },    // 維度：移動即選
+  { box: 'col-parts', sel: '.list-row', auto: true },   // 部位：移動即選
+  { box: 'col-groups', sel: '.cardrow', auto: false },  // 卡片：移動只聚焦（Enter 進去改名）
+  { box: 'col-cards', sel: '.opt', auto: false },       // 條件選項：移動聚焦，Enter/空白 切換選項
+  { box: 'palette', sel: '.pal-item', auto: false }     // observations：移動聚焦，Enter/空白 加入目前 combo
+];
+let nav = { col: 0, idx: 0 };
+function navItems(col) { const c = NAV_COLS[col]; const box = $(c.box); return box ? Array.prototype.slice.call(box.querySelectorAll(c.sel)) : []; }
+function navApply() {
+  document.querySelectorAll('.kbd-focus').forEach(e => e.classList.remove('kbd-focus'));
+  const items = navItems(nav.col); if (!items.length) return;
+  nav.idx = Math.max(0, Math.min(nav.idx, items.length - 1));
+  const t = items[nav.idx]; t.classList.add('kbd-focus'); t.scrollIntoView({ block: 'nearest' });
+}
+function navMove(d) {
+  const items = navItems(nav.col); if (!items.length) return;
+  nav.idx = Math.max(0, Math.min(nav.idx + d, items.length - 1));
+  if (NAV_COLS[nav.col].auto) { items[nav.idx].click(); navApply(); }   // 選即生效；click→重畫後再上焦
+  else navApply();
+}
+function navToCol(c) {
+  nav.col = Math.max(0, Math.min(c, NAV_COLS.length - 1)); nav.idx = 0;
+  const items = navItems(nav.col);
+  if (NAV_COLS[nav.col].auto && items.length) { items[0].click(); navApply(); }
+  else navApply();
+}
+function navActivate() { const items = navItems(nav.col); const t = items[nav.idx]; if (t) { t.click(); navApply(); } }   // click 可能重畫，動作後重新上焦
+function setupKbdNav() {
+  // 滑鼠點哪一欄/項，導覽焦點跟著同步
+  document.addEventListener('click', e => {
+    for (let i = 0; i < NAV_COLS.length; i++) {
+      const box = $(NAV_COLS[i].box); if (!box || !box.contains(e.target)) continue;
+      const items = navItems(i); const item = items.filter(it => it.contains(e.target))[0];
+      if (item) { nav.col = i; nav.idx = items.indexOf(item); navApply(); }
+      break;
+    }
+  });
+  document.addEventListener('keydown', e => {
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;   // 打字時不攔
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowUp': e.preventDefault(); navMove(-1); break;
+      case 'ArrowDown': e.preventDefault(); navMove(1); break;
+      case 'ArrowLeft': e.preventDefault(); navToCol(nav.col - 1); break;
+      case 'ArrowRight': e.preventDefault(); navToCol(nav.col + 1); break;
+      case 'Enter': case ' ': e.preventDefault(); navActivate(); break;
+    }
+  });
+}
+
 // ---------- boot ----------
 function boot() {
   loadDraft();
@@ -731,5 +785,6 @@ function boot() {
   renderAll();
   renderRsSelect();
   resetHistory();   // 初始 undo 基準
+  setupKbdNav();    // 鍵盤上下左右導覽
 }
 boot();
