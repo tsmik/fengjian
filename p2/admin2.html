@@ -40,6 +40,9 @@
   /* 未完成卡片（無題目 或 有題目沒設條件）：淡黃底提示 */
   .cardrow.incomplete { background:#fcf4d2; border-color:#e6d49a; }
   .card.incomplete { background:#fcf4d2; border-color:#e6d49a; }
+  /* 主卡片：淡褐紅底 */
+  .cardrow.main { background:#f4e0d5; border-color:#d8b6a3; }
+  .card.main { background:#f4e0d5; border-color:#d8b6a3; }
   /* col2 部位列：右側卡片計數 */
   .pr-line { display:flex; align-items:center; width:100%; }
   .pr-cnt { font-size:11px; color:var(--sub); margin-left:6px; white-space:nowrap; }
@@ -50,6 +53,8 @@
   .cr-top { display:flex; align-items:center; gap:4px; }
   .cr-name { flex:1; min-width:0; font-family:inherit; font-size:13px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; }
   .cr-role { font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:3px; }
+  .cr-role.role-main { border-color:var(--dynamic); border-width:1.5px; }   /* 主：褐紅框 */
+  .cr-role.role-unset { border-color:#d9534f; border-width:1.5px; }          /* 未設主輔：紅框提醒 */
   .cr-note { width:100%; margin-top:5px; resize:vertical; min-height:30px; font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; color:var(--ink); }
   /* col4 卡片標頭 */
   .role-badge { font-size:10px; color:#fff; background:#C17A5A; border-radius:9px; padding:1px 7px; }

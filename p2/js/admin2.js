@@ -297,7 +297,7 @@ function renderDims() {
   const box = $('col-dims'); box.innerHTML = '';
   box.appendChild(el('div', { class: 'col-title', text: '維度' }));
   META.dims.forEach(d => {
-    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimHasIncomplete(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
+    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimNeedsAttn(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
     row.appendChild(el('span', { class: 'dim-name', text: d.name + '　符合為' + dimTargetName(d.index) }));
     box.appendChild(row);
   });
@@ -337,7 +337,7 @@ function partRow(name, sub, isAgg) {
     el('span', { class: 'spacer' }),
     cnt > 0 ? el('span', { class: 'pr-cnt', text: cnt + '卡' }) : null
   ]);
-  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : '') + (partHasIncomplete(state.curDim, name) ? ' incomplete' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
+  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : '') + (partNeedsAttn(state.curDim, name) ? ' incomplete' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
     [inner]);
 }
 
@@ -356,17 +356,21 @@ function partCardCount(name) {
   const p = d && d.parts && d.parts[name];
   return (p && p.kind !== 'aggregate' && Array.isArray(p.cards)) ? p.cards.length : 0;
 }
-// 部位是否有「未完成卡片」→ 部位也淡黃
-function partHasIncomplete(di, name) {
+// 卡片未設主輔（未標）
+function roleUnset(card) { return !card.role; }
+// 卡片需要注意：條件不完整 或 未設主輔 → 讓部位/維度標黃
+function cardNeedsAttn(card) { return cardIncomplete(card) || roleUnset(card); }
+// 部位是否有需注意卡片 → 部位淡黃
+function partNeedsAttn(di, name) {
   const d = state.dims[di];
   const p = d && d.parts && d.parts[name];
-  return !!(p && p.kind !== 'aggregate' && Array.isArray(p.cards) && p.cards.some(cardIncomplete));
+  return !!(p && p.kind !== 'aggregate' && Array.isArray(p.cards) && p.cards.some(cardNeedsAttn));
 }
-// 維度是否有任一部位含未完成卡片 → 維度也淡黃
-function dimHasIncomplete(di) {
+// 維度是否有任一部位需注意 → 維度淡黃
+function dimNeedsAttn(di) {
   const d = state.dims[di];
   if (!d || !d.parts) return false;
-  return Object.keys(d.parts).some(pn => partHasIncomplete(di, pn));
+  return Object.keys(d.parts).some(pn => partNeedsAttn(di, pn));
 }
 // 改條件後要連帶刷新 col1(維度黃)＋col2(部位黃/計數)＋col3/4
 function renderEdit() { renderDims(); renderParts(); renderEditor(); }
@@ -422,12 +426,14 @@ function renderPartSpice(box, def) {
 }
 
 function renderCardRow(def, card, ci) {
-  const wrap = el('div', { class: 'cardrow' + (cardIncomplete(card) ? ' incomplete' : ''), 'data-cid': card.id });
+  const cardCls = card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : '');
+  const wrap = el('div', { class: 'cardrow' + cardCls, 'data-cid': card.id });
   const handle = el('span', { class: 'drag-h', text: '⠿', title: '拖曳排序' });
   const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
   name.addEventListener('input', () => { card.label = name.value; saveDraft(); syncLeafHeader(card); });
   if (focusCardId === card.id) { focusCardId = null; setTimeout(() => name.focus(), 0); }
-  const roleSel = el('select', { class: 'cr-role', onchange: (e) => { card.role = e.target.value || null; saveDraft(); syncLeafHeader(card); } });
+  const roleCls = 'cr-role' + (card.role === 'main' ? ' role-main' : (!card.role ? ' role-unset' : ''));
+  const roleSel = el('select', { class: roleCls, onchange: (e) => { card.role = e.target.value || null; renderEdit(); saveDraft(); } });
   [['', '未標'], ['main', '主'], ['aux', '輔']].forEach(([v, t]) => { const o = el('option', { value: v, text: t }); if ((card.role || '') === v) o.selected = true; roleSel.appendChild(o); });
   const note = el('textarea', { class: 'cr-note', placeholder: '註解 hint（會出現在部位觀察頁）' }); note.value = card.note || ''; note.style.display = 'none';
   const noteBtn = el('button', { class: 'btn xs note-toggle' + (card.note ? ' has' : ''), text: '✎', title: '註解 hint（點開編輯，編完收起）' });
@@ -473,7 +479,8 @@ function syncLeafHeader(card) {
 
 
 function renderCard(def, card, ci) {
-  const wrap = el('div', { class: 'card' + (cardIncomplete(card) ? ' incomplete' : ''), 'data-cid': card.id });
+  const cardCls = card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : '');
+  const wrap = el('div', { class: 'card' + cardCls, 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
     el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
