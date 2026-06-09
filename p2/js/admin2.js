@@ -688,40 +688,43 @@ async function setActiveFromEditor() {
 // ---------- 鍵盤導覽（Finder 欄位式：↑↓ 欄內移動、←→ 換欄、Enter/空白 動作）----------
 // 五欄：維度 / 部位 / 卡片 / 條件選項 / observations。輸入框(input/textarea/select)內不攔截，讓鍵盤正常打字。
 const NAV_COLS = [
-  { box: 'col-dims', sel: '.dim-row', auto: true },    // 維度：移動即選
-  { box: 'col-parts', sel: '.list-row', auto: true },   // 部位：移動即選
-  { box: 'col-groups', sel: '.cardrow', auto: false },  // 卡片：移動只聚焦（Enter 進去改名）
-  { box: 'col-cards', sel: '.opt', auto: false },       // 條件選項：移動聚焦，Enter/空白 切換選項
-  { box: 'palette', sel: '.pal-item', auto: false }     // observations：移動聚焦，Enter/空白 加入目前 combo
+  { box: 'col-dims', sel: '.dim-row', auto: true },        // 維度：移動即選
+  { box: 'col-parts', sel: '.list-row', auto: true },       // 部位：移動即選
+  { box: 'col-groups', sel: '.cardrow', auto: false },      // 卡片：移動聚焦（Enter 進去改名）
+  { box: 'col-cards', sel: '.combo, .opt', auto: false },   // 卡片內容：combo＋選項；Enter→combo 設為作用中／選項切換
+  { box: 'palette', sel: '.pal-item', auto: false }         // observations：移動聚焦，Enter/空白 加入目前 combo
 ];
-let nav = { col: 0, idx: 0 };
+let navCol = 0;
+const navIdx = [0, 0, 0, 0, 0];   // 每欄各自記住游標位置（換欄回到上次選的，比照 Finder）
 function navItems(col) { const c = NAV_COLS[col]; const box = $(c.box); return box ? Array.prototype.slice.call(box.querySelectorAll(c.sel)) : []; }
 function navApply() {
   document.querySelectorAll('.kbd-focus').forEach(e => e.classList.remove('kbd-focus'));
-  const items = navItems(nav.col); if (!items.length) return;
-  nav.idx = Math.max(0, Math.min(nav.idx, items.length - 1));
-  const t = items[nav.idx]; t.classList.add('kbd-focus'); t.scrollIntoView({ block: 'nearest' });
+  const items = navItems(navCol); if (!items.length) return;
+  navIdx[navCol] = Math.max(0, Math.min(navIdx[navCol], items.length - 1));
+  const t = items[navIdx[navCol]]; if (t) { t.classList.add('kbd-focus'); t.scrollIntoView({ block: 'nearest' }); }
 }
 function navMove(d) {
-  const items = navItems(nav.col); if (!items.length) return;
-  nav.idx = Math.max(0, Math.min(nav.idx + d, items.length - 1));
-  if (NAV_COLS[nav.col].auto) { items[nav.idx].click(); navApply(); }   // 選即生效；click→重畫後再上焦
+  const items = navItems(navCol); if (!items.length) return;
+  navIdx[navCol] = Math.max(0, Math.min(navIdx[navCol] + d, items.length - 1));
+  if (NAV_COLS[navCol].auto) { items[navIdx[navCol]].click(); navApply(); }   // 移動即選；click→重畫後再上焦
   else navApply();
 }
 function navToCol(c) {
-  nav.col = Math.max(0, Math.min(c, NAV_COLS.length - 1)); nav.idx = 0;
-  const items = navItems(nav.col);
-  if (NAV_COLS[nav.col].auto && items.length) { items[0].click(); navApply(); }
-  else navApply();
+  navCol = Math.max(0, Math.min(c, NAV_COLS.length - 1));
+  const items = navItems(navCol);
+  navIdx[navCol] = Math.max(0, Math.min(navIdx[navCol], Math.max(0, items.length - 1)));   // 沿用上次位置
+  // auto 欄：只有當聚焦項不是目前選中的才 click（避免重選/誤把 curPart 清掉）
+  if (NAV_COLS[navCol].auto && items.length) { const t = items[navIdx[navCol]]; if (t && !t.classList.contains('sel')) t.click(); }
+  navApply();
 }
-function navActivate() { const items = navItems(nav.col); const t = items[nav.idx]; if (t) { t.click(); navApply(); } }   // click 可能重畫，動作後重新上焦
+function navActivate() { const items = navItems(navCol); const t = items[navIdx[navCol]]; if (t) { t.click(); navApply(); } }   // click 可能重畫，動作後重新上焦
 function setupKbdNav() {
-  // 滑鼠點哪一欄/項，導覽焦點跟著同步
+  // 滑鼠點哪一欄/項，鍵盤焦點跟著同步
   document.addEventListener('click', e => {
     for (let i = 0; i < NAV_COLS.length; i++) {
       const box = $(NAV_COLS[i].box); if (!box || !box.contains(e.target)) continue;
-      const items = navItems(i); const item = items.filter(it => it.contains(e.target))[0];
-      if (item) { nav.col = i; nav.idx = items.indexOf(item); navApply(); }
+      const item = e.target.closest(NAV_COLS[i].sel);
+      if (item && box.contains(item)) { const k = navItems(i).indexOf(item); if (k >= 0) { navCol = i; navIdx[i] = k; navApply(); } }
       break;
     }
   });
@@ -732,8 +735,8 @@ function setupKbdNav() {
     switch (e.key) {
       case 'ArrowUp': e.preventDefault(); navMove(-1); break;
       case 'ArrowDown': e.preventDefault(); navMove(1); break;
-      case 'ArrowLeft': e.preventDefault(); navToCol(nav.col - 1); break;
-      case 'ArrowRight': e.preventDefault(); navToCol(nav.col + 1); break;
+      case 'ArrowLeft': e.preventDefault(); navToCol(navCol - 1); break;
+      case 'ArrowRight': e.preventDefault(); navToCol(navCol + 1); break;
       case 'Enter': case ' ': e.preventDefault(); navActivate(); break;
     }
   });
