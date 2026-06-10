@@ -334,6 +334,8 @@ async function save() {
       deleted.forEach(id => batch.delete(obsPath(id)));
       await batch.commit();                                         // 先存題目（版面寫入若出狀況不會連坐回滾題目）
       await setDoc(layPath, { layout, updatedAt: new Date().toISOString() });   // 版面分開存
+      // 記錄這次改動的題目 → 條件編輯器標示「需檢視」(累積到 obsmeta/stale)
+      if (dirty.size || deleted.size) { const changed = {}; dirty.forEach(id => changed[id] = true); deleted.forEach(id => changed[id] = true); try { await setDoc(doc(db, 'ruleSets', curSet, 'obsmeta', 'stale'), changed, { merge: true }); } catch (e) {} }
       toast('已存：' + dirty.size + ' 題、刪 ' + deleted.size + ' 題、版面已更新');
     }
     dirty.clear(); deleted.clear(); layoutDirty = false; updateDirty();

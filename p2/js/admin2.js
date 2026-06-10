@@ -222,6 +222,9 @@ function _mergeObs(live) {   // 以打包順序為主，套用 live 版本；新
   return next;
 }
 function _toMap(snap) { const m = {}; snap.forEach(d => { const o = d.data(); if (o && o.obsId) m[o.obsId] = o; }); return m; }
+let _staleObs = {}, _staleSig = '';   // 觀察庫改過、待此套裝條件檢視的題目（obsmeta/stale）
+function obsStale(ref) { return !!_staleObs[ref]; }
+function cardRefsStale(card) { return (card.combos || []).some(cb => (cb || []).some(l => obsStale(l.ref))); }
 async function loadLiveObs(force) {
   if (!fbOK || !db || !user) return;                       // 沒登入讀不到（規則限登入），維持靜態後備
   if (!force && Date.now() - _lastObs < 8000) return;      // 節流：聚焦時最多 8 秒抓一次
@@ -235,9 +238,11 @@ async function loadLiveObs(force) {
       let g = null; try { g = await getDocs(collection(db, 'observations')); } catch (e) {}   // 過渡：套裝沒題庫→全域
       next = (g && !g.empty) ? _mergeObs(_toMap(g)) : (window.OBSERVATIONS || []).slice();      // 再退打包基準
     }
-    if (_obsSig(next) === _obsSig(OBS)) return;             // 沒變就不重畫，避免打斷正在編輯
-    OBS = next; indexObs();
-    renderPalette(); renderEditor();                       // 重畫用到題目的欄位（observation 欄＋葉條件）
+    let stale = {}; try { const st = await getDoc(doc(db, 'ruleSets', setId, 'obsmeta', 'stale')); stale = (st.exists() ? st.data() : {}) || {}; } catch (e) {}
+    const staleSig = Object.keys(stale).filter(k => stale[k]).sort().join(',');
+    if (_obsSig(next) === _obsSig(OBS) && staleSig === _staleSig) return;   // 題庫＋待檢視都沒變才不重畫
+    OBS = next; indexObs(); _staleObs = stale; _staleSig = staleSig;
+    renderDims(); renderParts(); renderPalette(); renderEditor();   // 連帶刷新維度/部位黃標
   } catch (e) { /* 讀失敗：維持目前 OBS */ }
 }
 
@@ -298,6 +303,8 @@ function renderHeader() {
   h.textContent = txt;
   $('btn-login').style.display = (fbOK && !user) ? '' : 'none';
   $('btn-logout').style.display = (fbOK && user) ? '' : 'none';
+  const nStale = Object.keys(_staleObs).filter(k => _staleObs[k]).length;
+  const ob = $('btn-obsdone'); if (ob) { ob.style.display = (user && nStale) ? '' : 'none'; ob.textContent = '✓ 題庫變動已處理（' + nStale + '）'; }
 }
 
 // 每維度的極性設定：poleFlip（動靜對應）＋ tgt（符合為哪一極 a/b）
@@ -372,7 +379,7 @@ function partCardCount(name) {
 // 卡片未設主輔（未標）
 function roleUnset(card) { return !card.role; }
 // 卡片需要注意：條件不完整 或 未設主輔 → 讓部位/維度標黃
-function cardNeedsAttn(card) { return cardIncomplete(card) || roleUnset(card); }
+function cardNeedsAttn(card) { return cardIncomplete(card) || roleUnset(card) || cardRefsStale(card); }   // 含「用到被改過的題目」
 // 部位是否有需注意卡片 → 部位淡黃
 function partNeedsAttn(di, name) {
   const d = state.dims[di];
@@ -439,7 +446,7 @@ function renderPartSpice(box, def) {
 }
 
 function renderCardRow(def, card, ci) {
-  const cardCls = card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : '');
+  const cardCls = cardRefsStale(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
   const wrap = el('div', { class: 'cardrow' + cardCls, 'data-cid': card.id });
   const handle = el('span', { class: 'drag-h', text: '⠿', title: '拖曳排序' });
   const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
@@ -498,7 +505,7 @@ function syncLeafHeader(card) {
 
 
 function renderCard(def, card, ci) {
-  const cardCls = card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : '');
+  const cardCls = cardRefsStale(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
   const wrap = el('div', { class: 'card' + cardCls, 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
@@ -603,7 +610,7 @@ function renderPalette() {
     items = items.slice(0, 200);
     function obsItem(o) {
       return el('div', {
-        class: 'pal-item', draggable: true,
+        class: 'pal-item' + (obsStale(o.obsId) ? ' pal-stale' : ''), draggable: true,
         ondragstart: (e) => e.dataTransfer.setData('text/obsid', o.obsId),
         onclick: () => { if (!state.active) return alert('先點一個 combo 當作加入目標（會標 ◉）'); const def = getPart(state.curDim, state.curPart, true); const card = (def.cards || []).find(c => c.id === state.active.cardId); if (card) addLeaf(card, card.combos[state.active.comboIdx], o.obsId); }
       }, [
@@ -774,6 +781,12 @@ function boot() {
   $('btn-setlive').addEventListener('click', setActiveFromEditor);
   $('btn-undo').addEventListener('click', undo);
   $('btn-redo').addEventListener('click', redo);
+  $('btn-obsdone').addEventListener('click', async () => {
+    if (!isStaff()) return alert('需 admin/teacher');
+    if (!confirm('把目前套裝的「題庫變動黃標」全部清除（表示你已檢視/調整完）？')) return;
+    try { await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'obsmeta', 'stale'), {}); _staleObs = {}; _staleSig = ''; renderDims(); renderParts(); renderPalette(); renderEditor(); renderHeader(); }
+    catch (e) { alert('清除失敗：' + (e.code || e.message)); }
+  });
   document.addEventListener('keydown', (e) => {
     if (!(e.metaKey || e.ctrlKey)) return;
     const tag = (document.activeElement && document.activeElement.tagName) || '';

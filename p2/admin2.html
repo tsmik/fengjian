@@ -168,6 +168,7 @@
   .pal-sec:first-child { border-top:0; margin-top:2px; padding-top:0; }
   .pal-item { border:1px solid var(--bd); border-radius:6px; padding:5px 7px; background:#fff; cursor:grab; display:flex; flex-direction:column; }
   .pal-item:hover { background:#eef5ff; border-color:var(--accent); }
+  .pal-item.pal-stale { background:#fcf4d2; border-color:#e6d49a; }   /* 題目被改過→需檢視 */
   .pi-label { font-size:13px; }
   .pi-id { font-size:11px; color:var(--sub); }
   .spice-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
@@ -192,6 +193,7 @@
   <button class="btn sm" id="btn-export-md" title="把各維度條件匯出成人看的 Markdown">匯出 MD</button>
   <button class="btn sm primary" id="btn-save">儲存</button>
   <button class="btn sm" id="btn-setlive" title="把目前套裝設為學員看到的版本">設為上線</button>
+  <button class="btn sm" id="btn-obsdone" title="題庫變動已檢視→清除黃標" style="display:none;background:#fcf4d2;border-color:#e6d49a;">✓ 題庫變動已處理</button>
   <span class="save-status" id="save-status"></span>
   <span class="grow"></span>
   <span id="hdr-status"></span>
