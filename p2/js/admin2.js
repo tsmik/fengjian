@@ -350,7 +350,7 @@ function partRow(name, sub, isAgg) {
     el('span', { class: 'spacer' }),
     cnt > 0 ? el('span', { class: 'pr-cnt', text: cnt + '卡' }) : null
   ]);
-  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : '') + (partNeedsAttn(state.curDim, name) ? ' incomplete' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; renderEditor(); renderPalette(); renderParts(); } },
+  return el('div', { class: 'list-row' + (state.curPart === name ? ' sel' : '') + (partNeedsAttn(state.curDim, name) ? ' incomplete' : ''), onclick: () => { state.curPart = name; state.curGroup = null; state.active = null; saveDraft(); renderEditor(); renderPalette(); renderParts(); } },
     [inner]);
 }
 

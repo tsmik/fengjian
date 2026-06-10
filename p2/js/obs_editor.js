@@ -132,7 +132,7 @@ function sectionsOf(part) { return layout[part] || []; }
 function sectionOfQ(id) { const c = content[id]; return c ? c.section : ''; }
 
 /* =================== RENDER =================== */
-function persistNav() { try { localStorage.setItem('obs_last_nav', JSON.stringify({ set: curSet, part: curPart, q: curQ })); } catch (e) {} }
+function persistNav() { if (!curSet) return; try { localStorage.setItem('obs_last_nav', JSON.stringify({ set: curSet, part: curPart, q: curQ })); } catch (e) {} }   // curSet 未設(初始離線渲染)時不存，避免覆蓋上次記憶
 function renderAll() { renderHeader(); renderParts(); renderSections(); renderEd(); updateDirty(); persistNav(); }
 
 function renderHeader() {
@@ -185,7 +185,7 @@ function renderSection(sec, si, secs) {
   sec.qIds.forEach((id, qi) => {
     const c = content[id]; if (!c) return;
     const nref = refDimsOf(id).length;
-    body.appendChild(el('div', { class: 'qrow' + (curQ === id ? ' sel' : ''), onclick: () => { curQ = id; renderSections(); renderEd(); } }, [
+    body.appendChild(el('div', { class: 'qrow' + (curQ === id ? ' sel' : ''), onclick: () => { curQ = id; renderSections(); renderEd(); persistNav(); } }, [
       el('span', { class: 'qid', text: id }),
       el('span', { class: 'qtext', text: c.label || '（未命名）' }),
       el('span', { class: 'qopts', text: c.options.length + '選' }),
