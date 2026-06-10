@@ -448,7 +448,13 @@ function renderCardRow(def, card, ci) {
   noteBtn.addEventListener('click', () => { const show = note.style.display === 'none'; note.style.display = show ? 'block' : 'none'; if (show) note.focus(); });
   note.addEventListener('input', () => { card.note = note.value; saveDraft(); noteBtn.classList.toggle('has', !!card.note); });
   note.addEventListener('blur', () => { note.style.display = 'none'; });
-  wrap.appendChild(el('div', { class: 'cr-top' }, [handle, name, roleSel, noteBtn, el('button', { class: 'btn xs danger', text: '✕', onclick: () => deleteCard(def, ci) })]));
+  const delBtn = el('button', { class: 'btn xs danger', text: '✕', onclick: () => deleteCard(def, ci) });
+  // 三組:卡片名 / 主輔 / 編輯刪除 —— 欄寬過窄時依此順序上下排
+  wrap.appendChild(el('div', { class: 'cr-top' }, [
+    el('div', { class: 'cr-r cr-r-name' }, [handle, name]),
+    el('div', { class: 'cr-r' }, [roleSel]),
+    el('div', { class: 'cr-r' }, [noteBtn, delBtn])
+  ]));
   wrap.appendChild(note);
   return wrap;
 }

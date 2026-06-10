@@ -32,7 +32,7 @@ async function renderRsSelect() {
     sets.forEach(s => sel.appendChild(new Option((s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''), s.id)));
     if (!curSet || !sets.some(s => s.id === curSet)) {
       let last = null, sig = null;
-      try { last = localStorage.getItem('p2_last_set'); } catch (e) {}
+      try { last = localStorage.getItem('obs_last_set'); } catch (e) {}   // 觀察庫自己的記憶鍵（不被條件編輯器覆蓋）
       try { sig = JSON.parse(localStorage.getItem('admin2_edit_set') || 'null'); } catch (e) {}
       const pick = (last && sets.filter(s => s.id === last)[0]) || (sig && sig.id && sets.filter(s => s.id === sig.id)[0]) || sets.filter(s => /202605|人相兵法/.test(s.name || ''))[0] || sets[0];
       curSet = pick.id;
@@ -99,7 +99,7 @@ function loadBundled() {
 // 套裝化：讀「目前選的套裝」自己的題庫；若該套裝還沒有 → 載入全域(或打包)當底，seedAll=true（首存整份建入）
 async function loadSet(setId) {
   curSet = setId;
-  try { localStorage.setItem('p2_last_set', setId); } catch (e) {}   // 記住最後選的套裝（兩編輯器共用）
+  try { localStorage.setItem('obs_last_set', setId); } catch (e) {}   // 記住觀察庫最後選的套裝
   const snap = await getDocs(collection(db, 'ruleSets', setId, 'observations'));
   if (snap && !snap.empty) {
     content = {}; snap.forEach(d => { const o = d.data(); content[o.obsId || d.id] = toInternal(o); });
@@ -292,7 +292,7 @@ function deleteQuestion(c) {
   // remove from layout
   sectionsOf(c.part).forEach(s => { s.qIds = s.qIds.filter(x => x !== c.obsId); });
   delete content[c.obsId];
-  if (!OBS0.some(o => o.obsId === c.obsId)) dirty.delete(c.obsId); else deleted.add(c.obsId);
+  deleted.add(c.obsId);   // 一律記入待刪（刪伺服器上不存在的 doc 是無害 no-op；修：原本靠 OBS0 判斷，套裝題庫的題刪不掉）
   dirty.delete(c.obsId);
   if (curQ === c.obsId) curQ = null;
   markLayout(); renderAll();
@@ -323,6 +323,7 @@ async function save() {
       for (let i = 0; i < ids.length; i += 400) {
         const b = writeBatch(db); ids.slice(i, i + 400).forEach(id => b.set(obsPath(id), toDoc(content[id]))); await b.commit();
       }
+      if (deleted.size) { const b = writeBatch(db); deleted.forEach(id => b.delete(obsPath(id))); await b.commit(); }   // 連帶刪除
       await setDoc(layPath, { layout, updatedAt: new Date().toISOString() });
       seedAll = false;
       toast('已建立此套裝題庫：' + Object.keys(content).length + ' 題');

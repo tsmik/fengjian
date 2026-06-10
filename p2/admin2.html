@@ -50,8 +50,11 @@
   /* 條件 + hint 橫向並排：條件 hint 條件 hint…；hint 字級同條件 */
   .opt-wrap { display:inline-flex; flex-direction:row; align-items:center; gap:4px; vertical-align:top; }
   .opt-hint { font-size:12px; color:var(--sub); cursor:pointer; }
-  .cr-top { display:flex; align-items:center; gap:4px 6px; flex-wrap:wrap; }   /* 欄寬過窄時卡片列自動換行(上下排) */
-  .cr-name { min-width:90px; }
+  /* 卡片列三組:名稱/主輔/按鈕 —— 欄寬足夠時一行，過窄時依序上下排 */
+  .cr-top { display:flex; align-items:center; gap:4px 6px; flex-wrap:wrap; }
+  .cr-r { display:flex; align-items:center; gap:4px; }
+  .cr-r-name { flex:1 1 110px; }
+  .cr-name { flex:1; min-width:70px; }
   .cr-name { flex:1; min-width:0; font-family:inherit; font-size:13px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; }
   .cr-role { font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:3px; }
   .cr-role.role-main { border-color:var(--dynamic); border-width:1.5px; }   /* 主：褐紅框 */
