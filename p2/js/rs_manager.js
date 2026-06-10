@@ -255,6 +255,33 @@ function renderDiffRow(r) {
   return row;
 }
 
+// 題庫差異區：依部位分類、可收合
+function renderObsLibSection(d) {
+  const ol = d.obsLib || { added: [], removed: [], changed: [] };
+  const total = ol.added.length + ol.removed.length + ol.changed.length;
+  const sec = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '題庫差異（觀察題）—— A「' + d._a + '」→ B「' + d._b + '」　共 ' + total + ' 筆' })]);
+  if (!total) { sec.appendChild(el('div', { class: 'hint', text: '兩版本題庫一致。' })); return sec; }
+  const byPart = {};
+  const push = (part, kind, item) => { (byPart[part] = byPart[part] || { added: [], removed: [], changed: [] })[kind].push(item); };
+  ol.added.forEach(x => push(x.part || '(未分)', 'added', x));
+  ol.removed.forEach(x => push(x.part || '(未分)', 'removed', x));
+  ol.changed.forEach(x => push(x.part || '(未分)', 'changed', x));
+  Object.keys(byPart).forEach(part => {
+    const g = byPart[part];
+    const det = el('details', { class: 'ds-det', open: '' });
+    det.appendChild(el('summary', { text: part + '　（＋' + g.added.length + ' －' + g.removed.length + ' ✎' + g.changed.length + '）' }));
+    g.added.forEach(x => det.appendChild(el('div', { class: 'ds-row', text: '＋ 新題 ' + (x.label || x.id) + '（' + x.id + '）' })));
+    g.removed.forEach(x => det.appendChild(el('div', { class: 'ds-row', text: '－ 刪題 ' + (x.label || x.id) + '（' + x.id + '）' })));
+    g.changed.forEach(x => {
+      const bits = [];
+      if (x.aLabel !== x.bLabel) bits.push('題目「' + x.aLabel + '」→「' + x.bLabel + '」');
+      if (x.aOpts !== x.bOpts) bits.push('選項「' + (x.aOpts || '（無）') + '」→「' + (x.bOpts || '（無）') + '」');
+      det.appendChild(el('div', { class: 'ds-row', text: '✎ 改題（' + x.id + '）：' + bits.join('；') }));
+    });
+    sec.appendChild(det);
+  });
+  return sec;
+}
 function renderDiffReport() {
   const box = $('diff-out'); box.innerHTML = ''; if (!lastDiff) return;
   const d = lastDiff, s = d.summary;
@@ -268,6 +295,7 @@ function renderDiffReport() {
     el('div', { text: '• 規模：A「' + d._a + '」' + s.aCount + ' 條 / ' + s.aParts + ' 部位　B「' + d._b + '」' + s.bCount + ' 條 / ' + s.bParts + ' 部位' })
   ]);
   box.appendChild(ov);
+  box.appendChild(renderObsLibSection(d));   // 題庫差異放在條件差異前面
 
   const cd = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: diffObsMode ? '條件差異（觀察題層級）' : '條件差異（卡片層級）' })]);
   const rows = diffObsMode ? d.obsDiffs : d.conditionDiffs;
@@ -285,20 +313,6 @@ function renderDiffReport() {
     const po = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '目標極差別' })]);
     d.poleDiffs.forEach(x => po.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '　符合為 ' + x.from + ' → ' + x.to })));
     box.appendChild(po);
-  }
-  // 題庫（觀察題）差異
-  const ol = d.obsLib || { added: [], removed: [], changed: [] };
-  if (ol.added.length || ol.removed.length || ol.changed.length) {
-    const ob = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '題庫差異（觀察題）—— A「' + d._a + '」→ B「' + d._b + '」' })]);
-    ol.added.forEach(x => ob.appendChild(el('div', { class: 'ds-row', text: '＋ 新題 ' + x.part + '／' + (x.label || x.id) + '（' + x.id + '）' })));
-    ol.removed.forEach(x => ob.appendChild(el('div', { class: 'ds-row', text: '－ 刪題 ' + x.part + '／' + (x.label || x.id) + '（' + x.id + '）' })));
-    ol.changed.forEach(x => {
-      const parts = [];
-      if (x.aLabel !== x.bLabel) parts.push('題目「' + x.aLabel + '」→「' + x.bLabel + '」');
-      if (x.aOpts !== x.bOpts) parts.push('選項「' + (x.aOpts || '（無）') + '」→「' + (x.bOpts || '（無）') + '」');
-      ob.appendChild(el('div', { class: 'ds-row', text: '✎ 改題 ' + x.part + '（' + x.id + '）：' + parts.join('；') }));
-    });
-    box.appendChild(ob);
   }
 }
 
