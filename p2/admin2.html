@@ -94,7 +94,8 @@
   .pi-row { display:flex; align-items:center; justify-content:space-between; gap:4px; }
   /* col3 每部位辣度門檻 */
   .spice-need { border:1px solid var(--bd2); border-radius:8px; padding:6px 8px; margin:6px 0 4px; background:#f7f2ea; }
-  .spice-need-row { display:flex; gap:8px; margin-top:4px; }
+  .spice-need-row { display:flex; gap:8px 10px; margin-top:4px; flex-wrap:wrap; }   /* 欄寬過窄時辣度自動換行(上下排) */
+  .sn-cell { flex:0 0 auto; }
   .sn-cell { display:flex; align-items:center; gap:3px; font-size:12px; }
   .sn-lv { color:var(--sub); }
   .sn-num { width:42px; border:1px solid var(--bd2); border-radius:6px; padding:3px 5px; font-family:inherit; }

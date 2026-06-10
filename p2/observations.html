@@ -26,7 +26,9 @@
   .btn.sm{padding:3px 9px;font-size:12px;}
   .btn.xs{padding:1px 7px;font-size:12px;border-radius:6px;}
   .btn.danger{color:#a8503a;}
-  .wrap{display:grid;grid-template-columns:180px 1fr 340px;height:calc(100vh - 53px);}
+  .wrap{display:grid;grid-template-columns:180px 1fr var(--edw,340px);height:calc(100vh - 53px);}
+  .edsplit{position:fixed;top:53px;bottom:0;width:8px;margin-left:-4px;cursor:col-resize;z-index:8;}
+  .edsplit:hover,.edsplit.drag{background:rgba(122,158,126,.3);}
   .col{overflow:auto;padding:10px;border-right:1px solid var(--bd);}
   .col-title{font-size:12px;color:var(--sub);margin:2px 2px 8px;letter-spacing:.5px;}
   .prow{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;cursor:pointer;}
@@ -87,7 +89,27 @@
   <div class="col" id="col-sections"></div>
   <div class="col" id="ed"></div>
 </div>
+<div class="edsplit" id="edsplit"></div>
 <div class="toast" id="toast"></div>
+<script>
+  // 右邊題目編輯欄可拖曳調寬
+  (function () {
+    var wrap = document.querySelector('.wrap'), ed = document.getElementById('ed'), sp = document.getElementById('edsplit');
+    var w; try { w = parseInt(localStorage.getItem('obs_edw') || '340', 10); } catch (e) { w = 340; }
+    if (!(w >= 240 && w <= 900)) w = 340;
+    function apply() { wrap.style.setProperty('--edw', w + 'px'); place(); }
+    function place() { sp.style.left = ed.getBoundingClientRect().left + 'px'; }
+    sp.addEventListener('mousedown', function (e) {
+      e.preventDefault(); sp.classList.add('drag');
+      var sx = e.clientX, sw = w;
+      function mm(ev) { w = Math.max(240, Math.min(900, sw - (ev.clientX - sx))); apply(); }
+      function mu() { sp.classList.remove('drag'); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); try { localStorage.setItem('obs_edw', String(w)); } catch (e) {} }
+      document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+    });
+    window.addEventListener('resize', place);
+    apply(); setTimeout(place, 200);
+  })();
+</script>
 
 <script src="js/questions_layout.js"></script>
 <script src="js/observations_data.js"></script>

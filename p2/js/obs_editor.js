@@ -348,6 +348,7 @@ function boot() {
     if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
     renderAll();
   });
+  window.addEventListener('focus', () => { if (user) renderRsSelect(); });   // 切回來時刷新套裝清單(新建的套裝才會出現)
   renderAll();
   onUser(async (u, r) => {
     user = u; role = r;
