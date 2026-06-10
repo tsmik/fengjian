@@ -19,6 +19,25 @@ let layout = {};       // part -> [{label,qIds:[]}]
 let curPart = PART_ORDER[0], curQ = null;
 let dirty = new Set(), deleted = new Set(), layoutDirty = false;
 let user = null, role = null, online = false;
+let curSet = null, sets = [], seedAll = false;   // 套裝化：目前編輯的套裝、套裝清單、是否首次建入
+
+async function renderRsSelect() {
+  const sel = $('rs-select'); if (!sel) return;
+  if (!user) { sel.innerHTML = ''; sel.appendChild(new Option('（登入後選套裝）', '')); return; }
+  try {
+    const snap = await getDocs(collection(db, 'ruleSets')); sets = []; snap.forEach(d => sets.push({ id: d.id, ...d.data() }));
+    sets.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    sel.innerHTML = '';
+    if (!sets.length) { sel.appendChild(new Option('（尚無套裝→到套裝分頁新增）', '')); return; }
+    sets.forEach(s => sel.appendChild(new Option((s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''), s.id)));
+    if (!curSet || !sets.some(s => s.id === curSet)) {
+      let sig = null; try { sig = JSON.parse(localStorage.getItem('admin2_edit_set') || 'null'); } catch (e) {}
+      const pick = (sig && sig.id && sets.filter(s => s.id === sig.id)[0]) || sets.filter(s => /202605|人相兵法/.test(s.name || ''))[0] || sets[0];
+      curSet = pick.id;
+    }
+    sel.value = curSet;
+  } catch (e) {}
+}
 
 /* ---------- helpers ---------- */
 function el(t, a = {}, k = []) {
@@ -52,6 +71,7 @@ function toDoc(c) {
 function markObs(id) { dirty.add(id); layoutDirty = layoutDirty; updateDirty(); }
 function markLayout() { layoutDirty = true; updateDirty(); }
 function updateDirty() {
+  if (seedAll) { $('dirtywrap').innerHTML = '此套裝尚未有題庫，按「儲存」建立基準 ' + Object.keys(content).length + ' 題 <span class="dirtydot"></span>'; return; }
   const n = dirty.size + deleted.size + (layoutDirty ? 1 : 0);
   $('dirtywrap').innerHTML = n ? ('未存變更 ' + (dirty.size + deleted.size) + ' 筆' + (layoutDirty ? '＋版面' : '') + ' <span class="dirtydot"></span>') : '';
 }
@@ -74,12 +94,26 @@ function loadBundled() {
   layout = JSON.parse(JSON.stringify(LAYOUT0));
   reconcile();
 }
-async function loadOnline() {
-  const snap = await getDocs(collection(db, 'observations'));
-  content = {}; snap.forEach(d => { const o = d.data(); content[o.obsId || d.id] = toInternal(o); });
-  const lay = await getDoc(doc(db, 'config', 'questionsLayout'));
-  layout = (lay.exists() && lay.data().layout) ? lay.data().layout : JSON.parse(JSON.stringify(LAYOUT0));
+// 套裝化：讀「目前選的套裝」自己的題庫；若該套裝還沒有 → 載入全域(或打包)當底，seedAll=true（首存整份建入）
+async function loadSet(setId) {
+  curSet = setId;
+  const snap = await getDocs(collection(db, 'ruleSets', setId, 'observations'));
+  if (snap && !snap.empty) {
+    content = {}; snap.forEach(d => { const o = d.data(); content[o.obsId || d.id] = toInternal(o); });
+    seedAll = false;
+  } else {
+    let g = null; try { g = await getDocs(collection(db, 'observations')); } catch (e) {}
+    content = {};
+    if (g && !g.empty) g.forEach(d => { const o = d.data(); content[o.obsId || d.id] = toInternal(o); });
+    else OBS0.forEach(o => content[o.obsId] = toInternal(o));   // 連全域都沒有 → 打包基準
+    seedAll = true;
+  }
+  // 版面：套裝自己的 → 全域 → 打包
+  let lay = null; try { lay = await getDoc(doc(db, 'ruleSets', setId, 'obsmeta', 'layout')); } catch (e) {}
+  if (lay && lay.exists() && lay.data().layout) layout = lay.data().layout;
+  else { let gl = null; try { gl = await getDoc(doc(db, 'config', 'questionsLayout')); } catch (e) {} layout = (gl && gl.exists() && gl.data().layout) ? gl.data().layout : JSON.parse(JSON.stringify(LAYOUT0)); }
   reconcile();
+  dirty.clear(); deleted.clear(); layoutDirty = false;
 }
 
 /* ---------- id gen ---------- */
@@ -276,13 +310,27 @@ function moveQToSection(c, newLabel) {
 async function save() {
   if (!user) return alert('請先用 Google 登入');
   if (!(role === 'admin' || role === 'teacher')) return alert('角色＝' + (role || '（無）') + '，需 admin/teacher。\n你的 UID：' + user.uid);
+  if (!curSet) return alert('請先在上方選一個套裝。');
+  const obsPath = id => doc(db, 'ruleSets', curSet, 'observations', id);
+  const layPath = doc(db, 'ruleSets', curSet, 'obsmeta', 'layout');
   try {
-    const batch = writeBatch(db);
-    dirty.forEach(id => { if (content[id]) batch.set(doc(db, 'observations', id), toDoc(content[id])); });
-    deleted.forEach(id => batch.delete(doc(db, 'observations', id)));
-    batch.set(doc(db, 'config', 'questionsLayout'), { layout, updatedAt: new Date().toISOString() });
-    await batch.commit();
-    toast('已存：' + dirty.size + ' 題、刪 ' + deleted.size + ' 題、版面已更新');
+    if (seedAll) {
+      // 首次：把整份題庫寫入此套裝（分批 ≤400），確保完整不殘缺
+      const ids = Object.keys(content);
+      for (let i = 0; i < ids.length; i += 400) {
+        const b = writeBatch(db); ids.slice(i, i + 400).forEach(id => b.set(obsPath(id), toDoc(content[id]))); await b.commit();
+      }
+      await setDoc(layPath, { layout, updatedAt: new Date().toISOString() });
+      seedAll = false;
+      toast('已建立此套裝題庫：' + Object.keys(content).length + ' 題');
+    } else {
+      const batch = writeBatch(db);
+      dirty.forEach(id => { if (content[id]) batch.set(obsPath(id), toDoc(content[id])); });
+      deleted.forEach(id => batch.delete(obsPath(id)));
+      batch.set(layPath, { layout, updatedAt: new Date().toISOString() });
+      await batch.commit();
+      toast('已存：' + dirty.size + ' 題、刪 ' + deleted.size + ' 題、版面已更新');
+    }
     dirty.clear(); deleted.clear(); layoutDirty = false; updateDirty();
   } catch (e) { alert('存檔失敗：' + (e.code || e.message)); }
 }
@@ -293,12 +341,19 @@ function boot() {
   $('btn-login').addEventListener('click', () => login().catch(e => alert('登入失敗：' + (e.code || e.message))));
   $('btn-logout').addEventListener('click', () => logout());
   $('btn-save').addEventListener('click', save);
+  $('rs-select').addEventListener('change', async e => {
+    const v = e.target.value; if (!v || v === curSet) return;
+    if ((dirty.size || deleted.size || layoutDirty) && !confirm('目前套裝有未儲存變更，切換會丟掉這些變更。確定切換？')) { $('rs-select').value = curSet; return; }
+    try { await loadSet(v); } catch (err) { alert('載入失敗：' + (err.code || err.message)); }
+    if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
+    renderAll();
+  });
   renderAll();
   onUser(async (u, r) => {
     user = u; role = r;
     if (u) {
       online = true;
-      try { await loadOnline(); dirty.clear(); deleted.clear(); layoutDirty = false; } catch (e) { toast('讀 staging 失敗：' + (e.code || e.message)); }
+      try { await renderRsSelect(); if (curSet) await loadSet(curSet); } catch (e) { toast('讀 staging 失敗：' + (e.code || e.message)); }
     } else { online = false; }
     if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
     renderAll();

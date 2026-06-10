@@ -207,21 +207,29 @@ function buildMarkdown() {
 }
 function exportMarkdown() { _exportFmt = 'md'; $('export-ta').value = buildMarkdown(); $('export-title').textContent = '維度 Markdown（人看的摘要）'; $('export-modal').style.display = 'flex'; }
 
-// ---------- observations 即時讀取（登入後改用 live Firestore，讓觀察庫新增/改的題目馬上可用）----------
+// ---------- observations 即時讀取（套裝化：讀「目前載入套裝」自己的題庫；該套裝沒有→打包基準後備）----------
 let _lastObs = 0;
 function _obsSig(arr) { return arr.map(o => o.obsId + ':' + (o.label || '') + ':' + (o.options || []).join(',')).join('|'); }
+function _mergeObs(live) {   // 以打包順序為主，套用 live 版本；新題接尾；已刪去掉
+  const order = (window.OBSERVATIONS || []).map(o => o.obsId);
+  const next = []; order.forEach(id => { if (live[id]) { next.push(live[id]); delete live[id]; } });
+  Object.keys(live).forEach(id => next.push(live[id]));
+  return next;
+}
+function _toMap(snap) { const m = {}; snap.forEach(d => { const o = d.data(); if (o && o.obsId) m[o.obsId] = o; }); return m; }
 async function loadLiveObs(force) {
   if (!fbOK || !db || !user) return;                       // 沒登入讀不到（規則限登入），維持靜態後備
   if (!force && Date.now() - _lastObs < 8000) return;      // 節流：聚焦時最多 8 秒抓一次
   _lastObs = Date.now();
   try {
-    const snap = await getDocs(collection(db, 'observations'));
-    const live = {}; snap.forEach(d => { const o = d.data(); if (o && o.obsId) live[o.obsId] = o; });
-    if (!Object.keys(live).length) return;                 // 沒讀到就不動
-    // 以靜態順序為主套用 live 版本（反映編輯）；live 有靜態沒有的新題接在後面；靜態有 live 沒有的(已刪)去掉
-    const order = (window.OBSERVATIONS || []).map(o => o.obsId);
-    const next = []; order.forEach(id => { if (live[id]) { next.push(live[id]); delete live[id]; } });
-    Object.keys(live).forEach(id => next.push(live[id]));
+    const setId = state.ruleSet.id;
+    const snap = await getDocs(collection(db, 'ruleSets', setId, 'observations'));
+    let next;
+    if (!snap.empty) next = _mergeObs(_toMap(snap));        // 此套裝自己的題庫
+    else {
+      let g = null; try { g = await getDocs(collection(db, 'observations')); } catch (e) {}   // 過渡：套裝沒題庫→全域
+      next = (g && !g.empty) ? _mergeObs(_toMap(g)) : (window.OBSERVATIONS || []).slice();      // 再退打包基準
+    }
     if (_obsSig(next) === _obsSig(OBS)) return;             // 沒變就不重畫，避免打斷正在編輯
     OBS = next; indexObs();
     renderPalette(); renderEditor();                       // 重畫用到題目的欄位（observation 欄＋葉條件）
@@ -633,6 +641,7 @@ function applyRuleSet(meta, dimDocs) {
   migrateAllLeaves(); renderAll();
   lastSavedJson = curJson(); lastSavedAt = '（剛載入）'; renderSaveStatus(); renderRsSelect();
   resetHistory();   // 載入新套裝＝新的 undo 基準（不可往上一份套裝 undo）
+  loadLiveObs(true);   // 套裝化：載入此套裝自己的題庫
 }
 
 async function loadRsIntoEditor(id) {

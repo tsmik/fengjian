@@ -162,10 +162,15 @@ async function newSet() {
 async function copySet(id) {
   if (!isStaff()) return alert('需 admin/teacher');
   try {
-    const m = await getDoc(doc(db, 'ruleSets', id)); const dims = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+    const m = await getDoc(doc(db, 'ruleSets', id));
+    const dims = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+    const obs = await getDocs(collection(db, 'ruleSets', id, 'observations'));   // 題庫一起 fork
+    const lay = await getDoc(doc(db, 'ruleSets', id, 'obsmeta', 'layout'));
     const meta = m.exists() ? m.data() : {}; const newId = 'set-' + nowStamp();
     await setDoc(doc(db, 'ruleSets', newId), { name: (meta.name || '套裝') + ' 複本', period: meta.period || '', note: meta.note || '', basedOn: id, status: 'draft', createdAt: new Date().toISOString() });
-    const batch = writeBatch(db); dims.forEach(d => batch.set(doc(db, 'ruleSets', newId, 'dims', d.id), d.data())); await batch.commit();
+    { const b = writeBatch(db); dims.forEach(d => b.set(doc(db, 'ruleSets', newId, 'dims', d.id), d.data())); await b.commit(); }
+    if (!obs.empty) { const arr = []; obs.forEach(d => arr.push(d)); for (let i = 0; i < arr.length; i += 400) { const b = writeBatch(db); arr.slice(i, i + 400).forEach(d => b.set(doc(db, 'ruleSets', newId, 'observations', d.id), d.data())); await b.commit(); } }
+    if (lay.exists()) await setDoc(doc(db, 'ruleSets', newId, 'obsmeta', 'layout'), lay.data());
     loadList();
   } catch (e) { alert('複製失敗：' + (e.code || e.message)); }
 }
@@ -191,10 +196,16 @@ async function rollback() {
 async function deleteSet(s, isActive) {
   if (!isStaff()) return alert('需 admin/teacher');
   if (isActive) return alert('這是「上線中」的套裝，不能刪除。');
-  if (!confirm('永久刪除套裝「' + (s.name || s.id) + '」及其全部維度內容？此動作不可復原。')) return;
+  if (!confirm('永久刪除套裝「' + (s.name || s.id) + '」及其全部維度內容＋題庫？此動作不可復原。')) return;
   try {
     const dims = await getDocs(collection(db, 'ruleSets', s.id, 'dims'));
-    const batch = writeBatch(db); dims.forEach(d => batch.delete(doc(db, 'ruleSets', s.id, 'dims', d.id))); batch.delete(doc(db, 'ruleSets', s.id)); await batch.commit();
+    const obs = await getDocs(collection(db, 'ruleSets', s.id, 'observations'));
+    const refs = [];
+    dims.forEach(d => refs.push(doc(db, 'ruleSets', s.id, 'dims', d.id)));
+    obs.forEach(d => refs.push(doc(db, 'ruleSets', s.id, 'observations', d.id)));
+    refs.push(doc(db, 'ruleSets', s.id, 'obsmeta', 'layout'));
+    refs.push(doc(db, 'ruleSets', s.id));   // 主檔最後
+    for (let i = 0; i < refs.length; i += 400) { const b = writeBatch(db); refs.slice(i, i + 400).forEach(r => b.delete(r)); await b.commit(); }
     loadList();
   } catch (e) { alert('刪除失敗：' + (e.code || e.message)); }
 }

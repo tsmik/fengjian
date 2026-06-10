@@ -28,6 +28,15 @@ service cloud.firestore {
         allow read:  if isSignedIn();
         allow write: if isStaff();
       }
+      // 套裝化的觀察庫（題目＋版面順序），每套裝各一份
+      match /observations/{obsId} {
+        allow read:  if isSignedIn();
+        allow write: if isStaff();
+      }
+      match /obsmeta/{docId} {
+        allow read:  if isSignedIn();
+        allow write: if isStaff();
+      }
     }
     match /spiceScript/{docId} {
       allow read:  if isSignedIn();
