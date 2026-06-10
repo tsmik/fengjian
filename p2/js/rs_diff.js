@@ -106,3 +106,20 @@ export function diffSets(A, B) {
   };
   return { relationship: relationship(A, B), summary, conditionDiffs, obsDiffs, spiceDiffs, poleDiffs };
 }
+
+// 題庫（觀察題）層級差異：兩套裝各自的 observations 比對（新增/刪除/改題目或選項）
+export function diffObsLib(aObs, bObs) {
+  aObs = aObs || {}; bObs = bObs || {};
+  const added = [], removed = [], changed = [];
+  const optStr = o => ((o && o.options) || []).join('／');
+  const ids = new Set([...Object.keys(aObs), ...Object.keys(bObs)]);
+  ids.forEach(id => {
+    const a = aObs[id], b = bObs[id];
+    if (a && !b) { removed.push({ id, label: a.label || '', part: a.part || '' }); return; }
+    if (!a && b) { added.push({ id, label: b.label || '', part: b.part || '' }); return; }
+    if (a.label !== b.label || optStr(a) !== optStr(b)) {
+      changed.push({ id, part: b.part || a.part || '', aLabel: a.label || '', bLabel: b.label || '', aOpts: optStr(a), bOpts: optStr(b) });
+    }
+  });
+  return { added, removed, changed };
+}

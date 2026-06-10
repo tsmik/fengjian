@@ -2,7 +2,7 @@
 // 每套裝：名稱(name)、時期(period, YYYY-MM)、說明(note，可拉開的文字框)。
 // 列出/新增/複製/設上線(config/active)/一鍵回滾/刪除；「編輯內容」→ 切到條件編輯器分頁載入該套裝。
 import { fbOK, onUser, login, logout, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from './fb.js';
-import { diffSets } from './rs_diff.js';
+import { diffSets, diffObsLib } from './rs_diff.js';
 
 let user = null, role = null, showArchived = false;
 let lastDiff = null, diffObsMode = false, showAllCond = false;
@@ -224,9 +224,11 @@ function renderDiffControls(sets) {
 async function loadSetFull(id) {
   const m = await getDoc(doc(db, 'ruleSets', id));
   const ds = await getDocs(collection(db, 'ruleSets', id, 'dims'));
+  const os = await getDocs(collection(db, 'ruleSets', id, 'observations'));   // 題庫一起比對
   const dims = {}; ds.forEach(x => { const dd = x.data(); dims[+dd.dimIndex] = dd; });
+  const obs = {}; os.forEach(x => { const o = x.data(); obs[o.obsId || x.id] = o; });
   const meta = m.exists() ? m.data() : {};
-  return { id, name: meta.name || id, basedOn: meta.basedOn || null, dims };
+  return { id, name: meta.name || id, basedOn: meta.basedOn || null, dims, obs };
 }
 
 async function runCompare() {
@@ -237,7 +239,7 @@ async function runCompare() {
   out.appendChild(el('div', { class: 'hint', text: '比較中…' }));
   try {
     const [A, B] = await Promise.all([loadSetFull(aId), loadSetFull(bId)]);
-    lastDiff = diffSets(A, B); lastDiff._a = A.name; lastDiff._b = B.name; showAllCond = false;
+    lastDiff = diffSets(A, B); lastDiff._a = A.name; lastDiff._b = B.name; lastDiff.obsLib = diffObsLib(A.obs, B.obs); showAllCond = false;
     renderDiffReport();
   } catch (e) { out.innerHTML = ''; out.appendChild(el('div', { class: 'hint', text: '比較失敗：' + (e.code || e.message) })); }
 }
@@ -260,6 +262,7 @@ function renderDiffReport() {
     el('div', { class: 'ds-head', text: '關係與總覽' }),
     el('div', { class: 'ov-rel', text: '• ' + d.relationship }),
     el('div', { text: '• 規則差異：共 ' + (s.cardsAdded + s.cardsRemoved + s.cardsChanged) + ' 條（＋新增' + s.cardsAdded + '、－刪除' + s.cardsRemoved + '、✎修改' + s.cardsChanged + '）' }),
+    el('div', { text: '• 題庫差異：＋新題' + ((d.obsLib && d.obsLib.added.length) || 0) + '、－刪題' + ((d.obsLib && d.obsLib.removed.length) || 0) + '、✎改題' + ((d.obsLib && d.obsLib.changed.length) || 0) }),
     el('div', { text: '• 辣度差異：' + s.spiceDiffs + ' 個部位設定不同' }),
     el('div', { text: '• 目標極差異：' + s.poleDiffs + ' 個維度不同' }),
     el('div', { text: '• 規模：A「' + d._a + '」' + s.aCount + ' 條 / ' + s.aParts + ' 部位　B「' + d._b + '」' + s.bCount + ' 條 / ' + s.bParts + ' 部位' })
@@ -282,6 +285,20 @@ function renderDiffReport() {
     const po = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '目標極差別' })]);
     d.poleDiffs.forEach(x => po.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '　符合為 ' + x.from + ' → ' + x.to })));
     box.appendChild(po);
+  }
+  // 題庫（觀察題）差異
+  const ol = d.obsLib || { added: [], removed: [], changed: [] };
+  if (ol.added.length || ol.removed.length || ol.changed.length) {
+    const ob = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '題庫差異（觀察題）—— A「' + d._a + '」→ B「' + d._b + '」' })]);
+    ol.added.forEach(x => ob.appendChild(el('div', { class: 'ds-row', text: '＋ 新題 ' + x.part + '／' + (x.label || x.id) + '（' + x.id + '）' })));
+    ol.removed.forEach(x => ob.appendChild(el('div', { class: 'ds-row', text: '－ 刪題 ' + x.part + '／' + (x.label || x.id) + '（' + x.id + '）' })));
+    ol.changed.forEach(x => {
+      const parts = [];
+      if (x.aLabel !== x.bLabel) parts.push('題目「' + x.aLabel + '」→「' + x.bLabel + '」');
+      if (x.aOpts !== x.bOpts) parts.push('選項「' + (x.aOpts || '（無）') + '」→「' + (x.bOpts || '（無）') + '」');
+      ob.appendChild(el('div', { class: 'ds-row', text: '✎ 改題 ' + x.part + '（' + x.id + '）：' + parts.join('；') }));
+    });
+    box.appendChild(ob);
   }
 }
 
