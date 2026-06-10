@@ -27,6 +27,14 @@
   .btn.xs{padding:1px 7px;font-size:12px;border-radius:6px;}
   .btn.danger{color:#a8503a;}
   .wrap{display:grid;grid-template-columns:180px 1fr var(--edw,340px);height:calc(100vh - 53px);}
+  .wrap.compare{grid-template-columns:180px var(--basew,260px) 1fr var(--edw,340px);}
+  #col-base{display:none;background:#faf6ee;}
+  .wrap.compare #col-base{display:block;}
+  .base-sec{font-weight:600;font-size:12px;color:var(--sub);margin:9px 2px 4px;border-top:1px dashed var(--bd);padding-top:6px;}
+  .base-sec:first-of-type{border-top:0;}
+  .base-q{padding:4px 6px;border-bottom:1px solid var(--bd);}
+  .bq-label{font-size:13px;}
+  .base-opts{font-size:11px;color:var(--sub);line-height:1.5;}
   .edsplit{position:fixed;top:53px;bottom:0;width:8px;margin-left:-4px;cursor:col-resize;z-index:8;}
   .edsplit:hover,.edsplit.drag{background:rgba(122,158,126,.3);}
   .col{overflow:auto;padding:10px;border-right:1px solid var(--bd);}
@@ -77,7 +85,9 @@
 <header>
   <h1>觀察庫編輯器</h1>
   <span style="font-size:12px;color:var(--sub)">套裝：</span>
-  <select id="rs-select" title="選擇要編輯題庫的套裝（每套裝各一份題庫）" style="font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:5px 8px;background:#fffdf9;color:var(--ink);max-width:220px;"></select>
+  <select id="rs-select" title="選擇要編輯題庫的套裝（目標套裝）" style="font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:5px 8px;background:#fffdf9;color:var(--ink);max-width:200px;"></select>
+  <span style="font-size:12px;color:var(--sub)">對照基準：</span>
+  <select id="base-select" title="選一個套裝當對照基準（唯讀）；選「無」關閉對照" style="font-family:inherit;font-size:13px;border:1px solid var(--bd2);border-radius:8px;padding:5px 8px;background:#faf6ee;color:var(--ink);max-width:200px;"></select>
   <span id="dirtywrap" style="font-size:12px;color:var(--sub)"></span>
   <button class="btn sm primary" id="btn-save">儲存到 staging</button>
   <span class="grow"></span>
@@ -88,6 +98,7 @@
 
 <div class="wrap">
   <div class="col" id="col-parts"></div>
+  <div class="col" id="col-base"></div>
   <div class="col" id="col-sections"></div>
   <div class="col" id="ed"></div>
 </div>

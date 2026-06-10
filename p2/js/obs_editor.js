@@ -20,6 +20,26 @@ let curPart = PART_ORDER[0], curQ = null;
 let dirty = new Set(), deleted = new Set(), layoutDirty = false;
 let user = null, role = null, online = false;
 let curSet = null, sets = [], seedAll = false;   // 套裝化：目前編輯的套裝、套裝清單、是否首次建入
+let baseSet = null, baseContent = {}, baseLayout = {};   // 對照基準套裝（唯讀）
+
+function baseSetName() { const s = sets.filter(x => x.id === baseSet)[0]; return s ? (s.name || s.id) : baseSet; }
+function renderBaseSelect() {
+  const sel = $('base-select'); if (!sel) return;
+  sel.innerHTML = ''; sel.appendChild(new Option('（無，不對照）', ''));
+  sets.forEach(s => sel.appendChild(new Option((s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''), s.id)));
+  sel.value = baseSet || '';
+}
+async function loadBaseSet(setId) {
+  baseSet = setId || null;
+  try { localStorage.setItem('obs_base_set', baseSet || ''); } catch (e) {}
+  baseContent = {}; baseLayout = {};
+  if (!baseSet) return;
+  let snap = null; try { snap = await getDocs(collection(db, 'ruleSets', baseSet, 'observations')); } catch (e) {}
+  if (snap && !snap.empty) snap.forEach(d => { const o = d.data(); baseContent[o.obsId || d.id] = toInternal(o); });
+  else { let g = null; try { g = await getDocs(collection(db, 'observations')); } catch (e) {} if (g && !g.empty) g.forEach(d => { const o = d.data(); baseContent[o.obsId || d.id] = toInternal(o); }); else OBS0.forEach(o => baseContent[o.obsId] = toInternal(o)); }
+  let lay = null; try { lay = await getDoc(doc(db, 'ruleSets', baseSet, 'obsmeta', 'layout')); } catch (e) {}
+  baseLayout = (lay && lay.exists() && lay.data().layout) ? lay.data().layout : {};
+}
 
 async function renderRsSelect() {
   const sel = $('rs-select'); if (!sel) return;
@@ -133,7 +153,26 @@ function sectionOfQ(id) { const c = content[id]; return c ? c.section : ''; }
 
 /* =================== RENDER =================== */
 function persistNav() { if (!curSet) return; try { localStorage.setItem('obs_last_nav', JSON.stringify({ set: curSet, part: curPart, q: curQ })); } catch (e) {} }   // curSet 未設(初始離線渲染)時不存，避免覆蓋上次記憶
-function renderAll() { renderHeader(); renderParts(); renderSections(); renderEd(); updateDirty(); persistNav(); }
+// 對照欄：唯讀顯示基準套裝在目前部位的題目（依 section 分組＋選項）
+function renderBase() {
+  const box = $('col-base'); if (!box) return; box.innerHTML = '';
+  const wrap = document.querySelector('.wrap'); if (wrap) wrap.classList.toggle('compare', !!baseSet);
+  if (!baseSet) return;
+  box.appendChild(el('div', { class: 'col-title', text: '基準對照：' + baseSetName() + '（' + curPart + '）' }));
+  const qs = Object.values(baseContent).filter(c => c.part === curPart);
+  if (!qs.length) { box.appendChild(el('div', { class: 'empty', text: '（基準此部位無題目）' })); return; }
+  const order = (baseLayout[curPart] || []).map(s => s.label);
+  const bySec = {}; qs.forEach(c => { const k = c.section || '(未分組)'; (bySec[k] = bySec[k] || []).push(c); });
+  const secNames = [...new Set([...order, ...Object.keys(bySec)])].filter(s => bySec[s]);
+  secNames.forEach(sn => {
+    box.appendChild(el('div', { class: 'base-sec', text: sn }));
+    bySec[sn].forEach(c => box.appendChild(el('div', { class: 'base-q' }, [
+      el('div', { class: 'bq-label', text: c.label || '（未命名）' }),
+      el('div', { class: 'base-opts', text: (c.options || []).map(o => o.v).join('／') || '（無選項）' })
+    ])));
+  });
+}
+function renderAll() { renderHeader(); renderParts(); renderBase(); renderSections(); renderEd(); updateDirty(); persistNav(); }
 
 function renderHeader() {
   let s;
@@ -355,7 +394,11 @@ function boot() {
     if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
     renderAll();
   });
-  window.addEventListener('focus', () => { if (user) renderRsSelect(); });   // 切回來時刷新套裝清單(新建的套裝才會出現)
+  $('base-select').addEventListener('change', async e => {
+    try { await loadBaseSet(e.target.value); } catch (err) { alert('載入基準失敗：' + (err.code || err.message)); }
+    renderAll();
+  });
+  window.addEventListener('focus', () => { if (user) { renderRsSelect(); renderBaseSelect(); } });   // 切回來時刷新套裝清單(新建的套裝才會出現)
   renderAll();
   onUser(async (u, r) => {
     user = u; role = r;
@@ -368,6 +411,9 @@ function boot() {
           if (nav.part && PART_ORDER.includes(nav.part)) curPart = nav.part;
           if (nav.q && content[nav.q]) curQ = nav.q;
         }
+        let bs = null; try { bs = localStorage.getItem('obs_base_set'); } catch (e) {}   // 還原對照基準
+        if (bs && sets.filter(s => s.id === bs)[0] && bs !== curSet) baseSet = bs;
+        renderBaseSelect(); if (baseSet) await loadBaseSet(baseSet);
       } catch (e) { toast('讀 staging 失敗：' + (e.code || e.message)); }
     } else { online = false; }
     if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
