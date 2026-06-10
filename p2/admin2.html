@@ -20,7 +20,7 @@
   .btn.sm { padding:3px 8px; font-size:12px; }
   .btn.xs { padding:1px 6px; font-size:12px; }
   .btn.danger { color:#a33; }
-  .wrap { display:grid; grid-template-columns:168px 158px 188px minmax(0,1fr) 270px; gap:0; height:calc(100vh - 52px); }
+  .wrap { display:grid; grid-template-columns:148px 158px 188px minmax(0,1fr) 270px; gap:0; height:calc(100vh - 52px); }
   .col { border-right:1px solid var(--bd); overflow:auto; padding:8px; }
   .col-cards-wrap { display:flex; flex-direction:column; overflow:hidden; padding:0; background:var(--panel); }
   #col-cards { flex:1; overflow:auto; padding:10px; }
@@ -71,6 +71,7 @@
   .dim-row { display:flex; align-items:center; }
   #col-dims .list-row { align-items:flex-start; padding-left:0; }
   .dim-name { font-size:14px; white-space:nowrap; }
+  .dim-tgt { font-size:13px; color:var(--sub); }   /* 「符合為X」縮小，與部位名同大 */
   /* col2 維度極性設定 */
   .pole-ctrl { border:1px solid var(--bd); border-radius:8px; padding:6px 8px; margin:4px 0 10px; background:#fbf8f2; display:flex; flex-direction:column; gap:3px; }
   .pole-opt { display:inline-flex; align-items:center; gap:3px; font-size:12px; cursor:pointer; margin-right:8px; }
@@ -216,7 +217,7 @@
     var wrap = document.getElementById('wrap');
     var cw; try { cw = JSON.parse(localStorage.getItem('admin2_colw') || 'null'); } catch (e) {}
     if (!cw) cw = { w3: 188, w5: 270 };
-    function apply() { wrap.style.gridTemplateColumns = '168px 158px ' + cw.w3 + 'px minmax(0,1fr) ' + cw.w5 + 'px'; place(); }
+    function apply() { wrap.style.gridTemplateColumns = '148px 158px ' + cw.w3 + 'px minmax(0,1fr) ' + cw.w5 + 'px'; place(); }
     function place() {
       document.getElementById('split-a').style.left = document.getElementById('col-groups').getBoundingClientRect().right + 'px';
       document.getElementById('split-b').style.left = document.getElementById('col-cards-wrap').getBoundingClientRect().right + 'px';

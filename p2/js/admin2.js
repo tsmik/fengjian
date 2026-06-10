@@ -311,7 +311,7 @@ function renderDims() {
   box.appendChild(el('div', { class: 'col-title', text: '維度' }));
   META.dims.forEach(d => {
     const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimNeedsAttn(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
-    row.appendChild(el('span', { class: 'dim-name', text: d.name + '　符合為' + dimTargetName(d.index) }));
+    row.appendChild(el('span', { class: 'dim-name' }, [d.name, el('span', { class: 'dim-tgt', text: '　符合為' + dimTargetName(d.index) })]));
     box.appendChild(row);
   });
 }

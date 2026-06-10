@@ -77,6 +77,7 @@ function updateDirty() {
   const n = dirty.size + deleted.size + (layoutDirty ? 1 : 0);
   $('dirtywrap').innerHTML = n ? ('未存變更 ' + (dirty.size + deleted.size) + ' 筆' + (layoutDirty ? '＋版面' : '') + ' <span class="dirtydot"></span>') : '';
 }
+const DIM_COLORS = { '形勢': '#6B8C5A', '經緯': '#4A7A6E', '方圓': '#8A8078', '曲直': '#A07850', '收放': '#9A6878', '緩急': '#9A8A50', '順逆': '#4A7A9A', '分合': '#7A6890', '真假': '#5A8A6A', '攻守': '#5A8A5A', '奇正': '#7A6088', '虛實': '#4A8078', '進退': '#4A6E8A' };
 function refDimsOf(id) { return REF_DIMS[id] || []; }
 function valUsed(id, v) { return (REF_VALS[id] || []).indexOf(v) >= 0; }
 
@@ -188,7 +189,7 @@ function renderSection(sec, si, secs) {
       el('span', { class: 'qid', text: id }),
       el('span', { class: 'qtext', text: c.label || '（未命名）' }),
       el('span', { class: 'qopts', text: c.options.length + '選' }),
-      el('span', { class: 'badge' + (nref ? '' : ' zero'), text: nref + '維' }),
+      el('span', { class: 'badge' + (nref ? '' : ' zero'), text: '引用' + nref + '次' }),
       el('button', { class: 'btn xs', text: '▲', onclick: (e) => { e.stopPropagation(); moveQ(sec, qi, -1); } }),
       el('button', { class: 'btn xs', text: '▼', onclick: (e) => { e.stopPropagation(); moveQ(sec, qi, 1); } })
     ]));
@@ -209,9 +210,11 @@ function renderEd() {
     el('span', { class: 'grow', html: '<span style="flex:1"></span>' }),
     el('button', { class: 'btn xs danger', text: '刪除此題', onclick: () => deleteQuestion(c) })
   ]));
-  // text
+  // text + note（備註移到題目文字下方，預設一行）
   card.appendChild(el('label', { class: 'fl', text: '題目文字' }));
   card.appendChild(el('input', { class: 't', value: c.label, oninput: (e) => { c.label = e.target.value; markObs(c.obsId); renderSectionsLabelOnly(); } }));
+  card.appendChild(el('label', { class: 'fl', text: '備註（note）' }));
+  card.appendChild(el('textarea', { class: 't note1', rows: '1', value: c.note, oninput: (e) => { c.note = e.target.value; markObs(c.obsId); } }));
   // paired + section move
   const paired = el('input', { type: 'checkbox', checked: c.paired }); paired.addEventListener('change', () => { c.paired = paired.checked; markObs(c.obsId); });
   const secSel = el('select', { class: 't', onchange: (e) => moveQToSection(c, e.target.value) });
@@ -224,7 +227,7 @@ function renderEd() {
   // ref tags
   card.appendChild(el('label', { class: 'fl', text: '被哪些維度引用' }));
   const tags = el('div', { class: 'tags' });
-  if (nref.length) nref.forEach(d => tags.appendChild(el('span', { class: 'tag', text: d })));
+  if (nref.length) nref.forEach(d => tags.appendChild(el('span', { class: 'tag dimtag', text: d, style: 'background:' + (DIM_COLORS[d] || '#9a8f7d') + ';color:#fff;border-color:transparent;' })));
   else tags.appendChild(el('span', { class: 'tag', text: '（未被任何維度引用）' }));
   card.appendChild(tags);
   if (nref.length) card.appendChild(el('div', { class: 'protect', text: '⚠ 此題被 ' + nref.length + ' 個維度引用：刪除被擋；改題目文字不影響比對，但改/刪選項值會影響規則命中。' }));
@@ -232,9 +235,6 @@ function renderEd() {
   card.appendChild(el('label', { class: 'fl', text: '選項（值／提示）' }));
   c.options.forEach((op, oi) => card.appendChild(renderOpt(c, op, oi)));
   card.appendChild(el('button', { class: 'btn xs', text: '＋ 選項', onclick: () => { c.options.push({ v: '', hint: '' }); markObs(c.obsId); renderEd(); } }));
-  // note
-  card.appendChild(el('label', { class: 'fl', text: '備註（note）' }));
-  card.appendChild(el('textarea', { class: 't', value: c.note, oninput: (e) => { c.note = e.target.value; markObs(c.obsId); } }));
   box.appendChild(card);
 }
 
