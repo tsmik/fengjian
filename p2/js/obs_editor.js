@@ -131,7 +131,8 @@ function sectionsOf(part) { return layout[part] || []; }
 function sectionOfQ(id) { const c = content[id]; return c ? c.section : ''; }
 
 /* =================== RENDER =================== */
-function renderAll() { renderHeader(); renderParts(); renderSections(); renderEd(); updateDirty(); }
+function persistNav() { try { localStorage.setItem('obs_last_nav', JSON.stringify({ set: curSet, part: curPart, q: curQ })); } catch (e) {} }
+function renderAll() { renderHeader(); renderParts(); renderSections(); renderEd(); updateDirty(); persistNav(); }
 
 function renderHeader() {
   let s;
@@ -358,7 +359,14 @@ function boot() {
     user = u; role = r;
     if (u) {
       online = true;
-      try { await renderRsSelect(); if (curSet) await loadSet(curSet); } catch (e) { toast('讀 staging 失敗：' + (e.code || e.message)); }
+      try {
+        await renderRsSelect(); if (curSet) await loadSet(curSet);
+        let nav = null; try { nav = JSON.parse(localStorage.getItem('obs_last_nav') || 'null'); } catch (e) {}
+        if (nav && nav.set === curSet) {   // refresh 後停在上次的部位/題目
+          if (nav.part && PART_ORDER.includes(nav.part)) curPart = nav.part;
+          if (nav.q && content[nav.q]) curQ = nav.q;
+        }
+      } catch (e) { toast('讀 staging 失敗：' + (e.code || e.message)); }
     } else { online = false; }
     if (!PART_ORDER.includes(curPart)) curPart = PART_ORDER[0];
     renderAll();

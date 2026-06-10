@@ -100,7 +100,7 @@ function partHasContent(di, name) {
 }
 
 // ---------- persistence ----------
-function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice })); } catch (e) {} renderSaveStatus(); recordHistory(); }
+function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice, curDim: state.curDim, curPart: state.curPart, curGroup: state.curGroup })); } catch (e) {} renderSaveStatus(); recordHistory(); }
 function curJson() { try { return JSON.stringify(serialize()); } catch (e) { return ''; } }
 function isDirty() { return !!user && curJson() !== lastSavedJson; }
 function renderSaveStatus() {
@@ -118,7 +118,12 @@ function migrateAllLeaves() {
 function loadDraft() {
   try {
     const j = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (j && j.dims) { state.ruleSet = j.ruleSet; state.dims = j.dims; state.spice = j.spice || state.spice; migrateAllLeaves(); }
+    if (j && j.dims) {
+      state.ruleSet = j.ruleSet; state.dims = j.dims; state.spice = j.spice || state.spice; migrateAllLeaves();
+      if (typeof j.curDim === 'number') state.curDim = j.curDim;   // refresh 後停在原本維度/部位/卡片
+      if (j.curPart !== undefined) state.curPart = j.curPart;
+      if (j.curGroup !== undefined) state.curGroup = j.curGroup;
+    }
   } catch (e) {}
 }
 function serialize() {

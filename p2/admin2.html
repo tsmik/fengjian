@@ -53,8 +53,8 @@
   /* 卡片列三組:名稱/主輔/按鈕 —— 欄寬足夠時一行，過窄時依序上下排 */
   .cr-top { display:flex; align-items:center; gap:4px 6px; flex-wrap:wrap; }
   .cr-r { display:flex; align-items:center; gap:4px; }
-  .cr-r-name { flex:1 1 110px; }
-  .cr-name { flex:1; min-width:70px; }
+  .cr-r-name { flex:1 1 110px; min-width:0; }
+  .cr-name { flex:1; min-width:0; width:100%; }   /* 隨欄縮，不突出卡片 */
   .cr-name { flex:1; min-width:0; font-family:inherit; font-size:13px; border:1px solid var(--bd2); border-radius:6px; padding:4px 6px; background:#fffdf9; }
   .cr-role { font-family:inherit; font-size:12px; border:1px solid var(--bd2); border-radius:6px; padding:3px; }
   .cr-role.role-main { border-color:var(--dynamic); border-width:1.5px; }   /* 主：褐紅框 */
