@@ -629,6 +629,7 @@ function exportJSON() {
 // 從 Firestore 形狀還原回編輯器 state（poleFlip/tgt 由 targetPoleName 反推）
 function applyRuleSet(meta, dimDocs) {
   state.ruleSet = { id: meta.id, name: meta.name || '', note: meta.note || '', basedOn: meta.basedOn || null, status: meta.status || 'draft', createdAt: meta.createdAt || new Date().toISOString() };
+  try { localStorage.setItem('p2_last_set', meta.id); } catch (e) {}   // 記住最後載入的套裝（與觀察庫共用）
   state.dims = {};
   dimDocs.forEach(dd => {
     const di = +dd.dimIndex; const m = META.dims[di];

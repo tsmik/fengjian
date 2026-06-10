@@ -31,8 +31,10 @@ async function renderRsSelect() {
     if (!sets.length) { sel.appendChild(new Option('（尚無套裝→到套裝分頁新增）', '')); return; }
     sets.forEach(s => sel.appendChild(new Option((s.name || s.id) + (s.status === 'archived' ? '（封存）' : ''), s.id)));
     if (!curSet || !sets.some(s => s.id === curSet)) {
-      let sig = null; try { sig = JSON.parse(localStorage.getItem('admin2_edit_set') || 'null'); } catch (e) {}
-      const pick = (sig && sig.id && sets.filter(s => s.id === sig.id)[0]) || sets.filter(s => /202605|人相兵法/.test(s.name || ''))[0] || sets[0];
+      let last = null, sig = null;
+      try { last = localStorage.getItem('p2_last_set'); } catch (e) {}
+      try { sig = JSON.parse(localStorage.getItem('admin2_edit_set') || 'null'); } catch (e) {}
+      const pick = (last && sets.filter(s => s.id === last)[0]) || (sig && sig.id && sets.filter(s => s.id === sig.id)[0]) || sets.filter(s => /202605|人相兵法/.test(s.name || ''))[0] || sets[0];
       curSet = pick.id;
     }
     sel.value = curSet;
@@ -97,6 +99,7 @@ function loadBundled() {
 // 套裝化：讀「目前選的套裝」自己的題庫；若該套裝還沒有 → 載入全域(或打包)當底，seedAll=true（首存整份建入）
 async function loadSet(setId) {
   curSet = setId;
+  try { localStorage.setItem('p2_last_set', setId); } catch (e) {}   // 記住最後選的套裝（兩編輯器共用）
   const snap = await getDocs(collection(db, 'ruleSets', setId, 'observations'));
   if (snap && !snap.empty) {
     content = {}; snap.forEach(d => { const o = d.data(); content[o.obsId || d.id] = toInternal(o); });
@@ -238,8 +241,8 @@ function renderOpt(c, op, oi) {
   const used = valUsed(c.obsId, op.v);
   const v = el('input', { class: 't v', value: op.v, placeholder: '值', oninput: (e) => { op.v = e.target.value; markObs(c.obsId); } });
   const h = el('input', { class: 't h', value: op.hint, placeholder: '提示（可空）', oninput: (e) => { op.hint = e.target.value; markObs(c.obsId); } });
-  const del = el('button', { class: 'btn xs danger', text: '✕', title: used ? '被規則引用，不可刪' : '刪除', onclick: () => {
-    if (used) return toast('「' + op.v + '」被規則引用，不可刪');
+  const del = el('button', { class: 'btn xs danger', text: '✕', title: used ? '基準有規則引用此值（刪前確認）' : '刪除', onclick: () => {
+    if (used && !confirm('「' + op.v + '」在基準被規則引用，刪除可能影響命中。仍要刪除？')) return;
     c.options.splice(oi, 1); markObs(c.obsId); renderEd();
   } });
   const up = el('button', { class: 'btn xs', text: '▲', onclick: () => { if (oi > 0) { [c.options[oi - 1], c.options[oi]] = [c.options[oi], c.options[oi - 1]]; markObs(c.obsId); renderEd(); } } });
@@ -285,7 +288,7 @@ function addQuestion(sec) {
 }
 function deleteQuestion(c) {
   const refs = refDimsOf(c.obsId);
-  if (refs.length) return toast('此題被 ' + refs.length + ' 維度引用（' + refs.slice(0, 3).join('、') + '…），不可刪');
+  if (refs.length && !confirm('此題在基準被 ' + refs.length + ' 個維度引用（' + refs.slice(0, 3).join('、') + '…）。\n刪除後這些條件會找不到此題（重構題庫時常見）。仍要刪除？')) return;
   // remove from layout
   sectionsOf(c.part).forEach(s => { s.qIds = s.qIds.filter(x => x !== c.obsId); });
   delete content[c.obsId];
@@ -327,8 +330,8 @@ async function save() {
       const batch = writeBatch(db);
       dirty.forEach(id => { if (content[id]) batch.set(obsPath(id), toDoc(content[id])); });
       deleted.forEach(id => batch.delete(obsPath(id)));
-      batch.set(layPath, { layout, updatedAt: new Date().toISOString() });
-      await batch.commit();
+      await batch.commit();                                         // 先存題目（版面寫入若出狀況不會連坐回滾題目）
+      await setDoc(layPath, { layout, updatedAt: new Date().toISOString() });   // 版面分開存
       toast('已存：' + dirty.size + ' 題、刪 ' + deleted.size + ' 題、版面已更新');
     }
     dirty.clear(); deleted.clear(); layoutDirty = false; updateDirty();
