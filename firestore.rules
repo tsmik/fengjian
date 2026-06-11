@@ -23,11 +23,6 @@ service cloud.firestore {
       }
     }
 
-    // mobileUsers 集合：手機版用，無 Auth，完全開放
-    match /mobileUsers/{name} {
-      allow read, write: if true;
-    }
-
     // analyses 集合：已登入使用者可寫
     match /analyses/{doc} {
       allow write: if request.auth != null;
@@ -40,9 +35,10 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // photo_training：保持開放（訓練用）
+    // photo_training：僅 admin 可讀寫（原 if true 後門已關閉，2026-06-07）
     match /photo_training/{docId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }
