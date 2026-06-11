@@ -223,6 +223,7 @@ function _mergeObs(live) {   // 以打包順序為主，套用 live 版本；新
 }
 function _toMap(snap) { const m = {}; snap.forEach(d => { const o = d.data(); if (o && o.obsId) m[o.obsId] = o; }); return m; }
 let _staleObs = {}, _staleSig = '';   // 觀察庫改過、待此套裝條件檢視的題目（obsmeta/stale）
+let _obsLayout = {}, _laySig = '';    // 觀察庫存的題目順序（obsmeta/layout）→ 右欄 palette 依此排序
 function obsStale(ref) { return !!_staleObs[ref]; }
 function cardRefsStale(card) { return (card.combos || []).some(cb => (cb || []).some(l => obsStale(l.ref))); }
 async function loadLiveObs(force) {
@@ -239,9 +240,11 @@ async function loadLiveObs(force) {
       next = (g && !g.empty) ? _mergeObs(_toMap(g)) : (window.OBSERVATIONS || []).slice();      // 再退打包基準
     }
     let stale = {}; try { const st = await getDoc(doc(db, 'ruleSets', setId, 'obsmeta', 'stale')); stale = (st.exists() ? st.data() : {}) || {}; } catch (e) {}
+    let layout = {}; try { const ly = await getDoc(doc(db, 'ruleSets', setId, 'obsmeta', 'layout')); layout = (ly.exists() && ly.data().layout) ? ly.data().layout : {}; } catch (e) {}
     const staleSig = Object.keys(stale).filter(k => stale[k]).sort().join(',');
-    if (_obsSig(next) === _obsSig(OBS) && staleSig === _staleSig) return;   // 題庫＋待檢視都沒變才不重畫
-    OBS = next; indexObs(); _staleObs = stale; _staleSig = staleSig;
+    const laySig = JSON.stringify(Object.keys(layout).sort().map(p => [p, (layout[p] || []).map(s => s.label + ':' + (s.qIds || []).join(','))]));
+    if (_obsSig(next) === _obsSig(OBS) && staleSig === _staleSig && laySig === _laySig) return;   // 題庫＋待檢視＋順序都沒變才不重畫
+    OBS = next; indexObs(); _staleObs = stale; _staleSig = staleSig; _obsLayout = layout; _laySig = laySig;
     renderDims(); renderParts(); renderPalette(); renderEditor();   // 連帶刷新維度/部位黃標
   } catch (e) { /* 讀失敗：維持目前 OBS */ }
 }
@@ -622,9 +625,18 @@ function renderPalette() {
         el('span', { class: 'pi-row' }, [el('span', { class: 'pi-id', text: o.obsId }), el('span', { class: 'lr-tag', text: pairedOf(o.obsId) ? 'L/R' : '非L/R' })])
       ]);
     }
-    // 依 section（部位題目的分類，如 頂骨/枕骨/華陽骨）分組顯示
-    const groups = [];
-    items.forEach(o => { const sec = o.section || '（未分類）'; let g = groups.find(x => x.sec === sec); if (!g) { g = { sec, list: [] }; groups.push(g); } g.list.push(o); });
+    // 依「觀察庫存的順序」(obsmeta/layout) 排 section 與題目；不在 layout 的(新題)接在後面
+    const partKey = filt && filt[0];
+    const lay = (partKey && _obsLayout[partKey]) || [];
+    const byId = {}; items.forEach(o => byId[o.obsId] = o);
+    const used = new Set(); const groups = [];
+    lay.forEach(s => {
+      if (filt && filt[1] && s.label !== filt[1]) return;   // 單一 section 過濾(如頂骨)
+      const list = [];
+      (s.qIds || []).forEach(id => { if (byId[id] && !used.has(id)) { list.push(byId[id]); used.add(id); } });
+      if (list.length) groups.push({ sec: s.label, list });
+    });
+    items.forEach(o => { if (used.has(o.obsId)) return; const sec = o.section || '（未分類）'; let g = groups.find(x => x.sec === sec); if (!g) { g = { sec, list: [] }; groups.push(g); } g.list.push(o); });
     groups.forEach(g => { listBox.appendChild(el('div', { class: 'pal-sec', text: g.sec })); g.list.forEach(o => listBox.appendChild(obsItem(o))); });
     if (!items.length) listBox.appendChild(el('div', { class: 'hint', text: '無符合' }));
   }
