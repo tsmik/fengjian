@@ -566,6 +566,7 @@ function renderLeaf(card, combo, leaf, li) {
   const wrap = el('div', { class: 'leaf' });
   const head = el('div', { class: 'leaf-head' }, [
     el('span', { class: 'leaf-label', text: (o ? o.label : leaf.ref) }),
+    (o && o.note) ? el('span', { class: 'leaf-note', text: o.note }) : null,
     el('span', { class: 'lr-tag', text: pairedOf(leaf.ref) ? 'L/R' : '非L/R' })
   ]);
   if (!leaf.match.length) head.appendChild(el('span', { class: 'undef', text: '尚未定義條件' }));
@@ -621,8 +622,12 @@ function renderPalette() {
         ondragstart: (e) => e.dataTransfer.setData('text/obsid', o.obsId),
         onclick: () => { if (!state.active) return alert('先點一個 combo 當作加入目標（會標 ◉）'); const def = getPart(state.curDim, state.curPart, true); const card = (def.cards || []).find(c => c.id === state.active.cardId); if (card) addLeaf(card, card.combos[state.active.comboIdx], o.obsId); }
       }, [
-        el('span', { class: 'pi-label', text: o.label }),
-        el('span', { class: 'pi-row' }, [el('span', { class: 'pi-id', text: o.obsId }), el('span', { class: 'lr-tag', text: pairedOf(o.obsId) ? 'L/R' : '非L/R' })])
+        el('div', { class: 'pi-line' }, [
+          el('span', { class: 'pi-label', text: o.label }),
+          o.note ? el('span', { class: 'pi-note', text: o.note }) : null,
+          el('span', { class: 'pi-id2', text: '（' + o.obsId + '）' }),
+          el('span', { class: 'lr-tag', text: pairedOf(o.obsId) ? 'L/R' : '非L/R' })
+        ])
       ]);
     }
     // 依「觀察庫存的順序」(obsmeta/layout) 排 section 與題目；不在 layout 的(新題)接在後面

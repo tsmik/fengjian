@@ -154,6 +154,7 @@
   .leaf { border:1px solid #e6e0d6; border-radius:6px; padding:5px 6px; margin:4px 0; background:#faf8f4; }
   .leaf-head { display:flex; align-items:center; justify-content:space-between; }
   .leaf-label { font-size:13px; }
+  .leaf-note { font-size:12px; color:var(--sub); }   /* 卡片內引用題的備註 */
   .opts { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:4px; align-items:center; }
   .opt { font-size:12px; border:1px solid var(--bd); border-radius:12px; padding:1px 8px; cursor:pointer; background:#fff; }
   .opt.on { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -170,6 +171,10 @@
   .pal-item.pal-stale { background:#fcf4d2; border-color:#e6d49a; }   /* 題目被改過→需檢視 */
   .pi-label { font-size:13px; }
   .pi-id { font-size:11px; color:var(--sub); }
+  /* 右欄觀察題：label＋備註(同行,hint字級)＋編號(句尾括號) */
+  .pi-line { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 6px; }
+  .pi-note { font-size:12px; color:var(--sub); }
+  .pi-id2 { font-size:11px; color:var(--sub); }
   .spice-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
   .spice-lv { width:40px; font-weight:600; }
   /* 鍵盤導覽焦點框 */
