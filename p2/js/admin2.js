@@ -313,18 +313,22 @@ function dimTgt(di) { return (state.dims[di] && state.dims[di].tgt) || 'a'; }
 function poleDong(di, ab) { const d = META.dims[di], f = dimPoleFlip(di); return ab === 'a' ? (f ? d.bT : d.aT) : (f ? d.aT : d.bT); }
 function dimTargetName(di) { const d = META.dims[di]; return dimTgt(di) === 'a' ? d.a : d.b; }   // 目標極名（形/勢）
 function dimTargetPole(di) { return poleDong(di, dimTgt(di)); }                                    // 目標極動靜（給引擎）
+let axisPartFirst = false;   // false=維度優先(維度欄在前)；true=部位優先(部位欄在前)
+function dimsBox() { return axisPartFirst ? $('col-parts') : $('col-dims'); }
+function partsBox() { return axisPartFirst ? $('col-dims') : $('col-parts'); }
+function updateAxisBtn() { const b = $('btn-axis'); if (b) b.textContent = axisPartFirst ? '部位優先 ⇄' : '維度優先 ⇄'; }
 function renderDims() {
-  const box = $('col-dims'); box.innerHTML = '';
+  const box = dimsBox(); box.innerHTML = '';
   box.appendChild(el('div', { class: 'col-title', text: '維度' }));
   META.dims.forEach(d => {
-    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimNeedsAttn(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; state.curPart = null; renderAll(); } });
+    const row = el('div', { class: 'list-row dim-row' + (state.curDim === d.index ? ' sel' : '') + (dimNeedsAttn(d.index) ? ' incomplete' : ''), onclick: () => { state.curDim = d.index; saveDraft(); renderAll(); } });
     row.appendChild(el('span', { class: 'dim-name' }, [d.name, el('span', { class: 'dim-tgt', text: '　符合為' + dimTargetName(d.index) })]));
     box.appendChild(row);
   });
 }
 
 function renderParts() {
-  const box = $('col-parts'); box.innerHTML = '';
+  const box = partsBox(); box.innerHTML = '';
   const dm = META.dims[state.curDim];
   box.appendChild(el('div', { class: 'col-title', text: dm.name + '：部位' }));
   // 維度極性設定：動靜對應 ＋ 符合為
@@ -718,8 +722,8 @@ async function setActiveFromEditor() {
 // ---------- 鍵盤導覽（Finder 欄位式：↑↓ 欄內移動、←→ 換欄、Enter/空白 動作）----------
 // 五欄：維度 / 部位 / 卡片 / 條件選項 / observations。輸入框(input/textarea/select)內不攔截，讓鍵盤正常打字。
 const NAV_COLS = [
-  { box: 'col-dims', sel: '.dim-row', auto: true },        // 維度：移動即選
-  { box: 'col-parts', sel: '.list-row', auto: true },       // 部位：移動即選
+  { box: 'col-dims', sel: '.list-row', auto: true },        // 第一欄(維度或部位，依模式)：移動即選
+  { box: 'col-parts', sel: '.list-row', auto: true },       // 第二欄：移動即選
   { box: 'col-groups', sel: '.cardrow', auto: false },      // 卡片：移動聚焦（Enter 進去改名）
   { box: 'col-cards', sel: '.combo, .opt', auto: false },   // 卡片內容：combo＋選項；Enter→combo 設為作用中／選項切換
   { box: 'palette', sel: '.pal-item', auto: false }         // observations：移動聚焦，Enter/空白 加入目前 combo
@@ -783,6 +787,13 @@ function boot() {
   $('btn-setlive').addEventListener('click', setActiveFromEditor);
   $('btn-undo').addEventListener('click', undo);
   $('btn-redo').addEventListener('click', redo);
+  try { axisPartFirst = localStorage.getItem('admin2_axis') === '1'; } catch (e) {}   // 還原瀏覽順序
+  updateAxisBtn();
+  $('btn-axis').addEventListener('click', () => {
+    axisPartFirst = !axisPartFirst;
+    try { localStorage.setItem('admin2_axis', axisPartFirst ? '1' : '0'); } catch (e) {}
+    updateAxisBtn(); renderAll();
+  });
   $('btn-obsdone').addEventListener('click', async () => {
     if (!isStaff()) return alert('需 admin/teacher');
     if (!confirm('把目前套裝的「題庫變動黃標」全部清除（表示你已檢視/調整完）？')) return;

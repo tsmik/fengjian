@@ -68,8 +68,7 @@
   .save-status.dirty { color:var(--dynamic); }
   .save-status.ok { color:var(--static); }
   /* col1 維度：一行（名稱＋符合為X）；靠左對齊，與「維度」標題同左邊界 */
-  .dim-row { display:flex; align-items:center; }
-  #col-dims .list-row { align-items:flex-start; padding-left:0; }
+  .dim-row { display:flex; align-items:flex-start; padding-left:0; }   /* 維度列靠左(不論在哪一欄) */
   .dim-name { font-size:14px; white-space:nowrap; }
   .dim-tgt { font-size:13px; color:var(--sub); }   /* 「符合為X」縮小，與部位名同大 */
   /* col2 維度極性設定 */
@@ -187,6 +186,7 @@
   <span class="hint" style="padding:0">套裝：</span>
   <select class="rs" id="rs-select" title="選擇要編輯的套裝（在「套裝」分頁建立/改名）"></select>
   <button class="btn sm" id="btn-reload" title="從 staging 重新載入目前套裝（拉最新內容，例如匯入後）">↻ 重載</button>
+  <button class="btn sm" id="btn-axis" title="切換瀏覽順序：維度優先 ⇄ 部位優先">維度優先 ⇄</button>
   <button class="btn sm" id="btn-undo" title="復原 (⌘/Ctrl+Z)" disabled>↶ 復原</button>
   <button class="btn sm" id="btn-redo" title="重做 (⌘/Ctrl+Shift+Z)" disabled>↷ 重做</button>
   <button class="btn sm" id="btn-export">匯出 JSON</button>
