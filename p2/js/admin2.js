@@ -676,7 +676,9 @@ async function loadRsIntoEditor(id) {
 const EDIT_KEY = 'admin2_edit_set';
 function checkEditSignal() {
   let sig = null; try { sig = JSON.parse(localStorage.getItem(EDIT_KEY) || 'null'); } catch (e) {}
-  if (sig && sig.id && user && sig.id !== state.ruleSet.id) loadRsIntoEditor(sig.id);
+  if (!sig || !sig.id || !user) return;                       // 沒登入先不處理也不清，等登入再說
+  if (sig.id !== state.ruleSet.id) loadRsIntoEditor(sig.id);
+  try { localStorage.removeItem(EDIT_KEY); } catch (e) {}     // 一次性：用過清掉，之後 refresh 不再被拉回，維持在最後選的套裝
 }
 
 // 上方「套裝」下拉：選哪一份套裝來編（套裝在「套裝」分頁建立/改名）
