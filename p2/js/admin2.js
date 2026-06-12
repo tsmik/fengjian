@@ -114,6 +114,19 @@ function renderSaveStatus() {
 }
 function migrateAllLeaves() {
   Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => { if (p.kind === 'leaf') ensureCards(p); }));
+  trimDims(state.dims);
+}
+// 洗頭尾空白：match＝比對鍵（殘留空白＝看不見的比對失敗，br21 教訓）、卡片 label＝版本比較的顯示鍵
+function trimDims(dims) {
+  Object.values(dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => {
+    (p.cards || []).forEach(c => {
+      if (typeof c.label === 'string') c.label = c.label.trim();
+      (c.combos || []).forEach(cb => {
+        const leaves = Array.isArray(cb) ? cb : (cb.leaves || []);
+        leaves.forEach(l => { if (Array.isArray(l.match)) l.match = l.match.map(v => typeof v === 'string' ? v.trim() : v); });
+      });
+    });
+  }));
 }
 function loadDraft() {
   try {
@@ -127,6 +140,7 @@ function loadDraft() {
   } catch (e) {}
 }
 function serialize() {
+  trimDims(state.dims);   // 存檔出口再洗一次（載入後才輸入的內容）
   const out = { ruleSet: state.ruleSet, spice: state.spice, dims: {} };
   Object.keys(state.dims).forEach(di => {
     const parts = {};

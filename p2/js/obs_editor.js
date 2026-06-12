@@ -84,9 +84,10 @@ function toInternal(o) {
     paired: ('paired' in o) ? !!o.paired : !!PAIRED[o.obsId], options: opts, note: o.note || '', sourceQid: o.sourceQid || o.obsId };
 }
 function toDoc(c) {
-  const options = c.options.map(o => o.v);
-  const optionHints = {}; c.options.forEach(o => { if (o.hint) optionHints[o.v] = o.hint; });
-  const d = { obsId: c.obsId, part: c.part, section: c.section, label: c.label, paired: !!c.paired, options, note: c.note || '', sourceQid: c.sourceQid };
+  const t = s => (s == null ? '' : String(s).trim());   // 選項值＝規則比對鍵，殘留頭尾空白會造成看不見的比對失敗（br21 教訓）
+  const options = c.options.map(o => t(o.v));
+  const optionHints = {}; c.options.forEach(o => { if (o.hint) optionHints[t(o.v)] = t(o.hint); });
+  const d = { obsId: c.obsId, part: c.part, section: c.section, label: t(c.label), paired: !!c.paired, options, note: t(c.note), sourceQid: c.sourceQid };
   if (Object.keys(optionHints).length) d.optionHints = optionHints;
   return d;
 }
