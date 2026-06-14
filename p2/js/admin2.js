@@ -240,6 +240,8 @@ let _staleObs = {}, _staleSig = '';   // 觀察庫改過、待此套裝條件檢
 let _obsLayout = {}, _laySig = '';    // 觀察庫存的題目順序（obsmeta/layout）→ 右欄 palette 依此排序
 function obsStale(ref) { return !!_staleObs[ref]; }
 function cardRefsStale(card) { return (card.combos || []).some(cb => (cb || []).some(l => obsStale(l.ref))); }
+// 逐卡確認：卡片有引用到「被改過的題」且尚未確認當前那個改動戳記 → 未處理(❗、淡黃)；全部確認過 → 已處理(✓、回原色)
+function cardUnhandled(card) { const ack = card.ackStale || {}; return (card.combos || []).some(cb => (cb || []).some(l => { const s = _staleObs[l.ref]; return s && ack[l.ref] !== s; })); }
 async function loadLiveObs(force) {
   if (!fbOK || !db || !user) return;                       // 沒登入讀不到（規則限登入），維持靜態後備
   if (!force && Date.now() - _lastObs < 8000) return;      // 節流：聚焦時最多 8 秒抓一次
@@ -400,7 +402,7 @@ function partCardCount(name) {
 // 卡片未設主輔（未標）
 function roleUnset(card) { return !card.role; }
 // 卡片需要注意：條件不完整 或 未設主輔 → 讓部位/維度標黃
-function cardNeedsAttn(card) { return cardIncomplete(card) || roleUnset(card) || cardRefsStale(card); }   // 含「用到被改過的題目」
+function cardNeedsAttn(card) { return cardIncomplete(card) || roleUnset(card) || cardUnhandled(card); }   // 含「用到被改過的題目、且尚未逐卡確認」
 // 部位是否有需注意卡片 → 部位淡黃
 function partNeedsAttn(di, name) {
   const d = state.dims[di];
@@ -467,7 +469,7 @@ function renderPartSpice(box, def) {
 }
 
 function renderCardRow(def, card, ci) {
-  const cardCls = cardRefsStale(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
+  const cardCls = cardUnhandled(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
   const wrap = el('div', { class: 'cardrow' + cardCls, 'data-cid': card.id });
   const handle = el('span', { class: 'drag-h', text: '⠿', title: '拖曳排序' });
   const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
@@ -525,11 +527,30 @@ function syncLeafHeader(card) {
 }
 
 
+// 逐卡確認按鈕：未處理＝❗淡紅、已處理＝✓淡綠；點一下切換（已處理再點可取消）
+function ackBtn(card) {
+  const handled = !cardUnhandled(card);
+  return el('button', {
+    class: 'ack-btn ' + (handled ? 'done' : 'todo'),
+    text: handled ? '✓' : '!',
+    title: handled ? '此卡引用的觀察題變動已標記「已處理」（點一下可取消）' : '此卡引用的觀察題被改過——檢視/調整後點此標記「已處理」',
+    onclick: (e) => { e.stopPropagation(); toggleAck(card); }
+  });
+}
+function toggleAck(card) {
+  card.ackStale = card.ackStale || {};
+  const refs = []; (card.combos || []).forEach(cb => (cb || []).forEach(l => { if (_staleObs[l.ref]) refs.push(l.ref); }));
+  if (cardUnhandled(card)) refs.forEach(r => { card.ackStale[r] = _staleObs[r]; });   // 標記已處理＝記住當前戳記
+  else refs.forEach(r => { delete card.ackStale[r]; });                                // 取消＝回未處理
+  renderEdit(); renderHeader(); saveDraft();
+}
+
 function renderCard(def, card, ci) {
-  const cardCls = cardRefsStale(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
+  const cardCls = cardUnhandled(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
   const wrap = el('div', { class: 'card' + cardCls, 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
+    cardRefsStale(card) ? ackBtn(card) : null,
     el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
     el('span', { class: 'spacer' }),
     el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEdit(); saveDraft(); } })
@@ -827,7 +848,7 @@ function boot() {
   });
   $('btn-obsdone').addEventListener('click', async () => {
     if (!isStaff()) return alert('需 admin/teacher');
-    if (!confirm('把目前套裝的「題庫變動黃標」全部清除（表示你已檢視/調整完）？')) return;
+    if (!confirm('確定全部清除？\n\n會把目前套裝「題庫變動」狀態整批歸零：所有卡片上的 ❗/✓ 鈕全部消失、黃標也清掉（表示這批題庫變動都已檢視/調整完）。\n\n尚未逐卡確認的卡片也會一併清掉，無法復原。')) return;
     try { await setDoc(doc(db, 'ruleSets', state.ruleSet.id, 'obsmeta', 'stale'), {}); _staleObs = {}; _staleSig = ''; renderDims(); renderParts(); renderPalette(); renderEditor(); renderHeader(); }
     catch (e) { alert('清除失敗：' + (e.code || e.message)); }
   });

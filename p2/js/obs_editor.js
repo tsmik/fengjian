@@ -400,7 +400,7 @@ async function save() {
       await batch.commit();                                         // 先存題目（版面寫入若出狀況不會連坐回滾題目）
       await setDoc(layPath, { layout, updatedAt: new Date().toISOString() });   // 版面分開存
       // 記錄這次改動的題目 → 條件編輯器標示「需檢視」(累積到 obsmeta/stale)
-      if (dirty.size || deleted.size) { const changed = {}; dirty.forEach(id => changed[id] = true); deleted.forEach(id => changed[id] = true); try { await setDoc(doc(db, 'ruleSets', curSet, 'obsmeta', 'stale'), changed, { merge: true }); } catch (e) {} }
+      if (dirty.size || deleted.size) { const stamp = Date.now(); const changed = {}; dirty.forEach(id => changed[id] = stamp); deleted.forEach(id => changed[id] = stamp); try { await setDoc(doc(db, 'ruleSets', curSet, 'obsmeta', 'stale'), changed, { merge: true }); } catch (e) {} }   // 值＝這次改動戳記：條件編輯器逐卡確認時比對；同題再改→新戳記→已確認的卡片自動翻回未處理
       toast('已存：' + dirty.size + ' 題、刪 ' + deleted.size + ' 題、版面已更新');
     }
     dirty.clear(); deleted.clear(); layoutDirty = false; updateDirty();

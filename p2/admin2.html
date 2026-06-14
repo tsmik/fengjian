@@ -144,6 +144,12 @@
   .card { border:1px solid var(--bd); border-radius:8px; padding:8px; margin:8px 0; background:#fcfbf9; }
   .card-head { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
   .card-tag { font-weight:600; font-size:12px; }
+  /* 逐卡「題庫變動」確認鈕：❗未處理(淡紅) / ✓已處理(淡綠) */
+  .ack-btn { flex:0 0 auto; width:18px; height:18px; line-height:16px; text-align:center; border-radius:50%; font-size:12px; font-weight:700; cursor:pointer; padding:0; }
+  .ack-btn.todo { background:#f7e0db; border:1px solid #d99a8a; color:#a8503a; }
+  .ack-btn.todo:hover { background:#f1cfc7; }
+  .ack-btn.done { background:#dcebd9; border:1px solid #8fb98f; color:#3d7a44; }
+  .ack-btn.done:hover { background:#cfe4cf; }
   .spacer { flex:1; }
   .role-sel { border:1px solid var(--bd); border-radius:6px; padding:2px 4px; font-size:12px; }
   .or-sep { text-align:center; color:var(--sub); font-size:11px; margin:4px 0; }
