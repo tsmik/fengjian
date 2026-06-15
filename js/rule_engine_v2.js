@@ -66,18 +66,25 @@ function cardFire(card, obs, side) {
   return null;
 }
 
-/* ---------- 中辣門檻解析（§E）---------- */
+/* ---------- 輔門檻解析（§E）---------- */
+// 模型＝「每部位自己設」(Mike 2026-06-11 決)：admin2 編輯器 def.spice[大辣/中辣/小辣]＝該辣度要中幾張輔卡。
+// 優先讀 part.spice；未設才退回舊相容路徑（auxThreshold＝中辣 / 全域 spiceRatios 比例制）。
 function resolveAuxThreshold(part, spiceLevel, spiceRatios) {
-  if (spiceLevel === undefined || spiceLevel === '中辣' || !spiceRatios) {
-    return part.auxThreshold;     // 中辣 = rbf1 現有 min
+  var auxCount = (part.cards || []).filter(function (c) { return c.role !== 'main'; }).length;
+  var level = spiceLevel || '中辣';
+  // 每部位自己設（主路徑）
+  if (part.spice && part.spice[level] != null) {
+    var t = part.spice[level];
+    return t < 0 ? 0 : (t > auxCount ? auxCount : t);
   }
-  // 大/小辣：round(ratio × 輔卡數)，下限 0（取整機制 B，§E）
-  var M = (part.cards || []).filter(function (c) { return c.role !== 'main'; }).length;
-  var ratio = spiceRatios[spiceLevel];
-  if (ratio == null) return part.auxThreshold;
-  var t = Math.round(ratio * M);
-  if (t < 0) t = 0;
-  return t;
+  // 向後相容：中辣＝auxThreshold；大/小辣＝round(ratio × 輔卡數)（舊全域比例制 fixture）
+  if (spiceLevel === undefined || level === '中辣' || !spiceRatios) {
+    return (part.auxThreshold != null) ? part.auxThreshold : auxCount;   // 未設門檻＝全部輔卡都要中（最嚴）
+  }
+  var ratio = spiceRatios[level];
+  if (ratio == null) return (part.auxThreshold != null) ? part.auxThreshold : auxCount;
+  var r = Math.round(ratio * auxCount);
+  return r < 0 ? 0 : r;
 }
 
 /* ---------- 收集葉部位引用的觀察題（null 前置檢查用）---------- */
