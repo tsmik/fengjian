@@ -43,25 +43,36 @@ export function getAnswerV2(ref, side, obs) {
   return obs[ref] || '';
 }
 
-function leafMatch(leaf, obs, side) {
+// 辣度第1層（選項切點）：leaf.spice = {選項: level 1小/2中/3大}。學員選辣度 T → 認 level>=rank(T) 的選項。
+// 無 leaf.spice → 退回 leaf.match（＝大辣集合，舊資料相容）。
+function acceptedOptions(leaf, spiceLevel) {
+  if (leaf.spice && typeof leaf.spice === 'object') {
+    var rank = (spiceLevel === '小辣') ? 1 : (spiceLevel === '大辣') ? 3 : 2;   // 預設中辣
+    var out = [];
+    for (var k in leaf.spice) { if (leaf.spice[k] >= rank) out.push(k); }
+    return out;
+  }
+  return Array.isArray(leaf.match) ? leaf.match : (leaf.match != null ? [leaf.match] : []);
+}
+
+function leafMatch(leaf, obs, side, spiceLevel) {
   var effSide = ('side' in leaf) ? leaf.side : side;
   var ans = getAnswerV2(leaf.ref, effSide, obs);
-  if (Array.isArray(leaf.match)) return leaf.match.indexOf(ans) >= 0;
-  return ans === leaf.match;
+  return acceptedOptions(leaf, spiceLevel).indexOf(ans) >= 0;
 }
 
 // combo 全中？
-function comboMatch(combo, obs, side) {
+function comboMatch(combo, obs, side, spiceLevel) {
   for (var i = 0; i < combo.length; i++) {
-    if (!leafMatch(combo[i], obs, side)) return false;
+    if (!leafMatch(combo[i], obs, side, spiceLevel)) return false;
   }
   return true;
 }
 
 // 卡片成立？（任一 combo 全中）— 回傳成立的 combo（給理由字串），否則 null
-function cardFire(card, obs, side) {
+function cardFire(card, obs, side, spiceLevel) {
   for (var i = 0; i < card.combos.length; i++) {
-    if (comboMatch(card.combos[i], obs, side)) return card.combos[i];
+    if (comboMatch(card.combos[i], obs, side, spiceLevel)) return card.combos[i];
   }
   return null;
 }
@@ -122,7 +133,7 @@ export function evaluateLeafPart(part, obs, spiceLevel, spiceRatios) {
   function passOnSide(side) {
     var auxHit = 0, mainHit = false, localFired = [];
     (part.cards || []).forEach(function (card) {
-      var combo = cardFire(card, obs, side);
+      var combo = cardFire(card, obs, side, spiceLevel);
       if (combo) {
         localFired.push({ role: card.role || 'aux', combo: combo.map(function (l) { return l.label || l.ref; }) });
         if (card.role === 'main') mainHit = true; else auxHit++;

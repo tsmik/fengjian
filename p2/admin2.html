@@ -164,6 +164,24 @@
   .opts { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:4px; align-items:center; }
   .opt { font-size:12px; border:1px solid var(--bd); border-radius:12px; padding:1px 8px; cursor:pointer; background:#fff; }
   .opt.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  /* 辣度第1層：每選項三燈（黃小/橘中/紅大），亮＝該辣度認此選項 */
+  .opts-spice { margin-top:5px; }
+  .opt-row { display:flex; align-items:center; gap:9px; padding:3px 0; }
+  .spice-lamps { display:flex; gap:5px; flex:0 0 auto; }
+  .lamp { width:15px; height:15px; border-radius:50%; border:none; cursor:pointer; padding:0; }
+  .lamp:hover { box-shadow:0 0 0 2px rgba(0,0,0,.10); }
+  .opt-name { font-size:13px; color:var(--sub); }
+  .opt-name.on { color:var(--ink); }
+  .opts-spice .opt-hint { font-size:12px; color:var(--sub); }
+  /* 辣度未調整完：卡片淡橘提醒 */
+  .card.spice-todo { background:#f9e8d2; border-color:#e6bd84; }
+  .cardrow.spice-todo { background:#f9e8d2; border-color:#e6bd84; }
+  .cardrow.sel { outline:2px solid var(--accent); outline-offset:-1px; }
+  .spice-ack { flex:0 0 auto; border-radius:9px; font-size:11px; padding:1px 8px; cursor:pointer; }
+  .spice-ack.todo { background:#f6e2c6; border:1px solid #dca94f; color:#9a6a17; }
+  .spice-ack.todo:hover { background:#f0d6b0; }
+  .spice-ack.done { background:#dcebd9; border:1px solid #8fb98f; color:#3d7a44; }
+  .spice-ack.done:hover { background:#cfe4cf; }
   .warn { color:#b06a00; font-size:11px; margin-top:3px; }
   .agg-row { display:flex; align-items:center; gap:6px; padding:4px 2px; font-size:13px; }
   #palette { background:var(--panel); }

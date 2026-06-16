@@ -38,6 +38,7 @@ let state = {
   dims: {},                                  // {dimIndex: {parts:{partName:def}}}
   spice: { levels: ['大辣', '中辣', '小辣'], rounding: 'B', ratios: { 大辣: '', 中辣: '', 小辣: '' } },
   curDim: 0, curPart: null, curGroup: null,  // curGroup = 選中的敘述分組 id
+  curCard: null,                             // 選取的卡片 id（右欄置頂用）
   active: null                               // {part, cardId, comboIdx} 供「點 observation 加入」用
 };
 let auth = null, db = null, user = null, role = null, fbOK = false;
@@ -113,8 +114,26 @@ function renderSaveStatus() {
   s.className = 'save-status ' + (dirty ? 'dirty' : 'ok');
 }
 function migrateAllLeaves() {
-  Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => { if (p.kind === 'leaf') ensureCards(p); }));
+  Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => {
+    if (p.kind === 'leaf') { ensureCards(p); (p.cards || []).forEach(c => (c.combos || []).forEach(cb => (cb || []).forEach(ensureLeafSpice))); }
+  }));
   trimDims(state.dims);
+}
+// 辣度第1層（選項切點）：每個葉的每個選項存「亮到哪一段」level 1=小/2=中/3=大（紅）。
+// 越寬一定含越嚴：level n 代表 1..n 段都認。學員選某辣度 T → 認 level>=T 的選項。
+// leaf.match（舊引擎相容）＝大辣集合（level 3 的選項）。
+function ensureLeafSpice(leaf) {
+  if (!leaf.spice) { leaf.spice = {}; (leaf.match || []).forEach(v => { leaf.spice[v] = 3; }); }   // 舊條件→大辣(紅)起點
+}
+function syncLeafMatch(leaf) {
+  leaf.match = Object.keys(leaf.spice || {}).filter(v => leaf.spice[v] >= 3);   // 大辣集合
+}
+// 點某段燈：已是最高亮的那段→全熄；否則設成該段（含更寬的）
+function setLamp(leaf, opt, rank) {
+  if (!leaf.spice) leaf.spice = {};
+  const cur = leaf.spice[opt] || 0;
+  if (cur === rank) delete leaf.spice[opt]; else leaf.spice[opt] = rank;
+  syncLeafMatch(leaf); renderEdit(); saveDraft();
 }
 // 洗頭尾空白：match＝比對鍵（殘留空白＝看不見的比對失敗，br21 教訓）、卡片 label＝版本比較的顯示鍵
 function trimDims(dims) {
@@ -469,8 +488,10 @@ function renderPartSpice(box, def) {
 }
 
 function renderCardRow(def, card, ci) {
-  const cardCls = cardUnhandled(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
-  const wrap = el('div', { class: 'cardrow' + cardCls, 'data-cid': card.id });
+  const cardCls = (cardUnhandled(card) || cardIncomplete(card)) ? ' incomplete' : (!card.spiceDone ? ' spice-todo' : (card.role === 'main' ? ' main' : ''));
+  const selCls = (state.curCard === card.id) ? ' sel' : '';
+  const wrap = el('div', { class: 'cardrow' + cardCls + selCls, 'data-cid': card.id });
+  wrap.addEventListener('click', (e) => { if (e.target.closest('input,select,textarea,button')) return; if (state.curCard !== card.id) { state.curCard = card.id; renderEdit(); } });
   const handle = el('span', { class: 'drag-h', text: '⠿', title: '拖曳排序' });
   const name = el('input', { class: 'cr-name', value: card.label, placeholder: '簡稱（卡片名）' });
   name.addEventListener('input', () => { card.label = name.value; saveDraft(); syncLeafHeader(card); });
@@ -516,7 +537,9 @@ function renderLeavesCol() {
   const def = getPart(state.curDim, state.curPart, true);
   box.appendChild(el('div', { class: 'cards-head' }, [el('span', { text: '卡片內容（卡間＝或；卡內 combo＝或；combo 內葉＝而且）。點 combo → 右欄點/拖 observation 加葉。' })]));
   if (!def.cards.length) box.appendChild(el('div', { class: 'hint', text: '左欄＋新增敘述分組後，這裡會出現對應卡片。' }));
-  def.cards.forEach((card, ci) => box.appendChild(renderCard(def, card, ci)));
+  let order = def.cards.map((c, i) => i);
+  if (state.curCard) { const i = def.cards.findIndex(c => c.id === state.curCard); if (i > 0) order = [i, ...order.slice(0, i), ...order.slice(i + 1)]; }   // 選取的卡片置頂，不用滑動找
+  order.forEach(ci => box.appendChild(renderCard(def, def.cards[ci], ci)));
 }
 
 function syncLeafHeader(card) {
@@ -545,12 +568,24 @@ function toggleAck(card) {
   renderEdit(); renderHeader(); saveDraft();
 }
 
+// 辣度調整完按鈕（放卡片上方，與「確認更新題目」並排）：未設＝淡橘、已完成＝淡綠;點一下切換
+function spiceBtn(card) {
+  const done = !!card.spiceDone;
+  return el('button', {
+    class: 'spice-ack ' + (done ? 'done' : 'todo'),
+    text: done ? '辣度 ✓' : '辣度…',
+    title: done ? '此卡辣度已調整完（點一下可取消）' : '此卡每題選項的辣度調整完後，點此標記',
+    onclick: (e) => { e.stopPropagation(); card.spiceDone = !card.spiceDone; renderEdit(); saveDraft(); }
+  });
+}
+
 function renderCard(def, card, ci) {
-  const cardCls = cardUnhandled(card) ? ' incomplete' : (card.role === 'main' ? ' main' : (cardIncomplete(card) ? ' incomplete' : ''));
+  const cardCls = (cardUnhandled(card) || cardIncomplete(card)) ? ' incomplete' : (!card.spiceDone ? ' spice-todo' : (card.role === 'main' ? ' main' : ''));
   const wrap = el('div', { class: 'card' + cardCls, 'data-cid': card.id });
   wrap.appendChild(el('div', { class: 'card-head' }, [
     el('span', { class: 'card-tag', text: card.label || '（未命名敘述分組）' }),
     cardRefsStale(card) ? ackBtn(card) : null,
+    spiceBtn(card),
     el('span', { class: 'role-badge' + (card.role ? '' : ' none'), text: card.role === 'main' ? '主' : (card.role === 'aux' ? '輔' : '未標') }),
     el('span', { class: 'spacer' }),
     el('button', { class: 'btn xs', text: '＋combo（或）', onclick: () => { card.combos.push([]); renderEdit(); saveDraft(); } })
@@ -604,19 +639,30 @@ function renderLeaf(card, combo, leaf, li) {
     (o && o.note) ? el('span', { class: 'leaf-note', text: o.note }) : null,
     el('span', { class: 'lr-tag', text: pairedOf(leaf.ref) ? 'L/R' : '非L/R' })
   ]);
-  if (!leaf.match.length) head.appendChild(el('span', { class: 'undef', text: '尚未定義條件' }));
+  ensureLeafSpice(leaf);
+  const hasAny = Object.keys(leaf.spice || {}).length > 0;
+  if (!hasAny) head.appendChild(el('span', { class: 'undef', text: '尚未設辣度' }));
   head.appendChild(el('span', { class: 'spacer' }));
   head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEdit(); saveDraft(); } }));
   wrap.appendChild(head);
-  const optBox = el('div', { class: 'opts' });
+  const optBox = el('div', { class: 'opts-spice' });
   const hints = (o && o.optionHints) || {};
+  const LAMPS = [[1, '#C9A227', '#ece0bb', '小辣'], [2, '#D85A30', '#eed3c4', '中辣'], [3, '#D14343', '#ecc9c9', '大辣']];   // 黃橘紅＝小中大
   (o ? o.options : []).forEach(v => {
-    const on = leaf.match.indexOf(v) >= 0;
+    const level = (leaf.spice && leaf.spice[v]) || 0;
     const hint = hints[v] || '';
-    const toggle = (e) => { e.stopPropagation(); const i = leaf.match.indexOf(v); if (i >= 0) leaf.match.splice(i, 1); else leaf.match.push(v); renderEdit(); saveDraft(); };
-    const chip = el('span', { class: 'opt' + (on ? ' on' : ''), text: v, title: hint || v, onclick: toggle });
-    if (hint) optBox.appendChild(el('span', { class: 'opt-wrap' }, [chip, el('span', { class: 'opt-hint', title: hint, onclick: toggle }, [hint]) ]));
-    else optBox.appendChild(chip);
+    const lamps = el('div', { class: 'spice-lamps' });
+    LAMPS.forEach(([rank, onC, offC, nm]) => {
+      const lit = level >= rank;
+      const b = el('button', { class: 'lamp', title: nm, 'aria-label': nm });
+      b.style.background = lit ? onC : offC;
+      b.addEventListener('click', (e) => { e.stopPropagation(); setLamp(leaf, v, rank); });
+      lamps.appendChild(b);
+    });
+    const nameSpan = el('span', { class: 'opt-name' + (level > 0 ? ' on' : ''), text: v, title: hint || v });
+    const row = el('div', { class: 'opt-row' }, [lamps, nameSpan]);
+    if (hint) row.appendChild(el('span', { class: 'opt-hint', text: hint, title: hint }));
+    optBox.appendChild(row);
   });
   wrap.appendChild(optBox);
   return wrap;
