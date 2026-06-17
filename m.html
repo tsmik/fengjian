@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f7f4ef">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="人相兵法">
 <title>人相兵法 手機版</title>
 <meta name="description" content="風鑑學堂 人相兵法手機版 — 輸入觀察特徵、自動計算動靜，產生兵法報告">
 <meta property="og:type" content="website">
@@ -170,7 +177,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-fullscreen{position:fixed;top:calc(var(--nav-h) + var(--safe-top));left:0;right:0;bottom:0;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;overflow:hidden}
 .m-fullscreen.is-open{transform:translateX(0)}
 .m-fs-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #e8e0d4;min-height:44px}
-.m-fs-back{background:none;border:none;color:var(--active);font-size:16px;font-family:inherit;cursor:pointer;padding:6px 8px;flex-shrink:0}
+.m-fs-back{background:none;border:none;color:var(--active);font-size:16px;font-family:inherit;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;padding:0 10px;flex-shrink:0;touch-action:manipulation}
 .m-fs-title{font-size:16px;font-weight:600;color:#3a3228;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .m-fs-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px;display:flex;flex-direction:column;gap:14px}
 /* 案例管理 top bar 縮小按鈕（有個案時） */
@@ -1323,8 +1330,8 @@ body.m-debug-on .m-debug-clear{display:block}
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2z"/><path d="M22 4.5h-7a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22z"/></svg>
       </span>
       <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">上課</div>
-        <div class="m-home-bigbtn-sub">板書、跟老師條件評動／靜、產生手動報告</div>
+        <div class="m-home-bigbtn-title">上課手動</div>
+        <div class="m-home-bigbtn-sub">跟老師逐條評動／靜 → 產生手動兵法報告</div>
         <div class="m-home-bigbtn-progress">
           <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
           <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>
@@ -1337,7 +1344,7 @@ body.m-debug-on .m-debug-clear{display:block}
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
       </span>
       <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">部位觀察 · 自動報告</div>
+        <div class="m-home-bigbtn-title">部位觀察</div>
         <div class="m-home-bigbtn-sub">逐部位／維度觀察特徵，系統自動算出人相兵法報告</div>
         <div class="m-home-bigbtn-progress">
           <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
