@@ -111,16 +111,18 @@ export function buildRadar2MSVG(opts){
   if(preV!=null){const r=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,r)}" fill="#854F51" fill-opacity="0.3"/>`;}
   [[0,1],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+  if(!opts.noLabels){
   svg+=labM(f(211.0,rIn*0.711),'運氣',luckV,fsBox,'#546D77');
   svg+=labM(f(299.9,rIn*0.699),'後天',postV,fsBox,'#797181');
   svg+=labM(f(93.6,rIn*0.687),'先天',preV,fsBox,'#854F51');
+  }
   DIM.forEach((dm,i)=>{if(dm.c==null)return;const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);if(frac>0)svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
   DIM.forEach((dm,i)=>{if(dm.c==null||dm.c>0)return;const[a0,a1]=spans[i];const fill=dm.sf<0.5?A:S;svg+=`<path d="${facet(a0,a1,rIn,rIn+ZERO_MARK)}" fill="${fill}" fill-opacity="0.9" stroke="#fff" stroke-width="0.8"/>`;});
   [[0,'#854F51',1],[6*STEP,'#546D77',1],[9*STEP,'#797181',1]].forEach(([a,col,op])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="2"/>`;});
   svg+=`<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="none" stroke="#e6ddd0" stroke-width="1"/>`;
-  DIM.forEach((dm,i)=>{const np=NAMEPOS_M[i];const lp=f(np[0],rIn*np[1]);const c=Math.sin(rad(np[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${DIMTXT[i]}" fill-opacity="0.8" font-weight="600">${esc(dm.dn)}</text>`;});
-  DIM.forEach((dm,i)=>{const npp=f(NUMPOS_M[i][0],rIn*NUMPOS_M[i][1]);const nx=npp[0],ny=npp[1];const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const rT=(dm.c==null?rIn:rIn+Math.min(1,dm.c/COEF_MAX)*H);const ncol=(dm.c==null)?mcol:((rT>=rr)?'#fff':mcol);svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="${fsNum}" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(dm.c==null?'--':dm.c.toFixed(2))}</text>`;});
-  {const rTot=22*totS, lfs=9*totS, vfs=10.5*totS, tl=(21*totS).toFixed(1);const tg=spans.map(ss=>PS(f(ss[0],rTot))).join(' ');
+  if(!opts.noLabels) DIM.forEach((dm,i)=>{const np=NAMEPOS_M[i];const lp=f(np[0],rIn*np[1]);const c=Math.sin(rad(np[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${DIMTXT[i]}" fill-opacity="0.8" font-weight="600">${esc(dm.dn)}</text>`;});
+  if(!opts.noLabels) DIM.forEach((dm,i)=>{const npp=f(NUMPOS_M[i][0],rIn*NUMPOS_M[i][1]);const nx=npp[0],ny=npp[1];const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const rT=(dm.c==null?rIn:rIn+Math.min(1,dm.c/COEF_MAX)*H);const ncol=(dm.c==null)?mcol:((rT>=rr)?'#fff':mcol);svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="${fsNum}" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(dm.c==null?'--':dm.c.toFixed(2))}</text>`;});
+  if(!opts.noLabels){const rTot=22*totS, lfs=9*totS, vfs=10.5*totS, tl=(21*totS).toFixed(1);const tg=spans.map(ss=>PS(f(ss[0],rTot))).join(' ');
    svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
      +`<text x="${cx}" y="${(cy-3*totS).toFixed(1)}" font-size="${lfs.toFixed(1)}" text-anchor="middle" fill="#fff">總係數</text>`
      +`<text x="${cx}" y="${(cy+9*totS).toFixed(1)}" font-size="${vfs.toFixed(1)}" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${(totV==null?'--':totV.toFixed(2))}</text>`;}

@@ -19,7 +19,7 @@
 // ============================================================
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml, OBS_PARTS_DATA } from './core.js';
-import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
+import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
 import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups } from './m_main.js';
@@ -175,12 +175,25 @@ async function _liunianCompactHtml(gender, birthday) {
   const cell = (l, v) => '<div class="m-liunian-cell"><span class="m-liunian-cell-label">' + l + '</span><span class="m-liunian-cell-value">' + (v || '—') + '</span></div>';
   const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
   return '<div class="m-liunian-section"><div class="m-liunian-title">流年參考' + buildLiunianTitleHtml(info) + '</div>'
-    + '<div class="m-liunian-row" style="grid-template-columns:repeat(3,1fr)">' + cell('七十五', v75) + cell('九執', ln.jiuzhi) + cell('業務', ln.yewu) + '</div>'
-    + '<div class="m-liunian-row" style="grid-template-columns:repeat(5,1fr)">' + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('耳鼻', ln.erbei) + cell('五官', ln.wuguan) + cell('三停', ln.santing) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(4,1fr)">' + cell('三停', ln.santing) + cell('九執', ln.jiuzhi) + cell('五官', ln.wuguan) + cell('七十五', v75) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(4,1fr)">' + cell('業務', ln.yewu) + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('耳鼻', ln.erbei) + '</div>'
     + '</div>';
 }
 
-// 報告區塊（雷達縮圖 + 四係數摘要 + 重要參數分析/看完整報告）；手動 & 自動共用
+// 某維度 9 格是否全填（A/B）
+function _dimFilled(matrix, di) { const r = matrix[di]; if (!Array.isArray(r)) return false; for (let pp = 0; pp < 9; pp++) { if (r[pp] !== 'A' && r[pp] !== 'B') return false; } return true; }
+// 群組係數：群內各維皆完成才給值，否則 null（對齊完整報告 groupComplete 邏輯）
+function _grpCoeff(matrix, ids) { return ids.every((di) => _dimFilled(matrix, di)) ? avgCoeff(matrix, ids) : null; }
+// 係數總覽 6 值（先天/老闆/主管/運氣/後天/總）
+function _coefValues(matrix) {
+  if (!_hasMatrix(matrix)) return null;
+  return {
+    preV: _grpCoeff(matrix, [0,1,2,3,4,5]), bossV: _grpCoeff(matrix, [0,1,2]), mgrV: _grpCoeff(matrix, [3,4,5]),
+    luckV: _grpCoeff(matrix, [6,7,8]), postV: _grpCoeff(matrix, [9,10,11,12]), totV: _grpCoeff(matrix, [0,1,2,3,4,5,6,7,8,9,10,11,12])
+  };
+}
+
+// 報告區塊（雷達圖[僅圖形] + 係數總覽圖[含文字] + 重要參數分析/看完整報告）；手動 & 自動共用
 // matrix=該人 13×9 A/B 矩陣（手動=manualJson、自動=dataJson）；pct=填寫進度；showSens=是否顯示參數分析鈕
 function _dashReportBlock(kind, matrix, pct, showSens) {
   const isManual = kind === 'manual';
@@ -189,16 +202,19 @@ function _dashReportBlock(kind, matrix, pct, showSens) {
   const icon = isManual
     ? '<span class="m-home-bigbtn-icon">✎</span>'
     : '<span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span>';
-  const cs = _coeffSet(matrix);
-  let radar = '';
-  if (cs) { try { radar = buildMobileChartSvgs(matrix).radar2; } catch (e) { radar = ''; } }
-  const radarHtml = radar
-    ? '<div class="m-dash-report-radar">' + radar + '</div>'
-    : '<div class="m-dash-report-radar m-dash-report-radar-empty">尚未填寫</div>';
-  const cell = (lab, v) => '<div class="m-dash-coeff-cell"><b>' + (v != null ? v : '--') + '</b><i>' + lab + '</i></div>';
-  const coeffHtml = '<div class="m-dash-coeff">'
-    + cell('總', cs ? cs.tot : null) + cell('先天', cs ? cs.pre : null)
-    + cell('後天', cs ? cs.post : null) + cell('運氣', cs ? cs.luck : null) + '</div>';
+  const cv = _coefValues(matrix);
+  let bodyHtml;
+  if (cv) {
+    let radar = ''; try { radar = buildMobileChartSvgs(matrix, { noLabels: true }).radar2; } catch (e) { radar = ''; }
+    let coef = ''; try {
+      coef = buildCoefSVG({ preV: cv.preV, bossV: cv.bossV, mgrV: cv.mgrV, luckV: cv.luckV, postV: cv.postV, totV: cv.totV,
+        order: ['totV','preV','bossV','mgrV','luckV','postV'], big: ['總係數','先天','運氣','後天'], small: ['老闆','主管'],
+        title: '係數總覽', fs: 10.8, vbW: 360, x0: 57, trackW: 258, titleX: 10 });
+    } catch (e) { coef = ''; }
+    bodyHtml = '<div class="m-dash-report-radar">' + radar + '</div><div class="m-dash-report-coef">' + coef + '</div>';
+  } else {
+    bodyHtml = '<div class="m-dash-report-empty">尚未填寫</div>';
+  }
   let acts = '';
   if (showSens) acts += '<button type="button" class="m-dash-report-act" data-dash-sens="' + kind + '">重要參數分析</button>';
   acts += '<button type="button" class="m-dash-report-act is-primary" data-dash-report="' + kind + '">看完整報告 ›</button>';
@@ -206,7 +222,7 @@ function _dashReportBlock(kind, matrix, pct, showSens) {
     + '<div class="m-dash-report-head">' + icon
     + '<div class="m-dash-report-titles"><div class="m-dash-report-title">' + title + '</div><div class="m-dash-report-sub">' + sub + '</div></div>'
     + '<div class="m-detail-prog"><div class="m-detail-prog-pct">' + pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></div>'
-    + '<div class="m-dash-report-body">' + radarHtml + coeffHtml + '</div>'
+    + '<div class="m-dash-report-body">' + bodyHtml + '</div>'
     + '<div class="m-dash-report-acts">' + acts + '</div>'
     + '</div>';
 }
@@ -252,16 +268,19 @@ function _paintDashboard() {
   inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
   // 個案：開始分析（桌機→進側欄工作區；手機→沿用既有報告流程）
   if (p.isCase) inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
-  // 報告區塊（雷達縮圖＋四係數＋參數分析/看報告）：上課自我評分(手動) → 觀察自動評分(部位觀察)
+  // 右區：兩報告區塊（雷達僅圖形＋係數總覽含文字）：上課自我評分(手動) → 觀察自動評分(部位觀察)
   // 桌機個案走側欄工作區（無 sens 子畫面），隱藏參數分析鈕避免誤跳回本人
   const showSens = !(p.isCase && isDesktopSidebar());
-  inner += _dashReportBlock('manual', _parseMatrix(p.manualJson), man.pct, showSens);
-  inner += _dashReportBlock('auto', _parseMatrix(p.dataJson), obs.pct, showSens);
+  const right = _dashReportBlock('manual', _parseMatrix(p.manualJson), man.pct, showSens)
+              + _dashReportBlock('auto', _parseMatrix(p.dataJson), obs.pct, showSens);
 
-  let h = '<div class="m-dash-wrap" style="background:' + _cardTint(p.color) + '">' + inner + '</div>';
-  // 底部（外框之外）
+  // 三大區塊：左(姓名/基本資料/流年，人物色外框) ｜ 右(兩報告上下排)；窄螢幕自動單欄
+  let h = '<div class="m-dash2">'
+    + '<div class="m-dash-wrap m-dash2-left" style="background:' + _cardTint(p.color) + '">' + inner + '</div>'
+    + '<div class="m-dash2-right">' + right + '</div>'
+    + '</div>';
+  // 底部：個案才有刪除鈕；本人不再放「個案新增/管理」(已在個案管理分頁)
   if (p.isCase) h += '<button class="m-detail-delete" id="m-dash-delete" type="button">刪除此個案</button>';
-  else h += '<button class="m-dash-mgmt-btn" id="m-dash-mgmt" type="button">個案新增 / 管理</button>';
 
   t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
 
@@ -1160,7 +1179,7 @@ async function exportReportPng() {
 
 // 手機報告圖 SVG（radar2 報告圖 + radar3 動靜全圖）；自動/手動共用
 export var R2_TITLE = '人相兵法係數圖', R3_TITLE = '人相兵法動靜分布圖', CHART_GAP = 14;
-export function buildMobileChartSvgs(matrix) {
+export function buildMobileChartSvgs(matrix, radarOpts) {
   var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
   var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
   for (var i = 0; i < 13; i++) {
@@ -1169,11 +1188,11 @@ export function buildMobileChartSvgs(matrix) {
     dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
     var rc = calcDim(matrix, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
   }
-  var radar2 = buildRadar2MSVG({
+  var radar2 = buildRadar2MSVG(Object.assign({
     dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
     luckV: avgCoeff(matrix,[6,7,8])||0, postV: avgCoeff(matrix,[9,10,11,12])||0,
     preV: avgCoeff(matrix,[0,1,2,3,4,5])||0, totV: avgCoeff(matrix,all)||0
-  });
+  }, radarOpts || {}));
   // radar3 手機版：字級放大；viewBox 與 radar2 同寬(360) → 13 邊形一樣大
   var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5, viewBox: '20 40 360 360' });
   return { radar2: radar2, sd: sd };
