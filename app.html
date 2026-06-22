@@ -265,8 +265,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dash-report-act.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}
 .m-dash-report-act.is-primary:active{opacity:0.88}
 /* 桌機：「我的」充分利用頁面高度 — 左欄撐滿整頁高、右邊兩報告上下各半 */
+/* 覆蓋 P3/P4 的 .m-home grid(920px 兩欄)漏進來；改用本頁自己的 .m-dash2 滿寬滿高 */
 @media (min-width:1024px){
-  #m-page-report .m-home{height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px);box-sizing:border-box;padding:8px 4px}
+  #m-page-report .m-home{display:block;max-width:none;margin:0;grid-template-columns:none;height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px);box-sizing:border-box;padding:8px 4px}
   #m-page-report .m-dash2{height:100%;align-items:stretch;gap:16px}
   #m-page-report .m-dash2-left{align-self:stretch;overflow-y:auto}
   #m-page-report .m-dash2-right{height:100%}

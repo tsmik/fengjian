@@ -233,7 +233,7 @@ function _paintDashboard() {
   if (!p || !t) return;
   let g = p.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   const obs = _obsProgress(p.obsJson), man = _manualProgress(p.manualJson);
-  // 外框：人物顏色「包住」標題＋基本資料＋流年＋報告連結，視覺上是同一張卡
+  // 左區外框：人物顏色「包住」標題＋基本資料＋流年（報告區塊在右區）
   let inner = '<div class="m-dash-head"><span class="m-dash-head-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span><span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
   // 基本資料（檢視 or 編輯）
   if (_dashEdit) {
