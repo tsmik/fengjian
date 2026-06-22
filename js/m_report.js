@@ -205,11 +205,15 @@ function _dashReportBlock(kind, matrix, pct, showSens) {
   const cv = _coefValues(matrix);
   let bodyHtml;
   if (cv) {
-    let radar = ''; try { radar = buildMobileChartSvgs(matrix, { noLabels: true }).radar2; } catch (e) { radar = ''; }
+    // 未填完的維度→傳 null（雷達畫淡灰）；填完→實際係數。群組(先天/後天/運氣)未完成 cv.* 也是 null→中央淡灰
+    const dimC = [];
+    for (let i = 0; i < 13; i++) { if (_dimFilled(matrix, i)) { const r = calcDim(matrix, i); dimC.push(r && typeof r.coeff === 'number' ? r.coeff : null); } else dimC.push(null); }
+    let radar = '';
+    try { radar = buildMobileChartSvgs(matrix, { noLabels: true, grayEmpty: true, dimCoeff: dimC, preV: cv.preV, postV: cv.postV, luckV: cv.luckV, totV: cv.totV }).radar2; } catch (e) { radar = ''; }
     let coef = ''; try {
       coef = buildCoefSVG({ preV: cv.preV, bossV: cv.bossV, mgrV: cv.mgrV, luckV: cv.luckV, postV: cv.postV, totV: cv.totV,
         order: ['totV','preV','bossV','mgrV','luckV','postV'], big: ['總係數','先天','運氣','後天'], small: ['老闆','主管'],
-        title: '係數總覽', fs: 10.8, vbW: 360, x0: 57, trackW: 258, titleX: 10 });
+        fs: 10.8, vbW: 360, x0: 57, trackW: 258 });
     } catch (e) { coef = ''; }
     bodyHtml = '<div class="m-dash-report-radar">' + radar + '</div><div class="m-dash-report-coef">' + coef + '</div>';
   } else {

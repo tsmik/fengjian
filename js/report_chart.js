@@ -10,6 +10,8 @@ const S='#7A9E7E', A='#C17A5A';
 const CRBG='#f0e9dc', CRT='#7d6643';
 // 雷達圖「沒有任何數值」時，把外圈 13 邊形填米白（非整個方形）；有資料則不填
 const RADAR_EMPTY_BG='#f5efe4';
+// 未填完的維度/群組（opts.grayEmpty）用淡灰填滿表示
+const RADAR_GRAY='#d8d6d0';
 function _emptyBgPoly(isEmpty){
   if(!isEmpty)return '';
   return `<polygon points="${spans.map(s=>PS(f(s[0],rOut))).join(' ')}" fill="${RADAR_EMPTY_BG}"/>`;
@@ -106,6 +108,12 @@ export function buildRadar2MSVG(opts){
   const innerPoly=spans.map(s=>PS(f(s[0],rIn))).join(' ');
   let svg='';
   svg+=`<polygon points="${innerPoly}" fill="${CRBG}"/>`;
+  // 中央先天/後天/運氣 未填完→淡灰填滿
+  if(opts.grayEmpty){
+    if(preV==null)svg+=`<path d="${polySector(0,6*STEP,rIn)}" fill="${RADAR_GRAY}"/>`;
+    if(luckV==null)svg+=`<path d="${polySector(6*STEP,9*STEP,rIn)}" fill="${RADAR_GRAY}"/>`;
+    if(postV==null)svg+=`<path d="${polySector(9*STEP,360,rIn)}" fill="${RADAR_GRAY}"/>`;
+  }
   if(luckV!=null){const r=rIn*Math.sqrt(Math.min(1,luckV/COEF_MAX));svg+=`<path d="${polySector(6*STEP,9*STEP,r)}" fill="#546D77" fill-opacity="0.3"/>`;}
   if(postV!=null){const r=rIn*Math.sqrt(Math.min(1,postV/COEF_MAX));svg+=`<path d="${polySector(9*STEP,360,r)}" fill="#797181" fill-opacity="0.3"/>`;}
   if(preV!=null){const r=rIn*Math.sqrt(Math.min(1,preV/COEF_MAX));svg+=`<path d="${polySector(0,6*STEP,r)}" fill="#854F51" fill-opacity="0.3"/>`;}
@@ -116,6 +124,8 @@ export function buildRadar2MSVG(opts){
   svg+=labM(f(299.9,rIn*0.699),'後天',postV,fsBox,'#797181');
   svg+=labM(f(93.6,rIn*0.687),'先天',preV,fsBox,'#854F51');
   }
+  // 未填完的維度→整個 13 邊形外環區塊淡灰填滿
+  if(opts.grayEmpty)DIM.forEach((dm,i)=>{if(dm.c!=null)return;const[a0,a1]=spans[i];svg+=`<path d="${facet(a0,a1,rIn,rOut)}" fill="${RADAR_GRAY}" stroke="#fff" stroke-width="0.8"/>`;});
   DIM.forEach((dm,i)=>{if(dm.c==null)return;const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;const fill=dm.sf<0.5?A:S;const op=(OP_LOW*(1-frac)+OP_HIGH*frac).toFixed(3);if(frac>0)svg+=`<path d="${facet(a0,a1,rIn,rT)}" fill="${fill}" fill-opacity="${op}" stroke="#fff" stroke-width="0.8"/>`;});
   DIM.forEach((dm,i)=>{if(dm.c==null||dm.c>0)return;const[a0,a1]=spans[i];const fill=dm.sf<0.5?A:S;svg+=`<path d="${facet(a0,a1,rIn,rIn+ZERO_MARK)}" fill="${fill}" fill-opacity="0.9" stroke="#fff" stroke-width="0.8"/>`;});
   [[0,'#854F51',1],[6*STEP,'#546D77',1],[9*STEP,'#797181',1]].forEach(([a,col,op])=>{const p1=f(a,rOut);svg+=`<line x1="${cx}" y1="${cy}" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="2"/>`;});
