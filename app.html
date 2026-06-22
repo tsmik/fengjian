@@ -264,6 +264,18 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dash-report-act:active{background:#f5efe6}
 .m-dash-report-act.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}
 .m-dash-report-act.is-primary:active{opacity:0.88}
+/* 桌機：「我的」充分利用頁面高度 — 左欄撐滿整頁高、右邊兩報告上下各半 */
+@media (min-width:1024px){
+  #m-page-report .m-home{height:calc(100vh - var(--nav-h) - var(--safe-top) - 40px);box-sizing:border-box;padding:8px 4px}
+  #m-page-report .m-dash2{height:100%;align-items:stretch;gap:16px}
+  #m-page-report .m-dash2-left{align-self:stretch;overflow-y:auto}
+  #m-page-report .m-dash2-right{height:100%}
+  #m-page-report .m-dash2-right .m-dash-report{flex:1 1 0;min-height:0;overflow-y:auto;justify-content:center}
+  /* 報告內：雷達(左) ｜ 係數總覽(右) 橫向並排，用滿寬、壓低高度 */
+  #m-page-report .m-dash-report-body{flex-direction:row;align-items:center;gap:18px}
+  #m-page-report .m-dash-report-radar{flex:0 0 190px;width:190px;max-width:190px}
+  #m-page-report .m-dash-report-coef{flex:1;min-width:0}
+}
 
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
