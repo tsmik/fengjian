@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2 最小可跑通（接線驗核心）</title>
+<style>
+  :root { --line:#e3ddd2; --ink:#2c2722; --sub:#8a8278; --accent:#9a6878; --bg:#faf8f4; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif; margin:0; background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5; }
+  header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--line); padding:10px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; z-index:10; }
+  header .grow { flex:1; }
+  button { font:inherit; padding:7px 12px; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; min-height:38px; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  .wrap { max-width:880px; margin:0 auto; padding:14px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  select { font:inherit; padding:7px 8px; border:1px solid var(--line); border-radius:8px; min-height:38px; background:#fff; }
+  .status { color:var(--sub); font-size:13px; }
+  .spice label { margin-right:10px; cursor:pointer; }
+  .part { border:1px solid var(--line); border-radius:10px; margin-bottom:12px; background:#fff; overflow:hidden; }
+  .part > h3 { margin:0; padding:8px 12px; background:#f3eee5; font-size:15px; }
+  .sec { padding:4px 12px 8px; }
+  .sec > h4 { margin:10px 0 4px; font-size:13px; color:var(--sub); font-weight:600; }
+  .q { padding:5px 0; border-top:1px dashed var(--line); }
+  .q:first-child { border-top:none; }
+  .q .qt { font-size:14px; margin-bottom:3px; }
+  .q .lr { font-size:12px; color:var(--sub); margin-right:6px; display:inline-block; width:1.6em; }
+  .opts { display:inline-flex; gap:6px; flex-wrap:wrap; vertical-align:middle; }
+  .opt { padding:4px 10px; border:1px solid var(--line); border-radius:14px; font-size:13px; cursor:pointer; background:#fff; }
+  .opt.sel { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row { display:flex; align-items:flex-start; gap:4px; flex-wrap:wrap; margin:2px 0; }
+  table.rep { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  table.rep th, table.rep td { padding:6px 10px; border-bottom:1px solid var(--line); text-align:left; font-size:14px; }
+  table.rep th { background:#f3eee5; }
+  table.rep td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pole { font-weight:700; }
+  .hint { color:var(--sub); font-size:13px; }
+  h2 { font-size:16px; margin:18px 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <strong>P2 最小可跑通</strong>
+  <span class="status" id="who">未登入</span>
+  <span class="grow"></span>
+  <button id="btn-login" class="primary">Google 登入</button>
+  <button id="btn-logout" style="display:none">登出</button>
+</header>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="bar">
+    <label>套裝
+      <select id="sel-rs"><option value="">（載入中…）</option></select>
+    </label>
+    <button id="btn-load" class="primary">載入套裝</button>
+    <button id="btn-save">存檔</button>
+    <span class="status" id="status"></span>
+  </div>
+  <div class="bar spice" id="spice-bar" style="display:none">
+    <span>辣度：</span>
+    <label><input type="radio" name="spice" value="大辣">大辣</label>
+    <label><input type="radio" name="spice" value="中辣">中辣</label>
+    <label><input type="radio" name="spice" value="小辣">小辣</label>
+    <span class="hint">（切換即時重算報告）</span>
+  </div>
+
+  <div id="warn" style="display:none; background:#fff7d6; border:1px solid #e0c860; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:13px; color:#7a5c00;"></div>
+
+  <div id="questions"></div>
+
+  <h2 id="rep-h" style="display:none">兵法報告（13 維 · 動靜＋係數）</h2>
+  <div id="report"></div>
+</div>
+
+<div class="wrap" id="signin-hint">
+  <p class="hint">請先用有權限的 Google 帳號登入 rbf2app-staging（如 chaojentseng@gmail.com 或已加白名單的學員帳號）。</p>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { evaluateDimension } from './js/engine.js';
+import { loadActiveRuleSet, loadRuleSetById } from './js/load_ruleset.js';
+
+const P2_CFG = { apiKey:'AIzaSyDZ3z9LV1g3rnhO0QjmYOfipUGMtD1cq7g', authDomain:'rbf2app-staging.firebaseapp.com', projectId:'rbf2app-staging', storageBucket:'rbf2app-staging.firebasestorage.app', messagingSenderId:'565853308902', appId:'1:565853308902:web:8a7a3e63df1291124df827' };
+const app = initializeApp(P2_CFG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+setPersistence(auth, browserLocalPersistence).catch(()=>{});
+
+const $ = id => document.getElementById(id);
+const STATE = { user:null, rs:null, obs:{}, spice:'大辣', activeId:null };
+
+function setStatus(m){ $('status').textContent = m || ''; }
+
+// ---------- auth ----------
+$('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e=>alert('登入失敗：'+(e.code||e.message)));
+$('btn-logout').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (u) => {
+  STATE.user = u;
+  $('btn-login').style.display = u ? 'none' : '';
+  $('btn-logout').style.display = u ? '' : 'none';
+  $('app').style.display = u ? '' : 'none';
+  $('signin-hint').style.display = u ? 'none' : '';
+  $('who').textContent = u ? u.email : '未登入';
+  if (u) await onLogin();
+});
+
+async function onLogin(){
+  setStatus('讀取套裝清單…');
+  // 列出 ruleSets + 讀 config/active 預選
+  let activeId = null, defaultSpice = '大辣';
+  try { const a = await getDoc(doc(db,'config','active')); if (a.exists()){ activeId = a.data().activeRuleSetId || null; defaultSpice = a.data().defaultSpice || '大辣'; } } catch(e){}
+  STATE.activeId = activeId; STATE.spice = defaultSpice;
+  const sel = $('sel-rs'); sel.innerHTML = '';
+  try {
+    const snap = await getDocs(collection(db,'ruleSets'));
+    const rows = []; snap.forEach(d => rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=> (a.name||a.id).localeCompare(b.name||b.id));
+    if (!rows.length) sel.innerHTML = '<option value="">（無套裝）</option>';
+    rows.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id;
+      o.textContent = (r.name||r.id) + (r.id===activeId ? '　← 上線中' : '') + (r.status?('　['+r.status+']'):'');
+      if (r.id===activeId) o.selected = true;
+      sel.appendChild(o);
+    });
+    setStatus(activeId ? ('上線套裝＝'+activeId+'，預設辣度＝'+defaultSpice) : 'config/active 尚未設定，請手動選一個套裝載入');
+  } catch(e){ sel.innerHTML='<option value="">讀取失敗</option>'; setStatus('讀套裝清單失敗：'+(e.code||e.message)); }
+}
+
+// ---------- load ruleset ----------
+$('btn-load').onclick = async () => {
+  const id = $('sel-rs').value;
+  if (!id){ alert('請先選一個套裝'); return; }
+  setStatus('載入套裝 '+id+' …');
+  try {
+    STATE.rs = await loadRuleSetById(db, id, STATE.spice);
+    STATE.spice = STATE.rs.defaultSpice;
+    // 還原已存答案（同一套裝才還原）
+    await restoreAnswers(id);
+    document.querySelector(`input[name=spice][value="${STATE.spice}"]`).checked = true;
+    $('spice-bar').style.display = '';
+    checkRefIntegrity();
+    renderQuestions();
+    renderReport();
+    const nQ = STATE.rs.partNames.reduce((n,p)=> n + STATE.rs.obsParts[p].total, 0);
+    const nDim = STATE.rs.dims.filter(Boolean).length;
+    setStatus(`已載入：${STATE.rs.partNames.length} 部位 / ${nQ} 題 / ${nDim} 維有規則`);
+  } catch(e){ setStatus('載入失敗：'+(e.code||e.message)); alert('載入失敗：'+(e.message||e.code)); }
+};
+
+async function restoreAnswers(id){
+  STATE.obs = {};
+  try {
+    const s = await getDoc(doc(db,'users',STATE.user.uid));
+    if (s.exists() && s.data().ruleSetId===id && s.data().obsJson){ STATE.obs = JSON.parse(s.data().obsJson) || {}; }
+  } catch(e){}
+}
+
+$('btn-save').onclick = async () => {
+  if (!STATE.rs){ alert('先載入套裝'); return; }
+  setStatus('存檔中…');
+  try {
+    await setDoc(doc(db,'users',STATE.user.uid), { obsJson: JSON.stringify(STATE.obs), spice: STATE.spice, ruleSetId: STATE.rs.activeRuleSetId, updatedAt: new Date().toISOString() }, { merge:true });
+    setStatus('已存檔 ✓');
+  } catch(e){ setStatus('存檔失敗：'+(e.code||e.message)); }
+};
+
+// ---------- spice ----------
+document.querySelectorAll('input[name=spice]').forEach(r => r.addEventListener('change', e => { STATE.spice = e.target.value; renderReport(); }));
+
+// ---------- 自我檢查：維度條件引用的觀察題，是否都存在於本套裝題庫 ----------
+// 斷鏈（引用到已刪題）會讓該部位永遠算不出 null → 動靜算錯。
+function checkRefIntegrity(){
+  const rs = STATE.rs;
+  const qIds = new Set();
+  rs.partNames.forEach(pn => rs.obsParts[pn].sections.forEach(s => s.qs.forEach(q => qIds.add(q.id))));
+  const refDims = {};   // ref → Set(維度名)
+  rs.dims.forEach(dd => {
+    if (!dd) return;
+    Object.values(dd.parts || {}).forEach(p => {
+      if (p.kind === 'aggregate' || !Array.isArray(p.cards)) return;
+      p.cards.forEach(c => (c.combos || []).forEach(cb => {
+        const leaves = Array.isArray(cb) ? cb : (cb && cb.leaves) || [];
+        leaves.forEach(l => { if (l && l.ref && !qIds.has(l.ref)) { (refDims[l.ref] = refDims[l.ref] || new Set()).add(dd.dimName || ''); } });
+      }));
+    });
+  });
+  const missing = Object.keys(refDims);
+  const w = $('warn');
+  if (missing.length){
+    w.style.display = '';
+    w.innerHTML = '⚠️ 斷鏈：' + missing.length + ' 個條件引用到本套裝題庫沒有的觀察題（這些部位會算不出 → 動靜不準）：<br>'
+      + missing.map(r => `<b>${r}</b>（${[...refDims[r]].join('、')}）`).join('；');
+  } else {
+    w.style.display = '';
+    w.style.background = '#e6f4e6'; w.style.borderColor = '#9ac99a'; w.style.color = '#2f6b2f';
+    w.textContent = '✓ 題庫完整性檢查通過：所有維度條件引用的觀察題都存在。';
+  }
+}
+
+// ---------- render questions ----------
+function renderQuestions(){
+  const root = $('questions'); root.innerHTML='';
+  const rs = STATE.rs;
+  rs.partNames.forEach(pn => {
+    const part = rs.obsParts[pn];
+    const pEl = document.createElement('div'); pEl.className='part';
+    pEl.innerHTML = `<h3>${pn}</h3>`;
+    part.sections.forEach(sec => {
+      const sEl = document.createElement('div'); sEl.className='sec';
+      sEl.innerHTML = `<h4>${sec.label}</h4>`;
+      sec.qs.forEach(q => sEl.appendChild(qEl(q)));
+      pEl.appendChild(sEl);
+    });
+    root.appendChild(pEl);
+  });
+}
+
+function qEl(q){
+  const el = document.createElement('div'); el.className='q';
+  const qt = document.createElement('div'); qt.className='qt'; qt.textContent = q.text + (q.paired?'（左右題）':''); el.appendChild(qt);
+  if (q.paired){
+    el.appendChild(optRow(q, 'L', '左'));
+    el.appendChild(optRow(q, 'R', '右'));
+  } else {
+    el.appendChild(optRow(q, null, ''));
+  }
+  return el;
+}
+
+function optRow(q, side, label){
+  const row = document.createElement('div'); row.className='row';
+  if (label){ const t=document.createElement('span'); t.className='lr'; t.textContent=label; row.appendChild(t); }
+  const box = document.createElement('span'); box.className='opts';
+  const key = side ? q.id+'_'+side : q.id;
+  q.opts.forEach(o => {
+    const b = document.createElement('span'); b.className='opt'; b.textContent = o.v;
+    if (o.hint) b.title = o.hint;
+    if (STATE.obs[key]===o.v) b.classList.add('sel');
+    b.onclick = () => {
+      STATE.obs[key] = (STATE.obs[key]===o.v) ? undefined : o.v;
+      if (STATE.obs[key]===undefined) delete STATE.obs[key];
+      box.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+      if (STATE.obs[key]===o.v) b.classList.add('sel');
+      renderReport();
+    };
+    box.appendChild(b);
+  });
+  row.appendChild(box);
+  return row;
+}
+
+// ---------- render report ----------
+function renderReport(){
+  const rs = STATE.rs; if (!rs) return;
+  $('rep-h').style.display='';
+  const rows = [];
+  rs.dims.forEach((dd, di) => {
+    if (!dd) return;
+    const r = evaluateDimension(dd, STATE.obs, rs.isPaired, STATE.spice);
+    rows.push(`<tr>
+      <td>${di}</td><td>${dd.dimName||''}</td>
+      <td class="pole">${r.attribute||'—'}</td>
+      <td class="num">${r.coefficient.toFixed(2)}</td>
+      <td class="num">${r.positiveCount}/${r.negativeCount}</td>
+    </tr>`);
+  });
+  $('report').innerHTML = rows.length
+    ? `<table class="rep"><thead><tr><th>#</th><th>維度</th><th>動靜（屬性）</th><th>係數</th><th>符合/不符</th></tr></thead><tbody>${rows.join('')}</tbody></table>
+       <p class="hint">辣度＝${STATE.spice}；係數＝min(符合,不符)/max(…)；屬性＝該維度判到的極。</p>`
+    : '<p class="hint">此套裝尚無有規則的維度。</p>';
+}
+</script>
+</body>
+</html>

@@ -178,7 +178,7 @@ async function setActive(id) {
   if (!isStaff()) return alert('需 admin/teacher');
   try {
     let prev = null; const a = await getDoc(doc(db, 'config', 'active')); if (a.exists()) prev = a.data().activeRuleSetId || null;
-    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '中辣', updatedAt: new Date().toISOString() });
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '大辣', updatedAt: new Date().toISOString() });
     loadList();
   } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
 }
@@ -189,7 +189,7 @@ async function rollback() {
     if (!a.exists() || !a.data().previousActiveRuleSetId) return alert('沒有上一版可回滾');
     const cur = a.data().activeRuleSetId, prev = a.data().previousActiveRuleSetId;
     if (!confirm('把上線版從「' + cur + '」回滾到「' + prev + '」？')) return;
-    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: prev, previousActiveRuleSetId: cur, defaultSpice: a.data().defaultSpice || '中辣', updatedAt: new Date().toISOString() });
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: prev, previousActiveRuleSetId: cur, defaultSpice: a.data().defaultSpice || '大辣', updatedAt: new Date().toISOString() });
     loadList();
   } catch (e) { alert('回滾失敗：' + (e.code || e.message)); }
 }

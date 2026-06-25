@@ -812,7 +812,7 @@ async function setActiveFromEditor() {
   if (!confirm('把目前套裝《' + (state.ruleSet.name || state.ruleSet.id) + '》設為上線（＝學員看到的版本）？')) return;
   try {
     let prev = null; const a = await getDoc(doc(db, 'config', 'active')); if (a.exists()) prev = a.data().activeRuleSetId || null;
-    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: state.ruleSet.id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '中辣', updatedAt: new Date().toISOString() });
+    await setDoc(doc(db, 'config', 'active'), { activeRuleSetId: state.ruleSet.id, previousActiveRuleSetId: prev, defaultSpice: (a.exists() && a.data().defaultSpice) || '大辣', updatedAt: new Date().toISOString() });
     alert('已設為上線：' + (state.ruleSet.name || state.ruleSet.id));
   } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
 }

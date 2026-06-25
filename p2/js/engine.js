@@ -1,4 +1,4 @@
-// p2/js/engine.js — P2 計分引擎（逐側 主/輔；辣度＝輔門檻%）
+// p2/js/engine.js — P2 計分引擎＝單一前台引擎（逐側 主/輔；辣度第1層＝選項切點 acceptedOptions + 第2層＝每部位輔門檻數量 auxNeed）
 // 依 Mike 定案的左右計分模型（2026-06）：
 //  - 每張卡片（＝敘述分組）＝ 1 個計分單位，標 主(main) 或 輔(aux)。
 //  - 卡片引用「左右題」→ 左答案符合給左+1、右答案符合給右+1（各自獨立）。
@@ -19,16 +19,28 @@ function leafAnswer(leaf, obs, side, isPaired) {
   if (isPaired(ref)) { const k = ref + '_' + side; return (k in obs ? obs[k] : (obs[ref] != null ? obs[ref] : '')); }
   return obs[ref] != null ? obs[ref] : '';
 }
-function leafMatch(leaf, obs, side, isPaired) {
+// 辣度第1層（選項切點）：leaf.spice = {選項: level 1小/2中/3大}（每個葉自己一份；≠部位層 leafDef.spice 的數量字典）。
+// 學員選辣度 T → 認 level>=rank(T) 的選項（越嚴含越寬：大辣 rank3 認最少、小辣 rank1 認最多）。
+// 無 leaf.spice → 退回 leaf.match（＝大辣集合，舊資料相容）。
+function acceptedOptions(leaf, level) {
+  if (leaf.spice && typeof leaf.spice === 'object') {
+    const rank = (level === '小辣') ? 1 : (level === '大辣') ? 3 : 2;   // 預設中辣
+    const out = [];
+    for (const k in leaf.spice) { if (leaf.spice[k] >= rank) out.push(k); }
+    return out;
+  }
+  return Array.isArray(leaf.match) ? leaf.match : (leaf.match != null ? [leaf.match] : []);
+}
+function leafMatch(leaf, obs, side, isPaired, level) {
   const ans = leafAnswer(leaf, obs, side, isPaired);
   if (ans === '' || ans == null) return false;
-  return Array.isArray(leaf.match) ? leaf.match.indexOf(ans) >= 0 : ans === leaf.match;
+  return acceptedOptions(leaf, level).indexOf(ans) >= 0;
 }
 // combo 在記憶體是陣列 [leaf,...]；存進 Firestore 包成 {leaves:[...]}（Firestore 不接受巢狀陣列）。兩種都吃。
 function comboLeaves(combo) { return Array.isArray(combo) ? combo : (combo && Array.isArray(combo.leaves)) ? combo.leaves : []; }
 // 一張卡片在某側是否得分：任一 combo 成立（combo＝其葉在該側全中 AND）
-function cardFiresSide(card, obs, side, isPaired) {
-  return (card.combos || []).some(combo => { const lv = comboLeaves(combo); return lv.length > 0 && lv.every(leaf => leafMatch(leaf, obs, side, isPaired)); });
+function cardFiresSide(card, obs, side, isPaired, level) {
+  return (card.combos || []).some(combo => { const lv = comboLeaves(combo); return lv.length > 0 && lv.every(leaf => leafMatch(leaf, obs, side, isPaired, level)); });
 }
 
 function refsOfLeaf(leafDef) {
@@ -48,12 +60,12 @@ function partFilled(leafDef, obs, isPaired) {
   return true;
 }
 
-function sideScore(leafDef, obs, side, isPaired) {
+function sideScore(leafDef, obs, side, isPaired, level) {
   let main = 0, mainMax = 0, aux = 0, auxMax = 0;
   (leafDef.cards || []).forEach(card => {
     const isMain = card.role === 'main';
     if (isMain) mainMax++; else auxMax++;        // 非 main（含 aux / 未標）一律當輔
-    if (cardFiresSide(card, obs, side, isPaired)) { if (isMain) main++; else aux++; }
+    if (cardFiresSide(card, obs, side, isPaired, level)) { if (isMain) main++; else aux++; }
   });
   return { main, mainMax, aux, auxMax };
 }
@@ -70,8 +82,8 @@ function sidePass(sc, need) {
 
 export function scoreLeafPart(leafDef, obs, isPaired, level) {
   if (!partFilled(leafDef, obs, isPaired)) return { result: null };
-  const L = sideScore(leafDef, obs, 'L', isPaired);
-  const R = sideScore(leafDef, obs, 'R', isPaired);
+  const L = sideScore(leafDef, obs, 'L', isPaired, level);
+  const R = sideScore(leafDef, obs, 'R', isPaired, level);
   const need = auxNeed(leafDef, L.auxMax, level);              // L.auxMax === R.auxMax === 輔卡數
   const Lpass = sidePass(L, need), Rpass = sidePass(R, need);
   const standalonePass = Lpass && Rpass;                       // 部位當計分部位＝左右兩側都過（與 rbf1 merge=all 一致）
