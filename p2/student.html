@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人相兵法 · 學員</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-web@1.7.0/style.css">
+<style>
+  /* ---- DESIGN.md tokens ---- */
+  :root {
+    --bg:#f7f4ef; --cream-bg:#f3eee4; --cream-block:#f0e9dc; --cream-deep:#cdb892;
+    --cream-text:#7d6643; --text:#3a3228; --line:#d8cdb8; --line-deep:#cdb892;
+    --active:#C17A5A; --static:#7A9E7E;
+    --r-box:9px; --r-pill:16px;
+    --font:"LXGW WenKai Screen","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  }
+  * { box-sizing:border-box; }
+  body { font-family:var(--font); margin:0; background:var(--bg); color:var(--text); font-size:14px; line-height:1.55; }
+  /* 無粗體：全站 regular */
+  strong, b, h1, h2, h3, h4, th { font-weight:400; }
+
+  header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--line); padding:10px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; z-index:10; }
+  header .title { font-size:22px; color:var(--text); }
+  header .grow { flex:1; }
+  .who { color:var(--cream-text); font-size:14px; }
+
+  button { font:inherit; padding:7px 14px; border:1px solid var(--line-deep); background:#fff; color:var(--text); border-radius:var(--r-pill); cursor:pointer; min-height:38px; }
+  button.primary { background:var(--cream-deep); color:var(--text); border-color:var(--cream-deep); }
+  button:disabled { opacity:.45; cursor:default; }
+
+  .wrap { max-width:900px; margin:0 auto; padding:20px 16px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  select { font:inherit; padding:7px 8px; border:1px solid var(--line-deep); border-radius:var(--r-box); min-height:38px; background:#fff; color:var(--text); }
+  .status { color:var(--cream-text); font-size:14px; }
+
+  /* tabs（膠囊） */
+  .tabs { display:flex; gap:8px; margin:6px 0 14px; }
+  .tab { padding:7px 18px; border:1px solid var(--line-deep); border-radius:var(--r-pill); background:#fff; color:var(--text); cursor:pointer; }
+  .tab.on { background:var(--cream-block); border-color:var(--cream-deep); }
+
+  /* 辣度 */
+  .spice label { margin-right:12px; cursor:pointer; }
+  .spice .hint { color:var(--cream-text); font-size:14px; }
+
+  .warn { border-radius:var(--r-box); padding:8px 12px; margin-bottom:14px; font-size:14px; }
+  .warn.ok { background:#e6f0e7; border:1px solid #9ac99a; color:#3f6b42; }
+  .warn.bad { background:#f7ecd9; border:1px solid var(--cream-deep); color:#8a5c1a; }
+
+  /* ---------- 部位觀察（answer） ---------- */
+  .aw-part { border:1px solid var(--line); border-radius:var(--r-box); margin-bottom:12px; background:#fff; overflow:hidden; }
+  .aw-part-h { margin:0; padding:8px 14px; background:var(--cream-block); font-size:15px; color:var(--text); }
+  .aw-sec { padding:4px 14px 8px; }
+  .aw-sec-h { margin:10px 0 4px; font-size:14px; color:var(--cream-text); }
+  .aw-q { padding:6px 0; border-top:1px solid var(--line); }
+  .aw-q:first-child { border-top:none; }
+  .aw-qt { font-size:14px; margin-bottom:3px; }
+  .aw-row { display:flex; align-items:flex-start; gap:6px; flex-wrap:wrap; margin:2px 0; }
+  .aw-lr { font-size:13px; color:var(--cream-text); width:1.6em; display:inline-block; }
+  .aw-opts { display:inline-flex; gap:6px; flex-wrap:wrap; }
+  .aw-opt { padding:5px 12px; border:1px solid var(--line-deep); border-radius:var(--r-pill); font-size:14px; cursor:pointer; background:#fff; color:var(--text); min-height:32px; }
+  .aw-opt.sel { background:var(--cream-block); border-color:var(--cream-deep); }
+
+  /* ---------- 兵法報告（report） ---------- */
+  .rp-table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:var(--r-box); overflow:hidden; }
+  .rp-table th, .rp-table td { padding:7px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px; color:var(--text); }
+  .rp-table th { background:var(--cream-block); color:var(--cream-text); }
+  .rp-cat { background:var(--cream-bg); color:var(--cream-text); font-size:14px; }
+  .rp-dim { width:38%; }
+  .rp-num { text-align:right; font-variant-numeric:tabular-nums; }
+  .rp-sub { color:var(--cream-text); }
+  .rp-chip { display:inline-block; min-width:1.8em; text-align:center; padding:2px 9px; border-radius:var(--r-pill); color:#fff; font-size:13px; }
+  .rp-act { background:var(--active); }
+  .rp-sta { background:var(--static); }
+  .rp-dash { color:var(--cream-deep); }
+  .rp-inc { color:var(--cream-text); font-size:13px; }
+  .rp-inc-w { color:rgba(255,255,255,.75); font-size:13px; }
+  .rp-band { color:#fff; text-align:center; font-size:14px; padding:5px 10px; }
+  .rp-empty, .rp-foot { color:var(--cream-text); font-size:14px; }
+  .rp-foot { margin-top:10px; }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">人相兵法</span>
+  <span class="who" id="who">未登入</span>
+  <span class="grow"></span>
+  <button id="btn-login" class="primary">Google 登入</button>
+  <button id="btn-logout" style="display:none">登出</button>
+</header>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="bar">
+    <label>套裝
+      <select id="sel-rs"><option value="">（載入中…）</option></select>
+    </label>
+    <button id="btn-load" class="primary">載入</button>
+    <button id="btn-save">存檔</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div class="tabs" id="tabs" style="display:none">
+    <span class="tab on" data-tab="answer">部位觀察</span>
+    <span class="tab" data-tab="report">兵法報告</span>
+  </div>
+
+  <div class="bar spice" id="spice-bar" style="display:none">
+    <span>辣度：</span>
+    <label><input type="radio" name="spice" value="大辣">大辣</label>
+    <label><input type="radio" name="spice" value="中辣">中辣</label>
+    <label><input type="radio" name="spice" value="小辣">小辣</label>
+    <span class="hint">（切換即時重算報告）</span>
+  </div>
+
+  <div class="warn" id="warn" style="display:none"></div>
+
+  <div id="page-answer"></div>
+  <div id="page-report" style="display:none"></div>
+</div>
+
+<div class="wrap" id="signin-hint">
+  <p class="status">請先用有權限的 Google 帳號登入 rbf2app-staging（如 chaojentseng@gmail.com 或已加白名單的學員帳號）。</p>
+</div>
+
+<script type="module" src="./js/student/app.js"></script>
+</body>
+</html>
