@@ -1,0 +1,783 @@
+// js/manual.js — 手動輸入模組
+import { DIMS, data, manualData, setManualData, userName, _isTA, _currentCaseId, _currentCaseName, BETA_VISIBLE_DIMS,
+         setNavActive, showPage, _showToast, _getUserDocRef, calcDim, avgCoeff,
+         _liunianTable, currentUser, condResults, DIM_RULES } from './core.js';
+import { buildLiunianTableHtml, buildLiunianTitleHtml, _getLiunianInfo, drawReportCanvas, fallbackDownload, captureComposite, buildShareMenu, arrangeReportCharts } from './report.js';
+import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
+
+export function initManualData(){
+  if(manualData)return;
+  setManualData(Array(13).fill(null).map(function(){return Array(9).fill(null);}));
+}
+// 手動資料草稿的 LS key：per-使用者 per-個案（避免切換個案時殘留上一個的值）
+function _manualLsKey(){ return 'manual_data_v1_'+((currentUser&&currentUser.uid)||'anon')+'_'+(_currentCaseId||'self'); }
+export function manualSaveLocal(){
+  if(manualData)localStorage.setItem(_manualLsKey(),JSON.stringify(manualData));
+}
+export function manualLoadData(){
+  // 優先 Firebase，備用 localStorage
+  if(!currentUser){manualLoadLocal();return;}
+  _getUserDocRef().get().then(function(doc){
+    if(doc.exists&&doc.data().manualDataJson){
+      try{setManualData(JSON.parse(doc.data().manualDataJson));}catch(e){manualLoadLocal();}
+    }else{manualLoadLocal();}
+    renderManualPage();
+  }).catch(function(){manualLoadLocal();renderManualPage();});
+}
+export function manualLoadLocal(){
+  try{var s=localStorage.getItem(_manualLsKey());if(s)setManualData(JSON.parse(s));else setManualData(null);}catch(e){}
+  if(!manualData)initManualData();
+}
+
+export function showManualPage(){
+  showPage('manual-page');
+  document.getElementById('nav-name').innerText=(_currentCaseId?_currentCaseName:userName)||'';
+  setNavActive('nav-manual');
+  if(window.openReportNote)window.openReportNote();
+  if(!window._suppressPushState) history.pushState({page:'manual'},'');
+  initManualData();
+  manualLoadData();
+}
+
+export function manualCellClick(di,pi){
+  initManualData();
+  var cur=manualData[di][pi];
+  if(cur===null)manualData[di][pi]='A';
+  else if(cur==='A')manualData[di][pi]='B';
+  else manualData[di][pi]=null;
+  manualSaveLocal();
+  renderManualPage();
+}
+
+export function manualClear(){
+  if(!confirm('確定要清除所有手動輸入資料嗎？'))return;
+  setManualData(null);initManualData();
+  manualSaveLocal();
+  renderManualPage();
+  _showToast('手動資料已清除');
+}
+
+export function manualImportObs(){
+  if(!confirm('確定要將觀察評分資料帶入手動報告嗎？現有的手動資料會被覆蓋。'))return;
+  initManualData();
+  for(var di=0;di<BETA_VISIBLE_DIMS;di++){
+    for(var pi=0;pi<9;pi++){
+      manualData[di][pi]=data[di][pi]||null;
+    }
+  }
+  manualSaveLocal();
+  renderManualPage();
+  _showToast('已帶入觀察評分資料');
+}
+
+export function manualSave(){
+  if(!currentUser)return;
+  initManualData();
+  var visibleDimIds=[];
+  for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
+  var coeffs={};
+  for(var i=0;i<BETA_VISIBLE_DIMS;i++){
+    var res=calcDim(manualData,i);
+    coeffs[DIMS[i].dn]=res?{type:res.type,coeff:res.coeff,a:res.a,b:res.b}:null;
+  }
+  var btn=document.getElementById('manual-save-btn');
+  btn.innerText='儲存中...';btn.disabled=true;
+  // 存到 users/{userName} 的 manualDataJson 欄位（持久化）
+  var savePromise=_getUserDocRef().set({
+    manualDataJson:JSON.stringify(manualData),
+    manualCoeffs:JSON.stringify(coeffs),
+    manualTotalCoeff:avgCoeff(manualData,visibleDimIds),
+    manualUpdatedAt:new Date().toISOString()
+  },{merge:true});
+  // 歷史記錄（非關鍵，失敗不影響主儲存）
+  db.collection('analyses').add({
+    userName:userName,inputType:'manual',
+    manualData:JSON.stringify(manualData),coefficients:JSON.stringify(coeffs),
+    totalCoeff:avgCoeff(manualData,visibleDimIds),
+    createdAt:new Date().toISOString()
+  }).catch(function(e){console.log('analyses log失敗（不影響儲存）',e);});
+  manualSaveLocal();
+  savePromise.then(function(){
+    btn.innerText='已儲存 \u2713';btn.style.color='#7A9E7E';btn.style.borderColor='#7A9E7E';
+    setTimeout(function(){btn.innerText='儲存評分';btn.style.color='';btn.style.borderColor='';btn.disabled=false;},2000);
+  }).catch(function(e){
+    btn.innerText='儲存失敗';btn.disabled=false;
+    setTimeout(function(){btn.innerText='儲存評分';},2000);
+    console.log('手動評分儲存失敗',e);
+  });
+}
+
+export function renderManualPage(){
+  var el=document.getElementById('manual-table');if(!el)return;
+  initManualData();
+  var _manualLnInfo=_getLiunianInfo();
+  var _manualLnHtml=buildLiunianTableHtml(_manualLnInfo);
+  var _displayName=(_currentCaseId?_currentCaseName:userName)||'未命名';
+  var _manualTitleHtml='<div style="margin-bottom:8px"><span style="font-size:20px;font-weight:400;font-family:sans-serif">'+_displayName+'</span>'+buildLiunianTitleHtml(_manualLnInfo)+'<span style="font-size:15px;color:#888;font-family:sans-serif;margin-left:12px">人相兵法係數報告</span></div>';
+
+  // === 可見維度計算 ===
+  var visiblePre = Math.min(6, BETA_VISIBLE_DIMS);
+  var visibleLuck = Math.max(0, Math.min(3, BETA_VISIBLE_DIMS - 6));
+  var visiblePost = Math.max(0, Math.min(4, BETA_VISIBLE_DIMS - 9));
+  var showLuck = visibleLuck > 0;
+  var showPost = visiblePost > 0;
+  var totalCols = 1 + visiblePre*2 + 3 + (showLuck ? 1 + visibleLuck*2 + 3 : 0) + (showPost ? 1 + visiblePost*2 + 3 : 0) + 3 + 1;
+  var visibleDimIds = [];
+  for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
+
+  var partOrder=[0,1,2,3,4,5,6,7,8];
+  var partLabels=['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+  var SBG='#7A9E7E',DBG='#C17A5A';
+  var colL=DIMS.map(function(d){return d.da;});
+  var colR=DIMS.map(function(d){return d.db;});
+  var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
+
+  // === 和風色彩系統 ===
+  var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
+             '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+  var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
+               '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+  var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';
+  var C_BOSS='#8E4B50',C_MGR='#8C6B4A';
+  var C_PRE_C='#8E4B50',C_LUCK_C='#4C6E78',C_POST_C='#7B7082';
+  var C_TOTAL_SD='#3C3C40',C_TOTAL='#4A4540';
+  var C_PART_BG='#E8E4DF',C_PART_FC='#4A4540';
+  var C_AN_BG='#E8E4DF',C_AN_FC='#4A4540';
+
+  var dimDesc=['格局','核心價值','成就','責任','能耐','成敗',
+               '天運天機','地運資源','人運人和','戰略','戰術','算略KPI','智略'];
+
+  var rc='border-radius:3px';
+
+  // 統計
+  var vTotal=(BETA_VISIBLE_DIMS>=13)?avgCoeff(manualData,visibleDimIds):null;
+  var vPre=(visiblePre>=6)?avgCoeff(manualData,[0,1,2,3,4,5]):null;
+  var vLuck=(visibleLuck>=3)?avgCoeff(manualData,[6,7,8]):null;
+  var vPost=(visiblePost>=4)?avgCoeff(manualData,[9,10,11,12]):null;
+  var vLead=(visiblePre>=3)?avgCoeff(manualData,[0,1,2]):null;
+  var vSub=(visiblePre>=6)?avgCoeff(manualData,[3,4,5]):null;
+
+  function mCountSD(dimIds){
+    var s=0,d=0;
+    dimIds.forEach(function(di){
+      manualData[di].forEach(function(v){
+        if(!v)return;
+        var tp=v==='A'?DIMS[di].aT:DIMS[di].bT;
+        if(tp==='靜')s++;else d++;
+      });
+    });
+    return{s:s,d:d};
+  }
+  var visiblePreIds=[];for(var vpi=0;vpi<visiblePre;vpi++) visiblePreIds.push(vpi);
+  var visibleLuckIds=[];for(var vli=6;vli<6+visibleLuck;vli++) visibleLuckIds.push(vli);
+  var visiblePostIds=[];for(var vpoi=9;vpoi<9+visiblePost;vpoi++) visiblePostIds.push(vpoi);
+  var sdAll=mCountSD(visibleDimIds);
+  var sdPre=mCountSD(visiblePreIds);
+  var sdLuck=mCountSD(visibleLuckIds);
+  var sdPost=mCountSD(visiblePostIds);
+
+  var dimSCounts=[],dimDCounts=[];
+  for(var di2=0;di2<13;di2++){
+    var sc=0,dc=0;
+    manualData[di2].forEach(function(v){if(!v)return;var tp=v==='A'?DIMS[di2].aT:DIMS[di2].bT;if(tp==='靜')sc++;else dc++;});
+    dimSCounts.push(sc);dimDCounts.push(dc);
+  }
+  var dimCoeffs=[];
+  for(var dc2=0;dc2<13;dc2++){ dimCoeffs.push(calcDim(manualData,dc2)); }
+  var dimAttr=[];
+  for(var da2=0;da2<13;da2++){ var r=dimCoeffs[da2]; dimAttr.push(r?r.type:null); }
+
+  // 判斷每個維度是否 9 個部位全部填完
+  var dimComplete=[];
+  for(var di3=0;di3<13;di3++){
+    var complete=true;
+    for(var pi3=0;pi3<9;pi3++){ if(manualData[di3][pi3]===null||manualData[di3][pi3]===undefined){ complete=false; break; } }
+    dimComplete.push(complete);
+  }
+  function groupComplete(ids){ return ids.every(function(i){ return dimComplete[i]; }); }
+  var INC='未填完';
+  var INC_STYLE='color:#bbb;font-size:10px';
+
+  function ratioB(d,s){
+    var total=d+s;
+    if(!total)return '';
+    var mx=Math.max(d,s);
+    if(!mx)return '0.0';
+    return (Math.min(d,s)/mx).toFixed(1);
+  }
+
+  function checkMark(di){
+    return '<span style="display:inline-block;width:14px;height:14px;background:'+dimDeep[di]+';border-radius:2px;line-height:14px;text-align:center;color:#fff;font-size:10px">\u2713</span>';
+  }
+
+  // === 表格 ===
+  var t='<table style="border-collapse:separate;border-spacing:2px;white-space:nowrap;font-size:11px;font-family:sans-serif;width:100%">';
+
+  // --- R1: 流年（由外部 _manualLnHtml 處理）---
+  if(_manualLnHtml){
+    t+='<tr><td colspan="'+totalCols+'" style="padding:0 0 8px 0">'+_manualLnHtml+'</td></tr>';
+  }
+
+  // --- R2: 先天指數 | 運氣指數 | 後天指數 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='<td colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天指數</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣指數</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+(visiblePost*2+3)+'" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天指數</td>';
+  }
+  t+='<td colspan="4" style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R3: 維度名 + 動靜分析 + 總動靜分析 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  for(var i=0;i<visiblePre;i++){
+    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
+    t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+  }
+  t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+    }
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
+      t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
+    }
+    t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
+  }
+  t+='<td rowspan="2" colspan="3" style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">總動靜分析</td>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R4: 維度描述 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  for(var i=0;i<visiblePre;i++){
+    t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+  }
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
+    }
+  }
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R5: 靜/動標頭 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  function r5Cell(di,isLeft){
+    var isS;
+    if(isLeft){isS=colLIsS[di];}else{isS=!colLIsS[di];}
+    var label=isS?'靜':'動';
+    var fc=isS?'#000':'#980000';
+    return '<td style="background:'+dimBg[di]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc+'">'+label+'</td>';
+  }
+  for(var i=0;i<visiblePre;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
+  }
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">動</td>';
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">靜</td>';
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">比例</td>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R6~R14: 部位資料行（可點擊）---
+  function renderPartRow(pi, idx){
+    var label=partLabels[idx];
+    t+='<tr>';
+    t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+
+    var preS=0,preD=0,luckS=0,luckD=0,postS=0,postD=0;
+
+    // 先天 visiblePre 維度
+    for(var i=0;i<visiblePre;i++){
+      var v=manualData[i][pi];
+      if(v){
+        var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+        var isS=tp==='靜';
+        var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+        if(goLeft){
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+        }else{
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+        }
+        if(isS)preS++;else preD++;
+      }else{
+        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+        t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+      }
+    }
+    // 先天動靜分析
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preD+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+preS+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(preD,preS)+'</td>';
+
+    if(showLuck){
+      // 中部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      for(var i=6;i<6+visibleLuck;i++){
+        var v=manualData[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          }else{
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          }
+          if(isS)luckS++;else luckD++;
+        }else{
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+        }
+      }
+      // 運氣動靜分析
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+luckS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(luckD,luckS)+'</td>';
+    }
+
+    if(showPost){
+      // 右部位欄
+      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      for(var i=9;i<9+visiblePost;i++){
+        var v=manualData[i][pi];
+        if(v){
+          var tp=v==='A'?DIMS[i].aT:DIMS[i].bT;
+          var isS=tp==='靜';
+          var goLeft=(isS&&colLIsS[i])||(!isS&&!colLIsS[i]);
+          if(goLeft){
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          }else{
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+            t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;cursor:pointer">'+checkMark(i)+'</td>';
+          }
+          if(isS)postS++;else postD++;
+        }else{
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+          t+='<td onclick="manualCellClick('+i+','+pi+')" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';cursor:pointer"></td>';
+        }
+      }
+      // 後天動靜分析
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postD+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+postS+'</td>';
+      t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(postD,postS)+'</td>';
+    }
+
+    // 總動靜分析
+    var allS=preS+luckS+postS, allD=preD+luckD+postD;
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allD+'</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+allS+'</td>';
+    t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(allD,allS)+'</td>';
+
+    // 最右部位欄
+    t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+    t+='</tr>';
+  }
+
+  partOrder.forEach(function(pi,idx){
+    if(idx===4){
+      t+='<tr><td colspan="'+totalCols+'" style="height:2px;background:#b8b0a0;padding:0"></td></tr>';
+    }
+    renderPartRow(pi,idx);
+  });
+
+  // --- R15: 統計行 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  for(var i=0;i<visiblePre;i++){
+    var sn=dimSCounts[i],dn=dimDCounts[i];
+    var lv=colLIsS[i]?sn:dn;
+    var rv=colLIsS[i]?dn:sn;
+    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+    t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+  }
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPre.d+'</td>';
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPre.s+'</td>';
+  t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPre.d,sdPre.s)+'</td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.d+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdLuck.s+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdLuck.d,sdLuck.s)+'</td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      var sn=dimSCounts[i],dn=dimDCounts[i];
+      var lv=colLIsS[i]?sn:dn;
+      var rv=colLIsS[i]?dn:sn;
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+lv+'</td>';
+      t+='<td style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:#000">'+rv+'</td>';
+    }
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.d+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPost.s+'</td>';
+    t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPost.d,sdPost.s)+'</td>';
+  }
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.d+'</td>';
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+sdAll.s+'</td>';
+  t+='<td style="background:'+C_TOTAL_SD+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+ratioB(sdAll.d,sdAll.s)+'</td>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R16: 屬性行 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  for(var i=0;i<visiblePre;i++){
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var attr=dimAttr[i];
+      var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+      var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+    }
+  }
+  t+='<td colspan="3" style="padding:2px 4px"></td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var attr=dimAttr[i];
+        var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+        var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+      }
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var attr=dimAttr[i];
+        var alabel=attr==='動'?'動':attr==='靜'?'靜':'';
+        var fc2=attr==='動'?'#a61c00':attr==='靜'?'#0b5394':'#000';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+fc2+'">'+alabel+'</td>';
+      }
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+  }
+  t+='<td colspan="3" style="padding:2px 4px"></td>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R17: 係數行 ---
+  t+='<tr>';
+  t+='<td style="padding:2px 4px"></td>';
+  for(var i=0;i<visiblePre;i++){
+    if(!dimComplete[i]){
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+    }else{
+      var rcf=dimCoeffs[i];
+      var cv=rcf?rcf.coeff.toFixed(2):'';
+      t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+    }
+  }
+  t+='<td colspan="3" style="padding:2px 4px"></td>';
+  if(showLuck){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=6;i<6+visibleLuck;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var rcf=dimCoeffs[i];
+        var cv=rcf?rcf.coeff.toFixed(2):'';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+      }
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+  }
+  if(showPost){
+    t+='<td style="padding:2px 4px"></td>';
+    for(var i=9;i<9+visiblePost;i++){
+      if(!dimComplete[i]){
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
+      }else{
+        var rcf=dimCoeffs[i];
+        var cv=rcf?rcf.coeff.toFixed(2):'';
+        t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:12px">'+cv+'</td>';
+      }
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+  }
+  t+='<td colspan="3" style="padding:2px 4px"></td>';
+  t+='<td style="padding:2px 4px"></td>';
+  t+='</tr>';
+
+  // --- R18: 老闆係數 + 主管係數 ---
+  if(visiblePre>=3){
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    var bossOk=groupComplete([0,1,2]);
+    t+='<td colspan="6" style="background:'+C_BOSS+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">老闆係數 '+(bossOk?vLead:INC)+'</td>';
+    if(visiblePre>=6){
+      var mgrOk=groupComplete([3,4,5]);
+      t+='<td colspan="6" style="background:'+C_MGR+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">主管係數 '+(mgrOk?vSub:INC)+'</td>';
+    }else if(visiblePre*2-6>0){
+      t+='<td colspan="'+(visiblePre*2-6)+'" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showLuck){
+      t+='<td style="padding:2px 4px"></td>';
+      t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    if(showPost){
+      t+='<td style="padding:2px 4px"></td>';
+      t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
+
+  // --- R19: 先天係數 | 運氣係數 | 後天係數 ---
+  if(visiblePre>=6||visibleLuck>=3||visiblePost>=4){
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    if(visiblePre>=6){
+      var preOk=groupComplete([0,1,2,3,4,5]);
+      t+='<td colspan="'+visiblePre*2+'" style="background:'+C_PRE_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天係數 '+(preOk?vPre:INC)+'</td>';
+    }else{
+      t+='<td colspan="'+visiblePre*2+'" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    if(showLuck){
+      t+='<td style="padding:2px 4px"></td>';
+      if(visibleLuck>=3){
+        var luckOk=groupComplete([6,7,8]);
+        t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(luckOk?vLuck:INC)+'</td>';
+      }else{
+        t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
+      }
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    if(showPost){
+      t+='<td style="padding:2px 4px"></td>';
+      if(visiblePost>=4){
+        var postOk=groupComplete([9,10,11,12]);
+        t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(postOk?vPost:INC)+'</td>';
+      }else{
+        t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
+      }
+      t+='<td colspan="3" style="padding:2px 4px"></td>';
+    }
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
+
+  // --- R20: 總係數 ---
+  if(BETA_VISIBLE_DIMS>=13){
+    var allOk=groupComplete(visibleDimIds);
+    // 比照自動報告：bar 右緣對齊後天係數右緣 = 先天數據+先天動靜 + (部位+運氣數據+運氣動靜) + (部位+後天數據)
+    var dataColSpan=visiblePre*2+3+(showLuck?1+visibleLuck*2+3:0)+(showPost?1+visiblePost*2:0);
+    t+='<tr>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
+    if(showPost) t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td colspan="3" style="padding:2px 4px"></td>';
+    t+='<td style="padding:2px 4px"></td>';
+    t+='</tr>';
+  }
+
+  t+='</table>';
+  el.innerHTML=_manualTitleHtml+t;
+  _bindManualHints();
+  _ensureManualHintToggle();
+  // 報告圖（手動）：三圖 + 套用排版
+  try{
+    var _coef=document.getElementById('manual-coef'),_r2=document.getElementById('manual-radar2'),_sd=document.getElementById('manual-sd');
+    if(_coef||_r2||_sd){
+      var _dimSFrac=[],_dimCoeffArr=[];
+      for(var _ci=0;_ci<13;_ci++){var _sc=dimSCounts[_ci]||0,_dn=dimDCounts[_ci]||0,_tt=_sc+_dn;_dimSFrac.push(_tt>0?_sc/_tt:0.5);_dimCoeffArr.push(dimComplete[_ci]&&dimCoeffs[_ci]&&typeof dimCoeffs[_ci].coeff==='number'?dimCoeffs[_ci].coeff:null);}
+      var _gv=function(ids,v){return groupComplete(ids)?(v==null?null:v):null;};
+      var _pre=_gv([0,1,2,3,4,5],vPre),_boss=_gv([0,1,2],vLead),_mgr=_gv([3,4,5],vSub),_luck=_gv([6,7,8],vLuck),_post=_gv([9,10,11,12],vPost),_tot=_gv([0,1,2,3,4,5,6,7,8,9,10,11,12],vTotal);
+      if(_r2)_r2.innerHTML='<div class="rep-chart-title" style="font-size:9.9px">人相兵法係數圖</div>'+buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot});
+      if(_coef)_coef.innerHTML=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot});
+      if(_sd)_sd.innerHTML=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:'人相兵法動靜分布圖'});
+      requestAnimationFrame(function(){arrangeReportCharts('manual-coef','manual-radar2','manual-sd','manual-charts-row');});
+    }
+  }catch(e){}
+}
+
+// 手動報告分享：三選項
+export function showManualShareMenu(btn){
+  var cfg={btnId:'btn-manual-export',coefId:'manual-coef',r2Id:'manual-radar2',sdId:'manual-sd',src:manualData,bgId:'manual-page'};
+  buildShareMenu(btn,{onTable:function(){exportManualPNG();},onCharts:function(){captureComposite('charts',cfg);},onAll:function(){captureComposite('all',cfg);}});
+}
+
+/* ===== 手動表格格子 mouse over 判別標準提示 ===== */
+function _mEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let _manualHintEnabled=true;
+var _HINT_DIMCOLOR=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8','#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+function _ensureManualHintEl(){
+  var el=document.getElementById('manual-hint');
+  if(!el){
+    el=document.createElement('div');
+    el.id='manual-hint';
+    el.style.cssText='position:fixed;z-index:9999;max-width:280px;background:rgba(20,20,20,0.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);color:#f3f3f3;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.25);display:none;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+var _HINT_PN=['頭','上停','中停','下停','耳','眉','眼','鼻','口','顴','人中','地閣','頤','頂骨','枕骨','華陽骨'];
+var _HINT_NAME2IDX={'頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12,'頂骨':13,'枕骨':14,'華陽骨':15};
+// 取某維度某部位的敘述分組（distinct）
+function _hintGroupsOf(i,idx){
+  var p=(condResults[i]||{})[idx],g=[];
+  if(p&&p.items)p.items.forEach(function(it){if(it.groupLabel&&g.indexOf(it.groupLabel)<0)g.push(it.groupLabel);});
+  return g;
+}
+// 走規則樹收集 partResult 引用的部位名（去 .L/.R、去重）
+function _hintCollectPartRefs(node,out){
+  if(!node||typeof node!=='object')return;
+  if(node.partResult){var nm=String(node.partResult).split('.')[0];if(out.indexOf(nm)<0)out.push(nm);}
+  ['items','item','each','rule'].forEach(function(k){
+    var v=node[k];
+    if(Array.isArray(v))v.forEach(function(c){_hintCollectPartRefs(c,out);});
+    else if(v&&typeof v==='object')_hintCollectPartRefs(v,out);
+  });
+}
+function _manualHintHtml(i,pi){
+  var pos=(DIM_RULES[i]&&DIM_RULES[i].positive)?DIM_RULES[i].positive:'';
+  var h='';
+  if(pos)h+='<div style="font-weight:700;margin-bottom:6px;color:'+(_HINT_DIMCOLOR[i]||'#fff')+'">符合則「'+_mEsc(pos)+'」</div>';
+  var own=_hintGroupsOf(i,pi);
+  if(own.length){
+    // 一般部位：直接列自己的敘述分組
+    h+=own.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
+  }else{
+    // 容器部位（頭/中停/下停）：拆 partResult → 有列的部位「合看」、沒列的展開敘述分組
+    var pd=(DIM_RULES[i]&&DIM_RULES[i].parts)?DIM_RULES[i].parts[_HINT_PN[pi]]:null;
+    var refs=[];_hintCollectPartRefs(pd,refs);
+    var heju=[],detail=[];
+    refs.forEach(function(nm){var idx=_HINT_NAME2IDX[nm];if(idx==null)return;if(idx<=8){if(heju.indexOf(nm)<0)heju.push(nm);}else{if(detail.indexOf(idx)<0)detail.push(idx);}});
+    if(heju.length)h+='<div style="margin-bottom:3px">合看'+_mEsc(heju.join(''))+'</div>';
+    detail.forEach(function(idx){
+      var gs=_hintGroupsOf(i,idx);
+      h+='<div style="opacity:0.6;font-size:11px;margin-top:4px">'+_mEsc(_HINT_PN[idx])+'</div>';
+      if(gs.length)h+=gs.map(function(g){return '<div>・'+_mEsc(g)+'</div>';}).join('');
+    });
+    if(!heju.length&&!detail.length)h+='<div style="opacity:0.65">（無判別條件）</div>';
+  }
+  return h;
+}
+function _showManualHint(td,i,pi){
+  var el=_ensureManualHintEl();
+  el.innerHTML=_manualHintHtml(i,pi);
+  el.style.display='block';
+  var r=td.getBoundingClientRect();
+  var x=Math.min(r.left,window.innerWidth-el.offsetWidth-10);
+  var y=r.bottom+6;
+  if(y+el.offsetHeight>window.innerHeight)y=r.top-el.offsetHeight-6;
+  el.style.left=Math.max(8,x)+'px';
+  el.style.top=Math.max(8,y)+'px';
+}
+function manualHideHint(){var el=document.getElementById('manual-hint');if(el)el.style.display='none';}
+let _manualHintBound=false;
+function _bindManualHints(){
+  if(_manualHintBound)return;
+  var host=document.getElementById('manual-table');
+  if(!host)return;
+  _manualHintBound=true;
+  host.addEventListener('mouseover',function(e){
+    if(!_manualHintEnabled){manualHideHint();return;}
+    var td=e.target.closest&&e.target.closest('td[onclick^="manualCellClick"]');
+    if(!td){manualHideHint();return;}
+    var m=/manualCellClick\((\d+)\s*,\s*(\d+)\)/.exec(td.getAttribute('onclick')||'');
+    if(!m){manualHideHint();return;}
+    _showManualHint(td,parseInt(m[1],10),parseInt(m[2],10));
+  });
+  host.addEventListener('mouseleave',manualHideHint);
+}
+// 右上角切換鈕：開/關判別條件提示（掛在 #manual-page 內，隨頁面顯示而顯示）
+function _updateHintToggle(){
+  var btn=document.getElementById('manual-hint-toggle');if(!btn)return;
+  btn.textContent=_manualHintEnabled?'取消判別條件提示':'預覽判別條件';
+}
+function _ensureManualHintToggle(){
+  var page=document.getElementById('manual-page');if(!page)return;
+  var btn=document.getElementById('manual-hint-toggle');
+  if(!btn){
+    btn=document.createElement('button');
+    btn.id='manual-hint-toggle';btn.type='button';
+    btn.style.cssText='position:fixed;top:56px;right:18px;z-index:9998;font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text-2);cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,0.12)';
+    btn.onclick=function(){_manualHintEnabled=!_manualHintEnabled;if(!_manualHintEnabled)manualHideHint();_updateHintToggle();};
+    page.appendChild(btn);
+  }
+  _updateHintToggle();
+}
+
+export async function exportManualPNG(){
+  var btn=document.getElementById('btn-manual-export');
+  if(btn){btn.innerText='產生中...';btn.disabled=true;}
+  await new Promise(function(r){setTimeout(r,50);});
+  try{
+    initManualData();
+    var canvas=drawReportCanvas(manualData, {checkComplete:true});
+    var _expName=(_currentCaseId?_currentCaseName:userName)||'報告';
+    var file=new File([await new Promise(function(r){canvas.toBlob(r,'image/png');})],
+      '人相兵法_'+_expName+'_手動.png',{type:'image/png'});
+    var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'人相兵法報告',text:_expName+' 的人相兵法報告（手動）'});}
+      catch(e){if(e.name!=='AbortError')fallbackDownload(canvas);}
+    }else{fallbackDownload(canvas);}
+  }catch(e){console.error(e);alert('產生失敗，請截圖儲存');}
+  if(btn){btn.innerText='分享報告';btn.disabled=false;}
+}

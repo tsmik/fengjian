@@ -1,0 +1,228 @@
+// js/rule_engine_v2.js — 規則引擎 v2（讀「新格式 DNF」）
+//
+// 第 1 階段：並排新增，**不改 js/rule_engine.js（舊引擎）本體**。
+// 讀新文法（部位→卡片→combo→葉、主/輔、目標極、聚合部位、輔門檻/辣度），
+// 維度層輸出契約與舊引擎一致（數 positive/negative 部位 → 動靜＋係數 min/max）。
+// 依設計規格 v0.6 §B。
+//
+// === 新格式（fixture / 日後 admin2 產出）===
+// dimDef = {
+//   dimIndex, dimName, positiveType, negativeType,
+//   parts: {
+//     "<部位名>": 葉部位 | 聚合部位
+//   }
+// }
+// 葉部位 = {
+//   kind: "leaf",
+//   lrMode: "none" | "both" | "either",     // 舊 LR merge: all→both, any→either, 無 LR→none
+//   passPole: "positive" | "negative",        // 卡片達標時判到哪一極（rule1 一律 positive）
+//   auxThreshold: <int>,                       // 中辣門檻 = 舊 COUNT.min（要中幾張輔卡）
+//   cards: [ { id, role:"main"|"aux", combos: [ [ {ref,match,side?}, ... ], ... ], note? } ]
+// }
+//   - 一張卡多 combos = 「或」（任一 combo 全中即卡片成立）
+//   - 一個 combo 多葉 = 「而且」（全中）
+//   - 葉 {ref, match}: match 為字串或字串陣列；答案 ∈ match 即符合
+// 聚合部位 = {
+//   kind: "aggregate",
+//   passPole: "positive" | "negative",
+//   threshold: <int>,                          // 固定門檻（不受辣度影響）
+//   children: [ {part:"<子部位>", side?:"L"|"R"}, ... ]   // 數幾個子部位判到目標極
+// }
+//
+// === 辣度（§E）===
+// 中辣 → 輔門檻 = part.auxThreshold（= rbf1 現有 COUNT.min）。
+// 大/小辣 → round(ratio × 輔卡數)，ratio 由 spiceRatios 提供（admin2 階段才接；本階段只驗中辣）。
+
+/* ---------- 取值：與舊引擎 getAnswer 完全一致 ---------- */
+export function getAnswerV2(ref, side, obs) {
+  if (side) {
+    var k = ref + '_' + side;
+    if (k in obs) return obs[k];
+    return obs[ref] || '';        // fallback 到非分側答案
+  }
+  return obs[ref] || '';
+}
+
+// 辣度第1層（選項切點）：leaf.spice = {選項: level 1小/2中/3大}。學員選辣度 T → 認 level>=rank(T) 的選項。
+// 無 leaf.spice → 退回 leaf.match（＝大辣集合，舊資料相容）。
+function acceptedOptions(leaf, spiceLevel) {
+  if (leaf.spice && typeof leaf.spice === 'object') {
+    var rank = (spiceLevel === '小辣') ? 1 : (spiceLevel === '大辣') ? 3 : 2;   // 預設中辣
+    var out = [];
+    for (var k in leaf.spice) { if (leaf.spice[k] >= rank) out.push(k); }
+    return out;
+  }
+  return Array.isArray(leaf.match) ? leaf.match : (leaf.match != null ? [leaf.match] : []);
+}
+
+function leafMatch(leaf, obs, side, spiceLevel) {
+  var effSide = ('side' in leaf) ? leaf.side : side;
+  var ans = getAnswerV2(leaf.ref, effSide, obs);
+  return acceptedOptions(leaf, spiceLevel).indexOf(ans) >= 0;
+}
+
+// combo 全中？
+function comboMatch(combo, obs, side, spiceLevel) {
+  for (var i = 0; i < combo.length; i++) {
+    if (!leafMatch(combo[i], obs, side, spiceLevel)) return false;
+  }
+  return true;
+}
+
+// 卡片成立？（任一 combo 全中）— 回傳成立的 combo（給理由字串），否則 null
+function cardFire(card, obs, side, spiceLevel) {
+  for (var i = 0; i < card.combos.length; i++) {
+    if (comboMatch(card.combos[i], obs, side, spiceLevel)) return card.combos[i];
+  }
+  return null;
+}
+
+/* ---------- 輔門檻解析（§E）---------- */
+// 模型＝「每部位自己設」(Mike 2026-06-11 決)：admin2 編輯器 def.spice[大辣/中辣/小辣]＝該辣度要中幾張輔卡。
+// 優先讀 part.spice；未設才退回舊相容路徑（auxThreshold＝中辣 / 全域 spiceRatios 比例制）。
+function resolveAuxThreshold(part, spiceLevel, spiceRatios) {
+  var auxCount = (part.cards || []).filter(function (c) { return c.role !== 'main'; }).length;
+  var level = spiceLevel || '中辣';
+  // 每部位自己設（主路徑）
+  if (part.spice && part.spice[level] != null) {
+    var t = part.spice[level];
+    return t < 0 ? 0 : (t > auxCount ? auxCount : t);
+  }
+  // 向後相容：中辣＝auxThreshold；大/小辣＝round(ratio × 輔卡數)（舊全域比例制 fixture）
+  if (spiceLevel === undefined || level === '中辣' || !spiceRatios) {
+    return (part.auxThreshold != null) ? part.auxThreshold : auxCount;   // 未設門檻＝全部輔卡都要中（最嚴）
+  }
+  var ratio = spiceRatios[level];
+  if (ratio == null) return (part.auxThreshold != null) ? part.auxThreshold : auxCount;
+  var r = Math.round(ratio * auxCount);
+  return r < 0 ? 0 : r;
+}
+
+/* ---------- 收集葉部位引用的觀察題（null 前置檢查用）---------- */
+function leafRefsOfPart(part) {
+  var out = [];
+  (part.cards || []).forEach(function (card) {
+    card.combos.forEach(function (combo) {
+      combo.forEach(function (leaf) { out.push(leaf); });
+    });
+  });
+  return out;
+}
+
+/* ---------- 葉部位求值 ---------- */
+// 回傳 { result:"positive"|"negative"|null, firedCards:[{role,combo}], L?, R? }
+// L/R：lrMode both/either 時，各側是否達標（給聚合部位的 .L/.R 引用）
+export function evaluateLeafPart(part, obs, spiceLevel, spiceRatios) {
+  var lrMode = part.lrMode || 'none';
+  var sides = (lrMode === 'none') ? [null] : ['L', 'R'];
+  var passPole = part.passPole || 'positive';
+  var failPole = (passPole === 'positive') ? 'negative' : 'positive';
+
+  // === 前置：觀察題是否都已填寫（任一側任一葉空 → null，與舊引擎一致）===
+  var leaves = leafRefsOfPart(part);
+  for (var si = 0; si < sides.length; si++) {
+    for (var li = 0; li < leaves.length; li++) {
+      var v = getAnswerV2(leaves[li].ref, ('side' in leaves[li]) ? leaves[li].side : sides[si], obs);
+      if (v === '' || v === undefined || v === null) return { result: null, firedCards: [] };
+    }
+  }
+
+  var threshold = resolveAuxThreshold(part, spiceLevel, spiceRatios);
+  var firedCards = [];
+
+  function passOnSide(side) {
+    var auxHit = 0, mainHit = false, localFired = [];
+    (part.cards || []).forEach(function (card) {
+      var combo = cardFire(card, obs, side, spiceLevel);
+      if (combo) {
+        localFired.push({ role: card.role || 'aux', combo: combo.map(function (l) { return l.label || l.ref; }) });
+        if (card.role === 'main') mainHit = true; else auxHit++;
+      }
+    });
+    // §E 解讀（rule1 無 main，等價於 auxHit>=threshold = 舊 COUNT min）：
+    //   主卡中（充分）或 輔達門檻 → 成立
+    var pass = mainHit || (auxHit >= threshold);
+    return { pass: pass, fired: localFired };
+  }
+
+  var out = { firedCards: firedCards };
+  if (lrMode === 'none') {
+    var r = passOnSide(null);
+    firedCards.push.apply(firedCards, r.fired);
+    out.result = r.pass ? passPole : failPole;
+  } else {
+    var rL = passOnSide('L'), rR = passOnSide('R');
+    out.L = rL.pass; out.R = rR.pass;
+    if (rL.pass) firedCards.push.apply(firedCards, rL.fired.map(function (f) { return Object.assign({ side: 'L' }, f); }));
+    if (rR.pass) firedCards.push.apply(firedCards, rR.fired.map(function (f) { return Object.assign({ side: 'R' }, f); }));
+    var merged = (lrMode === 'either') ? (rL.pass || rR.pass) : (rL.pass && rR.pass);
+    out.result = merged ? passPole : failPole;
+  }
+  return out;
+}
+
+/* ---------- 聚合部位求值 ---------- */
+// 回傳 { result, hitChildren:[...] }
+export function evaluateAggregate(part, partResults) {
+  var passPole = part.passPole || 'positive';
+  var failPole = (passPole === 'positive') ? 'negative' : 'positive';
+  var hitChildren = [];
+  var count = 0;
+  for (var i = 0; i < part.children.length; i++) {
+    var ch = part.children[i];
+    var cr = partResults[ch.part];
+    // 子部位未算或為 null → 整個聚合 null（與舊引擎一致）
+    if (!cr || cr.result === null || cr.result === undefined) return { result: null, hitChildren: [] };
+    var hit;
+    if (ch.side) hit = (cr[ch.side] === true);
+    else hit = (cr.result === 'positive');
+    if (hit) { count++; hitChildren.push(ch.part + (ch.side ? '.' + ch.side : '')); }
+  }
+  var pass = count >= part.threshold;
+  return { result: pass ? passPole : failPole, hitChildren: hitChildren };
+}
+
+/* ---------- 維度求值（輸出契約與舊引擎一致）---------- */
+var SCORE_PARTS = ['頭', '上停', '耳', '眉', '眼', '鼻', '口', '中停', '下停'];
+var PART_IDX = { '頭': 0, '上停': 1, '中停': 2, '下停': 3, '耳': 4, '眉': 5, '眼': 6, '鼻': 7, '口': 8 };
+
+export function evaluateDimensionV2(dimDef, obs, spiceLevel, spiceRatios) {
+  var partResults = {};
+  var names = Object.keys(dimDef.parts);
+
+  // 1) 先算所有葉部位（聚合部位依賴它們）
+  names.forEach(function (pn) {
+    var pd = dimDef.parts[pn];
+    if (pd.kind !== 'aggregate') partResults[pn] = evaluateLeafPart(pd, obs, spiceLevel, spiceRatios);
+  });
+  // 2) 再算聚合部位
+  names.forEach(function (pn) {
+    var pd = dimDef.parts[pn];
+    if (pd.kind === 'aggregate') partResults[pn] = evaluateAggregate(pd, partResults);
+  });
+
+  // 3) 計分（只數 9 個計分部位）→ 動靜＋係數，並產 data 向量
+  var dataVec = [null, null, null, null, null, null, null, null, null];
+  var pos = 0, neg = 0;
+  SCORE_PARTS.forEach(function (sp) {
+    var pr = partResults[sp];
+    var r = pr ? pr.result : null;
+    var idx = PART_IDX[sp];
+    if (r === null || r === undefined) { dataVec[idx] = null; return; }
+    if (r === 'positive') { pos++; dataVec[idx] = 'A'; }
+    else { neg++; dataVec[idx] = 'B'; }
+  });
+
+  var attribute = (pos > neg) ? dimDef.positiveType : dimDef.negativeType;  // 平手歸 negative（與舊引擎一致）
+  var coefficient = (pos + neg > 0 && Math.max(pos, neg) > 0)
+    ? Math.min(pos, neg) / Math.max(pos, neg) : 0;
+
+  return {
+    parts: partResults,
+    dataVec: dataVec,
+    positiveCount: pos,
+    negativeCount: neg,
+    attribute: attribute,
+    coefficient: coefficient
+  };
+}
