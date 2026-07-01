@@ -939,7 +939,7 @@ function boot() {
     if (isDirty() && !confirm('目前套裝有未儲存變更，切換會丟掉這些變更（本機草稿仍保留）。確定切換？')) { renderRsSelect(); return; }
     loadRsIntoEditor(v);
   });
-  window.addEventListener('beforeunload', (e) => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', (e) => { if (isDirty() && !window.__adminNavigating) { e.preventDefault(); e.returnValue = ''; } });
   $('export-close').addEventListener('click', () => { $('export-modal').style.display = 'none'; });
   window.addEventListener('storage', e => { if (e.key === EDIT_KEY) checkEditSignal(); });
   window.addEventListener('focus', () => { loadLiveObs(false); if (user) renderRsSelect(); });   // 切回來時刷新 live 題庫＋套裝清單

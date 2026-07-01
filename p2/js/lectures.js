@@ -90,7 +90,7 @@ function boot() {
   $('btn-login').addEventListener('click', () => login().catch(e => alert('登入失敗：' + (e.code || e.message))));
   $('btn-logout').addEventListener('click', () => logout());
   $('btn-save').addEventListener('click', save);
-  window.addEventListener('beforeunload', e => { if (user && curJson() !== lastSavedJson) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', e => { if (user && curJson() !== lastSavedJson && !window.__adminNavigating) { e.preventDefault(); e.returnValue = ''; } });
   renderHeader(); renderDims(); renderSaveStatus();
   onUser((u, r) => { user = u; role = r; renderHeader(); loadFromServer(); });
 }

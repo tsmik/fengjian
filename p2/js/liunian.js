@@ -118,7 +118,7 @@ function boot() {
   $('g-male').addEventListener('click', () => setGender('男'));
   $('g-female').addEventListener('click', () => setGender('女'));
   $('btn-reset-all').addEventListener('click', () => { if (!confirm('把「' + gender + '」整個流年表重置為預設？（另一性別不動，要儲存才生效）')) return; data[gender] = clone(DEFAULT[gender]); userEdited = true; saveDraft(); renderTable(); renderSaveStatus(); });
-  window.addEventListener('beforeunload', e => { if (user && curJson() !== lastSavedJson) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', e => { if (user && curJson() !== lastSavedJson && !window.__adminNavigating) { e.preventDefault(); e.returnValue = ''; } });
   bindTable();
   renderHeader(); renderTable(); renderSaveStatus();
   onUser((u, r) => { user = u; role = r; renderHeader(); loadFromServer(); });

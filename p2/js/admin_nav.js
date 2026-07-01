@@ -27,6 +27,9 @@
       a.href = t.href;
       a.textContent = t.label;
       a.setAttribute('style', 'flex:0 0 auto;font-size:13px;text-decoration:none;padding:7px 15px;border-radius:8px 8px 0 0;color:' + (active ? '#4a443b' : '#9a8f7d') + ';font-weight:' + (active ? '600' : '400') + ';background:' + (active ? '#f6f1e9' : 'transparent') + ';border:1px solid ' + (active ? '#d8ccb6' : 'transparent') + ';border-bottom:none;');
+      // 用分頁列切換工具＝站內導覽:標記後,各頁 beforeunload 略過「未儲存離開」警告
+      // (草稿已自動存本機、切回會還原);仍保留關瀏覽器/打別網址時的警告。
+      if (!active) a.addEventListener('click', function () { try { window.__adminNavigating = true; } catch (e) {} });
       bar.appendChild(a);
     });
     document.body.insertBefore(bar, document.body.firstChild);
