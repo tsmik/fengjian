@@ -406,11 +406,28 @@ function partRow(name, sub, isAgg) {
 let focusCardId = null;
 function renderEditor() { renderCardsListCol(); renderLeavesCol(); }
 
-// 卡片「未完成」：沒有題目(無葉) 或 有題目但有葉沒設條件(match 空) → 淡黃底提示
+// 葉是否「已設有效條件」：大辣集合(match)非空，且至少一個值仍是該題「目前的」選項。
+// 只看 match.length 會漏掉「改題後選項已不存在、但 match 還留著舊值」→ 卡片誤判完整(米白)。
+function leafSet(leaf) {
+  // 「已設」＝至少一個「已選選項(任一辣度層)」仍存在於該題目前選項中。
+  // 用 spice(任一層 >0) 而非只看 match(大辣)：只選中辣/小辣也算已設，否則會誤判淡黃；
+  // 同時驗證選項仍存在，擋掉「改題後留舊選項值」的斷鏈。spice 缺時退回 match(舊資料相容)。
+  // spice 一旦存在(即使空 {})就以它為準(＝燈號所見)；只有 spice 從未建立(舊資料未遷移)才退回 match。
+  // 這樣「燈全暗但 match 殘留舊值」的脫鉤卡片會正確判為未設(淡黃)。
+  const sel = (leaf.spice !== undefined && leaf.spice !== null)
+    ? Object.keys(leaf.spice).filter(v => leaf.spice[v] > 0)
+    : (leaf.match || []);
+  if (!sel.length) return false;                      // 完全沒選 → 未設
+  if (!OBS || !OBS.length) return true;               // 題庫尚未載入 → 不誤報(維持已設)
+  const o = OBS_BY_ID[leaf.ref];
+  if (!o || !Array.isArray(o.options)) return false;  // 題庫已載入卻找不到此題(題目被刪) → 未設
+  return sel.some(v => o.options.indexOf(v) >= 0);     // 有已選選項仍存在 → 已設
+}
+// 卡片「未完成」：沒有題目(無葉) 或 有葉沒設有效條件 → 淡黃底提示
 function cardIncomplete(card) {
   const leaves = (card.combos || []).reduce((a, cb) => a.concat(cb), []);
   if (!leaves.length) return true;
-  return leaves.some(l => !l.match || !l.match.length);
+  return leaves.some(l => !leafSet(l));
 }
 // 某部位(目前維度)的卡片數
 function partCardCount(name) {
