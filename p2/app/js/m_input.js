@@ -22,7 +22,7 @@
 import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { recalcFromObs } from './obs_recalc.js';
+import { recalcFromObs, evalDimAt } from './obs_recalc.js';
 // ★ P2 接線：題庫(observations)與規則(dims)改讀「上線套裝」(config/active → ruleSets)
 import { loadP2, getSpice, setSpice } from './p2_data.js';
 import { updateHomeProgress } from './m_home.js';
@@ -374,6 +374,7 @@ function _renderObsReportShareRow() {
 let _spiceLoaded = false;
 let _spiceRenderTimer = null, _spicePersistTimer = null;   // debounce：避免快速連點時重複重繪/寫入
 let _liunianKicked = false;   // 流年只觸發一次載入+重繪，避免 P2 無流年資料時無限重繪
+let _dimPreviewSpice = null;  // 維度視角第4欄「辣度模擬」的預覽辣度（null=跟隨報告辣度 getSpice）；純預覽不影響報告
 function _applySavedSpiceOnce() {
   if (_spiceLoaded) return;
   _spiceLoaded = true;
@@ -730,10 +731,14 @@ function renderDimMode() {
   }
 
   // ── 第4欄：整體動靜預覽（9 主部位形/勢 + 加總 + 係數，唯讀，白底）
+  // 辣度模擬：此欄用「預覽辣度」即時算該維度動靜（用目前答案），純預覽——不寫全域 data、不影響報告、不存檔。
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
+  const prevSpice = _dimPreviewSpice || getSpice();
+  const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
+  const pvSpiceBar = `<div class="m-dimv-pv-spice">${['大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}<span class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才算）</span></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
-    const v = coreData[di] && coreData[di][pi];
+    const v = pv[pi];
     const aOn = v === pa.val, bOn = v === pb.val, wait = (v !== 'A' && v !== 'B');
     if (aOn) pvA++; else if (bOn) pvB++;
     let poles;
@@ -750,18 +755,18 @@ function renderDimMode() {
   // 加總（形X/勢Y，9 主部位）放在係數上方
   const pvSum = `<div class="m-dimv-pv-row m-dimv-pv-sumrow"><span class="m-dimv-pv-name">加總</span><span class="m-dimv-pv-poles"><span class="m-dimv-pv-num">${pvA}</span><span class="m-dimv-pv-num">${pvB}</span></span></div>`;
   // 未填完（9 主部位有任一未算出）→ 係數框改灰底「未填完」，不顯示動 係數=
-  const dimComplete = PREV_LABELS.every((_, pi) => { const v = coreData[di] && coreData[di][pi]; return v === 'A' || v === 'B'; });
+  const dimComplete = pv.every(v => v === 'A' || v === 'B');
   let pvCoeff;
   if (!dimComplete) {
     pvCoeff = `<div class="m-dimv-pv-coeff is-wait">未填完</div>`;
   } else {
-    const r = calcDim(coreData, di);
+    const r = calcDim({ [di]: pv }, di);   // 用預覽辣度的 pv 算係數（非全域 coreData）
     let cWord = '—', cVal = '', cTone = 'even';
     if (r) { cVal = r.coeff.toFixed(2); if (r.a > r.b) { cWord = dim.aT; cTone = dim.aT === '靜' ? 'jing' : 'dong'; } else if (r.b > r.a) { cWord = dim.bT; cTone = dim.bT === '靜' ? 'jing' : 'dong'; } else cWord = '平'; }
     pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
   }
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
-  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
+  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvSpiceBar}${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
 
   return `<div class="m-score-view m-dim-scoreview m-dimv"><div class="m-dimv-row1">${dimList}<div class="m-dimv-main">${dimbar}<div class="m-dimv-body">${partNav}${condCol}${preview}</div></div></div></div>`;
 }
@@ -1253,6 +1258,16 @@ function bindEvents() {
       _spiceRenderTimer = setTimeout(() => _renderKeepScroll(), 180);
       clearTimeout(_spicePersistTimer);
       _spicePersistTimer = setTimeout(() => _persistSpice(getSpice()), 600);
+    });
+  });
+
+  // 維度視角第4欄「辣度模擬」：只切預覽辣度、重畫該欄；不動全域辣度/報告/存檔
+  _root.querySelectorAll('[data-dimspice]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lv = btn.dataset.dimspice;
+      if (lv === (_dimPreviewSpice || getSpice())) return;
+      _dimPreviewSpice = lv;
+      _renderKeepScroll();
     });
   });
 

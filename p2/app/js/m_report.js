@@ -19,7 +19,7 @@
 // ============================================================
 
 import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml, OBS_PARTS_DATA } from './core.js';
-import { buildRadar2MSVG, buildRadar3SVG } from './report_chart.js';
+import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
 import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups } from './m_main.js';
@@ -93,7 +93,7 @@ async function _renderSelfDashboard() {
   if (!_container || !_isListMode) return;
   _dashIsCase = false;
   _dashEdit = false;
-  _dashPerson = { isCase: false, id: null, name: sd.displayName || '', gender: sd.gender || '', birthday: sd.birthday || '', color: sd.cardColor || CARD_DEFAULT_COLOR, group: '', note: '', obsJson: sd.obsJson || '', manualJson: sd.manualDataJson || '' };
+  _dashPerson = { isCase: false, id: null, name: sd.displayName || '', gender: sd.gender || '', birthday: sd.birthday || '', color: sd.cardColor || CARD_DEFAULT_COLOR, group: '', note: '', obsJson: sd.obsJson || '', dataJson: sd.dataJson || '', manualJson: sd.manualDataJson || '' };
   _dashTarget = _container;
   _paintDashboard();
 }
@@ -175,8 +175,59 @@ async function _liunianCompactHtml(gender, birthday) {
   const cell = (l, v) => '<div class="m-liunian-cell"><span class="m-liunian-cell-label">' + l + '</span><span class="m-liunian-cell-value">' + (v || '—') + '</span></div>';
   const v75 = (ln.name75 || '') + (ln.area75 ? '／' + ln.area75 : '');
   return '<div class="m-liunian-section"><div class="m-liunian-title">流年參考' + buildLiunianTitleHtml(info) + '</div>'
-    + '<div class="m-liunian-row" style="grid-template-columns:repeat(3,1fr)">' + cell('七十五', v75) + cell('九執', ln.jiuzhi) + cell('業務', ln.yewu) + '</div>'
-    + '<div class="m-liunian-row" style="grid-template-columns:repeat(5,1fr)">' + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('耳鼻', ln.erbei) + cell('五官', ln.wuguan) + cell('三停', ln.santing) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(4,1fr)">' + cell('三停', ln.santing) + cell('九執', ln.jiuzhi) + cell('五官', ln.wuguan) + cell('七十五', v75) + '</div>'
+    + '<div class="m-liunian-row" style="grid-template-columns:repeat(4,1fr)">' + cell('業務', ln.yewu) + cell('親族', ln.qinzu) + cell('子女', ln.zinv) + cell('耳鼻', ln.erbei) + '</div>'
+    + '</div>';
+}
+
+// 某維度 9 格是否全填（A/B）
+function _dimFilled(matrix, di) { const r = matrix[di]; if (!Array.isArray(r)) return false; for (let pp = 0; pp < 9; pp++) { if (r[pp] !== 'A' && r[pp] !== 'B') return false; } return true; }
+// 群組係數：群內各維皆完成才給值，否則 null（對齊完整報告 groupComplete 邏輯）
+function _grpCoeff(matrix, ids) { return ids.every((di) => _dimFilled(matrix, di)) ? avgCoeff(matrix, ids) : null; }
+// 係數總覽 6 值（先天/老闆/主管/運氣/後天/總）
+function _coefValues(matrix) {
+  if (!_hasMatrix(matrix)) return null;
+  return {
+    preV: _grpCoeff(matrix, [0,1,2,3,4,5]), bossV: _grpCoeff(matrix, [0,1,2]), mgrV: _grpCoeff(matrix, [3,4,5]),
+    luckV: _grpCoeff(matrix, [6,7,8]), postV: _grpCoeff(matrix, [9,10,11,12]), totV: _grpCoeff(matrix, [0,1,2,3,4,5,6,7,8,9,10,11,12])
+  };
+}
+
+// 報告區塊（雷達圖[僅圖形] + 係數總覽圖[含文字] + 重要參數分析/看完整報告）；手動 & 自動共用
+// matrix=該人 13×9 A/B 矩陣（手動=manualJson、自動=dataJson）；pct=填寫進度；showSens=是否顯示參數分析鈕
+function _dashReportBlock(kind, matrix, pct, showSens) {
+  const isManual = kind === 'manual';
+  const title = isManual ? '上課自我評分報告' : '觀察自動評分報告';
+  const sub = isManual ? '手動評分' : '部位觀察';
+  const icon = isManual
+    ? '<span class="m-home-bigbtn-icon">✎</span>'
+    : '<span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span>';
+  const cv = _coefValues(matrix);
+  let bodyHtml;
+  if (cv) {
+    // 未填完的維度→傳 null（雷達畫淡灰）；填完→實際係數。群組(先天/後天/運氣)未完成 cv.* 也是 null→中央淡灰
+    const dimC = [];
+    for (let i = 0; i < 13; i++) { if (_dimFilled(matrix, i)) { const r = calcDim(matrix, i); dimC.push(r && typeof r.coeff === 'number' ? r.coeff : null); } else dimC.push(null); }
+    let radar = '';
+    try { radar = buildMobileChartSvgs(matrix, { noLabels: true, grayEmpty: true, dimCoeff: dimC, preV: cv.preV, postV: cv.postV, luckV: cv.luckV, totV: cv.totV }).radar2; } catch (e) { radar = ''; }
+    let coef = ''; try {
+      coef = buildCoefSVG({ preV: cv.preV, bossV: cv.bossV, mgrV: cv.mgrV, luckV: cv.luckV, postV: cv.postV, totV: cv.totV,
+        order: ['totV','preV','bossV','mgrV','luckV','postV'], big: ['總係數','先天','運氣','後天'], small: ['老闆','主管'],
+        fs: 10.8, vbW: 360, x0: 57, trackW: 258 });
+    } catch (e) { coef = ''; }
+    bodyHtml = '<div class="m-dash-report-radar">' + radar + '</div><div class="m-dash-report-coef">' + coef + '</div>';
+  } else {
+    bodyHtml = '<div class="m-dash-report-empty">尚未填寫</div>';
+  }
+  let acts = '';
+  if (showSens) acts += '<button type="button" class="m-dash-report-act" data-dash-sens="' + kind + '">重要參數分析</button>';
+  acts += '<button type="button" class="m-dash-report-act is-primary" data-dash-report="' + kind + '">看完整報告 ›</button>';
+  return '<div class="m-dash-report">'
+    + '<div class="m-dash-report-head">' + icon
+    + '<div class="m-dash-report-titles"><div class="m-dash-report-title">' + title + '</div><div class="m-dash-report-sub">' + sub + '</div></div>'
+    + '<div class="m-detail-prog"><div class="m-detail-prog-pct">' + pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></div>'
+    + '<div class="m-dash-report-body">' + bodyHtml + '</div>'
+    + '<div class="m-dash-report-acts">' + acts + '</div>'
     + '</div>';
 }
 
@@ -186,7 +237,7 @@ function _paintDashboard() {
   if (!p || !t) return;
   let g = p.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   const obs = _obsProgress(p.obsJson), man = _manualProgress(p.manualJson);
-  // 外框：人物顏色「包住」標題＋基本資料＋流年＋報告連結，視覺上是同一張卡
+  // 左區外框：人物顏色「包住」標題＋基本資料＋流年（報告區塊在右區）
   let inner = '<div class="m-dash-head"><span class="m-dash-head-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span><span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
   // 基本資料（檢視 or 編輯）
   if (_dashEdit) {
@@ -202,7 +253,7 @@ function _paintDashboard() {
     }
     // 卡片顏色（本人＋個案皆可改）
     inner += '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-dash-colors">'
-      + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _detailSelColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
+      + FINDER_COLORS.map((hex) => '<span class="m-color-dot' + (hex.toLowerCase() === (_detailSelColor || '').toLowerCase() ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
       + '</div>';
     inner += '<div class="m-home-profile-status" id="m-dash-status"></div>'
       + '<div class="m-case-addform-btns"><button type="button" class="m-newcase-create" id="m-dash-save">存檔</button><button type="button" class="m-newcase-cancel" id="m-dash-cancel">取消</button></div>'
@@ -221,14 +272,19 @@ function _paintDashboard() {
   inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
   // 個案：開始分析（桌機→進側欄工作區；手機→沿用既有報告流程）
   if (p.isCase) inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
-  // 報告連結 + 進度
-  inner += '<button class="m-home-bigbtn" data-dash-report="auto"><span class="m-home-bigbtn-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg></span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">部位觀察報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + obs.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
-  inner += '<button class="m-home-bigbtn" data-dash-report="manual"><span class="m-home-bigbtn-icon">✎</span><div class="m-home-bigbtn-meta"><div class="m-home-bigbtn-title">上課手動報告</div></div><div class="m-detail-prog"><div class="m-detail-prog-pct">' + man.pct + '%</div><div class="m-detail-prog-label">填寫進度</div></div></button>';
+  // 右區：兩報告區塊（雷達僅圖形＋係數總覽含文字）：上課自我評分(手動) → 觀察自動評分(部位觀察)
+  // 桌機個案走側欄工作區（無 sens 子畫面），隱藏參數分析鈕避免誤跳回本人
+  const showSens = !(p.isCase && isDesktopSidebar());
+  const right = _dashReportBlock('manual', _parseMatrix(p.manualJson), man.pct, showSens)
+              + _dashReportBlock('auto', _parseMatrix(p.dataJson), obs.pct, showSens);
 
-  let h = '<div class="m-dash-wrap" style="background:' + _cardTint(p.color) + '">' + inner + '</div>';
-  // 底部（外框之外）
+  // 三大區塊：左(姓名/基本資料/流年，人物色外框) ｜ 右(兩報告上下排)；窄螢幕自動單欄
+  let h = '<div class="m-dash2">'
+    + '<div class="m-dash-wrap m-dash2-left" style="background:' + _cardTint(p.color) + '">' + inner + '</div>'
+    + '<div class="m-dash2-right">' + right + '</div>'
+    + '</div>';
+  // 底部：個案才有刪除鈕；本人不再放「個案新增/管理」(已在個案管理分頁)
   if (p.isCase) h += '<button class="m-detail-delete" id="m-dash-delete" type="button">刪除此個案</button>';
-  else h += '<button class="m-dash-mgmt-btn" id="m-dash-mgmt" type="button">個案新增 / 管理</button>';
 
   t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
 
@@ -246,6 +302,8 @@ function _paintDashboard() {
   const anaBtn = t.querySelector('[data-dash-analyze]'); if (anaBtn) anaBtn.onclick = _startAnalyze;
   const aBtn = t.querySelector('[data-dash-report="auto"]'); if (aBtn) aBtn.onclick = () => _gotoReport('auto');
   const mBtn = t.querySelector('[data-dash-report="manual"]'); if (mBtn) mBtn.onclick = () => _gotoReport('manual');
+  const aSens = t.querySelector('[data-dash-sens="auto"]'); if (aSens) aSens.onclick = () => _gotoSens('auto');
+  const mSens = t.querySelector('[data-dash-sens="manual"]'); if (mSens) mSens.onclick = () => _gotoSens('manual');
   const delBtn = t.querySelector('#m-dash-delete'); if (delBtn) delBtn.onclick = _deleteCurrentCase;
   const mgmtBtn = t.querySelector('#m-dash-mgmt'); if (mgmtBtn) mgmtBtn.onclick = _openCaseMgmt;
 }
@@ -303,6 +361,19 @@ async function _gotoReport(kind) {
   _closeCaseMgmt();
   if (kind === 'auto') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click(); }
   else { try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
+}
+
+// 從儀表板「重要參數分析」進入：設成目前分析 → 切到對應分頁的 sens view
+// （本人 _dashIsCase=false→分析本人；桌機個案已在 _paintDashboard 隱藏此鈕，不會走到 workspace 衝突）
+async function _gotoSens(kind) {
+  setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
+  await refreshUserData();
+  try { updateHomeProgress(); } catch (e) {}
+  try { updateAnalysisBanner(); } catch (e) {}
+  _closeCaseDetail();
+  _closeCaseMgmt();
+  if (kind === 'auto') { try { localStorage.setItem('m_input_view_once', 'sens'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click(); }
+  else { try { localStorage.setItem('m_manual_view_once', 'sens'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
 }
 
 // 個案細節頁「開始分析」：桌機→側欄工作區（部位觀察分析）；手機→沿用既有報告流程
@@ -457,7 +528,7 @@ async function _openCaseDetail(idOrEmpty) {
   const ud = window.__userData || {};
   _dashIsCase = !!caseId;
   _dashEdit = false;
-  _dashPerson = { isCase: !!caseId, id: caseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR), group: ud.group || '', note: ud.note || '', obsJson: ud.obsJson || '', manualJson: ud.manualDataJson || '' };
+  _dashPerson = { isCase: !!caseId, id: caseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR), group: ud.group || '', note: ud.note || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
   _dashTarget = document.getElementById('m-case-detail-body');
   const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = _dashPerson.name || '個案';
   _paintDashboard();
@@ -1107,7 +1178,7 @@ async function exportReportPng() {
 
 // 手機報告圖 SVG（radar2 報告圖 + radar3 動靜全圖）；自動/手動共用
 export var R2_TITLE = '人相兵法係數圖', R3_TITLE = '人相兵法動靜分布圖', CHART_GAP = 14;
-export function buildMobileChartSvgs(matrix) {
+export function buildMobileChartSvgs(matrix, radarOpts) {
   var all = [0,1,2,3,4,5,6,7,8,9,10,11,12];
   var dimSFrac = [], dimCoeffArr = [], dimStatic = [], dimActive = [];
   for (var i = 0; i < 13; i++) {
@@ -1116,11 +1187,11 @@ export function buildMobileChartSvgs(matrix) {
     dimSFrac.push((s + d) > 0 ? s / (s + d) : 0.5); dimStatic.push(s); dimActive.push(d);
     var rc = calcDim(matrix, i); dimCoeffArr.push(rc && typeof rc.coeff === 'number' ? rc.coeff : 0);
   }
-  var radar2 = buildRadar2MSVG({
+  var radar2 = buildRadar2MSVG(Object.assign({
     dimSFrac: dimSFrac, dimCoeff: dimCoeffArr,
     luckV: avgCoeff(matrix,[6,7,8])||0, postV: avgCoeff(matrix,[9,10,11,12])||0,
     preV: avgCoeff(matrix,[0,1,2,3,4,5])||0, totV: avgCoeff(matrix,all)||0
-  });
+  }, radarOpts || {}));
   // radar3 手機版：字級放大；viewBox 與 radar2 同寬(360) → 13 邊形一樣大
   var sd = buildRadar3SVG({ dimStatic: dimStatic, dimActive: dimActive, dimCoeff: dimCoeffArr, fsName: 14, fsNum: 13.5, fsPole: 13.5, fsCore: 12.5, viewBox: '20 40 360 360' });
   return { radar2: radar2, sd: sd };

@@ -302,6 +302,7 @@ let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
 const WS_SUBS = [
   { key: 'obs', label: '部位觀察分析', tab: 'input' },
+  { key: 'obs-dim', label: '維度視角', tab: 'input' },
   { key: 'obs-report', label: '報告', tab: 'input' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -367,9 +368,10 @@ export function selectWorkspaceSub(key) {
   if (sub.tab === 'input') {
     if (pInput) pInput.classList.add('active');
     unmountReport(); unmountManual();
+    const _wsView = key === 'obs-report' ? 'report' : (key === 'obs-dim' ? 'dim' : 'part');
     if (key === 'obs-report') { try { localStorage.setItem('m_input_view_once', 'report'); } catch (e) {} }
     mountInput(pInput);
-    try { setInputView(key === 'obs-report' ? 'report' : 'part'); } catch (e) {}
+    try { setInputView(_wsView); } catch (e) {}
   } else {
     if (pManual) pManual.classList.add('active');
     unmountInput(); unmountReport();

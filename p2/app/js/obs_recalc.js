@@ -50,6 +50,13 @@ export function recalcFromObs(){
   buildCondResultsP2(_rs, _lvl);
 }
 
+// 單維在「指定辣度」的 dataVec（用目前 obsData，不寫全域 data；給維度視角「辣度模擬預覽」用，不影響報告）
+export function evalDimAt(di, level) {
+  const rs = getP2();
+  if (!rs || !rs.dims || !rs.dims[di]) return [null, null, null, null, null, null, null, null, null];
+  return evaluateDimension(rs.dims[di], obsData, rs.isPaired, level).dataVec;
+}
+
 // 部位名 → condResults 索引（與 P1 一致；9 計分 + 內部子部位）
 const _P2_PART_IDX = { '頭':0,'上停':1,'中停':2,'下停':3,'耳':4,'眉':5,'眼':6,'鼻':7,'口':8,'顴':9,'人中':10,'地閣':11,'頤':12,'頂骨':13,'枕骨':14,'華陽骨':15 };
 const _AGG_CHILD = { 2: ['眉','眼','鼻','顴'], 3: ['口','人中','地閣','頤'] };   // 中停 / 下停 的關聯子部位
