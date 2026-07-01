@@ -5,7 +5,7 @@
 // 任何時候都可「匯出 JSON」「自動存草稿(localStorage)」，不需登入即可使用。
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc, writeBatch }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -288,7 +288,7 @@ async function loadLiveObs(force) {
 function initFirebase() {
   try {
     const app = initializeApp(RBF2_STAGING);
-    auth = getAuth(app); db = getFirestore(app); fbOK = true;
+    auth = getAuth(app); setPersistence(auth, browserLocalPersistence).catch(() => {}); db = getFirestore(app); fbOK = true;
     onAuthStateChanged(auth, async (u) => {
       user = u; role = null;
       // role 來源＝白名單 allowedUsers/{email}（admin 才可寫）；不再讀本人可寫的 users/{uid}.role。

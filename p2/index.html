@@ -4,70 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>admin2 — 人相兵法後台</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{ --bg:#f6f1e9; --panel:#fbf8f2; --bd:#e3d9c8; --bd2:#d8ccb6; --ink:#4a443b; --sub:#9a8f7d; --static:#7A9E7E; --sel:#efe7d6; }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
-  body{margin:0;font-family:"Noto Serif TC",serif;color:var(--ink);background:var(--bg);}
-  .shell-bar{display:flex;align-items:center;gap:4px;padding:0 14px;height:46px;background:var(--panel);border-bottom:1px solid var(--bd2);position:sticky;top:0;z-index:10;}
-  .shell-title{font-size:15px;font-weight:700;letter-spacing:1px;margin-right:14px;color:var(--ink);}
-  .tab{font-family:inherit;font-size:14px;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--sub);padding:8px 18px;cursor:pointer;border-radius:9px 9px 0 0;position:relative;top:1px;}
-  .tab:hover{color:var(--ink);background:var(--sel);}
-  .tab.active{color:var(--ink);font-weight:600;background:var(--bg);border-color:var(--bd2);}
-  .tab.soon{opacity:.4;cursor:default;}
-  .tab.soon:hover{background:transparent;color:var(--sub);}
-  .grow{flex:1;}
-  .hint{font-size:11px;color:var(--sub);}
-  .frames{position:absolute;top:46px;left:0;right:0;bottom:0;}
-  iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);}
-  iframe.hidden{display:none;}
-</style>
+<!-- 舊版是 6-iframe 外殼(同時跑 6 個 Firebase 登入互搶而被登出)。
+     改為導向條件編輯器;分頁切換改由各頁頂部 admin_nav.js 的 top-level 連結。 -->
+<script>location.replace('admin2.html' + location.search);</script>
+<meta http-equiv="refresh" content="0; url=admin2.html">
 </head>
-<body>
-<div class="shell-bar">
-  <span class="shell-title">admin2</span>
-  <button class="tab" data-tab="cond">條件編輯器</button>
-  <button class="tab" data-tab="obs">觀察庫</button>
-  <button class="tab" data-tab="rs">套裝</button>
-  <button class="tab" data-tab="lect">講義</button>
-  <button class="tab" data-tab="liu">流年</button>
-  <button class="tab" data-tab="users">使用者</button>
-  <button class="tab soon" disabled title="之後做">發布</button>
-  <span class="grow"></span>
-  <span class="hint" id="login-hint">登入一次，兩個分頁共用（同站同專案）</span>
-</div>
-<div class="frames">
-  <!-- 兩個現有頁原封不動掛進來；隱藏分頁的 iframe 保持存活 → 草稿不丟 -->
-  <iframe id="f-cond" src="admin2.html" title="條件編輯器"></iframe>
-  <iframe id="f-obs" src="observations.html" title="觀察庫"></iframe>
-  <iframe id="f-rs" src="rulesets.html" title="套裝管理"></iframe>
-  <iframe id="f-lect" src="lectures.html" title="講義編輯器"></iframe>
-  <iframe id="f-liu" src="liunian.html" title="流年表編輯器"></iframe>
-  <iframe id="f-users" src="users.html" title="使用者 / 白名單"></iframe>
-</div>
-<script>
-  var TABS = ['cond', 'obs', 'rs', 'lect', 'liu', 'users'];
-  function show(tab){
-    if (TABS.indexOf(tab) < 0) tab = 'cond';
-    document.getElementById('f-cond').classList.toggle('hidden', tab !== 'cond');
-    document.getElementById('f-obs').classList.toggle('hidden', tab !== 'obs');
-    document.getElementById('f-rs').classList.toggle('hidden', tab !== 'rs');
-    document.getElementById('f-lect').classList.toggle('hidden', tab !== 'lect');
-    document.getElementById('f-liu').classList.toggle('hidden', tab !== 'liu');
-    document.getElementById('f-users').classList.toggle('hidden', tab !== 'users');
-    Array.prototype.forEach.call(document.querySelectorAll('.tab[data-tab]'), function(b){
-      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
-    });
-    if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('.tab[data-tab]'), function(b){
-    b.addEventListener('click', function(){ show(b.getAttribute('data-tab')); });
-  });
-  window.addEventListener('hashchange', function(){ show(location.hash.slice(1)); });
-  show(location.hash.slice(1) || 'cond');
-</script>
-</body>
+<body></body>
 </html>

@@ -1,6 +1,6 @@
 // p2/js/fb.js — P2 admin 共用 Firebase（rbf2app-staging）。供各功能區編輯器 import。
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ export const RBF2_STAGING = {
 };
 
 let app, auth, db, _fbOK = false;
-try { app = initializeApp(RBF2_STAGING); auth = getAuth(app); db = getFirestore(app); _fbOK = true; }
+try { app = initializeApp(RBF2_STAGING); auth = getAuth(app); setPersistence(auth, browserLocalPersistence).catch(() => {}); db = getFirestore(app); _fbOK = true; }
 catch (e) { _fbOK = false; }
 
 export { auth, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch };
