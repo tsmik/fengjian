@@ -1487,6 +1487,12 @@ export async function mountInput(rootEl) {
       _view = once;
       localStorage.removeItem('m_input_view_once');
     }
+    // 重整還原用:維度視角一次性信號(m_main showApp 還原時設,正常點 tab 不設)
+    const subOnce = localStorage.getItem('m_input_submode_once');
+    if (subOnce === 'part' || subOnce === 'dim') {
+      _quizMode = subOnce;
+      localStorage.removeItem('m_input_submode_once');
+    }
   } catch (e) {}
 
   // 第一次載入題目時顯示 placeholder（後續 mount 已快取，瞬間出現）

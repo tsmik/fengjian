@@ -461,6 +461,15 @@ function showApp(displayName){
   try {
     const lastTab = localStorage.getItem('m_active_tab');
     if (lastTab && lastTab !== 'home') {
+      // 部位觀察子頁還原:只在「重整還原」時把上次子頁塞進一次性信號,
+      // 正常手動點 tab 不受影響(mountInput 仍預設回部位視角)。
+      // 報告/參數分析→m_input_view_once;維度視角→m_input_submode_once(部位視角為預設,免設)。
+      if (lastTab === 'input') {
+        const v = localStorage.getItem('m_input_view');
+        const sub = localStorage.getItem('m_input_submode');
+        if (v === 'report' || v === 'sens') localStorage.setItem('m_input_view_once', v);
+        else if (sub === 'dim') localStorage.setItem('m_input_submode_once', 'dim');
+      }
       const restoreBtn = document.querySelector('.m-tab[data-tab="' + lastTab + '"]');
       if (restoreBtn) restoreBtn.click();
     }
