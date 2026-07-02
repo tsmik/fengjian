@@ -44,7 +44,7 @@ function renderDims() {
   DIMS.forEach((d, i) => {
     const id = 'dim-' + i;
     const chip = el('span', { class: 'chip', text: (i + 1) + ' ' + d.name }); chip.style.borderColor = hue(i);
-    chip.addEventListener('click', () => { const t = $(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    chip.addEventListener('click', () => { const t = $(id); if (t) t.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' }); });
     chips.appendChild(chip);
 
     const block = el('div', { class: 'dim-block', id });
