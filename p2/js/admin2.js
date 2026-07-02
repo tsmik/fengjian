@@ -101,7 +101,9 @@ function partHasContent(di, name) {
 }
 
 // ---------- persistence ----------
-function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ruleSet: state.ruleSet, dims: state.dims, spice: state.spice, curDim: state.curDim, curPart: state.curPart, curGroup: state.curGroup })); } catch (e) {} renderSaveStatus(); recordHistory(); }
+function _draftObj() { return { ruleSet: state.ruleSet, dims: state.dims, spice: state.spice, optsSnap: state.optsSnap, curDim: state.curDim, curPart: state.curPart, curGroup: state.curGroup }; }
+function saveDraft() { try { localStorage.setItem(LS_KEY, JSON.stringify(_draftObj())); } catch (e) {} renderSaveStatus(); recordHistory(); }
+function persistDraftQuiet() { try { localStorage.setItem(LS_KEY, JSON.stringify(_draftObj())); } catch (e) {} }   // 只更新快照,不進 undo 史
 function curJson() { try { return JSON.stringify(serialize()); } catch (e) { return ''; } }
 function isDirty() { return !!user && curJson() !== lastSavedJson; }
 function renderSaveStatus() {
@@ -151,7 +153,7 @@ function loadDraft() {
   try {
     const j = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
     if (j && j.dims) {
-      state.ruleSet = j.ruleSet; state.dims = j.dims; state.spice = j.spice || state.spice; migrateAllLeaves();
+      state.ruleSet = j.ruleSet; state.dims = j.dims; state.spice = j.spice || state.spice; state.optsSnap = j.optsSnap || {}; migrateAllLeaves();
       if (typeof j.curDim === 'number') state.curDim = j.curDim;   // refresh 後停在原本維度/部位/卡片
       if (j.curPart !== undefined) state.curPart = j.curPart;
       if (j.curGroup !== undefined) state.curGroup = j.curGroup;
@@ -261,6 +263,63 @@ function obsStale(ref) { return !!_staleObs[ref]; }
 function cardRefsStale(card) { return (card.combos || []).some(cb => (cb || []).some(l => obsStale(l.ref))); }
 // 逐卡確認：卡片有引用到「被改過的題」且尚未確認當前那個改動戳記 → 未處理(❗、淡黃)；全部確認過 → 已處理(✓、回原色)
 function cardUnhandled(card) { const ack = card.ackStale || {}; return (card.combos || []).some(cb => (cb || []).some(l => { const s = _staleObs[l.ref]; return s && ack[l.ref] !== s; })); }
+// ===== 選項改名 → 保留辣度/選取 =====
+// 辣度存成 { 選項文字: 辣度 }。若在觀察庫「就地改某選項文字」,舊文字會孤兒化(燈全滅=看似歸零)。
+// 用「上次設辣度時的選項快照(state.optsSnap)」比對最新選項:同位置、舊值消失且新值全新 → 判定改名,
+// 把辣度精準搬到新選項名。長度變動(增/刪)或選項換位(reorder)→ 不猜,交給自然行為。
+function _walkLeaves(fn) {
+  Object.values(state.dims || {}).forEach(d => Object.values(d.parts || {}).forEach(p => {
+    const lists = [];
+    if (Array.isArray(p.cards)) lists.push(p.cards);
+    (p.groups || []).forEach(g => { if (Array.isArray(g.cards)) lists.push(g.cards); });
+    lists.forEach(cards => cards.forEach(c => (c.combos || []).forEach(cb => {
+      const leaves = Array.isArray(cb) ? cb : (cb.leaves || []);
+      leaves.forEach(l => { if (l && l.ref) fn(l); });
+    })));
+  }));
+}
+function _detectRenames(oldArr, newArr) {
+  const map = {};
+  if (!Array.isArray(oldArr) || !Array.isArray(newArr) || oldArr.length !== newArr.length) return map;
+  const oldSet = new Set(oldArr), newSet = new Set(newArr);
+  for (let i = 0; i < oldArr.length; i++) {
+    const o = oldArr[i], n = newArr[i];
+    if (o !== n && !newSet.has(o) && !oldSet.has(n)) map[o] = n;   // 同位置、舊值消失、新值全新 = 就地改名
+  }
+  return map;
+}
+function remapSpiceByRename(oldSnap) {
+  let any = false;
+  const renameByRef = {};
+  _walkLeaves(l => {
+    if (renameByRef[l.ref] === undefined) {
+      const o = OBS_BY_ID[l.ref];
+      const newArr = (o && Array.isArray(o.options)) ? o.options : null;
+      renameByRef[l.ref] = newArr ? _detectRenames(oldSnap[l.ref], newArr) : {};
+    }
+  });
+  _walkLeaves(l => {
+    const rn = renameByRef[l.ref]; if (!rn || !l.spice) return;
+    const o = OBS_BY_ID[l.ref]; const cur = new Set((o && o.options) || []);
+    let leafChanged = false;
+    for (const oldV in rn) {
+      const newV = rn[oldV];
+      if (cur.has(newV) && !cur.has(oldV) && l.spice[oldV] != null && l.spice[newV] == null) {
+        l.spice[newV] = l.spice[oldV]; delete l.spice[oldV]; leafChanged = true;
+      }
+    }
+    if (leafChanged) { syncLeafMatch(l); any = true; }
+  });
+  return any;
+}
+function rebuildOptsSnap() {
+  const snap = {};
+  _walkLeaves(l => { const o = OBS_BY_ID[l.ref]; if (o && Array.isArray(o.options)) snap[l.ref] = o.options.slice(); });
+  const changed = JSON.stringify(snap) !== JSON.stringify(state.optsSnap || {});
+  state.optsSnap = snap;
+  return changed;
+}
+
 async function loadLiveObs(force) {
   if (!fbOK || !db || !user) return;                       // 沒登入讀不到（規則限登入），維持靜態後備
   if (!force && Date.now() - _lastObs < 8000) return;      // 節流：聚焦時最多 8 秒抓一次
@@ -278,8 +337,15 @@ async function loadLiveObs(force) {
     let layout = {}; try { const ly = await getDoc(doc(db, 'ruleSets', setId, 'obsmeta', 'layout')); layout = (ly.exists() && ly.data().layout) ? ly.data().layout : {}; } catch (e) {}
     const staleSig = Object.keys(stale).filter(k => stale[k]).sort().join(',');
     const laySig = JSON.stringify(Object.keys(layout).sort().map(p => [p, (layout[p] || []).map(s => s.label + ':' + (s.qIds || []).join(','))]));
-    if (_obsSig(next) === _obsSig(OBS) && staleSig === _staleSig && laySig === _laySig) return;   // 題庫＋待檢視＋順序都沒變才不重畫
+    const oldSnap = state.optsSnap || {};   // 上次設辣度時的選項快照(比對用)
+    if (_obsSig(next) === _obsSig(OBS) && staleSig === _staleSig && laySig === _laySig) {
+      if (rebuildOptsSnap()) persistDraftQuiet();   // 首次載入仍 seed/更新快照,供日後改名比對
+      return;   // 題庫＋待檢視＋順序都沒變才不重畫
+    }
     OBS = next; indexObs(); _staleObs = stale; _staleSig = staleSig; _obsLayout = layout; _laySig = laySig;
+    const _remapped = remapSpiceByRename(oldSnap);   // 選項就地改名→把辣度/選取精準搬到新選項名(保留設定)
+    rebuildOptsSnap();                               // 快照對齊最新選項(供下次比對)
+    if (_remapped) saveDraft(); else persistDraftQuiet();
     renderDims(); renderParts(); renderPalette(); renderEditor();   // 連帶刷新維度/部位黃標
   } catch (e) { /* 讀失敗：維持目前 OBS */ }
 }
