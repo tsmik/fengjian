@@ -55,12 +55,12 @@ export function unmountBoard() {
 }
 
 async function _ensureData() {
-  // 1. 板書講義（settings/board，admin 編，全域唯讀）— 只載一次
-  //    結構同桌機 app.js：doc 有欄位 boardJson（JSON 字串）→ parse 成 {維度名: 講義文字}
+  // 1. 板書講義（P2：admin2 講義編輯器存 config/board.board，是 map {維度名: 講義文字}）— 只載一次
+  //    ⚠ 舊 P1 是 settings/board.boardJson（JSON 字串）；P2 改 config/board.board（map，免 parse）。
   if (!_boardLoaded) {
     try {
-      const s = await getDoc(doc(db, 'settings', 'board'));
-      if (s.exists() && s.data().boardJson) setBoardText(JSON.parse(s.data().boardJson));
+      const s = await getDoc(doc(db, 'config', 'board'));
+      if (s.exists() && s.data().board) setBoardText(s.data().board);
     } catch (e) { debugLog('[board]', '載入板書講義失敗', e && e.message); }
     _boardLoaded = true;
   }
