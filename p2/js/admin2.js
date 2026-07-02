@@ -36,7 +36,7 @@ const LS_KEY = 'admin2_draft_v1';
 let state = {
   ruleSet: { id: 'test-' + nowStamp(), name: '測試套裝', note: '', basedOn: null, status: 'draft', createdAt: new Date().toISOString() },
   dims: {},                                  // {dimIndex: {parts:{partName:def}}}
-  spice: { levels: ['大辣', '中辣', '小辣'], rounding: 'B', ratios: { 大辣: '', 中辣: '', 小辣: '' } },
+  spice: { levels: ['完整', '大辣', '中辣', '小辣'], rounding: 'B', ratios: { 完整: '', 大辣: '', 中辣: '', 小辣: '' } },
   curDim: 0, curPart: null, curGroup: null,  // curGroup = 選中的敘述分組 id
   curCard: null,                             // 選取的卡片 id（右欄置頂用）
   active: null                               // {part, cardId, comboIdx} 供「點 observation 加入」用
@@ -556,7 +556,7 @@ function renderPartSpice(box, def) {
   const auxCount = (def.cards || []).filter(c => c.role !== 'main').length;
   const wrap = el('div', { class: 'spice-need' }, [el('div', { class: 'fl', text: '辣度門檻：要中幾個輔（共 ' + auxCount + ' 輔；主必中）' })]);
   const row = el('div', { class: 'spice-need-row' });
-  ['大辣', '中辣', '小辣'].forEach(lv => {
+  ['完整', '大辣', '中辣', '小辣'].forEach(lv => {
     const cur = (def.spice && def.spice[lv] != null) ? Math.min(def.spice[lv], auxCount) : auxCount;
     const inp = el('input', { type: 'number', class: 'sn-num', min: '0', max: String(auxCount), value: String(cur) });
     inp.addEventListener('change', () => {
@@ -730,7 +730,7 @@ function renderLeaf(card, combo, leaf, li) {
   wrap.appendChild(head);
   const optBox = el('div', { class: 'opts-spice' });
   const hints = (o && o.optionHints) || {};
-  const LAMPS = [[1, '#C9A227', '#ece0bb', '小辣'], [2, '#D85A30', '#eed3c4', '中辣'], [3, '#D14343', '#ecc9c9', '大辣']];   // 黃橘紅＝小中大
+  const LAMPS = [[4, '#7E57C2', '#ddd3ec', '完整'], [3, '#D14343', '#ecc9c9', '大辣'], [2, '#D85A30', '#eed3c4', '中辣'], [1, '#C9A227', '#ece0bb', '小辣']];   // 左→右 紫紅橘黃＝完整/大/中/小(完整最嚴)
   (o ? o.options : []).forEach(v => {
     const level = (leaf.spice && leaf.spice[v]) || 0;
     const hint = hints[v] || '';
@@ -759,7 +759,7 @@ function addLeaf(card, combo, obsId) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「大/中/小辣 要中幾個輔」（在第三欄部位上方設定，主一律必中）。學員看報告時選大/中/小辣;聚合門檻固定、不受辣度。' }));
+  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「完整/大/中/小辣 要中幾個輔」（在第三欄部位上方設定，主一律必中）。選項燈號左→右＝紫完整/紅大/橘中/黃小(完整最嚴,只認標紫的選項)。學員看報告時選完整/大/中/小辣;聚合門檻固定、不受辣度。' }));
 }
 
 function renderPalette() {

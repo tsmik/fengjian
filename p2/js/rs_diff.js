@@ -65,7 +65,7 @@ export function diffSets(A, B) {
       if (aCards.length) aParts.add(di + pn); if (bCards.length) bParts.add(di + pn);
       // 辣度（部位層）
       const aSp = (aP && aP.spice) || {}, bSp = (bP && bP.spice) || {};
-      ['大辣', '中辣', '小辣'].forEach(lv => {
+      ['完整', '大辣', '中辣', '小辣'].forEach(lv => {
         const av = aSp[lv], bv = bSp[lv];
         if ((av == null ? null : av) !== (bv == null ? null : bv)) spiceDiffs.push({ dim: dimName, part: pn, level: lv, from: av == null ? '（預設全中）' : av, to: bv == null ? '（預設全中）' : bv });
       });

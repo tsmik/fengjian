@@ -19,12 +19,12 @@ function leafAnswer(leaf, obs, side, isPaired) {
   if (isPaired(ref)) { const k = ref + '_' + side; return (k in obs ? obs[k] : (obs[ref] != null ? obs[ref] : '')); }
   return obs[ref] != null ? obs[ref] : '';
 }
-// 辣度第1層（選項切點）：leaf.spice = {選項: level 1小/2中/3大}（每個葉自己一份；≠部位層 leafDef.spice 的數量字典）。
-// 學員選辣度 T → 認 level>=rank(T) 的選項（越嚴含越寬：大辣 rank3 認最少、小辣 rank1 認最多）。
-// 無 leaf.spice → 退回 leaf.match（＝大辣集合，舊資料相容）。
+// 辣度第1層（選項切點）：leaf.spice = {選項: level 1小/2中/3大/4完整}（每個葉自己一份；≠部位層 leafDef.spice 的數量字典）。
+// 學員選辣度 T → 認 level>=rank(T) 的選項（越嚴含越寬：完整 rank4 認最少、小辣 rank1 認最多）。
+// 無 leaf.spice → 退回 leaf.match（＝大辣及以上集合，舊資料相容）。
 function acceptedOptions(leaf, level) {
   if (leaf.spice && typeof leaf.spice === 'object') {
-    const rank = (level === '小辣') ? 1 : (level === '大辣') ? 3 : 2;   // 預設中辣
+    const rank = ({ '小辣': 1, '中辣': 2, '大辣': 3, '完整': 4 })[level] || 2;   // 完整=4(最嚴)/大3/中2/小1;未知退中辣
     const out = [];
     for (const k in leaf.spice) { if (leaf.spice[k] >= rank) out.push(k); }
     return out;

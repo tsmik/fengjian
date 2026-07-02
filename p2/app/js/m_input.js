@@ -379,11 +379,11 @@ function _applySavedSpiceOnce() {
   if (_spiceLoaded) return;
   _spiceLoaded = true;
   const ud = window.__userData || {};
-  if (ud.spice === '大辣' || ud.spice === '中辣' || ud.spice === '小辣') setSpice(ud.spice);
+  if (ud.spice === '完整' || ud.spice === '大辣' || ud.spice === '中辣' || ud.spice === '小辣') setSpice(ud.spice);
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-bar"><span class="m-spice-label">辣度</span>${['大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}<span class="m-spice-hint">越辣越嚴格</span></div>`;
+  return `<div class="m-spice-bar"><span class="m-spice-label">辣度</span>${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}<span class="m-spice-hint">越辣越嚴格（完整最嚴）</span></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
@@ -735,7 +735,7 @@ function renderDimMode() {
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   const prevSpice = _dimPreviewSpice || getSpice();
   const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
-  const pvSpiceBar = `<div class="m-dimv-pv-spice">${['大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}<span class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才算）</span></div>`;
+  const pvSpiceBar = `<div class="m-dimv-pv-spice">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}<span class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才算）</span></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = pv[pi];
