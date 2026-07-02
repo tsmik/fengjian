@@ -21,35 +21,53 @@ import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsL
 import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft, setManualView, getManualView } from "./m_manual.js";
 
+// 桌機側欄各區「獨立展開」狀態:上課、部位觀察兩區可同時展開、互不收合;點區標題 toggle。
+let _subExpanded = { manual: false, input: false };
+function _refreshSubnavs() { renderManualSubnav(); renderInputSubnav(); }
+
 // 桌機側欄：「上課」展開的子膠囊（課程/自我評分/兵法報告）
 function renderManualSubnav() {
   const host = document.getElementById('m-tabsub-manual');
   if (!host) return;
+  if (!_subExpanded.manual) { host.innerHTML = ''; return; }
   const items = [{ key: 'board', label: '課程' }, { key: 'input', label: '自我評分' }, { key: 'overview', label: '兵法報告' }];
   let cur = 'board';
   try { cur = getManualView() || 'board'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-msub="${it.key}">${it.label}</button>`).join('');
   host.querySelectorAll('[data-msub]').forEach(b => b.addEventListener('click', () => {
-    try { setManualView(b.dataset.msub); } catch (e) {}
-    renderManualSubnav();
+    const key = b.dataset.msub;
+    const mtab = document.querySelector('.m-tab[data-tab="manual"]');
+    const onManual = mtab && mtab.classList.contains('active');
+    if (onManual) { try { setManualView(key); } catch (e) {} renderManualSubnav(); }
+    else { try { localStorage.setItem('m_manual_view_once', key); } catch (e) {} _subExpanded.manual = true; if (mtab) mtab.click(); }
   }));
 }
-function clearManualSubnav() { const h = document.getElementById('m-tabsub-manual'); if (h) h.innerHTML = ''; }
+function clearManualSubnav() { _subExpanded.manual = false; const h = document.getElementById('m-tabsub-manual'); if (h) h.innerHTML = ''; }
 
 // 桌機側欄：「部位觀察」展開的子膠囊（部位視角/維度視角/報告/參數分析）— 比照上課
 function renderInputSubnav() {
   const host = document.getElementById('m-tabsub-input');
   if (!host) return;
+  if (!_subExpanded.input) { host.innerHTML = ''; return; }
   const items = [{ key: 'part', label: '部位視角' }, { key: 'dim', label: '維度視角' }, { key: 'report', label: '報告' }, { key: 'sens', label: '參數分析' }];
   let cur = 'part';
   try { cur = getInputView() || 'part'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
   host.querySelectorAll('[data-isub]').forEach(b => b.addEventListener('click', () => {
-    try { setInputView(b.dataset.isub); } catch (e) {}
-    renderInputSubnav();
+    const key = b.dataset.isub;
+    const itab = document.querySelector('.m-tab[data-tab="input"]');
+    const onInput = itab && itab.classList.contains('active');
+    if (onInput) { try { setInputView(key); } catch (e) {} renderInputSubnav(); }
+    else {
+      try {
+        if (key === 'report' || key === 'sens') localStorage.setItem('m_input_view_once', key);
+        else localStorage.setItem('m_input_submode_once', key);   // part/dim
+      } catch (e) {}
+      _subExpanded.input = true; if (itab) itab.click();
+    }
   }));
 }
-function clearInputSubnav() { const h = document.getElementById('m-tabsub-input'); if (h) h.innerHTML = ''; }
+function clearInputSubnav() { _subExpanded.input = false; const h = document.getElementById('m-tabsub-input'); if (h) h.innerHTML = ''; }
 import { initBadges } from "./m_badge.js";
 
 // ===== Firebase config =====
@@ -728,40 +746,34 @@ if (isTeacherMode) {
       if(key==='input'){
         unmountReport();
         unmountManual();
-        clearManualSubnav();
         mountInput(pages.input);
-        renderInputSubnav();
       } else if(key==='report'){
         unmountInput();
-        clearInputSubnav();
         unmountManual();
-        clearManualSubnav();
         mountReport(pages.report);
       } else if(key==='cases'){
         unmountInput();
-        clearInputSubnav();
         unmountManual();
-        clearManualSubnav();
         // 桌機：直接渲染三欄 Finder 進 report 容器（不先掛本人儀表板，避免閃一下）；手機：掛儀表板＋overlay
         if (isDesktopSidebar()) { unmountReport(); openCaseMgmtView(); }
         else { mountReport(pages.report); openCaseMgmtView(); }
       } else if(key==='manual'){
         if (!isOnManual || _forcedSelf) {   // 已在上課又點上課 → 不重 mount；但「強制切回本人」要重掛換資料
           unmountInput();
-          clearInputSubnav();
           unmountReport();
           mountManual(pages.manual);
         }
-        renderManualSubnav();
       } else {
         unmountInput();
-        clearInputSubnav();
         unmountReport();
         unmountManual();
-        clearManualSubnav();
         // 首頁固定顯示本人（不受目前分析個案影響）
         if (key === 'home') { try { refreshHomeSelf(); } catch (e) {} }
       }
+      // 側欄各區獨立展開:進某區→展開該區(已在該區再點=toggle收合);切到別區「不」收合其他區(D1/D2)
+      if (key === 'manual') _subExpanded.manual = isOnManual ? !_subExpanded.manual : true;
+      else if (key === 'input') _subExpanded.input = isOnInput ? !_subExpanded.input : true;
+      _refreshSubnavs();
     });
   });
 })();
