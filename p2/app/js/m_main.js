@@ -552,6 +552,9 @@ async function initAuth(){
           showDenied();
           return;
         }
+        // 記錄本次登入時間到白名單(本人可只更新自己的 lastLoginAt,供 admin2 使用者分頁顯示);非致命,失敗不擋登入
+        try { const _le=(user.email||'').toLowerCase(); if(_le) await setDoc(doc(db,'allowedUsers',_le),{lastLoginAt:new Date().toISOString()},{merge:true}); }
+        catch(e){ debugLog('[Auth]','寫 lastLoginAt 失敗',e&&e.message?e.message:e); }
         let displayName=user.displayName||(user.email||'').split('@')[0];
         try{
           const userRef=doc(db,'users',user.uid);

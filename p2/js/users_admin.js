@@ -21,6 +21,7 @@ const isAdmin = () => !!user && role === 'admin';
 const $ = id => document.getElementById(id);
 const roleZh = r => r === 'admin' ? '管理員' : r === 'teacher' ? '老師' : '學員';
 const roleCls = r => r === 'admin' ? 'admin' : r === 'teacher' ? 'teacher' : 'student';
+const _fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }); } catch (e) { return String(iso || '').slice(0, 10); } };
 const initial = s => (s || '').trim().charAt(0).toUpperCase() || '?';
 const groupOf = u => (u.group || '').trim();
 function el(t, a = {}, k = []) { const e = document.createElement(t); for (const x in a) { if (x === 'class') e.className = a[x]; else if (x === 'text') e.textContent = a[x]; else if (x === 'value') e.value = a[x]; else if (x.startsWith('on')) e.addEventListener(x.slice(2), a[x]); else e.setAttribute(x, a[x]); } (Array.isArray(k) ? k : [k]).forEach(c => c != null && e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c)); return e; }
@@ -175,7 +176,8 @@ function renderCards() {
       av,
       el('div', { class: 'ncard-main' }, [
         el('div', { class: 'ncard-name', text: u.name || u.email || u.id }),
-        el('div', { class: 'ncard-note', text: u.note ? u.note.replace(/\s+/g, ' ').trim() : (u.name ? (u.email || u.id) : '（無備註）') })
+        el('div', { class: 'ncard-note', text: u.note ? u.note.replace(/\s+/g, ' ').trim() : (u.name ? (u.email || u.id) : '（無備註）') }),
+        el('div', { class: 'ncard-login', style: 'font-size:11px;color:#9a8f7d;margin-top:2px;', text: u.lastLoginAt ? ('最後登入 ' + _fmtDate(u.lastLoginAt)) : '尚無登入紀錄' })
       ])
     ]);
     box.appendChild(card);

@@ -60,6 +60,9 @@ service cloud.firestore {
     match /allowedUsers/{email} {
       allow read:  if isSignedIn();
       allow write: if isAdmin();
+      // 本人登入時可「只」更新自己那格的 lastLoginAt（不能改角色等其他欄位;供 admin2 顯示最後登入）
+      allow update: if isSignedIn() && emailOf() == email
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt']);
     }
 
     // 其餘一律拒絕（無全開放 collection）
