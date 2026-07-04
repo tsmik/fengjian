@@ -710,7 +710,8 @@ function renderDimMode() {
     const noRule = !cr || cr.threshold === '無規則' || (cr.max || 0) === 0;
     const ppr = dimPartProgress(di, pi);
     const badge = ppr.total > 0 ? `${ppr.done}/${ppr.total}` : '';
-    const doneCls = (ppr.total > 0 && ppr.done === ppr.total) ? 'is-done' : (ppr.done > 0 ? 'is-partial' : '');
+    // 未填答完畢(含完全沒答)→ is-todo 淡黃;答完 → is-done
+    const doneCls = (ppr.total > 0 && ppr.done === ppr.total) ? 'is-done' : (ppr.total > 0 ? 'is-todo' : '');
     const dot = hasPartUpdate(label) ? '<span class="m-update-dot-inline"></span>' : '';
     return `<button class="m-dimv-part ${pi === selPi ? 'is-cur' : ''} ${doneCls} ${noRule ? 'is-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-dimv-part-name">${dot}${escapeHtml(label)}</span>${badge ? `<span class="m-dimv-part-prog">${badge}</span>` : ''}</button>`;
   }).join('');
@@ -1067,7 +1068,8 @@ function renderPartMode() {
   const navTiles = allParts.map(key => {
     const prog = partProgress(key);
     const badge = prog.status === 'full' ? '✓' : (prog.done > 0 ? `${prog.done}/${prog.total}` : '');
-    const doneCls = prog.status === 'full' ? 'is-done' : (prog.done > 0 ? 'is-partial' : '');
+    // 未填答完畢(含完全沒答)→ is-todo 淡黃;答完 → is-done
+    const doneCls = prog.status === 'full' ? 'is-done' : (prog.total > 0 ? 'is-todo' : '');
     const dot = hasPartUpdate(key) ? '<span class="m-update-dot-inline"></span>' : '';
     return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(key)}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
   }).join('');

@@ -536,6 +536,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== 維度視角 4 欄（元件樣式；桌機 @media 排 4 欄，手機暫堆疊）===== */
 .m-dimv-part{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:8px 14px;margin-bottom:7px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;cursor:pointer}
 .m-dimv-part.is-cur{background:#efe7d6;border-color:#d3c7b1}
+/* 未填答完畢的部位 → 淡黃(比照 m-dim-tile-todo);選中時稍深保持可辨識 */
+.m-dimv-part.is-todo{background:#fff8d5;border-color:#e8d48a}
+.m-dimv-part.is-todo.is-cur{background:#fff1ad;border-color:#d9c470}
 .m-dimv-part-name{font-size:16px;color:#5a5147}
 /* 個案工作區：部位導覽欄頂端的個案姓名。box 比照條件欄部位名列(.m-dimv-parthead：padding-top28/bottom10+border1+margin12)
    → 姓名字頂對齊「頭」字頂、且整塊同高，使下面第一個部位格(頭)對齊第一個條件框(頂骨) */

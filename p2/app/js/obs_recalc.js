@@ -5,6 +5,35 @@ import { evaluate, evaluateAll, evaluatePart, getAnswer } from './rule_engine.js
 import { evaluateDimension, scoreLeafPart } from './engine.js';
 import { getP2, getSpice } from './p2_data.js';
 
+/* ===== 答案有效性清洗 =====
+   「已答」須是該題「現有」選項之一——admin2 改題(改選項文字/刪選項)後,學員舊答案殘留,
+   引擎 partFilled 只看「有值」會誤認已填而照算(且極性錯)。計算前過濾:失效值視為未答
+   → 部位=null → 報告走既有 dimComplete「未填完」機制(不計分/灰底/圖表不畫)。
+   找不到題定義(題庫未載入/未知 qid)→ 保留原值(退回舊行為),與 m_input isAnswered 同準則。
+   ⚠只在計算時過濾,不動學員存檔(obsData/obsJson 原樣)。 */
+function _validOptsMap(){
+  var m={};
+  OBS_PART_NAMES.forEach(function(pn){
+    var pd=OBS_PARTS_DATA[pn];if(!pd||!Array.isArray(pd.sections))return;
+    pd.sections.forEach(function(s){(s.qs||[]).forEach(function(q){
+      m[q.id]=(q.opts||[]).map(function(o){return (o&&typeof o==='object')?o.v:o;});
+    });});
+  });
+  return m;
+}
+function cleanedObsData(){
+  var valid=_validOptsMap();
+  var out={};
+  Object.keys(obsData).forEach(function(k){
+    var qid=k.replace(/_[LR]$/,'');
+    var vals=valid[qid];
+    if(!vals){out[k]=obsData[k];return;}                       // 未知題 → 保留(退回舊行為)
+    var v=obsData[k];
+    if(v!=null&&v!==''&&vals.indexOf(v)>=0)out[k]=v;           // 有效值才進計算;失效值=未答
+  });
+  return out;
+}
+
 /* ===== recalcFromObs v2 — v2.2 ID格式 + 字串比較 ===== */
 export function recalcFromObs(){
   const hasAny=Object.keys(obsData).length>0;
@@ -37,9 +66,10 @@ export function recalcFromObs(){
   // 辣度由 p2_data.getSpice() 提供（F3 接選擇器；目前＝套裝 defaultSpice＝大辣）。
   var _rs = getP2();
   var _lvl = getSpice();
+  var _obs = cleanedObsData();   // 失效答案(選項已被 admin 改掉)過濾後才進引擎 → 部位正確回 null=未填完
   for (var _di = 0; _di < 13; _di++) {
     if (_rs && _rs.dims && _rs.dims[_di]) {
-      var _r = evaluateDimension(_rs.dims[_di], obsData, _rs.isPaired, _lvl);
+      var _r = evaluateDimension(_rs.dims[_di], _obs, _rs.isPaired, _lvl);
       data[_di] = _r.dataVec;
     } else {
       data[_di] = Array(9).fill(null);
@@ -47,14 +77,14 @@ export function recalcFromObs(){
   }
 
   // ===== condResults（P2 版）：供「維度視角」顯示每部位的條件分組 + 中停/下停關聯部位 =====
-  buildCondResultsP2(_rs, _lvl);
+  buildCondResultsP2(_rs, _lvl, _obs);
 }
 
 // 單維在「指定辣度」的 dataVec（用目前 obsData，不寫全域 data；給維度視角「辣度模擬預覽」用，不影響報告）
 export function evalDimAt(di, level) {
   const rs = getP2();
   if (!rs || !rs.dims || !rs.dims[di]) return [null, null, null, null, null, null, null, null, null];
-  return evaluateDimension(rs.dims[di], obsData, rs.isPaired, level).dataVec;
+  return evaluateDimension(rs.dims[di], cleanedObsData(), rs.isPaired, level).dataVec;
 }
 
 // 部位名 → condResults 索引（與 P1 一致；9 計分 + 內部子部位）
@@ -86,10 +116,11 @@ function _partCond(part, di, pi, level) {
     : (mainMax ? `必備 ${mainMax} 項全中` : '無規則');
   return { items, threshold, max: cards.length, min: need, pass: (pi <= 8 ? data[di][pi] === 'A' : false) };
 }
-function buildCondResultsP2(rs, level) {
+function buildCondResultsP2(rs, level, obsIn) {
   for (var k in condResults) delete condResults[k];
   if (!rs || !rs.dims) return;
   const isPaired = rs.isPaired;
+  const OBS = obsIn || obsData;   // 清洗後答案(與引擎一致);未傳退回原 obsData
   for (let di = 0; di < 13; di++) {
     condResults[di] = {};
     const dd = rs.dims[di]; if (!dd || !dd.parts) continue;
@@ -108,7 +139,7 @@ function buildCondResultsP2(rs, level) {
       const items = [];
       (_AGG_CHILD[api] || []).forEach(pn => {
         const part = dd.parts[pn]; if (!part || !Array.isArray(part.cards)) return;
-        const r = scoreLeafPart(part, obsData, isPaired, level);
+        const r = scoreLeafPart(part, OBS, isPaired, level);
         if (r.result === 'leaf') {
           if (_partPaired(part, isPaired)) { items.push({ partN: pn, side: 'L', ok: r.Lpass, ids: [] }); items.push({ partN: pn, side: 'R', ok: r.Rpass, ids: [] }); }
           else items.push({ partN: pn, side: null, ok: r.standalonePass, ids: [] });
