@@ -117,8 +117,8 @@ export async function refreshHomeSelf(){
 }
 
 export function initHome(displayName){
-  // 1. Hi 列
-  document.getElementById('m-home-name').textContent=displayName||'—';
+  // 1. Hi 列（新版 landing 首頁已無 m-home-name；null 安全,否則 initHome 拋錯→showApp 拋→登入 outer catch 誤判「帳號未授權」）
+  const _nm=document.getElementById('m-home-name'); if(_nm) _nm.textContent=displayName||'—';
 
   // 2. 兩大按鈕進度
   updateHomeProgress();
