@@ -627,11 +627,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-sv-note:focus{outline:none}
 .m-sv-note::placeholder{color:#b3a079}
 .m-sv-mytag{font-size:11px;color:#a08a6a;background:#f1e9da;border-radius:5px;padding:1px 6px;margin-left:6px}
-.m-sv-cond.is-mine{background:#f1f6f7}  /* 我的補充：淡藍底＋藍 post-it */
-.m-sv-mineicon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border:1px solid #9fc0c9;border-radius:50%;background:none}  /* 藍圈圈 */
-.m-sv-mineicon::after{content:'';width:12px;height:12px;background:#bcd9e0;border:1px solid #8fb3bc;border-radius:2px}  /* 內含藍 post-it */
-.m-sv-condedit{flex:1;min-width:0;border:none;background:transparent;resize:none;overflow:hidden;font-family:inherit;font-size:15px;line-height:1.5;color:#3f5a62;padding:2px 4px;margin:0}
-.m-sv-condedit:focus{outline:none;background:#fff;border-radius:5px;box-shadow:inset 0 0 0 1px #bcd3d9}
+.m-sv-cond.is-mine{background:#fff}  /* 我的補充：白底深棕字（Mike 2026-07-04 定，原淡藍底＋藍圈圈已移除） */
+.m-sv-condedit{flex:1;min-width:0;border:none;background:transparent;resize:none;overflow:hidden;font-family:inherit;font-size:16px;line-height:1.5;color:#3a3228;padding:2px 4px;margin:0}
+.m-sv-condedit:focus{outline:none;background:#fff;border-radius:5px;box-shadow:inset 0 0 0 1px #d3c7b1}
 .m-sv-condedit::placeholder{color:#9bb3b8}
 .m-sv-addcond{display:block;width:calc(100% - 24px);margin:8px 12px 4px;padding:6px;background:#fafaf8;border:1px dashed #d3c7b6;border-radius:8px;color:#8a7a5a;font-size:13px;font-family:inherit;cursor:pointer}
 .m-sv-addform{display:flex;gap:6px;padding:8px 12px 4px}
@@ -1453,6 +1451,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-plist{flex:0 0 200px;margin-bottom:0}
   .m-sv-condwrap{flex:1;min-width:0}
   .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
+  /* 單卡部位(耳/口等)：卡片跨滿兩欄、條件列排兩欄 */
+  .m-sv-subpart-master{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start}
   .m-sv-subpart:only-child{grid-column:1/-1}
   /* ===== 維度視角 4 欄桌機：維度｜部位導覽｜條件欄｜整體動靜預覽 ===== */
   /* 完全比照自我評分：margin-top:-20 抵銷 tab-page 上 padding(內容貼頂、版面上提)；

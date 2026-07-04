@@ -32,6 +32,7 @@ import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoade
 import { buildManualReportParts } from './manual_report.js';
 import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { evaluatePart } from './rule_engine.js';
+import { AGG_FIXED } from './engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
@@ -881,11 +882,25 @@ function _expandRows(local) {
   return rows;
 }
 // 某 (維度,部位) 的條件模型：local（頭/中停/下停 子部位分組＋formula）或 master（規則 groupLabel）
+// 頭/中停/下停 的固定骨架（比照 engine AGG_FIXED，非規則導出）：左右參考 bar 列 + 子部位卡清單
+const _AGG_SCORE_SPEC = {
+  0: { agg: '頭',   subRows: [['左頂骨', '右頂骨'], ['枕骨'], ['左華陽骨', '右華陽骨']], groups: [['頂骨', 2], ['枕骨', 1], ['華陽骨', 2]] },
+  2: { agg: '中停', subRows: [['左眉', '右眉'], ['左眼', '右眼'], ['鼻'], ['左顴', '右顴']], groups: [['顴', 2]] },
+  3: { agg: '下停', subRows: [['口'], ['人中'], ['地閣'], ['左頤', '右頤']], groups: [['人中', 1], ['地閣', 1], ['頤', 2]] }
+};
 function _scoreCondModel(di, pi) {
   // P2（Mike 2026-07-04 定）：自我評分「不導入既有部位條件」——條件全由學員自訂（＋條件），
   // 每條評「維度兩極」（如 形/勢），純參考不計分（部位靜動仍由部位列手動切）。
-  // 一律回 master 型（＋條件鈕常駐）、crits 空（只剩學員自訂 added）。
-  // 原 _localCondSpec/_partGroups（從 DIM_RULES 導條件）不再使用；P2 dims 為 DNF 格式舊解析器也吃不動。
+  // 頭/中停/下停＝固定聚合骨架（AGG_FIXED）：子部位左右參考 bar（點了存、再點取消、不計分）＋子部位卡各自＋條件。
+  // 其餘部位＝單卡（＋條件鈕在部位列）。原 _localCondSpec/_partGroups（從 DIM_RULES 導條件）不再使用。
+  const spec = _AGG_SCORE_SPEC[pi];
+  if (spec) {
+    const dim = DIMS[di] || {};
+    const agg = AGG_FIXED[spec.agg] || {};
+    const total = (agg.children || []).length, need = agg.threshold;
+    const crit = total ? `${total} 個部位，${need} 個（含）以上即為${dim.a}（不${dim.a}則${dim.b}）` : '';
+    return { kind: 'local', crit, refNote: '', subRows: spec.subRows, groups: spec.groups.map(([t, w]) => ({ title: t, w, crits: [], src: 'local' })) };
+  }
   return { kind: 'master', crit: '', refNote: '', groups: [{ title: PART_LABELS[pi], w: 0, crits: [], src: 'master' }] };
 }
 function _renderScoreView() {
@@ -1055,10 +1070,10 @@ function _condRow(k, c, opt) {
   const noteBox = noteOpenNow ? `<div class="m-sv-notebox">${_noteEl('data-cna="' + _esc(ck) + '"', nv, '這條的筆記…', 'c' + ck)}</div>` : '';
   if (added) {
     const cek = `${_esc(k)}|${_esc(String(opt.gi))}|${_esc(opt.id)}`;
-    const mineIcon = `<span class="m-sv-mineicon" title="我的補充"></span>`;
+    // P2：白底、深棕字、無藍圈圈（Mike 2026-07-04 定）
     const edit = `<textarea class="m-sv-condedit" rows="1" data-cedit="${cek}" placeholder="輸入條件…">${_esc(c)}</textarea>`;
     const delBtn = `<button class="m-sv-ico" data-cdel="${cek}" data-tip="移除這條">✕</button>`;
-    return `<div class="m-sv-condgroup"><div class="m-sv-cond is-mine">${mineIcon}${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}</div>`;
+    return `<div class="m-sv-condgroup"><div class="m-sv-cond is-mine">${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}</div>`;
   }
   return `<div class="m-sv-condgroup"><div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}</div>`;
 }
@@ -1069,7 +1084,7 @@ function _renderScoreCond(di, pi) {
   const bigPart = true;  // #6：9 個部位都可加部位筆記（原本只有頭/上停/中停/下停）
   const pNote = _scaffold.pnote[k] || '';
   const pNoteOpen = bigPart && (_noteOpen['p' + k] || pNote);
-  const pnoteBtn = bigPart ? `<button class="m-sv-ico" data-pnt="${k}" data-tip="部位筆記">✎</button>` : '';
+  const pnoteBtn = bigPart ? `<button class="m-sv-addpill" data-pnt="${k}" type="button" data-tip="部位筆記">✎ 筆記</button>` : '';
   const pEraseBtn = pNoteOpen ? _eraserBtn('p' + k) : '';
   // 部位名＋✎在第一行；評斷標準移到第二行、字體加深(.m-sv-crit2)
   const critHtml = model.crit ? `<div class="m-sv-crit2">${_esc(model.crit)}</div>` : '';
@@ -1105,15 +1120,15 @@ function _renderScoreCond(di, pi) {
     // 我的補充：行內可編輯（{id,text}）
     rows += (addedAll[gi] || []).map(it => _condRow(k, it.text, { added: true, gi, id: it.id })).join('');
     if (g.src === 'master') {
-      // 單卡片(上停/耳/眉/眼/鼻/口)：標題與＋條件在部位列，這裡只放條件
-      return `<div class="m-sv-subpart">${rows}</div>`;
+      // 單卡片(上停/耳/眉/眼/鼻/口)：標題與＋條件在部位列，這裡只放條件；桌機條件列排兩欄(m-sv-subpart-master)
+      return `<div class="m-sv-subpart m-sv-subpart-master">${rows}</div>`;
     }
     // 子部位卡片(頂骨/枕骨/華陽骨/顴/人中/地閣/頤)：標題改名(權重2→（左右X）)＋右側 筆記✎ ＋條件；其下子部位筆記框
     const sk = akey;
     const sNote = _scaffold.snote[sk] || '';
     const sOpen = _noteOpen['s' + sk] || sNote;
     const titleName = (g.w >= 2) ? `${g.title}（左右${g.title}）` : g.title;
-    const sNoteBtn = `<button class="m-sv-ico" data-snt="${sk}" data-tip="子部位筆記">✎</button>`;
+    const sNoteBtn = `<button class="m-sv-addpill" data-snt="${sk}" type="button" data-tip="子部位筆記">✎ 筆記</button>`;
     const sEraseBtn = sOpen ? _eraserBtn('s' + sk) : '';
     const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
     const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
