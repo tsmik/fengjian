@@ -882,19 +882,11 @@ function _expandRows(local) {
 }
 // 某 (維度,部位) 的條件模型：local（頭/中停/下停 子部位分組＋formula）或 master（規則 groupLabel）
 function _scoreCondModel(di, pi) {
-  const local = _localCondSpec(di, pi);
-  if (local) {
-    let crit = '', subRows = [];
-    if (local.total) {
-      subRows = _expandRows(local);  // 形/勢 bar 仍需左右展開
-      // 文字精簡：不再列舉子部位名稱（太長），門檻統一用「符合 N 個（含）以上」
-      crit = `${local.total} 個部位，${local.threshold} 個（含）以上即為${local.posChar}（不${local.posChar}則${local.negChar}）`;
-    }
-    return { kind: 'local', crit, refNote: local.refNote, subRows, groups: local.groups.map(g => ({ title: g.name, w: g.w, crits: g.crits, src: 'local' })) };
-  }
-  const mg = _partGroups(di, pi);
-  if (mg.length) return { kind: 'master', crit: '', refNote: '', groups: [{ title: PART_LABELS[pi], w: 0, crits: mg.map(g => g.label), src: 'master' }] };
-  return { kind: 'none', crit: '', refNote: '', groups: [] };
+  // P2（Mike 2026-07-04 定）：自我評分「不導入既有部位條件」——條件全由學員自訂（＋條件），
+  // 每條評「維度兩極」（如 形/勢），純參考不計分（部位靜動仍由部位列手動切）。
+  // 一律回 master 型（＋條件鈕常駐）、crits 空（只剩學員自訂 added）。
+  // 原 _localCondSpec/_partGroups（從 DIM_RULES 導條件）不再使用；P2 dims 為 DNF 格式舊解析器也吃不動。
+  return { kind: 'master', crit: '', refNote: '', groups: [{ title: PART_LABELS[pi], w: 0, crits: [], src: 'master' }] };
 }
 function _renderScoreView() {
   let di = _manualDimIdx; if (di == null || di < 0 || di > 12) di = 0;
@@ -1046,12 +1038,16 @@ function _eraserBtn(key) {
 function _condRow(k, c, opt) {
   opt = opt || {};
   const added = !!opt.added;
-  const noRule = !added && c.indexOf('待 admin') >= 0;
+  const noRule = !added && (c.indexOf('待 admin') >= 0 || c.indexOf('（尚無條件') >= 0);
   const sufKey = added ? '@' + opt.id : c;          // 狀態 key 後綴
   const ck = k + '|' + sufKey;
   const cond = _scaffold.cond[k] || {}, cnote = _scaffold.cnote[k] || {};
-  const a = cond[sufKey], yes = a === '符合' ? 'is-yes' : '', no = a === '不符' ? 'is-no' : '';
-  const yn = noRule ? '' : `<span class="m-sv-yn"><button class="${yes}" data-ynk="${_esc(ck)}" data-ynv="符合">符合</button><button class="${no}" data-ynk="${_esc(ck)}" data-ynv="不符">不符</button></span>`;
+  // P2：評斷鈕＝維度兩極字（如 形/勢），色同部位列（靜綠/動橘）；存 'A'|'B'（純參考不計分）
+  const _cdi = parseInt(k.split('_')[0], 10) || 0;
+  const _cdim = DIMS[_cdi] || {};
+  const _cpa = _poleOf(_cdim, _cdim.da), _cpb = _poleOf(_cdim, _cdim.db);
+  const a = cond[sufKey];
+  const yn = noRule ? '' : `<span class="m-sv-poles m-sv-yn"><button class="m-sv-pole ${a === _cpa.val ? 'is-' + _cpa.tone : ''}" data-ynk="${_esc(ck)}" data-ynv="${_cpa.val}">${_esc(_cdim.da)}</button><button class="m-sv-pole ${a === _cpb.val ? 'is-' + _cpb.tone : ''}" data-ynk="${_esc(ck)}" data-ynv="${_cpb.val}">${_esc(_cdim.db)}</button></span>`;
   const nv = cnote[sufKey] || '';
   const noteOpenNow = !noRule && (_noteOpen['c' + ck] || nv);
   const noteBtn = noRule ? '' : `<button class="m-sv-ico" data-cnt="${_esc(ck)}" data-tip="加筆記">✎</button>`;
@@ -1104,7 +1100,7 @@ function _renderScoreCond(di, pi) {
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {
     const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
-    let rows = (g.crits.length ? g.crits : ['（此維度規則尚未定義，待 admin 補上）']).map(c => _condRow(k, c)).join('');
+    let rows = (g.crits.length ? g.crits : ((addedAll[gi] || []).length ? [] : ['（尚無條件，按「＋條件」新增自己的判斷條件）'])).map(c => _condRow(k, c)).join('');
     // 我的補充條件（依子部位 gi 各自掛）
     // 我的補充：行內可編輯（{id,text}）
     rows += (addedAll[gi] || []).map(it => _condRow(k, it.text, { added: true, gi, id: it.id })).join('');
