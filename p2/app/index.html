@@ -246,7 +246,31 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 
 /* ===== 首頁 ===== */
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
-.m-home-hello{font-size:20px;font-weight:600;color:#3a3228;padding:4px 4px 0}
+/* ===== 首頁 landing(Mike 2026-07-04):上1/3 標題兩行、下2/3 三欄四框 ===== */
+.m-home-landing{display:flex;flex-direction:column;padding:0;gap:0;height:calc(100dvh - 52px)}
+.m-home-hero{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0}   /* 上 1/3 */
+.m-home-hero-title{margin:0;font-family:inherit;font-weight:400;font-size:34px;line-height:1.6;letter-spacing:8px;text-align:center;color:#3a3228}
+.m-home-grid{flex:2 1 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:0 16px 20px;min-height:0}   /* 下 2/3 */
+.m-home-col-right{display:grid;grid-template-rows:1fr 1fr;gap:14px;min-height:0}
+.m-home-door{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #e3dccb;border-radius:14px;padding:22px 20px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s;overflow:auto}
+.m-home-door:hover{background:#faf6ee;border-color:#d3c7b1}
+.m-home-door-title{font-size:22px;letter-spacing:3px;color:#3a3228}
+.m-home-door-desc{font-size:14px;line-height:1.85;color:#7d6643}
+/* 上課格:標題+課堂使用+三個子框(課程/自我評分/兵法報告),子框各自可點 */
+.m-home-lesson{cursor:default}
+.m-home-subcards{display:flex;flex-direction:column;gap:10px;flex:1 1 auto;min-height:0;margin-top:2px}
+.m-home-subcard{flex:1 1 0;display:flex;flex-direction:column;gap:6px;justify-content:center;background:#f5efe3;border:1px solid #e3dccb;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s}
+.m-home-subcard:hover{background:#efe7d6;border-color:#d3c7b1}
+.m-home-subcard-title{font-size:16px;letter-spacing:1px;color:#3a3228}
+.m-home-subcard-desc{font-size:14px;line-height:1.7;color:#7d6643}
+@media(max-width:720px){
+  .m-home-landing{min-height:0}
+  .m-home-hero{flex:0 0 auto;padding:28px 16px 18px}
+  .m-home-hero-title{font-size:28px;letter-spacing:6px}
+  .m-home-grid{grid-template-columns:1fr;gap:12px;padding-bottom:16px}
+  .m-home-col-right{grid-template-rows:auto auto}
+  .m-home-door{overflow:visible}
+}
 .m-home-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
 .m-home-card-title{font-size:13px;color:#888;margin-bottom:10px;font-weight:500}
 .m-home-progress-main{display:flex;align-items:center;gap:12px;margin-bottom:6px}
@@ -1307,6 +1331,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-home-hello,
   .m-home-hint,
   .m-home-profile{grid-column:1 / -1}
+  /* landing 首頁桌機:覆蓋上方 2 欄 grid,回直向 flex、全寬填滿(上1/3標題、下2/3三欄) */
+  .m-home-landing{display:flex;flex-direction:column;grid-template-columns:none;max-width:none;margin:0;padding:0;gap:0;height:calc(100dvh - 52px)}
 }
 
 /* ===== P4 RWD：報告分頁大螢幕展開 ===== */
@@ -1761,58 +1787,37 @@ body.m-debug-on .m-debug-clear{display:block}
     <button class="m-analysis-back" id="m-analysis-back-self" type="button" style="display:none"></button>
   </div>
   <section class="m-tab-page active" id="m-page-home">
-  <div class="m-home">
-    <div class="m-home-hello">Hi, <span id="m-home-name">—</span></div>
-    <div class="m-home-hint">選一個開始</div>
-
-    <!-- 四大方塊（§1/§12 IA）：上課 / 部位觀察 / 我的 / 個案管理 -->
-    <button class="m-home-bigbtn m-home-door" data-go="manual">
-      <span class="m-home-bigbtn-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2z"/><path d="M22 4.5h-7a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22z"/></svg>
-      </span>
-      <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">上課手動</div>
-        <div class="m-home-bigbtn-sub">跟老師逐條評動／靜 → 產生手動兵法報告</div>
-        <div class="m-home-bigbtn-progress">
-          <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-manual-fill"></div></div>
-          <div class="m-home-bigbtn-text"><span id="m-home-manual-dim">0</span>/13 維度</div>
+  <div class="m-home m-home-landing">
+    <!-- 上 1/3：標題兩行 -->
+    <div class="m-home-hero"><h1 class="m-home-hero-title">風鑑學堂<br>人相兵法</h1></div>
+    <!-- 下 2/3：三欄四框（保留 data-go 沿用 m_home.js 既有導覽） -->
+    <div class="m-home-grid">
+      <div class="m-home-door m-home-lesson">
+        <div class="m-home-door-title">上課</div>
+        <div class="m-home-door-desc">課堂使用</div>
+        <div class="m-home-subcards">
+          <button class="m-home-subcard" data-go="manual" data-msub="board">
+            <div class="m-home-subcard-title">課程</div>
+            <div class="m-home-subcard-desc">13 堂課程討論的各個維度內容與意義，上課板書</div>
+          </button>
+          <button class="m-home-subcard" data-go="manual" data-msub="input">
+            <div class="m-home-subcard-title">自我評分</div>
+            <div class="m-home-subcard-desc">課堂中每個維度的部位觀察標準筆記，以及分數計算</div>
+          </button>
+          <button class="m-home-subcard" data-go="manual" data-msub="overview">
+            <div class="m-home-subcard-title">兵法報告</div>
+            <div class="m-home-subcard-desc">整體兵法報告、圖表</div>
+          </button>
         </div>
       </div>
-    </button>
-
-    <button class="m-home-bigbtn m-home-door" data-go="obs">
-      <span class="m-home-bigbtn-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
-      </span>
-      <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">部位觀察</div>
-        <div class="m-home-bigbtn-sub">逐部位／維度觀察特徵，系統自動算出人相兵法報告</div>
-        <div class="m-home-bigbtn-progress">
-          <div class="m-home-bigbtn-bar"><div class="m-home-bigbtn-fill" id="m-home-obs-fill"></div></div>
-          <div class="m-home-bigbtn-text"><span id="m-home-obs-q">0</span>/<span id="m-home-obs-q-total">0</span> 題</div>
-        </div>
+      <button class="m-home-door" data-go="obs">
+        <div class="m-home-door-title">部位觀察</div>
+      </button>
+      <div class="m-home-col-right">
+        <button class="m-home-door" data-go="my"><div class="m-home-door-title">我的</div></button>
+        <button class="m-home-door" data-go="cases"><div class="m-home-door-title">個案管理</div></button>
       </div>
-    </button>
-
-    <button class="m-home-bigbtn m-home-door" data-go="my">
-      <span class="m-home-bigbtn-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-      </span>
-      <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">我的</div>
-        <div class="m-home-bigbtn-sub">基本資料、流年、報告連結、參數分析、筆記彙整</div>
-      </div>
-    </button>
-
-    <button class="m-home-bigbtn m-home-door" data-go="cases">
-      <span class="m-home-bigbtn-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </span>
-      <div class="m-home-bigbtn-meta">
-        <div class="m-home-bigbtn-title">個案管理</div>
-        <div class="m-home-bigbtn-sub">新增、編輯、管理你觀察的個案</div>
-      </div>
-    </button>
+    </div>
   </div>
 </section>
 

@@ -131,7 +131,7 @@ export function initHome(displayName){
       try{ setActiveCase(null); await refreshUserData(); }catch(e){}
       try{ updateHomeProgress(); }catch(e){}
       if(target==='obs'){ try{ localStorage.setItem('m_input_view','quiz'); }catch(e){} }
-      else if(target==='manual'){ try{ localStorage.setItem('m_manual_view','input'); }catch(e){} }
+      else if(target==='manual'){ const sub=btn.dataset.msub||'board'; try{ localStorage.setItem('m_manual_view_once', sub); }catch(e){} }   // 首頁上課子框→指定子頁(課程board/自我評分input/兵法報告overview)
       const tabBtn=document.querySelector('.m-tab[data-tab="'+(TAB_FOR[target]||'home')+'"]');
       if(tabBtn) tabBtn.click();
     };
