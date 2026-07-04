@@ -229,15 +229,17 @@ function getSections(key) {
 function getAllQuestions(key) {
   return getSections(key).flatMap(s => s.qs || []);
 }
+// 「已答」須是「存的值仍是該題現有選項之一」——防 admin 改題後舊答案殘留卻被算已答(值失效=未答)。
+// q.opts 缺(題目未載入/找不到)→ 退回舊行為(非空即算),避免題目還沒載入時把進度誤歸零。
+function _optVals(q) { return (q && Array.isArray(q.opts)) ? q.opts.map(o => (o && typeof o === 'object') ? o.v : o) : null; }
+function _valAnswered(vals, v) { return vals ? (v != null && vals.indexOf(v) >= 0) : (v != null); }
 function isAnswered(q) {
+  const vals = _optVals(q);
   if (q.paired) {
-    // paired 題兩種已答模式（兼容桌機 + 手機）：
-    //   桌機選「不分左右」→ 寫主值 q.id，刪 _L/_R
-    //   手機改 paired toggle → 寫 _L/_R，刪主值
-    // 兼容：主值有值 OR _L+_R 都有值 都算已答
-    return _draft[q.id] != null || (_draft[q.id + '_L'] != null && _draft[q.id + '_R'] != null);
+    // paired：主值有效 OR (_L 有效 且 _R 有效)（沿用原左右判定,只多加「值仍有效」）
+    return _valAnswered(vals, _draft[q.id]) || (_valAnswered(vals, _draft[q.id + '_L']) && _valAnswered(vals, _draft[q.id + '_R']));
   }
-  return _draft[q.id] != null;
+  return _valAnswered(vals, _draft[q.id]);
 }
 function pairedDiffStatus(qid) {
   const l = _draft[qid + '_L'];
@@ -589,10 +591,10 @@ function collectDimRefs(di) {
   return refs;
 }
 function isQidAnswered(qid) {
-  // single：_draft[qid] 有值；paired：_L 或 _R 有值（即視為涉及到該題）
-  if (_draft[qid] != null) return true;
-  if (_draft[qid + '_L'] != null || _draft[qid + '_R'] != null) return true;
-  return false;
+  // single：_draft[qid] 有效；paired：_L 或 _R 有效（沿用原判定,只多加「值仍是該題現有選項」）。
+  // 找不到題(未載入/已刪)→ _optVals 回 null → 退回舊「非空即算」,避免誤判。
+  const vals = _optVals(_findQById(qid));
+  return _valAnswered(vals, _draft[qid]) || _valAnswered(vals, _draft[qid + '_L']) || _valAnswered(vals, _draft[qid + '_R']);
 }
 function dimProgress(di) {
   const refs = collectDimRefs(di);
