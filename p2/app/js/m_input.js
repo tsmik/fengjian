@@ -401,7 +401,7 @@ function renderObsReport() {
   unmountAutoView();                       // 清掉前一個 sens 掛載
   const matrix = _obsReportMatrix();
   const ud = window.__userData || {};
-  const meta = { name: ud.displayName || '' };
+  const meta = { name: ud.displayName || '', grayIncomplete: true };   // 自動報告:未填部位格→灰底未填完(手動報告不設,空格=待點擊作答)
   let lnBlock = '';
   if (ud.gender && ud.birthday) {
     if (isLiunianReady()) {
@@ -690,7 +690,9 @@ function renderDimMode() {
   const dtile = (i) => {
     const dm = DIMS[i]; if (!dm) return '';
     const dot = hasDimUpdate(dm.dn) ? '<span class="m-update-dot"></span>' : '';
-    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-dim="${i}">${dot}${escapeHtml(dm.dn)}</button>`;
+    const dprog = dimProgress(i);   // 該維度引用題未全答 → 淡黃(is-cur 當前色優先)
+    const dtodo = (dprog.total > 0 && dprog.done < dprog.total) ? 'is-todo' : '';
+    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${dtodo} ${i === di ? 'is-cur' : ''}" data-dim="${i}">${dot}${escapeHtml(dm.dn)}</button>`;
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）

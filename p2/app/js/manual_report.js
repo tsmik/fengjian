@@ -257,6 +257,10 @@ function _buildParts(matrix, meta) {
           ? '<td'+a+' style="'+base+';text-align:center">'+cm+'</td><td'+a+' style="'+base+'"></td>'
           : '<td'+a+' style="'+base+'"></td><td'+a+' style="'+base+';text-align:center">'+cm+'</td>';
       }
+      // 自動報告(meta.grayIncomplete):未填部位 → 兩格合併灰底＋未填完;手動報告維持兩空格(待點擊作答)
+      if(meta&&meta.grayIncomplete){
+        return '<td'+a+' colspan="2" style="background:#eceae6;padding:3px 2px;'+rc+';text-align:center"><span style="font-size:8px;color:#a89e92">未填完</span></td>';
+      }
       return '<td'+a+' style="'+base+'"></td><td'+a+' style="'+base+'"></td>';
     }
     function tally(i,bucket){
