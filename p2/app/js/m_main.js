@@ -49,7 +49,7 @@ function renderInputSubnav() {
   const host = document.getElementById('m-tabsub-input');
   if (!host) return;
   if (!_subExpanded.input) { host.innerHTML = ''; return; }
-  const items = [{ key: 'part', label: '部位視角' }, { key: 'dim', label: '維度視角' }, { key: 'report', label: '報告' }, { key: 'sens', label: '參數分析' }];
+  const items = [{ key: 'part', label: '部位視角' }, { key: 'dim', label: '維度視角' }, { key: 'report', label: '報告' }, { key: 'spiceov', label: '辣度總覽' }, { key: 'sens', label: '參數分析' }];
   let cur = 'part';
   try { cur = getInputView() || 'part'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
@@ -60,7 +60,7 @@ function renderInputSubnav() {
     if (onInput) { try { setInputView(key); } catch (e) {} renderInputSubnav(); }
     else {
       try {
-        if (key === 'report' || key === 'sens') localStorage.setItem('m_input_view_once', key);
+        if (key === 'report' || key === 'sens' || key === 'spiceov') localStorage.setItem('m_input_view_once', key);
         else localStorage.setItem('m_input_submode_once', key);   // part/dim
       } catch (e) {}
       _subExpanded.input = true; if (itab) itab.click();
@@ -485,7 +485,7 @@ function showApp(displayName){
       if (lastTab === 'input') {
         const v = localStorage.getItem('m_input_view');
         const sub = localStorage.getItem('m_input_submode');
-        if (v === 'report' || v === 'sens') localStorage.setItem('m_input_view_once', v);
+        if (v === 'report' || v === 'sens' || v === 'spiceov') localStorage.setItem('m_input_view_once', v);
         else if (sub === 'dim') localStorage.setItem('m_input_submode_once', 'dim');
       }
       const restoreBtn = document.querySelector('.m-tab[data-tab="' + lastTab + '"]');

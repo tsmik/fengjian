@@ -37,6 +37,7 @@ const SUBMODES = [
   { key: 'part',   label: '部位視角' },
   { key: 'dim',    label: '維度視角' },
   { key: 'report', label: '報告' },
+  { key: 'spiceov', label: '辣度總覽' },
   { key: 'sens',   label: '參數分析' },
 ];
 
@@ -271,6 +272,9 @@ function render() {
   if (_view === 'report') {
     renderObsReport();          // 比照兵法報告（唯讀大表＋4 圖＋虛歲流年），餵觀察算出的矩陣
     try { showReportNote(); } catch (e) {}   // 報告頁 → 浮動筆記
+  } else if (_view === 'spiceov') {
+    renderSpiceOverview();      // 辣度總覽：四辣度 係數圖＋係數總覽 橫排比較
+    try { hideReportNote(); } catch (e) {}
   } else if (_view === 'sens') {
     renderAutoView('sens');     // 參數分析維持原 m_report 掛載
     try { hideReportNote(); } catch (e) {}
@@ -303,7 +307,7 @@ export function setInputView(key) {
   const isQuiz = (key === 'part' || key === 'dim');
   const cur = (_view === 'quiz') ? _quizMode : _view;
   if (cur === key) return;
-  if ((_view === 'report' || _view === 'sens') && isQuiz) unmountAutoView();
+  if ((_view === 'report' || _view === 'sens') && (isQuiz || key === 'spiceov')) unmountAutoView();
   if (isQuiz) {
     _view = 'quiz';
     _quizMode = key;
@@ -443,6 +447,32 @@ function renderObsReport() {
     exportMobileCharts({ mode: 'charts', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
   _root.querySelectorAll('[data-obsrc]').forEach(b => b.addEventListener('click', () =>
     exportMobileCharts({ mode: 'all', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
+}
+
+// ---------- 辣度總覽：四辣度(完整/大辣/中辣/小辣)各算一份矩陣，橫排「辣度｜係數圖｜係數總覽圖」一眼比較 ----------
+// 純預覽:evalDimAt 逐維算指定辣度(吃清洗後答案、不動全域 data/報告/存檔);未填完維度由圖表既有機制呈現(灰/未填完)。
+function renderSpiceOverview() {
+  _applySavedSpiceOnce();
+  const seg = renderSegmented();
+  unmountAutoView();
+  _obsReportMatrix();   // 先把目前草稿同步進 obsData(與報告同源),evalDimAt 才吃到最新答案
+  const LEVELS = ['完整', '大辣', '中辣', '小辣'];
+  const cols = LEVELS.map(lv => {
+    const matrix = [];
+    for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
+    const p = buildManualReportParts(matrix, {});
+    return `<div class="m-spov-col">
+      <div class="m-spov-title">${lv}</div>
+      <div class="m-spov-chart">${p.radar2Html}</div>
+      <div class="m-spov-chart">${p.coefHtml}</div>
+    </div>`;
+  }).join('');
+  _root.innerHTML = `
+    <div class="m-segmented m-segmented-sub">${seg}</div>
+    <div class="m-submode-content">
+      <div class="m-spov-grid">${cols}</div>
+    </div>`;
+  bindEvents();
 }
 
 function renderSegmented() {
@@ -1489,7 +1519,7 @@ export async function mountInput(rootEl) {
   _quizMode = 'part';
   try {
     const once = localStorage.getItem('m_input_view_once');
-    if (once === 'quiz' || once === 'report' || once === 'sens') {
+    if (once === 'quiz' || once === 'report' || once === 'sens' || once === 'spiceov') {
       _view = once;
       localStorage.removeItem('m_input_view_once');
     }

@@ -538,6 +538,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== 維度視角 4 欄（元件樣式；桌機 @media 排 4 欄，手機暫堆疊）===== */
 .m-dimv-part{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:8px 14px;margin-bottom:7px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;cursor:pointer}
 .m-dimv-part.is-cur{background:#efe7d6;border-color:#d3c7b1}
+/* ===== 辣度總覽:四辣度橫排(辣度｜係數圖｜係數總覽圖);手機 2 欄、桌機 @media 4 欄 ===== */
+.m-spov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;padding:4px}
+.m-spov-col{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding:10px 10px 6px;min-width:0}
+.m-spov-title{font-size:16px;color:#3a3228;text-align:center;padding:2px 0 8px;letter-spacing:2px}
+.m-spov-chart{margin-bottom:8px}
+.m-spov-chart svg{width:100%;height:auto;display:block}
 /* 未填答完畢的部位 → 淡黃(比照 m-dim-tile-todo);選中時稍深保持可辨識 */
 .m-dimv-part.is-todo{background:#fff8d5;border-color:#e8d48a}
 .m-dimv-part.is-todo.is-cur{background:#fff1ad;border-color:#d9c470}
@@ -1455,6 +1461,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
   .m-sv-subparts{grid-template-columns:repeat(2,1fr)}
   /* 單卡部位(耳/口等)：卡片跨滿兩欄、條件列排兩欄 */
   .m-sv-subpart-master{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start}
+  /* 辣度總覽：桌機四欄並排(完整/大辣/中辣/小辣 一眼比較) */
+  .m-spov-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .m-sv-subpart:only-child{grid-column:1/-1}
   /* ===== 維度視角 4 欄桌機：維度｜部位導覽｜條件欄｜整體動靜預覽 ===== */
   /* 完全比照自我評分：margin-top:-20 抵銷 tab-page 上 padding(內容貼頂、版面上提)；
