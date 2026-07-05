@@ -456,30 +456,49 @@ function renderObsReport() {
 
 // ---------- 辣度總覽：四辣度(完整/大辣/中辣/小辣)各算一份矩陣，橫排「辣度｜係數圖｜係數總覽圖」一眼比較 ----------
 // 純預覽:evalDimAt 逐維算指定辣度(吃清洗後答案、不動全域 data/報告/存檔);未填完維度由圖表既有機制呈現(灰/未填完)。
-// 辣度總覽 係數圖版面(Mike 在 spov_tuner 調定並匯出):雷達本體縮放+平移、維度名/係數字自訂位置與字級
-const SPOV_RADAR_CFG = {
-  scale: 1.16, offX: 0, offY: 8, nameFs: 14, numFs: 15.5,
+// 辣度總覽 三張圖版面(Mike 在 spov_tuner/spov_tuner2 調定並匯出):本體縮放+平移、文字自訂位置/字級/顯示
+const SPOV_RADAR_CFG = {   // 係數圖
+  scale: 1.16, offX: 0, offY: 8, fs: { dn: 14, dv: 15.5 }, hideRole: {},
   moved: {
     "dn-0":{x:220.3,y:146.1},"dn-1":{x:242.1,y:165.7},"dn-2":{x:262.4,y:195.8},"dn-3":{x:266.8,y:238},"dn-4":{x:253.6,y:270.8},"dn-5":{x:224.8,y:295.4},"dn-6":{x:200,y:309.1},"dn-7":{x:174.3,y:297.7},"dn-8":{x:146.5,y:273.5},"dn-9":{x:132.4,y:235.1},"dn-10":{x:136.4,y:198.6},"dn-11":{x:158.2,y:166.2},"dn-12":{x:179.9,y:146.5},
     "dv-0":{x:235.8,y:75.1},"dv-1":{x:303.3,y:115.1},"dv-2":{x:338.8,y:172.1},"dv-3":{x:349,y:249.6},"dv-4":{x:320,y:320.5},"dv-5":{x:271.5,y:365.1},"dv-6":{x:199.6,y:385.6},"dv-7":{x:130.6,y:366.1},"dv-8":{x:81.7,y:322},"dv-9":{x:50.4,y:244.7},"dv-10":{x:60.1,y:168.8},"dv-11":{x:100.2,y:112.2},"dv-12":{x:164.7,y:74.3}
   }
 };
-// 把 spov_tuner 調定的版面套到係數圖 SVG:本體(非文字)進縮放/平移群組;dn/dv 文字移到自訂座標＋字級
-function _applySpovRadarLayout(svgStr, cfg) {
+const SPOV_R3_CFG = {   // 動靜圖:外圍係數(dv)刪除,維度名(dn)+圖內動靜數字(pole)自訂
+  scale: 1.16, offX: 0, offY: 8, fs: { dn: 14, dv: 15.5, pole: 14 }, hideRole: { dv: true },
+  moved: {
+    "dn-0":{x:219.2,y:153.8},"dn-1":{x:235.5,y:172.6},"dn-2":{x:251.6,y:202.3},"dn-3":{x:255.1,y:235},"dn-4":{x:241,y:264.6},"dn-5":{x:220.4,y:287.9},"dn-6":{x:200,y:302.6},"dn-7":{x:179.6,y:289.7},"dn-8":{x:154.9,y:267.2},"dn-9":{x:145.6,y:235.5},"dn-10":{x:151.2,y:203.8},"dn-11":{x:166.8,y:173.2},"dn-12":{x:182.3,y:153.7},
+    "pole-0":{x:237.7,y:75.3},"pole-1":{x:301.2,y:111.8},"pole-2":{x:332,y:178},"pole-3":{x:354.2,y:244.8},"pole-4":{x:328.4,y:316.1},"pole-5":{x:277.7,y:363.3},"pole-6":{x:199.4,y:384.7},"pole-7":{x:130.1,y:363.8},"pole-8":{x:72.2,y:314.4},"pole-9":{x:47.2,y:247.9},"pole-10":{x:57.5,y:172.4},"pole-11":{x:100.8,y:112.3},"pole-12":{x:160.6,y:75.6}
+  }
+};
+const SPOV_COEF_CFG = {   // 係數總覽:整圖縮放+平移,名稱(cn)/數字(cv)自訂位置與字級
+  scale: 1.07, offX: 23, offY: 2, fs: { cn: 14, cv: 15 }, hideRole: {},
+  moved: {
+    "cn-0":{x:65.3,y:15.2},"cn-1":{x:52.2,y:38.9},"cn-2":{x:64.2,y:59.6},"cn-3":{x:64,y:80.2},"cn-4":{x:50.9,y:101.9},"cn-5":{x:51,y:123.8},
+    "cv-0":{x:219.9,y:17.1},"cv-1":{x:216.1,y:38.8},"cv-2":{x:223.5,y:60.2},"cv-3":{x:208.5,y:80.6},"cv-4":{x:251.1,y:100.7},"cv-5":{x:189.8,y:123.2}
+  }
+};
+// 通用:把 spov_tuner 調定的版面套到 SVG。本體(非文字)進縮放/平移群組(繞 viewBox 中心);
+// 有 data-role 的文字設字級(fs[role])、整組隱藏(hideRole[role])、移到自訂座標(moved[key])。
+function _applySpovLayout(svgStr, cfg) {
   try {
     const doc = new DOMParser().parseFromString(svgStr, 'image/svg+xml');
     const svg = doc.documentElement;
     if (svg.querySelector('parsererror')) return svgStr;
     const NS = 'http://www.w3.org/2000/svg';
+    const vb = (svg.getAttribute('viewBox') || '0 0 360 360').split(/\s+/).map(Number);
+    const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
     const body = doc.createElementNS(NS, 'g');
-    body.setAttribute('transform', `translate(${200 + cfg.offX} ${220 + cfg.offY}) scale(${cfg.scale}) translate(-200 -220)`);
+    body.setAttribute('transform', `translate(${cx + (cfg.offX || 0)} ${cy + (cfg.offY || 0)}) scale(${cfg.scale}) translate(${-cx} ${-cy})`);
     const kids = [...svg.children];
     svg.appendChild(body);
     kids.forEach(ch => { if (ch.getAttribute && ch.getAttribute('data-role')) svg.appendChild(ch); else body.appendChild(ch); });
+    const fs = cfg.fs || {}, hideRole = cfg.hideRole || {}, moved = cfg.moved || {};
     svg.querySelectorAll('[data-role]').forEach(t => {
-      const key = t.getAttribute('data-role') + '-' + t.getAttribute('data-i');
-      t.setAttribute('font-size', t.getAttribute('data-role') === 'dn' ? cfg.nameFs : cfg.numFs);
-      const m = cfg.moved[key];
+      const role = t.getAttribute('data-role'), key = role + '-' + t.getAttribute('data-i');
+      if (fs[role] != null) t.setAttribute('font-size', fs[role]);
+      if (hideRole[role]) t.setAttribute('display', 'none');
+      const m = moved[key];
       if (m) { t.setAttribute('x', m.x); t.setAttribute('y', m.y); }
     });
     return new XMLSerializer().serializeToString(svg);
@@ -496,12 +515,14 @@ function renderSpiceOverview() {
     const matrix = [];
     for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
     const p = buildManualReportParts(matrix, { noChartTitle: true, hideRadarCenter: true, coefColorMode: 'byType' });
-    const radar2 = _applySpovRadarLayout(p.radar2Html, SPOV_RADAR_CFG);
+    const radar2 = _applySpovLayout(p.radar2Html, SPOV_RADAR_CFG);
+    const sd = _applySpovLayout(p.sdHtml, SPOV_R3_CFG);
+    const coef = _applySpovLayout(p.coefHtml, SPOV_COEF_CFG);
     return `<div class="m-spov-col">
       <div class="m-spov-title">${lv}</div>
       <div class="m-spov-chart">${radar2}</div>
-      <div class="m-spov-chart">${p.sdHtml}</div>
-      <div class="m-spov-chart">${p.coefHtml}</div>
+      <div class="m-spov-chart">${sd}</div>
+      <div class="m-spov-chart">${coef}</div>
     </div>`;
   }).join('');
   _root.innerHTML = `

@@ -585,6 +585,8 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-spov-title{font-size:16px;color:#3a3228;text-align:center;padding:2px 0 6px;letter-spacing:2px}
 .m-spov-chart{margin-bottom:2px}
 .m-spov-chart svg{width:100%;height:auto;display:block}
+/* 辣度總覽三張圖文字一律黑體(比照調校頁);覆蓋 SVG font-family 屬性 */
+.m-spov-chart svg text{font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Heiti TC","Noto Sans TC",sans-serif}
 /* 未填答完畢的部位 → 淡黃(比照 m-dim-tile-todo);選中時稍深保持可辨識 */
 .m-dimv-part.is-todo{background:#fff8d5;border-color:#e8d48a}
 .m-dimv-part.is-todo.is-cur{background:#fff1ad;border-color:#d9c470}
