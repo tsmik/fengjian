@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>辣度總覽 動靜圖＋係數總覽 調校</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#efe9df;color:#3a3228}
+  .bar{position:sticky;top:0;z-index:10;background:#fbf8f2;border-bottom:1px solid #d8cdb8;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px}
+  .bar b{font-size:14px;color:#3a3228}
+  .bar label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .bar input[type=range]{width:110px}
+  .bar .val{min-width:32px;color:#8a7f70;font-variant-numeric:tabular-nums}
+  .bar button{font:inherit;font-size:13px;border:1px solid #c9bda3;background:#fff;border-radius:8px;padding:5px 11px;cursor:pointer}
+  .bar button.primary{background:#3a3228;color:#fff;border-color:#3a3228}
+  .bar button.warn{border-color:#b06a52;color:#b06a52}
+  .sep{width:1px;height:20px;background:#d8cdb8}
+  .panel{padding:12px 8px 22px;border-bottom:2px dashed #d0c4ab}
+  .stageWrap{display:flex;justify-content:center;padding-top:12px}
+  .stage{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding:10px}
+  .stage svg{display:block;width:100%;height:auto}
+  .stage [data-role]{cursor:move}
+  .stage [data-role]:hover{fill-opacity:1 !important;paint-order:stroke;stroke:#ffd27a;stroke-width:3px}
+  .stage [data-hide="1"]{display:none}
+  .out{width:100%;max-width:520px;height:96px;margin:10px auto 0;display:block;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;background:#fff}
+  .tip{font-size:12px;color:#8a7f70;padding:2px 12px 0;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- ===== 動靜圖 ===== -->
+<div class="panel" id="p3">
+  <div class="bar">
+    <b>動靜圖</b>
+    <label>雷達大小 <input type="range" id="p3_scale" min="40" max="180" value="125"><span class="val" id="p3_scaleV">125%</span></label>
+    <label>左右 <input type="range" id="p3_offx" min="-140" max="140" value="0"><span class="val" id="p3_offxV">0</span></label>
+    <label>上下 <input type="range" id="p3_offy" min="-140" max="140" value="8"><span class="val" id="p3_offyV">8</span></label>
+    <div class="sep"></div>
+    <label>維度名字 <input type="range" id="p3_dnfs" min="6" max="40" step="0.5" value="14"><span class="val" id="p3_dnfsV">14</span></label>
+    <label>圖內數字 <input type="range" id="p3_polefs" min="6" max="40" step="0.5" value="12"><span class="val" id="p3_polefsV">12</span></label>
+    <div class="sep"></div>
+    <label><input type="checkbox" id="p3_showdn" checked> 維度名</label>
+    <label><input type="checkbox" id="p3_showpole" checked> 圖內數字</label>
+    <label><input type="checkbox" id="p3_showdv"> 外圍係數</label>
+    <div class="sep"></div>
+    <button class="warn" id="p3_reset">全部重設</button>
+    <button id="p3_apply">套用貼上</button>
+    <button class="primary" id="p3_export">匯出設定</button>
+  </div>
+  <div class="tip">動靜圖:維度名預設＝係數圖位置(可各自拖曳);外圍係數預設刪除;「圖內數字」(動/靜字＋數量)可調字級與拖曳位置。雙擊某字＝隱藏。自動保存。</div>
+  <div class="stageWrap"><div class="stage" id="p3_stage"></div></div>
+  <textarea class="out" id="p3_out" placeholder="匯出會顯示於此;貼上設定後按「套用貼上」還原。"></textarea>
+</div>
+
+<!-- ===== 係數總覽 ===== -->
+<div class="panel" id="pc">
+  <div class="bar">
+    <b>係數總覽</b>
+    <label>圖大小 <input type="range" id="pc_scale" min="40" max="200" value="100"><span class="val" id="pc_scaleV">100%</span></label>
+    <label>左右 <input type="range" id="pc_offx" min="-160" max="160" value="0"><span class="val" id="pc_offxV">0</span></label>
+    <label>上下 <input type="range" id="pc_offy" min="-160" max="160" value="0"><span class="val" id="pc_offyV">0</span></label>
+    <div class="sep"></div>
+    <label>名稱字 <input type="range" id="pc_cnfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="pc_cnfsV">10.8</span></label>
+    <label>數字字 <input type="range" id="pc_cvfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="pc_cvfsV">10.8</span></label>
+    <div class="sep"></div>
+    <label><input type="checkbox" id="pc_showcn" checked> 係數名稱</label>
+    <label><input type="checkbox" id="pc_showcv" checked> 係數數字</label>
+    <div class="sep"></div>
+    <button class="warn" id="pc_reset">全部重設</button>
+    <button id="pc_apply">套用貼上</button>
+    <button class="primary" id="pc_export">匯出設定</button>
+  </div>
+  <div class="tip">係數總覽:「圖大小」縮放整張子彈圖;係數名稱、數字可各自拖曳並調字級。雙擊某字＝隱藏。自動保存。</div>
+  <div class="stageWrap"><div class="stage" id="pc_stage"></div></div>
+  <textarea class="out" id="pc_out" placeholder="匯出會顯示於此;貼上設定後按「套用貼上」還原。"></textarea>
+</div>
+
+<script type="module">
+const M = await import('./js/report_chart.js?v=' + Date.now());
+const rnd=(n,f)=>Array.from({length:n},(_,i)=>f(i));
+const CELL_W = Math.max(80, Math.round((window.innerWidth - 2*4 - 3*6) / 4));
+const SVGNS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+
+// 係數圖維度名位置(讓動靜圖維度名起點一致)
+const SPOV_DN={"dn-0":{x:220.3,y:146.1},"dn-1":{x:242.1,y:165.7},"dn-2":{x:262.4,y:195.8},"dn-3":{x:266.8,y:238},"dn-4":{x:253.6,y:270.8},"dn-5":{x:224.8,y:295.4},"dn-6":{x:200,y:309.1},"dn-7":{x:174.3,y:297.7},"dn-8":{x:146.5,y:273.5},"dn-9":{x:132.4,y:235.1},"dn-10":{x:136.4,y:198.6},"dn-11":{x:158.2,y:166.2},"dn-12":{x:179.9,y:146.5}};
+
+// 範例資料
+const COEFF=rnd(13,i=>+(0.12+0.5*Math.abs(Math.sin(i*1.3))).toFixed(2));
+const ST=rnd(13,i=>((i*3+2)%9)), DY=rnd(13,i=>9-((i*3+2)%9));
+const COEFV={preV:0.4,bossV:0.42,mgrV:0.38,luckV:0.5,postV:0.33,totV:0.41};
+
+// —— 通用調校面板 ——
+function makePanel(P){
+  const stage=$(P.stage), out=$(P.out);
+  let state, anchors={};
+  const save=()=>{try{localStorage.setItem(P.lsKey,JSON.stringify(state));}catch(e){}};
+  const load=()=>{try{const s=localStorage.getItem(P.lsKey);if(s)return JSON.parse(s);}catch(e){}return null;};
+  function norm(s){ s=Object.assign({},P.defaults,s); s.fs=Object.assign({},P.defaults.fs,s.fs||{});
+    s.moved=s.moved||{}; s.hidden=Array.isArray(s.hidden)?Object.fromEntries(s.hidden.map(k=>[k,true])):(s.hidden||{});
+    s.hideRole=Object.assign({},P.defaults.hideRole,s.hideRole||{}); return s; }
+  function bodyTransform(svg){
+    const b=svg.querySelector('#body'); if(!b) return; const vb=svg.viewBox.baseVal;
+    const cx=vb.x+vb.width/2, cy=vb.y+vb.height/2, s=state.scale/100;
+    b.setAttribute('transform',`translate(${cx+state.offX} ${cy+state.offY}) scale(${s}) translate(${-cx} ${-cy})`);
+  }
+  function svgPoint(svg,x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse());}
+  function bindDrag(t){
+    t.addEventListener('pointerdown',e=>{e.preventDefault();const svg=stage.querySelector('svg');
+      const st0=svgPoint(svg,e.clientX,e.clientY);const x0=+t.getAttribute('x'),y0=+t.getAttribute('y');
+      const key=t.getAttribute('data-role')+'-'+t.getAttribute('data-i');t.setPointerCapture(e.pointerId);
+      const mv=ev=>{const p=svgPoint(svg,ev.clientX,ev.clientY);const nx=+(x0+p.x-st0.x).toFixed(1),ny=+(y0+p.y-st0.y).toFixed(1);
+        t.setAttribute('x',nx);t.setAttribute('y',ny);state.moved[key]={x:nx,y:ny};};
+      const up=()=>{t.releasePointerCapture(e.pointerId);t.removeEventListener('pointermove',mv);t.removeEventListener('pointerup',up);save();};
+      t.addEventListener('pointermove',mv);t.addEventListener('pointerup',up);});
+    t.addEventListener('dblclick',e=>{e.preventDefault();const key=t.getAttribute('data-role')+'-'+t.getAttribute('data-i');
+      state.hidden[key]=!state.hidden[key];t.dataset.hide=state.hidden[key]?'1':'';save();});
+  }
+  function render(){
+    stage.style.width=P.boxW+'px';
+    stage.innerHTML=P.build(state);
+    const svg=stage.querySelector('svg');
+    // 分層:雷達/圖本體 body(可縮放) + 文字標籤(在上)
+    const body=document.createElementNS(SVGNS,'g'); body.id='body';
+    const kids=[...svg.children]; svg.appendChild(body);
+    kids.forEach(ch=>{ if(ch.getAttribute && ch.getAttribute('data-role')) svg.appendChild(ch); else body.appendChild(ch); });
+    svg.querySelectorAll('[data-role]').forEach(t=>{
+      const role=t.getAttribute('data-role'), key=role+'-'+t.getAttribute('data-i');
+      if(!anchors[key]) anchors[key]={x:+t.getAttribute('x'),y:+t.getAttribute('y')};
+      if(state.fs[role]!=null) t.setAttribute('font-size',state.fs[role]);
+      if(state.hideRole[role]||state.hidden[key]) t.dataset.hide='1';
+      const m=state.moved[key]; if(m){t.setAttribute('x',m.x);t.setAttribute('y',m.y);}
+      bindDrag(t);
+    });
+    bodyTransform(svg);
+  }
+  function sync(){ P.controls.forEach(c=>{ const el=$(c.id); if(!el) return;
+    if(c.type==='range'){ const v=c.get(state); el.value=v; const lab=$(c.id+'V'); if(lab) lab.textContent=v+(c.suffix||''); }
+    else if(c.type==='check'){ el.checked=c.get(state); } }); }
+  // 綁定控制項
+  P.controls.forEach(c=>{ const el=$(c.id); if(!el) return;
+    if(c.type==='range'){ el.addEventListener('input',()=>{ c.set(state,+el.value); const lab=$(c.id+'V'); if(lab) lab.textContent=el.value+(c.suffix||'');
+      if(c.live) c.live(stage,state); else render(); save(); }); }
+    else if(c.type==='check'){ el.addEventListener('change',()=>{ c.set(state,el.checked); render(); save(); }); } });
+  $(P.reset).addEventListener('click',()=>{ if(!confirm('確定把此圖所有調整歸零?'))return; state=norm(JSON.parse(JSON.stringify(P.seedBlank||{}))); anchors={}; try{localStorage.removeItem(P.lsKey);}catch(e){} sync(); render(); });
+  $(P.apply).addEventListener('click',()=>{ try{ state=norm(JSON.parse(out.value)); anchors={}; sync(); render(); save(); }catch(e){ alert('格式不正確'); } });
+  $(P.export).addEventListener('click',()=>{ out.value=JSON.stringify({scale:state.scale,offX:state.offX,offY:state.offY,fs:state.fs,hideRole:state.hideRole,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1); out.focus(); out.select(); });
+
+  state=norm(load()||P.seed||{}); sync(); render();
+}
+
+// —— 動靜圖面板 ——
+makePanel({
+  stage:'p3_stage', out:'p3_out', reset:'p3_reset', apply:'p3_apply', export:'p3_export',
+  lsKey:'spov_tuner_r3', boxW:CELL_W,
+  defaults:{ scale:125, offX:0, offY:8, fs:{dn:14,dv:15.5,pole:12}, hideRole:{dv:true}, moved:{}, hidden:{} },
+  seed:{ scale:125, offX:0, offY:8, fs:{dn:14,dv:15.5,pole:12}, hideRole:{dv:true}, moved:Object.assign({},SPOV_DN), hidden:{} },
+  seedBlank:{ hideRole:{dv:true} },
+  build:(s)=>M.buildRadar3SVG({dimStatic:ST,dimActive:DY,dimCoeff:COEFF,viewBox:'20 40 360 360',hideCenter:true,fsPole:s.fs.pole}),
+  controls:[
+    {id:'p3_scale',type:'range',suffix:'%',get:s=>s.scale,set:(s,v)=>s.scale=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'p3_offx',type:'range',get:s=>s.offX,set:(s,v)=>s.offX=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'p3_offy',type:'range',get:s=>s.offY,set:(s,v)=>s.offY=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'p3_dnfs',type:'range',get:s=>s.fs.dn,set:(s,v)=>s.fs.dn=v,live:(st,s)=>st.querySelectorAll('[data-role=dn]').forEach(t=>t.setAttribute('font-size',s.fs.dn))},
+    {id:'p3_polefs',type:'range',get:s=>s.fs.pole,set:(s,v)=>s.fs.pole=v},
+    {id:'p3_showdn',type:'check',get:s=>!s.hideRole.dn,set:(s,v)=>s.hideRole.dn=!v},
+    {id:'p3_showpole',type:'check',get:s=>!s.hideRole.pole,set:(s,v)=>s.hideRole.pole=!v},
+    {id:'p3_showdv',type:'check',get:s=>!s.hideRole.dv,set:(s,v)=>s.hideRole.dv=!v},
+  ]
+});
+
+// —— 係數總覽面板 ——
+makePanel({
+  stage:'pc_stage', out:'pc_out', reset:'pc_reset', apply:'pc_apply', export:'pc_export',
+  lsKey:'spov_tuner_coef', boxW:CELL_W,
+  defaults:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
+  seed:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
+  seedBlank:{},
+  build:(s)=>M.buildCoefSVG({preV:COEFV.preV,bossV:COEFV.bossV,mgrV:COEFV.mgrV,luckV:COEFV.luckV,postV:COEFV.postV,totV:COEFV.totV,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,totLabelCol:'#5a4f45',heights:{'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9},groupLine:{top:'先天',bot:'主管',color:'#8E4B50'}}),
+  controls:[
+    {id:'pc_scale',type:'range',suffix:'%',get:s=>s.scale,set:(s,v)=>s.scale=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'pc_offx',type:'range',get:s=>s.offX,set:(s,v)=>s.offX=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'pc_offy',type:'range',get:s=>s.offY,set:(s,v)=>s.offY=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'pc_cnfs',type:'range',get:s=>s.fs.cn,set:(s,v)=>s.fs.cn=v,live:(st,s)=>st.querySelectorAll('[data-role=cn]').forEach(t=>t.setAttribute('font-size',s.fs.cn))},
+    {id:'pc_cvfs',type:'range',get:s=>s.fs.cv,set:(s,v)=>s.fs.cv=v,live:(st,s)=>st.querySelectorAll('[data-role=cv]').forEach(t=>t.setAttribute('font-size',s.fs.cv))},
+    {id:'pc_showcn',type:'check',get:s=>!s.hideRole.cn,set:(s,v)=>s.hideRole.cn=!v},
+    {id:'pc_showcv',type:'check',get:s=>!s.hideRole.cv,set:(s,v)=>s.hideRole.cv=!v},
+  ]
+});
+</script>
+</body>
+</html>

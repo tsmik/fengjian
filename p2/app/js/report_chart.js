@@ -176,8 +176,8 @@ export function buildCoefSVG(opts){
   s+=`<rect x="${X0}" y="${cTop}" width="${TRACKW}" height="${(cBot-cTop).toFixed(1)}" rx="4" fill="#f3eee4"/>`;
   ROWS.forEach((r,i)=>{const h=heights[i],y=ys[i],cyy=y+h/2;
     if(r.v!=null)s+=`<path d="${_bR(X0,y,xOf(r.v)-X0,h,Math.min(3,h/2))}" fill="${r.col}" fill-opacity="${COEF_OP}"/>`;
-    s+=`<text x="${labelX(r.name).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="end" dominant-baseline="central" fill="${(r.name==='總係數'&&opts.totLabelCol)?opts.totLabelCol:r.col}" font-weight="700">${r.name}</text>`;
-    s+=`<text x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
+    s+=`<text data-role="cn" data-i="${i}" x="${labelX(r.name).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" text-anchor="end" dominant-baseline="central" fill="${(r.name==='總係數'&&opts.totLabelCol)?opts.totLabelCol:r.col}" font-weight="700">${r.name}</text>`;
+    s+=`<text data-role="cv" data-i="${i}" x="${(xOf(r.v)+6).toFixed(1)}" y="${cyy.toFixed(1)}" font-size="${FS}" dominant-baseline="central" fill="${r.col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(r.v==null?'--':r.v.toFixed(2))}</text>`;});
   if(totV!=null)s+=`<line x1="${tEdge.toFixed(1)}" y1="${(cTop-LP).toFixed(1)}" x2="${tEdge.toFixed(1)}" y2="${(cBot+LP).toFixed(1)}" stroke="${R0_TOT}" stroke-width="1.5"/>`;
   // 群組線：top..bot 幾列在左側用一條直線連起來(色＝先天)，凸顯「先天＝老闆+主管」這一群
   // 線位於「字」與「圖(條)」之間的正中：gx=X0-4＝(標籤右緣 X0-8 與 條左緣 X0) 的中點 → 左右等寬；不加上下凸出小線
@@ -308,12 +308,12 @@ export function buildRadar3SVG(opts){
   const rInner=rIn+0.25*H, rOuter=rIn+0.75*H;
   for(let i=0;i<13;i++){if(coeff[i]==null)continue;const dm=CORE_DIMS[i]||{};const s=+st[i]||0,d=+dy[i]||0;const mid=(spans[i][0]+spans[i][1])/2;
     const sCh=(dm.aT==='靜')?dm.a:dm.b, aCh=(dm.aT==='靜')?dm.b:dm.a;
-    if(s>d){const p=f(mid,rInner);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsPole*0.35).toFixed(1)}" font-size="${fsPole}" text-anchor="middle" fill="${R3_Sd}" font-weight="700">${esc(sCh)}${s}</text>`;}
-    else{const p=f(mid,rOuter);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsPole*0.35).toFixed(1)}" font-size="${fsPole}" text-anchor="middle" fill="${R3_Ad}" font-weight="700">${esc(aCh)}${d}</text>`;}}
+    if(s>d){const p=f(mid,rInner);svg+=`<text data-role="pole" data-i="${i}" x="${p[0].toFixed(1)}" y="${(p[1]+fsPole*0.35).toFixed(1)}" font-size="${fsPole}" text-anchor="middle" fill="${R3_Sd}" font-weight="700">${esc(sCh)}${s}</text>`;}
+    else{const p=f(mid,rOuter);svg+=`<text data-role="pole" data-i="${i}" x="${p[0].toFixed(1)}" y="${(p[1]+fsPole*0.35).toFixed(1)}" font-size="${fsPole}" text-anchor="middle" fill="${R3_Ad}" font-weight="700">${esc(aCh)}${d}</text>`;}}
   // 維度名 + 係數
   for(let i=0;i<13;i++){const dm=CORE_DIMS[i]||{};const dp=R3_DIMPOS[i];const lp=f(dp[0],rIn*dp[1]);const c=Math.sin(rad(dp[0]));const an=c>0.25?'start':c<-0.25?'end':'middle';const col=DIMTXT[i];const nm=dm.dn||'';const tl=(nm.length*fsName).toFixed(1);const cstr=(coeff[i]==null?'--':(+coeff[i]||0).toFixed(2));const tlAttr=(coeff[i]==null?'':` textLength="${tl}" lengthAdjust="spacingAndGlyphs"`);
-    svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${esc(nm)}</text>`
-      +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+fsName+1.2).toFixed(1)}" font-size="${fsNum}"${tlAttr} text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${cstr}</text>`;}
+    svg+=`<text data-role="dn" data-i="${i}" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${esc(nm)}</text>`
+      +`<text data-role="dv" data-i="${i}" x="${lp[0].toFixed(1)}" y="${(lp[1]+fsName+1.2).toFixed(1)}" font-size="${fsNum}"${tlAttr} text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${cstr}</text>`;}
   // 中央 先天/運氣/後天 文字（深米色）
   if(!opts.hideCenter)R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsCore*0.3).toFixed(1)}" font-size="${fsCore}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
   // 標題（畫在預設 viewBox 上方留白處，貼近圖頂、字級＝維度字；僅桌機用，手機版 viewBox 較窄不傳）
