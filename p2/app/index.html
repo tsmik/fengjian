@@ -447,7 +447,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-spice-float .m-spice-opt{font-size:13px;padding:5px 13px;min-height:0;background:#5a5147;color:#e8e0d2;border-color:#6a5f50}
 .m-spice-float .m-spice-opt.is-on{background:#cdb892;border-color:#cdb892;color:#3a2f24}
 /* 兵法報告：姓名+虛歲 與 流年 sticky（滑動時固定於 .m-main 頂）*/
-.m-obs-report-stickyhead{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:2px}
+.m-obs-report-stickyhead{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:2px;padding-bottom:2px}
 body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 /* 兵法報告：底部導覽鈕（辣度總覽/參數分析，深色反白，比照筆記按鈕字級）*/
 .m-report-allbtn-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;width:fit-content;max-width:100%;margin:0 auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
@@ -582,8 +582,9 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 /* ===== 辣度總覽:四辣度橫排(辣度｜係數圖｜係數總覽圖);手機 2 欄、桌機 @media 4 欄 ===== */
 .m-spov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:start;padding:4px}
 .m-spov-col{background:#fff;border:1px solid #e8dfce;border-radius:10px;padding:10px 10px 6px;min-width:0}
-.m-spov-title{font-size:16px;color:#3a3228;text-align:center;padding:2px 0 6px;letter-spacing:2px}
-.m-spov-chart{margin-bottom:2px}
+.m-spov-title{font-size:16px;color:#fff;background:#9c8862;text-align:center;padding:6px 0;letter-spacing:2px;border-radius:10px 10px 0 0;margin:-10px -10px 10px}
+.m-spov-chart{margin-bottom:16px}
+.m-spov-chart:last-child{margin-bottom:0}
 .m-spov-chart svg{width:100%;height:auto;display:block}
 /* 辣度總覽三張圖文字一律黑體(比照調校頁);覆蓋 SVG font-family 屬性 */
 .m-spov-chart svg text{font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Heiti TC","Noto Sans TC",sans-serif}
