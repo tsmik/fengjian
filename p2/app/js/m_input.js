@@ -465,7 +465,7 @@ function renderSpiceOverview() {
   const cols = LEVELS.map(lv => {
     const matrix = [];
     for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
-    const p = buildManualReportParts(matrix, { noChartTitle: true });
+    const p = buildManualReportParts(matrix, { noChartTitle: true, hideRadarCenter: true });
     return `<div class="m-spov-col">
       <div class="m-spov-title">${lv}</div>
       <div class="m-spov-chart">${p.radar2Html}</div>

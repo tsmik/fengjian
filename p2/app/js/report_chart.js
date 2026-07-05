@@ -55,7 +55,7 @@ export function buildRadar2SVG(opts){
   [[0,1],[3*STEP,0.4],[6*STEP,1],[9*STEP,1]].forEach(([a,op])=>{const p=f(a,rIn);svg+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#fff" stroke-opacity="${op}" stroke-width="1.5"/>`;});
   svg+=`<polygon points="${innerPoly}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
   function lab2(x,y,name,val,fs,col){const tl=(name.length*fs).toFixed(1);const vstr=(val==null?'--':(+val||0).toFixed(2));const tlAttr=(val==null?'':` textLength="${tl}" lengthAdjust="spacingAndGlyphs"`);svg+=`<text x="${x.toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${fs}" text-anchor="middle" fill="${col}" font-weight="700">${name}</text>`+`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" font-size="${fs}"${tlAttr} text-anchor="middle" fill="${col}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${vstr}</text>`;}
-  QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.nm,q.v,q.bs,q.tc);});
+  if(!opts.hideCenter)QUAD.forEach(q=>{const p=f(q.bd,rIn*q.bf);lab2(p[0],p[1],q.nm,q.v,q.bs,q.tc);});
   // 係數環：bar 由 rIn 放射、底色＝動/靜色、透明度與分數反比
   const OP_LOW=0.5,OP_HIGH=0.70;
   DIM.forEach((dm,i)=>{if(dm.c==null)return;const[a0,a1]=spans[i];const frac=Math.min(1,dm.c/COEF_MAX);const rT=rIn+frac*H;
@@ -74,9 +74,9 @@ export function buildRadar2SVG(opts){
     const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const rT=(dm.c==null?rIn:rIn+Math.min(1,dm.c/COEF_MAX)*H);const ncol=(dm.c==null)?mcol:((rT>=rr)?'#fff':mcol);
     svg+=`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(dm.c==null?'--':dm.c.toFixed(2))}</text>`;});
   // 先天框（#854F51，字級同運氣）
-  {const p=f(92.4,rIn*0.743);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
+  if(!opts.hideCenter){const p=f(92.4,rIn*0.743);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
   // 總係數（中央 13 邊形 #494541 白字）
-  {const tg=spans.map(ss=>PS(f(ss[0],22))).join(' ');
+  if(!opts.hideCenter){const tg=spans.map(ss=>PS(f(ss[0],22))).join(' ');
    svg+=`<polygon points="${tg}" fill="#494541" fill-opacity="0.92"/>`
      +`<text x="${cx}" y="${(cy-3).toFixed(1)}" font-size="9" text-anchor="middle" fill="#fff">總係數</text>`
      +`<text x="${cx}" y="${(cy+9).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="#fff" font-family="'Helvetica Neue',Arial,sans-serif">${(totV==null?'--':totV.toFixed(2))}</text>`;}
@@ -311,7 +311,7 @@ export function buildRadar3SVG(opts){
     svg+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${fsName}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${esc(nm)}</text>`
       +`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+fsName+1.2).toFixed(1)}" font-size="${fsNum}"${tlAttr} text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="600">${cstr}</text>`;}
   // 中央 先天/運氣/後天 文字（深米色）
-  R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsCore*0.3).toFixed(1)}" font-size="${fsCore}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
+  if(!opts.hideCenter)R3_CORELABELS.forEach(([nm,deg,fr])=>{const p=f(deg,rIn*fr);svg+=`<text x="${p[0].toFixed(1)}" y="${(p[1]+fsCore*0.3).toFixed(1)}" font-size="${fsCore}" text-anchor="middle" fill="#8a7440" font-weight="700">${nm}</text>`;});
   // 標題（畫在預設 viewBox 上方留白處，貼近圖頂、字級＝維度字；僅桌機用，手機版 viewBox 較窄不傳）
   if(opts.title){svg+=`<text x="${opts.titleX!=null?opts.titleX:36}" y="36" font-size="${fsName}" text-anchor="start" fill="#5a4f45" font-weight="700" letter-spacing="1">${esc(opts.title)}</text>`;}
   const VB=opts.viewBox||'0 -34 400 458'; // 手機版傳 "20 40 360 360" 使 13 邊形與 radar2 同大
