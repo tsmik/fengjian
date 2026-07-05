@@ -369,14 +369,12 @@ function _buildObsLiunianRow(ln) {
 function _renderObsReportShareRow() {
   return `
     <div class="m-report-link-wrap" style="padding:20px 16px 8px">
-      <div class="m-report-link-row">
-        <button class="m-report-link-btn" data-obspng="1">分享表格報告</button>
-        <button class="m-report-link-btn" data-obscharts="1">分享圖表</button>
-        <button class="m-report-link-btn" data-obsrc="1">分享表格報告＋圖表</button>
-      </div>
-      <div class="m-report-nav-row">
-        <button class="m-report-nav-btn" data-gonav="spiceov">辣度總覽</button>
-        <button class="m-report-nav-btn" data-gonav="sens">參數分析</button>
+      <div class="m-report-allbtn-row">
+        <button class="m-report-allbtn" data-obspng="1">分享表格報告</button>
+        <button class="m-report-allbtn" data-obscharts="1">分享圖表</button>
+        <button class="m-report-allbtn" data-obsrc="1">分享表格報告＋圖表</button>
+        <button class="m-report-allbtn" data-gonav="spiceov">辣度總覽</button>
+        <button class="m-report-allbtn" data-gonav="sens">參數分析</button>
       </div>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>`;
@@ -391,10 +389,11 @@ function _applySavedSpiceOnce() {
   _spiceLoaded = true;
   const ud = window.__userData || {};
   if (ud.spice === '完整' || ud.spice === '大辣' || ud.spice === '中辣' || ud.spice === '小辣') setSpice(ud.spice);
+  else setSpice('大辣');   // 從未選取 → 報告預設大辣
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-float"><span class="m-spice-float-ico">🌶️</span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
+  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
@@ -764,7 +763,7 @@ function renderDimMode() {
     const selLabel = DIM_PART_LABELS[DIM_PART_ORDER.indexOf(selPi)];
     const selCr = condResults[di] && condResults[di][selPi];
     const desc = _dimPartThreshDesc(selCr, dim);
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span>${desc ? `<span class="m-dimv-partexp">${escapeHtml(desc)}</span>` : ''}<button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span>${desc ? `<span class="m-dimv-partexp">${escapeHtml(desc)}</span>` : ''}<button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
     let body;
     if (!selCr || selCr.threshold === '無規則') body = `<div class="m-dim-part-content m-dim-empty">（此部位對該維度無規則）</div>`;
     else body = renderDimPartBody(di, selPi, selLabel);
@@ -1118,7 +1117,7 @@ function renderPartMode() {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
     // 條件欄頂：sticky 部位名(20px) + 說明字 + 最右紅點圖例
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
