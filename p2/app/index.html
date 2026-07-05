@@ -453,6 +453,10 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-report-allbtn-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;width:fit-content;max-width:100%;margin:0 auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .m-report-allbtn{flex:0 0 auto;white-space:nowrap;font-family:inherit;font-size:15px;letter-spacing:2px;color:#fff;background:#3a3228;border:none;border-radius:18px;padding:11px 26px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
 .m-report-allbtn:active{background:#2c251d}
+.m-report-allbtn.is-active{background:#cdb892;color:#3a2f24}
+/* 報告頁底部:辣度總覽四圖 滑出/滑入面板 */
+.m-report-spov-panel{max-height:0;overflow:hidden;transition:max-height .45s ease;padding:0 4px}
+.m-report-spov-panel.is-open{padding:8px 4px 20px}
 /* 維度視角第4欄 辣度模擬選擇器 */
 .m-dimv-pv-spice{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
 .m-dimv-pv-spice-title{font-size:13px;color:#6b5f50;font-weight:600;letter-spacing:1px}

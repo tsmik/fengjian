@@ -373,11 +373,12 @@ function _renderObsReportShareRow() {
         <button class="m-report-allbtn" data-obspng="1">分享表格報告</button>
         <button class="m-report-allbtn" data-obscharts="1">分享圖表</button>
         <button class="m-report-allbtn" data-obsrc="1">分享表格報告＋圖表</button>
-        <button class="m-report-allbtn" data-gonav="spiceov">辣度總覽</button>
+        <button class="m-report-allbtn" data-spovtoggle="1">辣度總覽</button>
         <button class="m-report-allbtn" data-gonav="sens">參數分析</button>
       </div>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
-    </div>`;
+    </div>
+    <div class="m-report-spov-panel" id="m-obs-spov-panel"></div>`;
 }
 // ---------- 辣度選擇器（F3）：報告頁大/中/小辣三選一，per-學員記住 ----------
 let _spiceLoaded = false;
@@ -450,8 +451,23 @@ function renderObsReport() {
     exportMobileCharts({ mode: 'charts', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
   _root.querySelectorAll('[data-obsrc]').forEach(b => b.addEventListener('click', () =>
     exportMobileCharts({ mode: 'all', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
-  // 報告底部導覽鈕：跳辣度總覽 / 參數分析（同 segmented 子 tab 切換）
+  // 報告底部導覽鈕：跳參數分析（同 segmented 子 tab 切換）
   _root.querySelectorAll('[data-gonav]').forEach(b => b.addEventListener('click', () => setInputView(b.dataset.gonav)));
+  // 辣度總覽鈕：在報告最下方滑出/滑入四辣度比較圖(不換頁)
+  _root.querySelectorAll('[data-spovtoggle]').forEach(b => b.addEventListener('click', () => {
+    const panel = _root.querySelector('#m-obs-spov-panel');
+    if (!panel) return;
+    const open = !panel.classList.contains('is-open');
+    if (open) {
+      if (!panel.dataset.built) { panel.innerHTML = _buildSpovGridHtml(); panel.dataset.built = '1'; }
+      panel.classList.add('is-open'); b.classList.add('is-active');
+      panel.style.maxHeight = panel.scrollHeight + 'px';   // 依內容高度滑出(準確順滑)
+      setTimeout(() => { try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 80);
+    } else {
+      panel.classList.remove('is-open'); b.classList.remove('is-active');
+      panel.style.maxHeight = '0px';   // 滑入收合
+    }
+  }));
 }
 
 // ---------- 辣度總覽：四辣度(完整/大辣/中辣/小辣)各算一份矩陣，橫排「辣度｜係數圖｜係數總覽圖」一眼比較 ----------
@@ -515,10 +531,8 @@ function _applySpovLayout(svgStr, cfg) {
   } catch (e) { return svgStr; }
 }
 
-function renderSpiceOverview() {
-  _applySavedSpiceOnce();
-  const seg = renderSegmented();
-  unmountAutoView();
+// 建四辣度並排比較圖(完整/大辣/中辣/小辣 各:係數圖+動靜圖+係數總覽);供辣度總覽頁與報告頁滑出面板共用
+function _buildSpovGridHtml() {
   _obsReportMatrix();   // 先把目前草稿同步進 obsData(與報告同源),evalDimAt 才吃到最新答案
   const LEVELS = ['完整', '大辣', '中辣', '小辣'];
   const cols = LEVELS.map(lv => {
@@ -535,10 +549,17 @@ function renderSpiceOverview() {
       <div class="m-spov-chart">${coef}</div>
     </div>`;
   }).join('');
+  return `<div class="m-spov-grid">${cols}</div>`;
+}
+
+function renderSpiceOverview() {
+  _applySavedSpiceOnce();
+  const seg = renderSegmented();
+  unmountAutoView();
   _root.innerHTML = `
     <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content">
-      <div class="m-spov-grid">${cols}</div>
+      ${_buildSpovGridHtml()}
     </div>`;
   bindEvents();
 }
