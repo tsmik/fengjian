@@ -47,7 +47,7 @@
   <button id="applyBtn">套用貼上設定</button>
   <button id="exportBtn" class="primary">匯出設定</button>
 </div>
-<div id="tip">白框＝四並排實際格寬(固定)。「雷達圖大小」縮放框裡的雷達本體;「雷達左右/上下」整個雷達本體平移。拖曳任何維度名/係數數字定位(各自獨立);雙擊某字＝隱藏/顯示。<b>你的調整會自動保存,重開頁面不會消失。</b>「匯出設定」把文字貼給我;要還原某份設定→把文字貼進右下框、按「套用貼上設定」;「全部重設」歸零並清除保存。<br>建議用電腦操作比較好拖。</div>
+<div id="tip">白框＝四並排實際格寬(固定)。「雷達圖大小」縮放框裡的雷達本體;「雷達左右/上下」整個雷達本體平移。拖曳任何維度名/係數數字定位(各自獨立);<b>雙擊「維度名」＝切換該字直書/橫書</b>;雙擊「係數數字」＝隱藏/顯示。<b>你的調整會自動保存,重開頁面不會消失。</b>「匯出設定」把文字貼給我;要還原某份設定→把文字貼進右下框、按「套用貼上設定」;「全部重設」歸零並清除保存。<br>建議用電腦操作比較好拖。</div>
 <div id="stageWrap"><div id="stage" class="vname"></div></div>
 <textarea id="out" placeholder="按「匯出設定」會顯示目前設定;或把一份設定貼進來、按「套用貼上設定」還原。"></textarea>
 
@@ -80,7 +80,7 @@ let state, anchors={};
 
 function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){} }
 function loadSaved(){ try{ const s=localStorage.getItem(LSKEY); if(s) return JSON.parse(s); }catch(e){} return null; }
-function normalize(s){ s={...DEFAULTS,...s}; s.moved=s.moved||{};
+function normalize(s){ s={...DEFAULTS,...s}; s.moved=s.moved||{}; s.vert=s.vert||{};
   if(Array.isArray(s.hidden)){ const h={}; s.hidden.forEach(k=>h[k]=true); s.hidden=h; } else s.hidden=s.hidden||{};
   if(s.radarScale!=null && s.scale==null) s.scale=s.radarScale;   // 兼容匯出格式
   return s; }
@@ -102,7 +102,6 @@ function applyScale(){
 function render(){
   const svgStr=buildRadar2SVG({...DATA, title:'', viewBox:VB, hideCenter:!state.showCenter, coefColorMode:'byType'});
   stage.style.width=CELL_W+'px';                 // 白框固定＝四並排格寬
-  stage.classList.toggle('vname', state.vname);
   stage.innerHTML=svgStr;
   const svg=stage.querySelector('svg');
   svg.removeAttribute('style');
@@ -121,6 +120,8 @@ function render(){
     if(t.dataset.role==='dv' && !state.showDv) t.dataset.hide='1';
     if(state.hidden[key]) t.dataset.hide='1';
     if(state.moved[key]){ t.setAttribute('x',state.moved[key].x); t.setAttribute('y',state.moved[key].y); }
+    if(t.dataset.role==='dn'){ const v=(state.vert[key]!==undefined)?state.vert[key]:state.vname;
+      t.style.writingMode=v?'vertical-rl':''; t.style.textOrientation=v?'upright':''; t.style.letterSpacing=v?'0.2em':''; }
     bindDrag(t);
   });
   applyScale();
@@ -153,14 +154,20 @@ function bindDrag(t){
     t.addEventListener('pointermove',move); t.addEventListener('pointerup',up);
   });
   t.addEventListener('dblclick',e=>{ e.preventDefault(); const key=t.dataset.role+'-'+t.dataset.i;
-    state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':''; drawConns(); save(); });
+    if(t.dataset.role==='dn'){   // 維度名雙擊＝切換直書/橫書(此一個)
+      const cur=(state.vert[key]!==undefined)?state.vert[key]:state.vname; state.vert[key]=!cur;
+      const v=state.vert[key]; t.style.writingMode=v?'vertical-rl':''; t.style.textOrientation=v?'upright':''; t.style.letterSpacing=v?'0.2em':'';
+    }else{   // 其他文字雙擊＝隱藏/顯示
+      state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':'';
+    }
+    drawConns(); save(); });
 }
 $('size').addEventListener('input',()=>{ state.scale=+$('size').value; $('sizeV').textContent=state.scale+'%'; applyScale(); save(); });
 $('offx').addEventListener('input',()=>{ state.offX=+$('offx').value; $('offxV').textContent=state.offX; applyScale(); save(); });
 $('offy').addEventListener('input',()=>{ state.offY=+$('offy').value; $('offyV').textContent=state.offY; applyScale(); save(); });
 $('nfs').addEventListener('input',()=>{ state.nameFs=+$('nfs').value; $('nfsV').textContent=state.nameFs; stage.querySelectorAll('[data-role="dn"]').forEach(t=>t.setAttribute('font-size',state.nameFs)); save(); });
 $('vfs').addEventListener('input',()=>{ state.numFs=+$('vfs').value; $('vfsV').textContent=state.numFs; stage.querySelectorAll('[data-role="dv"]').forEach(t=>t.setAttribute('font-size',state.numFs)); save(); });
-$('vname').addEventListener('change',e=>{ state.vname=e.target.checked; stage.classList.toggle('vname',state.vname); save(); });
+$('vname').addEventListener('change',e=>{ state.vname=e.target.checked; render(); save(); });
 $('showdn').addEventListener('change',e=>{ state.showDn=e.target.checked; stage.querySelectorAll('[data-role="dn"]').forEach(t=>{ const k='dn-'+t.dataset.i; t.dataset.hide=(!state.showDn||state.hidden[k])?'1':''; }); drawConns(); save(); });
 $('showdv').addEventListener('change',e=>{ state.showDv=e.target.checked; stage.querySelectorAll('[data-role="dv"]').forEach(t=>{ const k='dv-'+t.dataset.i; t.dataset.hide=(!state.showDv||state.hidden[k])?'1':''; }); drawConns(); save(); });
 $('showcenter').addEventListener('change',e=>{ state.showCenter=e.target.checked; render(); save(); });
@@ -170,7 +177,7 @@ $('applyBtn').addEventListener('click',()=>{ const o=$('out'); try{ state=normal
 $('exportBtn').addEventListener('click',()=>{ const o=$('out');
   o.value=JSON.stringify({cellW:CELL_W,radarScale:state.scale,nameFs:state.nameFs,numFs:state.numFs,vname:state.vname,
     offX:state.offX,offY:state.offY,showDn:state.showDn,showDv:state.showDv,showCenter:state.showCenter,
-    moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1);
+    vert:state.vert,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1);
   o.style.display='block'; o.focus(); o.select();
 });
 

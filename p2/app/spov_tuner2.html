@@ -48,7 +48,7 @@
     <button id="p3_apply">套用貼上</button>
     <button class="primary" id="p3_export">匯出設定</button>
   </div>
-  <div class="tip">動靜圖:維度名預設＝係數圖位置(可各自拖曳);外圍係數預設刪除;「圖內數字」(動/靜字＋數量)可調字級與拖曳位置。雙擊某字＝隱藏。自動保存。</div>
+  <div class="tip">動靜圖:維度名預設＝係數圖位置(可各自拖曳);外圍係數預設刪除;「圖內數字」(動/靜字＋數量)可調字級與拖曳位置。<b>雙擊「維度名」＝切換該字直書/橫書</b>;雙擊「圖內數字」＝隱藏。自動保存。</div>
   <div class="stageWrap"><div class="stage" id="p3_stage"></div></div>
   <textarea class="out" id="p3_out" placeholder="匯出會顯示於此;貼上設定後按「套用貼上」還原。"></textarea>
 </div>
@@ -98,7 +98,7 @@ function makePanel(P){
   const save=()=>{try{localStorage.setItem(P.lsKey,JSON.stringify(state));}catch(e){}};
   const load=()=>{try{const s=localStorage.getItem(P.lsKey);if(s)return JSON.parse(s);}catch(e){}return null;};
   function norm(s){ s=Object.assign({},P.defaults,s); s.fs=Object.assign({},P.defaults.fs,s.fs||{});
-    s.moved=s.moved||{}; s.hidden=Array.isArray(s.hidden)?Object.fromEntries(s.hidden.map(k=>[k,true])):(s.hidden||{});
+    s.moved=s.moved||{}; s.vert=s.vert||{}; s.hidden=Array.isArray(s.hidden)?Object.fromEntries(s.hidden.map(k=>[k,true])):(s.hidden||{});
     s.hideRole=Object.assign({},P.defaults.hideRole,s.hideRole||{}); return s; }
   function bodyTransform(svg){
     const b=svg.querySelector('#body'); if(!b) return; const vb=svg.viewBox.baseVal;
@@ -114,8 +114,11 @@ function makePanel(P){
         t.setAttribute('x',nx);t.setAttribute('y',ny);state.moved[key]={x:nx,y:ny};};
       const up=()=>{t.releasePointerCapture(e.pointerId);t.removeEventListener('pointermove',mv);t.removeEventListener('pointerup',up);save();};
       t.addEventListener('pointermove',mv);t.addEventListener('pointerup',up);});
-    t.addEventListener('dblclick',e=>{e.preventDefault();const key=t.getAttribute('data-role')+'-'+t.getAttribute('data-i');
-      state.hidden[key]=!state.hidden[key];t.dataset.hide=state.hidden[key]?'1':'';save();});
+    t.addEventListener('dblclick',e=>{e.preventDefault();const role=t.getAttribute('data-role'),key=role+'-'+t.getAttribute('data-i');
+      if(role==='dn'){ const cur=(state.vert[key]!==undefined)?state.vert[key]:!!state.vname; state.vert[key]=!cur; const v=state.vert[key];
+        t.style.writingMode=v?'vertical-rl':'';t.style.textOrientation=v?'upright':'';t.style.letterSpacing=v?'0.2em':''; }
+      else{ state.hidden[key]=!state.hidden[key];t.dataset.hide=state.hidden[key]?'1':''; }
+      save();});
   }
   function render(){
     stage.style.width=P.boxW+'px';
@@ -123,15 +126,18 @@ function makePanel(P){
     const svg=stage.querySelector('svg');
     // 分層:雷達/圖本體 body(可縮放) + 文字標籤(在上)
     const body=document.createElementNS(SVGNS,'g'); body.id='body';
+    const bodyRoles=P.bodyRoles||[];
     const kids=[...svg.children]; svg.appendChild(body);
-    kids.forEach(ch=>{ if(ch.getAttribute && ch.getAttribute('data-role')) svg.appendChild(ch); else body.appendChild(ch); });
+    kids.forEach(ch=>{ const r=ch.getAttribute&&ch.getAttribute('data-role'); if(r && bodyRoles.indexOf(r)<0) svg.appendChild(ch); else body.appendChild(ch); });
     svg.querySelectorAll('[data-role]').forEach(t=>{
       const role=t.getAttribute('data-role'), key=role+'-'+t.getAttribute('data-i');
       if(!anchors[key]) anchors[key]={x:+t.getAttribute('x'),y:+t.getAttribute('y')};
       if(state.fs[role]!=null) t.setAttribute('font-size',state.fs[role]);
       if(state.hideRole[role]||state.hidden[key]) t.dataset.hide='1';
       const m=state.moved[key]; if(m){t.setAttribute('x',m.x);t.setAttribute('y',m.y);}
-      bindDrag(t);
+      if(role==='dn'){ const v=(state.vert[key]!==undefined)?state.vert[key]:!!state.vname;
+        t.style.writingMode=v?'vertical-rl':'';t.style.textOrientation=v?'upright':'';t.style.letterSpacing=v?'0.2em':''; }
+      if(bodyRoles.indexOf(role)<0) bindDrag(t);
     });
     bodyTransform(svg);
   }
@@ -145,7 +151,7 @@ function makePanel(P){
     else if(c.type==='check'){ el.addEventListener('change',()=>{ c.set(state,el.checked); render(); save(); }); } });
   $(P.reset).addEventListener('click',()=>{ if(!confirm('確定把此圖所有調整歸零?'))return; state=norm(JSON.parse(JSON.stringify(P.seedBlank||{}))); anchors={}; try{localStorage.removeItem(P.lsKey);}catch(e){} sync(); render(); });
   $(P.apply).addEventListener('click',()=>{ try{ state=norm(JSON.parse(out.value)); anchors={}; sync(); render(); save(); }catch(e){ alert('格式不正確'); } });
-  $(P.export).addEventListener('click',()=>{ out.value=JSON.stringify({scale:state.scale,offX:state.offX,offY:state.offY,fs:state.fs,hideRole:state.hideRole,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1); out.focus(); out.select(); });
+  $(P.export).addEventListener('click',()=>{ out.value=JSON.stringify({scale:state.scale,offX:state.offX,offY:state.offY,fs:state.fs,hideRole:state.hideRole,vert:state.vert,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1); out.focus(); out.select(); });
 
   state=norm(load()||P.seed||{}); sync(); render();
 }
@@ -173,7 +179,7 @@ makePanel({
 // —— 係數總覽面板 ——
 makePanel({
   stage:'pc_stage', out:'pc_out', reset:'pc_reset', apply:'pc_apply', export:'pc_export',
-  lsKey:'spov_tuner_coef', boxW:CELL_W,
+  lsKey:'spov_tuner_coef', boxW:CELL_W, bodyRoles:['cv'],   // cv 數字跟著 bar 走(留在本體隨圖縮放,不可拖)
   defaults:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
   seed:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
   seedBlank:{},

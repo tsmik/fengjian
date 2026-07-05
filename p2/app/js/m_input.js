@@ -471,11 +471,10 @@ const SPOV_R3_CFG = {   // 動靜圖:外圍係數(dv)刪除,維度名(dn)+圖內
     "pole-0":{x:237.7,y:75.3},"pole-1":{x:301.2,y:111.8},"pole-2":{x:332,y:178},"pole-3":{x:354.2,y:244.8},"pole-4":{x:328.4,y:316.1},"pole-5":{x:277.7,y:363.3},"pole-6":{x:199.4,y:384.7},"pole-7":{x:130.1,y:363.8},"pole-8":{x:72.2,y:314.4},"pole-9":{x:47.2,y:247.9},"pole-10":{x:57.5,y:172.4},"pole-11":{x:100.8,y:112.3},"pole-12":{x:160.6,y:75.6}
   }
 };
-const SPOV_COEF_CFG = {   // 係數總覽:整圖縮放+平移,名稱(cn)/數字(cv)自訂位置與字級
-  scale: 1.07, offX: 23, offY: 2, fs: { cn: 14, cv: 15 }, hideRole: {},
+const SPOV_COEF_CFG = {   // 係數總覽:整圖縮放+平移,名稱(cn)自訂位置;數字(cv)回歸原始→跟著 bar 走(留在本體隨圖縮放)
+  scale: 1.07, offX: 23, offY: 2, fs: { cn: 14 }, hideRole: {}, bodyRoles: ['cv'],
   moved: {
-    "cn-0":{x:65.3,y:15.2},"cn-1":{x:52.2,y:38.9},"cn-2":{x:64.2,y:59.6},"cn-3":{x:64,y:80.2},"cn-4":{x:50.9,y:101.9},"cn-5":{x:51,y:123.8},
-    "cv-0":{x:219.9,y:17.1},"cv-1":{x:216.1,y:38.8},"cv-2":{x:223.5,y:60.2},"cv-3":{x:208.5,y:80.6},"cv-4":{x:251.1,y:100.7},"cv-5":{x:189.8,y:123.2}
+    "cn-0":{x:65.3,y:15.2},"cn-1":{x:52.2,y:38.9},"cn-2":{x:64.2,y:59.6},"cn-3":{x:64,y:80.2},"cn-4":{x:50.9,y:101.9},"cn-5":{x:51,y:123.8}
   }
 };
 // 通用:把 spov_tuner 調定的版面套到 SVG。本體(非文字)進縮放/平移群組(繞 viewBox 中心);
@@ -490,16 +489,25 @@ function _applySpovLayout(svgStr, cfg) {
     const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
     const body = doc.createElementNS(NS, 'g');
     body.setAttribute('transform', `translate(${cx + (cfg.offX || 0)} ${cy + (cfg.offY || 0)}) scale(${cfg.scale}) translate(${-cx} ${-cy})`);
+    // bodyRoles:這些角色的文字留在本體群組(隨圖縮放/平移,例如係數總覽數字跟著 bar 走);其餘 data-role 為可自訂文字
+    const bodyRoles = cfg.bodyRoles || [];
     const kids = [...svg.children];
     svg.appendChild(body);
-    kids.forEach(ch => { if (ch.getAttribute && ch.getAttribute('data-role')) svg.appendChild(ch); else body.appendChild(ch); });
-    const fs = cfg.fs || {}, hideRole = cfg.hideRole || {}, moved = cfg.moved || {};
+    kids.forEach(ch => {
+      const role = ch.getAttribute && ch.getAttribute('data-role');
+      if (role && bodyRoles.indexOf(role) < 0) svg.appendChild(ch); else body.appendChild(ch);
+    });
+    const fs = cfg.fs || {}, hideRole = cfg.hideRole || {}, moved = cfg.moved || {}, vert = cfg.vert || {};
     svg.querySelectorAll('[data-role]').forEach(t => {
       const role = t.getAttribute('data-role'), key = role + '-' + t.getAttribute('data-i');
       if (fs[role] != null) t.setAttribute('font-size', fs[role]);
       if (hideRole[role]) t.setAttribute('display', 'none');
       const m = moved[key];
       if (m) { t.setAttribute('x', m.x); t.setAttribute('y', m.y); }
+      if (role === 'dn') {   // 維度名 個別直書/橫書:vert[key] 有值以它為準,否則用整體 cfg.vname
+        const v = (vert[key] !== undefined) ? vert[key] : !!cfg.vname;
+        if (v) t.setAttribute('style', 'writing-mode:vertical-rl;text-orientation:upright;letter-spacing:0.2em');
+      }
     });
     return new XMLSerializer().serializeToString(svg);
   } catch (e) { return svgStr; }
