@@ -34,8 +34,8 @@ import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, mark
 // 重整（比照上課過程）：部位視角 / 維度視角 / 報告 / 參數分析 四個子 tab。
 // part/dim 升級成正式子 tab（內部仍走 _view='quiz' + _quizMode，降風險不動 renderPartMode/renderDimMode）。
 const SUBMODES = [
-  { key: 'part',   label: '依部位填寫' },
-  { key: 'dim',    label: '依維度填寫' },
+  { key: 'part',   label: '依部位填' },
+  { key: 'dim',    label: '依維度填' },
   { key: 'report', label: '兵法報告' },
   { key: 'spiceov', label: '辣度總覽' },
   { key: 'sens',   label: '參數分析' },
@@ -1185,15 +1185,19 @@ function _wsCaseNameHeader() {
 function renderPartMode() {
   // 部位視角：比照維度視角版型（部位導覽欄 ｜ 條件欄），沿用 .m-dimv-* 零件（無維度欄/維度標題列）
   if (!_expandedKey && _isDesktop()) _expandedKey = PART_ROW_1[0];
-  const allParts = PART_ROW_1.concat(PART_ROW_2);   // 11 題庫部位
-  const navTiles = allParts.map(key => {
+  const partTileHtml = key => {
     const prog = partProgress(key);
     const badge = prog.status === 'full' ? '✓' : (prog.done > 0 ? `${prog.done}/${prog.total}` : '');
     // 未填答完畢(含完全沒答)→ is-todo 淡黃;答完 → is-done
     const doneCls = prog.status === 'full' ? 'is-done' : (prog.total > 0 ? 'is-todo' : '');
     const dot = hasPartUpdate(key) ? '<span class="m-update-dot-inline"></span>' : '';
     return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(key)}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
-  }).join('');
+  };
+  // 手機版：11 部位排成兩排小按鈕(上排6/下排5)；桌機側欄仍垂直堆疊(靠 CSS 分岔)
+  const navTiles = `<div class="m-partv-partgrid">` +
+    `<div class="m-partv-partrow">${PART_ROW_1.map(partTileHtml).join('')}</div>` +
+    `<div class="m-partv-partrow">${PART_ROW_2.map(partTileHtml).join('')}</div>` +
+    `</div>`;
   const { done, total } = partGrandTotal();
   const partNav = `<div class="m-dimv-partnav">${_wsCaseNameHeader()}${navTiles}<div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
   let condCol;

@@ -619,6 +619,11 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-dimv-part-prog{font-size:13px;color:#a89e92}
 .m-dimv-part.is-done .m-dimv-part-prog{color:#5a8a5a}
 .m-dimv-part.is-norule{opacity:.55}
+/* 依部位填 手機版：11 部位兩排小按鈕(上排6/下排5)；桌機在 @media 還原成側欄垂直清單 */
+.m-partv-partrow{display:flex;gap:6px;margin-bottom:6px}
+.m-partv-partgrid .m-dimv-part{width:auto;flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:1px;min-height:46px;padding:6px 3px;margin-bottom:0}
+.m-partv-partgrid .m-dimv-part-name{font-size:15px}
+.m-partv-partgrid .m-dimv-part-prog{font-size:11px}
 .m-dimv-partfoot{font-size:14px;color:#6a5f50;text-align:center;margin:10px 0 8px}
 .m-dimv-clear{display:block;width:100%;min-height:44px;padding:9px;background:#fff;border:1px solid #dcc3ab;border-radius:10px;color:#a86a48;font-family:inherit;font-size:14px;cursor:pointer}
 .m-dimv-clear:active{background:#f3ebe1}
@@ -1574,6 +1579,10 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   /* 部位視角比照維度視角：部位欄 sticky 固定(滑條件欄不動)+padding-top:28→頭對齊維度視角形勢top；
      部位名(無維度標題列)黏 top:28 跟頭同高；條件題依 section 並排(比照自我評分)；section 標題放大 */
   .m-partv .m-dimv-partnav{position:sticky;top:0;align-self:flex-start;padding-top:28px}
+  /* 桌機側欄：兩排 grid 還原成垂直全寬清單(手機才兩排) */
+  .m-partv .m-partv-partrow{display:block;margin-bottom:0}
+  .m-partv .m-partv-partgrid .m-dimv-part{width:100%;flex-direction:row;justify-content:space-between;gap:8px;min-height:48px;padding:8px 14px;margin-bottom:7px}
+  .m-partv .m-partv-partgrid .m-dimv-part-name{font-size:16px}
   /* 個案工作區：部位欄頂端有個案姓名 → 拿掉 28 padding，讓姓名字頂對齊條件欄部位名(10px) */
   body.m-ws-active .m-partv .m-dimv-partnav{padding-top:0}
   /* 部位名比照維度標題列(dimbar)：sticky top:0+padding-top:28 → 部位名落 28(跟維度名同線)，整塊不透明覆蓋 0~28(滑動不穿透、不蓋子部位框) */
