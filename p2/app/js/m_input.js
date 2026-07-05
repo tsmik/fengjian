@@ -456,6 +456,36 @@ function renderObsReport() {
 
 // ---------- 辣度總覽：四辣度(完整/大辣/中辣/小辣)各算一份矩陣，橫排「辣度｜係數圖｜係數總覽圖」一眼比較 ----------
 // 純預覽:evalDimAt 逐維算指定辣度(吃清洗後答案、不動全域 data/報告/存檔);未填完維度由圖表既有機制呈現(灰/未填完)。
+// 辣度總覽 係數圖版面(Mike 在 spov_tuner 調定並匯出):雷達本體縮放+平移、維度名/係數字自訂位置與字級
+const SPOV_RADAR_CFG = {
+  scale: 1.25, offX: 0, offY: 8, nameFs: 14, numFs: 15.5,
+  moved: {
+    "dn-0":{x:220.3,y:146.1},"dn-1":{x:242.1,y:165.7},"dn-2":{x:262.4,y:195.8},"dn-3":{x:266.8,y:238},"dn-4":{x:253.6,y:270.8},"dn-5":{x:224.8,y:295.4},"dn-6":{x:200,y:309.1},"dn-7":{x:174.3,y:297.7},"dn-8":{x:146.5,y:273.5},"dn-9":{x:132.4,y:235.1},"dn-10":{x:136.4,y:198.6},"dn-11":{x:158.2,y:166.2},"dn-12":{x:179.9,y:146.5},
+    "dv-0":{x:244.1,y:51.7},"dv-1":{x:323.7,y:91.8},"dv-2":{x:364.6,y:164.9},"dv-3":{x:366.9,y:250.5},"dv-4":{x:343.5,y:331.1},"dv-5":{x:287.8,y:382.9},"dv-6":{x:199.5,y:400.9},"dv-7":{x:112.2,y:381.6},"dv-8":{x:58.1,y:329.9},"dv-9":{x:32.8,y:245.5},"dv-10":{x:37.9,y:159.3},"dv-11":{x:77.8,y:94.8},"dv-12":{x:157.9,y:50.1}
+  }
+};
+// 把 spov_tuner 調定的版面套到係數圖 SVG:本體(非文字)進縮放/平移群組;dn/dv 文字移到自訂座標＋字級
+function _applySpovRadarLayout(svgStr, cfg) {
+  try {
+    const doc = new DOMParser().parseFromString(svgStr, 'image/svg+xml');
+    const svg = doc.documentElement;
+    if (svg.querySelector('parsererror')) return svgStr;
+    const NS = 'http://www.w3.org/2000/svg';
+    const body = doc.createElementNS(NS, 'g');
+    body.setAttribute('transform', `translate(${200 + cfg.offX} ${220 + cfg.offY}) scale(${cfg.scale}) translate(-200 -220)`);
+    const kids = [...svg.children];
+    svg.appendChild(body);
+    kids.forEach(ch => { if (ch.getAttribute && ch.getAttribute('data-role')) svg.appendChild(ch); else body.appendChild(ch); });
+    svg.querySelectorAll('[data-role]').forEach(t => {
+      const key = t.getAttribute('data-role') + '-' + t.getAttribute('data-i');
+      t.setAttribute('font-size', t.getAttribute('data-role') === 'dn' ? cfg.nameFs : cfg.numFs);
+      const m = cfg.moved[key];
+      if (m) { t.setAttribute('x', m.x); t.setAttribute('y', m.y); }
+    });
+    return new XMLSerializer().serializeToString(svg);
+  } catch (e) { return svgStr; }
+}
+
 function renderSpiceOverview() {
   _applySavedSpiceOnce();
   const seg = renderSegmented();
@@ -465,10 +495,11 @@ function renderSpiceOverview() {
   const cols = LEVELS.map(lv => {
     const matrix = [];
     for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
-    const p = buildManualReportParts(matrix, { noChartTitle: true, hideRadarCenter: true });
+    const p = buildManualReportParts(matrix, { noChartTitle: true, hideRadarCenter: true, coefColorMode: 'byType' });
+    const radar2 = _applySpovRadarLayout(p.radar2Html, SPOV_RADAR_CFG);
     return `<div class="m-spov-col">
       <div class="m-spov-title">${lv}</div>
-      <div class="m-spov-chart">${p.radar2Html}</div>
+      <div class="m-spov-chart">${radar2}</div>
       <div class="m-spov-chart">${p.sdHtml}</div>
       <div class="m-spov-chart">${p.coefHtml}</div>
     </div>`;

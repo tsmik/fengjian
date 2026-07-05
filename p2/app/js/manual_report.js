@@ -538,7 +538,7 @@ function _buildParts(matrix, meta) {
   var _noT = meta && meta.noChartTitle;
   var _hideC = meta && meta.hideRadarCenter;   // 辣度總覽:隱藏雷達中央 總係數/老闆/主管/先天/後天/運氣 文字數字
   var _RVB = _noT ? '20 40 360 360' : '20 16 360 384';
-  var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:_noT?'':'係數圖',viewBox:_RVB,hideCenter:_hideC});
+  var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:_noT?'':'係數圖',viewBox:_RVB,hideCenter:_hideC,coefColorMode:(meta&&meta.coefColorMode)});
   // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
   // 條高：總/先天/運氣/後天 再 -10%(總14→12.6、其餘12.6→11.34)；老闆/主管 維持 9
   var _COEF_H={'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9};
