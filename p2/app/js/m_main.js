@@ -49,7 +49,7 @@ function renderInputSubnav() {
   const host = document.getElementById('m-tabsub-input');
   if (!host) return;
   if (!_subExpanded.input) { host.innerHTML = ''; return; }
-  const items = [{ key: 'part', label: '依部位填寫' }, { key: 'dim', label: '依維度填寫' }, { key: 'report', label: '兵法報告' }, { key: 'spiceov', label: '辣度總覽' }, { key: 'sens', label: '參數分析' }];
+  const items = [{ key: 'part', label: '依部位填寫' }, { key: 'dim', label: '依維度填寫' }, { key: 'report', label: '兵法報告' }, { key: 'sens', label: '參數分析' }];  // 辣度總覽已移到兵法報告頁底部滑出,側欄不再列
   let cur = 'part';
   try { cur = getInputView() || 'part'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
