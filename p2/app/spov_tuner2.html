@@ -58,11 +58,9 @@
   <div class="bar">
     <b>係數總覽</b>
     <label>圖大小 <input type="range" id="pc_scale" min="40" max="200" value="100"><span class="val" id="pc_scaleV">100%</span></label>
+    <label>圖高度 <input type="range" id="pc_hs" min="100" max="320" value="100"><span class="val" id="pc_hsV">100%</span></label>
     <label>左右 <input type="range" id="pc_offx" min="-160" max="160" value="0"><span class="val" id="pc_offxV">0</span></label>
     <label>上下 <input type="range" id="pc_offy" min="-160" max="160" value="0"><span class="val" id="pc_offyV">0</span></label>
-    <div class="sep"></div>
-    <label>名稱字 <input type="range" id="pc_cnfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="pc_cnfsV">10.8</span></label>
-    <label>數字字 <input type="range" id="pc_cvfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="pc_cvfsV">10.8</span></label>
     <div class="sep"></div>
     <label><input type="checkbox" id="pc_showcn" checked> 係數名稱</label>
     <label><input type="checkbox" id="pc_showcv" checked> 係數數字</label>
@@ -71,7 +69,7 @@
     <button id="pc_apply">套用貼上</button>
     <button class="primary" id="pc_export">匯出設定</button>
   </div>
-  <div class="tip">係數總覽:「圖大小」縮放整張子彈圖;係數名稱、數字可各自拖曳並調字級。雙擊某字＝隱藏。自動保存。</div>
+  <div class="tip">係數總覽:「<b>圖高度</b>」把子彈圖變高、字一起變大(字太小就調這個);「圖大小」整張縮放;係數名稱可拖曳,數字跟著 bar 走。雙擊某字＝隱藏。自動保存。</div>
   <div class="stageWrap"><div class="stage" id="pc_stage"></div></div>
   <textarea class="out" id="pc_out" placeholder="匯出會顯示於此;貼上設定後按「套用貼上」還原。"></textarea>
 </div>
@@ -156,7 +154,7 @@ function makePanel(P){
     else if(c.type==='check'){ el.addEventListener('change',()=>{ c.set(state,el.checked); render(); save(); }); } });
   $(P.reset).addEventListener('click',()=>{ if(!confirm('確定把此圖所有調整歸零?'))return; state=norm(JSON.parse(JSON.stringify(P.seedBlank||{}))); anchors={}; try{localStorage.removeItem(P.lsKey);}catch(e){} sync(); render(); });
   $(P.apply).addEventListener('click',()=>{ try{ state=norm(JSON.parse(out.value)); anchors={}; sync(); render(); save(); }catch(e){ alert('格式不正確'); } });
-  $(P.export).addEventListener('click',()=>{ out.value=JSON.stringify({scale:state.scale,offX:state.offX,offY:state.offY,fs:state.fs,hideRole:state.hideRole,vert:state.vert,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1); out.focus(); out.select(); });
+  $(P.export).addEventListener('click',()=>{ out.value=JSON.stringify({scale:state.scale,offX:state.offX,offY:state.offY,heightScale:state.heightScale,fs:state.fs,hideRole:state.hideRole,vert:state.vert,moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1); out.focus(); out.select(); });
 
   state=norm(load()||P.seed||{}); sync(); render();
 }
@@ -185,16 +183,15 @@ makePanel({
 makePanel({
   stage:'pc_stage', out:'pc_out', reset:'pc_reset', apply:'pc_apply', export:'pc_export',
   lsKey:'spov_tuner_coef', boxW:CELL_W, bodyRoles:['cv'],   // cv 數字跟著 bar 走(留在本體隨圖縮放,不可拖)
-  defaults:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
-  seed:{ scale:100, offX:0, offY:0, fs:{cn:10.8,cv:10.8}, hideRole:{}, moved:{}, hidden:{} },
+  defaults:{ scale:100, offX:0, offY:0, heightScale:1, fs:{}, hideRole:{}, moved:{}, hidden:{} },
+  seed:{ scale:100, offX:0, offY:0, heightScale:1, fs:{}, hideRole:{}, moved:{}, hidden:{} },
   seedBlank:{},
-  build:(s)=>M.buildCoefSVG({preV:COEFV.preV,bossV:COEFV.bossV,mgrV:COEFV.mgrV,luckV:COEFV.luckV,postV:COEFV.postV,totV:COEFV.totV,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,totLabelCol:'#5a4f45',heights:{'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9},groupLine:{top:'先天',bot:'主管',color:'#8E4B50'}}),
+  build:(s)=>M.buildCoefSVG({preV:COEFV.preV,bossV:COEFV.bossV,mgrV:COEFV.mgrV,luckV:COEFV.luckV,postV:COEFV.postV,totV:COEFV.totV,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:'',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,totLabelCol:'#5a4f45',heights:{'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9},groupLine:{top:'先天',bot:'主管',color:'#8E4B50'},heightScale:(s.heightScale||1)}),
   controls:[
     {id:'pc_scale',type:'range',suffix:'%',get:s=>s.scale,set:(s,v)=>s.scale=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
+    {id:'pc_hs',type:'range',suffix:'%',get:s=>Math.round((s.heightScale||1)*100),set:(s,v)=>s.heightScale=v/100},
     {id:'pc_offx',type:'range',get:s=>s.offX,set:(s,v)=>s.offX=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
     {id:'pc_offy',type:'range',get:s=>s.offY,set:(s,v)=>s.offY=v,live:(st,s)=>{const svg=st.querySelector('svg');const b=svg.querySelector('#body');const vb=svg.viewBox.baseVal,cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;b.setAttribute('transform',`translate(${cx+s.offX} ${cy+s.offY}) scale(${s.scale/100}) translate(${-cx} ${-cy})`);}},
-    {id:'pc_cnfs',type:'range',get:s=>s.fs.cn,set:(s,v)=>s.fs.cn=v,live:(st,s)=>st.querySelectorAll('[data-role=cn]').forEach(t=>t.setAttribute('font-size',s.fs.cn))},
-    {id:'pc_cvfs',type:'range',get:s=>s.fs.cv,set:(s,v)=>s.fs.cv=v,live:(st,s)=>st.querySelectorAll('[data-role=cv]').forEach(t=>t.setAttribute('font-size',s.fs.cv))},
     {id:'pc_showcn',type:'check',get:s=>!s.hideRole.cn,set:(s,v)=>s.hideRole.cn=!v},
     {id:'pc_showcv',type:'check',get:s=>!s.hideRole.cv,set:(s,v)=>s.hideRole.cv=!v},
   ]

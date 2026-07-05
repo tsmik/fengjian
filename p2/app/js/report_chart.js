@@ -156,13 +156,15 @@ export function buildCoefSVG(opts){
   const ROWS=order.map(k=>MAP[k]).filter(Boolean);
   // vbW/x0/trackW 可調(RWD 用 360 以與雷達同 viewBox 寬→同螢幕字級)；不傳＝legacy 400/74/300
   const vbW=+opts.vbW||400;
-  const X0=opts.x0!=null?opts.x0:R0_X0, BAR_H=R0_BAR,GAP=R0_GAP,PAD=R0_PAD,LP=4, TRACKW=opts.trackW!=null?opts.trackW:R0_TW, COEF_OP=0.7;
+  // heightScale：垂直放大倍率(條高/列距/字級一起放大、寬度不變)→ 讓子彈圖變高、字變大
+  const HS=+opts.heightScale||1;
+  const X0=opts.x0!=null?opts.x0:R0_X0, BAR_H=R0_BAR,GAP=R0_GAP*HS,PAD=R0_PAD*HS,LP=4, TRACKW=opts.trackW!=null?opts.trackW:R0_TW, COEF_OP=0.7;
   // 全圖字級統一(opts.fs)＝標題/標籤/數字一致；主次靠「縮排＋條粗細」分，不靠字級
   // big＝主列(總/先天/運氣/後天)：條較粗＋標籤向左外凸半字；small＝次列(老闆/主管)：條較窄
   const small=opts.small||[];
   const inB=nm=>big.indexOf(nm)>=0, inS=nm=>small.indexOf(nm)>=0;
-  const FS=+opts.fs||12;
-  const rowH=nm=>(opts.heights&&opts.heights[nm]!=null)?opts.heights[nm]:(inS(nm)?9:(inB(nm)?14:BAR_H));
+  const FS=(+opts.fs||12)*HS;
+  const rowH=nm=>((opts.heights&&opts.heights[nm]!=null)?opts.heights[nm]:(inS(nm)?9:(inB(nm)?14:BAR_H)))*HS;
   const HALF=FS*0.55;                       // 主列向左外凸約半個中文字，分主次
   const labelX=nm=>inB(nm)?(X0-8-HALF):(X0-8);
   const xOf=v=>X0+(Math.min(1,(v==null?0:v)/R0_CMAX))*TRACKW;

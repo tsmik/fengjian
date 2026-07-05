@@ -542,7 +542,7 @@ function _buildParts(matrix, meta) {
   // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
   // 條高：總/先天/運氣/後天 再 -10%(總14→12.6、其餘12.6→11.34)；老闆/主管 維持 9
   var _COEF_H={'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9};
-  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:_noT?'':'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,
+  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:_noT?'':'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,heightScale:(meta&&meta.coefHeightScale)||1,
     totLabelCol:'#5a4f45',                                  // 總係數三個字＝標題色(不要黑)
     heights:_COEF_H,
     groupLine:{top:'先天',bot:'主管',color:'#8E4B50'}});      // 先天/老闆/主管 左側括線(先天色)
