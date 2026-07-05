@@ -374,6 +374,10 @@ function _renderObsReportShareRow() {
         <button class="m-report-link-btn" data-obscharts="1">分享圖表</button>
         <button class="m-report-link-btn" data-obsrc="1">分享表格報告＋圖表</button>
       </div>
+      <div class="m-report-nav-row">
+        <button class="m-report-nav-btn" data-gonav="spiceov">辣度總覽</button>
+        <button class="m-report-nav-btn" data-gonav="sens">參數分析</button>
+      </div>
       <div class="m-report-link-tip">未填完維度／係數會顯示「未填完」</div>
     </div>`;
 }
@@ -390,7 +394,7 @@ function _applySavedSpiceOnce() {
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-bar"><span class="m-spice-label">辣度</span>${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}<span class="m-spice-hint">越辣越嚴格（完整最嚴）</span></div>`;
+  return `<div class="m-spice-float"><span class="m-spice-float-ico">🌶️</span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
@@ -423,8 +427,7 @@ function renderObsReport() {
     <div class="m-submode-content">
       ${_renderSpiceBar()}
       <div class="m-manual-report m-obs-report">
-        ${p.titleHtml}
-        ${lnBlock}
+        <div class="m-obs-report-stickyhead">${p.titleHtml}${lnBlock}</div>
         <div class="m-manual-fullreport">${p.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
@@ -448,6 +451,8 @@ function renderObsReport() {
     exportMobileCharts({ mode: 'charts', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
   _root.querySelectorAll('[data-obsrc]').forEach(b => b.addEventListener('click', () =>
     exportMobileCharts({ mode: 'all', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
+  // 報告底部導覽鈕：跳辣度總覽 / 參數分析（同 segmented 子 tab 切換）
+  _root.querySelectorAll('[data-gonav]').forEach(b => b.addEventListener('click', () => setInputView(b.dataset.gonav)));
 }
 
 // ---------- 辣度總覽：四辣度(完整/大辣/中辣/小辣)各算一份矩陣，橫排「辣度｜係數圖｜係數總覽圖」一眼比較 ----------
@@ -727,7 +732,7 @@ function renderDimMode() {
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div></div>`;
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -759,7 +764,7 @@ function renderDimMode() {
     const selLabel = DIM_PART_LABELS[DIM_PART_ORDER.indexOf(selPi)];
     const selCr = condResults[di] && condResults[di][selPi];
     const desc = _dimPartThreshDesc(selCr, dim);
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span>${desc ? `<span class="m-dimv-partexp">${escapeHtml(desc)}</span>` : ''}</div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span>${desc ? `<span class="m-dimv-partexp">${escapeHtml(desc)}</span>` : ''}<button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div>`;
     let body;
     if (!selCr || selCr.threshold === '無規則') body = `<div class="m-dim-part-content m-dim-empty">（此部位對該維度無規則）</div>`;
     else body = renderDimPartBody(di, selPi, selLabel);
@@ -771,7 +776,7 @@ function renderDimMode() {
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   const prevSpice = _dimPreviewSpice || getSpice();
   const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
-  const pvSpiceBar = `<div class="m-dimv-pv-spice">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}<span class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才算）</span></div>`;
+  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-title">嚴格程度調整</div><div class="m-dimv-pv-spice-opts">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = pv[pi];
@@ -1187,7 +1192,7 @@ function renderOptions(qid, curVal, opts) {
     const hint = o.hint || '';
     const sel = curVal === v ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">${escapeHtml(hint)}</span>` : ''}</button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">｜${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }
@@ -1239,7 +1244,7 @@ function _renderSyncOptions(qid, opts, vL, vR) {
     const hint = o.hint || '';
     const sel = (v === vL || v === vR) ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">${escapeHtml(hint)}</span>` : ''}</button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">｜${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }

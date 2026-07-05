@@ -438,11 +438,27 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-spice-opt{font-family:inherit;font-size:14px;color:#9a8f7e;padding:6px 18px;border:1px solid #e0d8ca;border-radius:16px;background:#fff;cursor:pointer;min-height:34px;transition:background .12s,color .12s}
 .m-spice-opt.is-on{background:#cdb892;border-color:#a8946a;color:#3a2f24}
 .m-spice-hint{font-size:13px;color:#9a8f7e}
+/* 兵法報告：辣度浮動列（右上角，比照筆記 fab 深色底；隨頁滑動即時調整）*/
+.m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;z-index:8000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#3a3228;color:#fff;border-radius:22px;padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,0.25);max-width:calc(100vw - 28px)}
+.m-spice-float-ico{font-size:16px;line-height:1;flex:0 0 auto}
+.m-spice-float-name{font-size:13px;letter-spacing:1px;color:#f3ecdd;white-space:nowrap}
+.m-spice-float-opts{display:flex;gap:5px}
+.m-spice-float .m-spice-opt{font-size:13px;padding:5px 13px;min-height:0;background:#5a5147;color:#e8e0d2;border-color:#6a5f50}
+.m-spice-float .m-spice-opt.is-on{background:#cdb892;border-color:#cdb892;color:#3a2f24}
+/* 兵法報告：姓名+虛歲 與 流年 sticky（滑動時固定於 .m-main 頂）*/
+.m-obs-report-stickyhead{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:2px}
+body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
+/* 兵法報告：底部導覽鈕（辣度總覽/參數分析，深色反白，比照筆記按鈕字級）*/
+.m-report-nav-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+.m-report-nav-btn{font-family:inherit;font-size:14px;letter-spacing:2px;color:#fff;background:#3a3228;border:none;border-radius:10px;padding:11px 30px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.m-report-nav-btn:active{background:#2c251d}
 /* 維度視角第4欄 辣度模擬選擇器 */
-.m-dimv-pv-spice{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:8px}
-.m-dimv-pv-spice-opt{font-family:inherit;font-size:13px;color:#9a8f7e;padding:3px 11px;border:1px solid #e0d8ca;border-radius:14px;background:#fff;cursor:pointer}
+.m-dimv-pv-spice{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.m-dimv-pv-spice-title{font-size:13px;color:#6b5f50;font-weight:600;letter-spacing:1px}
+.m-dimv-pv-spice-opts{display:flex;gap:4px;flex-wrap:nowrap}
+.m-dimv-pv-spice-opt{font-family:inherit;font-size:13px;color:#9a8f7e;padding:3px 11px;border:1px solid #e0d8ca;border-radius:14px;background:#fff;cursor:pointer;white-space:nowrap}
 .m-dimv-pv-spice-opt.is-on{background:#cdb892;border-color:#a8946a;color:#3a2f24}
-.m-dimv-pv-spice-hint{font-size:11px;color:#b0a594;flex-basis:100%;line-height:1.3}
+.m-dimv-pv-spice-hint{font-size:11px;color:#b0a594;line-height:1.3}
 /* 「我的」三大區塊：左(姓名/基本資料/流年) ｜ 右(兩報告上下排)；窄螢幕單欄 */
 .m-dash2{display:grid;grid-template-columns:minmax(0,0.92fr) minmax(0,1.08fr);gap:14px;align-items:start}
 .m-dash2-left{align-self:start}
@@ -755,12 +771,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-dim-empty{padding:14px;font-size:12px;color:#aaa;font-style:italic;text-align:center}
 .m-dim-subpart{margin-bottom:10px}
 .m-dim-subpart:last-child{margin-bottom:0}
-.m-dim-subpart-title{font-size:15px;font-weight:700;color:#8a5a3a;padding:6px 2px;border-bottom:2px solid #e0d2c0;margin-bottom:8px;letter-spacing:1px}
+.m-dim-subpart-title{font-size:19px;font-weight:800;color:#2a241c;padding:6px 2px;border-bottom:2px solid #e0d2c0;margin-bottom:8px;letter-spacing:1px}
 .m-dim-group{margin-bottom:8px}
 .m-dim-group:last-child{margin-bottom:0}
 .m-dim-group-header{display:flex;align-items:center;gap:8px;padding:9px 12px;margin-bottom:8px;cursor:pointer;background:#ece2cf;border-radius:8px;border-left:4px solid #b59a6a}
 .m-dim-group-chevron{flex-shrink:0;font-size:11px;color:#8a7a5a;width:12px;text-align:center;line-height:1}
-.m-dim-group-label{font-weight:700;font-size:15px;color:#4a3d2a;letter-spacing:1px}
+.m-dim-group-label{font-weight:800;font-size:17px;color:#2a241c;letter-spacing:1px}
 .m-dim-group-body{padding:8px 0 4px}
 /* partResult 結論行（中停/下停常見：「左頭達標」之類純展示，不可答） */
 .m-dim-result-item{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#3d3b39;border-bottom:1px solid #f5efe6}
