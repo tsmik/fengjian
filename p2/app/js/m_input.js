@@ -473,12 +473,6 @@ const SPOV_R3_CFG = {   // 動靜圖:外圍係數(dv)刪除,維度名(dn)+圖內
     "pole-0":{x:228.1,y:105.1},"pole-1":{x:281.5,y:131.6},"pole-2":{x:306.2,y:181.3},"pole-3":{x:307.6,y:235},"pole-4":{x:290.7,y:284.9},"pole-5":{x:257.2,y:331.8},"pole-6":{x:203.2,y:343.6},"pole-7":{x:141.9,y:327.4},"pole-8":{x:100.8,y:292.2},"pole-9":{x:81.2,y:240.2},"pole-10":{x:86.1,y:180.2},"pole-11":{x:123.2,y:131.1},"pole-12":{x:170.3,y:105.5}
   }
 };
-const SPOV_COEF_CFG = {   // 係數總覽:整圖縮放+平移,名稱(cn)自訂位置;數字(cv)回歸原始→跟著 bar 走(留在本體隨圖縮放)
-  scale: 1.07, offX: 23, offY: 2, fs: { cn: 14 }, hideRole: {}, bodyRoles: ['cv'],
-  moved: {
-    "cn-0":{x:65.3,y:15.2},"cn-1":{x:52.2,y:38.9},"cn-2":{x:64.2,y:59.6},"cn-3":{x:64,y:80.2},"cn-4":{x:50.9,y:101.9},"cn-5":{x:51,y:123.8}
-  }
-};
 // 通用:把 spov_tuner 調定的版面套到 SVG。本體(非文字)進縮放/平移群組(繞 viewBox 中心);
 // 有 data-role 的文字設字級(fs[role])、整組隱藏(hideRole[role])、移到自訂座標(moved[key])。
 function _applySpovLayout(svgStr, cfg) {
@@ -527,7 +521,7 @@ function renderSpiceOverview() {
     const p = buildManualReportParts(matrix, { noChartTitle: true, hideRadarCenter: true, coefColorMode: 'byType' });
     const radar2 = _applySpovLayout(p.radar2Html, SPOV_RADAR_CFG);
     const sd = _applySpovLayout(p.sdHtml, SPOV_R3_CFG);
-    const coef = _applySpovLayout(p.coefHtml, SPOV_COEF_CFG);
+    const coef = p.coefHtml;   // 係數總覽維持原樣(數字本就跟著 bar);不套自訂版面
     return `<div class="m-spov-col">
       <div class="m-spov-title">${lv}</div>
       <div class="m-spov-chart">${radar2}</div>
