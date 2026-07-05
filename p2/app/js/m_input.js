@@ -465,10 +465,11 @@ function renderSpiceOverview() {
   const cols = LEVELS.map(lv => {
     const matrix = [];
     for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
-    const p = buildManualReportParts(matrix, {});
+    const p = buildManualReportParts(matrix, { noChartTitle: true });
     return `<div class="m-spov-col">
       <div class="m-spov-title">${lv}</div>
       <div class="m-spov-chart">${p.radar2Html}</div>
+      <div class="m-spov-chart">${p.sdHtml}</div>
       <div class="m-spov-chart">${p.coefHtml}</div>
     </div>`;
   }).join('');
