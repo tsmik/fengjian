@@ -130,7 +130,13 @@ export function initHome(displayName){
       const target=btn.dataset.go;
       try{ setActiveCase(null); await refreshUserData(); }catch(e){}
       try{ updateHomeProgress(); }catch(e){}
-      if(target==='obs'){ try{ localStorage.setItem('m_input_view','quiz'); }catch(e){} }
+      if(target==='obs'){ const isub=btn.dataset.isub;   // 首頁系統計算報告子框→指定子頁
+        try{
+          if(isub==='part'||isub==='dim') localStorage.setItem('m_input_submode_once', isub);        // 依部位/依維度填寫
+          else if(isub==='report'||isub==='spiceov'||isub==='sens') localStorage.setItem('m_input_view_once', isub);  // 兵法報告/辣度總覽/參數分析
+          else localStorage.setItem('m_input_view','quiz');                                           // 無 isub→答題
+        }catch(e){}
+      }
       else if(target==='manual'){ const sub=btn.dataset.msub||'board'; try{ localStorage.setItem('m_manual_view_once', sub); }catch(e){} }   // 首頁上課子框→指定子頁(課程board/自我評分input/兵法報告overview)
       const tabBtn=document.querySelector('.m-tab[data-tab="'+(TAB_FOR[target]||'home')+'"]');
       if(tabBtn) tabBtn.click();

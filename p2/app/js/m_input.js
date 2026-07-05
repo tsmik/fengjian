@@ -34,9 +34,9 @@ import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, mark
 // 重整（比照上課過程）：部位視角 / 維度視角 / 報告 / 參數分析 四個子 tab。
 // part/dim 升級成正式子 tab（內部仍走 _view='quiz' + _quizMode，降風險不動 renderPartMode/renderDimMode）。
 const SUBMODES = [
-  { key: 'part',   label: '部位視角' },
-  { key: 'dim',    label: '維度視角' },
-  { key: 'report', label: '報告' },
+  { key: 'part',   label: '依部位填寫' },
+  { key: 'dim',    label: '依維度填寫' },
+  { key: 'report', label: '兵法報告' },
   { key: 'spiceov', label: '辣度總覽' },
   { key: 'sens',   label: '參數分析' },
 ];

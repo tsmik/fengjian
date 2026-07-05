@@ -49,7 +49,7 @@ function renderInputSubnav() {
   const host = document.getElementById('m-tabsub-input');
   if (!host) return;
   if (!_subExpanded.input) { host.innerHTML = ''; return; }
-  const items = [{ key: 'part', label: '部位視角' }, { key: 'dim', label: '維度視角' }, { key: 'report', label: '報告' }, { key: 'spiceov', label: '辣度總覽' }, { key: 'sens', label: '參數分析' }];
+  const items = [{ key: 'part', label: '依部位填寫' }, { key: 'dim', label: '依維度填寫' }, { key: 'report', label: '兵法報告' }, { key: 'spiceov', label: '辣度總覽' }, { key: 'sens', label: '參數分析' }];
   let cur = 'part';
   try { cur = getInputView() || 'part'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
@@ -319,9 +319,9 @@ export function isDesktopSidebar() {
 let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
 const WS_SUBS = [
-  { key: 'obs', label: '部位觀察分析', tab: 'input' },
-  { key: 'obs-dim', label: '維度視角', tab: 'input' },
-  { key: 'obs-report', label: '報告', tab: 'input' }
+  { key: 'obs', label: '依部位填寫', tab: 'input' },
+  { key: 'obs-dim', label: '依維度填寫', tab: 'input' },
+  { key: 'obs-report', label: '兵法報告', tab: 'input' }
 ];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 // 把個案色淡淡混進某個底色。f 越大越濃。

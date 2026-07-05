@@ -248,9 +248,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home{padding:16px;display:flex;flex-direction:column;gap:14px}
 /* ===== 首頁 landing(Mike 2026-07-04):上1/3 標題兩行、下2/3 三欄四框 ===== */
 .m-home-landing{display:flex;flex-direction:column;padding:0;gap:0;height:calc(100dvh - 52px)}
-.m-home-hero{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0}   /* 上 1/3 */
+.m-home-hero{flex:0 0 25%;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0}   /* 上 1/4 */
 .m-home-hero-title{margin:0;font-family:inherit;font-weight:400;font-size:34px;line-height:1.6;letter-spacing:8px;text-align:center;color:#3a3228}
-.m-home-grid{flex:2 1 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:0 16px 20px;min-height:0}   /* 下 2/3 */
+.m-home-grid{flex:0 0 63.75%;display:grid;grid-template-columns:2fr 2fr 1fr;gap:14px;padding:0 16px 20px;min-height:0}   /* 下方大框:75%×0.85=63.75%(縮15%),底部留白;上課40%／系統計算報告40%／右欄20% */
 .m-home-col-right{display:grid;grid-template-rows:1fr 1fr;gap:14px;min-height:0}
 .m-home-door{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #e3dccb;border-radius:14px;padding:22px 20px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s;overflow:auto}
 .m-home-door:hover{background:#faf6ee;border-color:#d3c7b1}
@@ -258,8 +258,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-door-desc{font-size:14px;line-height:1.85;color:#7d6643}
 /* 上課格:標題+課堂使用+三個子框(課程/自我評分/兵法報告),子框各自可點 */
 .m-home-lesson{cursor:default}
-.m-home-subcards{display:flex;flex-direction:column;gap:10px;flex:1 1 auto;min-height:0;margin-top:2px}
-.m-home-subcard{flex:1 1 0;display:flex;flex-direction:column;gap:6px;justify-content:center;background:#f5efe3;border:1px solid #e3dccb;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s}
+.m-home-subcards{display:flex;flex-direction:column;gap:10px;flex:1 1 auto;min-height:0;margin-top:2px;align-self:stretch;width:100%;box-sizing:border-box}   /* 撐滿大框內寬,隨大框調整 */
+.m-home-subcard{flex:1 1 0;display:flex;flex-direction:column;gap:6px;justify-content:center;background:#f5efe3;border:1px solid #e3dccb;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s;width:100%;box-sizing:border-box}
 .m-home-subcard:hover{background:#efe7d6;border-color:#d3c7b1}
 .m-home-subcard-title{font-size:16px;letter-spacing:1px;color:#3a3228}
 .m-home-subcard-desc{font-size:14px;line-height:1.7;color:#7d6643}
@@ -1810,12 +1810,33 @@ body.m-debug-on .m-debug-clear{display:block}
           </button>
         </div>
       </div>
-      <button class="m-home-door" data-go="obs">
-        <div class="m-home-door-title">部位觀察</div>
-      </button>
+      <div class="m-home-door m-home-lesson">
+        <div class="m-home-door-title">系統計算報告</div>
+        <div class="m-home-door-desc">填寫不同部位的觀察標準，系統計算產生人相兵法報告</div>
+        <div class="m-home-subcards">
+          <button class="m-home-subcard" data-go="obs" data-isub="part">
+            <div class="m-home-subcard-title">依部位填寫</div>
+            <div class="m-home-subcard-desc">填寫每個部位的所有觀察題目</div>
+          </button>
+          <button class="m-home-subcard" data-go="obs" data-isub="dim">
+            <div class="m-home-subcard-title">依維度填寫</div>
+            <div class="m-home-subcard-desc">逐維度填寫各個部位的觀察題目</div>
+          </button>
+          <button class="m-home-subcard" data-go="obs" data-isub="report">
+            <div class="m-home-subcard-title">兵法報告</div>
+            <div class="m-home-subcard-desc">系統計算出的兵法報告表格、圖表</div>
+          </button>
+        </div>
+      </div>
       <div class="m-home-col-right">
-        <button class="m-home-door" data-go="my"><div class="m-home-door-title">我的</div></button>
-        <button class="m-home-door" data-go="cases"><div class="m-home-door-title">個案管理</div></button>
+        <button class="m-home-door" data-go="my">
+          <div class="m-home-door-title">我的</div>
+          <div class="m-home-door-desc">我的基本資料、流年，以及兵法報告概覽</div>
+        </button>
+        <button class="m-home-door" data-go="cases">
+          <div class="m-home-door-title">個案管理</div>
+          <div class="m-home-door-desc">建立自己的個案庫，評分與紀錄不同個案的兵法報告與筆記</div>
+        </button>
       </div>
     </div>
   </div>
@@ -1894,7 +1915,7 @@ body.m-debug-on .m-debug-clear{display:block}
     <span class="m-tab-icon">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 0 1-2 2"/></svg>
     </span>
-    <span>部位觀察</span>
+    <span>系統計算報告</span>
   </button>
   <div class="m-tabsub" id="m-tabsub-input"></div>
   <button class="m-tab" data-tab="report">
