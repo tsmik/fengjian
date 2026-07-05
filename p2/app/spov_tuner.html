@@ -25,12 +25,14 @@
   #stage.vname [data-role="dn"]{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:0.2em}
   #stage [data-hide="1"]{display:none}
   .conn{stroke:#b7a98c;stroke-width:0.8;stroke-dasharray:2 2;fill:none}
-  #out{position:fixed;right:10px;bottom:10px;width:340px;max-width:calc(100vw - 20px);height:150px;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;display:none;z-index:20;background:#fff}
+  #out{position:fixed;right:10px;bottom:10px;width:340px;max-width:calc(100vw - 20px);height:140px;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;z-index:20;background:#fff;opacity:0.9}
 </style>
 </head>
 <body>
 <div id="bar">
   <label>雷達圖大小 <input type="range" id="size" min="40" max="160" value="100"><span class="val" id="sizeV">100%</span></label>
+  <label>雷達左右 <input type="range" id="offx" min="-140" max="140" value="0"><span class="val" id="offxV">0</span></label>
+  <label>雷達上下 <input type="range" id="offy" min="-140" max="140" value="0"><span class="val" id="offyV">0</span></label>
   <div class="sep"></div>
   <label>維度名字 <input type="range" id="nfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="nfsV">10.8</span></label>
   <label>係數字 <input type="range" id="vfs" min="6" max="40" step="0.5" value="10.5"><span class="val" id="vfsV">10.5</span></label>
@@ -42,11 +44,12 @@
   <label><input type="checkbox" id="showconn"> 引線</label>
   <div class="sep"></div>
   <button id="resetBtn" class="warn">全部重設</button>
+  <button id="applyBtn">套用貼上設定</button>
   <button id="exportBtn" class="primary">匯出設定</button>
 </div>
-<div id="tip">白色框＝目前四並排的實際格寬(固定不變)。「雷達圖大小」只縮放框裡面的雷達本體(多邊形),讓你把圖調到剛好、四周留位置給文字。拖曳任何維度名/係數數字到你要的位置(每個都能各自移動);雙擊某個字＝隱藏/顯示它。維度名預設「直書」。調完按「匯出設定」把文字貼給我。<b>全部重設</b>會把位置/隱藏/字級/雷達大小/勾選全部歸零。<br>建議用電腦操作比較好拖。</div>
+<div id="tip">白框＝四並排實際格寬(固定)。「雷達圖大小」縮放框裡的雷達本體;「雷達左右/上下」整個雷達本體平移。拖曳任何維度名/係數數字定位(各自獨立);雙擊某字＝隱藏/顯示。<b>你的調整會自動保存,重開頁面不會消失。</b>「匯出設定」把文字貼給我;要還原某份設定→把文字貼進右下框、按「套用貼上設定」;「全部重設」歸零並清除保存。<br>建議用電腦操作比較好拖。</div>
 <div id="stageWrap"><div id="stage" class="vname"></div></div>
-<textarea id="out" readonly></textarea>
+<textarea id="out" placeholder="按「匯出設定」會顯示目前設定;或把一份設定貼進來、按「套用貼上設定」還原。"></textarea>
 
 <script type="module">
 const { buildRadar2SVG } = await import('./js/report_chart.js?v=' + Date.now());
@@ -64,17 +67,27 @@ const VB='20 40 360 360';
 const CELL_W = Math.max(80, Math.round((window.innerWidth - 2*4 - 3*6) / 4));
 
 const SVGNS='http://www.w3.org/2000/svg';
-const CX=200, CY=220;   // viewBox '20 40 360 360' 的中心(縮放雷達本體用)
+const CX=200, CY=220;   // viewBox '20 40 360 360' 的中心(縮放/平移雷達本體用)
 const stage=document.getElementById('stage');
 const $=id=>document.getElementById(id);
-const DEFAULTS={ scale:100, nameFs:10.8, numFs:10.5, vname:true, showDn:true, showDv:true, showCenter:false, showConn:false };
-let state, anchors;
+const LSKEY='spov_tuner_state';
+const DEFAULTS={ scale:100, nameFs:10.8, numFs:10.5, vname:true, showDn:true, showDv:true, showCenter:false, showConn:false, offX:0, offY:0, moved:{}, hidden:{} };
+// —— Mike 上次匯出的設定(第一次打開的起點;之後以自動保存為準) ——
+const SEED={ scale:121, nameFs:14, numFs:15.5, vname:false, showDn:true, showDv:true, showCenter:false, showConn:false, offX:0, offY:0,
+  moved:{"dn-0":{"x":220.8,"y":139.3},"dn-1":{"x":242.4,"y":157.2},"dn-2":{"x":264.2,"y":187.4},"dn-3":{"x":268.4,"y":229.3},"dn-4":{"x":254.9,"y":264.4},"dn-5":{"x":227.6,"y":291},"dn-6":{"x":200.9,"y":300.1},"dn-7":{"x":175.3,"y":290.2},"dn-8":{"x":145.9,"y":265.5},"dn-9":{"x":131.8,"y":226.7},"dn-10":{"x":136.3,"y":189},"dn-11":{"x":158.2,"y":157.1},"dn-12":{"x":178.8,"y":139.9},"dv-0":{"x":236.8,"y":58.4},"dv-1":{"x":307.4,"y":97.3},"dv-2":{"x":347.9,"y":159.8},"dv-3":{"x":357.3,"y":241.3},"dv-4":{"x":332.4,"y":310.7},"dv-5":{"x":277.4,"y":362.6},"dv-6":{"x":200.6,"y":386.6},"dv-7":{"x":123,"y":363},"dv-8":{"x":71.5,"y":314.3},"dv-9":{"x":41.4,"y":234.9},"dv-10":{"x":50.3,"y":164.3},"dv-11":{"x":91.3,"y":98.7},"dv-12":{"x":165.8,"y":57.8}},
+  hidden:{} };
+let state, anchors={};
 
-function resetState(){
-  state={ ...DEFAULTS, moved:{}, hidden:{} };
-  anchors={};
-  // 還原 UI 控制項
+function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){} }
+function loadSaved(){ try{ const s=localStorage.getItem(LSKEY); if(s) return JSON.parse(s); }catch(e){} return null; }
+function normalize(s){ s={...DEFAULTS,...s}; s.moved=s.moved||{};
+  if(Array.isArray(s.hidden)){ const h={}; s.hidden.forEach(k=>h[k]=true); s.hidden=h; } else s.hidden=s.hidden||{};
+  if(s.radarScale!=null && s.scale==null) s.scale=s.radarScale;   // 兼容匯出格式
+  return s; }
+function syncControls(){
   $('size').value=state.scale; $('sizeV').textContent=state.scale+'%';
+  $('offx').value=state.offX; $('offxV').textContent=state.offX;
+  $('offy').value=state.offY; $('offyV').textContent=state.offY;
   $('nfs').value=state.nameFs; $('nfsV').textContent=state.nameFs;
   $('vfs').value=state.numFs; $('vfsV').textContent=state.numFs;
   $('vname').checked=state.vname; $('showdn').checked=state.showDn; $('showdv').checked=state.showDv;
@@ -83,11 +96,11 @@ function resetState(){
 function applyScale(){
   const b=stage.querySelector('#body'); if(!b) return;
   const s=state.scale/100;
-  b.setAttribute('transform', `translate(${CX} ${CY}) scale(${s}) translate(${-CX} ${-CY})`);
+  b.setAttribute('transform', `translate(${CX+state.offX} ${CY+state.offY}) scale(${s}) translate(${-CX} ${-CY})`);
 }
 
 function render(){
-  const svgStr=buildRadar2SVG({...DATA, title:'', viewBox:VB, hideCenter:!state.showCenter});
+  const svgStr=buildRadar2SVG({...DATA, title:'', viewBox:VB, hideCenter:!state.showCenter, coefColorMode:'byType'});
   stage.style.width=CELL_W+'px';                 // 白框固定＝四並排格寬
   stage.classList.toggle('vname', state.vname);
   stage.innerHTML=svgStr;
@@ -136,31 +149,34 @@ function bindDrag(t){
     const move=ev=>{ const p=svgPoint(svg,ev.clientX,ev.clientY);
       const nx=+(x0+(p.x-start.x)).toFixed(1), ny=+(y0+(p.y-start.y)).toFixed(1);
       t.setAttribute('x',nx); t.setAttribute('y',ny); state.moved[key]={x:nx,y:ny}; drawConns(); };
-    const up=()=>{ t.releasePointerCapture(e.pointerId); t.removeEventListener('pointermove',move); t.removeEventListener('pointerup',up); };
+    const up=()=>{ t.releasePointerCapture(e.pointerId); t.removeEventListener('pointermove',move); t.removeEventListener('pointerup',up); save(); };
     t.addEventListener('pointermove',move); t.addEventListener('pointerup',up);
   });
   t.addEventListener('dblclick',e=>{ e.preventDefault(); const key=t.dataset.role+'-'+t.dataset.i;
-    state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':''; drawConns(); });
+    state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':''; drawConns(); save(); });
 }
-function bindRange(id,valId,key,after){ const el=$(id),v=$(valId);
-  el.addEventListener('input',()=>{ state[key]=+el.value; v.textContent=el.value; after&&after(); }); }
-$('size').addEventListener('input',()=>{ state.scale=+$('size').value; $('sizeV').textContent=state.scale+'%'; applyScale(); });
-bindRange('nfs','nfsV','nameFs',()=>{ stage.querySelectorAll('[data-role="dn"]').forEach(t=>t.setAttribute('font-size',state.nameFs)); });
-bindRange('vfs','vfsV','numFs',()=>{ stage.querySelectorAll('[data-role="dv"]').forEach(t=>t.setAttribute('font-size',state.numFs)); });
-$('vname').addEventListener('change',e=>{ state.vname=e.target.checked; stage.classList.toggle('vname',state.vname); });
-$('showdn').addEventListener('change',e=>{ state.showDn=e.target.checked; stage.querySelectorAll('[data-role="dn"]').forEach(t=>{ const k='dn-'+t.dataset.i; t.dataset.hide=(!state.showDn||state.hidden[k])?'1':''; }); drawConns(); });
-$('showdv').addEventListener('change',e=>{ state.showDv=e.target.checked; stage.querySelectorAll('[data-role="dv"]').forEach(t=>{ const k='dv-'+t.dataset.i; t.dataset.hide=(!state.showDv||state.hidden[k])?'1':''; }); drawConns(); });
-$('showcenter').addEventListener('change',e=>{ state.showCenter=e.target.checked; render(); });
-$('showconn').addEventListener('change',e=>{ state.showConn=e.target.checked; drawConns(); });
-$('resetBtn').addEventListener('click',()=>{ resetState(); render(); $('out').style.display='none'; });
-$('exportBtn').addEventListener('click',()=>{ const o=$('out'); o.style.display='block';
+$('size').addEventListener('input',()=>{ state.scale=+$('size').value; $('sizeV').textContent=state.scale+'%'; applyScale(); save(); });
+$('offx').addEventListener('input',()=>{ state.offX=+$('offx').value; $('offxV').textContent=state.offX; applyScale(); save(); });
+$('offy').addEventListener('input',()=>{ state.offY=+$('offy').value; $('offyV').textContent=state.offY; applyScale(); save(); });
+$('nfs').addEventListener('input',()=>{ state.nameFs=+$('nfs').value; $('nfsV').textContent=state.nameFs; stage.querySelectorAll('[data-role="dn"]').forEach(t=>t.setAttribute('font-size',state.nameFs)); save(); });
+$('vfs').addEventListener('input',()=>{ state.numFs=+$('vfs').value; $('vfsV').textContent=state.numFs; stage.querySelectorAll('[data-role="dv"]').forEach(t=>t.setAttribute('font-size',state.numFs)); save(); });
+$('vname').addEventListener('change',e=>{ state.vname=e.target.checked; stage.classList.toggle('vname',state.vname); save(); });
+$('showdn').addEventListener('change',e=>{ state.showDn=e.target.checked; stage.querySelectorAll('[data-role="dn"]').forEach(t=>{ const k='dn-'+t.dataset.i; t.dataset.hide=(!state.showDn||state.hidden[k])?'1':''; }); drawConns(); save(); });
+$('showdv').addEventListener('change',e=>{ state.showDv=e.target.checked; stage.querySelectorAll('[data-role="dv"]').forEach(t=>{ const k='dv-'+t.dataset.i; t.dataset.hide=(!state.showDv||state.hidden[k])?'1':''; }); drawConns(); save(); });
+$('showcenter').addEventListener('change',e=>{ state.showCenter=e.target.checked; render(); save(); });
+$('showconn').addEventListener('change',e=>{ state.showConn=e.target.checked; drawConns(); save(); });
+$('resetBtn').addEventListener('click',()=>{ if(!confirm('確定要把所有調整歸零?')) return; state=normalize({}); anchors={}; try{localStorage.removeItem(LSKEY);}catch(e){} syncControls(); render(); });
+$('applyBtn').addEventListener('click',()=>{ const o=$('out'); try{ state=normalize(JSON.parse(o.value)); anchors={}; syncControls(); render(); save(); }catch(e){ alert('貼上的設定格式不正確'); } });
+$('exportBtn').addEventListener('click',()=>{ const o=$('out');
   o.value=JSON.stringify({cellW:CELL_W,radarScale:state.scale,nameFs:state.nameFs,numFs:state.numFs,vname:state.vname,
-    showDn:state.showDn,showDv:state.showDv,showCenter:state.showCenter,
+    offX:state.offX,offY:state.offY,showDn:state.showDn,showDv:state.showDv,showCenter:state.showCenter,
     moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1);
-  o.select();
+  o.style.display='block'; o.focus(); o.select();
 });
 
-resetState();
+// 初始:有自動保存→用保存;否則用 Mike 上次匯出的 SEED
+state = normalize(loadSaved() || SEED);
+syncControls();
 render();
 </script>
 </body>

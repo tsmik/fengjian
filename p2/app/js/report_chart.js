@@ -71,7 +71,11 @@ export function buildRadar2SVG(opts){
     svg+=`<text data-role="dn" data-i="${i}" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" font-size="${FSD}" text-anchor="${an}" fill="${col}" fill-opacity="0.8" font-weight="600">${dm.dn}</text>`;});
   // 維度係數數字（13邊形內圍；被 bar 蓋到→白字，否則動/靜色）
   DIM.forEach((dm,i)=>{const npp=f(NUMPOS[i][0],rIn*NUMPOS[i][1]);const nx=npp[0],ny=npp[1];
-    const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const rT=(dm.c==null?rIn:rIn+Math.min(1,dm.c/COEF_MAX)*H);const ncol=(dm.c==null)?mcol:((rT>=rr)?'#fff':mcol);
+    const rr=Math.hypot(nx-cx,ny-cy);const mcol=dm.sf<0.5?A:S;const rT=(dm.c==null?rIn:rIn+Math.min(1,dm.c/COEF_MAX)*H);
+    // coefColorMode='byType'(辣度總覽比較圖):係數字固定色 靜=深橄欖綠/動=深橘/0.0=深橘紅;否則沿用(蓋到→白字)
+    let ncol;
+    if(opts.coefColorMode==='byType'){ ncol=(dm.c==null)?mcol:(dm.c===0?'#B23A12':(dm.sf>=0.5?'#4E6B2F':'#C86A16')); }
+    else{ ncol=(dm.c==null)?mcol:((rT>=rr)?'#fff':mcol); }
     svg+=`<text data-role="dv" data-i="${i}" x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10.5" text-anchor="middle" fill="${ncol}" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700">${(dm.c==null?'--':dm.c.toFixed(2))}</text>`;});
   // 先天框（#854F51，字級同運氣）
   if(!opts.hideCenter){const p=f(92.4,rIn*0.743);lab2(p[0],p[1],'先天',preV,10.5,'#854F51');}
