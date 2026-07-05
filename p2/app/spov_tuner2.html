@@ -106,19 +106,24 @@ function makePanel(P){
     b.setAttribute('transform',`translate(${cx+state.offX} ${cy+state.offY}) scale(${s}) translate(${-cx} ${-cy})`);
   }
   function svgPoint(svg,x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse());}
+  function dblAction(t,role,key){
+    if(role==='dn'){ const cur=(state.vert[key]!==undefined)?state.vert[key]:!!state.vname; state.vert[key]=!cur; const v=state.vert[key];
+      t.style.writingMode=v?'vertical-rl':'';t.style.textOrientation=v?'upright':'';t.style.letterSpacing=v?'0.2em':''; }
+    else{ state.hidden[key]=!state.hidden[key];t.dataset.hide=state.hidden[key]?'1':''; }
+    save();
+  }
   function bindDrag(t){
     t.addEventListener('pointerdown',e=>{e.preventDefault();const svg=stage.querySelector('svg');
+      const role=t.getAttribute('data-role'),key=role+'-'+t.getAttribute('data-i');
+      const now=Date.now();
+      if(t._ld && now-t._ld<350){ t._ld=0; dblAction(t,role,key); return; }   // 手動判定雙擊(preventDefault 擋掉原生 dblclick)
+      t._ld=now;
       const st0=svgPoint(svg,e.clientX,e.clientY);const x0=+t.getAttribute('x'),y0=+t.getAttribute('y');
-      const key=t.getAttribute('data-role')+'-'+t.getAttribute('data-i');t.setPointerCapture(e.pointerId);
+      t.setPointerCapture(e.pointerId);
       const mv=ev=>{const p=svgPoint(svg,ev.clientX,ev.clientY);const nx=+(x0+p.x-st0.x).toFixed(1),ny=+(y0+p.y-st0.y).toFixed(1);
         t.setAttribute('x',nx);t.setAttribute('y',ny);state.moved[key]={x:nx,y:ny};};
       const up=()=>{t.releasePointerCapture(e.pointerId);t.removeEventListener('pointermove',mv);t.removeEventListener('pointerup',up);save();};
       t.addEventListener('pointermove',mv);t.addEventListener('pointerup',up);});
-    t.addEventListener('dblclick',e=>{e.preventDefault();const role=t.getAttribute('data-role'),key=role+'-'+t.getAttribute('data-i');
-      if(role==='dn'){ const cur=(state.vert[key]!==undefined)?state.vert[key]:!!state.vname; state.vert[key]=!cur; const v=state.vert[key];
-        t.style.writingMode=v?'vertical-rl':'';t.style.textOrientation=v?'upright':'';t.style.letterSpacing=v?'0.2em':''; }
-      else{ state.hidden[key]=!state.hidden[key];t.dataset.hide=state.hidden[key]?'1':''; }
-      save();});
   }
   function render(){
     stage.style.width=P.boxW+'px';

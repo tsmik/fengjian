@@ -22,7 +22,6 @@
   #stage svg{display:block;overflow:visible}
   #stage [data-role]{cursor:move}
   #stage [data-role]:hover{fill-opacity:1 !important;paint-order:stroke;stroke:#ffd27a;stroke-width:3px}
-  #stage.vname [data-role="dn"]{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:0.2em}
   #stage [data-hide="1"]{display:none}
   .conn{stroke:#b7a98c;stroke-width:0.8;stroke-dasharray:2 2;fill:none}
   #out{position:fixed;right:10px;bottom:10px;width:340px;max-width:calc(100vw - 20px);height:140px;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;z-index:20;background:#fff;opacity:0.9}
@@ -48,7 +47,7 @@
   <button id="exportBtn" class="primary">匯出設定</button>
 </div>
 <div id="tip">白框＝四並排實際格寬(固定)。「雷達圖大小」縮放框裡的雷達本體;「雷達左右/上下」整個雷達本體平移。拖曳任何維度名/係數數字定位(各自獨立);<b>雙擊「維度名」＝切換該字直書/橫書</b>;雙擊「係數數字」＝隱藏/顯示。<b>你的調整會自動保存,重開頁面不會消失。</b>「匯出設定」把文字貼給我;要還原某份設定→把文字貼進右下框、按「套用貼上設定」;「全部重設」歸零並清除保存。<br>建議用電腦操作比較好拖。</div>
-<div id="stageWrap"><div id="stage" class="vname"></div></div>
+<div id="stageWrap"><div id="stage"></div></div>
 <textarea id="out" placeholder="按「匯出設定」會顯示目前設定;或把一份設定貼進來、按「套用貼上設定」還原。"></textarea>
 
 <script type="module">
@@ -141,11 +140,24 @@ function drawConns(){
   });
 }
 function svgPoint(svg,cx,cy){ const p=svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function _dblAction(t,key){   // 雙擊:維度名→切直/橫;其他→隱藏
+  if(t.dataset.role==='dn'){
+    const cur=(state.vert[key]!==undefined)?state.vert[key]:state.vname; state.vert[key]=!cur;
+    const v=state.vert[key]; t.style.writingMode=v?'vertical-rl':''; t.style.textOrientation=v?'upright':''; t.style.letterSpacing=v?'0.2em':'';
+  }else{
+    state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':'';
+  }
+  drawConns(); save();
+}
 function bindDrag(t){
   t.addEventListener('pointerdown',e=>{
     e.preventDefault(); const svg=stage.querySelector('svg');
+    const key=t.dataset.role+'-'+t.dataset.i;
+    const now=Date.now();
+    if(t._ld && now-t._ld<350){ t._ld=0; _dblAction(t,key); return; }   // 手動判定雙擊(preventDefault 會擋掉原生 dblclick)
+    t._ld=now;
     const start=svgPoint(svg,e.clientX,e.clientY);
-    const x0=+t.getAttribute('x'), y0=+t.getAttribute('y'), key=t.dataset.role+'-'+t.dataset.i;
+    const x0=+t.getAttribute('x'), y0=+t.getAttribute('y');
     t.setPointerCapture(e.pointerId);
     const move=ev=>{ const p=svgPoint(svg,ev.clientX,ev.clientY);
       const nx=+(x0+(p.x-start.x)).toFixed(1), ny=+(y0+(p.y-start.y)).toFixed(1);
@@ -153,14 +165,6 @@ function bindDrag(t){
     const up=()=>{ t.releasePointerCapture(e.pointerId); t.removeEventListener('pointermove',move); t.removeEventListener('pointerup',up); save(); };
     t.addEventListener('pointermove',move); t.addEventListener('pointerup',up);
   });
-  t.addEventListener('dblclick',e=>{ e.preventDefault(); const key=t.dataset.role+'-'+t.dataset.i;
-    if(t.dataset.role==='dn'){   // 維度名雙擊＝切換直書/橫書(此一個)
-      const cur=(state.vert[key]!==undefined)?state.vert[key]:state.vname; state.vert[key]=!cur;
-      const v=state.vert[key]; t.style.writingMode=v?'vertical-rl':''; t.style.textOrientation=v?'upright':''; t.style.letterSpacing=v?'0.2em':'';
-    }else{   // 其他文字雙擊＝隱藏/顯示
-      state.hidden[key]=!state.hidden[key]; t.dataset.hide=state.hidden[key]?'1':'';
-    }
-    drawConns(); save(); });
 }
 $('size').addEventListener('input',()=>{ state.scale=+$('size').value; $('sizeV').textContent=state.scale+'%'; applyScale(); save(); });
 $('offx').addEventListener('input',()=>{ state.offX=+$('offx').value; $('offxV').textContent=state.offX; applyScale(); save(); });
