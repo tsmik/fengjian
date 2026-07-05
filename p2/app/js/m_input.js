@@ -393,7 +393,7 @@ function _applySavedSpiceOnce() {
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11 C28 14 29 21 24 26 C19 31 10 30 7 27 C13 27 18 23 20 17 C21 15 22 13 22 11 Z"/><path d="M22 11 C22 7 25 4 28 6 C26 6 25 8 26 10"/><path d="M19 16 C15 17 12 18 10 19 C11 16 10 15 11 13 C12 15 13 15 14 13 C15 15 16 15 16 12 C17 14 18 15 19 16 Z"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
+  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
