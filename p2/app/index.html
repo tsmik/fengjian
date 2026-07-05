@@ -131,13 +131,17 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-analysis-banner{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fbf7f0;border-bottom:1px solid rgba(0,0,0,0.06)}
 .m-analysis-banner-label{color:var(--text-3);font-size:12px;flex-shrink:0}
 .m-analysis-banner-name{flex:1;min-width:0;color:#3a3228;font-weight:700;font-size:15px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.m-analysis-banner{display:none!important}  /* #6：先拿掉「現在做誰的報告」橫幅，待個案管理另做提醒；刪此行即可恢復 */
+/* #6 橫幅已恢復：僅在「分析個案」時顯示（本人不顯示，保持乾淨）；顯示邏輯見 updateAnalysisBanner + tab 切換 */
 .m-analysis-back{flex-shrink:0;display:inline-flex;align-items:center;background:rgba(255,255,255,0.75);border:1px solid rgba(0,0,0,0.12);border-radius:14px;padding:4px 11px;font-size:13px;color:#3a3228;font-family:inherit;cursor:pointer;white-space:nowrap}
 .m-analysis-back:active{background:rgba(255,255,255,0.95)}
 
 /* 個案細節頁「開始分析」主按鈕 */
 .m-dash-analyze{display:block;width:100%;box-sizing:border-box;margin:4px 0 12px;padding:13px 16px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:2px;cursor:pointer}
 .m-dash-analyze:active{background:#2c251d}
+/* 個案細節：手機「新增觀察」兩入口（依部位／依維度填寫），比照桌機工作區 */
+.m-dash-obsentry{display:flex;gap:8px;margin:4px 0 12px}
+.m-dash-obsbtn{flex:1;box-sizing:border-box;padding:13px 8px;border:none;border-radius:12px;background:#3a3228;color:#fff;font-family:inherit;font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer}
+.m-dash-obsbtn:active{background:#2c251d}
 
 /* 桌機浮動筆記（報告頁）：固定右下角，跟著畫面捲動；面板可由 textarea 右下角拖拉放大 */
 .m-note-fab{position:fixed;right:22px;bottom:22px;z-index:8000;display:none;align-items:center;gap:7px;background:#3a3228;color:#fff;border:none;border-radius:22px;padding:11px 18px;font-family:inherit;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
@@ -207,7 +211,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-case-item-col{flex:1;min-width:0;display:flex;flex-direction:column}
 
 /* ===== 全螢幕頁（案例管理 / 名片細節 / 新增個案）：nav 下方右側滑入 ===== */
-.m-fullscreen{position:fixed;top:calc(var(--nav-h) + var(--safe-top));left:0;right:0;bottom:0;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;overflow:hidden}
+.m-fullscreen{position:fixed;top:calc(var(--nav-h) + var(--safe-top));left:0;right:0;bottom:calc(var(--tab-h) + var(--safe-bottom));background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;overflow:hidden}
 .m-fullscreen.is-open{transform:translateX(0)}
 .m-fs-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #e8e0d4;min-height:44px}
 .m-fs-back{background:none;border:none;color:var(--active);font-size:16px;font-family:inherit;cursor:pointer;padding:6px 8px;flex-shrink:0}

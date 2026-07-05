@@ -270,8 +270,17 @@ function _paintDashboard() {
   }
   // 流年（縮兩行）
   inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
-  // 個案：開始分析（桌機→進側欄工作區；手機→沿用既有報告流程）
-  if (p.isCase) inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
+  // 個案：新增觀察入口。桌機→側欄工作區（開始分析）；手機→明確「依部位／依維度填寫」兩顆（比照桌機工作區，取代語意不清的「開始分析」）
+  if (p.isCase) {
+    if (isDesktopSidebar()) {
+      inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
+    } else {
+      inner += '<div class="m-dash-obsentry">'
+        + '<button class="m-dash-obsbtn" data-dash-obs="part" type="button">依部位填寫 ▸</button>'
+        + '<button class="m-dash-obsbtn" data-dash-obs="dim" type="button">依維度填寫 ▸</button>'
+        + '</div>';
+    }
+  }
   // 右區：兩報告區塊（雷達僅圖形＋係數總覽含文字）：上課自我評分(手動) → 觀察自動評分(部位觀察)
   // 桌機個案走側欄工作區（無 sens 子畫面），隱藏參數分析鈕避免誤跳回本人
   const showSens = !(p.isCase && isDesktopSidebar());
@@ -300,6 +309,7 @@ function _paintDashboard() {
     });
   }
   const anaBtn = t.querySelector('[data-dash-analyze]'); if (anaBtn) anaBtn.onclick = _startAnalyze;
+  t.querySelectorAll('[data-dash-obs]').forEach((b) => { b.onclick = () => _gotoObs(b.dataset.dashObs); });
   const aBtn = t.querySelector('[data-dash-report="auto"]'); if (aBtn) aBtn.onclick = () => _gotoReport('auto');
   const mBtn = t.querySelector('[data-dash-report="manual"]'); if (mBtn) mBtn.onclick = () => _gotoReport('manual');
   const aSens = t.querySelector('[data-dash-sens="auto"]'); if (aSens) aSens.onclick = () => _gotoSens('auto');
@@ -374,6 +384,18 @@ async function _gotoSens(kind) {
   _closeCaseMgmt();
   if (kind === 'auto') { try { localStorage.setItem('m_input_view_once', 'sens'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click(); }
   else { try { localStorage.setItem('m_manual_view_once', 'sens'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
+}
+
+// 手機個案細節頁「依部位／依維度填寫」：設成目前分析個案 → 切到「系統計算報告」tab 的對應填寫子頁（= 新增觀察）
+async function _gotoObs(view) {   // view = 'part' | 'dim'
+  setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
+  await refreshUserData();
+  try { updateHomeProgress(); } catch (e) {}
+  try { updateAnalysisBanner(); } catch (e) {}
+  _closeCaseDetail();
+  _closeCaseMgmt();
+  try { localStorage.setItem('m_input_submode_once', (view === 'dim') ? 'dim' : 'part'); } catch (e) {}
+  const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click();
 }
 
 // 個案細節頁「開始分析」：桌機→側欄工作區（部位觀察分析）；手機→沿用既有報告流程

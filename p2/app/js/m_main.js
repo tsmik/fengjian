@@ -295,6 +295,12 @@ export function updateAnalysisBanner() {
       backBtn.style.display = 'none';
     }
   }
+  // 橫幅顯示條件：在填寫/報告分頁(input/manual) 且 正在分析某個案 才顯示（本人不顯示，保持乾淨）
+  if (banner) {
+    const at = document.querySelector('.m-tab.active');
+    const k = at && at.dataset.tab;
+    banner.style.display = ((k === 'input' || k === 'manual') && getActiveCaseId()) ? 'flex' : 'none';
+  }
 }
 // 從個案分析切回本人，並重掛目前分析分頁
 async function _backToSelf() {
@@ -720,6 +726,10 @@ if (isTeacherMode) {
         _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
+      // 個案管理不再是「困住的蓋版」：底部 tab 一直露出，切到別的分頁時收起任何開著的個案 overlay
+      if (key !== 'cases') {
+        ['m-case-mgmt','m-case-detail','m-case-form'].forEach(function(id){ var o=document.getElementById(id); if(o) o.classList.remove('is-open'); });
+      }
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
       const pageKey = (key === 'cases') ? 'report' : key;
       Object.keys(pages).forEach(function(k){
@@ -734,12 +744,8 @@ if (isTeacherMode) {
         saveZone.classList.toggle('is-hidden', key === 'home' || key === 'report' || key === 'cases');
       }
       // 「目前分析：XXX」橫幅：只在分析分頁（部位觀察 / 手動輸入）顯示
-      const banner = document.getElementById('m-analysis-banner');
-      if(banner){
-        const showBanner = (key === 'input' || key === 'manual');
-        banner.style.display = showBanner ? 'flex' : 'none';
-        if(showBanner) updateAnalysisBanner();
-      }
+      // 個案分析橫幅（回本人入口）：顯示與否由 updateAnalysisBanner 依「目前分頁＋是否在分析個案」決定
+      updateAnalysisBanner();
       // 記住目前 tab，重整時恢復
       try { localStorage.setItem('m_active_tab', key); } catch (e) {}
       // 浮動筆記預設收起；若接著掛到「報告」子畫面，m_input/m_manual 的 render 會再叫出來
