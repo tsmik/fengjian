@@ -627,6 +627,13 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-dimv-partfoot{font-size:14px;color:#6a5f50;text-align:center;margin:10px 0 8px}
 .m-dimv-clear{display:block;width:100%;min-height:44px;padding:9px;background:#fff;border:1px solid #dcc3ab;border-radius:10px;color:#a86a48;font-family:inherit;font-size:14px;cursor:pointer}
 .m-dimv-clear:active{background:#f3ebe1}
+/* 依部位填 手機版:已填x/100 與 清空所有觀察 併同一排;桌機在 @media 還原成堆疊 */
+.m-partv-foot{display:flex;align-items:center;gap:10px;margin:10px 0 8px}
+.m-partv-foot .m-dimv-partfoot{margin:0;flex-shrink:0}
+.m-partv-foot .m-dimv-clear{width:auto;flex:1;min-height:40px}
+/* 依部位填 手機版:部位名+說明+顯示所有說明 同一排(不換行) */
+.m-partv .m-dimv-parthead{flex-wrap:nowrap}
+.m-partv .m-dimv-partexp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .m-dimv-parthead{position:sticky;top:0;z-index:14;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;background:var(--bg);border-bottom:1px solid #d4c9b0;padding:10px 2px;margin-bottom:12px}
 .m-dimv-partname{font-size:20px;color:#3a3228;letter-spacing:2px}
 .m-dimv-partexp{font-size:14px;color:#7a6e64}
@@ -1587,6 +1594,9 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   body.m-ws-active .m-partv .m-dimv-partnav{padding-top:0}
   /* 部位名比照維度標題列(dimbar)：sticky top:0+padding-top:28 → 部位名落 28(跟維度名同線)，整塊不透明覆蓋 0~28(滑動不穿透、不蓋子部位框) */
   .m-partv .m-dimv-parthead{top:0;padding-top:28px}
+  /* 桌機側欄:已填/清空 還原成上下堆疊(手機才併排) */
+  .m-partv .m-partv-foot{display:block}
+  .m-partv .m-partv-foot .m-dimv-clear{width:100%}
   .m-partv .m-dimv-condcol .m-section{display:block}
   .m-partv .m-dimv-condcol .m-section-label{font-size:17px;margin-bottom:10px}
   /* 兵法報告桌機：分析圖=兩張雷達 並排(等大)；係數總覽=子彈圖放左欄(同雷達寬→同字級，總對齊係數圖的奇) */

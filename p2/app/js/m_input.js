@@ -1199,13 +1199,14 @@ function renderPartMode() {
     `<div class="m-partv-partrow">${PART_ROW_2.map(partTileHtml).join('')}</div>` +
     `</div>`;
   const { done, total } = partGrandTotal();
-  const partNav = `<div class="m-dimv-partnav">${_wsCaseNameHeader()}${navTiles}<div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
+  // 已填 x/100 與 清空所有觀察 併同一排(手機);桌機側欄靠 CSS 還原成上下堆疊
+  const partNav = `<div class="m-dimv-partnav">${_wsCaseNameHeader()}${navTiles}<div class="m-partv-foot"><div class="m-dimv-partfoot">已填 ${done}／${total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div></div>`;
   let condCol;
   if (!_expandedKey) {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
-    // 條件欄頂：sticky 部位名(20px) + 說明字 + 最右紅點圖例
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
+    // 條件欄頂：sticky 部位名(20px) + 說明字 + 顯示所有說明(同一排)
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
