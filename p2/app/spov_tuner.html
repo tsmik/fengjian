@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>辣度總覽 比較圖 調校</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#efe9df;color:#3a3228}
+  #bar{position:sticky;top:0;z-index:10;background:#fbf8f2;border-bottom:1px solid #d8cdb8;padding:8px 10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:13px}
+  #bar label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  #bar input[type=range]{width:110px}
+  #bar .val{min-width:30px;color:#8a7f70;font-variant-numeric:tabular-nums}
+  #bar button{font:inherit;font-size:13px;border:1px solid #c9bda3;background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+  #bar button.primary{background:#3a3228;color:#fff;border-color:#3a3228}
+  #bar button:active{transform:translateY(1px)}
+  .sep{width:1px;height:22px;background:#d8cdb8}
+  #tip{font-size:12px;color:#8a7f70;padding:6px 12px;background:#f5efe3}
+  #stageWrap{display:flex;justify-content:center;padding:16px 8px 40px}
+  #stage{background:#fff;border:1px solid #e8dfce;border-radius:12px;padding:10px}
+  #stage svg{display:block}
+  #stage [data-role]{cursor:move}
+  #stage [data-role]:hover{fill-opacity:1 !important;text-decoration:underline}
+  #stage [data-hide="1"]{display:none}
+  .conn{stroke:#b7a98c;stroke-width:0.8;stroke-dasharray:2 2;fill:none}
+  #out{position:fixed;right:10px;bottom:10px;width:340px;max-width:calc(100vw - 20px);height:150px;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;display:none;z-index:20;background:#fff}
+</style>
+</head>
+<body>
+<div id="bar">
+  <label>雷達大小 <input type="range" id="size" min="220" max="720" value="340"><span class="val" id="sizeV">340</span></label>
+  <div class="sep"></div>
+  <label>維度名字 <input type="range" id="nfs" min="6" max="34" step="0.5" value="10.8"><span class="val" id="nfsV">10.8</span></label>
+  <label>係數字 <input type="range" id="vfs" min="6" max="34" step="0.5" value="10.5"><span class="val" id="vfsV">10.5</span></label>
+  <div class="sep"></div>
+  <label><input type="checkbox" id="showdn" checked> 維度名</label>
+  <label><input type="checkbox" id="showdv" checked> 係數數字</label>
+  <label><input type="checkbox" id="showcenter"> 中央群組</label>
+  <label><input type="checkbox" id="showconn" checked> 引線</label>
+  <div class="sep"></div>
+  <button id="stackBtn">維度名→上下排</button>
+  <button id="resetBtn">重設位置</button>
+  <button id="exportBtn" class="primary">匯出設定</button>
+</div>
+<div id="tip">操作:直接用滑鼠/手指拖曳任何「維度名」或「係數數字」。雙擊某個字＝隱藏/顯示它。調滑桿改大小與字級。按「維度名→上下排」先套一個上下排的起點再微調。</div>
+<div id="stageWrap"><div id="stage"></div></div>
+<textarea id="out" readonly></textarea>
+
+<script type="module">
+const { buildRadar2SVG } = await import('./js/report_chart.js?v=' + Date.now());
+
+// —— 範例資料(隨便一組,只為看樣式) ——
+const rnd=(n,f)=>Array.from({length:n},(_,i)=>f(i));
+const DATA={
+  dimSFrac: rnd(13,i=>+(Math.abs(Math.cos(i*0.9))).toFixed(2)),
+  dimCoeff: rnd(13,i=>+(0.12+0.5*Math.abs(Math.sin(i*1.3))).toFixed(2)),
+  bossV:0.42,mgrV:0.38,luckV:0.5,postV:0.33,preV:0.4,totV:0.41
+};
+const VB='20 40 360 360';
+
+const stage=document.getElementById('stage');
+const state={ size:340, nameFs:10.8, numFs:10.5, showDn:true, showDv:true, showCenter:false, showConn:true,
+              moved:{}, hidden:{} };
+const anchors={};   // key -> {x,y} 原始位置(圖本身算出的)
+
+const $=id=>document.getElementById(id);
+
+function render(){
+  const svgStr=buildRadar2SVG({...DATA, title:'', viewBox:VB, hideCenter:!state.showCenter});
+  stage.style.width=state.size+'px';
+  stage.innerHTML=svgStr;
+  const svg=stage.querySelector('svg');
+  svg.removeAttribute('style');
+  svg.setAttribute('width', (state.size-20));
+  svg.setAttribute('height', (state.size-20));
+  // 引線層(放最前面→在圖形底下)
+  const conn=document.createElementNS('http://www.w3.org/2000/svg','g');
+  conn.setAttribute('id','connlayer');
+  svg.insertBefore(conn, svg.firstChild);
+  // 記錄原始位置 + 套用目前狀態
+  svg.querySelectorAll('[data-role]').forEach(t=>{
+    const key=t.dataset.role+'-'+t.dataset.i;
+    if(!anchors[key]) anchors[key]={x:+t.getAttribute('x'), y:+t.getAttribute('y')};
+    // 字級
+    t.setAttribute('font-size', t.dataset.role==='dn'?state.nameFs:state.numFs);
+    // 顯示/隱藏(整組)
+    if(t.dataset.role==='dn' && !state.showDn) t.dataset.hide='1';
+    if(t.dataset.role==='dv' && !state.showDv) t.dataset.hide='1';
+    // 個別隱藏
+    if(state.hidden[key]) t.dataset.hide='1';
+    // 位移
+    if(state.moved[key]){ t.setAttribute('x',state.moved[key].x); t.setAttribute('y',state.moved[key].y); }
+    bindDrag(t);
+  });
+  drawConns();
+}
+
+function drawConns(){
+  const svg=stage.querySelector('svg'); if(!svg) return;
+  const conn=svg.querySelector('#connlayer'); conn.innerHTML='';
+  if(!state.showConn) return;
+  Object.keys(state.moved).forEach(key=>{
+    const t=svg.querySelector(`[data-role="${key.split('-')[0]}"][data-i="${key.split('-')[1]}"]`);
+    if(!t || t.dataset.hide==='1') return;
+    const a=anchors[key]; const m=state.moved[key];
+    if(!a) return;
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',a.x); l.setAttribute('y1',a.y-3);
+    l.setAttribute('x2',m.x); l.setAttribute('y2',m.y-3);
+    l.setAttribute('class','conn');
+    conn.appendChild(l);
+  });
+}
+
+// —— 拖曳 ——
+function svgPoint(svg,cx,cy){ const p=svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function bindDrag(t){
+  t.addEventListener('pointerdown',e=>{
+    e.preventDefault(); const svg=stage.querySelector('svg');
+    const start=svgPoint(svg,e.clientX,e.clientY);
+    const x0=+t.getAttribute('x'), y0=+t.getAttribute('y');
+    const key=t.dataset.role+'-'+t.dataset.i;
+    t.setPointerCapture(e.pointerId);
+    const move=ev=>{ const p=svgPoint(svg,ev.clientX,ev.clientY);
+      const nx=+(x0+(p.x-start.x)).toFixed(1), ny=+(y0+(p.y-start.y)).toFixed(1);
+      t.setAttribute('x',nx); t.setAttribute('y',ny);
+      state.moved[key]={x:nx,y:ny}; drawConns(); };
+    const up=ev=>{ t.releasePointerCapture(e.pointerId); t.removeEventListener('pointermove',move); t.removeEventListener('pointerup',up); };
+    t.addEventListener('pointermove',move); t.addEventListener('pointerup',up);
+  });
+  t.addEventListener('dblclick',e=>{ e.preventDefault();
+    const key=t.dataset.role+'-'+t.dataset.i;
+    state.hidden[key]=!state.hidden[key];
+    t.dataset.hide=state.hidden[key]?'1':''; drawConns(); });
+}
+
+// —— 上下排 預設 ——
+function stackLayout(){
+  const svg=stage.querySelector('svg'); if(!svg) return;
+  const vb=svg.viewBox.baseVal; const cyc=vb.y+vb.height/2, cxc=vb.x+vb.width/2;
+  const names=[...svg.querySelectorAll('[data-role="dn"]')];
+  const top=[], bot=[];
+  names.forEach(t=>{ const key='dn-'+t.dataset.i; const a=anchors[key]; (a.y<cyc?top:bot).push({t,a,key}); });
+  const place=(arr,y)=>{ arr.sort((p,q)=>p.a.x-q.a.x);
+    const n=arr.length; const left=vb.x+18, right=vb.x+vb.width-18; const step=(right-left)/(n-1||1);
+    arr.forEach((o,i)=>{ const x=+(left+step*i).toFixed(1);
+      o.t.setAttribute('x',x); o.t.setAttribute('y',y); o.t.setAttribute('text-anchor','middle');
+      state.moved[o.key]={x,y}; }); };
+  place(top, +(vb.y+16).toFixed(1));
+  place(bot, +(vb.y+vb.height-6).toFixed(1));
+  drawConns();
+}
+
+// —— 控制項 ——
+function bindRange(id,valId,key,after){ const el=$(id),v=$(valId);
+  el.addEventListener('input',()=>{ state[key]=+el.value; v.textContent=el.value; after&&after(); }); }
+bindRange('size','sizeV','size',()=>{ const svg=stage.querySelector('svg'); stage.style.width=state.size+'px'; if(svg){svg.setAttribute('width',state.size-20);svg.setAttribute('height',state.size-20);} });
+bindRange('nfs','nfsV','nameFs',()=>{ stage.querySelectorAll('[data-role="dn"]').forEach(t=>t.setAttribute('font-size',state.nameFs)); });
+bindRange('vfs','vfsV','numFs',()=>{ stage.querySelectorAll('[data-role="dv"]').forEach(t=>t.setAttribute('font-size',state.numFs)); });
+$('showdn').addEventListener('change',e=>{ state.showDn=e.target.checked; stage.querySelectorAll('[data-role="dn"]').forEach(t=>{ const k='dn-'+t.dataset.i; t.dataset.hide=(!state.showDn||state.hidden[k])?'1':''; }); drawConns(); });
+$('showdv').addEventListener('change',e=>{ state.showDv=e.target.checked; stage.querySelectorAll('[data-role="dv"]').forEach(t=>{ const k='dv-'+t.dataset.i; t.dataset.hide=(!state.showDv||state.hidden[k])?'1':''; }); drawConns(); });
+$('showcenter').addEventListener('change',e=>{ state.showCenter=e.target.checked; render(); });
+$('showconn').addEventListener('change',e=>{ state.showConn=e.target.checked; drawConns(); });
+$('stackBtn').addEventListener('click',stackLayout);
+$('resetBtn').addEventListener('click',()=>{ state.moved={}; state.hidden={}; render(); });
+$('exportBtn').addEventListener('click',()=>{ const o=$('out');
+  o.style.display='block';
+  o.value=JSON.stringify({size:state.size,nameFs:state.nameFs,numFs:state.numFs,
+    showDn:state.showDn,showDv:state.showDv,showCenter:state.showCenter,
+    moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1);
+  o.select();
+});
+
+render();
+</script>
+</body>
+</html>
