@@ -22,7 +22,7 @@
   #stage svg{display:block;overflow:visible}
   #stage [data-role]{cursor:move}
   #stage [data-role]:hover{fill-opacity:1 !important;paint-order:stroke;stroke:#ffd27a;stroke-width:3px}
-  #stage.vname [data-role="dn"]{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:-1px}
+  #stage.vname [data-role="dn"]{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:0.2em}
   #stage [data-hide="1"]{display:none}
   .conn{stroke:#b7a98c;stroke-width:0.8;stroke-dasharray:2 2;fill:none}
   #out{position:fixed;right:10px;bottom:10px;width:340px;max-width:calc(100vw - 20px);height:150px;font:12px/1.4 ui-monospace,monospace;border:1px solid #c9bda3;border-radius:8px;padding:8px;display:none;z-index:20;background:#fff}
@@ -30,7 +30,7 @@
 </head>
 <body>
 <div id="bar">
-  <label>雷達大小 <input type="range" id="size" min="60" max="300" value="300"><span class="val" id="sizeV">300</span></label>
+  <label>雷達圖大小 <input type="range" id="size" min="40" max="160" value="100"><span class="val" id="sizeV">100%</span></label>
   <div class="sep"></div>
   <label>維度名字 <input type="range" id="nfs" min="6" max="40" step="0.5" value="10.8"><span class="val" id="nfsV">10.8</span></label>
   <label>係數字 <input type="range" id="vfs" min="6" max="40" step="0.5" value="10.5"><span class="val" id="vfsV">10.5</span></label>
@@ -44,7 +44,7 @@
   <button id="resetBtn" class="warn">全部重設</button>
   <button id="exportBtn" class="primary">匯出設定</button>
 </div>
-<div id="tip">操作:拖曳任何維度名/係數數字到你要的位置(每個都能各自移動)。雙擊某個字＝隱藏/顯示它。維度名預設「直書」(文字直的)。「雷達大小」的最大值＝目前四並排的實際格寬,不會超過。調完按「匯出設定」把文字貼給我。<b>全部重設</b>會把位置/隱藏/字級/大小/勾選全部歸零。<br>建議用電腦操作比較好拖。</div>
+<div id="tip">白色框＝目前四並排的實際格寬(固定不變)。「雷達圖大小」只縮放框裡面的雷達本體(多邊形),讓你把圖調到剛好、四周留位置給文字。拖曳任何維度名/係數數字到你要的位置(每個都能各自移動);雙擊某個字＝隱藏/顯示它。維度名預設「直書」。調完按「匯出設定」把文字貼給我。<b>全部重設</b>會把位置/隱藏/字級/雷達大小/勾選全部歸零。<br>建議用電腦操作比較好拖。</div>
 <div id="stageWrap"><div id="stage" class="vname"></div></div>
 <textarea id="out" readonly></textarea>
 
@@ -63,32 +63,43 @@ const VB='20 40 360 360';
 // —— 四並排實際格寬(＝大小上限):比照 spov CSS grid 4 欄, gap 6, 格線 padding 4 ——
 const CELL_W = Math.max(80, Math.round((window.innerWidth - 2*4 - 3*6) / 4));
 
+const SVGNS='http://www.w3.org/2000/svg';
+const CX=200, CY=220;   // viewBox '20 40 360 360' 的中心(縮放雷達本體用)
 const stage=document.getElementById('stage');
 const $=id=>document.getElementById(id);
-const DEFAULTS={ size:CELL_W, nameFs:10.8, numFs:10.5, vname:true, showDn:true, showDv:true, showCenter:false, showConn:false };
+const DEFAULTS={ scale:100, nameFs:10.8, numFs:10.5, vname:true, showDn:true, showDv:true, showCenter:false, showConn:false };
 let state, anchors;
 
 function resetState(){
   state={ ...DEFAULTS, moved:{}, hidden:{} };
   anchors={};
   // 還原 UI 控制項
-  $('size').max=CELL_W; $('size').value=state.size; $('sizeV').textContent=state.size;
+  $('size').value=state.scale; $('sizeV').textContent=state.scale+'%';
   $('nfs').value=state.nameFs; $('nfsV').textContent=state.nameFs;
   $('vfs').value=state.numFs; $('vfsV').textContent=state.numFs;
   $('vname').checked=state.vname; $('showdn').checked=state.showDn; $('showdv').checked=state.showDv;
   $('showcenter').checked=state.showCenter; $('showconn').checked=state.showConn;
 }
+function applyScale(){
+  const b=stage.querySelector('#body'); if(!b) return;
+  const s=state.scale/100;
+  b.setAttribute('transform', `translate(${CX} ${CY}) scale(${s}) translate(${-CX} ${-CY})`);
+}
 
 function render(){
   const svgStr=buildRadar2SVG({...DATA, title:'', viewBox:VB, hideCenter:!state.showCenter});
-  stage.style.width=state.size+'px';
+  stage.style.width=CELL_W+'px';                 // 白框固定＝四並排格寬
   stage.classList.toggle('vname', state.vname);
   stage.innerHTML=svgStr;
   const svg=stage.querySelector('svg');
   svg.removeAttribute('style');
-  svg.setAttribute('width', (state.size-20)); svg.setAttribute('height', (state.size-20));
-  const conn=document.createElementNS('http://www.w3.org/2000/svg','g');
-  conn.setAttribute('id','connlayer'); svg.insertBefore(conn, svg.firstChild);
+  svg.setAttribute('width', (CELL_W-20)); svg.setAttribute('height', (CELL_W-20));
+  // 分層:引線(底) → 雷達本體 body(可縮放) → 文字標籤(在上,不隨縮放,可各自拖曳)
+  const orig=[...svg.children];
+  const conn=document.createElementNS(SVGNS,'g'); conn.id='connlayer';
+  const body=document.createElementNS(SVGNS,'g'); body.id='body';
+  svg.appendChild(conn); svg.appendChild(body);
+  orig.forEach(ch=>{ if(ch.matches('[data-role]')) svg.appendChild(ch); else body.appendChild(ch); });
   svg.querySelectorAll('[data-role]').forEach(t=>{
     const key=t.dataset.role+'-'+t.dataset.i;
     if(!anchors[key]) anchors[key]={x:+t.getAttribute('x'), y:+t.getAttribute('y')};
@@ -99,6 +110,7 @@ function render(){
     if(state.moved[key]){ t.setAttribute('x',state.moved[key].x); t.setAttribute('y',state.moved[key].y); }
     bindDrag(t);
   });
+  applyScale();
   drawConns();
 }
 function drawConns(){
@@ -132,7 +144,7 @@ function bindDrag(t){
 }
 function bindRange(id,valId,key,after){ const el=$(id),v=$(valId);
   el.addEventListener('input',()=>{ state[key]=+el.value; v.textContent=el.value; after&&after(); }); }
-bindRange('size','sizeV','size',()=>{ const svg=stage.querySelector('svg'); stage.style.width=state.size+'px'; if(svg){svg.setAttribute('width',state.size-20);svg.setAttribute('height',state.size-20);} });
+$('size').addEventListener('input',()=>{ state.scale=+$('size').value; $('sizeV').textContent=state.scale+'%'; applyScale(); });
 bindRange('nfs','nfsV','nameFs',()=>{ stage.querySelectorAll('[data-role="dn"]').forEach(t=>t.setAttribute('font-size',state.nameFs)); });
 bindRange('vfs','vfsV','numFs',()=>{ stage.querySelectorAll('[data-role="dv"]').forEach(t=>t.setAttribute('font-size',state.numFs)); });
 $('vname').addEventListener('change',e=>{ state.vname=e.target.checked; stage.classList.toggle('vname',state.vname); });
@@ -142,7 +154,7 @@ $('showcenter').addEventListener('change',e=>{ state.showCenter=e.target.checked
 $('showconn').addEventListener('change',e=>{ state.showConn=e.target.checked; drawConns(); });
 $('resetBtn').addEventListener('click',()=>{ resetState(); render(); $('out').style.display='none'; });
 $('exportBtn').addEventListener('click',()=>{ const o=$('out'); o.style.display='block';
-  o.value=JSON.stringify({cellW:CELL_W,size:state.size,nameFs:state.nameFs,numFs:state.numFs,vname:state.vname,
+  o.value=JSON.stringify({cellW:CELL_W,radarScale:state.scale,nameFs:state.nameFs,numFs:state.numFs,vname:state.vname,
     showDn:state.showDn,showDv:state.showDv,showCenter:state.showCenter,
     moved:state.moved,hidden:Object.keys(state.hidden).filter(k=>state.hidden[k])},null,1);
   o.select();
