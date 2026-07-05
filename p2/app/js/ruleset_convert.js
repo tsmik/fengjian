@@ -20,6 +20,7 @@ function toQ(o) {
     opts: (o.options || []).map(v => ({ v, hint: hints[v] || '' })),
   };
   if (o.paired) q.paired = true;
+  if (o.note) q.note = o.note;   // 題目備注(觀察庫 note)→前台 i 圈圈展開顯示
   return q;
 }
 

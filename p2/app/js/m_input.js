@@ -69,6 +69,7 @@ let _baselineFingerprintAtMount = '';   // mount 時 firestore baseline 的 JSON
 let _firestoreBaseline = {};
 let _expandedKey = null;
 let _splitOpen = {};
+let _hintOpen = {};   // qid → bool:該題「備注+選項hint」是否展開(i 圈圈控制;預設收合)
 let _pairedSide = {};
 let _dimExpanded = null;  // 維度視角當前展開的維度 idx（null = 未展開）
 let _dimPartExpanded = {};  // {di: pi} 各維度當前展開的部位 tile（互斥單選；缺 key 表示沒展開）
@@ -726,7 +727,7 @@ function renderDimMode() {
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div></div>`;
+  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -1112,7 +1113,7 @@ function renderPartMode() {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
     // 條件欄頂：sticky 部位名(20px) + 說明字 + 最右紅點圖例
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><span class="m-dimv-legend"><span class="m-update-dot-inline"></span>新題目/內容更新</span></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇部位觀察特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明">顯示說明</button></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
@@ -1166,14 +1167,27 @@ function _questionDot(partName, qid) {
   return hasUpdate('q_' + partName + '_' + qid) ? '<span class="m-update-dot-inline"></span>' : '';
 }
 
+// i 圈圈:題目後的說明開關(有備注或任一選項有 hint 才出現);點開該題備注+所有選項 hint
+function _qInfoBtn(q) {
+  const hasDesc = !!(q.note || (q.opts || []).some(o => o.hint));
+  return hasDesc ? `<button class="m-q-info" type="button" data-qinfo="${escapeHtml(q.id)}" title="點選打開備注說明">ⓘ</button>` : '';
+}
+function _qNote(q) { return q.note ? `<div class="m-q-note">${escapeHtml(q.note)}</div>` : ''; }
+// 「顯示說明」開關 is-on = 此部位所有題目都展開
+function _syncDescSwitch() {
+  if (!_root) return;
+  const wraps = [..._root.querySelectorAll('.m-q[data-qwrap]')];
+  const allOpen = wraps.length > 0 && wraps.every(w => w.classList.contains('m-q-descopen'));
+  _root.querySelectorAll('[data-descswitch]').forEach(sw => sw.classList.toggle('is-on', allOpen));
+}
 function renderOptions(qid, curVal, opts) {
-  // 說明(hint)常駐顯示在選項下方（上課筆記款），ⓘ 當 icon、不再點開收合（避免與選取誤觸衝突）
+  // hint 預設收合(藏在 .m-opt-hint,由該題 .m-q-descopen 控制顯示);選項 ⓘ 已隱藏(Mike 2026-07-05)
   return (opts || []).map(o => {
     const v = o.v;
     const hint = o.hint || '';
     const sel = curVal === v ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}</button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid)}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }
@@ -1181,9 +1195,11 @@ function renderOptions(qid, curVal, opts) {
 function renderSingleQuestion(q, partName) {
   const todoCls = isAnswered(q) ? '' : ' m-q-todo';
   const dot = _questionDot(partName, q.id);
+  const openCls = _hintOpen[q.id] ? ' m-q-descopen' : '';
   return `
-    <div class="m-q${todoCls}">
-      <div class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</div>
+    <div class="m-q${todoCls}${openCls}" data-qwrap="${escapeHtml(q.id)}">
+      <div class="m-q-text">${dot}${escapeHtml(q.text || q.id)}${_qInfoBtn(q)}</div>
+      ${_qNote(q)}
       <div class="m-q-opts">${renderOptions(q.id, _draft[q.id], q.opts)}</div>
     </div>
   `;
@@ -1223,7 +1239,7 @@ function _renderSyncOptions(qid, opts, vL, vR) {
     const hint = o.hint || '';
     const sel = (v === vL || v === vR) ? 'm-opt-selected' : '';
     return `
-      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint"><span class="m-opt-hint-i">ⓘ</span>${escapeHtml(hint)}</span>` : ''}</button>
+      <button class="m-opt ${sel}" data-qid="${escapeHtml(qid + '__sync')}" data-val="${escapeHtml(v)}"><span class="m-opt-v">${escapeHtml(v)}</span>${hint ? `<span class="m-opt-hint">${escapeHtml(hint)}</span>` : ''}</button>
     `;
   }).join('');
 }
@@ -1237,27 +1253,30 @@ function renderPairedQuestion(q, partName) {
   const isDiff = (vL != null && vR != null && vL !== vR);
   // 左右不一致提示（放展開/收合鈕右邊）；左右一致時不顯示
   const diffHint = isDiff ? `<span class="m-q-tag m-q-tag-diff">左${escapeHtml(vL)}　右${escapeHtml(vR)}</span>` : '';
+  const openCls = _hintOpen[q.id] ? ' m-q-descopen' : '';
   if (!isOpen) {
     // 左右收合：單排選項（不一致時左右兩個選到的都淡綠底；點任一→視為左右一致）+「左右展開」鈕 + 不一致提示
     return `
-      <div class="m-q m-q-paired${_todoCls}">
+      <div class="m-q m-q-paired${_todoCls}${openCls}" data-qwrap="${escapeHtml(q.id)}">
         <div class="m-q-head">
-          <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
+          <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}${_qInfoBtn(q)}</span>
           <button class="m-paired-toggle" data-pair-id="${escapeHtml(q.id)}" data-action="open">左右展開</button>
           ${diffHint}
         </div>
+        ${_qNote(q)}
         <div class="m-q-opts">${_renderSyncOptions(q.id, q.opts, vL, vR)}</div>
       </div>
     `;
   }
   // 左右展開：兩欄左右選項 +「左右收合」鈕 + 不一致提示
   return `
-    <div class="m-q m-q-paired m-q-paired-open${_todoCls}">
+    <div class="m-q m-q-paired m-q-paired-open${_todoCls}${openCls}" data-qwrap="${escapeHtml(q.id)}">
       <div class="m-q-head">
-        <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}</span>
+        <span class="m-q-text">${dot}${escapeHtml(q.text || q.id)}${_qInfoBtn(q)}</span>
         <button class="m-paired-toggle m-paired-toggle-active" data-pair-id="${escapeHtml(q.id)}" data-action="close">左右收合</button>
         ${diffHint}
       </div>
+      ${_qNote(q)}
       <div class="m-q-paired-cols">
         <div class="m-q-paired-col">
           <div class="m-q-paired-col-head">左</div>
@@ -1330,17 +1349,27 @@ function bindEvents() {
     });
   });
 
-  // hint ⓘ 圖示：點開/收合該選項的 hint 文字（不觸發答題）
-  _root.querySelectorAll('.m-opt-hint-icon').forEach(icon => {
-    icon.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const btn = icon.closest('.m-opt');
-      if (!btn) return;
-      const hint = btn.querySelector('.m-opt-hint');
-      if (hint) hint.classList.toggle('is-hidden');
+  // i 圈圈:點開/收合該題「備注 + 所有選項 hint」(以一題為單位;DOM toggle,不重繪)
+  _root.querySelectorAll('[data-qinfo]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      const wrap = btn.closest('.m-q'); if (!wrap) return;
+      const open = wrap.classList.toggle('m-q-descopen');
+      _hintOpen[btn.dataset.qinfo] = open;
+      _syncDescSwitch();
     });
   });
+  // 顯示說明 開關:一鍵全開/全關此部位條件欄所有題目的備注與 hint
+  _root.querySelectorAll('[data-descswitch]').forEach(sw => {
+    sw.addEventListener('click', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      const wraps = [..._root.querySelectorAll('.m-q[data-qwrap]')];
+      const anyClosed = wraps.some(w => !w.classList.contains('m-q-descopen'));   // 有收合的→全開;否則全收
+      wraps.forEach(w => { w.classList.toggle('m-q-descopen', anyClosed); const id = w.dataset.qwrap; if (id) _hintOpen[id] = anyClosed; });
+      _syncDescSwitch();
+    });
+  });
+  _syncDescSwitch();
 
   // 答題（toggle：點已選的選項再點一次 → 取消選取）
   _root.querySelectorAll('.m-opt').forEach(btn => {
