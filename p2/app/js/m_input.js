@@ -505,6 +505,11 @@ function _applySpovLayout(svgStr, cfg) {
         if (v) t.setAttribute('style', 'writing-mode:vertical-rl;text-orientation:upright;letter-spacing:0.2em');
       }
     });
+    // 依標籤位置擴充 viewBox,讓所有文字收在自己框內(避免溢出下緣蓋到下一張圖);只擴大不縮小
+    const pad = Math.max(fs.dn || 0, fs.dv || 0, fs.pole || 0, 14);
+    let minX = vb[0], minY = vb[1], maxX = vb[0] + vb[2], maxY = vb[1] + vb[3];
+    Object.values(moved).forEach(m => { minX = Math.min(minX, m.x - pad); maxX = Math.max(maxX, m.x + pad); minY = Math.min(minY, m.y - pad); maxY = Math.max(maxY, m.y + pad * 0.45); });
+    svg.setAttribute('viewBox', `${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX - minX).toFixed(1)} ${(maxY - minY).toFixed(1)}`);
     return new XMLSerializer().serializeToString(svg);
   } catch (e) { return svgStr; }
 }
