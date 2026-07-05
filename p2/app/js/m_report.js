@@ -355,14 +355,15 @@ async function _saveDashboardEdit() {
 
 // 從儀表板報告連結進入：把這人設成目前分析 → 切到對應分頁
 async function _gotoReport(kind) {
-  // 桌機 + 個案：改走側欄「個案工作區」（上方分頁留給本人），不跳上面的部位觀察/手動分頁
-  if (_dashIsCase && _dashPerson && isDesktopSidebar()) {
+  // 個案：改走「個案工作區」（桌機側欄／手機頂部列），全程留在個案管理內，不跳上面的部位觀察/手動分頁
+  if (_dashIsCase && _dashPerson) {
     const sub = (kind === 'manual') ? 'manual-report' : 'obs-report';
     _closeCaseDetail();
     _closeCaseMgmt();
     openCaseWorkspace({ id: _dashPerson.id, name: _dashPerson.name, color: _dashPerson.color }, sub);
     return;
   }
+  // 本人：沿用跳分頁（本人無工作區）
   setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
   await refreshUserData();
   try { updateHomeProgress(); } catch (e) {}
@@ -386,16 +387,13 @@ async function _gotoSens(kind) {
   else { try { localStorage.setItem('m_manual_view_once', 'sens'); } catch (e) {} const tb = document.querySelector('.m-tab[data-tab="manual"]'); if (tb) tb.click(); }
 }
 
-// 手機個案細節頁「依部位／依維度填寫」：設成目前分析個案 → 切到「系統計算報告」tab 的對應填寫子頁（= 新增觀察）
+// 手機個案細節頁「依部位／依維度填寫」：開個案工作區（頂部列）→ 全程留在個案管理內，不跳「系統計算報告」tab
 async function _gotoObs(view) {   // view = 'part' | 'dim'
-  setActiveCase(_dashIsCase ? (_dashPerson && _dashPerson.id) : null);
-  await refreshUserData();
-  try { updateHomeProgress(); } catch (e) {}
-  try { updateAnalysisBanner(); } catch (e) {}
+  // 個案才有此鈕（本人 dashboard 不渲染 data-dash-obs）；仍防呆
+  if (!_dashIsCase || !_dashPerson) return;
   _closeCaseDetail();
   _closeCaseMgmt();
-  try { localStorage.setItem('m_input_submode_once', (view === 'dim') ? 'dim' : 'part'); } catch (e) {}
-  const tb = document.querySelector('.m-tab[data-tab="input"]'); if (tb) tb.click();
+  openCaseWorkspace({ id: _dashPerson.id, name: _dashPerson.name, color: _dashPerson.color }, (view === 'dim') ? 'obs-dim' : 'obs');
 }
 
 // 個案細節頁「開始分析」：桌機→側欄工作區（部位觀察分析）；手機→沿用既有報告流程

@@ -329,6 +329,18 @@ const WS_SUBS = [
   { key: 'obs-dim', label: '依維度填寫', tab: 'input' },
   { key: 'obs-report', label: '兵法報告', tab: 'input' }
 ];
+// 手機工作區頂部列：兩組（系統計算 / 手動建立），比照個案儀表板的兩個報告家族
+const MWS_GROUPS = [
+  { title: '系統計算', subs: [
+    { key: 'obs', label: '依部位填寫' },
+    { key: 'obs-dim', label: '依維度填寫' },
+    { key: 'obs-report', label: '兵法報告' }
+  ] },
+  { title: '手動建立', subs: [
+    { key: 'manual', label: '自我評分' },
+    { key: 'manual-report', label: '兵法報告' }
+  ] }
+];
 function _wsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 // 把個案色淡淡混進某個底色。f 越大越濃。
 function _wsBlend(base, hex, f) {
@@ -359,6 +371,29 @@ function _renderWorkspace() {
   const cl = host.querySelector('#m-ws-close'); if (cl) cl.onclick = closeCaseWorkspace;
   host.querySelectorAll('[data-ws]').forEach(function (b) { b.addEventListener('click', function () { selectWorkspaceSub(b.dataset.ws); }); });
 }
+// 手機工作區頂部列：個案名 ＋ 返回清單 ＋ 兩組子頁鈕（系統計算／手動建立）
+function _renderMobileWs() {
+  const host = document.getElementById('m-mws');
+  if (!host) return;
+  if (!_wsCase) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = '';
+  const groups = MWS_GROUPS.map(function (g) {
+    const items = g.subs.map(function (s) {
+      return '<button class="m-mws-item' + (s.key === _wsSub ? ' active' : '') + '" data-mws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
+    }).join('');
+    return '<div class="m-mws-group"><span class="m-mws-gtitle">' + _wsEsc(g.title) + '</span><div class="m-mws-items">' + items + '</div></div>';
+  }).join('');
+  host.innerHTML =
+    '<div class="m-mws-top">' +
+      '<button class="m-mws-back" id="m-mws-back">‹ 個案清單</button>' +
+      '<span class="m-mws-bar" style="background:' + (_wsCase.color || '#c9b98e') + '"></span>' +
+      '<span class="m-mws-name">' + _wsEsc(_wsCase.name) + '</span>' +
+    '</div>' + groups;
+  const bk = host.querySelector('#m-mws-back'); if (bk) bk.onclick = closeCaseWorkspace;
+  host.querySelectorAll('[data-mws]').forEach(function (b) { b.addEventListener('click', function () { selectWorkspaceSub(b.dataset.mws); }); });
+}
+function _hideMobileWs() { const h = document.getElementById('m-mws'); if (h) { h.style.display = 'none'; h.innerHTML = ''; } }
+
 // 開啟某個案的工作區（取代既有的；一次一個），預設停在 subKey（不給 → 部位觀察分析）
 export function openCaseWorkspace(caseObj, subKey) {
   if (!caseObj || !caseObj.id) return;
@@ -371,8 +406,8 @@ export function openCaseWorkspace(caseObj, subKey) {
 // 避免上方 部位觀察/上課 被高亮、也不顯示它們的子膠囊）。個案分析完全走側欄工作區。
 export function selectWorkspaceSub(key) {
   if (!_wsCase) return;
-  const sub = WS_SUBS.find(function (s) { return s.key === key; });
-  if (!sub) return;
+  const isManual = (key === 'manual' || key === 'manual-report');
+  const subTab = isManual ? 'manual' : 'input';
   // 離開目前內容的未存提示（目前可能在某個分析頁）
   const pInput = document.getElementById('m-page-input');
   const pManual = document.getElementById('m-page-manual');
@@ -389,7 +424,7 @@ export function selectWorkspaceSub(key) {
   clearInputSubnav(); clearManualSubnav();
   [pInput, pManual, pReport, pHome].forEach(function (p) { if (p) p.classList.remove('active'); });
 
-  if (sub.tab === 'input') {
+  if (subTab === 'input') {
     if (pInput) pInput.classList.add('active');
     unmountReport(); unmountManual();
     const _wsView = key === 'obs-report' ? 'report' : (key === 'obs-dim' ? 'dim' : 'part');
@@ -408,7 +443,14 @@ export function selectWorkspaceSub(key) {
   _wsSub = key;
   document.body.classList.add('m-ws-active');
   document.body.style.setProperty('--ws-tint', _wsWash(_wsCase.color));
-  _renderWorkspace();
+  if (isDesktopSidebar()) {
+    _renderWorkspace();
+  } else {
+    // 手機：保留「個案管理」tab 高亮（工作區在個案管理 tab 內完成）＋ 顯示手機頂部列（取代側欄）
+    const cb = document.querySelector('.m-tab[data-tab="cases"]'); if (cb) cb.classList.add('active');
+    document.body.classList.add('m-mws-active');
+    _renderMobileWs();
+  }
   try { localStorage.removeItem('m_input_view_once'); localStorage.removeItem('m_manual_view_once'); } catch (e) {}
 }
 // ✕：關閉工作區、回到「個案管理」清單（工作區消失）
@@ -417,6 +459,8 @@ export function closeCaseWorkspace() {
   if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
   _wsCase = null; _wsSub = null;
   document.body.classList.remove('m-ws-active');
+  document.body.classList.remove('m-mws-active');
+  _hideMobileWs();
   setActiveCase(null);
   _renderWorkspace();
   const tb = document.querySelector('.m-tab[data-tab="cases"]'); if (tb) tb.click();
@@ -716,11 +760,13 @@ if (isTeacherMode) {
         if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
         if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
       }
-      // 桌機：點上方分頁一律切回本人（個案分析走側欄工作區）。工作區仍釘在側欄，僅取消染色/高亮。
+      // 點底部 tab 一律離開個案工作區、切回本人（桌機側欄工作區仍釘著僅取消染色；手機頂部列直接收起）。
       let _forcedSelf = false;
-      // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點上方分頁會殘留個案染色）
+      const _wasMobileWs = document.body.classList.contains('m-mws-active');
+      // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點底部 tab 會殘留個案染色）
       if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
-      if (isDesktopSidebar() && getActiveCaseId()) {
+      if (_wasMobileWs) { document.body.classList.remove('m-mws-active'); _hideMobileWs(); }
+      if ((isDesktopSidebar() || _wasMobileWs) && getActiveCaseId()) {
         setActiveCase(null);
         try { await refreshUserData(); } catch (e) {}
         _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
