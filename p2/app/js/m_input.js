@@ -824,9 +824,12 @@ function renderDimMode() {
   }
   const selPi = _dimPartExpanded[di];
 
-  // ── 第2欄：部位導覽（高 tile：名左/進度右）+ 底部已填 + 清空所有選擇
-  const navTiles = DIM_PART_ORDER.map((pi, i) => {
-    const label = DIM_PART_LABELS[i];
+  // ── 第2欄：部位導覽 — 固定 11 部位兩排(上排6/下排5)，比照依部位填；去掉恆無規則的 中停(2)/下停(3)
+  //   pi 即 DIM_PART_ORDER 值(0..12)；DIM_PART_LABELS[pi] = 部位名
+  const DIM_NAV_ROW1 = [0, 1, 4, 5, 6, 7];    // 頭 上停 耳 眉 眼 鼻
+  const DIM_NAV_ROW2 = [8, 9, 10, 11, 12];    // 口 顴 人中 地閣 頤
+  const dimPartBtn = (pi) => {
+    const label = DIM_PART_LABELS[pi];
     const cr = condResults[di] && condResults[di][pi];
     const noRule = !cr || cr.threshold === '無規則' || (cr.max || 0) === 0;
     const ppr = dimPartProgress(di, pi);
@@ -835,7 +838,11 @@ function renderDimMode() {
     const doneCls = (ppr.total > 0 && ppr.done === ppr.total) ? 'is-done' : (ppr.total > 0 ? 'is-todo' : '');
     const dot = hasPartUpdate(label) ? '<span class="m-update-dot-inline"></span>' : '';
     return `<button class="m-dimv-part ${pi === selPi ? 'is-cur' : ''} ${doneCls} ${noRule ? 'is-norule' : ''}" data-dim="${di}" data-pi="${pi}"><span class="m-dimv-part-name">${dot}${escapeHtml(label)}</span>${badge ? `<span class="m-dimv-part-prog">${badge}</span>` : ''}</button>`;
-  }).join('');
+  };
+  const navTiles = `<div class="m-partv-partgrid">` +
+    `<div class="m-partv-partrow">${DIM_NAV_ROW1.map(dimPartBtn).join('')}</div>` +
+    `<div class="m-partv-partrow">${DIM_NAV_ROW2.map(dimPartBtn).join('')}</div>` +
+    `</div>`;
   const dprog = dimProgress(di);
   const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${dprog.done}／${dprog.total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
 
