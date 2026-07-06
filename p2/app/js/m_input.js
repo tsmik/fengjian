@@ -426,12 +426,17 @@ function renderObsReport() {
     }
   }
   const p = buildManualReportParts(matrix, meta);
+  const _lnToggleBtn = lnBlock ? '<button class="m-rep-ln-toggle" type="button" data-lntoggle="1">流年<span class="m-rep-ln-arrow">▼</span></button>' : '';
+  const _lnWrap = lnBlock ? `<div class="m-rep-liunian-wrap" id="m-rep-liunian-wrap" hidden>${lnBlock}</div>` : '';
   _root.innerHTML = `
     <div class="m-segmented m-segmented-sub">${seg}</div>
     <div class="m-submode-content">
-      ${_renderSpiceBar()}
       <div class="m-manual-report m-obs-report">
-        <div class="m-obs-report-stickyhead">${p.titleHtml}${lnBlock}</div>
+        <div class="m-obs-report-stickyhead">
+          <div class="m-rep-headrow">${p.titleHtml}${_lnToggleBtn}</div>
+          ${_renderSpiceBar()}
+          ${_lnWrap}
+        </div>
         <div class="m-manual-fullreport">${p.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
@@ -455,6 +460,13 @@ function renderObsReport() {
     exportMobileCharts({ mode: 'charts', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
   _root.querySelectorAll('[data-obsrc]').forEach(b => b.addEventListener('click', () =>
     exportMobileCharts({ mode: 'all', srcData: _obsReportMatrix(), chartSvgs: _obsSvgs(), btn: b })));
+  // 流年折疊：預設收起，點按向下展開/收合，箭頭 ▼↔▲
+  _root.querySelectorAll('[data-lntoggle]').forEach(b => b.addEventListener('click', () => {
+    const wrap = _root.querySelector('#m-rep-liunian-wrap'); if (!wrap) return;
+    const show = wrap.hasAttribute('hidden');
+    if (show) wrap.removeAttribute('hidden'); else wrap.setAttribute('hidden', '');
+    const arrow = b.querySelector('.m-rep-ln-arrow'); if (arrow) arrow.textContent = show ? '▲' : '▼';
+  }));
   // 報告底部導覽鈕：跳參數分析（同 segmented 子 tab 切換）
   _root.querySelectorAll('[data-gonav]').forEach(b => b.addEventListener('click', () => setInputView(b.dataset.gonav)));
   // 辣度總覽鈕：在報告最下方滑出/滑入四辣度比較圖(不換頁)
