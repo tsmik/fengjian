@@ -32,7 +32,7 @@ function _buildParts(matrix, meta) {
   var _manualTitleHtml = '<div class="m-rep-title" style="margin-bottom:12px">'
     + '<span style="font-size:20px;color:#3a3228;letter-spacing:2px">' + _displayName + '</span>'
     + _ageHtml + _liunianTitleHtml
-    + '<span style="font-size:15px;color:#7a6e64;margin-left:12px">人相兵法係數報告</span>'
+    + '<span class="m-rep-subtitle" style="font-size:15px;color:#7a6e64;margin-left:12px">人相兵法係數報告</span>'
     + '</div>';
 
   // R1 流年（由外部 meta.liunianHtml 提供）

@@ -459,12 +459,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-spice-opt.is-on{background:#cdb892;border-color:#a8946a;color:#3a2f24}
 .m-spice-hint{font-size:13px;color:#9a8f7e}
 /* 兵法報告：辣度浮動列（右上角，比照筆記 fab 深色底；隨頁滑動即時調整）*/
-.m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;z-index:8000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#3a3228;color:#fff;border-radius:22px;padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,0.25);max-width:calc(100vw - 28px)}
+.m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;z-index:8000;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;background:#3a3228;color:#fff;border-radius:22px;padding:7px 12px;box-shadow:0 3px 12px rgba(0,0,0,0.25);max-width:calc(100vw - 20px)}
+/* 兵法報告手機:副標「人相兵法係數報告」隱藏(桌機/PNG 保留) */
+.m-rep-subtitle{display:none}
 .m-spice-float-ico{width:22px;height:22px;border-radius:50%;background:#fbf8f2;color:#3a3228;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .m-spice-float-ico svg{width:14px;height:14px;display:block}
 .m-spice-float-name{font-size:13px;letter-spacing:1px;color:#f3ecdd;white-space:nowrap}
 .m-spice-float-opts{display:flex;gap:5px}
-.m-spice-float .m-spice-opt{font-size:13px;padding:5px 13px;min-height:0;background:#5a5147;color:#e8e0d2;border-color:#6a5f50}
+.m-spice-float .m-spice-opt{font-size:13px;padding:5px 10px;min-height:0;background:#5a5147;color:#e8e0d2;border-color:#6a5f50}
 .m-spice-float .m-spice-opt.is-on{background:#cdb892;border-color:#cdb892;color:#3a2f24}
 /* 兵法報告：姓名+虛歲 與 流年 sticky（滑動時固定於 .m-main 頂）*/
 .m-obs-report-stickyhead{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:2px;padding-bottom:2px}
@@ -1625,6 +1627,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   .m-partv .m-dimv-condcol .m-section-label{font-size:17px;margin-bottom:10px}
   /* 兵法報告桌機：分析圖=兩張雷達 並排(等大)；係數總覽=子彈圖放左欄(同雷達寬→同字級，總對齊係數圖的奇) */
   .m-rep-figs,.m-rep-overview{grid-template-columns:1fr 1fr;align-items:start;gap:20px}
+  .m-rep-subtitle{display:inline}  /* 桌機/PNG 仍顯示副標(手機才隱藏) */
   /* 桌機還原表格 zoom（手機微縮不影響桌機）*/
   .m-manual-fullreport table{zoom:1}
   /* 桌機還原標題/流年左對齊（手機才縮排對齊分析圖）；流年八格桌機排成一列；hover 已有描邊→隱藏點格提示 */
