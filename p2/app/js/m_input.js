@@ -37,9 +37,12 @@ const SUBMODES = [
   { key: 'part',   label: '依部位填' },
   { key: 'dim',    label: '依維度填' },
   { key: 'report', label: '兵法報告' },
-  { key: 'spiceov', label: '辣度總覽' },
-  { key: 'sens',   label: '參數分析' },
+  // 辣度總覽(未來移入兵法報告)、參數分析(先隱藏) → 不列入 segmented；view 邏輯保留
 ];
+// 兵法報告的 13 維度淺色（維度名稱列底色用；同 manual_report dimBg）
+const DIM_BG = ['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8','#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+// 部位顯示名：題庫「額」在此頁一律顯示「上停」(與維度規則一致；資料鍵仍是額)
+function _partLabel(key){ return key === '額' ? '上停' : key; }
 
 // 6+5 異形排列
 const PART_ROW_1 = ['頭', '額', '耳', '眉', '眼', '鼻'];
@@ -815,7 +818,8 @@ function renderDimMode() {
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇部位觀察特徵，自動計算係數</span></div></div>`;
+  const _dbProg = dimProgress(di);
+  const dimbar = `<div class="m-sv-dimhead" style="background:${DIM_BG[di] || '#e7dcc6'}"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇特徵，自動計算係數</span><span class="m-sv-dimprog">${_dbProg.done}／${_dbProg.total}</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -843,8 +847,8 @@ function renderDimMode() {
     `<div class="m-partv-partrow">${DIM_NAV_ROW1.map(dimPartBtn).join('')}</div>` +
     `<div class="m-partv-partrow">${DIM_NAV_ROW2.map(dimPartBtn).join('')}</div>` +
     `</div>`;
-  const dprog = dimProgress(di);
-  const partNav = `<div class="m-dimv-partnav">${navTiles}<div class="m-dimv-partfoot">已填 ${dprog.done}／${dprog.total} 題</div><button class="m-eraser-btn m-dimv-clear" data-action="erase-all">清空所有觀察</button></div>`;
+  // 已填進度已移到維度名稱列;清空鈕移到本頁最下方(改成清空該維度)
+  const partNav = `<div class="m-dimv-partnav">${navTiles}</div>`;
 
   // ── 第3欄：條件欄（sticky 部位名 + 門檻 + 觀察題）
   let condCol;
@@ -854,7 +858,7 @@ function renderDimMode() {
     const selLabel = DIM_PART_LABELS[DIM_PART_ORDER.indexOf(selPi)];
     const selCr = condResults[di] && condResults[di][selPi];
     const desc = _dimPartThreshDesc(selCr, dim);
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span>${desc ? `<span class="m-dimv-partexp">${escapeHtml(desc)}</span>` : ''}<button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-descaction="expand">全部展開</button><button class="m-desc-switch" type="button" data-descaction="collapse">全部收合</button></span></div>`;
     let body;
     if (!selCr || selCr.threshold === '無規則') body = `<div class="m-dim-part-content m-dim-empty">（此部位對該維度無規則）</div>`;
     else body = renderDimPartBody(di, selPi, selLabel);
@@ -899,7 +903,9 @@ function renderDimMode() {
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
   const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvSpiceBar}${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
 
-  return `<div class="m-score-view m-dim-scoreview m-dimv"><div class="m-dimv-row1">${dimList}<div class="m-dimv-main">${dimbar}<div class="m-dimv-body">${partNav}${condCol}${preview}</div></div></div></div>`;
+  // 清空鈕移到本頁最下方，功能＝清空此維度所有觀察
+  const clearBtn = `<button class="m-eraser-btn m-dimv-clear m-dim-clearbottom" data-action="erase-dim" data-dim="${di}">清空${escapeHtml(dim.dn)}所有觀察</button>`;
+  return `<div class="m-score-view m-dim-scoreview m-dimv"><div class="m-dimv-row1">${dimList}<div class="m-dimv-main">${dimbar}<div class="m-dimv-body">${partNav}${condCol}${preview}</div>${clearBtn}</div></div></div>`;
 }
 
 function renderDimTile(di) {
@@ -1198,7 +1204,7 @@ function renderPartMode() {
     // 未填答完畢(含完全沒答)→ is-todo 淡黃;答完 → is-done
     const doneCls = prog.status === 'full' ? 'is-done' : (prog.total > 0 ? 'is-todo' : '');
     const dot = hasPartUpdate(key) ? '<span class="m-update-dot-inline"></span>' : '';
-    return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(key)}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
+    return `<button class="m-dimv-part ${_expandedKey === key ? 'is-cur' : ''} ${doneCls}" data-key="${escapeHtml(key)}"><span class="m-dimv-part-name">${dot}${escapeHtml(_partLabel(key))}</span>${badge ? `<span class="m-dimv-part-prog">${escapeHtml(badge)}</span>` : ''}</button>`;
   };
   // 手機版：11 部位排成兩排小按鈕(上排6/下排5)；桌機側欄仍垂直堆疊(靠 CSS 分岔)
   const navTiles = `<div class="m-partv-partgrid">` +
@@ -1213,7 +1219,7 @@ function renderPartMode() {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
     // 條件欄頂：sticky 部位名(20px) + 說明字 + 顯示所有說明(同一排)
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_expandedKey)}</span><span class="m-dimv-partexp">選擇特徵，自動計算係數</span><button class="m-desc-switch" type="button" data-descswitch="1" title="全部打開/收合此部位的備注與說明"><span class="m-desc-switch-ico">ⓘ</span>顯示所有說明</button></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_partLabel(_expandedKey))}</span><span class="m-dimv-partexp">選擇特徵，自動計算係數</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-descaction="expand">全部展開</button><button class="m-desc-switch" type="button" data-descaction="collapse">全部收合</button></span></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
@@ -1459,17 +1465,15 @@ function bindEvents() {
       _syncDescSwitch();
     });
   });
-  // 顯示說明 開關:一鍵全開/全關此部位條件欄所有題目的備注與 hint
-  _root.querySelectorAll('[data-descswitch]').forEach(sw => {
+  // 全部展開 / 全部收合:一鍵開/關此部位條件欄所有題目的備注與 hint
+  _root.querySelectorAll('[data-descaction]').forEach(sw => {
     sw.addEventListener('click', (e) => {
       e.stopPropagation(); e.preventDefault();
+      const open = sw.dataset.descaction === 'expand';
       const wraps = [..._root.querySelectorAll('.m-q[data-qwrap]')];
-      const anyClosed = wraps.some(w => !w.classList.contains('m-q-descopen'));   // 有收合的→全開;否則全收
-      wraps.forEach(w => { w.classList.toggle('m-q-descopen', anyClosed); const id = w.dataset.qwrap; if (id) _hintOpen[id] = anyClosed; });
-      _syncDescSwitch();
+      wraps.forEach(w => { w.classList.toggle('m-q-descopen', open); const id = w.dataset.qwrap; if (id) _hintOpen[id] = open; });
     });
   });
-  _syncDescSwitch();
 
   // 答題（toggle：點已選的選項再點一次 → 取消選取）
   _root.querySelectorAll('.m-opt').forEach(btn => {
@@ -1539,6 +1543,19 @@ function bindEvents() {
   _root.querySelectorAll('.m-eraser-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (btn.dataset.action === 'erase-dim') {
+        // 只清此維度引用到的題目答案(部位視角清空鈕仍是全清)
+        const di = parseInt(btn.dataset.dim, 10);
+        const dn = (DIMS[di] && DIMS[di].dn) || '此維度';
+        if (!confirm(`清空「${dn}」的所有觀察？\n此維度引用的題目答案會清除\n按下上方儲存按鈕後才會生效`)) return;
+        const refs = collectDimRefs(di);
+        refs.forEach(qid => { delete _draft[qid]; delete _draft[qid + '_L']; delete _draft[qid + '_R']; });
+        saveDraft();
+        setSaveStatus('dirty');
+        _syncRecalc();
+        render();
+        return;
+      }
       if (!confirm('清空所有觀察資料？\n部位和維度的答題會全部清除\n按下上方儲存按鈕後才會清除')) return;
       _draft = {};
       saveDraft();
