@@ -39,8 +39,9 @@ const SUBMODES = [
   { key: 'report', label: '兵法報告' },
   // 辣度總覽(未來移入兵法報告)、參數分析(先隱藏) → 不列入 segmented；view 邏輯保留
 ];
-// 兵法報告的 13 維度淺色（維度名稱列底色用；同 manual_report dimBg）
+// 兵法報告的 13 維度淺色 / 深色（維度名稱列、維度鈕邊線用；同 manual_report dimBg/dimDeep）
 const DIM_BG = ['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8','#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+const DIM_DEEP = ['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
 // 部位顯示名：題庫「額」在此頁一律顯示「上停」(與維度規則一致；資料鍵仍是額)
 function _partLabel(key){ return key === '額' ? '上停' : key; }
 
@@ -814,12 +815,12 @@ function renderDimMode() {
     const dot = hasDimUpdate(dm.dn) ? '<span class="m-update-dot"></span>' : '';
     const dprog = dimProgress(i);   // 該維度引用題未全答 → 淡黃(is-cur 當前色優先)
     const dtodo = (dprog.total > 0 && dprog.done < dprog.total) ? 'is-todo' : '';
-    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${dtodo} ${i === di ? 'is-cur' : ''}" data-dim="${i}">${dot}${escapeHtml(dm.dn)}</button>`;
+    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${dtodo} ${i === di ? 'is-cur' : ''}" data-dim="${i}" style="border-top-color:${DIM_DEEP[i] || '#a89e92'}">${dot}${escapeHtml(dm.dn)}</button>`;
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
-  // 維度大標題（跨欄、sticky）：維度名 + 動作說明 + 最右紅點圖例（比照部位視角）
+  // 維度名稱列(sticky)：底色＝兵法報告維度深色、字＝淡維度色；右接填題進度
   const _dbProg = dimProgress(di);
-  const dimbar = `<div class="m-sv-dimhead" style="background:${DIM_BG[di] || '#e7dcc6'}"><div class="m-sv-dimbar"><span class="m-sv-dimname">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇特徵，自動計算係數</span><span class="m-sv-dimprog">${_dbProg.done}／${_dbProg.total}</span></div></div>`;
+  const dimbar = `<div class="m-sv-dimhead" style="background:${DIM_DEEP[di] || '#8a7e6e'}"><div class="m-sv-dimbar"><span class="m-sv-dimname" style="color:${DIM_BG[di] || '#f3ecdd'}">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇特徵，自動計算係數</span><span class="m-sv-dimprog">${_dbProg.done}／${_dbProg.total}</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {
@@ -858,7 +859,7 @@ function renderDimMode() {
     const selLabel = DIM_PART_LABELS[DIM_PART_ORDER.indexOf(selPi)];
     const selCr = condResults[di] && condResults[di][selPi];
     const desc = _dimPartThreshDesc(selCr, dim);
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-descaction="expand">全部展開</button><button class="m-desc-switch" type="button" data-descaction="collapse">全部收合</button></span></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(selLabel)}</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-dim-action="group-expand-all" data-dim="${di}" data-pi="${selPi}">全部展開</button><button class="m-desc-switch" type="button" data-dim-action="group-collapse-all" data-dim="${di}" data-pi="${selPi}">全部收合</button></span></div>`;
     let body;
     if (!selCr || selCr.threshold === '無規則') body = `<div class="m-dim-part-content m-dim-empty">（此部位對該維度無規則）</div>`;
     else body = renderDimPartBody(di, selPi, selLabel);
@@ -870,7 +871,7 @@ function renderDimMode() {
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   const prevSpice = _dimPreviewSpice || getSpice();
   const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
-  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-title">嚴格程度調整</div><div class="m-dimv-pv-spice-opts">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
+  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-row"><span class="m-dimv-pv-spice-title">嚴格程度調整</span><div class="m-dimv-pv-spice-opts">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div></div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = pv[pi];
@@ -901,7 +902,7 @@ function renderDimMode() {
     pvCoeff = `<div class="m-dimv-pv-coeff is-${cTone}"><span>${escapeHtml(cWord)}</span><span class="r">係數 ${cVal || '—'}</span></div>`;
   }
   const pvHead = `<div class="m-dimv-pv-colhead"><span class="h-${pa.tone}">${escapeHtml(dim.da)}</span><span class="h-${pb.tone}">${escapeHtml(dim.db)}</span></div>`;
-  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-pv-card">${pvSpiceBar}${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
+  const preview = `<div class="m-dimv-prevcol"><div class="m-dimv-prev-title">${escapeHtml(dim.dn)}係數預覽</div><div class="m-dimv-pv-card">${pvSpiceBar}${pvHead}${pvRows}${pvSum}${pvCoeff}</div></div>`;
 
   // 清空鈕移到本頁最下方，功能＝清空此維度所有觀察
   const clearBtn = `<button class="m-eraser-btn m-dimv-clear m-dim-clearbottom" data-action="erase-dim" data-dim="${di}">清空${escapeHtml(dim.dn)}所有觀察</button>`;
@@ -1632,8 +1633,8 @@ function bindEvents() {
     });
   });
 
-  // 「全部展開 / 全部收合」：作用於當前展開部位的所有 groups
-  _root.querySelectorAll('.m-dim-action-btn').forEach(btn => {
+  // 「全部展開 / 全部收合」：作用於當前展開部位的所有 groups(條件題目)
+  _root.querySelectorAll('[data-dim-action]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const di = parseInt(btn.dataset.dim, 10);

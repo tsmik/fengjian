@@ -365,7 +365,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-seg-active{background:#fff;color:#3a3228;font-weight:600}
 /* 系統計算報告 上方 3 分頁:滿版貼頂 sticky;選中深米底淺米字 */
 .m-segmented-sub{margin:-20px -16px 0;border-radius:0;border:none;border-bottom:1px solid #cdbfa8;position:sticky;top:0;z-index:16}
-.m-segmented-sub .m-seg-active{background:#6b5e49;color:#f0e9dc}
+.m-segmented-sub .m-seg-active{background:#6a464b;color:#f0e9ea}
 .m-submode-content{padding-bottom:8px}
 /* v1.7 階段 11：頁面頂端說明 hint */
 .m-page-hint{font-size:15px;font-weight:700;color:#3a3228;padding:14px 14px 4px;letter-spacing:1px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -478,12 +478,14 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-report-spov-panel{max-height:0;overflow:hidden;transition:max-height .45s ease;padding:0 4px}
 .m-report-spov-panel.is-open{padding:8px 4px 20px}
 /* 維度視角第4欄 辣度模擬選擇器 */
-.m-dimv-pv-spice{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
-.m-dimv-pv-spice-title{font-size:13px;color:#6b5f50;font-weight:600;letter-spacing:1px}
-.m-dimv-pv-spice-opts{display:flex;gap:4px;flex-wrap:nowrap}
-.m-dimv-pv-spice-opt{font-family:inherit;font-size:13px;color:#9a8f7e;padding:3px 11px;border:1px solid #e0d8ca;border-radius:14px;background:#fff;cursor:pointer;white-space:nowrap}
-.m-dimv-pv-spice-opt.is-on{background:#cdb892;border-color:#a8946a;color:#3a2f24}
-.m-dimv-pv-spice-hint{font-size:11px;color:#b0a594;line-height:1.3}
+/* 嚴格程度調整:比照報告頁浮動列黑底;標題+選項同一行,小字說明在下 */
+.m-dimv-pv-spice{background:#3a3228;border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.m-dimv-pv-spice-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.m-dimv-pv-spice-title{font-size:13px;color:#f3ecdd;letter-spacing:1px;flex-shrink:0}
+.m-dimv-pv-spice-opts{display:flex;gap:5px;flex-wrap:nowrap;margin-left:auto}
+.m-dimv-pv-spice-opt{font-family:inherit;font-size:13px;color:#e8e0d2;padding:4px 11px;border:1px solid #6a5f50;border-radius:14px;background:#5a5147;cursor:pointer;white-space:nowrap}
+.m-dimv-pv-spice-opt.is-on{background:#cdb892;border-color:#cdb892;color:#3a2f24}
+.m-dimv-pv-spice-hint{font-size:11px;color:#b8afa0;line-height:1.3;margin-top:6px}
 /* 「我的」三大區塊：左(姓名/基本資料/流年) ｜ 右(兩報告上下排)；窄螢幕單欄 */
 .m-dash2{display:grid;grid-template-columns:minmax(0,0.92fr) minmax(0,1.08fr);gap:14px;align-items:start}
 .m-dash2-left{align-self:start}
@@ -545,20 +547,21 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-score-view,.m-score-view *{font-weight:400}
 .m-sv-dimlist{margin-bottom:12px}
 .m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
-.m-sv-dim{flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;min-height:38px;padding:5px 3px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:15px;color:#5a5147;cursor:pointer;border-left-width:3px}
-.m-sv-dim.m-sv-grp-boss{border-left-color:var(--grp-pre)}
-.m-sv-dim.m-sv-grp-mgr{border-left-color:var(--grp-mgr)}
-.m-sv-dim.m-sv-grp-luck{border-left-color:var(--grp-luck)}
-.m-sv-dim.m-sv-grp-post{border-left-color:var(--grp-post)}
-/* 維度引用題未全答 → 淡黃(is-cur 在後,當前維度維持米色) */
-.m-sv-dim.is-todo{background:#fff8d5;border-color:#e8d48a;border-left-width:3px}
+.m-sv-dim{position:relative;flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;min-height:38px;padding:5px 3px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:15px;color:#5a5147;cursor:pointer;border-top-width:3px}
+.m-sv-dim.m-sv-grp-boss{border-top-color:var(--grp-pre)}
+.m-sv-dim.m-sv-grp-mgr{border-top-color:var(--grp-mgr)}
+.m-sv-dim.m-sv-grp-luck{border-top-color:var(--grp-luck)}
+.m-sv-dim.m-sv-grp-post{border-top-color:var(--grp-post)}
+/* 維度引用題未全答 → 正常色 + 右上角紅圈圈(取代淡黃) */
+.m-sv-dim.is-todo::after{content:'';position:absolute;top:-4px;right:-4px;width:11px;height:11px;background:#d64541;border:1.5px solid #fff;border-radius:50%;box-sizing:border-box;pointer-events:none}
 .m-sv-dim.is-cur{color:#3a3228;background:#efe7d6}
 .m-sv-main{min-width:0}
-.m-sv-dimhead{position:sticky;top:0;z-index:15;margin-bottom:14px;padding:9px 12px;background:#e7dcc6;border:1px solid #d3c7b1;border-radius:10px}
-.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0}
-.m-sv-dimname{font-size:20px;color:#3a3228;letter-spacing:2px}
-.m-sv-dimexp{font-size:15px;color:#7a6e64}
-.m-sv-dimprog{margin-left:auto;font-size:15px;font-weight:600;color:#5a4f3f;flex-shrink:0}
+/* 維度名稱列:高度/字比照維度鈕;深維度底(inline)淡維度字;凍結上緣接在 3 分頁下方 */
+.m-sv-dimhead{position:sticky;top:39px;z-index:15;margin-bottom:12px;min-height:38px;display:flex;align-items:center;padding:5px 12px;background:#e7dcc6;border:none;border-radius:10px}
+.m-sv-dimbar{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:0;width:100%}
+.m-sv-dimname{font-size:15px;color:#3a3228;letter-spacing:2px;flex-shrink:0}
+.m-sv-dimexp{font-size:13px;color:rgba(255,255,255,0.82);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-sv-dimprog{margin-left:auto;font-size:14px;font-weight:600;color:rgba(255,255,255,0.92);flex-shrink:0}
 .m-sv-sub{display:block}
 .m-sv-plist{margin-bottom:14px}
 .m-sv-pitem{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;padding:9px 9px 9px 14px;margin-bottom:7px;cursor:pointer}
@@ -627,8 +630,9 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 /* 依部位填 手機版：11 部位兩排小按鈕(上排6/下排5)；桌機在 @media 還原成側欄垂直清單 */
 .m-partv-partrow{display:flex;gap:6px;margin-bottom:6px}
 .m-partv-partgrid .m-dimv-part{position:relative;width:auto;flex:1 1 0;min-width:0;justify-content:center;min-height:38px;padding:5px 3px;margin-bottom:0}
-/* 未答完部位:右上角 ？小圈圈(手機;桌機有 x/y 不顯示) */
-.m-partv-partgrid .m-dimv-part.is-todo::after{content:'？';position:absolute;top:-5px;right:-4px;width:15px;height:15px;line-height:13px;text-align:center;font-size:10px;font-weight:600;color:#8a6d1a;background:#ffe9a8;border:1px solid #e0c25a;border-radius:50%;box-sizing:border-box;pointer-events:none}
+/* 未答完部位:正常色 + 右上角紅圈圈(手機;桌機有 x/y 不顯示) */
+.m-partv-partgrid .m-dimv-part.is-todo{background:#fff;border-color:#e3dccb}
+.m-partv-partgrid .m-dimv-part.is-todo::after{content:'';position:absolute;top:-4px;right:-4px;width:11px;height:11px;background:#d64541;border:1.5px solid #fff;border-radius:50%;box-sizing:border-box;pointer-events:none}
 .m-partv-partgrid .m-dimv-part-name{font-size:15px}
 .m-partv-partgrid .m-dimv-part-prog{display:none}  /* 上方部位鈕不顯示 答題x/y 或 ✓ */
 .m-dimv-partfoot{font-size:14px;color:#6a5f50;text-align:center;margin:10px 0 8px}
@@ -644,6 +648,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-dimv-parthead{position:sticky;top:0;z-index:14;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;background:var(--bg);border-bottom:1px solid #d4c9b0;padding:10px 2px;margin-bottom:12px}
 .m-dimv-partname{font-size:20px;color:#3a3228;letter-spacing:2px}
 .m-dimv-partexp{font-size:14px;color:#7a6e64}
+.m-dimv-prev-title{font-size:15px;font-weight:600;color:#3a3228;letter-spacing:1px;margin:2px 2px 8px}
 .m-dimv-pv-card{background:#fff;border:1px solid #e3dccb;border-radius:14px;padding:14px}
 .m-dimv-pv-title{font-size:14px;color:#8a7f70;letter-spacing:1px;margin-bottom:10px;text-align:center}
 .m-dimv-pv-colhead{display:flex;margin:0 0 8px 52px}
@@ -730,7 +735,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-sv-expinput{flex:1;min-width:120px;padding:5px 9px;border:1px solid #ccc;border-radius:7px;font-size:14px;font-family:inherit;background:#fff}
 .m-q{position:relative;background:#fff;border:1px solid #e8dfce;border-radius:10px;padding:12px 14px;margin-bottom:12px}
 .m-q:last-child{margin-bottom:0}
-.m-q-todo{background:#fffbe8;border-color:#e8d48a}
+.m-q-todo{background:#fff;border-color:#e8dfce}  /* 未答改正常色,用右上紅圈圈標示(見 ::after) */
 .m-q-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .m-q-text{font-size:14px;color:#3a3228;font-weight:500}
 .m-q-opts{display:flex;flex-wrap:wrap;gap:6px}
@@ -747,10 +752,10 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-opt-hint.is-hidden{display:none}
 /* ===== i 圈圈 + 備注/hint 收合（Mike 2026-07-05）：預設收合,由該題 .m-q-descopen 控制 ===== */
 /* i 圈圈:放大到跟字高差不多、加圈線,好看好按 */
-.m-q-info{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:6px;padding:0;font-size:15px;line-height:1;color:#7d6643;background:#fbf8f2;border:1.3px solid #cdbfa8;border-radius:50%;cursor:pointer;vertical-align:middle;flex-shrink:0}
+.m-q-info{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:6px;padding:0;font-size:16px;line-height:1;color:#7d6643;background:none;border:none;border-radius:50%;cursor:pointer;vertical-align:middle;flex-shrink:0}
 .m-q-info:hover{color:#3a3228;background:#ece4d6}
-/* 未答題目框右上角 ？小圈圈 */
-.m-q-todo::after{content:'？';position:absolute;top:8px;right:10px;width:18px;height:18px;line-height:16px;text-align:center;font-size:12px;font-weight:600;color:#8a6d1a;background:#ffe9a8;border:1px solid #e0c25a;border-radius:50%;box-sizing:border-box;pointer-events:none}
+/* 未答題目框右上角 紅色圈圈(表未填答) */
+.m-q-todo::after{content:'';position:absolute;top:10px;right:12px;width:11px;height:11px;background:#d64541;border:1.5px solid #fff;border-radius:50%;box-sizing:border-box;pointer-events:none}
 .m-q-descopen .m-q-info{color:#7d6643}
 .m-q-note{display:none;font-size:14px;color:#6b572b;line-height:1.55;margin:1px 0 7px;padding:7px 10px;background:#f3eee4;border-radius:8px}
 .m-q-descopen .m-q-note{display:block}
@@ -760,7 +765,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 .m-desc-switch{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#fff;background:#3a3228;border:none;border-radius:15px;padding:6px 15px;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.18)}
 /* 全部展開/全部收合:兩顆小鈕靠右並排 */
 .m-desc-switches{margin-left:auto;display:inline-flex;gap:6px;flex-shrink:0}
-.m-desc-switches .m-desc-switch{margin-left:0;padding:6px 12px;font-size:12px;box-shadow:none;background:#6b5e49}
+.m-desc-switches .m-desc-switch{margin-left:0;padding:6px 12px;font-size:12px;box-shadow:none;background:#3a3228}
 .m-desc-switch:hover{background:#2c251d}
 .m-desc-switch.is-on{background:#cdb892;color:#3a2f24}
 .m-desc-switch-ico{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#fbf8f2;color:#3a3228;font-size:12px;flex:0 0 auto}
@@ -1042,7 +1047,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   transition:color 0.15s;
   position:relative;
 }
-.m-tab.active{color:#f0e9dc;font-weight:600}  /* 選中:深米底(見 ::after)淺米字 */
+.m-tab.active{color:#f0e9ea;font-weight:600}  /* 選中:深酒紅底(見 ::after)淺字 */
 /* active tab 圓角 pill 底色（v1.7 階段 7+）*/
 .m-tab::after{
   content:'';
@@ -1056,7 +1061,7 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   transition:background 0.18s;
   z-index:-1;
 }
-.m-tab.active::after{background:#6b5e49}
+.m-tab.active::after{background:#6a464b}
 .m-tab-icon{
   width:22px;
   height:22px;
