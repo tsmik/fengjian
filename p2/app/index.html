@@ -529,8 +529,8 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
 .m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 0 4px 0}
 /* 兵法報告手機:表格最左部位欄凍結(橫捲時固定);box-shadow 向右補滿 border-spacing 縫,不露空隙;桌機還原 */
 .m-manual-fullreport table tr > td:first-child{position:sticky;left:0;z-index:3;background:#f7f4ef;box-shadow:3px 0 0 0 #f7f4ef}
-/* 手機保留大表只做微縮：整張表 zoom 縮一截，少左右捲動（桌機 @media 還原 1）*/
-.m-manual-fullreport table{zoom:0.9}
+/* 手機:整張表 zoom(原 0.9 微縮 → 依 Mike 再放大 8% = 0.97);桌機 @media 還原 1 */
+.m-manual-fullreport table{zoom:0.97}
 /* 標題姓名 + 流年八格 左對齊「分析圖」的分（seg-title 文字起點 16px）；桌機 @media 還原 0 */
 .m-rep-title{padding-left:16px}
 /* 流年八格：固定一塊（在大表外，不跟表格左右捲動）；手機 4 欄＝兩排 */
@@ -1646,6 +1646,7 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-obs-spice-sticky{position:static;padding:0;margin:0}
   .m-manual-fullreport table tr > td:first-child{position:static;box-shadow:none}  /* 桌機不凍結部位欄 */
   .m-manual-fullreport{padding:4px 2px}
+  .m-manual-fullreport table{zoom:1}  /* 桌機不放大 */
   .m-obs-spice-sticky .m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;max-width:calc(100vw - 20px);margin:0;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
   /* 桌機還原表格 zoom（手機微縮不影響桌機）*/
   .m-manual-fullreport table{zoom:1}

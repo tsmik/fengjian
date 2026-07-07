@@ -542,26 +542,27 @@ function _buildParts(matrix, meta) {
   var _noT = meta && meta.noChartTitle;
   var _hideC = meta && meta.hideRadarCenter;   // 辣度總覽:隱藏雷達中央 總係數/老闆/主管/先天/後天/運氣 文字數字
   var _RVB = _noT ? '20 40 360 360' : '20 16 360 384';
-  var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:_noT?'':'係數圖',viewBox:_RVB,hideCenter:_hideC,coefColorMode:(meta&&meta.coefColorMode)});
+  var _cf = compact ? 1.12 : 1;   // 手機:4 張圖字放大一級(溫和,避免 SVG 內文字重疊)
+  var _radar2Svg=buildRadar2SVG({dimSFrac:_dimSFrac,dimCoeff:_dimCoeffArr,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,preV:_pre,totV:_tot,title:_noT?'':'係數圖',viewBox:_RVB,hideCenter:_hideC,coefColorMode:(meta&&meta.coefColorMode),fsName:15.5*_cf,fsNum:14*_cf});
   // 子彈圖：總係數置頂 → 先天 老闆 主管 運氣 後天；先天/運氣/後天 加粗放大
   // 條高：總/先天/運氣/後天 再 -10%(總14→12.6、其餘12.6→11.34)；老闆/主管 維持 9
   var _COEF_H={'總係數':12.6,'先天':11.34,'運氣':11.34,'後天':11.34,'老闆':9,'主管':9};
-  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:_noT?'':'係數總覽',fs:10.8,vbW:360,x0:57,trackW:258,titleX:10,heightScale:(meta&&meta.coefHeightScale)||1,
+  var _coefSvg=buildCoefSVG({preV:_pre,bossV:_boss,mgrV:_mgr,luckV:_luck,postV:_post,totV:_tot,order:['totV','preV','bossV','mgrV','luckV','postV'],big:['總係數','先天','運氣','後天'],small:['老闆','主管'],title:_noT?'':'係數總覽',fs:10.8*_cf,vbW:360,x0:57,trackW:258,titleX:10,heightScale:(meta&&meta.coefHeightScale)||1,
     totLabelCol:'#5a4f45',                                  // 總係數三個字＝標題色(不要黑)
     heights:_COEF_H,
     groupLine:{top:'先天',bot:'主管',color:'#8E4B50'}});      // 先天/老闆/主管 左側括線(先天色)
   // 係數總覽米白底下緣 y：cTop(4+FS+8)+PAD(8)+Σ列高+列間距+PAD；供動靜總覽米白底向下對齊
   var _coefHs=[_COEF_H['總係數'],_COEF_H['先天'],_COEF_H['老闆'],_COEF_H['主管'],_COEF_H['運氣'],_COEF_H['後天']];
-  var _coefBeigeBot=(4+(10.8+8))+8 + _coefHs.reduce(function(a,b){return a+b;},0) + (_coefHs.length-1)*9.6 + 8;
+  var _coefBeigeBot=(4+(10.8*_cf+8))+8 + _coefHs.reduce(function(a,b){return a+b;},0) + (_coefHs.length-1)*9.6 + 8;
   // fsNum 10.5：動靜圖外圍係數數字 = 係數圖(radar2)的數字字級一致（維度名兩圖同為 10.8）
-  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:_noT?'':'動靜圖',viewBox:_RVB,fsNum:10.5,hideCenter:_hideC});
+  var _sdSvg=buildRadar3SVG({dimStatic:dimSCounts,dimActive:dimDCounts,dimCoeff:_dimCoeffArr,title:_noT?'':'動靜圖',viewBox:_RVB,fsNum:10.5*_cf,fsName:10.8*_cf,fsPole:10*_cf,fsCore:10.8*_cf,hideCenter:_hideC});
 
   // 動靜總覽：逐部位 動|靜 比例 bar，左組 頭/上停/中停/下停、右組 耳/眉/眼/鼻/口
   // x 對齊上方動靜圖：標題動=16；左組右緣=後天天(172.7)；右組文字左=先天先(188.5)、右緣=方圓圓(345.1)
   var _partD=[],_partS=[];
   for(var _pp=0;_pp<9;_pp++){var _sd=0,_ss=0;for(var _dd=0;_dd<13;_dd++){var _pv=manualData[_dd][_pp];if(!_pv)continue;var _ptp=_pv==='A'?DIMS[_dd].aT:DIMS[_dd].bT;if(_ptp==='靜')_ss++;else _sd++;}_partD.push(_sd);_partS.push(_ss);}
   var _mkRows=function(ids){return ids.map(function(pi){return {label:partLabels[pi],d:_partD[pi],s:_partS[pi]};});};
-  var _sdPairSvg=buildSDPairSVG({title:'動靜總覽',titleX:16,fs:10.8,barH:12.6,vbW:360,legend:true,beigeBottom:_coefBeigeBot,cols:[
+  var _sdPairSvg=buildSDPairSVG({title:'動靜總覽',titleX:16,fs:10.8*_cf,barH:12.6,vbW:360,legend:true,beigeBottom:_coefBeigeBot,cols:[
     {labelX:16,   barLeft:43.6,  barRight:172.7, rows:_mkRows([0,1,2,3])},
     {labelX:188.5,barLeft:205.3, barRight:345.1, rows:_mkRows([4,5,6,7,8])}
   ]});
