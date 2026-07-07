@@ -476,7 +476,7 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-rep-ln-arrow{font-size:10px;line-height:1}
 .m-rep-liunian-wrap[hidden]{display:none}
 /* 辣度列:獨立凍結(sticky),緊貼分頁下方;間距 6px 比照依維度填維度列 */
-.m-obs-spice-sticky{position:sticky;top:39px;z-index:18;background:var(--bg);padding:6px 0;margin-bottom:6px}
+.m-obs-spice-sticky{position:sticky;top:35px;z-index:18;background:var(--bg);padding:6px 0;margin-bottom:6px}
 body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
 .m-obs-spice-sticky .m-spice-float{position:static;top:auto;right:auto;max-width:none;margin:0;justify-content:flex-start;box-shadow:none}
 /* 兵法報告：底部導覽鈕（辣度總覽/參數分析，深色反白，比照筆記按鈕字級）*/
@@ -526,9 +526,9 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   #m-page-report .m-dash-report-coef{flex:1;min-width:0}
 }
 .m-rep-seg-title::before{content:"";position:absolute;left:0;top:2px;width:4px;height:16px;background:#C17A5A;border-radius:2px}
-.m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px}
-/* 兵法報告手機:表格最左部位欄凍結(橫捲時固定);桌機還原 */
-.m-manual-fullreport table tr > td:first-child{position:sticky;left:0;z-index:3;background:#f7f4ef}
+.m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 0 4px 0}
+/* 兵法報告手機:表格最左部位欄凍結(橫捲時固定);box-shadow 向右補滿 border-spacing 縫,不露空隙;桌機還原 */
+.m-manual-fullreport table tr > td:first-child{position:sticky;left:0;z-index:3;background:#f7f4ef;box-shadow:3px 0 0 0 #f7f4ef}
 /* 手機保留大表只做微縮：整張表 zoom 縮一截，少左右捲動（桌機 @media 還原 1）*/
 .m-manual-fullreport table{zoom:0.9}
 /* 標題姓名 + 流年八格 左對齊「分析圖」的分（seg-title 文字起點 16px）；桌機 @media 還原 0 */
@@ -1644,7 +1644,8 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-rep-ln-toggle{display:none}
   .m-rep-liunian-wrap[hidden]{display:block}
   .m-obs-spice-sticky{position:static;padding:0;margin:0}
-  .m-manual-fullreport table tr > td:first-child{position:static}  /* 桌機不凍結部位欄 */
+  .m-manual-fullreport table tr > td:first-child{position:static;box-shadow:none}  /* 桌機不凍結部位欄 */
+  .m-manual-fullreport{padding:4px 2px}
   .m-obs-spice-sticky .m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;max-width:calc(100vw - 20px);margin:0;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
   /* 桌機還原表格 zoom（手機微縮不影響桌機）*/
   .m-manual-fullreport table{zoom:1}
