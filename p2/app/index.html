@@ -468,17 +468,17 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-spice-float-opts{display:flex;gap:5px}
 .m-spice-float .m-spice-opt{font-size:13px;padding:5px 10px;min-height:0;background:#5a5147;color:#e8e0d2;border-color:#6a5f50}
 .m-spice-float .m-spice-opt.is-on{background:#cdb892;border-color:#cdb892;color:#3a2f24}
-/* 兵法報告：姓名+辣度 sticky（凍在上方 3 分頁下方,top=分頁高度;比照依維度填維度列） */
-.m-obs-report-stickyhead{position:sticky;top:39px;z-index:18;background:var(--bg);padding:6px 0 2px}
-body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
-/* 手機:姓名列(右流年▼鈕) + 辣度列(取代浮動,排在姓名下方) + 流年(預設收起),一起凍結 */
-/* 間距比照依維度填維度兩行(6px):姓名↔分頁、姓名↔辣度 都 6px */
+/* 兵法報告手機:姓名列不凍結(會滑走);只有辣度列凍結,上滑時緊貼 3 分頁下方(top=分頁高度) */
+.m-obs-report-stickyhead{position:static;background:var(--bg);padding:6px 0 0}
 .m-rep-headrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .m-obs-report-stickyhead .m-rep-title{margin-bottom:0 !important}
 .m-rep-ln-toggle{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;background:#6a464b;color:#f0e9ea;border:none;border-radius:14px;padding:5px 12px;font-family:inherit;font-size:13px;cursor:pointer}
 .m-rep-ln-arrow{font-size:10px;line-height:1}
-.m-obs-report-stickyhead .m-spice-float{position:static;top:auto;right:auto;max-width:none;margin:6px 0 0;justify-content:flex-start;box-shadow:none}
 .m-rep-liunian-wrap[hidden]{display:none}
+/* 辣度列:獨立凍結(sticky),緊貼分頁下方;間距 6px 比照依維度填維度列 */
+.m-obs-spice-sticky{position:sticky;top:39px;z-index:18;background:var(--bg);padding:6px 0;margin-bottom:6px}
+body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
+.m-obs-spice-sticky .m-spice-float{position:static;top:auto;right:auto;max-width:none;margin:0;justify-content:flex-start;box-shadow:none}
 /* 兵法報告：底部導覽鈕（辣度總覽/參數分析，深色反白，比照筆記按鈕字級）*/
 .m-report-allbtn-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;width:fit-content;max-width:100%;margin:0 auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .m-report-allbtn{flex:0 0 auto;white-space:nowrap;font-family:inherit;font-size:15px;letter-spacing:2px;color:#fff;background:#3a3228;border:none;border-radius:18px;padding:11px 26px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
@@ -527,6 +527,8 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
 }
 .m-rep-seg-title::before{content:"";position:absolute;left:0;top:2px;width:4px;height:16px;background:#C17A5A;border-radius:2px}
 .m-manual-fullreport{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px}
+/* 兵法報告手機:表格最左部位欄凍結(橫捲時固定);桌機還原 */
+.m-manual-fullreport table tr > td:first-child{position:sticky;left:0;z-index:3;background:#f7f4ef}
 /* 手機保留大表只做微縮：整張表 zoom 縮一截，少左右捲動（桌機 @media 還原 1）*/
 .m-manual-fullreport table{zoom:0.9}
 /* 標題姓名 + 流年八格 左對齊「分析圖」的分（seg-title 文字起點 16px）；桌機 @media 還原 0 */
@@ -1636,12 +1638,14 @@ body.m-ws-active .m-obs-report-stickyhead{background:var(--ws-tint, #f7f4ef)}
   /* 兵法報告桌機：分析圖=兩張雷達 並排(等大)；係數總覽=子彈圖放左欄(同雷達寬→同字級，總對齊係數圖的奇) */
   .m-rep-figs,.m-rep-overview{grid-template-columns:1fr 1fr;align-items:start;gap:20px}
   .m-rep-subtitle{display:inline}  /* 桌機/PNG 仍顯示副標(手機才隱藏) */
-  /* 桌機報告頂部維持原樣:辣度浮動、流年恆顯示、無流年鈕、stickyhead 凍在頂端 */
-  .m-obs-report-stickyhead{top:0;padding:2px 0}
+  /* 桌機報告頂部維持原樣:姓名凍頂、辣度浮動、流年恆顯示、無流年鈕 */
+  .m-obs-report-stickyhead{position:sticky;top:0;padding:2px 0}
   .m-obs-report-stickyhead .m-rep-title{margin-bottom:12px !important}
   .m-rep-ln-toggle{display:none}
   .m-rep-liunian-wrap[hidden]{display:block}
-  .m-obs-report-stickyhead .m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;max-width:calc(100vw - 20px);margin:0;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
+  .m-obs-spice-sticky{position:static;padding:0;margin:0}
+  .m-manual-fullreport table tr > td:first-child{position:static}  /* 桌機不凍結部位欄 */
+  .m-obs-spice-sticky .m-spice-float{position:fixed;top:calc(var(--nav-h) + var(--safe-top) + 8px);right:14px;max-width:calc(100vw - 20px);margin:0;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.25)}
   /* 桌機還原表格 zoom（手機微縮不影響桌機）*/
   .m-manual-fullreport table{zoom:1}
   /* 桌機還原標題/流年左對齊（手機才縮排對齊分析圖）；流年八格桌機排成一列；hover 已有描邊→隱藏點格提示 */

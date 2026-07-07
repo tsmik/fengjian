@@ -434,9 +434,9 @@ function renderObsReport() {
       <div class="m-manual-report m-obs-report">
         <div class="m-obs-report-stickyhead">
           <div class="m-rep-headrow">${p.titleHtml}${_lnToggleBtn}</div>
-          ${_renderSpiceBar()}
           ${_lnWrap}
         </div>
+        <div class="m-obs-spice-sticky">${_renderSpiceBar()}</div>
         <div class="m-manual-fullreport">${p.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
         <div class="m-rep-figs">
