@@ -414,7 +414,7 @@ function renderObsReport() {
   unmountAutoView();                       // 清掉前一個 sens 掛載
   const matrix = _obsReportMatrix();
   const ud = window.__userData || {};
-  const meta = { name: ud.displayName || '', grayIncomplete: true };   // 自動報告:未填部位格→灰底未填完(手動報告不設,空格=待點擊作答)
+  const meta = { name: ud.displayName || '', grayIncomplete: true, compactParts: !_isDesktop() };   // 自動報告:未填部位格→灰底未填完;compactParts=手機省略重複部位欄
   let lnBlock = '';
   if (ud.gender && ud.birthday) {
     if (isLiunianReady()) {

@@ -45,6 +45,10 @@ function _buildParts(matrix, meta) {
   var showLuck = visibleLuck > 0;
   var showPost = visiblePost > 0;
   var totalCols = 1 + visiblePre*2 + 3 + (showLuck ? 1 + visibleLuck*2 + 3 : 0) + (showPost ? 1 + visiblePost*2 + 3 : 0) + 3;
+  // 手機 compact:省略運氣/後天前的「分隔／部位名」欄(表頭 spacer + 資料 label 整欄一起省 → 每列少同樣欄數,不跑版);只留第一欄(凍結)
+  var compact = !!(meta && meta.compactParts);
+  var _sepGrp = compact ? '' : '<td style="padding:2px 4px"></td>';
+  if (compact) totalCols -= (showLuck ? 1 : 0) + (showPost ? 1 : 0);
   var visibleDimIds = [];
   for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
 
@@ -146,11 +150,11 @@ function _buildParts(matrix, meta) {
   t+='<td style="padding:2px 4px"></td>';
   t+='<td colspan="'+(visiblePre*2+3)+'" style="background:'+C_PRE+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">先天指數</td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     t+='<td colspan="'+(visibleLuck*2+3)+'" style="background:'+C_LUCK+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣指數</td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     t+='<td colspan="'+(visiblePost*2+3)+'" style="background:'+C_POST+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天指數</td>';
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
@@ -165,7 +169,7 @@ function _buildParts(matrix, meta) {
   }
   t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){
       t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
       t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
@@ -173,7 +177,7 @@ function _buildParts(matrix, meta) {
     t+='<td rowspan="2" colspan="3" style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">動靜分析</td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){
       t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].da+'</td>';
       t+='<td style="background:'+dimDeep[i]+';padding:3px 4px;'+rc+';text-align:center;color:#fff">'+DIMS[i].db+'</td>';
@@ -190,13 +194,13 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
   }
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
     }
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){
       t+='<td colspan="2" style="background:'+dimBg[i]+';padding:2px 4px;'+rc+';text-align:center;color:'+C_AN_FC+';font-size:9px">'+dimDesc[i]+'</td>';
     }
@@ -218,14 +222,14 @@ function _buildParts(matrix, meta) {
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">比例</td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){t+=r5Cell(i,true)+r5Cell(i,false);}
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#980000">動</td>';
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:#000">靜</td>';
@@ -280,8 +284,8 @@ function _buildParts(matrix, meta) {
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(preD,preS)+'</td>';
 
     if(showLuck){
-      // 中部位欄
-      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      // 中部位欄(compact 時整欄省略,與表頭 _sepGrp 一致)
+      if(!compact) t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
       var bLuck={s:0,d:0};
       for(var i=6;i<6+visibleLuck;i++){ tally(i,bLuck); t+=dimCellPair(i); }
       luckS=bLuck.s;luckD=bLuck.d;
@@ -292,8 +296,8 @@ function _buildParts(matrix, meta) {
     }
 
     if(showPost){
-      // 右部位欄
-      t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
+      // 右部位欄(compact 時整欄省略,與表頭 _sepGrp 一致)
+      if(!compact) t+='<td style="background:'+C_PART_BG+';padding:3px 6px;'+rc+';text-align:center;color:'+C_PART_FC+'">'+label+'</td>';
       var bPost={s:0,d:0};
       for(var i=9;i<9+visiblePost;i++){ tally(i,bPost); t+=dimCellPair(i); }
       postS=bPost.s;postD=bPost.d;
@@ -333,7 +337,7 @@ function _buildParts(matrix, meta) {
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+sdPre.s+'</td>';
   t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdPre.d,sdPre.s)+'</td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){
       var sn=dimSCounts[i],dn=dimDCounts[i];
       var lv=colLIsS[i]?sn:dn;
@@ -346,7 +350,7 @@ function _buildParts(matrix, meta) {
     t+='<td style="background:'+C_AN_BG+';padding:3px 4px;'+rc+';text-align:center;color:'+C_AN_FC+'">'+ratioB(sdLuck.d,sdLuck.s)+'</td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){
       var sn=dimSCounts[i],dn=dimDCounts[i];
       var lv=colLIsS[i]?sn:dn;
@@ -378,7 +382,7 @@ function _buildParts(matrix, meta) {
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){
       if(!dimComplete[i]){
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
@@ -392,7 +396,7 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){
       if(!dimComplete[i]){
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
@@ -422,7 +426,7 @@ function _buildParts(matrix, meta) {
   }
   t+='<td colspan="3" style="padding:2px 4px"></td>';
   if(showLuck){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=6;i<6+visibleLuck;i++){
       if(!dimComplete[i]){
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
@@ -435,7 +439,7 @@ function _buildParts(matrix, meta) {
     t+='<td colspan="3" style="padding:2px 4px"></td>';
   }
   if(showPost){
-    t+='<td style="padding:2px 4px"></td>';
+    t+=_sepGrp;
     for(var i=9;i<9+visiblePost;i++){
       if(!dimComplete[i]){
         t+='<td colspan="2" style="background:'+dimBg[i]+';padding:3px 4px;'+rc+';text-align:center;'+INC_STYLE+'">'+INC+'</td>';
@@ -464,12 +468,12 @@ function _buildParts(matrix, meta) {
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     if(showLuck){
-      t+='<td style="padding:2px 4px"></td>';
+      t+=_sepGrp;
       t+='<td colspan="'+visibleLuck*2+'" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
     }
     if(showPost){
-      t+='<td style="padding:2px 4px"></td>';
+      t+=_sepGrp;
       t+='<td colspan="'+visiblePost*2+'" style="padding:2px 4px"></td>';
       t+='<td colspan="3" style="padding:2px 4px"></td>';
     }
@@ -489,7 +493,7 @@ function _buildParts(matrix, meta) {
     }
     t+='<td colspan="3" style="padding:2px 4px"></td>';
     if(showLuck){
-      t+='<td style="padding:2px 4px"></td>';
+      t+=_sepGrp;
       if(visibleLuck>=3){
         var luckOk=groupComplete([6,7,8]);
         t+='<td colspan="'+visibleLuck*2+'" style="background:'+C_LUCK_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">運氣係數 '+(luckOk?vLuck:INC)+'</td>';
@@ -499,7 +503,7 @@ function _buildParts(matrix, meta) {
       t+='<td colspan="3" style="padding:2px 4px"></td>';
     }
     if(showPost){
-      t+='<td style="padding:2px 4px"></td>';
+      t+=_sepGrp;
       if(visiblePost>=4){
         var postOk=groupComplete([9,10,11,12]);
         t+='<td colspan="'+visiblePost*2+'" style="background:'+C_POST_C+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">後天係數 '+(postOk?vPost:INC)+'</td>';
@@ -516,7 +520,7 @@ function _buildParts(matrix, meta) {
   if(BETA_VISIBLE_DIMS>=13){
     var allOk=groupComplete(visibleDimIds);
     // 比照自動報告：bar 右緣對齊後天係數右緣 = 先天數據+先天動靜 + (部位+運氣數據+運氣動靜) + (部位+後天數據)
-    var dataColSpan=visiblePre*2+3+(showLuck?1+visibleLuck*2+3:0)+(showPost?1+visiblePost*2:0);
+    var dataColSpan=visiblePre*2+3+(showLuck?(compact?0:1)+visibleLuck*2+3:0)+(showPost?(compact?0:1)+visiblePost*2:0);
     t+='<tr>';
     t+='<td style="padding:2px 4px"></td>';
     t+='<td colspan="'+dataColSpan+'" style="background:'+C_TOTAL+';color:#fff;padding:4px 8px;'+rc+';text-align:center;font-size:13px">總係數 '+(allOk?vTotal:INC)+'</td>';
