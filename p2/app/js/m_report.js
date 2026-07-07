@@ -432,8 +432,8 @@ async function _renderMgmt() {
   body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
   if (barActions) barActions.innerHTML = '';
   const uid = getEffectiveUid();
-  let groupOrder = [];
-  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists() && Array.isArray(s.data().groupOrder)) groupOrder = s.data().groupOrder; } catch (e) {}
+  let groupOrder = [], groupDescs = {};
+  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists()) { const d = s.data(); if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder; if (d.groupDescs && typeof d.groupDescs === 'object') groupDescs = d.groupDescs; } } catch (e) {}
   let cases = [];
   try { cases = await listCases(); } catch (e) {}
   if (!document.getElementById('m-case-mgmt')) return;
@@ -442,9 +442,11 @@ async function _renderMgmt() {
   const gset = [];
   cases.forEach((c) => { const g = c.group || ''; if (g && gset.indexOf(g) < 0) gset.push(g); });
   const orderedGroups = [];
-  groupOrder.forEach((g) => { if (gset.indexOf(g) >= 0) orderedGroups.push(g); });
-  gset.forEach((g) => { if (orderedGroups.indexOf(g) < 0) orderedGroups.push(g); });
+  groupOrder.forEach((g) => { if (g && orderedGroups.indexOf(g) < 0) orderedGroups.push(g); });   // 全部分組(含尚無個案的空分組)
+  gset.forEach((g) => { if (orderedGroups.indexOf(g) < 0) orderedGroups.push(g); });                // 有個案但不在 groupOrder
   _knownGroups = orderedGroups.slice();
+  // 手機版「管理分組」與「個案編輯選分組」沿用同一組狀態(桌機由 mountFinderDesktop 填;手機在此填,否則看不到/存不到分組)
+  _finderCases = cases; _finderGroups = orderedGroups.slice(); _finderGroupDescs = groupDescs;
   const rowHtml = (c, sub) => '<button class="m-case-item" data-open="' + _esc(c.id) + '"><span class="m-case-swatch" style="background:' + _cardTint(caseColor(c)) + '"></span><span class="m-case-item-col"><span class="m-case-item-name">' + _esc(c.name || '(未命名)') + '</span>' + (sub ? '<span class="m-case-item-sub">' + _esc(sub) + '</span>' : '') + '</span></button>';
 
   if (cases.length === 0) {
@@ -461,9 +463,10 @@ async function _renderMgmt() {
       const grouped = {};
       cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
       const grpBlock = (g, label, extraCls) => {
+        const items = grouped[g] || [];   // 空分組(尚無個案)也要顯示
         const col = _mgmtCollapsed.has(g);
-        return '<div class="m-case-group-title' + (extraCls || '') + '" data-grp="' + _esc(g) + '"><span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>' + _esc(label) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>'
-          + '<div class="m-case-list"' + (col ? ' style="display:none"' : '') + '>' + grouped[g].map((c) => rowHtml(c, '')).join('') + '</div>';
+        return '<div class="m-case-group-title' + (extraCls || '') + '" data-grp="' + _esc(g) + '"><span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>' + _esc(label) + '<span class="m-case-group-count">（' + items.length + '）</span></div>'
+          + '<div class="m-case-list"' + (col ? ' style="display:none"' : '') + '>' + items.map((c) => rowHtml(c, '')).join('') + '</div>';
       };
       orderedGroups.forEach((g) => { html += grpBlock(g, g, ''); });
       if (grouped[''] && grouped[''].length) html += grpBlock('', '未分組', ' ungrouped');
@@ -659,7 +662,8 @@ async function _gmSave() {
     _refreshCaseMgmt(); // 桌機→重繪 Finder、手機→重繪 overlay 清單
   } catch (e) {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
-    alert('儲存失敗，請重試');
+    debugLog('[Case]', '分組儲存失敗', e && e.message ? e.message : e);
+    alert('儲存失敗：' + (e && e.message ? e.message : e));
   }
 }
 
