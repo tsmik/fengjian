@@ -201,9 +201,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-case-item-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:#3a3228;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .m-case-item-meta{font-size:12px;color:#5a5048;flex-shrink:0}
 .m-case-item-tag{font-size:11px;color:#4a4138;background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.08);border-radius:6px;padding:2px 7px;flex-shrink:0}
-.m-case-group-title{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:600;color:#6a6258;margin:14px 2px 6px}
+.m-case-group-title{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:600;color:#6a6258;margin:14px 2px 6px;cursor:pointer;user-select:none}
 .m-case-group-title.ungrouped{color:#a89e92}
 .m-case-group-count{font-size:11px;color:#a89e92;font-weight:400}
+.m-case-grp-chevron{font-size:10px;color:#a89e92;width:12px;flex:0 0 auto}
+.m-mgmt-title{font-size:17px;font-weight:600;color:#3a3228;letter-spacing:1px}
 .m-case-add{width:100%;margin-top:10px;padding:11px;border:1px dashed #d3c7b6;border-radius:10px;background:#fff;color:var(--text-3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
 .m-case-add:active{background:#f5efe6}
 .m-case-addform{margin-top:10px;display:flex;flex-direction:column;gap:8px}
@@ -1996,7 +1998,7 @@ body.m-debug-on .m-debug-clear{display:block}
 <!-- ===== 案例管理總畫面（全螢幕，nav 下方滑入）===== -->
 <div class="m-fullscreen" id="m-case-mgmt" style="z-index:300">
   <div class="m-fs-bar">
-    <button class="m-fs-back" id="m-mgmt-back" type="button">‹ 返回</button>
+    <span class="m-mgmt-title">個案管理</span>
     <div class="m-mgmt-bar-actions" id="m-mgmt-bar-actions"></div>
   </div>
   <div class="m-fs-body" id="m-mgmt-body"></div>

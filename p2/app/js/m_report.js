@@ -129,6 +129,7 @@ function _tsStr(v) {
 let _knownGroups = [];      // 現有組別名（給表單 datalist）
 let _existingCaseCount = 0;
 let _caseSort = (function () { try { return localStorage.getItem('m_case_sort') || 'group'; } catch (e) { return 'group'; } })();
+let _mgmtCollapsed = new Set();   // 個案管理分組收合狀態(記憶體;進入預設空=全展開)
 let _ncColor = '';          // 新增個案進入時派的顏色
 // 儀表板共用狀態（本人 = 我的分頁 inline；個案 = 全螢幕細節）
 let _dashPerson = null;     // {isCase,id,name,gender,birthday,color,group,note,obsJson,manualJson}
@@ -413,7 +414,6 @@ function _openCaseMgmt() {
   _renderMgmt();
   const ov = document.getElementById('m-case-mgmt');
   if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
-  const back = document.getElementById('m-mgmt-back'); if (back) back.onclick = _closeCaseMgmt;
 }
 function _closeCaseMgmt() {
   const ov = document.getElementById('m-case-mgmt'); if (ov) ov.classList.remove('is-open');
@@ -424,14 +424,6 @@ export function openCaseMgmtView() {
   // 桌機：改用右側三欄 Finder（左側欄不消失）；手機：維持原本全螢幕 overlay
   if (isDesktopSidebar()) { mountFinderDesktop(); return; }
   _openCaseMgmt();
-  const back = document.getElementById('m-mgmt-back');
-  if (back) back.onclick = () => {
-    _closeCaseMgmt();
-    const myTab = document.querySelector('.m-tab[data-tab="report"]');
-    const caseTab = document.querySelector('.m-tab[data-tab="cases"]');
-    if (caseTab) caseTab.classList.remove('active');
-    if (myTab) myTab.classList.add('active');
-  };
 }
 async function _renderMgmt() {
   const body = document.getElementById('m-mgmt-body');
@@ -468,8 +460,13 @@ async function _renderMgmt() {
     if (_caseSort === 'group') {
       const grouped = {};
       cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
-      orderedGroups.forEach((g) => { html += '<div class="m-case-group-title">' + _esc(g) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div><div class="m-case-list">' + grouped[g].map((c) => rowHtml(c, '')).join('') + '</div>'; });
-      if (grouped[''] && grouped[''].length) html += '<div class="m-case-group-title ungrouped">未分組<span class="m-case-group-count">（' + grouped[''].length + '）</span></div><div class="m-case-list">' + grouped[''].map((c) => rowHtml(c, '')).join('') + '</div>';
+      const grpBlock = (g, label, extraCls) => {
+        const col = _mgmtCollapsed.has(g);
+        return '<div class="m-case-group-title' + (extraCls || '') + '" data-grp="' + _esc(g) + '"><span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>' + _esc(label) + '<span class="m-case-group-count">（' + grouped[g].length + '）</span></div>'
+          + '<div class="m-case-list"' + (col ? ' style="display:none"' : '') + '>' + grouped[g].map((c) => rowHtml(c, '')).join('') + '</div>';
+      };
+      orderedGroups.forEach((g) => { html += grpBlock(g, g, ''); });
+      if (grouped[''] && grouped[''].length) html += grpBlock('', '未分組', ' ungrouped');
     } else {
       const tsOf = (c) => _caseSort === 'updated' ? _tsStr(c.updatedAt || c.createdAt) : _tsStr(c.createdAt);
       const arr = cases.slice().sort((a, b) => String(tsOf(b)).localeCompare(String(tsOf(a))));
@@ -480,6 +477,7 @@ async function _renderMgmt() {
     body.innerHTML = html;
   }
   body.querySelectorAll('.m-case-item').forEach((btn) => { btn.onclick = () => _openCaseDetail(btn.dataset.open || null); });
+  body.querySelectorAll('.m-case-group-title[data-grp]').forEach((t) => { t.onclick = () => { const g = t.dataset.grp || ''; if (_mgmtCollapsed.has(g)) _mgmtCollapsed.delete(g); else _mgmtCollapsed.add(g); _renderMgmt(); }; });
   const sortSel = body.querySelector('#m-mgmt-sort'); if (sortSel) sortSel.onchange = (e) => { _caseSort = e.target.value; try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {} _renderMgmt(); };
   const addBtn = document.getElementById('m-mgmt-add'); if (addBtn) addBtn.onclick = _openNewCaseForm;
   const grpBtn = document.getElementById('m-mgmt-groups'); if (grpBtn) grpBtn.onclick = _openManageGroups;
