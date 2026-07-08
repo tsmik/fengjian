@@ -4,7 +4,6 @@ import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, 
          _userGender, _userBirthday, _caseGender, _caseBirthday, _caseDate, _liunianTable, BETA_VISIBLE_DIMS,
          setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
-import { collectDetailForPrompt } from './obs_ui.js';
 import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
 
 /* ===== Report Save ===== */

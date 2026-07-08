@@ -763,7 +763,7 @@ function _condResultOf(di, pi) {
     if (a !== '是' && a !== '否') allAnswered = false;
     g.leaves.forEach(lf => {
       const mv = Array.isArray(lf.match) ? lf.match[0] : lf.match;
-      obs[lf.ref] = (a === '是') ? mv : ' NO';  // 否：給不符合的哨兵值（leaf 為 false 但「已答」）
+      obs[lf.ref] = (a === '是') ? mv : '\u0000NO';  // 否：給不符合的哨兵值（leaf 為 false 但「已答」）
     });
   });
   if (!allAnswered) return null;

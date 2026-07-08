@@ -1,7 +1,6 @@
 // js/manual_sens_v2.js — 手動版重要參數分析 v2（調整方向建議 + 雙矩陣）
 import { DIMS, manualData, userName, _isTA, _currentCaseId, _currentCaseName,
          BETA_VISIBLE_DIMS, setNavActive, showPage, calcDim, avgCoeff } from './core.js';
-import { initManualData, manualLoadData } from './manual.js';
 
 // ===== 1. 常數 =====
 
@@ -682,73 +681,6 @@ function renderBlock(dataArr, blockType) {
   h += renderSummary(adjustments, blockType, origSub, newSub);
   h += '</div>'; // 關閉區塊容器
   return h;
-}
-
-// ===== 9. 頁面入口（沿用 v1） =====
-
-export function showManualSensV2Page() {
-  showPage('manual-sens-v2-page');
-  document.getElementById('nav-name').innerText = (_currentCaseId ? _currentCaseName : userName) || '';
-  setNavActive('nav-manual-sens-v2');
-  if (!window._suppressPushState) history.pushState({ page: 'manual-sens-v2' }, '');
-  initManualData();
-  manualLoadData();
-  setTimeout(renderManualSensV2Page, 300);
-}
-
-export function renderManualSensV2Page() {
-  var el = document.getElementById('manual-sens-v2-content');
-  if (!el) return;
-  if (!manualData) {
-    el.innerHTML = '<div style="color:#aaa;padding:20px">請先在「手動輸入報告」中填入資料</div>';
-    return;
-  }
-
-  // 全空檢查
-  var allNull = true;
-  for (var di = 0; di < manualData.length; di++) {
-    for (var pi = 0; pi < 9; pi++) {
-      if (manualData[di][pi] === 'A' || manualData[di][pi] === 'B') { allNull = false; break; }
-    }
-    if (!allNull) break;
-  }
-  if (allNull) {
-    el.innerHTML = '<div style="padding:40px 20px;text-align:center">' +
-      '<div style="font-size:16px;color:#E8B000;margin-bottom:12px">\u26A0 手動輸入報告尚未填寫</div>' +
-      '<button onclick="showManualPage()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--border);background:white;color:var(--text);font-size:14px;cursor:pointer">前往手動輸入報告</button>' +
-      '</div>';
-    return;
-  }
-
-  var html = '';
-  html += '<div style="font-size:18px;font-weight:400;color:var(--text);margin-bottom:4px;letter-spacing:2px">手動版重要參數分析</div>';
-  html += '<div style="font-size:13px;color:var(--text-3);margin-bottom:16px">基於手動輸入的 9 部位 \u00D7 13 維度矩陣，找出調整方向建議</div>';
-
-  // 整體調整摘要
-  html += renderOverallSummary(manualData);
-
-  // 先天區塊
-  html += renderBlock(manualData, 'innate');
-
-  // 運氣區塊
-  if (BETA_VISIBLE_DIMS >= 9) {
-    html += renderBlock(manualData, 'luck');
-  } else {
-    html += '<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center">';
-    html += '<div style="font-size:18px;font-weight:400;color:#bbb;letter-spacing:2px;margin-bottom:8px">運氣係數分析</div>';
-    html += '<div style="font-size:14px;color:#bbb">建置中</div></div>';
-  }
-
-  // 後天區塊
-  if (BETA_VISIBLE_DIMS >= 13) {
-    html += renderBlock(manualData, 'acquired');
-  } else {
-    html += '<div style="margin-bottom:24px;padding:40px 16px;background:#f0f0ea;border-radius:10px;border:1px solid #d4d4c8;text-align:center">';
-    html += '<div style="font-size:18px;font-weight:400;color:#bbb;letter-spacing:2px;margin-bottom:8px">後天係數分析</div>';
-    html += '<div style="font-size:14px;color:#bbb">建置中</div></div>';
-  }
-
-  el.innerHTML = html;
 }
 
 // cf-redeploy touch 2026-05-26
