@@ -782,7 +782,7 @@ if (isTeacherMode) {
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       // 個案管理不再是「困住的蓋版」：底部 tab 一直露出，切到別的分頁時收起任何開著的個案 overlay
       if (key !== 'cases') {
-        ['m-case-mgmt','m-case-detail','m-case-form'].forEach(function(id){ var o=document.getElementById(id); if(o) o.classList.remove('is-open'); });
+        ['m-case-mgmt','m-case-list','m-case-page','m-case-detail','m-case-form'].forEach(function(id){ var o=document.getElementById(id); if(o) o.classList.remove('is-open'); });
       }
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
       const pageKey = (key === 'cases') ? 'report' : key;

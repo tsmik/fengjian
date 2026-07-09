@@ -235,6 +235,20 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-mgmt-bar-actions{display:flex;gap:6px;margin-left:auto}
 .m-mgmt-bar-btn{padding:6px 10px;border:1px solid #e0d8cc;border-radius:8px;background:#fff;font-size:13px;font-family:inherit;color:#5a5048;cursor:pointer;white-space:nowrap}
 .m-mgmt-bar-btn.is-primary{background:var(--active);color:#fff;border-color:var(--active)}
+/* 個案管理主頁兩大按鈕（人頭=新增、筆記本=管理檢視） */
+.m-hub{display:flex;flex-direction:column;gap:14px;padding:18px 4px}
+.m-hub-btn{display:flex;align-items:center;gap:14px;width:100%;padding:22px 18px;border-radius:14px;border:1px solid #e0d8cc;background:#fff;cursor:pointer;font-family:inherit;text-align:left}
+.m-hub-btn.is-primary{background:#3a3228;border-color:#3a3228;color:#fff}
+.m-hub-btn.is-secondary{color:#5a5048}
+.m-hub-ico{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.m-hub-ico svg{width:26px;height:26px}
+.m-hub-label{font-size:16.5px;font-weight:600;letter-spacing:1px}
+/* 個案專屬頁 3 tab */
+.m-cp-tabs{display:flex;border-bottom:1px solid #ddd4c8;background:#faf7f2;position:sticky;top:0;z-index:5}
+.m-cp-tab{flex:1;padding:11px 2px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer;border-bottom:2px solid transparent}
+.m-cp-tab.active{color:#3f3a33;border-bottom-color:#c47a3d;font-weight:600}
+.m-cp-tab:disabled{color:#c8c0b4;cursor:default}
+.m-cp-lockhint{padding:6px 14px;font-size:12px;color:#a89e92;background:#faf7f2;border-bottom:1px solid #eee6da}
 /* 案例管理空狀態兩大按鈕 */
 .m-mgmt-bigbtn{width:100%;padding:22px 16px;border-radius:14px;font-size:17px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer;border:1px solid #e0d8cc}
 .m-mgmt-bigbtn.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}
@@ -1997,13 +2011,32 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-png-hint">雙指縮放 / 雙擊重置</div>
 </div>
 
-<!-- ===== 案例管理總畫面（全螢幕，nav 下方滑入）===== -->
+<!-- ===== 個案管理主頁（兩大按鈕）===== -->
 <div class="m-fullscreen" id="m-case-mgmt" style="z-index:300">
   <div class="m-fs-bar">
     <span class="m-mgmt-title">個案管理</span>
+  </div>
+  <div class="m-fs-body" id="m-hub-body"></div>
+</div>
+
+<!-- ===== 個案清單（管理/檢視個案：分組/排序/管理分組住這）===== -->
+<div class="m-fullscreen" id="m-case-list" style="z-index:310">
+  <div class="m-fs-bar">
+    <button class="m-fs-back" id="m-case-list-back" type="button">‹ 返回</button>
+    <span class="m-mgmt-title">個案清單</span>
     <div class="m-mgmt-bar-actions" id="m-mgmt-bar-actions"></div>
   </div>
   <div class="m-fs-body" id="m-mgmt-body"></div>
+</div>
+
+<!-- ===== 個案專屬頁（3 tab：基本資料/手動輸入報告/系統計算報告）===== -->
+<div class="m-fullscreen" id="m-case-page" style="z-index:325">
+  <div class="m-fs-bar">
+    <button class="m-fs-back" id="m-cp-back" type="button">‹ 返回</button>
+    <div class="m-fs-title" id="m-cp-title">個案管理</div>
+  </div>
+  <div class="m-cp-tabs" id="m-cp-tabs"></div>
+  <div class="m-fs-body" id="m-cp-body"></div>
 </div>
 
 <!-- ===== 全螢幕名片細節（個案 / 本人儀表板）===== -->
