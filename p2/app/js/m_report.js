@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -469,6 +469,7 @@ function _openCasePage(caseId) {
   const back = document.getElementById('m-cp-back'); if (back) back.onclick = _closeCasePage;
 }
 function _closeCasePage() {
+  if (_cpTab === 'manual' && !_cpUnmountManual()) return;   // 未存草稿可取消返回
   const ov = document.getElementById('m-case-page'); if (ov) ov.classList.remove('is-open');
 }
 function _renderCpTabs() {
@@ -480,15 +481,45 @@ function _renderCpTabs() {
     return '<button type="button" class="m-cp-tab' + (t.key === _cpTab ? ' active' : '') + '" data-cptab="' + t.key + '"' + (dis ? ' disabled' : '') + '>' + t.label + '</button>';
   }).join('');
   host.querySelectorAll('[data-cptab]').forEach((b) => {
-    b.onclick = () => { if (b.disabled) return; _cpTab = b.dataset.cptab; _renderCpTabs(); _renderCpBody(); };
+    b.onclick = () => {
+      if (b.disabled || b.dataset.cptab === _cpTab) return;
+      if (_cpTab === 'manual' && !_cpUnmountManual()) return;   // 手動 tab 有未存草稿 → 可取消離開
+      _cpTab = b.dataset.cptab;
+      _renderCpTabs();
+      _renderCpBody();
+    };
   });
 }
 function _renderCpBody() {
+  if (_cpTab === 'manual') { _renderCpManual(); return; }
   if (_cpTab === 'basic') { _renderCpBasic(); return; }
   const body = document.getElementById('m-cp-body');
   if (!body) return;
-  const label = _cpTab === 'manual' ? '手動輸入報告' : '系統計算報告';
-  body.innerHTML = '<div style="padding:40px 16px;text-align:center;color:#a89e92;font-size:14px">' + label + '（下一波施工中）</div>';
+  body.innerHTML = '<div style="padding:40px 16px;text-align:center;color:#a89e92;font-size:14px">系統計算報告（下一波施工中）</div>';
+}
+// ---- 手動輸入報告 tab：把上課的手動兵法報告(overview)掛進 cp 頁（只服務手動；segmented 由 CSS 隱藏）----
+let _cpManualMounted = false;
+function _renderCpManual() {
+  const body = document.getElementById('m-cp-body');
+  if (!body || !_cpCaseId) return;
+  setActiveCase(_cpCaseId);
+  try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
+  mountManual(body);
+  _cpManualMounted = true;
+}
+// 回傳 false = 使用者取消離開（有未存草稿）
+function _cpUnmountManual() {
+  if (!_cpManualMounted) return true;
+  try {
+    if (getManualDirty()) {
+      if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return false;
+      discardManualDraft();
+    }
+  } catch (e) {}
+  try { unmountManual(); } catch (e) {}
+  _cpManualMounted = false;
+  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
+  return true;
 }
 async function _renderCpBasic() {
   const body = document.getElementById('m-cp-body');
