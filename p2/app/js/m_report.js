@@ -425,17 +425,30 @@ export function openCaseMgmtView() {
   if (isDesktopSidebar()) { mountFinderDesktop(); return; }
   _openCaseMgmt();
 }
+// 共用：讀分組設定(users doc 的 groupOrder/groupDescs)＋個案清單 — 桌機 Finder / 手機 overlay 同一資料源
+// (排序邏輯兩邊刻意不同：手機空分組照儲存順序、桌機空分組排最後，故各自保留)
+async function _loadCaseMgmtData() {
+  const uid = getEffectiveUid();
+  let groupOrder = [], groupDescs = {};
+  try {
+    const s = await getDoc(doc(db, 'users', uid));
+    if (s.exists()) {
+      const d = s.data();
+      if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder;
+      if (d.groupDescs && typeof d.groupDescs === 'object') groupDescs = d.groupDescs;
+    }
+  } catch (e) {}
+  let cases = [];
+  try { cases = await listCases(); } catch (e) {}
+  return { groupOrder, groupDescs, cases };
+}
 async function _renderMgmt() {
   const body = document.getElementById('m-mgmt-body');
   const barActions = document.getElementById('m-mgmt-bar-actions');
   if (!body) return;
   body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
   if (barActions) barActions.innerHTML = '';
-  const uid = getEffectiveUid();
-  let groupOrder = [], groupDescs = {};
-  try { const s = await getDoc(doc(db, 'users', uid)); if (s.exists()) { const d = s.data(); if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder; if (d.groupDescs && typeof d.groupDescs === 'object') groupDescs = d.groupDescs; } } catch (e) {}
-  let cases = [];
-  try { cases = await listCases(); } catch (e) {}
+  const { groupOrder, groupDescs, cases } = await _loadCaseMgmtData();
   if (!document.getElementById('m-case-mgmt')) return;
   _existingCaseCount = cases.length;
   const caseColor = (c) => c.color || _autoColor(c.id);
@@ -728,17 +741,8 @@ export async function mountFinderDesktop() {
 }
 
 async function _finderLoad() {
-  const uid = getEffectiveUid();
-  let groupOrder = []; _finderGroupDescs = {};
-  try {
-    const s = await getDoc(doc(db, 'users', uid));
-    if (s.exists()) {
-      const d = s.data();
-      if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder;
-      if (d.groupDescs && typeof d.groupDescs === 'object') _finderGroupDescs = d.groupDescs;
-    }
-  } catch (e) {}
-  let cases = []; try { cases = await listCases(); } catch (e) {}
+  const { groupOrder, groupDescs, cases } = await _loadCaseMgmtData();
+  _finderGroupDescs = groupDescs;
   _finderCases = cases;
   const gset = []; cases.forEach((c) => { const g = c.group || ''; if (g && gset.indexOf(g) < 0) gset.push(g); });
   const ordered = []; groupOrder.forEach((g) => { if (gset.indexOf(g) >= 0) ordered.push(g); }); gset.forEach((g) => { if (ordered.indexOf(g) < 0) ordered.push(g); });
