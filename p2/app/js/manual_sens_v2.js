@@ -1,6 +1,7 @@
 // js/manual_sens_v2.js — 手動版重要參數分析 v2（調整方向建議 + 雙矩陣）
 import { DIMS, manualData, userName, _isTA, _currentCaseId, _currentCaseName,
-         BETA_VISIBLE_DIMS, setNavActive, showPage, calcDim, avgCoeff } from './core.js';
+         BETA_VISIBLE_DIMS, setNavActive, showPage, calcDim, avgCoeff,
+         DIM_BG_COLORS, DIM_DEEP_COLORS } from './core.js';
 
 // ===== 1. 常數 =====
 
@@ -19,10 +20,8 @@ var BLOCK_COLORS = {
   luck: '#4C6E78', acquired: '#7B7082'
 };
 
-var _dimBg = ['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-              '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
-var _dimDeep = ['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
-                '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+var _dimBg = DIM_BG_COLORS;    // 維度色正本在 core.js
+var _dimDeep = DIM_DEEP_COLORS;
 var _colLIsS = DIMS.map(function(d) { var dt = (d.da === d.a) ? d.aT : d.bT; return dt === '靜'; });
 
 // ===== 2. 完整度檢查（沿用 v1） =====

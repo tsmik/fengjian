@@ -13,7 +13,7 @@
  *     liunianHtml?: string       // 表格第一列流年區塊（選填，內聯 HTML）
  *   }
  */
-import { DIMS, calcDim, avgCoeff } from './core.js';
+import { DIMS, calcDim, avgCoeff, DIM_BG_COLORS, DIM_DEEP_COLORS } from './core.js';
 import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG, buildSDPairSVG } from './report_chart.js';
 
 function _buildParts(matrix, meta) {
@@ -59,11 +59,9 @@ function _buildParts(matrix, meta) {
   var colR=DIMS.map(function(d){return d.db;});
   var colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
 
-  // === 和風色彩系統 ===
-  var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-             '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
-  var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
-               '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+  // === 和風色彩系統 ===（維度色正本在 core.js）
+  var dimBg=DIM_BG_COLORS;
+  var dimDeep=DIM_DEEP_COLORS;
   var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';
   var C_BOSS='#8E4B50',C_MGR='#8C6B4A';
   var C_PRE_C='#8E4B50',C_LUCK_C='#4C6E78',C_POST_C='#7B7082';

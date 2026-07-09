@@ -19,7 +19,7 @@
 //   - 桌機 staging / production：完全不該被影響
 // ============================================================
 
-import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim } from './core.js';
+import { OBS_PARTS_DATA, setObsData, setObsPartsData, setObsPartNames, setDimRules, data as coreData, DIMS, DIM_RULES, condResults, calcDim, DIM_BG_COLORS, DIM_DEEP_COLORS, _escHtml } from './core.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { recalcFromObs, evalDimAt } from './obs_recalc.js';
@@ -39,9 +39,11 @@ const SUBMODES = [
   { key: 'report', label: '兵法報告' },
   // 辣度總覽(未來移入兵法報告)、參數分析(先隱藏) → 不列入 segmented；view 邏輯保留
 ];
-// 兵法報告的 13 維度淺色 / 深色（維度名稱列、維度鈕邊線用；同 manual_report dimBg/dimDeep）
-const DIM_BG = ['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8','#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
-const DIM_DEEP = ['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+// 兵法報告的 13 維度淺色 / 深色（維度名稱列、維度鈕邊線用）— 正本在 core.js
+const DIM_BG = DIM_BG_COLORS;
+const DIM_DEEP = DIM_DEEP_COLORS;
+// 辣度等級（嚴格程度，由嚴到寬）— 全檔唯一正本，加/改等級只改這裡
+const SPICE_LEVELS = ['完整', '大辣', '中辣', '小辣'];
 // 部位顯示名：題庫「額」在此頁一律顯示「上停」(與維度規則一致；資料鍵仍是額)
 function _partLabel(key){ return key === '額' ? '上停' : key; }
 
@@ -266,11 +268,7 @@ function partProgress(key) {
 }
 
 // ---------- 渲染 ----------
-function escapeHtml(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+const escapeHtml = _escHtml;   // 正本在 core.js（多跳脫單引號，顯示相同）
 
 function render() {
   if (!_root) return;
@@ -393,12 +391,12 @@ function _applySavedSpiceOnce() {
   if (_spiceLoaded) return;
   _spiceLoaded = true;
   const ud = window.__userData || {};
-  if (ud.spice === '完整' || ud.spice === '大辣' || ud.spice === '中辣' || ud.spice === '小辣') setSpice(ud.spice);
+  if (SPICE_LEVELS.includes(ud.spice)) setSpice(ud.spice);
   else setSpice('大辣');   // 從未選取 → 報告預設大辣
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${['完整', '大辣', '中辣', '小辣'].map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
+  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${SPICE_LEVELS.map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
@@ -550,7 +548,7 @@ function _applySpovLayout(svgStr, cfg) {
 // 建四辣度並排比較圖(完整/大辣/中辣/小辣 各:係數圖+動靜圖+係數總覽);供辣度總覽頁與報告頁滑出面板共用
 function _buildSpovGridHtml() {
   _obsReportMatrix();   // 先把目前草稿同步進 obsData(與報告同源),evalDimAt 才吃到最新答案
-  const LEVELS = ['完整', '大辣', '中辣', '小辣'];
+  const LEVELS = SPICE_LEVELS;
   const cols = LEVELS.map(lv => {
     const matrix = [];
     for (let di = 0; di < 13; di++) matrix.push(evalDimAt(di, lv));
@@ -883,7 +881,7 @@ function renderDimMode() {
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   const prevSpice = _dimPreviewSpice || getSpice();
   const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
-  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-row"><span class="m-dimv-pv-spice-title">嚴格程度調整</span><div class="m-dimv-pv-spice-opts">${['完整','大辣','中辣','小辣'].map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div></div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
+  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-row"><span class="m-dimv-pv-spice-title">嚴格程度調整</span><div class="m-dimv-pv-spice-opts">${SPICE_LEVELS.map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div></div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = pv[pi];

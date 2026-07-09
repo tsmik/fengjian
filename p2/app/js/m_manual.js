@@ -28,7 +28,7 @@
 // ============================================================
 
 import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
-import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoaded } from './m_report.js';
+import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoaded, generatePng } from './m_report.js';
 import { buildManualReportParts } from './manual_report.js';
 import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { evaluatePart } from './rule_engine.js';
@@ -36,7 +36,6 @@ import { AGG_FIXED } from './engine.js';
 import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
-import { generatePng } from './m_report.js';
 import { renderManualSens } from './m_sens.js';
 import { mountBoard, unmountBoard } from './m_board.js';
 import { setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';

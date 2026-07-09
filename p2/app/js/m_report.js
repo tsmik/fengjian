@@ -18,7 +18,7 @@
 //   - 自動版重要參數分析：進入時 ensureDimRulesLoaded + obsData baseline；返回 OK
 // ============================================================
 
-import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml, OBS_PARTS_DATA } from './core.js';
+import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTable, data, avgCoeff, DIMS, calcDim, _escHtml, OBS_PARTS_DATA, DIM_DEEP_COLORS } from './core.js';
 import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
@@ -99,9 +99,9 @@ async function _renderSelfDashboard() {
 }
 
 // ===== 個案管理：本人儀表板 + 案例管理總畫面 + 新增表單 + 全螢幕細節 =====
-// 14 色色盤 + 淡化底色（與桌機 case_mgmt.js 一致）
+// 14 色色盤 + 淡化底色 = 米色 + 13 維度深色（維度色正本在 core.js DIM_DEEP_COLORS）
 const CARD_DEFAULT_COLOR = '#D9CBA8';
-const CARD_COLORS = ['#D9CBA8','#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50','#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+const CARD_COLORS = [CARD_DEFAULT_COLOR, ...DIM_DEEP_COLORS];
 function _cardTint(hex) {
   hex = hex || CARD_DEFAULT_COLOR;
   if (hex.charAt(0) !== '#' || hex.length < 7) return '#ffffff';

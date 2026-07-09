@@ -2,7 +2,8 @@
 
 import { DIMS, PARTS, data, obsData, obsOverride, condResults, userName, _isTA, _currentCaseId, _currentCaseName,
          _userGender, _userBirthday, _caseGender, _caseBirthday, _caseDate, _liunianTable, BETA_VISIBLE_DIMS,
-         setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser } from './core.js';
+         setNavActive, showPage, _getUserDocRef, calcDim, avgCoeff, currentUser,
+         DIM_BG_COLORS, DIM_DEEP_COLORS } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { buildRadar2SVG, buildCoefSVG, buildRadar3SVG } from './report_chart.js';
 
@@ -907,11 +908,9 @@ export function drawReportCanvas(srcData, opts){
   var visibleDimIds = [];
   for(var vi=0;vi<BETA_VISIBLE_DIMS;vi++) visibleDimIds.push(vi);
 
-  // === 和風色彩系統（與 showReport 完全一致）===
-  var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-             '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
-  var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
-               '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+  // === 和風色彩系統（維度色正本在 core.js）===
+  var dimBg=DIM_BG_COLORS;
+  var dimDeep=DIM_DEEP_COLORS;
   var dimText=['#4A6B3A','#3A5E54','#6A6458','#7A5A38','#7A4858','#7A6A38',
                '#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
   // 結構色
