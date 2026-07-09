@@ -442,13 +442,17 @@ async function _loadCaseMgmtData() {
   try { cases = await listCases(); } catch (e) {}
   return { groupOrder, groupDescs, cases };
 }
-async function _renderMgmt() {
+let _mgmtCache = null;   // 清單資料快取：收合/排序只重畫不重抓；新增/刪除/編輯後重抓
+async function _renderMgmt(useCache) {
   const body = document.getElementById('m-mgmt-body');
   const barActions = document.getElementById('m-mgmt-bar-actions');
   if (!body) return;
-  body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
-  if (barActions) barActions.innerHTML = '';
-  const { groupOrder, groupDescs, cases } = await _loadCaseMgmtData();
+  if (!(useCache && _mgmtCache)) {
+    body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
+    if (barActions) barActions.innerHTML = '';
+    _mgmtCache = await _loadCaseMgmtData();
+  }
+  const { groupOrder, groupDescs, cases } = _mgmtCache;
   if (!document.getElementById('m-case-mgmt')) return;
   _existingCaseCount = cases.length;
   const caseColor = (c) => c.color || _autoColor(c.id);
@@ -493,8 +497,8 @@ async function _renderMgmt() {
     body.innerHTML = html;
   }
   body.querySelectorAll('.m-case-item').forEach((btn) => { btn.onclick = () => _openCaseDetail(btn.dataset.open || null); });
-  body.querySelectorAll('.m-case-group-title[data-grp]').forEach((t) => { t.onclick = () => { const g = t.dataset.grp || ''; if (_mgmtCollapsed.has(g)) _mgmtCollapsed.delete(g); else _mgmtCollapsed.add(g); _renderMgmt(); }; });
-  const sortSel = body.querySelector('#m-mgmt-sort'); if (sortSel) sortSel.onchange = (e) => { _caseSort = e.target.value; try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {} _renderMgmt(); };
+  body.querySelectorAll('.m-case-group-title[data-grp]').forEach((t) => { t.onclick = () => { const g = t.dataset.grp || ''; if (_mgmtCollapsed.has(g)) _mgmtCollapsed.delete(g); else _mgmtCollapsed.add(g); _renderMgmt(true); }; });
+  const sortSel = body.querySelector('#m-mgmt-sort'); if (sortSel) sortSel.onchange = (e) => { _caseSort = e.target.value; try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {} _renderMgmt(true); };
   const addBtn = document.getElementById('m-mgmt-add'); if (addBtn) addBtn.onclick = _openNewCaseForm;
   const grpBtn = document.getElementById('m-mgmt-groups'); if (grpBtn) grpBtn.onclick = _openManageGroups;
 }

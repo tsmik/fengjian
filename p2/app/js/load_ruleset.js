@@ -34,6 +34,22 @@ export async function loadRuleSetById(db, id, defaultSpice) {
   return { activeRuleSetId: id, defaultSpice: defaultSpice || DEFAULT_SPICE, dims, obsParts, isPaired, partNames };
 }
 
+// 套裝 localStorage 快取：重整只抓 config/active（1 個小文件）核對版本，
+// 命中→直接用本地快取（省掉 dims/observations/layout 共 110+ 文件約 120KB 的重抓）；
+// 版本鎖＝activeRuleSetId + config/active 的 updatedAt（上線新套裝或重新發布都會失效重抓）。
+const RS_CACHE_KEY = 'p2_rs_cache_v1';
+function _rsCacheRead(ver) {
+  try {
+    const raw = localStorage.getItem(RS_CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    return (c && c.ver === ver && c.bundle && c.bundle.dims) ? c.bundle : null;
+  } catch (e) { return null; }
+}
+function _rsCacheWrite(ver, bundle) {
+  try { localStorage.setItem(RS_CACHE_KEY, JSON.stringify({ ver, bundle })); } catch (e) {}
+}
+
 // 讀「上線套裝」(config/active) → 轉成前台結構
 // 失敗（無 config/active 或無上線套裝）→ throw，由前台決定如何提示
 export async function loadActiveRuleSet(db) {
@@ -42,5 +58,11 @@ export async function loadActiveRuleSet(db) {
   const active = activeSnap.data() || {};
   const id = active.activeRuleSetId;
   if (!id) throw new Error('config/active 無 activeRuleSetId');
-  return loadRuleSetById(db, id, active.defaultSpice);
+  const spice = active.defaultSpice || DEFAULT_SPICE;
+  const ver = id + '|' + String(active.updatedAt || '');
+  const cached = _rsCacheRead(ver);
+  if (cached) { cached.defaultSpice = spice; return cached; }   // 辣度預設值一律用剛抓回的新值
+  const bundle = await loadRuleSetById(db, id, spice);
+  _rsCacheWrite(ver, bundle);
+  return bundle;
 }
