@@ -274,7 +274,8 @@ function _paintDashboard() {
   // 流年（縮兩行）
   inner += '<div id="m-dash-liunian" class="m-liunian-placeholder">流年載入中…</div>';
   // 個案：新增觀察入口。桌機→側欄工作區（開始分析）；手機→明確「依部位／依維度填寫」兩顆（比照桌機工作區，取代語意不清的「開始分析」）
-  if (p.isCase) {
+  // cp(個案專屬頁)模式不放：填寫入口已由「系統計算報告」tab 承接
+  if (p.isCase && !_dashCpMode) {
     if (isDesktopSidebar()) {
       inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
     } else {
