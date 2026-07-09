@@ -324,10 +324,16 @@ export function isDesktopSidebar() {
 }
 let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
-const WS_SUBS = [
-  { key: 'obs', label: '依部位填寫', tab: 'input' },
-  { key: 'obs-dim', label: '依維度填寫', tab: 'input' },
-  { key: 'obs-report', label: '兵法報告', tab: 'input' }
+// 桌機工作區側欄：兩組（系統計算 / 手動輸入）。手動輸入點了直接出現可填寫的兵法報告（manual overview）
+const WS_GROUPS = [
+  { title: '系統計算', subs: [
+    { key: 'obs', label: '依部位填寫' },
+    { key: 'obs-dim', label: '依維度填寫' },
+    { key: 'obs-report', label: '兵法報告' }
+  ] },
+  { title: '手動輸入', subs: [
+    { key: 'manual-report', label: '兵法報告' }
+  ] }
 ];
 // 手機工作區頂部列：兩組（系統計算 / 手動建立），比照個案儀表板的兩個報告家族
 const MWS_GROUPS = [
@@ -359,8 +365,10 @@ function _renderWorkspace() {
   if (!_wsCase) { host.innerHTML = ''; host.style.display = 'none'; host.style.background = ''; return; }
   host.style.display = '';
   host.style.background = '';  // 這一區不放底色
-  const items = WS_SUBS.map(function (s) {
-    return '<button class="m-ws-item' + (s.key === _wsSub ? ' active' : '') + '" data-ws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
+  const items = WS_GROUPS.map(function (g) {
+    return '<div class="m-ws-gtitle">' + _wsEsc(g.title) + '</div>' + g.subs.map(function (s) {
+      return '<button class="m-ws-item' + (s.key === _wsSub ? ' active' : '') + '" data-ws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
+    }).join('');
   }).join('');
   host.innerHTML =
     '<div class="m-ws-head"><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
