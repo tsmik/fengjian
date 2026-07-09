@@ -27,13 +27,13 @@
 //   - 詳盡報告 PNG（手動版）+ 重要參數分析（手動版）
 // ============================================================
 
-import { DIMS, avgCoeff, calcDim, DIM_RULES } from './core.js';
+import { DIMS, avgCoeff, calcDim, DIM_RULES, DIM_BG_COLORS } from './core.js';
 import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoaded, generatePng } from './m_report.js';
 import { buildManualReportParts } from './manual_report.js';
 import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
 import { evaluatePart } from './rule_engine.js';
 import { AGG_FIXED } from './engine.js';
-import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote } from './m_main.js';
+import { auth, db, debugLog, refreshUserData, getEffectiveUid, getActiveCaseId, getCurrentDocRef, showReportNote, hideReportNote, isDesktopSidebar } from './m_main.js';
 import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js';
 import { updateHomeProgress } from './m_home.js';
 import { renderManualSens } from './m_sens.js';
@@ -309,8 +309,9 @@ function _renderManualInput() {
     // 兵法報告（桌機排版：明細 → 圖像 → 係數總覽）餵自我評分 _manualDraft；表格可點擊改 A/B 即時重算＋同步自我評分
     const _ud = window.__userData || {};
     const _rname = _ud.displayName || '';
-    // 標題虛歲（接姓名後）+ 流年八格（固定一塊，不跟表格左右捲動）；流年表 lazy load，載好後重繪一次
-    const _meta = { name: _rname };
+    // 標題虛歲（接姓名後）+ 流年（比照系統計算報告：手機收成「流年▼」鈕可展開；桌機恆顯示）；流年表 lazy load，載好後重繪一次
+    // compactParts：手機省略右方重複部位欄、只留最左凍結欄（同系統計算報告）
+    const _meta = { name: _rname, compactParts: !isDesktopSidebar() };
     let _lnBlock = '';
     if (_ud.gender && _ud.birthday) {
       if (isLiunianReady()) {
@@ -324,10 +325,14 @@ function _renderManualInput() {
       }
     }
     const _rp = buildManualReportParts(_manualDraft, _meta);
+    const _lnToggleBtn = _lnBlock ? '<button class="m-rep-ln-toggle" type="button" data-lntoggle="1">流年<span class="m-rep-ln-arrow">▼</span></button>' : '';
+    const _lnWrap = _lnBlock ? `<div class="m-rep-liunian-wrap" id="m-manual-liunian-wrap" hidden>${_lnBlock}</div>` : '';
     body = `
       <div class="m-manual-report">
-        ${_rp.titleHtml}
-        ${_lnBlock}
+        <div class="m-obs-report-stickyhead">
+          <div class="m-rep-headrow">${_rp.titleHtml}${_lnToggleBtn}</div>
+          ${_lnWrap}
+        </div>
         <div class="m-rep-edit-hint">↓ 點表格任一格可改動靜，係數即時更新</div>
         <div class="m-manual-fullreport">${_rp.tableHtml}</div>
         <div class="m-rep-seg-title">分析圖</div>
@@ -357,11 +362,8 @@ function _renderClearAllRow() {
 
 // v1.7 階段 11：renderCoeffSummary export — 給 m_manual + m_report.js auto view 共用
 // 接收 matrix (13×9 'A'/'B'/null)，render 5 段橫向小結卡（4 個 dim group + 1 個跨群組總）
-// 13 維度個別 PNG 背景色（同步桌機 report.js dimBg）
-const DIM_BG = [
-  '#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-  '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'
-];
+// 13 維度個別 PNG 背景色 — 正本在 core.js（第四級收斂時 m_manual 因 NUL 位元組漏掃，此處補收）
+const DIM_BG = DIM_BG_COLORS;
 export function renderCoeffSummary(matrix) {
   if (!Array.isArray(matrix) || matrix.length !== 13) {
     matrix = Array(13).fill(null).map(() => Array(9).fill(null));
@@ -1150,6 +1152,15 @@ function _bindEvents() {
   });
   _container.querySelectorAll('[data-mpng]').forEach(btn => {
     btn.addEventListener('click', () => exportManualPng(btn));
+  });
+  // 流年折疊（比照系統計算報告）：預設收起，點按展開/收合，箭頭 ▼↔▲；桌機由 CSS 藏鈕+恆顯示
+  _container.querySelectorAll('[data-lntoggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wrap = _container.querySelector('#m-manual-liunian-wrap'); if (!wrap) return;
+      const show = wrap.hasAttribute('hidden');
+      if (show) wrap.removeAttribute('hidden'); else wrap.setAttribute('hidden', '');
+      const arrow = btn.querySelector('.m-rep-ln-arrow'); if (arrow) arrow.textContent = show ? '▲' : '▼';
+    });
   });
   _container.querySelectorAll('[data-mcharts]').forEach(btn => {
     btn.addEventListener('click', () => exportMobileCharts({ mode: 'charts', srcData: _manualDraft, chartSvgs: _manualChartSvgs(), btn: btn }));
