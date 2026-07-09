@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -462,6 +462,8 @@ const CP_TABS = [
 function _openCasePage(caseId) {
   _cpCaseId = caseId || null;
   _cpTab = 'basic';
+  _cpManualMounted = false; _cpSystemMounted = false;   // 外部強制關頁(切底部tab)後旗標歸零
+  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
   _renderCpTabs();
   _renderCpBody();
   const ov = document.getElementById('m-case-page');
@@ -469,7 +471,7 @@ function _openCasePage(caseId) {
   const back = document.getElementById('m-cp-back'); if (back) back.onclick = _closeCasePage;
 }
 function _closeCasePage() {
-  if (_cpTab === 'manual' && !_cpUnmountManual()) return;   // 未存草稿可取消返回
+  if (!_cpLeaveCurrentTab()) return;   // 未存草稿可取消返回
   const ov = document.getElementById('m-case-page'); if (ov) ov.classList.remove('is-open');
 }
 function _renderCpTabs() {
@@ -483,7 +485,7 @@ function _renderCpTabs() {
   host.querySelectorAll('[data-cptab]').forEach((b) => {
     b.onclick = () => {
       if (b.disabled || b.dataset.cptab === _cpTab) return;
-      if (_cpTab === 'manual' && !_cpUnmountManual()) return;   // 手動 tab 有未存草稿 → 可取消離開
+      if (!_cpLeaveCurrentTab()) return;   // 手動/系統 tab 有未存草稿 → 可取消離開
       _cpTab = b.dataset.cptab;
       _renderCpTabs();
       _renderCpBody();
@@ -492,10 +494,37 @@ function _renderCpTabs() {
 }
 function _renderCpBody() {
   if (_cpTab === 'manual') { _renderCpManual(); return; }
-  if (_cpTab === 'basic') { _renderCpBasic(); return; }
+  if (_cpTab === 'system') { _renderCpSystem(); return; }
+  _renderCpBasic();
+}
+// ---- 系統計算報告 tab：掛 m_input（自帶 依部位填寫/依維度填寫/兵法報告 segmented；無回到個案鈕）----
+let _cpSystemMounted = false;
+function _renderCpSystem() {
   const body = document.getElementById('m-cp-body');
-  if (!body) return;
-  body.innerHTML = '<div style="padding:40px 16px;text-align:center;color:#a89e92;font-size:14px">系統計算報告（下一波施工中）</div>';
+  if (!body || !_cpCaseId) return;
+  setActiveCase(_cpCaseId);
+  mountInput(body);
+  _cpSystemMounted = true;
+  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
+}
+function _cpUnmountSystem() {
+  if (!_cpSystemMounted) return true;
+  try {
+    if (getSaveStatus() === 'dirty') {
+      if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return false;
+      discardDraft(); discardReportDraft();
+    }
+  } catch (e) {}
+  try { unmountInput(); } catch (e) {}
+  _cpSystemMounted = false;
+  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
+  return true;
+}
+// 離開目前 cp tab 前的未存檢查（false=使用者取消）
+function _cpLeaveCurrentTab() {
+  if (_cpTab === 'manual') return _cpUnmountManual();
+  if (_cpTab === 'system') return _cpUnmountSystem();
+  return true;
 }
 // ---- 手動輸入報告 tab：把上課的手動兵法報告(overview)掛進 cp 頁（只服務手動；segmented 由 CSS 隱藏）----
 let _cpManualMounted = false;
@@ -504,6 +533,7 @@ function _renderCpManual() {
   if (!body || !_cpCaseId) return;
   setActiveCase(_cpCaseId);
   try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
+  body.classList.add('m-cp-manual');   // CSS 據此隱藏手動頁自己的 segmented/hint
   mountManual(body);
   _cpManualMounted = true;
 }
@@ -518,6 +548,7 @@ function _cpUnmountManual() {
   } catch (e) {}
   try { unmountManual(); } catch (e) {}
   _cpManualMounted = false;
+  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
   return true;
 }
