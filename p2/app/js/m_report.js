@@ -466,6 +466,7 @@ function _openCasePage(caseId, restoreTab) {
   _cpTab = (caseId && restoreTab) ? restoreTab : 'basic';   // restoreTab：切回個案管理時還原離開前的 tab
   _cpManualMounted = false; _cpSystemMounted = false;   // 外部強制關頁(切底部tab)後旗標歸零
   const cb = document.getElementById('m-cp-body'); if (cb) { cb.classList.remove('m-cp-manual'); cb.classList.remove('m-cp-system'); }
+  const sth = document.getElementById('m-cp-systabs-host'); if (sth) sth.innerHTML = '';
   _renderCpTabs();
   _renderCpBody();
   const ov = document.getElementById('m-case-page');
@@ -511,19 +512,21 @@ function _renderCpSystem() {
   if (!body || !_cpCaseId) return;
   setActiveCase(_cpCaseId);
   _cpSeedUserData();
-  // cp 自己的固定子 tab 列（sticky 釘在 3 tab 下方，不隨 m_input 內部重繪消失）；m_input 自帶的 segmented 由 CSS(m-cp-system)隱藏
+  // cp 自己的固定子 tab 列：放在 3 tab 正下方、捲動容器之外（密合＋不隨捲動/內部重繪消失）；m_input 自帶的 segmented 由 CSS(m-cp-system)隱藏
   body.classList.add('m-cp-system');
-  body.innerHTML = '<div class="m-cp-systabs" id="m-cp-systabs">'
+  const host = document.getElementById('m-cp-systabs-host');
+  if (host) host.innerHTML = '<div class="m-cp-systabs">'
     + CP_SYS_SUBS.map((s) => '<button type="button" class="m-cp-systab" data-cpsys="' + s.key + '">' + s.label + '</button>').join('')
-    + '</div><div id="m-cp-sysbody"></div>';
+    + '</div>';
   const paintActive = () => {
     let cur = 'part'; try { cur = getInputView() || 'part'; } catch (e) {}
-    body.querySelectorAll('[data-cpsys]').forEach((b) => b.classList.toggle('active', b.dataset.cpsys === cur));
+    if (host) host.querySelectorAll('[data-cpsys]').forEach((b) => b.classList.toggle('active', b.dataset.cpsys === cur));
   };
-  body.querySelectorAll('[data-cpsys]').forEach((b) => {
+  if (host) host.querySelectorAll('[data-cpsys]').forEach((b) => {
     b.onclick = () => { try { setInputView(b.dataset.cpsys); } catch (e) {} paintActive(); };
   });
-  mountInput(document.getElementById('m-cp-sysbody'));
+  body.innerHTML = '';
+  mountInput(body);
   paintActive();
   _cpSystemMounted = true;
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
@@ -539,6 +542,7 @@ function _cpUnmountSystem() {
   try { unmountInput(); } catch (e) {}
   _cpSystemMounted = false;
   const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-system');
+  const host = document.getElementById('m-cp-systabs-host'); if (host) host.innerHTML = '';
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
   return true;
 }
@@ -641,6 +645,7 @@ export function stashCasesView() {
   // 手動/系統掛載旗標歸零（未存草稿已由 m_main 分頁切換警示處理）
   _cpManualMounted = false; _cpSystemMounted = false;
   const cb = document.getElementById('m-cp-body'); if (cb) { cb.classList.remove('m-cp-manual'); cb.classList.remove('m-cp-system'); }
+  const sth = document.getElementById('m-cp-systabs-host'); if (sth) sth.innerHTML = '';
 }
 // 由「個案管理」tab 進入：開啟案例管理 overlay（底下是已 mount 的「我的」儀表板）；
 // 返回時關 overlay 並把 tab 高亮切回「我的」（report）。

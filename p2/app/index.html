@@ -254,8 +254,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
    cp 系統計算 tab：改用 cp 自己的固定子 tab 列(.m-cp-systabs)，m_input 自帶的 segmented 一併隱藏 */
 #m-cp-body.m-cp-manual .m-segmented-sub,#m-cp-body.m-cp-manual .m-page-hint,
 #m-cp-body.m-cp-system .m-segmented-sub{display:none}
-/* cp 系統計算固定子 tab 列：sticky 釘在 3 tab 正下方（m-cp-tabs 在捲動容器外，故 body 內 top:0 即緊貼其下） */
-.m-cp-systabs{display:flex;gap:0;position:sticky;top:0;z-index:21;background:#ede8e0;border-bottom:1px solid #cdbfa8}
+/* cp 系統計算固定子 tab 列：實體放在 3 tab 正下方、捲動容器之外 → 與 3 tab 密合且永不被內容 sticky 干擾 */
+.m-cp-systabs{display:flex;gap:0;background:#ede8e0;border-bottom:1px solid #cdbfa8}
 .m-cp-systab{flex:1;padding:9px 4px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer}
 .m-cp-systab:not(:last-child){border-right:1px solid #d0c8be}
 .m-cp-systab.active{background:#6a464b;color:#f0e9ea}
@@ -2046,6 +2046,7 @@ body.m-debug-on .m-debug-clear{display:block}
     <div class="m-fs-title" id="m-cp-title">個案管理</div>
   </div>
   <div class="m-cp-tabs" id="m-cp-tabs"></div>
+  <div id="m-cp-systabs-host"></div>
   <div class="m-fs-body" id="m-cp-body"></div>
 </div>
 
