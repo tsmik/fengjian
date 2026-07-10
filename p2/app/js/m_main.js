@@ -18,7 +18,7 @@ import {
 
 import { initHome, refreshHomeSelf } from "./m_home.js";
 import { mountInput, unmountInput, getSaveStatus, discardDraft, ensureQuestionsLoaded, setInputView, getInputView } from "./m_input.js";
-import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView } from "./m_report.js";
+import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView, stashCasesView } from "./m_report.js";
 import { mountManual, unmountManual, getManualDirty, discardManualDraft, setManualView, getManualView } from "./m_manual.js";
 // 轉出口給 m_report.js（個案專屬頁「手動輸入報告/系統計算報告」tab 掛頁用；沿用既有 m_main↔m_report 依賴邊）
 export { mountManual, unmountManual, getManualDirty, discardManualDraft };
@@ -771,20 +771,31 @@ if (isTeacherMode) {
         if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
         if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
       }
+      // 從個案管理（手機個案專屬頁的手動/系統 tab）離開 → 未存提示（cases tab active，上面判斷抓不到）
+      const casesTabBtn = document.querySelector('.m-tab[data-tab="cases"]');
+      const isOnCases = casesTabBtn && casesTabBtn.classList.contains('active');
+      if (isOnCases && key !== 'cases') {
+        if (getSaveStatus() === 'dirty') { if (!confirm('你還有未儲存的答題，確定要離開嗎？')) return; discardDraft(); discardReportDraft(); }
+        if (getManualDirty()) { if (!confirm('你還有未儲存的手動填答，確定要離開嗎？')) return; discardManualDraft(); }
+      }
       // 點底部 tab 一律離開個案工作區、切回本人（桌機側欄工作區仍釘著僅取消染色；手機頂部列直接收起）。
       let _forcedSelf = false;
       const _wasMobileWs = document.body.classList.contains('m-mws-active');
       // 先即時清掉工作區的染色/高亮（不要等下面的網路 refresh，否則點底部 tab 會殘留個案染色）
       if (document.body.classList.contains('m-ws-active')) _exitWorkspaceActive();
       if (_wasMobileWs) { document.body.classList.remove('m-mws-active'); _hideMobileWs(); }
-      if ((isDesktopSidebar() || _wasMobileWs) && getActiveCaseId()) {
+      // 主帳號與個案完全分割（Mike 2026-07-10）：切到任何非個案管理分頁一律回本人
+      // → 部位觀察/上課等主分頁永遠是本人資料，不再出現「目前分析個案+回本人」橫幅
+      if (key !== 'cases' && getActiveCaseId()) {
         setActiveCase(null);
         try { await refreshUserData(); } catch (e) {}
         _forcedSelf = true;  // 已換人 → 即使「已在該分頁」也要強制重掛，才會換成本人資料
       }
       tabs.forEach(function(b){b.classList.toggle('active',b===btn)});
       // 個案管理不再是「困住的蓋版」：底部 tab 一直露出，切到別的分頁時收起任何開著的個案 overlay
+      // 收起前先暫存目前畫面（主頁/清單/專屬頁+tab），回到個案管理時還原
       if (key !== 'cases') {
+        try { stashCasesView(); } catch (e) {}
         ['m-case-mgmt','m-case-list','m-case-page','m-case-detail','m-case-form'].forEach(function(id){ var o=document.getElementById(id); if(o) o.classList.remove('is-open'); });
       }
       // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面

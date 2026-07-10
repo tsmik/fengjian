@@ -460,9 +460,9 @@ const CP_TABS = [
   { key: 'manual', label: '手動輸入報告' },
   { key: 'system', label: '系統計算報告' }
 ];
-function _openCasePage(caseId) {
+function _openCasePage(caseId, restoreTab) {
   _cpCaseId = caseId || null;
-  _cpTab = 'basic';
+  _cpTab = (caseId && restoreTab) ? restoreTab : 'basic';   // restoreTab：切回個案管理時還原離開前的 tab
   _cpManualMounted = false; _cpSystemMounted = false;   // 外部強制關頁(切底部tab)後旗標歸零
   const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
   _renderCpTabs();
@@ -587,12 +587,30 @@ async function _cpRenderNewForm(body) {
     await _renderCpBasic();        // 轉成編輯框呈現
   });
 }
+// ---- 個案管理頁面記憶：切去其他底部分頁時暫存目前畫面(主頁/清單/專屬頁+tab)，回來時還原 ----
+let _casesStash = null;   // {view:'hub'|'list'|'cp', caseId, cpTab}
+export function stashCasesView() {
+  const isOpen = (id) => { const o = document.getElementById(id); return !!(o && o.classList.contains('is-open')); };
+  if (isOpen('m-case-page') && _cpCaseId) _casesStash = { view: 'cp', caseId: _cpCaseId, cpTab: _cpTab };
+  else if (isOpen('m-case-page')) _casesStash = { view: 'hub' };   // 新增模式未建立 → 回主頁（表單內容不保留）
+  else if (isOpen('m-case-list')) _casesStash = { view: 'list' };
+  else _casesStash = { view: 'hub' };
+  // 手動/系統掛載旗標歸零（未存草稿已由 m_main 分頁切換警示處理）
+  _cpManualMounted = false; _cpSystemMounted = false;
+  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
+}
 // 由「個案管理」tab 進入：開啟案例管理 overlay（底下是已 mount 的「我的」儀表板）；
 // 返回時關 overlay 並把 tab 高亮切回「我的」（report）。
 export function openCaseMgmtView() {
   // 桌機：改用右側三欄 Finder（左側欄不消失）；手機：維持原本全螢幕 overlay
   if (isDesktopSidebar()) { mountFinderDesktop(); return; }
   _openCaseMgmt();
+  // 還原離開前的畫面（清單頁 or 個案專屬頁含所在 tab）
+  if (_casesStash) {
+    const s = _casesStash; _casesStash = null;
+    if (s.view === 'list') _openCaseList();
+    else if (s.view === 'cp' && s.caseId) _openCasePage(s.caseId, s.cpTab);
+  }
 }
 // 共用：讀分組設定(users doc 的 groupOrder/groupDescs)＋個案清單 — 桌機 Finder / 手機 overlay 同一資料源
 // (排序邏輯兩邊刻意不同：手機空分組照儲存順序、桌機空分組排最後，故各自保留)
