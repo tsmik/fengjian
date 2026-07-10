@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft, setInputView, getInputView } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, getLiunianInfoFor, calcXuSui, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -465,7 +465,7 @@ function _openCasePage(caseId, restoreTab) {
   _cpCaseId = caseId || null;
   _cpTab = (caseId && restoreTab) ? restoreTab : 'basic';   // restoreTab：切回個案管理時還原離開前的 tab
   _cpManualMounted = false; _cpSystemMounted = false;   // 外部強制關頁(切底部tab)後旗標歸零
-  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
+  const cb = document.getElementById('m-cp-body'); if (cb) { cb.classList.remove('m-cp-manual'); cb.classList.remove('m-cp-system'); }
   _renderCpTabs();
   _renderCpBody();
   const ov = document.getElementById('m-case-page');
@@ -501,12 +501,30 @@ function _renderCpBody() {
 }
 // ---- 系統計算報告 tab：掛 m_input（自帶 依部位填寫/依維度填寫/兵法報告 segmented；無回到個案鈕）----
 let _cpSystemMounted = false;
+const CP_SYS_SUBS = [
+  { key: 'part', label: '依部位填寫' },
+  { key: 'dim', label: '依維度填寫' },
+  { key: 'report', label: '兵法報告' }
+];
 function _renderCpSystem() {
   const body = document.getElementById('m-cp-body');
   if (!body || !_cpCaseId) return;
   setActiveCase(_cpCaseId);
   _cpSeedUserData();
-  mountInput(body);
+  // cp 自己的固定子 tab 列（sticky 釘在 3 tab 下方，不隨 m_input 內部重繪消失）；m_input 自帶的 segmented 由 CSS(m-cp-system)隱藏
+  body.classList.add('m-cp-system');
+  body.innerHTML = '<div class="m-cp-systabs" id="m-cp-systabs">'
+    + CP_SYS_SUBS.map((s) => '<button type="button" class="m-cp-systab" data-cpsys="' + s.key + '">' + s.label + '</button>').join('')
+    + '</div><div id="m-cp-sysbody"></div>';
+  const paintActive = () => {
+    let cur = 'part'; try { cur = getInputView() || 'part'; } catch (e) {}
+    body.querySelectorAll('[data-cpsys]').forEach((b) => b.classList.toggle('active', b.dataset.cpsys === cur));
+  };
+  body.querySelectorAll('[data-cpsys]').forEach((b) => {
+    b.onclick = () => { try { setInputView(b.dataset.cpsys); } catch (e) {} paintActive(); };
+  });
+  mountInput(document.getElementById('m-cp-sysbody'));
+  paintActive();
   _cpSystemMounted = true;
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
 }
@@ -520,6 +538,7 @@ function _cpUnmountSystem() {
   } catch (e) {}
   try { unmountInput(); } catch (e) {}
   _cpSystemMounted = false;
+  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-system');
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
   return true;
 }
@@ -621,7 +640,7 @@ export function stashCasesView() {
   try { localStorage.setItem('m_cases_stash', JSON.stringify(_casesStash)); } catch (e) {}   // 存 LS：手機瀏覽器回收頁面/重整後也能還原
   // 手動/系統掛載旗標歸零（未存草稿已由 m_main 分頁切換警示處理）
   _cpManualMounted = false; _cpSystemMounted = false;
-  const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
+  const cb = document.getElementById('m-cp-body'); if (cb) { cb.classList.remove('m-cp-manual'); cb.classList.remove('m-cp-system'); }
 }
 // 由「個案管理」tab 進入：開啟案例管理 overlay（底下是已 mount 的「我的」儀表板）；
 // 返回時關 overlay 並把 tab 高亮切回「我的」（report）。

@@ -251,8 +251,14 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-cp-tab:disabled{color:#c8c0b4;cursor:default}
 .m-cp-lockhint{padding:6px 14px;font-size:12px;color:#a89e92;background:#faf7f2;border-bottom:1px solid #eee6da}
 /* cp 手動輸入報告 tab：只服務手動 → 隱藏手動頁自己的 segmented(課程/自我評分/報告) 與頂端 hint
-   （系統計算 tab 不加 m-cp-manual，讓 m_input 的 依部位/依維度/兵法報告 segmented 正常顯示） */
-#m-cp-body.m-cp-manual .m-segmented-sub,#m-cp-body.m-cp-manual .m-page-hint{display:none}
+   cp 系統計算 tab：改用 cp 自己的固定子 tab 列(.m-cp-systabs)，m_input 自帶的 segmented 一併隱藏 */
+#m-cp-body.m-cp-manual .m-segmented-sub,#m-cp-body.m-cp-manual .m-page-hint,
+#m-cp-body.m-cp-system .m-segmented-sub{display:none}
+/* cp 系統計算固定子 tab 列：sticky 釘在 3 tab 正下方（m-cp-tabs 在捲動容器外，故 body 內 top:0 即緊貼其下） */
+.m-cp-systabs{display:flex;gap:0;position:sticky;top:0;z-index:21;background:#ede8e0;border-bottom:1px solid #cdbfa8}
+.m-cp-systab{flex:1;padding:9px 4px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer}
+.m-cp-systab:not(:last-child){border-right:1px solid #d0c8be}
+.m-cp-systab.active{background:#6a464b;color:#f0e9ea}
 /* 案例管理空狀態兩大按鈕 */
 .m-mgmt-bigbtn{width:100%;padding:22px 16px;border-radius:14px;font-size:17px;font-weight:600;font-family:inherit;letter-spacing:1px;cursor:pointer;border:1px solid #e0d8cc}
 .m-mgmt-bigbtn.is-primary{background:#3a3228;color:#fff;border-color:#3a3228}

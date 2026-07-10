@@ -22,7 +22,7 @@ import { mountReport, unmountReport, discardReportDraft, openCaseMgmtView, stash
 import { mountManual, unmountManual, getManualDirty, discardManualDraft, setManualView, getManualView } from "./m_manual.js";
 // 轉出口給 m_report.js（個案專屬頁「手動輸入報告/系統計算報告」tab 掛頁用；沿用既有 m_main↔m_report 依賴邊）
 export { mountManual, unmountManual, getManualDirty, discardManualDraft };
-export { mountInput, unmountInput, getSaveStatus, discardDraft };
+export { mountInput, unmountInput, getSaveStatus, discardDraft, setInputView, getInputView };
 
 // 桌機側欄各區「獨立展開」狀態:上課、部位觀察兩區可同時展開、互不收合;點區標題 toggle。
 let _subExpanded = { manual: false, input: false };
