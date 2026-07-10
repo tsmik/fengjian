@@ -538,7 +538,9 @@ function showApp(displayName){
   initHome(displayName);
   // 恢復上次 tab（重整後留在原頁，而非預設首頁）
   try {
-    const lastTab = localStorage.getItem('m_active_tab');
+    let lastTab = localStorage.getItem('m_active_tab');
+    // 手機已無「我的」(report) tab（四tab 方案一）→ 舊值導向新「我的」（cases）；桌機 report tab 仍在，不改
+    if (lastTab === 'report' && !isDesktopSidebar()) lastTab = 'cases';
     if (lastTab && lastTab !== 'home') {
       // 部位觀察子頁還原:只在「重整還原」時把上次子頁塞進一次性信號,
       // 正常手動點 tab 不受影響(mountInput 仍預設回部位視角)。

@@ -1149,6 +1149,10 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   font-size:18px;
 }
 .m-tab.active .m-tab-icon{transform:scale(1.05)}
+/* 手機四tab（Mike 方案一）：舊「我的」(report)隱藏—本人資料併入個案管理＝新「我的」；桌機於 min-width:1024px 還原五項 */
+.m-tab[data-tab="report"]{display:none}
+.m-tab-lbl-d{display:none}
+.m-tab-icon.m-tab-ico-d{display:none}
 .m-tabsub{display:none}  /* 桌機側欄「上課」展開子膠囊；手機用上方 segmented */
 .m-ws{display:none}      /* 個案工作區：桌機側欄限定；手機永遠隱藏（個案分析走細節頁報告流程）*/
 
@@ -1373,6 +1377,12 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
     font-size:14px;
   }
   .m-tab-icon{margin-bottom:0}
+  /* 桌機側欄維持五項：還原「我的」(report) tab；個案管理顯示原名＋多人icon */
+  .m-tab[data-tab="report"]{display:flex}
+  .m-tab-lbl-d{display:inline}
+  .m-tab-lbl-m{display:none}
+  .m-tab-icon.m-tab-ico-d{display:flex}
+  .m-tab-icon.m-tab-ico-m{display:none}
   /* 「上課」展開的子膠囊 */
   .m-tabsub{display:flex;flex-direction:column;gap:6px;padding:2px 12px 8px 34px}
   .m-tabsub-item{font-family:inherit;font-size:14px;color:#6a5f50;padding:7px 10px;border:1px solid #e0d8ca;border-radius:16px;background:#fff;cursor:pointer;text-align:center;white-space:nowrap}
@@ -2116,11 +2126,15 @@ body.m-debug-on .m-debug-clear{display:block}
     </span>
     <span>我的</span>
   </button>
+  <!-- 手機四tab：此鈕顯示「我的」(單人icon)；桌機側欄維持「個案管理」(多人icon)（CSS 依斷點切換）-->
   <button class="m-tab" data-tab="cases">
-    <span class="m-tab-icon">
+    <span class="m-tab-icon m-tab-ico-m">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </span>
+    <span class="m-tab-icon m-tab-ico-d">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </span>
-    <span>個案管理</span>
+    <span class="m-tab-lbl-m">我的</span><span class="m-tab-lbl-d">個案管理</span>
   </button>
   <div class="m-ws" id="m-ws" style="display:none"></div>
 </nav>
