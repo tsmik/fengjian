@@ -243,10 +243,11 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-hub-ico{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
 .m-hub-ico svg{width:26px;height:26px}
 .m-hub-label{font-size:16.5px;font-weight:600;letter-spacing:1px}
-/* 個案專屬頁 3 tab */
-.m-cp-tabs{display:flex;border-bottom:1px solid #ddd4c8;background:#faf7f2;position:sticky;top:0;z-index:5}
-.m-cp-tab{flex:1;padding:11px 2px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer;border-bottom:2px solid transparent}
-.m-cp-tab.active{color:#3f3a33;border-bottom-color:#c47a3d;font-weight:600}
+/* 個案專屬頁 3 tab — 比照上課 segmented（課程/自我評分/兵法報告）配色 */
+.m-cp-tabs{display:flex;gap:0;border-bottom:1px solid #cdbfa8;background:#ede8e0;position:sticky;top:0;z-index:5}
+.m-cp-tab{flex:1;padding:10px 2px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer}
+.m-cp-tab:not(:last-child){border-right:1px solid #d0c8be}
+.m-cp-tab.active{background:#6a464b;color:#f0e9ea;font-weight:400}
 .m-cp-tab:disabled{color:#c8c0b4;cursor:default}
 .m-cp-lockhint{padding:6px 14px;font-size:12px;color:#a89e92;background:#faf7f2;border-bottom:1px solid #eee6da}
 /* cp 手動輸入報告 tab：只服務手動 → 隱藏手動頁自己的 segmented(課程/自我評分/報告) 與頂端 hint
@@ -559,7 +560,7 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
 .m-rep-ln-l::after{content:'｜';color:#b3a994}
 .m-rep-ln-v{font-size:14px;color:#3a3228;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 手機提示：可點表格改動靜（桌機改用 hover 描邊，@media 隱藏此行）*/
-.m-rep-edit-hint{font-size:12px;color:#a8917a;letter-spacing:.5px;padding:0 4px 6px 16px}
+.m-rep-edit-hint{font-size:14px;color:#a8917a;letter-spacing:.5px;padding:2px 4px 8px 16px}  /* Mike 2026-07-10 放大(原12px);桌機本就隱藏 */
 .m-rep-overview,.m-rep-figs{display:grid;grid-template-columns:1fr;gap:16px;padding:4px}
 .m-rep-chart-coef,.m-rep-chart-sd2{width:100%}
 .m-rep-chart svg{width:100%;height:auto;display:block}

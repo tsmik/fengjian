@@ -25,7 +25,7 @@ import { persistProfile, updateHomeProgress } from './m_home.js';
 import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
-import { drawReportCanvas, _getLiunianInfo, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
+import { drawReportCanvas, getLiunianInfoFor, calcXuSui, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
 import { renderAutoSens } from './m_sens.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -167,12 +167,12 @@ function _manualProgress(manualJson) {
 }
 
 // 流年參考（縮成兩行：七十五/九執/業務 ; 親族/子女/耳鼻/五官/三停）
-async function _liunianCompactHtml(gender, birthday) {
+async function _liunianCompactHtml(gender, birthday, refDate) {
   try { await _ensureLiunianLoaded(); } catch (e) {}
   let g = gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   if (g) setUserGender(g);
   if (birthday) setUserBirthday(birthday);
-  const info = _getLiunianInfo();
+  const info = getLiunianInfoFor(g, birthday, refDate || null);   // 個案→建立日期當基準日；本人→今天
   if (!info) return '<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">填出生年月日＋性別後顯示</div></div>';
   const ln = info.ln;
   const cell = (l, v) => '<div class="m-liunian-cell"><span class="m-liunian-cell-label">' + l + '</span><span class="m-liunian-cell-value">' + (v || '—') + '</span></div>';
@@ -269,6 +269,7 @@ function _paintDashboard() {
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">生日</span><span>' + _esc(p.birthday || '未填寫') + '</span></div>'
       + (p.isCase ? '<div class="m-detail-info-row"><span class="m-detail-info-label">組別</span><span>' + _esc(p.group || '未分組') + '</span></div>' : '')
       + (p.isCase ? '<div class="m-detail-info-row"><span class="m-detail-info-label">備註</span><span>' + _esc(p.note || '—') + '</span></div>' : '')
+      + (p.isCase ? '<div class="m-detail-info-row"><span class="m-detail-info-label">建立日期</span><span>' + _esc(p.createDate || '—') + '</span></div>' : '')
       + '</div>';
   }
   // 流年（縮兩行）
@@ -303,7 +304,7 @@ function _paintDashboard() {
   t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
 
   // 流年 async（render 後可能已換人 → 比對 p）
-  _liunianCompactHtml(p.gender, p.birthday).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
+  _liunianCompactHtml(p.gender, p.birthday, p.isCase ? (p.createDate || null) : null).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
   // wire
   const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
   const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
@@ -564,7 +565,7 @@ async function _renderCpBasic() {
   const ud = window.__userData || {};
   _dashIsCase = true;
   _dashEdit = false;
-  _dashPerson = { isCase: true, id: _cpCaseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: ud.color || _autoColor(_cpCaseId), group: ud.group || '', note: ud.note || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
+  _dashPerson = { isCase: true, id: _cpCaseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: ud.color || _autoColor(_cpCaseId), group: ud.group || '', note: ud.note || '', createDate: ud.createDate || (String(ud.createdAt || '').slice(0, 10)) || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
   _dashTarget = body;
   _dashCpMode = true;
   _paintDashboard();
@@ -704,6 +705,7 @@ function _newCaseFormHtml() {
     + '<div class="m-home-profile-row"><label>生日</label><input type="date" id="m-nc-birthday"></div>'
     + '<div class="m-home-profile-row"><label>組別</label><input type="text" id="m-nc-group" list="m-nc-grouplist" placeholder="可不填"><datalist id="m-nc-grouplist">' + groupOpts + '</datalist></div>'
     + '<div class="m-home-profile-row"><label>備註</label><input type="text" id="m-nc-note" placeholder="可不填"></div>'
+    + '<div class="m-home-profile-row"><label>建立日期</label><input type="date" id="m-nc-createdate" value="' + new Date().toISOString().slice(0, 10) + '"></div>'
     + '<div class="m-home-card-title" style="margin-top:8px">卡片顏色</div><div class="m-color-grid" id="m-nc-colors">'
     + CARD_COLORS.map((hex) => '<span class="m-color-dot' + (hex === _ncColor ? ' is-sel' : '') + '" data-color="' + hex + '" style="background:' + hex + '"></span>').join('')
     + '</div>'
@@ -728,9 +730,11 @@ async function _submitNewCase(createBtn, body, onCreated) {
   const birthday = body.querySelector('#m-nc-birthday').value || '';
   const group = (body.querySelector('#m-nc-group').value || '').trim();
   const note = (body.querySelector('#m-nc-note').value || '').trim();
+  const cdEl = body.querySelector('#m-nc-createdate');
+  const createDate = (cdEl && cdEl.value) || '';   // 建立日期：預設今天、可改；之後編輯其他欄位不影響
   createBtn.disabled = true; const old = createBtn.textContent; createBtn.textContent = '建立中…';
   try {
-    const newId = await createCase({ name: name, gender: gender, birthday: birthday, group: group, note: note, color: _ncColor });
+    const newId = await createCase({ name: name, gender: gender, birthday: birthday, group: group, note: note, color: _ncColor, createDate: createDate });
     if (onCreated) await onCreated(newId);
   } catch (e) {
     debugLog('[Case]', '新增個案失敗', e && e.message ? e.message : e);
@@ -750,7 +754,7 @@ async function _openCaseDetail(idOrEmpty) {
   _dashIsCase = !!caseId;
   _dashEdit = false;
   _dashCpMode = false;
-  _dashPerson = { isCase: !!caseId, id: caseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR), group: ud.group || '', note: ud.note || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
+  _dashPerson = { isCase: !!caseId, id: caseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: caseId ? (ud.color || _autoColor(caseId)) : (ud.cardColor || CARD_DEFAULT_COLOR), group: ud.group || '', note: ud.note || '', createDate: ud.createDate || (String(ud.createdAt || '').slice(0, 10)) || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
   _dashTarget = document.getElementById('m-case-detail-body');
   const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = _dashPerson.name || '個案';
   _paintDashboard();
@@ -894,12 +898,10 @@ const FINDER_COLORS = ['#C9B98E', '#8FB081', '#79A597', '#ADA59B', '#C2A07F', '#
 
 const _C_TOT = [0,1,2,3,4,5,6,7,8,9,10,11,12], _C_PRE = [0,1,2,3,4,5], _C_POST = [9,10,11,12], _C_LUCK = [6,7,8];
 function _finderColor(c) { return c.color || _autoColor(c.id); }
-// 虛歲 = 今年 - 出生年 + 1
-function _xusuiOf(birthday) {
-  const by = parseInt((birthday || '').slice(0, 4), 10);
-  if (!by || isNaN(by)) return '';
-  const x = new Date().getFullYear() - by + 1;
-  return (x > 0 && x < 150) ? x : '';
+// 虛歲：依基準日(個案=建立日期,未過生日減一)+1 — 同 report.calcXuSui
+function _xusuiOf(birthday, refDate) {
+  const x = calcXuSui(birthday, refDate || null);
+  return (x && x > 0 && x < 150) ? x : '';
 }
 // 第二欄卡片底色：比 _cardTint(0.40) 更淡（要再調濃淡改這個 f；0=純白、1=純色）
 function _cardTintLight(hex) {
@@ -974,7 +976,7 @@ function _renderFinderCol2() {
   el.innerHTML = '<div class="m-finder-grid">' + list.map((c) => {
     const gd = c.gender === 'M' ? '男' : (c.gender === 'F' ? '女' : (c.gender || ''));
     const by = (c.birthday || '').slice(0, 4);
-    const xs = _xusuiOf(c.birthday);
+    const xs = _xusuiOf(c.birthday, _finderCreateDateStr(c) || null);
     const line2 = [gd, xs ? ('虛歲' + xs + '歲') : '', by ? (by + '年出生') : ''].filter(Boolean).join(', ');
     const cd = _finderCreateDateStr(c);
     const cym = cd ? cd.slice(0, 7).replace('-', '/') : '';
@@ -1353,7 +1355,7 @@ export async function renderLiunianBlock() {
   else if (_gender === 'F') _gender = '女';
   if (_gender) setUserGender(_gender);
   if (ud.birthday) setUserBirthday(ud.birthday);
-  const info = _getLiunianInfo();
+  const info = getLiunianInfoFor(_gender, ud.birthday, ud.createDate || null);   // 個案→建立日期當基準日
   if (!info) {
     return `<div class="m-liunian-section"><div class="m-liunian-title">流年參考</div><div class="m-liunian-empty">需在首頁填出生年月日 + 性別才能顯示</div></div>`;
   }

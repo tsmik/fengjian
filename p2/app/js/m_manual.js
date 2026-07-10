@@ -315,7 +315,7 @@ function _renderManualInput() {
     let _lnBlock = '';
     if (_ud.gender && _ud.birthday) {
       if (isLiunianReady()) {
-        const _ln = getLiunianInfoFor(_ud.gender, _ud.birthday);
+        const _ln = getLiunianInfoFor(_ud.gender, _ud.birthday, _ud.createDate || null);   // 個案→建立日期當基準日；本人→今天
         if (_ln) {
           _meta.liunianTitleHtml = buildLiunianTitleHtml(_ln);
           _lnBlock = _buildLiunianRow(_ln.ln);
@@ -1244,9 +1244,14 @@ function _bindEvents() {
     cell.addEventListener('click', (e) => {
       e.stopPropagation();
       const seg = cell.dataset.mrcell.split('_');
-      const di = parseInt(seg[0], 10), pi = parseInt(seg[1], 10);
+      const di = parseInt(seg[0], 10), pi = parseInt(seg[1], 10), side = seg[2] || 'L';
+      // 單格勾選（Mike 2026-07-10）：點左格＝選左字(勾選)、再點＝取消；點右格同理（取代舊的 A→B→取消 三段循環）
+      const d = DIMS[di];
+      const leftIsStatic = ((d.da === d.a) ? d.aT : d.bT) === '靜';         // 左欄字是否為靜側
+      const staticVal = d.aT === '靜' ? 'A' : 'B';                          // 靜側對應的存值
+      const target = ((side === 'L') === leftIsStatic) ? staticVal : (staticVal === 'A' ? 'B' : 'A');
       const cur = _manualDraft[di][pi];
-      _manualDraft[di][pi] = (cur == null) ? 'A' : (cur === 'A' ? 'B' : null);
+      _manualDraft[di][pi] = (cur === target) ? null : target;
       _markDirty();
       _render();
     });

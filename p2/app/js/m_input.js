@@ -416,7 +416,7 @@ function renderObsReport() {
   let lnBlock = '';
   if (ud.gender && ud.birthday) {
     if (isLiunianReady()) {
-      const lnInfo = getLiunianInfoFor(ud.gender, ud.birthday);
+      const lnInfo = getLiunianInfoFor(ud.gender, ud.birthday, ud.createDate || null);   // 個案→建立日期當基準日；本人→今天
       if (lnInfo) { meta.liunianTitleHtml = buildLiunianTitleHtml(lnInfo); lnBlock = _buildObsLiunianRow(lnInfo.ln); }
     } else if (!_liunianKicked) {
       _liunianKicked = true;   // 只觸發一次：載到就重繪顯示；P2 無流年資料(載不到)也不再重繪→不會死迴圈
