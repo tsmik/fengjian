@@ -441,8 +441,8 @@ function _renderHub() {
   const lb = body.querySelector('#m-hub-list'); if (lb) lb.onclick = _openCaseList;
 }
 // ---- 個案清單頁（原案例管理清單：分組/排序/管理分組）----
-function _openCaseList() {
-  _renderMgmt();
+function _openCaseList(useCache) {
+  _renderMgmt(!!useCache);   // 還原時吃快取即開；主動點入才重抓
   const ov = document.getElementById('m-case-list');
   if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
   const back = document.getElementById('m-case-list-back'); if (back) back.onclick = _closeCaseList;
@@ -505,6 +505,7 @@ function _renderCpSystem() {
   const body = document.getElementById('m-cp-body');
   if (!body || !_cpCaseId) return;
   setActiveCase(_cpCaseId);
+  _cpSeedUserData();
   mountInput(body);
   _cpSystemMounted = true;
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
@@ -530,10 +531,18 @@ function _cpLeaveCurrentTab() {
 }
 // ---- 手動輸入報告 tab：把上課的手動兵法報告(overview)掛進 cp 頁（只服務手動；segmented 由 CSS 隱藏）----
 let _cpManualMounted = false;
+// ⚠️掛手動/系統前先把 __userData 換成「這個個案」的資料（快取版即可，mount 後模組會自己 refresh 校正）。
+// 不做的話：從其他分頁回來時 __userData 還是本人（完全分割歸零過）→ 初始 baseline 錯，快速編輯可能把本人資料存進個案。
+function _cpSeedUserData() {
+  const cached = _cpCachedCase();
+  if (cached) window.__userData = Object.assign({}, cached, { displayName: cached.displayName || cached.name || '' });
+  else window.__userData = {};   // 沒快取寧可空白，等模組自己 refresh，也不能讓本人資料混進個案
+}
 function _renderCpManual() {
   const body = document.getElementById('m-cp-body');
   if (!body || !_cpCaseId) return;
   setActiveCase(_cpCaseId);
+  _cpSeedUserData();
   try { localStorage.setItem('m_manual_view_once', 'overview'); } catch (e) {}
   body.classList.add('m-cp-manual');   // CSS 據此隱藏手動頁自己的 segmented/hint
   mountManual(body);
@@ -554,21 +563,34 @@ function _cpUnmountManual() {
   const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.add('is-hidden');
   return true;
 }
+// 清單快取裡撈個案完整資料（listCases 抓的是整份 doc，欄位齊全）
+function _cpCachedCase() {
+  return (_mgmtCache && Array.isArray(_mgmtCache.cases) && _mgmtCache.cases.find((c) => c.id === _cpCaseId)) || null;
+}
+function _cpPaintBasic(body, src) {
+  _dashIsCase = true;
+  _dashEdit = false;
+  _dashPerson = { isCase: true, id: _cpCaseId, name: src.displayName || src.name || '', gender: src.gender || '', birthday: src.birthday || '', color: src.color || _autoColor(_cpCaseId), group: src.group || '', note: src.note || '', createDate: src.createDate || (String(src.createdAt || '').slice(0, 10)) || '', obsJson: src.obsJson || '', dataJson: src.dataJson || '', manualJson: src.manualDataJson || '' };
+  _dashTarget = body;
+  _dashCpMode = true;
+  _paintDashboard();
+}
 async function _renderCpBasic() {
   const body = document.getElementById('m-cp-body');
   if (!body) return;
   if (!_cpCaseId) { await _cpRenderNewForm(body); return; }
   setActiveCase(_cpCaseId);
-  await refreshUserData();
+  // 快取先畫（立即可見，解「基本資料很晚出現」）→ 背景 refresh 拿最新再畫一次（跨裝置同步）
+  const cached = _cpCachedCase();
+  if (cached) _cpPaintBasic(body, cached);
+  else body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:16px 8px">載入中…</div>';
+  const caseAtCall = _cpCaseId;
+  const ok = await refreshUserData();
+  if (_cpCaseId !== caseAtCall || _cpTab !== 'basic') return;   // 期間已切走 → 不覆蓋
   try { updateHomeProgress(); } catch (e) {}
   try { updateAnalysisBanner(); } catch (e) {}
-  const ud = window.__userData || {};
-  _dashIsCase = true;
-  _dashEdit = false;
-  _dashPerson = { isCase: true, id: _cpCaseId, name: ud.displayName || '', gender: ud.gender || '', birthday: ud.birthday || '', color: ud.color || _autoColor(_cpCaseId), group: ud.group || '', note: ud.note || '', createDate: ud.createDate || (String(ud.createdAt || '').slice(0, 10)) || '', obsJson: ud.obsJson || '', dataJson: ud.dataJson || '', manualJson: ud.manualDataJson || '' };
-  _dashTarget = body;
-  _dashCpMode = true;
-  _paintDashboard();
+  if (ok) _cpPaintBasic(body, window.__userData || {});
+  else if (!cached) _closeCasePage();   // 讀不到又沒快取（個案可能已刪）→ 關頁回主頁
 }
 // 新增模式：基本資料 tab = 新增表單（沿用 m-nc-* 欄位；建立成功→解鎖另兩個 tab）
 async function _cpRenderNewForm(body) {
@@ -596,6 +618,7 @@ export function stashCasesView() {
   else if (isOpen('m-case-page')) _casesStash = { view: 'hub' };   // 新增模式未建立 → 回主頁（表單內容不保留）
   else if (isOpen('m-case-list')) _casesStash = { view: 'list' };
   else _casesStash = { view: 'hub' };
+  try { localStorage.setItem('m_cases_stash', JSON.stringify(_casesStash)); } catch (e) {}   // 存 LS：手機瀏覽器回收頁面/重整後也能還原
   // 手動/系統掛載旗標歸零（未存草稿已由 m_main 分頁切換警示處理）
   _cpManualMounted = false; _cpSystemMounted = false;
   const cb = document.getElementById('m-cp-body'); if (cb) cb.classList.remove('m-cp-manual');
@@ -606,10 +629,11 @@ export function openCaseMgmtView() {
   // 桌機：改用右側三欄 Finder（左側欄不消失）；手機：維持原本全螢幕 overlay
   if (isDesktopSidebar()) { mountFinderDesktop(); return; }
   _openCaseMgmt();
-  // 還原離開前的畫面（清單頁 or 個案專屬頁含所在 tab）
-  if (_casesStash) {
-    const s = _casesStash; _casesStash = null;
-    if (s.view === 'list') _openCaseList();
+  // 還原離開前的畫面（清單頁 or 個案專屬頁含所在 tab）；記憶體沒有時退回 LS（重整/頁面被回收後仍可還原）
+  let s = _casesStash; _casesStash = null;
+  if (!s) { try { s = JSON.parse(localStorage.getItem('m_cases_stash') || 'null'); } catch (e) { s = null; } }
+  if (s) {
+    if (s.view === 'list') _openCaseList(true);
     else if (s.view === 'cp' && s.caseId) _openCasePage(s.caseId, s.cpTab);
   }
 }
