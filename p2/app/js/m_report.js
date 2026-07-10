@@ -129,7 +129,7 @@ function _tsStr(v) {
 }
 let _knownGroups = [];      // 現有組別名（給表單 datalist）
 let _existingCaseCount = 0;
-let _caseSort = (function () { try { return localStorage.getItem('m_case_sort') || 'group'; } catch (e) { return 'group'; } })();
+let _caseSort = (function () { try { const v = localStorage.getItem('m_case_sort'); return v === 'group' ? 'group' : 'created'; } catch (e) { return 'created'; } })();   // 方案一：只剩 依建立時間(預設,新→舊)/依分組；舊值 updated→created
 let _mgmtCollapsed = new Set();   // 個案管理分組收合狀態(記憶體;進入預設空=全展開)
 let _ncColor = '';          // 新增個案進入時派的顏色
 // 儀表板共用狀態（本人 = 我的分頁 inline；個案 = 全螢幕細節）
@@ -353,7 +353,7 @@ async function _saveDashboardEdit() {
     _dashEdit = false;
     _paintDashboard();
     _mgmtCache = null;   // 名字/分組/顏色可能變了 → 清單快取失效
-    const lv = document.getElementById('m-case-list'); if (lv && lv.classList.contains('is-open')) _renderMgmt();
+    if (!isDesktopSidebar()) _renderCasesHome(true);   // 合併主頁（底下清單/我的資料卡）同步更新
   } catch (e) {
     debugLog('[Case]', '儀表板儲存失敗', e && e.message ? e.message : e);
     setS('儲存失敗', 'is-error');
@@ -419,39 +419,146 @@ function _startAnalyze() {
   }
 }
 
-// ---- 個案管理主頁（兩大按鈕）----
+// ---- 個案管理合併主頁（我的資料卡＋新增個案＋同頁個案清單）— Mike 2026-07-10 方案一 ----
 const _HUB_ICO_PERSON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-5.5 8-5.5s8 2.2 8 5.5"/></svg>';
-const _HUB_ICO_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M18 16H7a2 2 0 0 0-2 2"/><path d="M9 4v16"/></svg>';
 function _openCaseMgmt() {
-  _renderHub();
+  _renderCasesHome(true);
   const ov = document.getElementById('m-case-mgmt');
   if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
 }
 function _closeCaseMgmt() {
   const ov = document.getElementById('m-case-mgmt'); if (ov) ov.classList.remove('is-open');
 }
-function _renderHub() {
+// 快取先畫（立即可見）＋refresh=true 時背景重抓再畫一次（跨裝置同步）；排序/收合只重畫不重抓
+async function _renderCasesHome(refresh) {
   const body = document.getElementById('m-hub-body');
   if (!body) return;
-  body.innerHTML = '<div class="m-hub">'
-    + '<button type="button" class="m-hub-btn is-primary" id="m-hub-new"><span class="m-hub-ico">' + _HUB_ICO_PERSON + '</span><span class="m-hub-label">＋新增個案/兵法報告</span></button>'
-    + '<button type="button" class="m-hub-btn is-secondary" id="m-hub-list"><span class="m-hub-ico">' + _HUB_ICO_BOOK + '</span><span class="m-hub-label">管理/檢視個案</span></button>'
-    + '</div>';
-  const nb = body.querySelector('#m-hub-new'); if (nb) nb.onclick = () => _openCasePage(null);
-  const lb = body.querySelector('#m-hub-list'); if (lb) lb.onclick = _openCaseList;
+  if (_mgmtCache) _paintCasesHome(body);
+  else { body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>'; refresh = true; }
+  if (!refresh) return;
+  const d = await _loadCaseMgmtData();
+  _mgmtCache = d;
+  _paintCasesHome(body);
 }
-// ---- 個案清單頁（原案例管理清單：分組/排序/管理分組）----
-function _openCaseList(useCache) {
-  _renderMgmt(!!useCache);   // 還原時吃快取即開；主動點入才重抓
-  const ov = document.getElementById('m-case-list');
-  if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
-  const back = document.getElementById('m-case-list-back'); if (back) back.onclick = _closeCaseList;
+let _chMenuCloserBound = false;   // 「選項」選單點外面收起（document 監聽只綁一次）
+function _paintCasesHome(body) {
+  const d = _mgmtCache;
+  if (!body || !d) return;
+  const { groupOrder, groupDescs, cases } = d;
+  const self = d.self || {};
+  _existingCaseCount = cases.length;
+  const orderedGroups = _mobileOrderedGroups(groupOrder, cases);
+  _knownGroups = orderedGroups.slice();
+  // 「管理分組」與「個案編輯選分組」沿用同一組狀態（桌機由 mountFinderDesktop 填；手機在此填）
+  _finderCases = cases; _finderGroups = orderedGroups.slice(); _finderGroupDescs = groupDescs;
+  const caseColor = (c) => c.color || _autoColor(c.id);
+  // 卡片每行兩張：姓名／分組／建立年月日
+  const cardHtml = (c) => {
+    const cd = _finderCreateDateStr(c);
+    return '<button type="button" class="m-ch-card" data-open="' + _esc(c.id) + '" style="background:' + _cardTint(caseColor(c)) + '">'
+      + '<span class="m-ch-card-name">' + _esc(c.name || '(未命名)') + '</span>'
+      + '<span class="m-ch-card-sub' + (c.group ? '' : ' is-dim') + '">' + (c.group ? _esc(c.group) : '未分組') + '</span>'
+      + '<span class="m-ch-card-sub">' + _esc(cd || '—') + '</span></button>';
+  };
+  // 1) 我的資料卡（本人）→ 點開只改基本資料
+  let h = '<button type="button" class="m-ch-self" id="m-ch-self" style="background:' + _cardTint(self.color || CARD_DEFAULT_COLOR) + '">'
+    + '<span class="m-ch-self-name">' + _esc(self.name || '本人') + '</span>'
+    + '<span class="m-case-item-tag">本人</span>'
+    + '<span class="m-ch-self-arrow">›</span></button>';
+  // 2) ＋新增個案
+  h += '<button type="button" class="m-hub-btn is-primary" id="m-ch-new"><span class="m-hub-ico">' + _HUB_ICO_PERSON + '</span><span class="m-hub-label">＋新增個案</span></button>';
+  // 3) 個案清單表頭（右側「選項」→ 依建立時間/依分組）
+  h += '<div class="m-ch-listhead"><span class="m-ch-listtitle">個案清單</span>'
+    + '<span class="m-ch-optwrap"><button type="button" class="m-ch-optbtn" id="m-ch-opt">選項 ▾</button>'
+    + '<div class="m-ch-optmenu" id="m-ch-optmenu">'
+    + '<button type="button" data-sort="created" class="' + (_caseSort === 'created' ? 'is-sel' : '') + '">依建立時間</button>'
+    + '<button type="button" data-sort="group" class="' + (_caseSort === 'group' ? 'is-sel' : '') + '">依分組</button>'
+    + '</div></span></div>';
+  // 4) 清單
+  if (_caseSort === 'group') {
+    const grouped = {};
+    cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
+    let firstBar = true;   // 第一個組名列右側放「管理分組」鈕
+    const grpBlock = (g, label, extraCls) => {
+      const items = grouped[g] || [];   // 空分組(尚無個案)也要顯示
+      const col = _mgmtCollapsed.has(g);
+      const mg = firstBar ? '<button type="button" class="m-ch-grpbtn" id="m-ch-groups">管理分組</button>' : '';
+      firstBar = false;
+      return '<div class="m-ch-grpbar' + (extraCls || '') + '" data-grp="' + _esc(g) + '">'
+        + '<span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>'
+        + '<span class="m-ch-grpname">' + _esc(label) + '</span>'
+        + '<span class="m-ch-grpcount">（' + items.length + '）</span>' + mg + '</div>'
+        + (col || !items.length ? '' : '<div class="m-ch-grid">' + items.map(cardHtml).join('') + '</div>');
+    };
+    orderedGroups.forEach((g) => { h += grpBlock(g, g, ''); });
+    // 有未分組個案 → 列未分組；完全沒有組名列時也給一列（保住「管理分組」入口）
+    if ((grouped[''] && grouped[''].length) || firstBar) h += grpBlock('', '未分組', ' ungrouped');
+  } else {
+    // 依建立時間（新→舊）：建立日期(可編輯欄)優先、同日再比建檔時間戳
+    const arr = cases.slice().sort((a, b) => {
+      const ka = _finderCreateDateStr(a), kb = _finderCreateDateStr(b);
+      if (ka !== kb) return kb.localeCompare(ka);
+      return _tsStr(b.createdAt).localeCompare(_tsStr(a.createdAt));
+    });
+    h += arr.length ? '<div class="m-ch-grid">' + arr.map(cardHtml).join('') + '</div>'
+      : '<div class="m-ch-empty">還沒有個案，點上方「＋新增個案」開始。</div>';
+  }
+  body.innerHTML = '<div class="m-ch">' + h + '</div>';
+  // wire
+  const selfBtn = body.querySelector('#m-ch-self'); if (selfBtn) selfBtn.onclick = _openSelfPage;
+  const newBtn = body.querySelector('#m-ch-new'); if (newBtn) newBtn.onclick = () => _openCasePage(null);
+  body.querySelectorAll('.m-ch-card').forEach((btn) => { btn.onclick = () => _openCasePage(btn.dataset.open || null); });
+  const optBtn = body.querySelector('#m-ch-opt'), optMenu = body.querySelector('#m-ch-optmenu');
+  if (optBtn && optMenu) {
+    optBtn.onclick = (e) => { e.stopPropagation(); optMenu.classList.toggle('is-open'); };
+    optMenu.querySelectorAll('[data-sort]').forEach((b) => {
+      b.onclick = () => { _caseSort = b.dataset.sort; try { localStorage.setItem('m_case_sort', _caseSort); } catch (e) {} _paintCasesHome(body); };
+    });
+    if (!_chMenuCloserBound) {
+      _chMenuCloserBound = true;
+      document.addEventListener('click', () => { const m = document.getElementById('m-ch-optmenu'); if (m) m.classList.remove('is-open'); });
+    }
+  }
+  body.querySelectorAll('.m-ch-grpbar[data-grp]').forEach((t) => {
+    t.onclick = () => { const g = t.dataset.grp || ''; if (_mgmtCollapsed.has(g)) _mgmtCollapsed.delete(g); else _mgmtCollapsed.add(g); _paintCasesHome(body); };
+  });
+  const grpBtn = body.querySelector('#m-ch-groups');
+  if (grpBtn) grpBtn.onclick = (e) => { e.stopPropagation(); _openManageGroups(); };
 }
-function _closeCaseList() {
-  const ov = document.getElementById('m-case-list'); if (ov) ov.classList.remove('is-open');
+// ---- 我的資料頁（本人基本資料＋流年；報告區塊不畫 — 報告走底部 上課/系統計算報告 tab）----
+function _openSelfPage() {
+  setActiveCase(null);
+  const body = document.getElementById('m-case-detail-body');
+  const titleEl = document.getElementById('m-case-detail-title'); if (titleEl) titleEl.textContent = '我的資料';
+  _paintSelfBasic(body, (_mgmtCache && _mgmtCache.self) || {});   // 快取先畫
+  const ov = document.getElementById('m-case-detail'); if (ov) requestAnimationFrame(() => ov.classList.add('is-open'));
+  const back = document.getElementById('m-case-detail-back'); if (back) back.onclick = _closeCaseDetail;
+  // 背景抓最新本人資料再畫一次（跨裝置同步）
+  (async () => {
+    try {
+      const s = await getDoc(doc(db, 'users', getEffectiveUid()));
+      if (!s.exists()) return;
+      const ovEl = document.getElementById('m-case-detail');
+      if (!ovEl || !ovEl.classList.contains('is-open')) return;   // 已離開 → 不覆蓋
+      const sd = s.data();
+      const fresh = { name: sd.displayName || '', gender: sd.gender || '', birthday: sd.birthday || '', color: sd.cardColor || CARD_DEFAULT_COLOR };
+      if (_mgmtCache) _mgmtCache.self = fresh;
+      if (_dashEdit) return;   // 使用者已在編輯 → 不重畫蓋掉輸入
+      _paintSelfBasic(body, fresh);
+    } catch (e) {}
+  })();
 }
-// 跳去工作區前把清單/專屬頁一併關掉
-function _closeCaseListPage() { _closeCaseList(); _closeCasePage(); }
+function _paintSelfBasic(body, self) {
+  if (!body) return;
+  _dashIsCase = false;
+  _dashEdit = false;
+  _dashCpMode = true;   // 只留基本資料＋流年；報告區塊不畫
+  _dashPerson = { isCase: false, id: null, name: self.name || '', gender: self.gender || '', birthday: self.birthday || '', color: self.color || CARD_DEFAULT_COLOR, group: '', note: '', obsJson: '', dataJson: '', manualJson: '' };
+  _dashTarget = body;
+  _paintDashboard();
+}
+// 跳去工作區前把個案專屬頁關掉（清單已併入主頁，無獨立清單頁可關）
+function _closeCaseListPage() { _closeCasePage(); }
 
 // ---- 個案專屬頁（3 tab：基本資料/手動輸入報告/系統計算報告）----
 // _cpCaseId=null → 新增模式：先填基本資料，建立成功前另兩個 tab 鎖住
@@ -631,109 +738,56 @@ async function _cpRenderNewForm(body) {
     _mgmtCache = null;             // 清單快取失效（多了一筆）
     _renderCpTabs();               // 解鎖另兩個 tab
     await _renderCpBasic();        // 轉成編輯框呈現
+    _renderCasesHome(true);        // 底下合併主頁清單同步多這一筆
   });
 }
-// ---- 個案管理頁面記憶：切去其他底部分頁時暫存目前畫面(主頁/清單/專屬頁+tab)，回來時還原 ----
-let _casesStash = null;   // {view:'hub'|'list'|'cp', caseId, cpTab}
+// ---- 個案管理頁面記憶：切去其他底部分頁時暫存目前畫面(主頁/我的資料頁/專屬頁+tab)，回來時還原 ----
+let _casesStash = null;   // {view:'hub'|'self'|'cp', caseId, cpTab}（舊值 'list' 已併入 hub）
 export function stashCasesView() {
   const isOpen = (id) => { const o = document.getElementById(id); return !!(o && o.classList.contains('is-open')); };
   if (isOpen('m-case-page') && _cpCaseId) _casesStash = { view: 'cp', caseId: _cpCaseId, cpTab: _cpTab };
-  else if (isOpen('m-case-page')) _casesStash = { view: 'hub' };   // 新增模式未建立 → 回主頁（表單內容不保留）
-  else if (isOpen('m-case-list')) _casesStash = { view: 'list' };
-  else _casesStash = { view: 'hub' };
+  else if (isOpen('m-case-detail')) _casesStash = { view: 'self' };   // 我的資料頁
+  else _casesStash = { view: 'hub' };   // 含新增模式未建立 → 回主頁（表單內容不保留）
   try { localStorage.setItem('m_cases_stash', JSON.stringify(_casesStash)); } catch (e) {}   // 存 LS：手機瀏覽器回收頁面/重整後也能還原
   // 手動/系統掛載旗標歸零（未存草稿已由 m_main 分頁切換警示處理）
   _cpManualMounted = false; _cpSystemMounted = false;
   const cb = document.getElementById('m-cp-body'); if (cb) { cb.classList.remove('m-cp-manual'); cb.classList.remove('m-cp-system'); }
   const sth = document.getElementById('m-cp-systabs-host'); if (sth) sth.innerHTML = '';
 }
-// 由「個案管理」tab 進入：開啟案例管理 overlay（底下是已 mount 的「我的」儀表板）；
-// 返回時關 overlay 並把 tab 高亮切回「我的」（report）。
+// 由「個案管理」tab 進入：手機開合併主頁 overlay；桌機用右側三欄 Finder（左側欄不消失）
 export function openCaseMgmtView() {
-  // 桌機：改用右側三欄 Finder（左側欄不消失）；手機：維持原本全螢幕 overlay
   if (isDesktopSidebar()) { mountFinderDesktop(); return; }
   _openCaseMgmt();
-  // 還原離開前的畫面（清單頁 or 個案專屬頁含所在 tab）；記憶體沒有時退回 LS（重整/頁面被回收後仍可還原）
+  // 還原離開前的畫面（我的資料頁 or 個案專屬頁含所在 tab）；記憶體沒有時退回 LS（重整/頁面被回收後仍可還原）
   let s = _casesStash; _casesStash = null;
   if (!s) { try { s = JSON.parse(localStorage.getItem('m_cases_stash') || 'null'); } catch (e) { s = null; } }
   if (s) {
-    if (s.view === 'list') _openCaseList(true);
-    else if (s.view === 'cp' && s.caseId) _openCasePage(s.caseId, s.cpTab);
+    if (s.view === 'cp' && s.caseId) _openCasePage(s.caseId, s.cpTab);
+    else if (s.view === 'self') _openSelfPage();
+    // 舊 'list' → 合併後主頁即清單，開主頁就好
   }
 }
-// 共用：讀分組設定(users doc 的 groupOrder/groupDescs)＋個案清單 — 桌機 Finder / 手機 overlay 同一資料源
+// 共用：讀分組設定(users doc 的 groupOrder/groupDescs)＋本人基本資料＋個案清單 — 桌機 Finder / 手機合併主頁同一資料源
 // (排序邏輯兩邊刻意不同：手機空分組照儲存順序、桌機空分組排最後，故各自保留)
+// ⚠️self 只放純字串（快取 bundle 不可含函式/Set/Map — 0423f9f 教訓）
 async function _loadCaseMgmtData() {
   const uid = getEffectiveUid();
   let groupOrder = [], groupDescs = {};
+  let self = { name: '', gender: '', birthday: '', color: CARD_DEFAULT_COLOR };
   try {
     const s = await getDoc(doc(db, 'users', uid));
     if (s.exists()) {
       const d = s.data();
       if (Array.isArray(d.groupOrder)) groupOrder = d.groupOrder;
       if (d.groupDescs && typeof d.groupDescs === 'object') groupDescs = d.groupDescs;
+      self = { name: d.displayName || '', gender: d.gender || '', birthday: d.birthday || '', color: d.cardColor || CARD_DEFAULT_COLOR };
     }
   } catch (e) {}
   let cases = [];
   try { cases = await listCases(); } catch (e) {}
-  return { groupOrder, groupDescs, cases };
+  return { groupOrder, groupDescs, cases, self };
 }
-let _mgmtCache = null;   // 清單資料快取：收合/排序只重畫不重抓；新增/刪除/編輯後重抓
-async function _renderMgmt(useCache) {
-  const body = document.getElementById('m-mgmt-body');
-  const barActions = document.getElementById('m-mgmt-bar-actions');
-  if (!body) return;
-  if (!(useCache && _mgmtCache)) {
-    body.innerHTML = '<div style="color:#a89e92;font-size:13px;padding:8px 2px">載入中…</div>';
-    if (barActions) barActions.innerHTML = '';
-    _mgmtCache = await _loadCaseMgmtData();
-  }
-  const { groupOrder, groupDescs, cases } = _mgmtCache;
-  if (!document.getElementById('m-case-list')) return;
-  _existingCaseCount = cases.length;
-  const caseColor = (c) => c.color || _autoColor(c.id);
-  const orderedGroups = _mobileOrderedGroups(groupOrder, cases);
-  _knownGroups = orderedGroups.slice();
-  // 手機版「管理分組」與「個案編輯選分組」沿用同一組狀態(桌機由 mountFinderDesktop 填;手機在此填,否則看不到/存不到分組)
-  _finderCases = cases; _finderGroups = orderedGroups.slice(); _finderGroupDescs = groupDescs;
-  const rowHtml = (c, sub) => '<button class="m-case-item" data-open="' + _esc(c.id) + '"><span class="m-case-swatch" style="background:' + _cardTint(caseColor(c)) + '"></span><span class="m-case-item-col"><span class="m-case-item-name">' + _esc(c.name || '(未命名)') + '</span>' + (sub ? '<span class="m-case-item-sub">' + _esc(sub) + '</span>' : '') + '</span></button>';
-
-  if (cases.length === 0) {
-    body.innerHTML = '<button class="m-mgmt-bigbtn is-primary" id="m-mgmt-add" type="button">＋ 新增個案</button>'
-      + '<button class="m-mgmt-bigbtn is-secondary" id="m-mgmt-groups" type="button">管理個案分組</button>';
-  } else {
-    if (barActions) barActions.innerHTML = '<button class="m-mgmt-bar-btn is-primary" id="m-mgmt-add" type="button">＋ 新增</button><button class="m-mgmt-bar-btn" id="m-mgmt-groups" type="button">管理分組</button>';
-    let html = '<div class="m-case-sortbar"><span class="m-case-sortbar-label">排序</span><select class="m-case-sort" id="m-mgmt-sort">'
-      + '<option value="group"' + (_caseSort === 'group' ? ' selected' : '') + '>分組</option>'
-      + '<option value="created"' + (_caseSort === 'created' ? ' selected' : '') + '>建立時間</option>'
-      + '<option value="updated"' + (_caseSort === 'updated' ? ' selected' : '') + '>修改時間</option>'
-      + '</select></div>';
-    if (_caseSort === 'group') {
-      const grouped = {};
-      cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
-      const grpBlock = (g, label, extraCls) => {
-        const items = grouped[g] || [];   // 空分組(尚無個案)也要顯示
-        const col = _mgmtCollapsed.has(g);
-        return '<div class="m-case-group-title' + (extraCls || '') + '" data-grp="' + _esc(g) + '"><span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>' + _esc(label) + '<span class="m-case-group-count">（' + items.length + '）</span></div>'
-          + '<div class="m-case-list"' + (col ? ' style="display:none"' : '') + '>' + items.map((c) => rowHtml(c, '')).join('') + '</div>';
-      };
-      orderedGroups.forEach((g) => { html += grpBlock(g, g, ''); });
-      if (grouped[''] && grouped[''].length) html += grpBlock('', '未分組', ' ungrouped');
-    } else {
-      const tsOf = (c) => _caseSort === 'updated' ? _tsStr(c.updatedAt || c.createdAt) : _tsStr(c.createdAt);
-      const arr = cases.slice().sort((a, b) => String(tsOf(b)).localeCompare(String(tsOf(a))));
-      const byDate = []; const idx = {};
-      arr.forEach((c) => { const d = String(tsOf(c)).slice(0, 10) || '—'; if (!(d in idx)) { idx[d] = byDate.length; byDate.push({ d: d, items: [] }); } byDate[idx[d]].items.push(c); });
-      byDate.forEach((grp) => { html += '<div class="m-case-group-title">' + _esc(grp.d || '—') + '</div><div class="m-case-list">' + grp.items.map((c) => rowHtml(c, c.group || '')).join('') + '</div>'; });
-    }
-    body.innerHTML = html;
-  }
-  body.querySelectorAll('.m-case-item').forEach((btn) => { btn.onclick = () => _openCasePage(btn.dataset.open || null); });
-  body.querySelectorAll('.m-case-group-title[data-grp]').forEach((t) => { t.onclick = () => { const g = t.dataset.grp || ''; if (_mgmtCollapsed.has(g)) _mgmtCollapsed.delete(g); else _mgmtCollapsed.add(g); _renderMgmt(true); }; });
-  const sortSel = body.querySelector('#m-mgmt-sort'); if (sortSel) sortSel.onchange = (e) => { _caseSort = e.target.value; try { localStorage.setItem('m_case_sort', _caseSort); } catch (_) {} _renderMgmt(true); };
-  const addBtn = document.getElementById('m-mgmt-add'); if (addBtn) addBtn.onclick = () => _openCasePage(null);
-  const grpBtn = document.getElementById('m-mgmt-groups'); if (grpBtn) grpBtn.onclick = _openManageGroups;
-}
+let _mgmtCache = null;   // 清單資料快取{groupOrder,groupDescs,cases,self}：收合/排序只重畫不重抓；新增/刪除/編輯後重抓
 // 手機分組排序：groupOrder 全列(含空分組、照儲存順序) + 有個案但不在 groupOrder 的排後面
 function _mobileOrderedGroups(groupOrder, cases) {
   const gset = [];
@@ -825,7 +879,7 @@ async function _deleteCurrentCase() {
     _closeCaseDetail();
     _closeCasePage();
     _mgmtCache = null;
-    const lv = document.getElementById('m-case-list'); if (lv && lv.classList.contains('is-open')) _renderMgmt();
+    if (!isDesktopSidebar()) _renderCasesHome(true);   // 合併主頁清單同步少這一筆
   } catch (e) {
     debugLog('[Case]', '刪除失敗', e && e.message ? e.message : e);
     alert('刪除失敗，請重試');
@@ -922,8 +976,8 @@ async function _gmSave() {
   }
 }
 
-// 新增/刪除個案後刷新案例管理畫面（桌機 Finder / 手機 overlay 清單）
-function _refreshCaseMgmt() { if (isDesktopSidebar()) mountFinderDesktop(); else _renderMgmt(); }
+// 分組儲存後刷新案例管理畫面（桌機 Finder / 手機合併主頁）
+function _refreshCaseMgmt() { if (isDesktopSidebar()) mountFinderDesktop(); else { _mgmtCache = null; _renderCasesHome(true); } }
 
 // ============================================================
 // 桌機個案管理：Mac Finder 三欄（群組欄 ｜ 卡片方格欄 ｜ 預覽欄）

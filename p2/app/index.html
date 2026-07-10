@@ -243,6 +243,36 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-hub-ico{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
 .m-hub-ico svg{width:26px;height:26px}
 .m-hub-label{font-size:16.5px;font-weight:600;letter-spacing:1px}
+/* ===== 個案管理合併主頁（我的資料卡＋新增＋同頁清單）— Mike 方案一 ===== */
+.m-ch{display:flex;flex-direction:column;gap:12px}
+.m-ch-self{display:flex;align-items:center;gap:10px;width:100%;border:1px solid #e0d8cc;border-radius:14px;padding:18px 16px;cursor:pointer;font-family:inherit;text-align:left}
+.m-ch-self:active{filter:brightness(0.96)}
+.m-ch-self-name{flex:1;min-width:0;font-size:17px;font-weight:600;color:#3a3228;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-ch-self-arrow{color:#8a7e6e;font-size:18px;flex-shrink:0}
+.m-ch-listhead{display:flex;align-items:center;gap:8px;margin-top:4px}
+.m-ch-listtitle{font-size:16px;font-weight:600;color:#3a3228;letter-spacing:1px}
+.m-ch-optwrap{margin-left:auto;position:relative}
+.m-ch-optbtn{padding:6px 12px;border:1px solid #e0d8cc;border-radius:8px;background:#fff;font-size:13px;font-family:inherit;color:#5a5048;cursor:pointer}
+.m-ch-optmenu{display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:50;background:#fff;border:1px solid #d4c9b0;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);min-width:150px;overflow:hidden}
+.m-ch-optmenu.is-open{display:block}
+.m-ch-optmenu button{display:block;width:100%;padding:11px 14px;border:none;background:#fff;font-family:inherit;font-size:14px;color:#3a3228;text-align:left;cursor:pointer}
+.m-ch-optmenu button:active{background:#f2ebe0}
+.m-ch-optmenu button.is-sel{font-weight:700;color:#6a464b}
+.m-ch-optmenu button.is-sel::before{content:'✓ '}
+/* 組名列：比照部位觀察子部位群組列（.m-section-label bar）；第一列右側掛「管理分組」鈕 */
+.m-ch-grpbar{display:flex;align-items:center;gap:8px;font-size:15px;color:#4a3d2a;font-weight:700;letter-spacing:1px;padding:9px 12px;background:#ece2cf;border-radius:8px;border-left:4px solid #b59a6a;cursor:pointer;user-select:none}
+.m-ch-grpbar.ungrouped{color:#8a7e6e}
+.m-ch-grpname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-ch-grpcount{color:#7a6a48;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:0;flex-shrink:0}
+.m-ch-grpbtn{margin-left:auto;flex-shrink:0;padding:5px 10px;border:1px solid #d3c7b1;border-radius:8px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:400;letter-spacing:0;color:#5a5048;cursor:pointer}
+/* 個案卡片：每行兩張（姓名/分組/建立年月日）*/
+.m-ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-ch-card{display:flex;flex-direction:column;gap:3px;min-width:0;border:1px solid #e6ddd0;border-radius:12px;padding:12px;cursor:pointer;font-family:inherit;text-align:left}
+.m-ch-card:active{filter:brightness(0.96)}
+.m-ch-card-name{font-size:15px;font-weight:600;color:#3a3228;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-ch-card-sub{font-size:12px;color:#6a6258;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-ch-card-sub.is-dim{color:#a89e92}
+.m-ch-empty{color:#a89e92;font-size:13px;padding:10px 2px}
 /* 個案專屬頁 3 tab — 比照上課 segmented（課程/自我評分/兵法報告）配色 */
 .m-cp-tabs{display:flex;gap:0;border-bottom:1px solid #cdbfa8;background:#ede8e0;position:sticky;top:0;z-index:5}
 .m-cp-tab{flex:1;padding:10px 2px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer}
@@ -2027,22 +2057,9 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-png-hint">雙指縮放 / 雙擊重置</div>
 </div>
 
-<!-- ===== 個案管理主頁（兩大按鈕）===== -->
+<!-- ===== 個案管理合併主頁（我的資料卡＋新增個案＋同頁個案清單；無標題列 — Mike 方案一）===== -->
 <div class="m-fullscreen" id="m-case-mgmt" style="z-index:300">
-  <div class="m-fs-bar">
-    <span class="m-mgmt-title">個案管理</span>
-  </div>
   <div class="m-fs-body" id="m-hub-body"></div>
-</div>
-
-<!-- ===== 個案清單（管理/檢視個案：分組/排序/管理分組住這）===== -->
-<div class="m-fullscreen" id="m-case-list" style="z-index:310">
-  <div class="m-fs-bar">
-    <button class="m-fs-back" id="m-case-list-back" type="button">‹ 返回</button>
-    <span class="m-mgmt-title">個案清單</span>
-    <div class="m-mgmt-bar-actions" id="m-mgmt-bar-actions"></div>
-  </div>
-  <div class="m-fs-body" id="m-mgmt-body"></div>
 </div>
 
 <!-- ===== 個案專屬頁（3 tab：基本資料/手動輸入報告/系統計算報告）===== -->
