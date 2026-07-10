@@ -61,7 +61,11 @@ export async function loadActiveRuleSet(db) {
   const spice = active.defaultSpice || DEFAULT_SPICE;
   const ver = id + '|' + String(active.updatedAt || '');
   const cached = _rsCacheRead(ver);
-  if (cached) { cached.defaultSpice = spice; return cached; }   // 辣度預設值一律用剛抓回的新值
+  if (cached) {
+    cached.defaultSpice = spice;                       // 辣度預設值一律用剛抓回的新值
+    cached.isPaired = buildIsPaired(cached.obsParts);  // ⚠️isPaired 是函式,JSON 快取存不住 → 讀取後必須重建(漏了會整個報告算不出)
+    return cached;
+  }
   const bundle = await loadRuleSetById(db, id, spice);
   _rsCacheWrite(ver, bundle);
   return bundle;
