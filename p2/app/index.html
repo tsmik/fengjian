@@ -256,6 +256,12 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 #m-cp-body.m-cp-system .m-segmented-sub{display:none}
 /* cp 系統計算固定子 tab 列：實體放在 3 tab 正下方、捲動容器之外 → 與 3 tab 密合且永不被內容 sticky 干擾 */
 .m-cp-systabs{display:flex;gap:0;background:#ede8e0;border-bottom:1px solid #cdbfa8}
+/* cp 系統計算 tab：m_input 內部凍結列原本預留給自家 segmented(約39px,cp內已隱藏) 的偏移歸零＋去掉容器頂部內距
+   → 部位chips列/維度標題列/辣度列 上滑凍結時緊貼第二行子tab（要調整凍結位置改這裡） */
+#m-cp-body.m-cp-system{padding-top:0}
+#m-cp-body.m-cp-system .m-obs-spice-sticky{top:0}
+#m-cp-body.m-cp-system .m-sv-dimhead{top:0}
+#m-cp-body.m-cp-system .m-dimv:not(.m-partv) .m-partv-partgrid{top:49px}
 .m-cp-systab{flex:1;padding:9px 4px;border:none;background:transparent;font-family:inherit;font-size:14px;color:#7a6e64;cursor:pointer}
 .m-cp-systab:not(:last-child){border-right:1px solid #d0c8be}
 .m-cp-systab.active{background:#6a464b;color:#f0e9ea}
