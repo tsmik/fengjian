@@ -281,7 +281,7 @@ function _paintDashboard() {
       inner += '<button class="m-dash-analyze" data-dash-analyze="1" type="button">開始分析 ▸</button>';
     } else {
       inner += '<div class="m-dash-obsentry">'
-        + '<button class="m-dash-obsbtn" data-dash-obs="part" type="button">依部位填寫 ▸</button>'
+        + '<button class="m-dash-obsbtn" data-dash-obs="part" type="button">部位觀察 ▸</button>'
         + '<button class="m-dash-obsbtn" data-dash-obs="dim" type="button">依維度填寫 ▸</button>'
         + '</div>';
     }

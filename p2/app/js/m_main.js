@@ -52,7 +52,7 @@ function renderInputSubnav() {
   const host = document.getElementById('m-tabsub-input');
   if (!host) return;
   if (!_subExpanded.input) { host.innerHTML = ''; return; }
-  const items = [{ key: 'part', label: '依部位填寫' }, { key: 'dim', label: '依維度填寫' }, { key: 'report', label: '兵法報告' }, { key: 'sens', label: '參數分析' }];  // 辣度總覽已移到兵法報告頁底部滑出,側欄不再列
+  const items = [{ key: 'part', label: '部位觀察' }, { key: 'dim', label: '依維度填寫' }, { key: 'report', label: '兵法報告' }, { key: 'sens', label: '參數分析' }];  // 依部位填寫→部位觀察(與手機一致 Mike 2026-07-20);辣度總覽已移到兵法報告頁底部滑出,側欄不再列
   let cur = 'part';
   try { cur = getInputView() || 'part'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-isub="${it.key}">${it.label}</button>`).join('');
@@ -329,23 +329,23 @@ let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
 // 桌機工作區側欄：兩組（系統計算 / 手動輸入）。手動輸入點了直接出現可填寫的兵法報告（manual overview）
 const WS_GROUPS = [
-  { title: '系統計算', subs: [
-    { key: 'obs', label: '依部位填寫' },
+  { title: '快速報告', subs: [
+    { key: 'obs', label: '部位觀察' },
     { key: 'obs-dim', label: '依維度填寫' },
     { key: 'obs-report', label: '兵法報告' }
   ] },
-  { title: '手動輸入', subs: [
+  { title: '手動評分', subs: [
     { key: 'manual-report', label: '兵法報告' }
   ] }
 ];
 // 手機工作區頂部列：兩組（系統計算 / 手動建立），比照個案儀表板的兩個報告家族
 const MWS_GROUPS = [
-  { title: '系統計算', subs: [
-    { key: 'obs', label: '依部位填寫' },
+  { title: '快速報告', subs: [
+    { key: 'obs', label: '部位觀察' },
     { key: 'obs-dim', label: '依維度填寫' },
     { key: 'obs-report', label: '兵法報告' }
   ] },
-  { title: '手動建立', subs: [
+  { title: '手動評分', subs: [
     { key: 'manual', label: '自我評分' },
     { key: 'manual-report', label: '兵法報告' }
   ] }
