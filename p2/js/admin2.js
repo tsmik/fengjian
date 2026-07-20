@@ -33,6 +33,13 @@ indexObs();
 
 // ---------- state ----------
 const LS_KEY = 'admin2_draft_v1';
+// 辣度等級顯示名（Mike 2026-07-20）：完整／標準／適中／寬鬆，與學員前台一致。
+// ⚠️ 只翻譯畫面文字。資料鍵永遠是 完整/大辣/中辣/小辣 —— 那四個中文字本身就是 Firestore 的鑰匙
+// （部位 def.spice={大辣:n,…}、state.spice.ratios、config/active.defaultSpice），
+// 且 engine.js 的 rank 表結尾是 `|| 2`，查不到會默默退回中辣繼續算：報告照畫、數字全錯、無錯誤訊息。
+const SPICE_LABELS = { '完整': '完整', '大辣': '標準', '中辣': '適中', '小辣': '寬鬆' };
+const spiceLabel = (v) => SPICE_LABELS[v] || v;
+
 let state = {
   ruleSet: { id: 'test-' + nowStamp(), name: '測試套裝', note: '', basedOn: null, status: 'draft', createdAt: new Date().toISOString() },
   dims: {},                                  // {dimIndex: {parts:{partName:def}}}
@@ -564,7 +571,7 @@ function renderPartSpice(box, def) {
       let v = parseInt(inp.value || '0', 10); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(v, auxCount));
       def.spice[lv] = v; inp.value = String(v); saveDraft();
     });
-    row.appendChild(el('label', { class: 'sn-cell' }, [el('span', { class: 'sn-lv', text: lv }), inp]));
+    row.appendChild(el('label', { class: 'sn-cell' }, [el('span', { class: 'sn-lv', text: spiceLabel(lv) }), inp]));
   });
   wrap.appendChild(row);
   box.appendChild(wrap);
@@ -730,7 +737,7 @@ function renderLeaf(card, combo, leaf, li) {
   wrap.appendChild(head);
   const optBox = el('div', { class: 'opts-spice' });
   const hints = (o && o.optionHints) || {};
-  const LAMPS = [[4, '#7E57C2', '#ddd3ec', '完整'], [3, '#D14343', '#ecc9c9', '大辣'], [2, '#D85A30', '#eed3c4', '中辣'], [1, '#C9A227', '#ece0bb', '小辣']];   // 左→右 紫紅橘黃＝完整/大/中/小(完整最嚴)
+  const LAMPS = [[4, '#7E57C2', '#ddd3ec', spiceLabel('完整')], [3, '#D14343', '#ecc9c9', spiceLabel('大辣')], [2, '#D85A30', '#eed3c4', spiceLabel('中辣')], [1, '#C9A227', '#ece0bb', spiceLabel('小辣')]];   // 左→右 紫紅橘黃＝完整/標準/適中/寬鬆(完整最嚴)；燈號 level 數字才是資料
   (o ? o.options : []).forEach(v => {
     const level = (leaf.spice && leaf.spice[v]) || 0;
     const hint = hints[v] || '';
@@ -759,7 +766,7 @@ function addLeaf(card, combo, obsId) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「完整/大/中/小辣 要中幾個輔」（在第三欄部位上方設定，主一律必中）。選項燈號左→右＝紫完整/紅大/橘中/黃小(完整最嚴,只認標紫的選項)。學員看報告時選完整/大/中/小辣;聚合門檻固定、不受辣度。' }));
+  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「完整/標準/適中/寬鬆 要中幾個輔」（在第三欄部位上方設定，主一律必中）。選項燈號左→右＝紫完整/紅標準/橘適中/黃寬鬆(完整最嚴,只認標紫的選項)。學員看報告時選完整/標準/適中/寬鬆;聚合門檻固定、不受辣度。' }));
 }
 
 function renderPalette() {

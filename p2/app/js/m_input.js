@@ -46,6 +46,12 @@ const DIM_BG = DIM_BG_COLORS;
 const DIM_DEEP = DIM_DEEP_COLORS;
 // 辣度等級（嚴格程度，由嚴到寬）— 全檔唯一正本，加/改等級只改這裡
 const SPICE_LEVELS = ['完整', '大辣', '中辣', '小辣'];
+// 顯示名（Mike 2026-07-20）：完整／標準／適中／寬鬆。
+// ⚠️ 只翻譯「看得到的字」，資料鍵永遠是 完整/大辣/中辣/小辣 —— 那四個中文字本身就是 Firestore 的鑰匙
+// （部位 spice={大辣:n,…}、ratios、config/active.defaultSpice），而 engine.js 的 rank 表結尾是 `|| 2`，
+// 查不到會「默默退回中辣」繼續算：報告照畫、數字全錯、無錯誤訊息。故資料鍵不可動。
+const SPICE_LABELS = { '完整': '完整', '大辣': '標準', '中辣': '適中', '小辣': '寬鬆' };
+const spiceLabel = (v) => SPICE_LABELS[v] || v;
 // 部位顯示名：題庫「額」在此頁一律顯示「上停」(與維度規則一致；資料鍵仍是額)
 function _partLabel(key){ return key === '額' ? '上停' : key; }
 
@@ -404,7 +410,7 @@ function _applySavedSpiceOnce() {
 }
 function _renderSpiceBar() {
   const cur = getSpice();
-  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${SPICE_LEVELS.map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${v}</button>`).join('')}</div></div>`;
+  return `<div class="m-spice-float"><span class="m-spice-float-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.6c.9-1.1 2.4-1.4 3.6-.7"/><path d="M15 5.3c2.5.6 4.1 2.9 3.9 5.7-.3 4.9-4.8 9-10 9.2-2.2.1-3.8-1.1-3.8-2.8 0-1.4 1-2.2 2.5-2.3 3-.2 5.1-2.1 5-5"/></svg></span><span class="m-spice-float-name">嚴格程度調整</span><div class="m-spice-float-opts">${SPICE_LEVELS.map(v => `<button class="m-spice-opt ${v === cur ? 'is-on' : ''}" data-spice="${v}">${spiceLabel(v)}</button>`).join('')}</div></div>`;
 }
 function _persistSpice(lv) {
   if (!window.__userData) window.__userData = {};
@@ -565,7 +571,7 @@ function _buildSpovGridHtml() {
     const sd = _applySpovLayout(p.sdHtml, SPOV_R3_CFG);
     const coef = p.coefHtml;   // 係數總覽維持原樣(數字本就跟著 bar);不套自訂版面
     return `<div class="m-spov-col">
-      <div class="m-spov-title">${lv}</div>
+      <div class="m-spov-title">${spiceLabel(lv)}</div>
       <div class="m-spov-chart">${radar2}</div>
       <div class="m-spov-chart">${sd}</div>
       <div class="m-spov-chart">${coef}</div>
@@ -889,7 +895,7 @@ function renderDimMode() {
   const PREV_LABELS = ['頭','上停','中停','下停','耳','眉','眼','鼻','口'];
   const prevSpice = _dimPreviewSpice || getSpice();
   const pv = evalDimAt(di, prevSpice);   // 該維度在預覽辣度的 dataVec（不動 coreData）
-  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-row"><span class="m-dimv-pv-spice-title">嚴格程度調整</span><div class="m-dimv-pv-spice-opts">${SPICE_LEVELS.map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${v}</button>`).join('')}</div></div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
+  const pvSpiceBar = `<div class="m-dimv-pv-spice"><div class="m-dimv-pv-spice-row"><span class="m-dimv-pv-spice-title">嚴格程度調整</span><div class="m-dimv-pv-spice-opts">${SPICE_LEVELS.map(v => `<button class="m-dimv-pv-spice-opt ${v === prevSpice ? 'is-on' : ''}" data-dimspice="${escapeHtml(v)}">${spiceLabel(v)}</button>`).join('')}</div></div><div class="m-dimv-pv-spice-hint">模擬（不影響報告，按儲存才正式計算）</div></div>`;
   let pvA = 0, pvB = 0;
   const pvRows = PREV_LABELS.map((label, pi) => {
     const v = pv[pi];

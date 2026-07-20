@@ -336,6 +336,15 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-hero{flex:0 0 25%;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0}   /* 上 1/4 */
 .m-home-hero-title{margin:0;font-family:inherit;font-weight:400;font-size:34px;line-height:1.6;letter-spacing:8px;text-align:center;color:#3a3228}
 .m-home-grid{flex:0 0 63.75%;display:grid;grid-template-columns:2fr 2fr 1fr;gap:14px;padding:0 16px 20px;min-height:0}   /* 下方大框:75%×0.85=63.75%(縮15%),底部留白;上課40%／系統計算報告40%／右欄20% */
+/* ===== 手機首頁＝我的資料（Mike 2026-07-20）：四方塊改由底部分頁進入，首頁只留基本資料表單 ===== */
+.m-home-landing .m-home-grid{display:none}
+.m-home-selfcard{flex:1;min-height:0;overflow:auto;margin:0 16px 16px;padding:20px 18px;background:#fff;border:1px solid #e3dccb;border-radius:14px}
+.m-home-selfcard-head{display:flex;align-items:center;gap:8px}
+.m-home-selfcard-title{font-size:18px;font-weight:600;letter-spacing:1px;color:#3a3228}
+.m-home-selfcard-desc{margin:6px 0 16px;font-size:13px;color:#8a7e6e;line-height:1.5}
+/* 我的資料未填完 → 底部「首頁」分頁圖示右上角紅點 */
+.m-tab.has-alert .m-tab-icon{position:relative}
+.m-tab.has-alert .m-tab-icon::after{content:'';position:absolute;top:-2px;right:-6px;width:9px;height:9px;background:#c03830;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,0.2)}
 .m-home-col-right{display:grid;grid-template-rows:1fr 1fr;gap:14px;min-height:0}
 .m-home-door{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #e3dccb;border-radius:14px;padding:22px 20px;cursor:pointer;font-family:inherit;text-align:left;color:#3a3228;transition:background .12s,border-color .12s;overflow:auto}
 .m-home-door:hover{background:#faf6ee;border-color:#d3c7b1}
@@ -1527,6 +1536,9 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-home-profile{grid-column:1 / -1}
   /* landing 首頁桌機:覆蓋上方 2 欄 grid,回直向 flex、全寬填滿(上1/3標題、下2/3三欄) */
   .m-home-landing{display:flex;flex-direction:column;grid-template-columns:none;max-width:none;margin:0;padding:0;gap:0;height:calc(100dvh - 52px)}
+  /* 桌機首頁維持原本四方塊；手機專用的「我的資料」卡不顯示（Mike：本次只動手機） */
+  .m-home-landing .m-home-grid{display:grid}
+  .m-home-selfcard{display:none}
 }
 
 /* ===== P4 RWD：報告分頁大螢幕展開 ===== */
@@ -2006,6 +2018,35 @@ body.m-debug-on .m-debug-clear{display:block}
   <div class="m-home m-home-landing">
     <!-- 上 1/3：標題兩行 -->
     <div class="m-home-hero"><h1 class="m-home-hero-title">風鑑學堂<br>人相兵法</h1></div>
+    <!-- 手機首頁＝我的資料（Mike 2026-07-20）：桌機於 min-width:1024px 隱藏，桌機仍走下方四方塊。
+         欄位 id 沿用 m_home.js 既有的 initHome/refreshHomeSelf 邏輯（含 persistProfile 存檔），不另寫 JS -->
+    <div class="m-home-selfcard" id="m-home-selfcard">
+      <div class="m-home-selfcard-head">
+        <span class="m-home-selfcard-title">我的資料</span>
+        <span class="m-update-dot-inline" id="m-home-selfdot" style="display:none"></span>
+      </div>
+      <div class="m-home-selfcard-desc">填寫後，兵法報告才會顯示你的虛歲與流年</div>
+      <div class="m-home-profile">
+        <div class="m-home-profile-row">
+          <label for="m-home-profile-name">姓名</label>
+          <input id="m-home-profile-name" type="text" placeholder="請輸入姓名">
+        </div>
+        <div class="m-home-profile-row">
+          <label for="m-home-profile-gender">性別</label>
+          <select id="m-home-profile-gender">
+            <option value="">請選擇</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div class="m-home-profile-row">
+          <label for="m-home-profile-birthday">生日</label>
+          <input id="m-home-profile-birthday" type="date">
+        </div>
+        <button class="m-home-profile-save-btn" id="m-home-profile-save" type="button">儲存</button>
+        <div class="m-home-profile-status" id="m-home-profile-status"></div>
+      </div>
+    </div>
     <!-- 下 2/3：三欄四框（保留 data-go 沿用 m_home.js 既有導覽） -->
     <div class="m-home-grid">
       <div class="m-home-door m-home-lesson">

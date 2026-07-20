@@ -100,6 +100,17 @@ export function updateHomeProgress(ud){
   if(elManualFill) elManualFill.style.width=(manualDim/13*100)+'%';
 }
 
+// 我的資料未填完（姓名／性別／生日缺任一）→ 首頁卡片標題與底部「首頁」分頁顯示紅點（Mike 2026-07-20）
+// 生日是報告抬頭虛歲與流年的來源,沒填會整塊空掉,所以值得提醒
+export function updateSelfDot(sd){
+  const s = sd || {};
+  const incomplete = !(s.displayName && s.gender && s.birthday);
+  const dot = document.getElementById('m-home-selfdot');
+  if (dot) dot.style.display = incomplete ? 'inline-block' : 'none';
+  const tab = document.querySelector('.m-tab[data-tab="home"]');
+  if (tab) tab.classList.toggle('has-alert', incomplete);
+}
+
 // 首頁固定顯示「本人」：從 users/{uid} 讀本人資料更新進度＋姓名＋基本資料（不動 active 個案）
 export async function refreshHomeSelf(){
   const uid=getEffectiveUid();
@@ -114,6 +125,7 @@ export async function refreshHomeSelf(){
   const elGender=document.getElementById('m-home-profile-gender');
   if(elGender){ let g=sd.gender||''; if(g==='M')g='男'; else if(g==='F')g='女'; elGender.value=g; }
   try{ setSelfName(sd.displayName||''); }catch(e){}
+  try{ updateSelfDot(sd); }catch(e){}
 }
 
 export function initHome(displayName){
@@ -122,6 +134,8 @@ export function initHome(displayName){
 
   // 2. 兩大按鈕進度
   updateHomeProgress();
+  // 首次載入就先依快取資料決定紅點（之後切到首頁時 refreshHomeSelf 會用最新資料再算一次）
+  try{ updateSelfDot(window.__userData||{}); }catch(e){}
 
   // 3. 四大方塊點擊：先把 active 設回本人 → 跳對應 tab（上課/部位觀察/我的/個案管理）
   const TAB_FOR={obs:'input',manual:'manual',my:'report',cases:'cases'};
@@ -169,6 +183,8 @@ export function initHome(displayName){
     elStatus.className='m-home-profile-status is-saving';
     try{
       await persistProfile({displayName:elName.value, birthday:elBday.value, gender:elGender.value});
+      // 存檔後立即更新紅點（三欄都填齊就消失,不必等下次切分頁重讀）
+      try{ updateSelfDot({displayName:elName.value, birthday:elBday.value, gender:elGender.value}); }catch(e){}
       elStatus.textContent='已儲存';
       elStatus.className='m-home-profile-status is-saved';
       setTimeout(function(){if(elStatus.textContent==='已儲存') elStatus.textContent='';},1500);

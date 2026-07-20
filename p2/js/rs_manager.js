@@ -4,6 +4,10 @@
 import { fbOK, onUser, login, logout, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from './fb.js';
 import { diffSets, diffObsLib } from './rs_diff.js';
 
+// 辣度等級顯示名（Mike 2026-07-20）：與學員前台／admin2 一致。只翻譯畫面文字，資料鍵仍是 完整/大辣/中辣/小辣
+const SPICE_LABELS = { '完整': '完整', '大辣': '標準', '中辣': '適中', '小辣': '寬鬆' };
+const spiceLabel = (v) => SPICE_LABELS[v] || v;
+
 let user = null, role = null, showArchived = false;
 let lastDiff = null, diffObsMode = false, showAllCond = false;
 const isStaff = () => !!user && (role === 'admin' || role === 'teacher');
@@ -306,7 +310,7 @@ function renderDiffReport() {
 
   if (d.spiceDiffs.length) {
     const sp = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '辣度設定差別' })]);
-    d.spiceDiffs.forEach(x => sp.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '›' + x.part + '　' + x.level + '　' + x.from + ' → ' + x.to })));
+    d.spiceDiffs.forEach(x => sp.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '›' + x.part + '　' + spiceLabel(x.level) + '　' + x.from + ' → ' + x.to })));
     box.appendChild(sp);
   }
   if (d.poleDiffs.length) {
