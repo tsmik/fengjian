@@ -294,7 +294,7 @@ function renderDiffReport() {
     el('div', { class: 'ov-rel', text: '• ' + d.relationship }),
     el('div', { text: '• 規則差異：共 ' + (s.cardsAdded + s.cardsRemoved + s.cardsChanged) + ' 條（＋新增' + s.cardsAdded + '、－刪除' + s.cardsRemoved + '、✎修改' + s.cardsChanged + '）' }),
     el('div', { text: '• 題庫差異：＋新題' + ((d.obsLib && d.obsLib.added.length) || 0) + '、－刪題' + ((d.obsLib && d.obsLib.removed.length) || 0) + '、✎改題' + ((d.obsLib && d.obsLib.changed.length) || 0) }),
-    el('div', { text: '• 辣度差異：' + s.spiceDiffs + ' 個部位設定不同' }),
+    el('div', { text: '• 嚴格程度差異：' + s.spiceDiffs + ' 個部位設定不同' }),
     el('div', { text: '• 目標極差異：' + s.poleDiffs + ' 個維度不同' }),
     el('div', { text: '• 規模：A「' + d._a + '」' + s.aCount + ' 條 / ' + s.aParts + ' 部位　B「' + d._b + '」' + s.bCount + ' 條 / ' + s.bParts + ' 部位' })
   ]);
@@ -309,7 +309,7 @@ function renderDiffReport() {
   box.appendChild(cd);
 
   if (d.spiceDiffs.length) {
-    const sp = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '辣度設定差別' })]);
+    const sp = el('div', { class: 'ds' }, [el('div', { class: 'ds-head', text: '嚴格程度設定差別' })]);
     d.spiceDiffs.forEach(x => sp.appendChild(el('div', { class: 'ds-row', text: '• ' + x.dim + '›' + x.part + '　' + spiceLabel(x.level) + '　' + x.from + ' → ' + x.to })));
     box.appendChild(sp);
   }

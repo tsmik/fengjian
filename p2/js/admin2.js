@@ -561,7 +561,7 @@ function renderAggReadonly(box) {
 // 每部位辣度門檻：大/中/小辣 各「要中幾個輔」（主一律必中）
 function renderPartSpice(box, def) {
   const auxCount = (def.cards || []).filter(c => c.role !== 'main').length;
-  const wrap = el('div', { class: 'spice-need' }, [el('div', { class: 'fl', text: '辣度門檻：要中幾個輔（共 ' + auxCount + ' 輔；主必中）' })]);
+  const wrap = el('div', { class: 'spice-need' }, [el('div', { class: 'fl', text: '嚴格程度門檻：要中幾個輔（共 ' + auxCount + ' 輔；主必中）' })]);
   const row = el('div', { class: 'spice-need-row' });
   ['完整', '大辣', '中辣', '小辣'].forEach(lv => {
     const cur = (def.spice && def.spice[lv] != null) ? Math.min(def.spice[lv], auxCount) : auxCount;
@@ -663,8 +663,8 @@ function spiceBtn(card) {
   const done = !!card.spiceDone;
   return el('button', {
     class: 'spice-ack ' + (done ? 'done' : 'todo'),
-    text: done ? '辣度 ✓' : '辣度…',
-    title: done ? '此卡辣度已調整完（點一下可取消）' : '此卡每題選項的辣度調整完後，點此標記',
+    text: done ? '嚴格程度 ✓' : '嚴格程度…',
+    title: done ? '此卡嚴格程度已調整完（點一下可取消）' : '此卡每題選項的嚴格程度調整完後，點此標記',
     onclick: (e) => { e.stopPropagation(); card.spiceDone = !card.spiceDone; renderEdit(); saveDraft(); }
   });
 }
@@ -731,7 +731,7 @@ function renderLeaf(card, combo, leaf, li) {
   ]);
   ensureLeafSpice(leaf);
   const hasAny = Object.keys(leaf.spice || {}).length > 0;
-  if (!hasAny) head.appendChild(el('span', { class: 'undef', text: '尚未設辣度' }));
+  if (!hasAny) head.appendChild(el('span', { class: 'undef', text: '尚未設嚴格程度' }));
   head.appendChild(el('span', { class: 'spacer' }));
   head.appendChild(el('button', { class: 'btn xs danger', text: '✕', onclick: (e) => { e.stopPropagation(); combo.splice(li, 1); renderEdit(); saveDraft(); } }));
   wrap.appendChild(head);
@@ -766,7 +766,7 @@ function addLeaf(card, combo, obsId) {
 
 function renderSpice() {
   const box = $('spice-box'); if (!box) return; box.innerHTML = '';
-  box.appendChild(el('div', { class: 'sb-title', text: '辣度＝每個部位各自設「完整/標準/適中/寬鬆 要中幾個輔」（在第三欄部位上方設定，主一律必中）。選項燈號左→右＝紫完整/紅標準/橘適中/黃寬鬆(完整最嚴,只認標紫的選項)。學員看報告時選完整/標準/適中/寬鬆;聚合門檻固定、不受辣度。' }));
+  box.appendChild(el('div', { class: 'sb-title', text: '嚴格程度＝每個部位各自設「完整/標準/適中/寬鬆 要中幾個輔」（在第三欄部位上方設定，主一律必中）。選項燈號左→右＝紫完整/紅標準/橘適中/黃寬鬆(完整最嚴,只認標紫的選項)。學員看報告時選完整/標準/適中/寬鬆;聚合門檻固定、不受嚴格程度影響。' }));
 }
 
 function renderPalette() {
