@@ -227,6 +227,9 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* ===== 全螢幕頁（案例管理 / 名片細節 / 新增個案）：nav 下方右側滑入 ===== */
 .m-fullscreen{position:fixed;top:calc(var(--nav-h) + var(--safe-top));left:0;right:0;bottom:calc(var(--tab-h) + var(--safe-bottom));background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;overflow:hidden}
 .m-fullscreen.is-open{transform:translateX(0)}
+/* 個案主頁（底部「個案」tab 開的那層）：直接出現、不從右方滑入（Mike 2026-07-20）。
+   其餘全螢幕層（個案細節/工作區/新增表單）維持滑入動畫 */
+#m-case-mgmt{transition:none}
 .m-fs-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #e8e0d4;min-height:44px}
 .m-fs-back{background:none;border:none;color:var(--active);font-size:16px;font-family:inherit;cursor:pointer;padding:6px 8px;flex-shrink:0}
 .m-fs-title{font-size:16px;font-weight:600;color:#3a3228;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -239,6 +242,10 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-hub{display:flex;flex-direction:column;gap:14px;padding:18px 4px}
 .m-hub-btn{display:flex;align-items:center;gap:14px;width:100%;padding:22px 18px;border-radius:14px;border:1px solid #e0d8cc;background:#fff;cursor:pointer;font-family:inherit;text-align:left}
 .m-hub-btn.is-primary{background:#3a3228;border-color:#3a3228;color:#fff}
+/* 個案主頁上方兩顆按鈕：左＝新增個案、右＝管理分組（Mike 2026-07-20）。等寬並排、置中 */
+.m-ch-actions{display:flex;gap:10px}
+.m-ch-actions .m-hub-btn{flex:1;min-width:0;justify-content:center;text-align:center;gap:8px;padding:18px 10px}
+.m-ch-actions .m-hub-label{white-space:nowrap}
 .m-hub-btn.is-secondary{color:#5a5048}
 .m-hub-ico{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
 .m-hub-ico svg{width:26px;height:26px}

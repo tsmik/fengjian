@@ -460,14 +460,13 @@ function _paintCasesHome(body) {
       + '<span class="m-ch-card-sub' + (c.group ? '' : ' is-dim') + '">' + (c.group ? _esc(c.group) : '未分組') + '</span>'
       + '<span class="m-ch-card-sub">' + _esc(cd || '—') + '</span></button>';
   };
-  // 1) 我的資料卡（本人）→ 點開只改基本資料
-  let h = '<button type="button" class="m-ch-self" id="m-ch-self" style="background:' + _cardTint(self.color || CARD_DEFAULT_COLOR) + '">'
-    + '<span class="m-ch-self-name">' + _esc(self.name || '本人') + '</span>'
-    + '<span class="m-case-item-tag">本人</span>'
-    + '<span class="m-ch-self-arrow">›</span></button>';
-  // 2) ＋新增個案
-  h += '<button type="button" class="m-hub-btn is-primary" id="m-ch-new"><span class="m-hub-ico">' + _HUB_ICO_PERSON + '</span><span class="m-hub-label">＋新增個案</span></button>';
-  // 3) 個案清單表頭（右側「選項」→ 依建立時間/依分組）
+  // 1) 上方兩顆按鈕：左＝新增個案、右＝管理分組（Mike 2026-07-20）
+  //    本人卡已移除：本人只走底部「快速報告」分頁，個案分頁純粹管別人（甲案，避免同一人兩個入口）
+  let h = '<div class="m-ch-actions">'
+    + '<button type="button" class="m-hub-btn is-primary" id="m-ch-new"><span class="m-hub-ico">' + _HUB_ICO_PERSON + '</span><span class="m-hub-label">＋新增個案</span></button>'
+    + '<button type="button" class="m-hub-btn" id="m-ch-groups"><span class="m-hub-label">管理分組</span></button>'
+    + '</div>';
+  // 2) 個案清單表頭（右側「選項」→ 依建立時間/依分組）
   h += '<div class="m-ch-listhead"><span class="m-ch-listtitle">個案清單</span>'
     + '<span class="m-ch-optwrap"><button type="button" class="m-ch-optbtn" id="m-ch-opt">選項 ▾</button>'
     + '<div class="m-ch-optmenu" id="m-ch-optmenu">'
@@ -478,11 +477,11 @@ function _paintCasesHome(body) {
   if (_caseSort === 'group') {
     const grouped = {};
     cases.forEach((c) => { const g = c.group || ''; (grouped[g] = grouped[g] || []).push(c); });
-    let firstBar = true;   // 第一個組名列右側放「管理分組」鈕
+    let firstBar = true;   // 「管理分組」鈕已移到頁面上方兩顆按鈕的右邊，組名列不再重複放（Mike 2026-07-20）
     const grpBlock = (g, label, extraCls) => {
       const items = grouped[g] || [];   // 空分組(尚無個案)也要顯示
       const col = _mgmtCollapsed.has(g);
-      const mg = firstBar ? '<button type="button" class="m-ch-grpbtn" id="m-ch-groups">管理分組</button>' : '';
+      const mg = '';
       firstBar = false;
       return '<div class="m-ch-grpbar' + (extraCls || '') + '" data-grp="' + _esc(g) + '">'
         + '<span class="m-case-grp-chevron">' + (col ? '▸' : '▾') + '</span>'
@@ -505,7 +504,8 @@ function _paintCasesHome(body) {
   }
   body.innerHTML = '<div class="m-ch">' + h + '</div>';
   // wire
-  const selfBtn = body.querySelector('#m-ch-self'); if (selfBtn) selfBtn.onclick = _openSelfPage;
+  // 本人卡已移除（Mike 2026-07-20 甲案）→ 此處不再綁 #m-ch-self。
+  // _openSelfPage 仍保留：重整還原(view==='self') 會用到，且下一批「首頁＝我的資料」要重用。
   const newBtn = body.querySelector('#m-ch-new'); if (newBtn) newBtn.onclick = () => _openCasePage(null);
   body.querySelectorAll('.m-ch-card').forEach((btn) => { btn.onclick = () => _openCasePage(btn.dataset.open || null); });
   const optBtn = body.querySelector('#m-ch-opt'), optMenu = body.querySelector('#m-ch-optmenu');
@@ -565,8 +565,8 @@ function _closeCaseListPage() { _closeCasePage(); }
 let _cpCaseId = null, _cpTab = 'basic';
 const CP_TABS = [
   { key: 'basic', label: '基本資料' },
-  { key: 'manual', label: '手動輸入報告' },
-  { key: 'system', label: '系統計算報告' }
+  { key: 'manual', label: '手動評分' },
+  { key: 'system', label: '快速報告' }
 ];
 function _openCasePage(caseId, restoreTab) {
   _cpCaseId = caseId || null;
@@ -609,9 +609,9 @@ function _renderCpBody() {
 }
 // ---- 系統計算報告 tab：掛 m_input（自帶 依部位填寫/依維度填寫/兵法報告 segmented；無回到個案鈕）----
 let _cpSystemMounted = false;
+// 手機個案工作區的快速報告子 tab：取消「依維度填寫」，只留兩個（Mike 2026-07-20）
 const CP_SYS_SUBS = [
-  { key: 'part', label: '依部位填寫' },
-  { key: 'dim', label: '依維度填寫' },
+  { key: 'part', label: '部位觀察' },
   { key: 'report', label: '兵法報告' }
 ];
 function _renderCpSystem() {
@@ -633,6 +633,12 @@ function _renderCpSystem() {
     b.onclick = () => { try { setInputView(b.dataset.cpsys); } catch (e) {} paintActive(); };
   });
   body.innerHTML = '';
+  // 預設子 tab（Mike 2026-07-20）：已有觀察資料 → 直接看兵法報告；全新／未填的個案 → 落在部位觀察，
+  // 否則一進來就是整張「未填完」的空表，學員不知道要去哪填。mountInput 會讀後即清這個一次性旗標。
+  try {
+    const _obsJson = (window.__userData && window.__userData.obsJson) || '';
+    if (_obsProgress(_obsJson).pct > 0) localStorage.setItem('m_input_view_once', 'report');
+  } catch (e) {}
   mountInput(body);
   paintActive();
   _cpSystemMounted = true;
