@@ -9,9 +9,9 @@
 // 版型沿用 A1/A2 兩欄（.m-dim-layout）：手機單欄、桌機左維度清單＋右內容。
 // ============================================================
 
-import { DIMS, condResults, boardText, boardNotes, setBoardText, setBoardNotes } from './core.js';
+import { DIMS, condResults, boardText, boardNotes, setBoardText, setBoardNotes, DIM_BG_COLORS, DIM_DEEP_COLORS } from './core.js';
 import { recalcFromObs } from './obs_recalc.js';
-import { db, debugLog, getCurrentDocRef } from './m_main.js';
+import { db, debugLog, getCurrentDocRef, isDesktopSidebar } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -130,7 +130,10 @@ function _dimContent(i) {
     ? `<button class="m-board-btn" data-board-reset="${_esc(dn)}">還原成老師版</button>` : '';
   // 置頂維度 pill：形勢 看 格局（格局比照形勢同樣大字）
   const view = dm.view || '';
-  const pill = `<div class="m-board-pill"><span class="m-board-pill-name">${_esc(dn)}</span>${view ? `<span class="m-board-pill-see">看</span><span class="m-board-pill-name">${_esc(view)}</span>` : ''}</div>`;
+  // 手機：維度 bar 依維度上色（比照依維度填的 DIM_DEEP 底 + DIM_BG 字；Mike 2026-07-20 e）；桌機維持原米色
+  const _tint = isDesktopSidebar() ? '' : ` style="background:${DIM_DEEP_COLORS[i] || '#8a7e6e'};border-color:${DIM_DEEP_COLORS[i] || '#8a7e6e'}"`;
+  const _tintTx = isDesktopSidebar() ? '' : ` style="color:${DIM_BG_COLORS[i] || '#f3ecdd'}"`;
+  const pill = `<div class="m-board-pill"${_tint}><span class="m-board-pill-name"${_tintTx}>${_esc(dn)}</span>${view ? `<span class="m-board-pill-see"${_tintTx}>看</span><span class="m-board-pill-name"${_tintTx}>${_esc(view)}</span>` : ''}</div>`;
   return `
     ${pill}
     <div class="m-board-lecture-block">

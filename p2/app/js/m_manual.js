@@ -27,7 +27,7 @@
 //   - 詳盡報告 PNG（手動版）+ 重要參數分析（手動版）
 // ============================================================
 
-import { DIMS, avgCoeff, calcDim, DIM_RULES, DIM_BG_COLORS } from './core.js';
+import { DIMS, avgCoeff, calcDim, DIM_RULES, DIM_BG_COLORS, DIM_DEEP_COLORS } from './core.js';
 import { chartsBlockHtml, exportMobileCharts, isLiunianReady, ensureLiunianLoaded, generatePng } from './m_report.js';
 import { buildManualReportParts } from './manual_report.js';
 import { getLiunianInfoFor, buildLiunianTitleHtml } from './report.js';
@@ -49,10 +49,12 @@ let _manualSubview = 'board';  // 'board'(課程) | 'input'(手動評分) | 'ove
 
 // 上課 tab 上方 segmented：課程(板書) / 手動評分 / 報告。
 // 參數分析(sens) 暫不列入（之後搬到「我的」），但 renderManualSens / 'sens' view 邏輯保留。
+// ⚠️ 此 segmented 為手機限定（桌機 .m-segmented-sub 於 min-width:1024px 隱藏、改走側欄子膠囊），
+//    故此處加的 ①②③ 步驟編號只會出現在手機；桌機側欄清單在 m_main.js，維持無編號。
 const SUBMODES = [
-  { key: 'board',    label: '課程' },
-  { key: 'input',    label: '自我評分' },
-  { key: 'overview', label: '兵法報告' },
+  { key: 'board',    label: '① 課程' },
+  { key: 'input',    label: '② 自我評分' },
+  { key: 'overview', label: '③ 兵法報告' },
 ];
 let _manualDraft = null;
 let _firestoreBaseline = null;
@@ -949,7 +951,12 @@ function _renderScoreView() {
   const expEraseBtn = (expOpen || expNote) ? _eraserBtn('exp' + di) : '';
   const expBox = (expOpen || expNote) ? `<div class="m-sv-expnote">${_noteEl('data-expinput="' + di + '"', expNote, '', 'exp' + di)}</div>` : '';
   // 維度名置頂(sticky)只包名稱列；維度筆記(expBox)移到 sticky 外，避免打字長高造成游標上下跳
-  const dimbar = `<div class="m-sv-dimhead"><div class="m-sv-dimbar"><span class="m-sv-dimname">${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div></div>${expBox}`;
+  // 手機：維度 bar 依維度上色（比照依維度填的 DIM_DEEP 底 + DIM_BG 字；Mike 2026-07-20 e）；桌機維持原米色。
+  // 深色底上「符合條件為X」與 ✎ 也要調亮，否則對比不足。用 is-tint 讓 CSS 一併處理子元素顏色。
+  const _tint = desktop ? '' : ` style="background:${DIM_DEEP_COLORS[di] || '#8a7e6e'}"`;
+  const _tintCls = desktop ? '' : ' is-tint';
+  const _tintTx = desktop ? '' : ` style="color:${DIM_BG_COLORS[di] || '#f3ecdd'}"`;
+  const dimbar = `<div class="m-sv-dimhead${_tintCls}"${_tint}><div class="m-sv-dimbar"><span class="m-sv-dimname"${_tintTx}>${dim.dn}</span><span class="m-sv-dimexp">${_esc(defExp)}</span>${expBtn}${expEraseBtn}</div></div>${expBox}`;
   _svLastDesktop = desktop;
   return `<div class="m-score-view"><div class="m-sv-layout">${dimList}<div class="m-sv-main">${dimbar}<div class="m-sv-sub">${partCol}${condCol}</div></div></div></div>`;
 }
@@ -1054,7 +1061,8 @@ function _eraserBtn(key) {
 function _condRow(k, c, opt) {
   opt = opt || {};
   const added = !!opt.added;
-  const noRule = !added && (c.indexOf('待 admin') >= 0 || c.indexOf('（尚無條件') >= 0);
+  // 偵測用 '尚無條件'（不含全形括號）→ 新短版「尚無條件」與舊長版「（尚無條件，按…）」都認得，改文案不會漏判
+  const noRule = !added && (c.indexOf('待 admin') >= 0 || c.indexOf('尚無條件') >= 0);
   const sufKey = added ? '@' + opt.id : c;          // 狀態 key 後綴
   const ck = k + '|' + sufKey;
   const cond = _scaffold.cond[k] || {}, cnote = _scaffold.cnote[k] || {};
@@ -1076,7 +1084,7 @@ function _condRow(k, c, opt) {
     const delBtn = `<button class="m-sv-ico" data-cdel="${cek}" data-tip="移除這條">✕</button>`;
     return `<div class="m-sv-condgroup"><div class="m-sv-cond is-mine">${edit}${yn}${noteBtn}${eraseBtn}${delBtn}</div>${noteBox}</div>`;
   }
-  return `<div class="m-sv-condgroup"><div class="m-sv-cond"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}</div>`;
+  return `<div class="m-sv-condgroup"><div class="m-sv-cond${noRule ? ' is-norule' : ''}"><span class="m-sv-cond-text">${_esc(c)}</span>${yn}${noteBtn}${eraseBtn}</div>${noteBox}</div>`;
 }
 function _renderScoreCond(di, pi) {
   const model = _scoreCondModel(di, pi);
@@ -1116,7 +1124,9 @@ function _renderScoreCond(di, pi) {
   const addedAll = _scaffold.added[k] || {};
   const cards = model.groups.map((g, gi) => {
     const akey = `${k}_${gi}`;  // di_pi_gi（皆數字）
-    let rows = (g.crits.length ? g.crits : ((addedAll[gi] || []).length ? [] : ['（尚無條件，按「＋條件」新增自己的判斷條件）'])).map(c => _condRow(k, c)).join('');
+    // 手機只留灰字「尚無條件」（＋條件鈕就在同列，夠明顯）；桌機保留原本的完整說明
+    const _noRuleText = isDesktopSidebar() ? '（尚無條件，按「＋條件」新增自己的判斷條件）' : '尚無條件';
+    let rows = (g.crits.length ? g.crits : ((addedAll[gi] || []).length ? [] : [_noRuleText])).map(c => _condRow(k, c)).join('');
     // 我的補充條件（依子部位 gi 各自掛）
     // 我的補充：行內可編輯（{id,text}）
     rows += (addedAll[gi] || []).map(it => _condRow(k, it.text, { added: true, gi, id: it.id })).join('');
@@ -1129,11 +1139,14 @@ function _renderScoreCond(di, pi) {
     const sNote = _scaffold.snote[sk] || '';
     const sOpen = _noteOpen['s' + sk] || sNote;
     const titleName = (g.w >= 2) ? `${g.title}（左右${g.title}）` : g.title;
-    const sNoteBtn = `<button class="m-sv-addpill" data-snt="${sk}" type="button" data-tip="子部位筆記">✎ 筆記</button>`;
-    const sEraseBtn = sOpen ? _eraserBtn('s' + sk) : '';
+    // 子部位筆記：手機取消此功能（Mike 2026-07-20，畫面太雜）；桌機保留。
+    // 只藏入口不刪資料 → 既有 snote 仍在 manualScaffoldJson 裡，桌機照樣讀得到、改得動。
+    const _showSNote = isDesktopSidebar();
+    const sNoteBtn = _showSNote ? `<button class="m-sv-addpill" data-snt="${sk}" type="button" data-tip="子部位筆記">✎ 筆記</button>` : '';
+    const sEraseBtn = (_showSNote && sOpen) ? _eraserBtn('s' + sk) : '';
     const sAddBtn = `<button class="m-sv-addpill" data-addcond="${akey}" type="button" data-tip="新增條件">＋條件</button>`;
     const subhead = `<div class="m-sv-subhead"><span class="m-sv-subtitle-name">${_esc(titleName)}</span>${sNoteBtn}${sEraseBtn}${sAddBtn}</div>`;
-    const sNoteBox = sOpen ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
+    const sNoteBox = (_showSNote && sOpen) ? `<div class="m-sv-notebox m-sv-snotebox">${_noteEl('data-sna="' + sk + '"', sNote, '這個子部位的筆記…', 's' + sk)}</div>` : '';
     // 子部位筆記＝與維度/部位筆記一致樣式（在標題色塊下、白底區、無底色）
     return `<div class="m-sv-subpart">${subhead}${sNoteBox}${rows}</div>`;
   }).join('');

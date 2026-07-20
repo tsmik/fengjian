@@ -33,9 +33,11 @@ import { hasPartUpdate, hasDimUpdate, hasUpdate, markPartSeen, markDimSeen, mark
 
 // 重整（比照上課過程）：部位視角 / 維度視角 / 報告 / 參數分析 四個子 tab。
 // part/dim 升級成正式子 tab（內部仍走 _view='quiz' + _quizMode，降風險不動 renderPartMode/renderDimMode）。
+// ⚠️ 此 segmented 是「手機限定」（桌機 .m-segmented-sub 於 min-width:1024px 隱藏，改走側欄子膠囊），
+//    所以這裡改標籤／隱藏 dim 都只影響手機；桌機側欄清單在 m_main.js（維度視角仍保留）。
 const SUBMODES = [
-  { key: 'part',   label: '依部位填' },
-  { key: 'dim',    label: '依維度填' },
+  { key: 'part',   label: '部位觀察' },
+  { key: 'dim',    label: '依維度填', desktopOnly: true },   // 手機不列（Mike 2026-07-20）；桌機仍由側欄進入
   { key: 'report', label: '兵法報告' },
   // 辣度總覽(未來移入兵法報告)、參數分析(先隱藏) → 不列入 segmented；view 邏輯保留
 ];
@@ -323,6 +325,12 @@ export function setInputView(key) {
 }
 
 function renderQuizView() {
+  // 手機沒有「依維度填」子分頁：任何入口（LS 還原、個案細節按鈕、桌機縮窗）把 _quizMode 帶成 dim 時，
+  // 一律退回部位視角，否則會渲染出一個沒有按鈕可離開的畫面。
+  if (_quizMode === 'dim' && !_isDesktop()) {
+    _quizMode = 'part';
+    try { localStorage.setItem('m_input_submode', _quizMode); } catch (e) {}
+  }
   const seg = renderSegmented();
   let content = '';
   if (_quizMode === 'part') content = renderPartMode();
@@ -581,7 +589,7 @@ function renderSpiceOverview() {
 function renderSegmented() {
   // 部位視角/維度視角 同屬 quiz，用 _quizMode 判斷哪個 active；報告/參數分析直接看 _view
   const cur = (_view === 'quiz') ? _quizMode : _view;
-  return SUBMODES.map(m => `
+  return SUBMODES.filter(m => !m.desktopOnly || _isDesktop()).map(m => `
     <button class="m-seg-btn ${cur === m.key ? 'm-seg-active' : ''}" data-submode="${m.key}">
       ${escapeHtml(m.label)}
     </button>
@@ -1230,7 +1238,7 @@ function renderPartMode() {
     condCol = `<div class="m-dimv-condcol"><div class="m-sv-empty">← 點選左側部位開始觀察</div></div>`;
   } else {
     // 條件欄頂：sticky 部位名(20px) + 說明字 + 顯示所有說明(同一排)
-    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_partLabel(_expandedKey))}</span><span class="m-dimv-partexp">選擇特徵，自動計算係數</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-descaction="expand">全部展開</button><button class="m-desc-switch" type="button" data-descaction="collapse">全部收合</button></span></div>`;
+    const head = `<div class="m-dimv-parthead"><span class="m-dimv-partname">${escapeHtml(_partLabel(_expandedKey))}</span><span class="m-dimv-partexp">選擇特徵，自動計算係數</span><span class="m-desc-switches"><button class="m-desc-switch" type="button" data-descaction="expand"><span class="m-lbl-m">展開說明</span><span class="m-lbl-d">全部展開</span></button><button class="m-desc-switch" type="button" data-descaction="collapse"><span class="m-lbl-m">收合說明</span><span class="m-lbl-d">全部收合</span></button></span></div>`;
     condCol = `<div class="m-dimv-condcol">${head}${renderSections(_expandedKey)}</div>`;
   }
   return `<div class="m-score-view m-dim-scoreview m-dimv m-partv"><div class="m-dimv-row1">${partNav}${condCol}</div></div>`;
