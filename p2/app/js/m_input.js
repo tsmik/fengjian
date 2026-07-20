@@ -845,7 +845,10 @@ function renderDimMode() {
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度名稱列(sticky)：底色＝兵法報告維度深色、字＝淡維度色；右接填題進度
   const _dbProg = dimProgress(di);
-  const dimbar = `<div class="m-sv-dimhead" style="background:${DIM_DEEP[di] || '#8a7e6e'}"><div class="m-sv-dimbar"><span class="m-sv-dimname" style="color:${DIM_BG[di] || '#f3ecdd'}">${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇特徵，自動計算係數</span><span class="m-sv-dimprog">${_dbProg.done}／${_dbProg.total}</span></div></div>`;
+  // 維度色底＝手機限定；桌機無底色、比照依部位填寫的部位標題（米白底＋深字，Mike 2026-07-20 桌機 UI）
+  const _tintBg = _isDesktop() ? '' : ` style="background:${DIM_DEEP[di] || '#8a7e6e'}"`;
+  const _tintTx = _isDesktop() ? '' : ` style="color:${DIM_BG[di] || '#f3ecdd'}"`;
+  const dimbar = `<div class="m-sv-dimhead"${_tintBg}><div class="m-sv-dimbar"><span class="m-sv-dimname"${_tintTx}>${escapeHtml(dim.dn)}</span><span class="m-sv-dimexp">選擇特徵，自動計算係數</span><span class="m-sv-dimprog">${_dbProg.done}／${_dbProg.total}</span></div></div>`;
 
   // 桌機預設選第一個有規則的部位
   if (_dimPartExpanded[di] == null && _isDesktop()) {

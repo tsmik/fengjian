@@ -1953,6 +1953,14 @@ body.m-debug-on .m-debug-clear{display:block}
   .m-sv-pn{font-size:20px;letter-spacing:2px}
   /* 維度 bar 標題（自我評分「形勢 符合條件為形」／依維度填寫同元件）：16→20px 與課程統一 */
   .m-sv-dimname{font-size:20px}
+  /* 維度 bar 無底色後（依維度填寫拿掉維度色底、自我評分本就米白）：說明字/進度數字改深色
+     —— 基底是給有色底用的白色系，桌機不改會白字配米白看不見 */
+  .m-sv-dimexp{color:#7a6e64}
+  .m-sv-dimprog{color:#3a3228}
+  /* 嚴格程度調整（依維度填寫右欄預覽）：標題自己一行，四個選項下一行等寬、收在深色框內不溢出 */
+  .m-dimv-pv-spice-row{flex-wrap:wrap}
+  .m-dimv-pv-spice-opts{flex:1 0 100%;margin-left:0;margin-top:6px}
+  .m-dimv-pv-spice-opt{flex:1 1 0;min-width:0;padding:4px 2px;text-align:center}
 }
 </style>
 </head>
