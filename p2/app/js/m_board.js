@@ -102,7 +102,8 @@ function _dimTile(i) {
   // 對齊手動評分：.m-sv-dim 群組左色條＋選取淡米底
   const grp = i <= 2 ? 'm-sv-grp-boss' : (i <= 5 ? 'm-sv-grp-mgr' : (i <= 8 ? 'm-sv-grp-luck' : 'm-sv-grp-post'));
   const cur = _dim === i ? 'is-cur' : '';
-  return `<button class="m-sv-dim ${grp} ${cur}" data-bdim="${i}">${_esc(dm.dn)}</button>`;
+  // --dimc＝該維度深色：手機不用（維持群組色上邊線）；桌機 CSS 拿它畫左色線（Mike 2026-07-20 桌機 UI）
+  return `<button class="m-sv-dim ${grp} ${cur}" data-bdim="${i}" style="--dimc:${DIM_DEEP_COLORS[i] || '#a89e92'}">${_esc(dm.dn)}</button>`;
 }
 
 function _noteEditor(dn, slot) {

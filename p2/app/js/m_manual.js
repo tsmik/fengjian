@@ -495,7 +495,7 @@ export function renderPngPreview() {
           <rect x="102" y="22" width="14" height="74" fill="#CEDDE8"/>
           <rect x="118" y="22" width="14" height="74" fill="#DDD4E4"/>
           <rect x="134" y="22" width="14" height="74" fill="#D2DDD6"/>
-          <rect x="150" y="22" width="11" height="74" fill="#D4E2CF"/>
+          <rect x="150" y="22" width="11" height="74" fill="#E2E3C0"/>
           <rect x="163" y="22" width="11" height="74" fill="#DED5DF"/>
           <rect x="176" y="22" width="11" height="74" fill="#CADDD8"/>
           <rect x="189" y="22" width="5" height="74" fill="#CDDAE6"/>
@@ -910,7 +910,8 @@ function _renderScoreView() {
   let di = _manualDimIdx; if (di == null || di < 0 || di > 12) di = 0;
   const dim = DIMS[di];
   // col1：13 維度（先天/運氣/後天 群組色條）
-  const dtile = (i) => `<button class="m-sv-dim ${_scoreGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-mdim="${i}">${DIMS[i].dn}</button>`;
+  // --dimc＝該維度深色：手機不使用（維持群組色上邊線）；桌機 CSS 拿它畫左色線（Mike 2026-07-20 桌機 UI）
+  const dtile = (i) => `<button class="m-sv-dim ${_scoreGrpClass(i)} ${i === di ? 'is-cur' : ''}" data-mdim="${i}" style="--dimc:${DIM_DEEP_COLORS[i] || '#a89e92'}">${DIMS[i].dn}</button>`;
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${[0,1,2,3,4,5].map(dtile).join('')}</div><div class="m-sv-dimrow">${[6,7,8,9,10,11,12].map(dtile).join('')}</div></div>`;
   // col2：9 部位 + 形/勢評分鈕（跟著維度名 da/db）
   const pa = _poleOf(dim, dim.da), pb = _poleOf(dim, dim.db);

@@ -839,7 +839,8 @@ function renderDimMode() {
     const dot = hasDimUpdate(dm.dn) ? '<span class="m-update-dot"></span>' : '';
     const dprog = dimProgress(i);   // 該維度引用題未全答 → 淡黃(is-cur 當前色優先)
     const dtodo = (dprog.total > 0 && dprog.done < dprog.total) ? 'is-todo' : '';
-    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${dtodo} ${i === di ? 'is-cur' : ''}" data-dim="${i}" style="border-top-color:${DIM_DEEP[i] || '#a89e92'}">${dot}${escapeHtml(dm.dn)}</button>`;
+    // border-top-color＝手機上邊線（維持原樣）；--dimc＝桌機左色線用（Mike 2026-07-20 桌機 UI）
+    return `<button class="m-sv-dim ${_dimGrpClass(i)} ${dtodo} ${i === di ? 'is-cur' : ''}" data-dim="${i}" style="border-top-color:${DIM_DEEP[i] || '#a89e92'};--dimc:${DIM_DEEP[i] || '#a89e92'}">${dot}${escapeHtml(dm.dn)}</button>`;
   };
   const dimList = `<div class="m-sv-dimlist"><div class="m-sv-dimrow">${DIM_ROW_1_IDX.map(dtile).join('')}</div><div class="m-sv-dimrow">${DIM_ROW_2_IDX.map(dtile).join('')}</div></div>`;
   // 維度名稱列(sticky)：底色＝兵法報告維度深色、字＝淡維度色；右接填題進度

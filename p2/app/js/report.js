@@ -174,9 +174,9 @@ export function showReport(){
 
     // === 和風色彩系統 ===
     var dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-               '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+               '#CEDDE8','#DDD4E4','#D2DDD6','#E2E3C0','#DED5DF','#CADDD8','#CDDAE6'];
     var dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
-                 '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+                 '#4A7A9A','#7A6890','#5A8A6A','#6B7A3A','#7A6088','#4A8078','#4A6E8A'];
     var dimText=['#4A6B3A','#3A5E54','#6A6458','#7A5A38','#7A4858','#7A6A38',
                  '#3A5A7A','#5A4870','#3A6A4A','#3A6B3A','#5A4068','#3A6058','#3A5870'];
     var C_PRE='#8E4B50',C_LUCK='#4C6E78',C_POST='#7B7082';

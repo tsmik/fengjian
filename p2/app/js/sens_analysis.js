@@ -18,9 +18,9 @@ export function renderSensPage(){
   var el=document.getElementById('sens-content');if(!el)return;
   var SBG='#7A9E7E',DBG='#C17A5A';
   var _dimBg=['#D6E4CC','#C8DCD8','#E2DDD5','#F0DECA','#E8D2D8','#EDE4C8',
-              '#CEDDE8','#DDD4E4','#D2DDD6','#D4E2CF','#DED5DF','#CADDD8','#CDDAE6'];
+              '#CEDDE8','#DDD4E4','#D2DDD6','#E2E3C0','#DED5DF','#CADDD8','#CDDAE6'];
   var _dimDeep=['#6B8C5A','#4A7A6E','#8A8078','#A07850','#9A6878','#9A8A50',
-                '#4A7A9A','#7A6890','#5A8A6A','#5A8A5A','#7A6088','#4A8078','#4A6E8A'];
+                '#4A7A9A','#7A6890','#5A8A6A','#6B7A3A','#7A6088','#4A8078','#4A6E8A'];
   var _colLIsS=DIMS.map(function(d){var dt=(d.da===d.a)?d.aT:d.bT;return dt==='靜';});
   function _checkMark(di){
     return '<span style="display:inline-block;width:16px;height:16px;background:'+_dimDeep[di]+';border-radius:3px;line-height:16px;text-align:center;color:#fff;font-size:11px;font-weight:400">\u2713</span>';

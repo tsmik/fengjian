@@ -1940,6 +1940,18 @@ body.m-debug-on .m-debug-clear{display:block}
 .m-sens-q-bar-fill{height:100%;background:#C17A5A;border-radius:2px;transition:width 0.3s}
 .m-sens-q-empty{padding:12px;color:#a89e92;font-size:13px;text-align:center}
 
+/* ===== 桌機 13 維度框改版（Mike 2026-07-20）：課程/自我評分/依維度填寫 三頁共用 .m-sv-dim =====
+   1) 清單總高＝頁面高（13 框 flex 均分）  2) 有色邊線改左邊、色＝各維度深色（--dimc）
+   3) 框內文字 16px 比照依部位填寫部位框。手機完全不動（上邊線維持原樣）。 */
+@media (min-width:1024px){
+  .m-sv-dimlist{height:calc(100vh - var(--nav-h) - 16px);max-height:none;overflow-y:auto}
+  /* 兩排 wrapper 攤平成清單直接子項，13 框才能一起均分高度 */
+  .m-sv-dimrow{display:contents}
+  /* !important：蓋掉 m_input 行內的 border-top-color（手機用），桌機上邊線一律回一般框線 */
+  .m-sv-dim{flex:1 1 0;min-height:34px;font-size:16px;border-top:1.5px solid #e3dccb !important;border-left:4px solid var(--dimc,#e3dccb)}
+  /* 自我評分：點部位後第二欄部位名稱，比照課程維度標題（20px＋2px 字距） */
+  .m-sv-pn{font-size:20px;letter-spacing:2px}
+}
 </style>
 </head>
 <body>

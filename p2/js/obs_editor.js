@@ -98,7 +98,7 @@ function updateDirty() {
   const n = dirty.size + deleted.size + (layoutDirty ? 1 : 0);
   $('dirtywrap').innerHTML = n ? ('未存變更 ' + (dirty.size + deleted.size) + ' 筆' + (layoutDirty ? '＋版面' : '') + ' <span class="dirtydot"></span>') : '';
 }
-const DIM_COLORS = { '形勢': '#6B8C5A', '經緯': '#4A7A6E', '方圓': '#8A8078', '曲直': '#A07850', '收放': '#9A6878', '緩急': '#9A8A50', '順逆': '#4A7A9A', '分合': '#7A6890', '真假': '#5A8A6A', '攻守': '#5A8A5A', '奇正': '#7A6088', '虛實': '#4A8078', '進退': '#4A6E8A' };
+const DIM_COLORS = { '形勢': '#6B8C5A', '經緯': '#4A7A6E', '方圓': '#8A8078', '曲直': '#A07850', '收放': '#9A6878', '緩急': '#9A8A50', '順逆': '#4A7A9A', '分合': '#7A6890', '真假': '#5A8A6A', '攻守': '#6B7A3A', '奇正': '#7A6088', '虛實': '#4A8078', '進退': '#4A6E8A' };
 // 「題→哪些維度引用」「題→用到哪些值」改成讀「目前套裝」的實際條件（不再用打包基準 REF_DIMS）
 let liveRef = {}, liveVals = {}, dimIdxByName = {};
 async function loadSetRefs(setId) {
