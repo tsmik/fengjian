@@ -22,7 +22,7 @@ import { setObsData, setUserName, setUserGender, setUserBirthday, setLiunianTabl
 import { buildRadar2MSVG, buildRadar3SVG, buildCoefSVG } from './report_chart.js';
 import { renderCoeffSummary, renderPngPreview } from './m_manual.js';
 import { persistProfile, updateHomeProgress } from './m_home.js';
-import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft, setInputView, getInputView } from './m_main.js';
+import { db, debugLog, refreshUserData, getEffectiveUid, setActiveCase, getActiveCaseId, listCases, createCase, updateCase, deleteCase, updateSelfCard, updateAnalysisBanner, openCaseWorkspace, isDesktopSidebar, saveGroups, mountManual, unmountManual, getManualDirty, discardManualDraft, mountInput, unmountInput, getSaveStatus, discardDraft, setInputView, getInputView, setCaseBasicRenderer } from './m_main.js';
 import { ensureDimRulesLoaded } from './m_input.js';
 import { recalcFromObs } from './obs_recalc.js';
 import { drawReportCanvas, getLiunianInfoFor, calcXuSui, buildLiunianTitleHtml, buildLiunianTableHtml } from './report.js';
@@ -324,6 +324,33 @@ function _paintDashboard() {
   const mgmtBtn = t.querySelector('#m-dash-mgmt'); if (mgmtBtn) mgmtBtn.onclick = _openCaseMgmt;
 }
 
+// 桌機工作區「基本資料」項：複用 _paintDashboard（cpMode＝只基本資料＋流年、不畫報告），
+// 渲染進工作區借用的 m-page-report 容器。狀態同手機個案細節頁基本資料 tab。
+function _renderCaseBasicInWs(wsCase, container) {
+  if (!wsCase || !container) return;
+  setActiveCase(wsCase.id);
+  const build = (c) => ({
+    isCase: true, id: wsCase.id,
+    name: c.name || c.displayName || wsCase.name || '',
+    gender: c.gender || '', birthday: c.birthday || '',
+    color: c.color || c.cardColor || wsCase.color || CARD_DEFAULT_COLOR,
+    group: c.group || '', note: c.note || '', createDate: _finderCreateDateStr(c) || '',
+    obsJson: c.obsJson || '', dataJson: c.dataJson || '', manualJson: c.manualDataJson || ''
+  });
+  const cached = (_finderCases || []).find((x) => x.id === wsCase.id)
+    || ((_mgmtCache && _mgmtCache.cases) || []).find((x) => x.id === wsCase.id) || {};
+  _dashIsCase = true; _dashEdit = false; _dashCpMode = true;
+  _dashPerson = build(cached);
+  _dashTarget = container;
+  _paintDashboard();
+  // 背景抓最新個案 doc（跨裝置同步）；期間切走或已進編輯 → 不覆蓋
+  (async () => {
+    const ok = await refreshUserData();
+    if (!ok || getActiveCaseId() !== wsCase.id || _dashTarget !== container || _dashEdit) return;
+    _dashPerson = build({ ...cached, ...(window.__userData || {}) });
+    _paintDashboard();
+  })();
+}
 async function _saveDashboardEdit() {
   const t = _dashTarget, p = _dashPerson;
   if (!t || !p) return;
@@ -1029,6 +1056,9 @@ function _coeffSet(matrix) {
 }
 
 export async function mountFinderDesktop() {
+  // 註冊工作區基本資料 renderer：放這裡（app 運行後才呼叫）而非模組頂層，
+  // 避免 m_main↔m_report 循環 import 下 let TDZ 把註冊吞掉/覆蓋
+  try { setCaseBasicRenderer(_renderCaseBasicInWs); } catch (e) {}
   const root = document.getElementById('m-page-report');
   if (!root) return;
   root.innerHTML = '<div class="m-finder">'

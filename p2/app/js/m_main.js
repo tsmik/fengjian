@@ -328,16 +328,10 @@ export function isDesktopSidebar() {
 let _wsCase = null;     // {id,name,color}
 let _wsSub = null;      // 'obs' | 'obs-report' | 'manual' | 'manual-report'
 // 桌機工作區側欄：兩組（系統計算 / 手動輸入）。手動輸入點了直接出現可填寫的兵法報告（manual overview）
-const WS_GROUPS = [
-  { title: '快速報告', subs: [
-    { key: 'obs', label: '部位觀察' },
-    { key: 'obs-dim', label: '依維度填寫' },
-    { key: 'obs-report', label: '兵法報告' }
-  ] },
-  { title: '手動評分', subs: [
-    { key: 'manual-report', label: '兵法報告' }
-  ] }
-];
+// 桌機工作區「基本資料」的內容渲染在 m_report.js（緊耦合 _paintDashboard 狀態）。
+// m_report 已單向依賴本檔，為避免循環 import，改用回呼註冊：m_report 載入時把 renderer 登記進來。
+let _caseBasicRenderer = null;
+export function setCaseBasicRenderer(fn) { _caseBasicRenderer = fn; }
 // 手機工作區頂部列：兩組（系統計算 / 手動建立），比照個案儀表板的兩個報告家族
 const MWS_GROUPS = [
   { title: '快速報告', subs: [
@@ -368,11 +362,19 @@ function _renderWorkspace() {
   if (!_wsCase) { host.innerHTML = ''; host.style.display = 'none'; host.style.background = ''; return; }
   host.style.display = '';
   host.style.background = '';  // 這一區不放底色
-  const items = WS_GROUPS.map(function (g) {
-    return '<div class="m-ws-gtitle">' + _wsEsc(g.title) + '</div>' + g.subs.map(function (s) {
-      return '<button class="m-ws-item' + (s.key === _wsSub ? ' active' : '') + '" data-ws="' + s.key + '">' + _wsEsc(s.label) + '</button>';
-    }).join('');
-  }).join('');
+  // 三個並列項：基本資料 / 手動評分 / 快速報告（快速報告選中時展開子項），比照手機三 tab（Mike 2026-07-20）
+  const cur = _wsSub;
+  const isFast = (cur === 'obs' || cur === 'obs-dim' || cur === 'obs-report');
+  const item = function (key, label, extraCls) {
+    return '<button class="m-ws-item' + (cur === key ? ' active' : '') + (extraCls || '') + '" data-ws="' + key + '">' + _wsEsc(label) + '</button>';
+  };
+  const fastSubs = isFast
+    ? '<div class="m-ws-subwrap">' + item('obs', '部位觀察') + item('obs-dim', '依維度填寫') + item('obs-report', '兵法報告') + '</div>'
+    : '';
+  const items = item('basic', '基本資料')
+    + item('manual-report', '手動評分')
+    + '<button class="m-ws-item m-ws-fast' + (isFast ? ' active' : '') + '" data-ws="obs">快速報告</button>'
+    + fastSubs;
   host.innerHTML =
     '<div class="m-ws-head"><span class="m-ws-name">' + _wsEsc(_wsCase.name) + '</span>' +
     '<span class="m-ws-close-wrap"><button class="m-ws-close" id="m-ws-close">✕</button>' +
@@ -417,8 +419,9 @@ export function openCaseWorkspace(caseObj, subKey) {
 // 避免上方 部位觀察/上課 被高亮、也不顯示它們的子膠囊）。個案分析完全走側欄工作區。
 export function selectWorkspaceSub(key) {
   if (!_wsCase) return;
+  const isBasic = (key === 'basic');
   const isManual = (key === 'manual' || key === 'manual-report');
-  const subTab = isManual ? 'manual' : 'input';
+  const subTab = isBasic ? 'basic' : (isManual ? 'manual' : 'input');
   // 離開目前內容的未存提示（目前可能在某個分析頁）
   const pInput = document.getElementById('m-page-input');
   const pManual = document.getElementById('m-page-manual');
@@ -435,7 +438,12 @@ export function selectWorkspaceSub(key) {
   clearInputSubnav(); clearManualSubnav();
   [pInput, pManual, pReport, pHome].forEach(function (p) { if (p) p.classList.remove('active'); });
 
-  if (subTab === 'input') {
+  if (subTab === 'basic') {
+    // 基本資料：渲染進個案管理容器（m-page-report）；退出工作區時 mountFinderDesktop 會重繪
+    if (pReport) pReport.classList.add('active');
+    unmountInput(); unmountManual(); unmountReport();
+    if (_caseBasicRenderer) _caseBasicRenderer(_wsCase, pReport);
+  } else if (subTab === 'input') {
     if (pInput) pInput.classList.add('active');
     unmountReport(); unmountManual();
     const _wsView = key === 'obs-report' ? 'report' : (key === 'obs-dim' ? 'dim' : 'part');
@@ -449,7 +457,8 @@ export function selectWorkspaceSub(key) {
     mountManual(pManual);
     try { setManualView(key === 'manual-report' ? 'overview' : 'input'); } catch (e) {}
   }
-  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.remove('is-hidden');
+  // 基本資料自帶存檔鈕 → 隱藏底部整頁儲存區；其餘子頁顯示
+  const sz = document.getElementById('m-save-zone'); if (sz) sz.classList.toggle('is-hidden', isBasic);
   try { localStorage.setItem('m_active_tab', 'cases'); } catch (e) {}
   _wsSub = key;
   document.body.classList.add('m-ws-active');
