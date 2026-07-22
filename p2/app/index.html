@@ -1403,8 +1403,9 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
     font-size:14px;
   }
   .m-tab-icon{margin-bottom:0}
-  /* 桌機側欄維持五項：還原「我的」(report) tab；個案管理顯示原名＋多人icon */
-  .m-tab[data-tab="report"]{display:flex}
+  /* 桌機四項側欄（Mike 2026-07-20）：「我的」(report) tab 隱藏，本人儀表板改由「首頁」承接；
+     個案管理顯示原名＋多人icon。側欄＝首頁/上課/快速報告/個案管理，與手機底部四項對齊 */
+  .m-tab[data-tab="report"]{display:none}
   .m-tab-lbl-d{display:inline}
   .m-tab-lbl-m{display:none}
   .m-tab-icon.m-tab-ico-d{display:flex}

@@ -548,8 +548,8 @@ function showApp(displayName){
   // 恢復上次 tab（重整後留在原頁，而非預設首頁）
   try {
     let lastTab = localStorage.getItem('m_active_tab');
-    // 手機已無「我的」(report) tab（四tab 方案一）→ 舊值導向新「我的」（cases）；桌機 report tab 仍在，不改
-    if (lastTab === 'report' && !isDesktopSidebar()) lastTab = 'cases';
+    // 「我的」(report) tab 已移除：手機導向「個案」(cases)；桌機導向「首頁」(home＝本人儀表板)
+    if (lastTab === 'report') lastTab = isDesktopSidebar() ? 'home' : 'cases';
     if (lastTab && lastTab !== 'home') {
       // 部位觀察子頁還原:只在「重整還原」時把上次子頁塞進一次性信號,
       // 正常手動點 tab 不受影響(mountInput 仍預設回部位視角)。
@@ -562,6 +562,11 @@ function showApp(displayName){
       }
       const restoreBtn = document.querySelector('.m-tab[data-tab="' + lastTab + '"]');
       if (restoreBtn) restoreBtn.click();
+    } else if (isDesktopSidebar()) {
+      // 桌機首頁＝本人儀表板：HTML 預設 active 的是 m-page-home（手機我的資料），
+      // 桌機需主動觸發一次 home click → 走 mountReport 顯示儀表板
+      const hb = document.querySelector('.m-tab[data-tab="home"]');
+      if (hb) hb.click();
     }
   } catch (e) {}
 }
@@ -809,8 +814,10 @@ if (isTeacherMode) {
         try { stashCasesView(); } catch (e) {}
         ['m-case-mgmt','m-case-list','m-case-page','m-case-detail','m-case-form'].forEach(function(id){ var o=document.getElementById(id); if(o) o.classList.remove('is-open'); });
       }
-      // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面
-      const pageKey = (key === 'cases') ? 'report' : key;
+      // 個案管理 tab 沒有自己的 page section，底下沿用「我的」(report) 頁，overlay 蓋在上面。
+      // 桌機「首頁」改顯示本人儀表板（＝我的），也用 report 頁；手機首頁維持 m-page-home（我的資料）
+      const _isDesk = isDesktopSidebar();
+      const pageKey = (key === 'cases' || (key === 'home' && _isDesk)) ? 'report' : key;
       Object.keys(pages).forEach(function(k){
         pages[k].classList.toggle('active',k===pageKey);
       });
@@ -835,7 +842,8 @@ if (isTeacherMode) {
         unmountReport();
         unmountManual();
         mountInput(pages.input);
-      } else if(key==='report'){
+      } else if(key==='report' || (key==='home' && _isDesk)){
+        // 桌機首頁＝本人儀表板（複用 mountReport）；手機首頁走下方 else（我的資料表單）
         unmountInput();
         unmountManual();
         mountReport(pages.report);
