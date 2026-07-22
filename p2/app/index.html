@@ -1442,6 +1442,9 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
 
   /* 工作區啟用：個案色淡淡混進頁底色（在內容底下）；部位名/維度名標題列＝同一個染色色（看起來跟底色一致）＋ 中和上方分頁高亮 */
   body.m-ws-active .m-main{background:var(--ws-tint, #f7f4ef)}
+  /* 報告區維持中性米底（Mike 2026-07-20）：報告有自己的維度配色，不該被個案染色(--ws-tint)透背景干擾；
+     染色提示保留在頂部個案名＋色條。手動/快速兩種報告都涵蓋，讓個案報告底色與本人報告一致 */
+  body.m-ws-active .m-manual-report{background:var(--bg, #f7f4ef)}
   body.m-ws-active .m-sv-dimhead,
   body.m-ws-active .m-dimv-parthead{background:var(--ws-tint, #f7f4ef)}
   body.m-ws-active .m-tab.active{color:var(--text-3);font-weight:400}
