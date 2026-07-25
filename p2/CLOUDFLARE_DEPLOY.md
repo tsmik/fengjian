@@ -19,10 +19,9 @@
 
 ## 部署後，這些網址可開
 - 編輯器（你主要要的）：**https://rbf2app-staging.pages.dev/p2/admin2**
-- P2 前台桌機：**https://rbf2app-staging.pages.dev/app**
-- P2 前台手機：**https://rbf2app-staging.pages.dev/m**
-> 註：`/app`、`/m` 會載入、能 Google 登入，但**還沒接新引擎、rbf2app-staging 也還沒有規則資料**，
-> 所以報告類功能是空的——那是第 4 階段（換引擎）的事。本次重點是 **admin2 能線上開**。
+- P2 前台（桌機／手機同一個網址、RWD 自動切版）：**https://rbf2app-staging.pages.dev/p2/app**
+> 註：桌機／手機原規劃是 `/app`、`/m` 兩條路由分開，後來收斂成 `/p2/app` 單一網址、
+> 靠 `m_main.js` + `@media` 自動判斷螢幕大小切版，沒有獨立的 `/m` 路由。
 
 ## 確認部署成功
 開 `/p2/admin2` 應看到：左欄 13 維、右欄一堆 observations、標題「admin2 條件編輯器」。
