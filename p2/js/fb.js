@@ -13,9 +13,24 @@ export const RBF2_STAGING = {
   messagingSenderId: '565853308902',
   appId: '1:565853308902:web:8a7a3e63df1291124df827'
 };
+export const RBF2_PROD = {
+  apiKey: 'AIzaSyB2n1wCVVETwyS9eCldAzowwWue5HXxNbs',
+  authDomain: 'rbf2app.firebaseapp.com',
+  projectId: 'rbf2app',
+  storageBucket: 'rbf2app.firebasestorage.app',
+  messagingSenderId: '93651965615',
+  appId: '1:93651965615:web:813fab08c6d6e70650665a'
+};
+// 網域感知(比照前台 m_main.js getFirebaseConfig):正式 rbf2app 網域→正式庫;其餘(staging.pages.dev/localhost)→staging。
+// 這樣 rbf2app.pages.dev/p2/* 後台存的是正式庫,不會誤寫 staging。
+export function rbf2Config() {
+  const host = window.location.hostname;
+  if (host === 'rbf2app.web.app' || host === 'rbf2app.pages.dev' || /\.rbf2app\.(web\.app|pages\.dev)$/.test(host)) return RBF2_PROD;
+  return RBF2_STAGING;
+}
 
 let app, auth, db, _fbOK = false;
-try { app = initializeApp(RBF2_STAGING); auth = getAuth(app); setPersistence(auth, browserLocalPersistence).catch(() => {}); db = getFirestore(app); _fbOK = true; }
+try { app = initializeApp(rbf2Config()); auth = getAuth(app); setPersistence(auth, browserLocalPersistence).catch(() => {}); db = getFirestore(app); _fbOK = true; }
 catch (e) { _fbOK = false; }
 
 export { auth, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch };

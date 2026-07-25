@@ -24,6 +24,20 @@ const RBF2_STAGING = {
   messagingSenderId: '565853308902',
   appId: '1:565853308902:web:8a7a3e63df1291124df827'
 };
+const RBF2_PROD = {
+  apiKey: 'AIzaSyB2n1wCVVETwyS9eCldAzowwWue5HXxNbs',
+  authDomain: 'rbf2app.firebaseapp.com',
+  projectId: 'rbf2app',
+  storageBucket: 'rbf2app.firebasestorage.app',
+  messagingSenderId: '93651965615',
+  appId: '1:93651965615:web:813fab08c6d6e70650665a'
+};
+// 網域感知(同 fb.js/前台 m_main.js):正式 rbf2app 網域→正式庫;其餘→staging。
+function rbf2Config() {
+  const host = window.location.hostname;
+  if (host === 'rbf2app.web.app' || host === 'rbf2app.pages.dev' || /\.rbf2app\.(web\.app|pages\.dev)$/.test(host)) return RBF2_PROD;
+  return RBF2_STAGING;
+}
 
 const META = window.DIMS_META;
 let OBS = window.OBSERVATIONS || [];                 // 靜態快照當後備；登入後改讀 live Firestore
@@ -360,7 +374,7 @@ async function loadLiveObs(force) {
 // ---------- Firebase ----------
 function initFirebase() {
   try {
-    const app = initializeApp(RBF2_STAGING);
+    const app = initializeApp(rbf2Config());
     auth = getAuth(app); setPersistence(auth, browserLocalPersistence).catch(() => {}); db = getFirestore(app); fbOK = true;
     onAuthStateChanged(auth, async (u) => {
       user = u; role = null;
