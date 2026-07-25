@@ -1,0 +1,10 @@
+# Cloudflare Pages 轉址(只存在 p2-staging / p2-main 分支 → 只作用於 rbf2app / rbf2app-staging 兩個 P2 網域)
+# P1 的部署(fengjian.pages.dev=main 分支、staging.fengjian.pages.dev=staging 分支、GitHub Pages=main)沒有此檔,完全不受影響。
+# 目的:P2 網域上的 P1 舊碼副本(根目錄 /app /m 等)是「開得起來但報告會壞」的陷阱,一律轉到正版 /p2/app。
+/ /p2/app 302
+/index.html /p2/app 302
+/index_desktop.html /p2/app 302
+/app /p2/app 302
+/app.html /p2/app 302
+/m /p2/app 302
+/m.html /p2/app 302
