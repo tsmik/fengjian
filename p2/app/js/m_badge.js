@@ -1,11 +1,15 @@
 // ============================================================
 // 手機版紅點機制（共用桌機 updateLog / seenLog 邏輯，modular SDK 版）
-// updateLog：firestore settings/updateLog 內每個 key 的 updatedAt
+// updateLog：firestore config/updateLog 內每個 key 的 updatedAt
+//   （P2 改讀 config/updateLog；P1 是 settings/updateLog。發布端 scripts/promote-p2-to-prod.js
+//     用 lib/ruleset-diff.js 比對新舊套裝、把變動處寫進 config/updateLog。）
 //   - part_{部位}  → 部位整體
-//   - q_{部位}_{qid} → 個別題目
+//   - q_{部位}_{obsId} → 個別題目（前台 q.id = observation 的 obsId）
 //   - dim_{維度}  → 維度規則
 // seenLog：LS rxbf_seen_{uid}（跟桌機共用同 key，互不干擾）
 //   hasUpdate(key) = updateLog[key] > seenLog[key] → 顯示紅點
+// 基準線：帳號首次接觸紅點系統時，把當下 updateLog 全部視為已讀（避免整頁爆紅點）；
+//   之後只有比基準線更新的變動才冒紅點。旗標＝users/{uid}.badgeBaseline。
 // 被用：m_main.js login 後 initBadges；m_input.js render 各 tile / question 時查 hasUpdate
 // ============================================================
 
@@ -65,7 +69,7 @@ function _loadSeen() {
 export async function initBadges() {
   _loadSeen(); // LS 先載（快）
   try {
-    const ref = doc(db, 'settings', 'updateLog');
+    const ref = doc(db, 'config', 'updateLog');   // P2：config/updateLog（規則允許登入者讀）
     const snap = await getDoc(ref);
     _updateLog = snap.exists() ? snap.data() : {};
     const allKeys = Object.keys(_updateLog);
@@ -85,13 +89,21 @@ export async function initBadges() {
     try {
       const userRef = doc(db, 'users', uid);
       const userSnap = await getDoc(userRef);
-      if (userSnap.exists() && userSnap.data().badgeSeen) {
-        const cloudSeen = userSnap.data().badgeSeen || {};
+      const ud = userSnap.exists() ? userSnap.data() : {};
+      if (ud.badgeSeen) {
+        const cloudSeen = ud.badgeSeen || {};
         const before = Object.keys(_seenLog).length;
         _seenLog = _mergeSeen(_seenLog, cloudSeen);
         // 寫回 LS（cloud 較新的 entries cache 起來）
         try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(_seenLog)); } catch (e) {}
         debugLog('[Badge]', 'badgeSeen 雲端載入 ✓ LS:', before, '→ merged:', Object.keys(_seenLog).length);
+      }
+      // 基準線：此帳號從未接觸紅點系統 → 把當下 updateLog 全部標成已讀，之後只有新變動才冒紅點。
+      if (!ud.badgeBaseline) {
+        for (const k in _updateLog) { _seenLog[k] = _updateLog[k]; }
+        try { localStorage.setItem(SEEN_KEY_PREFIX + uid, JSON.stringify(_seenLog)); } catch (e) {}
+        try { await setDoc(userRef, { badgeSeen: _seenLog, badgeBaseline: new Date().toISOString() }, { merge: true }); } catch (e) {}
+        debugLog('[Badge]', '建立紅點基準線 ✓（現況全標已讀，', Object.keys(_updateLog).length, '個記號）');
       }
     } catch (e) {
       debugLog('[Badge]', 'badgeSeen 載入失敗', e && e.message);
