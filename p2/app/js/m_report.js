@@ -240,6 +240,9 @@ function _paintDashboard() {
   if (!p || !t) return;
   let g = p.gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   const obs = _obsProgress(p.obsJson), man = _manualProgress(p.manualJson);
+  // 基本資料未填完（姓名／性別／生日缺一）→ 基本資料框標題也標紅點，與側欄「首頁」紅點一致（只本人，個案不提醒）
+  const basicIncomplete = !p.isCase && !(p.name && g && p.birthday);
+  const basicDot = basicIncomplete ? '<span class="m-update-dot-inline" style="margin-left:6px;margin-right:0"></span>' : '';
   // 左區外框：人物顏色「包住」標題＋基本資料＋流年（報告區塊在右區）
   let inner = '<div class="m-dash-head"><span class="m-dash-head-name">' + _esc(p.name || (p.isCase ? '(未命名)' : '本人')) + '</span><span class="m-case-item-tag">' + (p.isCase ? '個案' : '本人') + '</span></div>';
   // 基本資料（檢視 or 編輯）
@@ -263,7 +266,7 @@ function _paintDashboard() {
       + '</div>';
   } else {
     inner += '<div class="m-home-card">'
-      + '<div style="display:flex;align-items:center;margin-bottom:6px"><div class="m-home-card-title" style="margin:0">基本資料</div><button type="button" class="m-detail-edit-btn" id="m-dash-edit">編輯</button></div>'
+      + '<div style="display:flex;align-items:center;margin-bottom:6px"><div class="m-home-card-title" style="margin:0">基本資料' + basicDot + '</div><button type="button" class="m-detail-edit-btn" id="m-dash-edit">編輯</button></div>'
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">姓名</span><span>' + _esc(p.name || '未填寫') + '</span></div>'
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">性別</span><span>' + (g || '未填寫') + '</span></div>'
       + '<div class="m-detail-info-row"><span class="m-detail-info-label">生日</span><span>' + _esc(p.birthday || '未填寫') + '</span></div>'
