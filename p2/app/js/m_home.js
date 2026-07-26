@@ -13,6 +13,18 @@
 import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef, setActiveCase, refreshUserData, setSelfName } from "./m_main.js";
 import { setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
+import { liunianCompactHtml } from "./m_report.js";   // 手機首頁流年＝桌機同一套（本人以今天為基準日）
+
+// 手機首頁「我的資料」卡片流年：填入 #m-home-liunian（姓名/性別/生日缺時顯示提示）
+async function renderHomeLiunian(sd){
+  const slot=document.getElementById('m-home-liunian');
+  if(!slot) return;
+  try{
+    const html=await liunianCompactHtml((sd&&sd.gender)||'', (sd&&sd.birthday)||'', null);   // 本人→今天為基準日
+    slot.innerHTML=html;   // 用 innerHTML 保留 #m-home-liunian 容器(下次刷新仍找得到)
+    slot.classList.remove('m-liunian-placeholder');
+  }catch(e){ debugLog&&debugLog('[Home]','流年渲染失敗',e&&e.message); }
+}
 
 // 共用：寫入基本資料到雲端 + 更新記憶體狀態（首頁與「我的」分頁共用）
 export async function persistProfile(d){
@@ -126,6 +138,7 @@ export async function refreshHomeSelf(){
   if(elGender){ let g=sd.gender||''; if(g==='M')g='男'; else if(g==='F')g='女'; elGender.value=g; }
   try{ setSelfName(sd.displayName||''); }catch(e){}
   try{ updateSelfDot(sd); }catch(e){}
+  try{ renderHomeLiunian(sd); }catch(e){}
 }
 
 export function initHome(displayName){
@@ -136,6 +149,7 @@ export function initHome(displayName){
   updateHomeProgress();
   // 首次載入就先依快取資料決定紅點（之後切到首頁時 refreshHomeSelf 會用最新資料再算一次）
   try{ updateSelfDot(window.__userData||{}); }catch(e){}
+  try{ renderHomeLiunian(window.__userData||{}); }catch(e){}   // 首次載入先用快取資料畫流年
 
   // 3. 四大方塊點擊：先把 active 設回本人 → 跳對應 tab（上課/部位觀察/我的/個案管理）
   const TAB_FOR={obs:'input',manual:'manual',my:'report',cases:'cases'};
@@ -185,6 +199,7 @@ export function initHome(displayName){
       await persistProfile({displayName:elName.value, birthday:elBday.value, gender:elGender.value});
       // 存檔後立即更新紅點（三欄都填齊就消失,不必等下次切分頁重讀）
       try{ updateSelfDot({displayName:elName.value, birthday:elBday.value, gender:elGender.value}); }catch(e){}
+      try{ renderHomeLiunian({displayName:elName.value, birthday:elBday.value, gender:elGender.value}); }catch(e){}   // 存檔後即時更新流年
       elStatus.textContent='已儲存';
       elStatus.className='m-home-profile-status is-saved';
       setTimeout(function(){if(elStatus.textContent==='已儲存') elStatus.textContent='';},1500);

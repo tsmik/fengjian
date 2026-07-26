@@ -167,7 +167,8 @@ function _manualProgress(manualJson) {
 }
 
 // 流年參考（縮成兩行：七十五/九執/業務 ; 親族/子女/耳鼻/五官/三停）
-async function _liunianCompactHtml(gender, birthday, refDate) {
+// export：手機首頁「我的資料」卡片也共用同一套流年（m_home.js 呼叫）
+export async function liunianCompactHtml(gender, birthday, refDate) {
   try { await _ensureLiunianLoaded(); } catch (e) {}
   let g = gender || ''; if (g === 'M') g = '男'; else if (g === 'F') g = '女';
   if (g) setUserGender(g);
@@ -307,7 +308,7 @@ function _paintDashboard() {
   t.innerHTML = p.isCase ? h : '<div class="m-home" style="padding:16px 14px">' + h + '</div>';
 
   // 流年 async（render 後可能已換人 → 比對 p）
-  _liunianCompactHtml(p.gender, p.birthday, p.isCase ? (p.createDate || null) : null).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
+  liunianCompactHtml(p.gender, p.birthday, p.isCase ? (p.createDate || null) : null).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
   // wire
   const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
   const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
