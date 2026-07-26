@@ -10,6 +10,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc, writeBatch }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { AGG_FIXED } from './engine.js';
+import { diffRuleSets } from './ruleset_diff.js';
 
 const PAIRED = window.PAIRED_MAP || {};
 const pairedOf = id => !!PAIRED[id];
@@ -921,6 +922,110 @@ async function setActiveFromEditor() {
   } catch (e) { alert('設上線失敗：' + (e.code || e.message)); }
 }
 
+// ---------- 發布到正式站（測試站 staging → 正式站 rbf2app，含自動紅點）----------
+// 只在測試站/localhost 顯示;正式站(prod)本身不需此鈕。用第二個 firebase app 連 prod,
+// 首次按會跳 Google 登入(同帳號)授權寫 prod;之後 persistence 記住免再登。
+let _prodApp = null, _prodAuth = null, _prodDb = null;
+function ensureProdApp() {
+  if (_prodApp) return;
+  _prodApp = initializeApp(RBF2_PROD, 'prod');
+  _prodAuth = getAuth(_prodApp);
+  setPersistence(_prodAuth, browserLocalPersistence).catch(() => {});
+  _prodDb = getFirestore(_prodApp);
+}
+async function prodSignIn() {
+  ensureProdApp();
+  if (_prodAuth.currentUser) return _prodAuth.currentUser;
+  const r = await signInWithPopup(_prodAuth, new GoogleAuthProvider());
+  return r.user;
+}
+// 讀某 db 某套裝內容 → { obs:{obsId:doc}, dims:{dimName:doc}, partObs:{part:[obsId]} }（給紅點比對）
+async function loadSetContentFrom(database, setId) {
+  const [obsSnap, dimSnap] = await Promise.all([
+    getDocs(collection(database, 'ruleSets', setId, 'observations')),
+    getDocs(collection(database, 'ruleSets', setId, 'dims')),
+  ]);
+  const obs = {}, partObs = {};
+  obsSnap.forEach(d => { const o = d.data(); const id = o.obsId || d.id; obs[id] = o; (partObs[o.part || ''] = partObs[o.part || ''] || []).push(id); });
+  const dims = {};
+  dimSnap.forEach(d => { const x = d.data(); dims[x.dimName || d.id] = x; });
+  return { obs, dims, partObs };
+}
+async function commitInChunks(database, ops) {   // ops:[{path:[...], data}]，每批 <500
+  for (let i = 0; i < ops.length; i += 400) {
+    const b = writeBatch(database);
+    ops.slice(i, i + 400).forEach(o => b.set(doc(database, ...o.path), o.data));
+    await b.commit();
+  }
+}
+async function promoteToProd() {
+  if (!fbOK || !user) return alert('請先用 Google 登入');
+  if (!isStaff()) return alert('需 admin/teacher 才能發布');
+  if (isDirty()) return alert('目前有未儲存的變更，請先按「儲存」，再發布到正式站。');
+  const sa = await getDoc(doc(db, 'config', 'active'));
+  if (!sa.exists() || !sa.data().activeRuleSetId) return alert('測試站尚未設定上線套裝（請先「設為上線」）。');
+  const activeId = sa.data().activeRuleSetId;
+  if (!confirm('把測試站目前上線的內容發布到「正式站」給學員？\n\n套裝：' + activeId + '\n（會同時自動比對出紅點；學員會立刻看到新內容）')) return;
+  const btn = $('btn-promote'); const t0 = btn ? btn.textContent : '';
+  const setBtn = (txt) => { if (btn) { btn.disabled = true; btn.textContent = txt; } };
+  try {
+    setBtn('登入正式站…');
+    await prodSignIn();
+
+    setBtn('讀取內容…');
+    // 正式站現有內容(紅點的「舊」)——覆蓋前先抓
+    let oldContent = null;
+    const pa = await getDoc(doc(_prodDb, 'config', 'active'));
+    if (pa.exists() && pa.data().activeRuleSetId) {
+      try { oldContent = await loadSetContentFrom(_prodDb, pa.data().activeRuleSetId); } catch (e) {}
+    }
+    // 測試站要發布的內容(紅點的「新」＋要複製的資料)
+    const [setMain, dimsSnap, obsSnap, metaSnap, cfgActive, cfgBoard, cfgLiunian] = await Promise.all([
+      getDoc(doc(db, 'ruleSets', activeId)),
+      getDocs(collection(db, 'ruleSets', activeId, 'dims')),
+      getDocs(collection(db, 'ruleSets', activeId, 'observations')),
+      getDocs(collection(db, 'ruleSets', activeId, 'obsmeta')),
+      getDoc(doc(db, 'config', 'active')),
+      getDoc(doc(db, 'config', 'board')),
+      getDoc(doc(db, 'config', 'liunian')),
+    ]);
+
+    setBtn('寫入正式站…');
+    const ops = [];
+    if (setMain.exists()) ops.push({ path: ['ruleSets', activeId], data: setMain.data() });
+    dimsSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'dims', d.id], data: d.data() }));
+    obsSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'observations', d.id], data: d.data() }));
+    metaSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'obsmeta', d.id], data: d.data() }));
+    if (cfgActive.exists()) ops.push({ path: ['config', 'active'], data: cfgActive.data() });
+    if (cfgBoard.exists()) ops.push({ path: ['config', 'board'], data: cfgBoard.data() });
+    if (cfgLiunian.exists()) ops.push({ path: ['config', 'liunian'], data: cfgLiunian.data() });
+    await commitInChunks(_prodDb, ops);
+
+    // 紅點:比對舊 vs 新 → 寫 prod config/updateLog
+    let dotMsg = '（正式站首次發布，本次不產生紅點）';
+    if (oldContent) {
+      const newContent = { obs: {}, dims: {}, partObs: {} };
+      obsSnap.forEach(d => { const o = d.data(); const id = o.obsId || d.id; newContent.obs[id] = o; (newContent.partObs[o.part || ''] = newContent.partObs[o.part || ''] || []).push(id); });
+      dimsSnap.forEach(d => { const x = d.data(); newContent.dims[x.dimName || d.id] = x; });
+      const { updateLog, changed } = diffRuleSets(oldContent, newContent);
+      const n = Object.keys(updateLog).length;
+      if (n > 0) {
+        await setDoc(doc(_prodDb, 'config', 'updateLog'), updateLog, { merge: true });
+        dotMsg = '🔴 紅點：部位 ' + changed.parts.length + '、題目 ' + changed.qs.length + '、維度 ' + changed.dims.length +
+          (changed.parts.length ? '\n變動部位：' + changed.parts.join('、') : '') +
+          (changed.dims.length ? '\n變動維度：' + changed.dims.join('、') : '');
+      } else {
+        dotMsg = '內容與正式站相同，無新紅點。';
+      }
+    }
+    alert('✅ 已發布到正式站！學員即刻可見。\n\n' + dotMsg);
+  } catch (e) {
+    alert('發布失敗：' + (e.code || e.message) + '\n（可重按一次；資料寫入為覆蓋式，重試安全）');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t0 || '🚀 發布到正式站'; }
+  }
+}
+
 // ---------- 鍵盤導覽（Finder 欄位式：↑↓ 欄內移動、←→ 換欄、Enter/空白 動作）----------
 // 五欄：維度 / 部位 / 卡片 / 條件選項 / observations。輸入框(input/textarea/select)內不攔截，讓鍵盤正常打字。
 const NAV_COLS = [
@@ -987,6 +1092,12 @@ function boot() {
   $('btn-export-md').addEventListener('click', exportMarkdown);
   $('btn-save').addEventListener('click', saveToStaging);
   $('btn-setlive').addEventListener('click', setActiveFromEditor);
+  // 發布到正式站:只在測試站/localhost 顯示(正式站自己不需要);點擊＝staging→prod 複製+紅點
+  (function () {
+    const pb = $('btn-promote'); if (!pb) return;
+    const onProd = /(^|\.)rbf2app\.(pages\.dev|web\.app)$/.test(location.hostname);
+    if (!onProd) { pb.style.display = ''; pb.addEventListener('click', promoteToProd); }
+  })();
   $('btn-undo').addEventListener('click', undo);
   $('btn-redo').addEventListener('click', redo);
   try { axisPartFirst = localStorage.getItem('admin2_axis') === '1'; } catch (e) {}   // 還原瀏覽順序
