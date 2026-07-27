@@ -13,8 +13,13 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="人相兵法 手機版">
 <meta name="twitter:description" content="風鑑學堂 人相兵法手機版">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">
+<!-- WenKai 中文字型改「非阻塞」載入:第一次冷開時,原本 render-blocking 的 style.css(內含 @import 串 4 個子 CSS 瀑布下載)會卡住整頁首次繪製→改 media=print+onload 切回,首屏先用系統/Noto 字型即時顯示,WenKai 背景載完再自動套用 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"></noscript>
 <style>
 /* ===== 色票（沿用桌機版 + 手機版新增） ===== */
 :root{
