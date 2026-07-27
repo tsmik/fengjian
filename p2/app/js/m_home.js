@@ -13,16 +13,20 @@
 import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef, setActiveCase, refreshUserData, setSelfName } from "./m_main.js";
 import { setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
-import { liunianCompactHtml } from "./m_report.js";   // 手機首頁流年＝桌機同一套（本人以今天為基準日）
+import { ensureLiunianLoaded } from "./m_report.js";   // 載入 config/liunian（桌機手機共用同一份）
+import { getLiunianInfoFor, buildLiunianTitleHtml, buildLiunianTableHtml } from "./report.js";   // 流年比照報告設計(sans-serif 灰底 chip)
 
-// 手機首頁「我的資料」卡片流年：填入 #m-home-liunian（姓名/性別/生日缺時顯示提示）
+// 手機首頁「我的資料」卡片流年：比照報告的流年(chip 排列＋字體)，無折疊按鈕；本人以今天為基準日
 async function renderHomeLiunian(sd){
   const slot=document.getElementById('m-home-liunian');
   if(!slot) return;
   try{
-    const html=await liunianCompactHtml((sd&&sd.gender)||'', (sd&&sd.birthday)||'', null);   // 本人→今天為基準日
-    slot.innerHTML=html;   // 用 innerHTML 保留 #m-home-liunian 容器(下次刷新仍找得到)
+    await ensureLiunianLoaded();
+    let g=(sd&&sd.gender)||''; if(g==='M')g='男'; else if(g==='F')g='女';
+    const info=getLiunianInfoFor(g, (sd&&sd.birthday)||'', null);   // 本人→今天為基準日
     slot.classList.remove('m-liunian-placeholder');
+    if(!info){ slot.innerHTML='<div class="m-home-liunian-title">流年參考</div><div class="m-home-liunian-empty">填出生年月日＋性別後顯示</div>'; return; }
+    slot.innerHTML='<div class="m-home-liunian-title">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info);
   }catch(e){ debugLog&&debugLog('[Home]','流年渲染失敗',e&&e.message); }
 }
 
