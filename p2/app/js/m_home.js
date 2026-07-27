@@ -14,9 +14,9 @@ import { auth, db, debugLog, getEffectiveUid, getActiveCaseId, getCurrentDocRef,
 import { setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { OBS_PARTS_DATA, setUserName, setUserGender, setUserBirthday } from "./core.js";
 import { ensureLiunianLoaded } from "./m_report.js";   // 載入 config/liunian（桌機手機共用同一份）
-import { getLiunianInfoFor, buildLiunianTitleHtml, buildLiunianTableHtml } from "./report.js";   // 流年比照報告設計(sans-serif 灰底 chip)
+import { getLiunianInfoFor, buildLiunianTitleHtml } from "./report.js";   // 流年 chip 排列比照報告,但字體用本頁 inherit
 
-// 手機首頁「我的資料」卡片流年：比照報告的流年(chip 排列＋字體)，無折疊按鈕；本人以今天為基準日
+// 手機首頁「我的資料」卡片流年：chip 排列比照報告，字體＝上方我的資料同一套(inherit)，無折疊按鈕；本人以今天為基準日
 async function renderHomeLiunian(sd){
   const slot=document.getElementById('m-home-liunian');
   if(!slot) return;
@@ -26,7 +26,11 @@ async function renderHomeLiunian(sd){
     const info=getLiunianInfoFor(g, (sd&&sd.birthday)||'', null);   // 本人→今天為基準日
     slot.classList.remove('m-liunian-placeholder');
     if(!info){ slot.innerHTML='<div class="m-home-liunian-title">流年參考</div><div class="m-home-liunian-empty">填出生年月日＋性別後顯示</div>'; return; }
-    slot.innerHTML='<div class="m-home-liunian-title">流年參考'+buildLiunianTitleHtml(info)+'</div>'+buildLiunianTableHtml(info);
+    const ln=info.ln;
+    const items=[['七十五',(ln.name75||'')+(ln.area75?'／'+ln.area75:'')],['九執',ln.jiuzhi||''],['業務',ln.yewu||''],['親族',ln.qinzu||''],['子女',ln.zinv||''],['耳鼻',ln.erbei||''],['五官',ln.wuguan||''],['三停',ln.santing||'']];
+    // chip 樣式比照報告(灰底交錯/13px)，但不設 font-family → 繼承本頁字體(WenKai)
+    const chips=items.map((it,i)=>'<div style="background:'+(i%2===0?'#E8E4DF':'#F0EDE8')+';padding:5px 10px;border-radius:3px;font-size:13px;color:#4A4540">'+it[0]+' | '+(it[1]||'—')+'</div>').join('');
+    slot.innerHTML='<div class="m-home-liunian-title">流年參考'+buildLiunianTitleHtml(info)+'</div><div style="display:flex;gap:3px;flex-wrap:wrap">'+chips+'</div>';
   }catch(e){ debugLog&&debugLog('[Home]','流年渲染失敗',e&&e.message); }
 }
 
