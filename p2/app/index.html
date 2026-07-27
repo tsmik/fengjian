@@ -393,11 +393,16 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 .m-home-profile-save-btn{margin-top:10px;width:100%;padding:11px;border:none;border-radius:8px;background:var(--active,#C17A5A);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
 /* 緊湊排版:姓名+生日一行、性別+小儲存鈕一行;標籤在上、兩欄可壓縮(minmax 0)避免日期框撐破 */
 .m-hp-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;margin-bottom:10px}
-.m-hp-row2-end{align-items:end}
 .m-hp-field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .m-hp-field label{font-size:12px;color:#5a5048;font-weight:500}
 .m-hp-field input,.m-hp-field select{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;min-width:0}
-.m-home-profile-save-sm{margin-top:0;width:100%;padding:9px 0;font-size:15px}
+/* 生日｜儲存 這行:生日取自然寬(容 iOS 完整日期、不溢出),儲存填剩餘空間→右緣對齊性別、與生日間距=12px、與生日框同高 */
+.m-hp-birthrow{display:flex;gap:12px;align-items:stretch;margin-bottom:10px}
+.m-hp-field-bday{flex:0 1 auto;min-width:0}
+.m-hp-field-bday input{width:auto;max-width:100%}
+.m-hp-save-cell{flex:1 1 auto;min-width:0}
+.m-hp-save-cell label{visibility:hidden}
+.m-hp-save-cell .m-home-profile-save-btn{flex:1 1 auto;width:100%;margin:0;padding:0;font-size:15px;display:flex;align-items:center;justify-content:center}
 .m-home-profile-compact .m-home-profile-status{margin-top:8px}
 /* 首頁流年參考:chip 排列比照報告,字體改用上方我的資料同一套(inherit=WenKai),字級不變 */
 #m-home-liunian{margin-top:16px;padding-top:14px;border-top:1px solid #eee5d6}
@@ -2081,12 +2086,15 @@ body.m-debug-on .m-debug-clear{display:block}
             </select>
           </div>
         </div>
-        <div class="m-hp-row2 m-hp-row2-end">
-          <div class="m-hp-field">
+        <div class="m-hp-birthrow">
+          <div class="m-hp-field m-hp-field-bday">
             <label for="m-home-profile-birthday">生日</label>
             <input id="m-home-profile-birthday" type="date">
           </div>
-          <button class="m-home-profile-save-btn m-home-profile-save-sm" id="m-home-profile-save" type="button">儲存</button>
+          <div class="m-hp-field m-hp-save-cell">
+            <label aria-hidden="true">&nbsp;</label>
+            <button class="m-home-profile-save-btn m-home-profile-save-sm" id="m-home-profile-save" type="button">儲存</button>
+          </div>
         </div>
         <div class="m-home-profile-status" id="m-home-profile-status"></div>
       </div>
