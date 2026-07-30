@@ -49,5 +49,5 @@ export function onUser(cb) {
     cb(u, role);
   });
 }
-export async function login() { if (!_fbOK) throw new Error('Firebase 未初始化'); await signInWithPopup(auth, new GoogleAuthProvider()); }
+export async function login() { if (!_fbOK) throw new Error('Firebase 未初始化'); const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); await signInWithPopup(auth, p); }
 export async function logout() { if (auth) await signOut(auth); }

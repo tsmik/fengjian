@@ -596,6 +596,7 @@ document.getElementById('m-login-btn').addEventListener('click',async function()
   elLogin.classList.add('is-loading');
   try{
     const provider=new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' }); // 每次登入都跳帳號選擇(登出後可換帳號)
     debugLog('[Auth]','開始 signInWithPopup');
     const result=await signInWithPopup(auth,provider);
     debugLog('[Auth]','signInWithPopup 成功，user =',result.user.email||result.user.uid);
