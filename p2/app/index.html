@@ -309,6 +309,8 @@ body.m-staging-mode .m-nav-title{color:#C17A5A}
 /* cp 系統計算 tab：m_input 內部凍結列原本預留給自家 segmented(約39px,cp內已隱藏) 的偏移歸零＋去掉容器頂部內距
    → 部位chips列/維度標題列/辣度列 上滑凍結時緊貼第二行子tab（要調整凍結位置改這裡） */
 #m-cp-body.m-cp-system{padding-top:0}
+/* 手動評分同樣去掉容器頂部內距:否則那 16px 縫在姓名吸頂列與 tab 間漏出捲動中的表格(且姓名列與 tab 貼更密) */
+#m-cp-body.m-cp-manual{padding-top:0}
 #m-cp-body.m-cp-system .m-obs-spice-sticky{top:0}
 #m-cp-body.m-cp-system .m-sv-dimhead{top:0}
 #m-cp-body.m-cp-system .m-dimv:not(.m-partv) .m-partv-partgrid{top:49px}
