@@ -1799,6 +1799,13 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-rep-edit-hint{display:none}
 }
 
+/* iPad 等觸控裝置的「桌機寬度」(如橫放 ≥1024)：流年不強制展開，恢復「流年▼」鈕可收合，
+   避免流年八格攤開破版。真桌機(滑鼠 pointer:fine)不受影響、維持恆顯示。 */
+@media (min-width:1024px) and (pointer:coarse){
+  .m-rep-ln-toggle{display:inline-flex}
+  .m-rep-liunian-wrap[hidden]{display:none}
+}
+
 /* ===== Debug 面板（v1.7 階段 18 production 隱藏，保留 code 給未來 debug 用：JS 仍跑 debugLog 到 console）===== */
 .m-debug-toggle,
 .m-debug-panel,
