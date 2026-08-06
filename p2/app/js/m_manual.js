@@ -38,6 +38,7 @@ import { setSaveStatus, getSaveStatus, ensureDimRulesLoaded } from './m_input.js
 import { updateHomeProgress } from './m_home.js';
 import { renderManualSens } from './m_sens.js';
 import { mountBoard, unmountBoard } from './m_board.js';
+import { mountCondmap, unmountCondmap } from './m_condmap.js';
 import { setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const LS_DIM_IDX = 'm_manual_dim_idx';
@@ -55,6 +56,7 @@ const SUBMODES = [
   { key: 'board',    label: '① 課程' },
   { key: 'input',    label: '② 自我評分' },
   { key: 'overview', label: '③ 兵法報告' },
+  { key: 'condmap',  label: '④ 條件總覽' },
 ];
 let _manualDraft = null;
 let _firestoreBaseline = null;
@@ -129,7 +131,7 @@ export function mountManual(container) {
   _manualSubview = 'board';
   try {
     const once = localStorage.getItem('m_manual_view_once');
-    if (once === 'board' || once === 'input' || once === 'overview' || once === 'sens') {
+    if (once === 'board' || once === 'input' || once === 'overview' || once === 'sens' || once === 'condmap') {
       _manualSubview = once;
       localStorage.removeItem('m_manual_view_once');
     }
@@ -185,6 +187,7 @@ export function mountManual(container) {
 
 export function unmountManual() {
   try { unmountBoard(); } catch (e) {}
+  try { unmountCondmap(); } catch (e) {}
   if (_container) _container.innerHTML = '';
   _container = null;
 }
@@ -199,6 +202,7 @@ export function setManualView(key) {
   const prev = _manualSubview;
   _manualSubview = key;
   if (prev === 'board' && key !== 'board') { try { unmountBoard(); } catch (e) {} }
+  if (prev === 'condmap' && key !== 'condmap') { try { unmountCondmap(); } catch (e) {} }
   try { localStorage.setItem(LS_VIEW, key); } catch (e) {}
   _render();
 }
@@ -261,7 +265,7 @@ function _render() {
   if (!_container) return;
   // sens / board view 隱藏手動儲存按鈕（board 自己 debounce 存筆記）；其他 view 顯示
   const saveZone = document.getElementById('m-save-zone');
-  if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens' || _manualSubview === 'board');
+  if (saveZone) saveZone.classList.toggle('is-hidden', _manualSubview === 'sens' || _manualSubview === 'board' || _manualSubview === 'condmap');
   // #1：重畫前後保留捲動位置 → 點任何鈕（形/勢、符合/不符…）畫面都不會跳動
   const _scroller = (_container.closest && _container.closest('.m-main')) || document.querySelector('.m-main');
   const _keepTop = _scroller ? _scroller.scrollTop : 0;
@@ -271,6 +275,10 @@ function _render() {
   if (_manualSubview === 'board') {
     const mount = _container.querySelector('#m-board-mount');
     if (mount) mountBoard(mount);
+  }
+  if (_manualSubview === 'condmap') {
+    const mount = _container.querySelector('#m-condmap-mount');
+    if (mount) mountCondmap(mount);
   }
   // 兵法報告(overview) → 浮動筆記；其餘子畫面收起
   try { if (_manualSubview === 'overview') showReportNote(); else hideReportNote(); } catch (e) {}
@@ -305,6 +313,8 @@ function _renderManualInput() {
   let body;
   if (_manualSubview === 'board') {
     body = `<div id="m-board-mount"></div>`;
+  } else if (_manualSubview === 'condmap') {
+    body = `<div id="m-condmap-mount"></div>`;
   } else if (_manualSubview === 'sens') {
     body = `<div class="m-sens-body">${renderManualSens(_manualDraft)}</div>`;
   } else if (_manualSubview === 'overview') {

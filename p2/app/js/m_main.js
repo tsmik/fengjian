@@ -33,7 +33,7 @@ function renderManualSubnav() {
   const host = document.getElementById('m-tabsub-manual');
   if (!host) return;
   if (!_subExpanded.manual) { host.innerHTML = ''; return; }
-  const items = [{ key: 'board', label: '課程' }, { key: 'input', label: '自我評分' }, { key: 'overview', label: '兵法報告' }];
+  const items = [{ key: 'board', label: '課程' }, { key: 'input', label: '自我評分' }, { key: 'overview', label: '兵法報告' }, { key: 'condmap', label: '條件總覽' }];
   let cur = 'board';
   try { cur = getManualView() || 'board'; } catch (e) {}
   host.innerHTML = items.map(it => `<button class="m-tabsub-item ${it.key === cur ? 'active' : ''}" data-msub="${it.key}">${it.label}</button>`).join('');

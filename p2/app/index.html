@@ -670,6 +670,43 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
 .m-obs-report .m-manual-fullreport td[data-mrcell]{cursor:default!important}
 @media(hover:hover){.m-obs-report .m-manual-fullreport td[data-mrcell]:hover{outline:none}}
 .m-score-view,.m-score-view *{font-weight:400}
+/* ===== 條件總覽（m_condmap.js）：13維×部位 唯讀對照大表 ===== */
+.m-cm-hint{margin:2px 4px 10px;padding:8px 10px;background:var(--pre-bg);border:1px solid var(--border);border-radius:8px;font-size:12.5px;line-height:1.6;color:var(--text-2)}
+.m-cm-hint b{color:var(--accent);font-weight:600}
+.m-cm-wrap{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:10px;max-height:calc(100vh - var(--nav-h) - 150px);background:var(--bg)}
+.m-cm-table{border-collapse:separate;border-spacing:0;font-size:12.5px;color:var(--text);table-layout:fixed}
+.m-cm-table th,.m-cm-table td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);vertical-align:top}
+/* 表頭：13 維度（sticky top）*/
+.m-cm-table thead th{position:sticky;top:0;z-index:3;background:var(--sidebar)}
+.m-cm-dh{min-width:118px;width:118px;padding:6px 5px;text-align:center;border-top:3px solid var(--dc);background:var(--db)!important}
+.m-cm-dn{display:block;font-size:14px;font-weight:600;color:var(--dc)}
+.m-cm-dv{display:block;font-size:10.5px;color:var(--text-3);margin-top:1px}
+/* 左欄：部位（sticky left）*/
+.m-cm-corner{position:sticky;left:0;top:0;z-index:5;width:88px;min-width:88px;background:var(--nav)!important;color:#fff;padding:6px;text-align:center;font-size:11.5px;line-height:1.4}
+.m-cm-part{position:sticky;left:0;z-index:2;width:88px;min-width:88px;background:var(--sidebar);padding:7px 6px;text-align:center}
+.m-cm-pn{display:block;font-size:14px;font-weight:600;color:var(--text)}
+.m-cm-part.is-ref{background:var(--luck-bg)}
+.m-cm-psub{display:block;font-size:10px;color:var(--luck-fc);margin-top:2px;line-height:1.35}
+/* 分區帶 */
+.m-cm-band{position:sticky;left:0;z-index:2;background:var(--nav);color:#f0e8d8;font-size:11px;letter-spacing:1px;padding:3px 6px;text-align:center}
+.m-cm-bandfill{background:var(--nav)}
+.m-cm-bandrow th,.m-cm-bandrow td{border-bottom:1px solid var(--nav)}
+/* 資料格 */
+.m-cm-cell{padding:5px 5px;background:#fff}
+.m-cm-cell.is-empty{background:var(--zebra)}
+.m-cm-cell.is-ref{background:var(--luck-bg);text-align:center}
+.m-cm-refnote{display:inline-block;margin-top:4px;font-size:11px;color:var(--luck-fc);opacity:.8}
+.m-cm-row:nth-child(even) .m-cm-cell{background:#fbf9f4}
+.m-cm-row:nth-child(even) .m-cm-part{background:#e2d9c1}
+.m-cm-card{margin-bottom:3px}
+.m-cm-card:last-child{margin-bottom:0}
+.m-cm-chip{display:block;width:100%;text-align:left;padding:3px 6px;background:var(--hover);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;line-height:1.4;color:var(--text-2);cursor:pointer}
+.m-cm-chip .m-cm-caret{float:right;color:var(--text-3);transition:transform .15s}
+.m-cm-chip.is-open{background:var(--pre-bg);border-color:var(--pre-fc);color:var(--pre-fc)}
+.m-cm-chip.is-open .m-cm-caret{transform:rotate(90deg)}
+.m-cm-chip.is-flat{background:transparent;border-color:transparent;cursor:default}
+.m-cm-detail{margin:3px 2px 5px;padding:4px 7px;background:var(--zebra);border-left:2px solid var(--gold);border-radius:0 5px 5px 0;font-size:11px;line-height:1.55;color:var(--text-3)}
+@media(hover:hover){.m-cm-chip:not(.is-flat):hover{border-color:var(--pre-fc)}}
 .m-sv-dimlist{margin-bottom:12px}
 .m-sv-dimrow{display:flex;gap:6px;margin-bottom:6px}
 .m-sv-dim{position:relative;flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;min-height:38px;padding:5px 3px;background:#fff;border:1.5px solid #e3dccb;border-radius:10px;font-family:inherit;font-size:15px;color:#5a5147;cursor:pointer;border-top-width:3px}
