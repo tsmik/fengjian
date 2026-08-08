@@ -810,7 +810,15 @@ function _mrcTipHtml(di, pi) {
   const dd = DIM_RULES[di] || {};
   let posChar = dd.positive;   // P1 舊欄位＝極字
   if (!posChar && DIMS[di]) { const pt = dd.positiveType; posChar = pt ? (DIMS[di].aT === pt ? DIMS[di].a : DIMS[di].b) : ''; }
-  const groups = _partGroups(di, pi);
+  // ⚠️P2 規則＝卡片格式 parts[部位].cards[].label（_partGroups 只認 P1 舊 node.group,對 P2 永遠空）
+  const part = dd.parts && dd.parts[PART_LABELS[pi]];
+  const cards = (part && Array.isArray(part.cards)) ? part.cards : [];
+  const cardLabels = cards.map(c => (c.label || '').trim()).filter(Boolean);
+  if (cardLabels.length) {
+    return '<div class="m-mrc-tip-title">全部符合為 ' + _esc(posChar || '') + '</div>'
+      + cardLabels.map(lb => '<div class="m-mrc-tip-item">' + _esc(lb) + '</div>').join('');
+  }
+  const groups = _partGroups(di, pi);   // P1 舊格式規則（保險退路）
   if (groups.length) {
     return '<div class="m-mrc-tip-title">全部符合為 ' + _esc(posChar || '') + '</div>'
       + groups.map(g => '<div class="m-mrc-tip-item">' + _esc(g.label) + '</div>').join('');
