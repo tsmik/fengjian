@@ -814,7 +814,8 @@ function _mrcTipHtml(di, pi) {
   //   眉×2＋眼×2＋鼻＋顴×2
   //   4個(含)以上為經 → 中停為經
   //   [眉] 條件…（組成與門檻動態讀 engine AGG_FIXED,與計算永遠一致）
-  const AGG_SUBS = { 0: ['頂骨', '枕骨', '華陽骨'], 2: ['眉', '眼', '鼻', '顴'], 3: ['口', '人中', '地閣', '頤'] };
+  // 只列「表上沒有自己列」的子部位（眉/眼/鼻/口 各自的列 hover 就有,不重複）
+  const AGG_SUBS = { 0: ['頂骨', '枕骨', '華陽骨'], 2: ['顴'], 3: ['人中', '地閣', '頤'] };
   if (AGG_SUBS[pi] && dd.parts) {
     const aggName = PART_LABELS[pi];
     const agg = AGG_FIXED[aggName] || null;
