@@ -1581,9 +1581,11 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-fc-pre{background:rgba(142,75,80,.13)}  .m-fc-pre i{color:#8E4B50}
   .m-fc-luck{background:rgba(84,109,119,.13)}.m-fc-luck i{color:#546D77}
   .m-fc-post{background:rgba(121,113,129,.13)}.m-fc-post i{color:#797181}
-  /* 選中個案卡片右上角「打開」鈕（span 假按鈕：卡片本身已是 button，不可巢狀 button） */
-  .m-finder-card-open{position:absolute;top:10px;right:10px;background:#3a3228;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px;line-height:1.4;cursor:pointer}
-  .m-finder-card-open:hover{background:#5a4f40}
+  /* 選中個案卡片「打開」鈕（span 假按鈕：卡片本身已是 button，不可巢狀 button）：
+     圓角框、固定右下角；卡片統一加底部留白（高度稍高）→ 按鈕位置固定不擠內容 */
+  .m-finder-card{padding-bottom:44px}
+  .m-finder-card-open{position:absolute;bottom:10px;right:10px;background:#fff;color:#3a3228;border:1px solid #c9ba9e;font-size:12px;font-weight:600;padding:5px 14px;border-radius:9px;line-height:1.4;cursor:pointer}
+  .m-finder-card-open:hover{background:#f3eee4;border-color:#a8946f}
   .m-finder-pv-actions4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
   .m-finder-act{font-family:inherit;font-size:13px;padding:10px 4px;border-radius:9px;border:1px solid #d3c7b1;background:#fff;color:#3a3228;cursor:pointer;white-space:nowrap}
   .m-finder-act:hover{background:#f3eee4}
