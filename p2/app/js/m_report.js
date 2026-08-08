@@ -235,6 +235,26 @@ function _dashReportBlock(kind, matrix, pct, showSens) {
     + '</div>';
 }
 
+// 主頁小卡「自動報告」＝即時用 obsJson＋現行規則重算，取代讀存檔 dataJson 快照
+// （否則 admin 改規則後，小卡仍顯示上次儲存時算好的舊快照）。async 確保規則載入 →
+// 算完存 p._autoLive 快取 → 重繪一次；無 obsJson 或失敗則沿用存檔快照。快取旗標防無限重繪。
+async function _ensureDashAutoLive(p) {
+  if (!p || !p.obsJson || p._autoLive || p._autoLivePending) return;
+  p._autoLivePending = true;
+  try {
+    await ensureDimRulesLoaded();
+    setObsData(JSON.parse(p.obsJson));
+    recalcFromObs();
+    p._autoLive = data.map((r) => r.slice());   // 複製，避免之後其他重算覆蓋
+  } catch (e) {
+    debugLog('[m_report]', '小卡即時重算失敗，沿用存檔快照', e && e.message);
+    p._autoLive = null;
+  } finally {
+    p._autoLivePending = false;
+    if (_dashPerson === p && p._autoLive) _paintDashboard();   // 有算出結果才重繪（避免無限循環）
+  }
+}
+
 // ---- 儀表板（本人 / 個案共用版型）----
 function _paintDashboard() {
   const p = _dashPerson, t = _dashTarget;
@@ -294,8 +314,10 @@ function _paintDashboard() {
   // 桌機個案走側欄工作區（無 sens 子畫面），隱藏參數分析鈕避免誤跳回本人
   // 個案專屬頁(cp)模式：報告區塊不畫（報告改由 手動輸入報告/系統計算報告 tab 承接）
   const showSens = !(p.isCase && isDesktopSidebar());
+  // 自動報告小卡：即時重算結果(p._autoLive)優先；尚未算好前先用存檔 dataJson 快照墊著
+  const autoMatrix = p._autoLive || _parseMatrix(p.dataJson);
   const right = _dashCpMode ? '' : (_dashReportBlock('manual', _parseMatrix(p.manualJson), man.pct, showSens)
-              + _dashReportBlock('auto', _parseMatrix(p.dataJson), obs.pct, showSens));
+              + _dashReportBlock('auto', autoMatrix, obs.pct, showSens));
 
   // 三大區塊：左(姓名/基本資料/流年，人物色外框) ｜ 右(兩報告上下排)；窄螢幕自動單欄
   let h = '<div class="m-dash2">'
@@ -309,6 +331,8 @@ function _paintDashboard() {
 
   // 流年 async（render 後可能已換人 → 比對 p）
   liunianCompactHtml(p.gender, p.birthday, p.isCase ? (p.createDate || null) : null).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
+  // 自動報告小卡 async 即時重算（算完會重繪一次；_dashCpMode 不畫報告區塊則免算）
+  if (!_dashCpMode) _ensureDashAutoLive(p);
   // wire
   const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
   const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
