@@ -235,23 +235,23 @@ function _dashReportBlock(kind, matrix, pct, showSens) {
     + '</div>';
 }
 
-// 主頁小卡「自動報告」＝即時用 obsJson＋現行規則重算，取代讀存檔 dataJson 快照
-// （否則 admin 改規則後，小卡仍顯示上次儲存時算好的舊快照）。async 確保規則載入 →
-// 算完存 p._autoLive 快取 → 重繪一次；無 obsJson 或失敗則沿用存檔快照。快取旗標防無限重繪。
-async function _ensureDashAutoLive(p) {
-  if (!p || !p.obsJson || p._autoLive || p._autoLivePending) return;
-  p._autoLivePending = true;
+// 通用：把 obj.obsJson 用「現行規則」即時重算成 13×9 A/B 矩陣，存 obj._autoLive 快取，算好呼叫 repaint()。
+// 取代讀存檔 dataJson 快照（admin 改規則後快照不會更新）。async 確保規則載入；旗標防重複/無限重繪；
+// 無 obsJson 或失敗 → 不設 _autoLive，畫面沿用存檔快照。共用給主頁小卡 + 個案管理預覽係數。
+async function _ensureAutoLive(obj, repaint) {
+  if (!obj || !obj.obsJson || obj._autoLive || obj._autoLivePending) return;
+  obj._autoLivePending = true;
   try {
     await ensureDimRulesLoaded();
-    setObsData(JSON.parse(p.obsJson));
+    setObsData(JSON.parse(obj.obsJson));
     recalcFromObs();
-    p._autoLive = data.map((r) => r.slice());   // 複製，避免之後其他重算覆蓋
+    obj._autoLive = data.map((r) => r.slice());   // 複製，避免之後其他重算覆蓋
   } catch (e) {
-    debugLog('[m_report]', '小卡即時重算失敗，沿用存檔快照', e && e.message);
-    p._autoLive = null;
+    debugLog('[m_report]', '即時重算失敗，沿用存檔快照', e && e.message);
+    obj._autoLive = null;
   } finally {
-    p._autoLivePending = false;
-    if (_dashPerson === p && p._autoLive) _paintDashboard();   // 有算出結果才重繪（避免無限循環）
+    obj._autoLivePending = false;
+    if (obj._autoLive && typeof repaint === 'function') repaint();   // 有算出結果才重繪（避免無限循環）
   }
 }
 
@@ -332,7 +332,7 @@ function _paintDashboard() {
   // 流年 async（render 後可能已換人 → 比對 p）
   liunianCompactHtml(p.gender, p.birthday, p.isCase ? (p.createDate || null) : null).then((html) => { if (_dashPerson !== p) return; const slot = t.querySelector('#m-dash-liunian'); if (slot) slot.outerHTML = html; });
   // 自動報告小卡 async 即時重算（算完會重繪一次；_dashCpMode 不畫報告區塊則免算）
-  if (!_dashCpMode) _ensureDashAutoLive(p);
+  if (!_dashCpMode) _ensureAutoLive(p, () => { if (_dashPerson === p) _paintDashboard(); });
   // wire
   const editBtn = t.querySelector('#m-dash-edit'); if (editBtn) editBtn.onclick = () => { _detailSelColor = p.color; _dashEdit = true; _paintDashboard(); };
   const cancelBtn = t.querySelector('#m-dash-cancel'); if (cancelBtn) cancelBtn.onclick = () => { _dashEdit = false; _paintDashboard(); };
@@ -1164,7 +1164,9 @@ function _renderFinderCol3() {
   _finderEditColor = _finderColor(c);
   const editing = _finderEditing;
   const man = _coeffSet(_parseMatrix(c.manualDataJson));
-  const obs = _coeffSet(_parseMatrix(c.dataJson));
+  // 觀察(自動)係數：即時重算優先(c._autoLive)，尚未算好前先用存檔 dataJson 快照墊著
+  const obs = _coeffSet(c._autoLive || _parseMatrix(c.dataJson));
+  _ensureAutoLive(c, () => { if (_finderCaseId === c.id) _renderFinderCol3(); });
   const createD = _finderCreateDateStr(c);
   const coeffRow = (label, s) => '<div class="m-finder-coeff-row"><span class="m-finder-coeff-src">' + label + '</span>'
     + '<span class="m-finder-coeff-cell"><b>' + (s ? s.tot : '--') + '</b><i>總</i></span>'
