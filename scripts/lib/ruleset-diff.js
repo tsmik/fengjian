@@ -6,24 +6,32 @@
 //   dim_{維度名}        維度規則層
 // node 可單測（無 firebase 依賴）。
 
+// ⚠️ Firestore 讀回的物件 key 順序不保證(兩專案可不同)。簽章前先深度排序,
+// 否則值相同、順序不同會誤判「變了」→ 發布時滿版假紅點(2026-08-08 實測:69 鍵只有 1 個真變動)。
+function sortDeep(x) {
+  if (Array.isArray(x)) return x.map(sortDeep);
+  if (x && typeof x === 'object') { const o = {}; Object.keys(x).sort().forEach(k => { o[k] = sortDeep(x[k]); }); return o; }
+  return x;
+}
+
 // 題目「內容簽章」:這些欄位任一改了 → 算「這題變了」
 function qSig(o) {
   o = o || {};
-  return JSON.stringify({
+  return JSON.stringify(sortDeep({
     label: o.label || '',
     section: o.section || '',
     paired: !!o.paired,
     options: o.options || [],
     optionHints: o.optionHints || {},
     note: o.note || ''
-  });
+  }));
 }
 
 // 維度「內容簽章」:除身分欄位(index/name),其餘(規則 parts、極性設定…)有變就算變
 function dimSig(d) {
   const c = Object.assign({}, d || {});
   delete c.dimIndex; delete c.dimName;
-  return JSON.stringify(c);
+  return JSON.stringify(sortDeep(c));
 }
 
 // oldC / newC 皆為 { obs:{obsId:doc}, dims:{dimName:doc}, partObs:{part:[obsId...]} }

@@ -3,17 +3,24 @@
 // 供 admin2「發布到正式站」按鈕在瀏覽器內算紅點;key 形狀比照前台 m_badge.js/m_input.js:
 //   part_{部位} / q_{部位}_{obsId}(前台 q.id=obsId) / dim_{維度名}
 
+// ⚠️ Firestore 讀回的物件 key 順序不保證(兩專案可不同)。簽章前先深度排序,
+// 否則值相同、順序不同會誤判「變了」→ 發布時滿版假紅點(2026-08-08 實測:69 鍵只有 1 個真變動)。
+function sortDeep(x) {
+  if (Array.isArray(x)) return x.map(sortDeep);
+  if (x && typeof x === 'object') { const o = {}; Object.keys(x).sort().forEach(k => { o[k] = sortDeep(x[k]); }); return o; }
+  return x;
+}
 function qSig(o) {
   o = o || {};
-  return JSON.stringify({
+  return JSON.stringify(sortDeep({
     label: o.label || '', section: o.section || '', paired: !!o.paired,
     options: o.options || [], optionHints: o.optionHints || {}, note: o.note || ''
-  });
+  }));
 }
 function dimSig(d) {
   const c = Object.assign({}, d || {});
   delete c.dimIndex; delete c.dimName;
-  return JSON.stringify(c);
+  return JSON.stringify(sortDeep(c));
 }
 
 // oldC / newC = { obs:{obsId:doc}, dims:{dimName:doc}, partObs:{part:[obsId...]} }
