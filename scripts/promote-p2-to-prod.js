@@ -60,7 +60,18 @@ async function main() {
 
   console.log('📋 複製 config/*...');
   for (const docId of ['active', 'board', 'liunian']) {
-    await copyDoc(stagingDb.doc(`config/${docId}`), prodDb.doc(`config/${docId}`));
+    if (docId === 'active') {
+      // ⚠️ config/active.updatedAt 一律換成「發布當下」：前台規則快取鎖＝套裝id+updatedAt,
+      // 在原上線套裝內改規則(id不變)若沿用舊 updatedAt,學員瀏覽器會繼續用舊快取規則算,報告不更新。
+      // 每次發布都 bump → 保證學員重抓新規則。(2026-08-08 修)
+      const snap = await stagingDb.doc('config/active').get();
+      if (!snap.exists) { console.log('  ⚠️ staging config/active 不存在,略過'); continue; }
+      const now = new Date().toISOString();
+      await prodDb.doc('config/active').set({ ...snap.data(), updatedAt: now });
+      console.log(`  ✅ config/active (updatedAt→${now}) → prod`);
+    } else {
+      await copyDoc(stagingDb.doc(`config/${docId}`), prodDb.doc(`config/${docId}`));
+    }
   }
 
   console.log(`📋 複製 ruleSets/${activeId} 主文件...`);

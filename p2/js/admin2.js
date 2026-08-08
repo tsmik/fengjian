@@ -996,7 +996,10 @@ async function promoteToProd() {
     dimsSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'dims', d.id], data: d.data() }));
     obsSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'observations', d.id], data: d.data() }));
     metaSnap.forEach(d => ops.push({ path: ['ruleSets', activeId, 'obsmeta', d.id], data: d.data() }));
-    if (cfgActive.exists()) ops.push({ path: ['config', 'active'], data: cfgActive.data() });
+    // ⚠️ config/active.updatedAt 一律換成「發布當下」：前台規則快取鎖＝套裝id+updatedAt,
+    // 在原上線套裝內改規則(id不變)若沿用舊 updatedAt,學員瀏覽器會繼續用舊快取規則算,報告不更新。
+    // 每次發布都 bump → 保證學員重抓新規則。(2026-08-08 修:改規則發布後報告不重算的根因)
+    if (cfgActive.exists()) ops.push({ path: ['config', 'active'], data: { ...cfgActive.data(), updatedAt: new Date().toISOString() } });
     if (cfgBoard.exists()) ops.push({ path: ['config', 'board'], data: cfgBoard.data() });
     if (cfgLiunian.exists()) ops.push({ path: ['config', 'liunian'], data: cfgLiunian.data() });
     await commitInChunks(_prodDb, ops);
