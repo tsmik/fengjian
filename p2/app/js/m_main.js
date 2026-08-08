@@ -362,15 +362,13 @@ function _renderWorkspace() {
   if (!_wsCase) { host.innerHTML = ''; host.style.display = 'none'; host.style.background = ''; return; }
   host.style.display = '';
   host.style.background = '';  // 這一區不放底色
-  // 三個並列項：基本資料 / 手動評分 / 快速報告（快速報告選中時展開子項），比照手機三 tab（Mike 2026-07-20）
+  // 三個並列項：基本資料 / 手動評分 / 快速報告。快速報告子項常駐展開不收合（Mike 2026-08-08）
   const cur = _wsSub;
   const isFast = (cur === 'obs' || cur === 'obs-dim' || cur === 'obs-report');
   const item = function (key, label, extraCls) {
     return '<button class="m-ws-item' + (cur === key ? ' active' : '') + (extraCls || '') + '" data-ws="' + key + '">' + _wsEsc(label) + '</button>';
   };
-  const fastSubs = isFast
-    ? '<div class="m-ws-subwrap">' + item('obs', '部位觀察') + item('obs-dim', '依維度填寫') + item('obs-report', '兵法報告') + '</div>'
-    : '';
+  const fastSubs = '<div class="m-ws-subwrap">' + item('obs', '部位觀察') + item('obs-dim', '依維度填寫') + item('obs-report', '兵法報告') + '</div>';
   const items = item('basic', '基本資料')
     + item('manual-report', '手動評分')
     + '<button class="m-ws-item m-ws-fast' + (isFast ? ' active' : '') + '" data-ws="obs">快速報告</button>'
