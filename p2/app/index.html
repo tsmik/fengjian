@@ -1581,6 +1581,11 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-fc-pre{background:rgba(142,75,80,.13)}  .m-fc-pre i{color:#8E4B50}
   .m-fc-luck{background:rgba(84,109,119,.13)}.m-fc-luck i{color:#546D77}
   .m-fc-post{background:rgba(121,113,129,.13)}.m-fc-post i{color:#797181}
+  /* 手動評分表格 hover 條件提示框（跟著游標、fixed 定位、不擋滑鼠事件） */
+  .m-mrc-tip{position:fixed;display:none;z-index:9999;background:#3a3228;color:#fff;font-size:12px;line-height:1.7;padding:8px 12px;border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none;max-width:240px}
+  .m-mrc-tip-title{font-weight:700;margin-bottom:3px;color:#f0e6d2}
+  .m-mrc-tip-group{font-weight:600;margin-top:4px;color:#e8dcc0}
+  .m-mrc-tip-item{white-space:normal}
   /* 選中個案卡片「打開」鈕（span 假按鈕：卡片本身已是 button，不可巢狀 button）：
      圓角框、固定右下角；卡片統一加底部留白（高度稍高）→ 按鈕位置固定不擠內容 */
   .m-finder-card{padding-bottom:44px}

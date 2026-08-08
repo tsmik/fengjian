@@ -788,6 +788,42 @@ function _condResultOf(di, pi) {
   return (res.result === 'positive') ? (posIsA ? 'A' : 'B') : (posIsA ? 'B' : 'A');
 }
 
+// ===== 手動評分表格 hover 條件提示（Mike 2026-08-08）=====
+// 游標移到 維度×部位 的兩極格（如 形×耳/勢×耳）→ 浮出同一個小框：
+// 「全部符合為 {正極字}」＋該格條件清單（來源＝_partGroups＝admin2 規則卡片標籤）。
+// 葉部位用 master 規則組；頭/中停/下停 退回 _localCondSpec 參考條件；都沒有→不顯示。
+let _mrcTipEl = null;
+function _mrcTipShow(html, x, y) {
+  if (!_mrcTipEl) { _mrcTipEl = document.createElement('div'); _mrcTipEl.className = 'm-mrc-tip'; document.body.appendChild(_mrcTipEl); }
+  _mrcTipEl.innerHTML = html;
+  _mrcTipEl.style.display = 'block';
+  const pad = 12, vw = window.innerWidth, vh = window.innerHeight;
+  const r = _mrcTipEl.getBoundingClientRect();
+  let left = x + pad, top = y + pad;
+  if (left + r.width > vw - 8) left = Math.max(8, x - r.width - pad);
+  if (top + r.height > vh - 8) top = Math.max(8, y - r.height - pad);
+  _mrcTipEl.style.left = left + 'px'; _mrcTipEl.style.top = top + 'px';
+}
+function _mrcTipHide() { if (_mrcTipEl) _mrcTipEl.style.display = 'none'; }
+document.addEventListener('scroll', _mrcTipHide, true);   // 捲動就收（fixed 定位不跟捲）
+function _mrcTipHtml(di, pi) {
+  const dd = DIM_RULES[di] || {};
+  let posChar = dd.positive;   // P1 舊欄位＝極字
+  if (!posChar && DIMS[di]) { const pt = dd.positiveType; posChar = pt ? (DIMS[di].aT === pt ? DIMS[di].a : DIMS[di].b) : ''; }
+  const groups = _partGroups(di, pi);
+  if (groups.length) {
+    return '<div class="m-mrc-tip-title">全部符合為 ' + _esc(posChar || '') + '</div>'
+      + groups.map(g => '<div class="m-mrc-tip-item">' + _esc(g.label) + '</div>').join('');
+  }
+  const local = _localCondSpec(di, pi);
+  if (local && local.groups && local.groups.length) {
+    return '<div class="m-mrc-tip-title">條件參考' + (local.posChar ? '（符合為 ' + _esc(local.posChar) + '）' : '') + '</div>'
+      + local.groups.map(g => '<div class="m-mrc-tip-group">' + _esc(g.name) + '</div>'
+        + (g.crits || []).map(c => '<div class="m-mrc-tip-item">' + _esc(c) + '</div>').join('')).join('');
+  }
+  return '';
+}
+
 function _renderManualRow(di, pi) {
   const dim = DIMS[di];
   const v = _manualDraft[di][pi];
@@ -1265,8 +1301,16 @@ function _bindEvents() {
   });
   // 兵法報告表格：點維度格 → 循環 未填→A(形/靜)→B(勢/動)→未填；改的是同一份 _manualDraft，故自我評分同步
   _container.querySelectorAll('[data-mrcell]').forEach(cell => {
+    // hover 條件提示：同一 維度×部位 的左右兩格共用同一份內容
+    cell.addEventListener('mouseenter', (e) => {
+      const seg = cell.dataset.mrcell.split('_');
+      const html = _mrcTipHtml(parseInt(seg[0], 10), parseInt(seg[1], 10));
+      if (html) _mrcTipShow(html, e.clientX, e.clientY);
+    });
+    cell.addEventListener('mouseleave', _mrcTipHide);
     cell.addEventListener('click', (e) => {
       e.stopPropagation();
+      _mrcTipHide();   // 點擊會重繪表格,格子換新 DOM 不會觸發 mouseleave → 手動收
       const seg = cell.dataset.mrcell.split('_');
       const di = parseInt(seg[0], 10), pi = parseInt(seg[1], 10), side = seg[2] || 'L';
       // 單格勾選（Mike 2026-07-10）：點左格＝選左字(勾選)、再點＝取消；點右格同理（取代舊的 A→B→取消 三段循環）
