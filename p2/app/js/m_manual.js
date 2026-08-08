@@ -810,16 +810,32 @@ function _mrcTipHtml(di, pi) {
   const dd = DIM_RULES[di] || {};
   let posChar = dd.positive;   // P1 舊欄位＝極字
   if (!posChar && DIMS[di]) { const pt = dd.positiveType; posChar = pt ? (DIMS[di].aT === pt ? DIMS[di].a : DIMS[di].b) : ''; }
-  // 聚合列(頭/中停/下停)＝列出關聯子部位各自的條件卡細節（Mike 2026-08-08）
+  // 聚合列(頭/中停/下停)：公式＋門檻＋各子部位條件卡細節（Mike 2026-08-08 定版式）
+  //   眉×2＋眼×2＋鼻＋顴×2
+  //   4個(含)以上為經 → 中停為經
+  //   [眉] 條件…（組成與門檻動態讀 engine AGG_FIXED,與計算永遠一致）
   const AGG_SUBS = { 0: ['頂骨', '枕骨', '華陽骨'], 2: ['眉', '眼', '鼻', '顴'], 3: ['口', '人中', '地閣', '頤'] };
   if (AGG_SUBS[pi] && dd.parts) {
+    const aggName = PART_LABELS[pi];
+    const agg = AGG_FIXED[aggName] || null;
+    let formula = '', th = null;
+    if (agg) {
+      const cnt = {}; const order = [];
+      (agg.children || []).forEach(ch => { if (!(ch.part in cnt)) { cnt[ch.part] = 0; order.push(ch.part); } cnt[ch.part]++; });
+      formula = order.map(pn => pn + (cnt[pn] > 1 ? '×' + cnt[pn] : '')).join('＋');
+      th = agg.threshold;
+    }
     const secs = AGG_SUBS[pi].map(pn => {
       const p = dd.parts[pn];
       const ls = (p && Array.isArray(p.cards)) ? p.cards.map(c => (c.label || '').trim()).filter(Boolean) : [];
       if (!ls.length) return '';
       return '<div class="m-mrc-tip-group">' + _esc(pn) + '</div>' + ls.map(lb => '<div class="m-mrc-tip-item">' + _esc(lb) + '</div>').join('');
     }).filter(Boolean).join('');
-    if (secs) return '<div class="m-mrc-tip-title">符合為 ' + _esc(posChar || '') + '（由 ' + AGG_SUBS[pi].join('/') + ' 決定）</div>' + secs;
+    if (secs) {
+      const head = (formula ? '<div class="m-mrc-tip-title">' + _esc(formula) + '</div>' : '')
+        + (th != null ? '<div class="m-mrc-tip-item" style="margin-bottom:2px">' + _esc(th + '個(含)以上為' + (posChar || '') + ' → ' + aggName + '為' + (posChar || '')) + '</div>' : '');
+      return head + secs;
+    }
   }
   // ⚠️P2 規則＝卡片格式 parts[部位].cards[].label（_partGroups 只認 P1 舊 node.group,對 P2 永遠空）
   const part = dd.parts && dd.parts[PART_LABELS[pi]];
