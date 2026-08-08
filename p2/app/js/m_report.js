@@ -1218,7 +1218,6 @@ function _renderFinderCol3() {
     + fields
     + '<div class="m-finder-pv-coeff"><div class="m-finder-coeff-title">係數摘要</div>' + coeffRow('手動', man) + coeffRow('觀察', obs) + '</div>'
     + '<div class="m-finder-pv-actions4">'
-      + '<button type="button" class="m-finder-act is-primary" id="m-finder-open">打開</button>'
       + '<button type="button" class="m-finder-act" id="m-finder-save">儲存</button>'
       + '<button type="button" class="m-finder-act is-danger" id="m-finder-del">刪除</button>'
       + '<button type="button" class="m-finder-act" id="m-finder-cancel">取消</button>'
@@ -1231,7 +1230,7 @@ function _renderFinderCol3() {
     const sw = document.getElementById('m-fe-swatches');
     if (sw) sw.querySelectorAll('.m-fd-swatch-btn').forEach((b) => { b.onclick = () => { _finderEditColor = b.dataset.color; sw.querySelectorAll('.m-fd-swatch-btn').forEach((x) => x.classList.toggle('is-sel', x === b)); }; });
   }
-  const openBtn = document.getElementById('m-finder-open'); if (openBtn) openBtn.onclick = () => openCaseWorkspace({ id: c.id, name: c.name, color: _finderColor(c) }, 'obs');
+  // 「打開」已移到第二欄選中卡片右下角（data-opencase），此欄不再放
   const saveBtn = document.getElementById('m-finder-save'); if (saveBtn) saveBtn.onclick = () => _finderSave(c);
   const delBtn = document.getElementById('m-finder-del'); if (delBtn) delBtn.onclick = () => _finderDelete(c);
   const cancelBtn = document.getElementById('m-finder-cancel'); if (cancelBtn) cancelBtn.onclick = () => _finderCancel(c);
