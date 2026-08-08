@@ -1576,6 +1576,14 @@ body.m-ws-active .m-obs-spice-sticky{background:var(--ws-tint, #f7f4ef)}
   .m-finder-coeff-cell{flex:1;display:flex;flex-direction:column;align-items:center;background:#f3eee4;border-radius:8px;padding:5px 2px}
   .m-finder-coeff-cell b{font-size:15px;color:#3a3228;font-weight:600}
   .m-finder-coeff-cell i{font-size:11px;color:#a89e92;font-style:normal}
+  /* 係數格底色＝各係數代表色淡色(同係數總覽色系)；標籤字用正色 */
+  .m-fc-tot{background:rgba(73,69,65,.13)}   .m-fc-tot i{color:#494541}
+  .m-fc-pre{background:rgba(142,75,80,.13)}  .m-fc-pre i{color:#8E4B50}
+  .m-fc-luck{background:rgba(84,109,119,.13)}.m-fc-luck i{color:#546D77}
+  .m-fc-post{background:rgba(121,113,129,.13)}.m-fc-post i{color:#797181}
+  /* 選中個案卡片右上角「打開」鈕（span 假按鈕：卡片本身已是 button，不可巢狀 button） */
+  .m-finder-card-open{position:absolute;top:10px;right:10px;background:#3a3228;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px;line-height:1.4;cursor:pointer}
+  .m-finder-card-open:hover{background:#5a4f40}
   .m-finder-pv-actions4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
   .m-finder-act{font-family:inherit;font-size:13px;padding:10px 4px;border-radius:9px;border:1px solid #d3c7b1;background:#fff;color:#3a3228;cursor:pointer;white-space:nowrap}
   .m-finder-act:hover{background:#f3eee4}

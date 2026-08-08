@@ -1147,13 +1147,19 @@ function _renderFinderCol2() {
     const cd = _finderCreateDateStr(c);
     const cym = cd ? cd.slice(0, 7).replace('-', '/') : '';
     const line3 = cym ? (cym + ' 建立個案') : '';
-    return '<button class="m-finder-card' + (_finderCaseId === c.id ? ' active' : '') + '" data-case="' + _esc(c.id) + '" style="background:' + _cardTintLight(_finderColor(c)) + '">'
+    const isActive = _finderCaseId === c.id;
+    return '<button class="m-finder-card' + (isActive ? ' active' : '') + '" data-case="' + _esc(c.id) + '" style="background:' + _cardTintLight(_finderColor(c)) + '">'
       + '<span class="m-finder-card-name">' + _esc(c.name || '(未命名)') + '</span>'
       + (line2 ? '<span class="m-finder-card-meta">' + _esc(line2) + '</span>' : '')
       + (line3 ? '<span class="m-finder-card-join">' + _esc(line3) + '</span>' : '')
-      + (c.note ? '<span class="m-finder-card-note">' + _esc(c.note) + '</span>' : '') + '</button>';
+      + (c.note ? '<span class="m-finder-card-note">' + _esc(c.note) + '</span>' : '')
+      + (isActive ? '<span class="m-finder-card-open" data-opencase="' + _esc(c.id) + '">打開 ▸</span>' : '') + '</button>';
   }).join('') + '</div>';
-  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = () => { _finderCaseId = b.dataset.case; _finderEditing = false; _finderIsNew = false; _renderFinderCol2(); _renderFinderCol3(); }; });
+  el.querySelectorAll('[data-case]').forEach((b) => { b.onclick = (e) => {
+    // 選中卡片右上角的「打開」：直接進個案工作區（不經第三欄）
+    const op = e.target.closest('[data-opencase]');
+    if (op) { const cc = list.find((x) => x.id === op.dataset.opencase); if (cc) openCaseWorkspace({ id: cc.id, name: cc.name, color: _finderColor(cc) }, 'obs'); return; }
+    _finderCaseId = b.dataset.case; _finderEditing = false; _finderIsNew = false; _renderFinderCol2(); _renderFinderCol3(); }; });
 }
 
 function _renderFinderCol3() {
@@ -1168,11 +1174,12 @@ function _renderFinderCol3() {
   const obs = _coeffSet(c._autoLive || _parseMatrix(c.dataJson));
   _ensureAutoLive(c, () => { if (_finderCaseId === c.id) _renderFinderCol3(); });
   const createD = _finderCreateDateStr(c);
+  // 順序＝總係數/先天/運氣/後天(Mike 2026-08-08)；底色＝各係數代表色淡色(同係數總覽 buildCoefSVG 色系)
   const coeffRow = (label, s) => '<div class="m-finder-coeff-row"><span class="m-finder-coeff-src">' + label + '</span>'
-    + '<span class="m-finder-coeff-cell"><b>' + (s ? s.tot : '--') + '</b><i>總</i></span>'
-    + '<span class="m-finder-coeff-cell"><b>' + (s ? s.pre : '--') + '</b><i>先天</i></span>'
-    + '<span class="m-finder-coeff-cell"><b>' + (s ? s.post : '--') + '</b><i>後天</i></span>'
-    + '<span class="m-finder-coeff-cell"><b>' + (s ? s.luck : '--') + '</b><i>運氣</i></span></div>';
+    + '<span class="m-finder-coeff-cell m-fc-tot"><b>' + (s ? s.tot : '--') + '</b><i>總係數</i></span>'
+    + '<span class="m-finder-coeff-cell m-fc-pre"><b>' + (s ? s.pre : '--') + '</b><i>先天</i></span>'
+    + '<span class="m-finder-coeff-cell m-fc-luck"><b>' + (s ? s.luck : '--') + '</b><i>運氣</i></span>'
+    + '<span class="m-finder-coeff-cell m-fc-post"><b>' + (s ? s.post : '--') + '</b><i>後天</i></span></div>';
 
   let fields;
   if (editing) {
