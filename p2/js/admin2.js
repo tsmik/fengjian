@@ -1013,10 +1013,17 @@ async function promoteToProd() {
       const { updateLog, changed } = diffRuleSets(oldContent, newContent);
       const n = Object.keys(updateLog).length;
       if (n > 0) {
-        await setDoc(doc(_prodDb, 'config', 'updateLog'), updateLog, { merge: true });
-        dotMsg = '🔴 紅點：部位 ' + changed.parts.length + '、題目 ' + changed.qs.length + '、維度 ' + changed.dims.length +
-          (changed.parts.length ? '\n變動部位：' + changed.parts.join('、') : '') +
-          (changed.dims.length ? '\n變動維度：' + changed.dims.join('、') : '');
+        // 防呆(2026-08-10):13 維全被標「變動」＝假紅點招牌特徵——幾乎都是這個分頁開太久、
+        // 還在跑舊版比對程式(改版後未重整,ES module 停在載入當下的版本)。先確認再寫,避免污染紅點。
+        const suspicious = changed.dims.length >= 13;
+        if (suspicious && !confirm('⚠️ 全部 13 維都被標記「變動」——通常代表這個 admin2 分頁開太久、還在跑舊版程式。\n\n建議按「取消」（內容已發布、只是不寫紅點），重新整理本頁後再按一次🚀 重算紅點。\n\n仍要照這份結果寫入紅點嗎？')) {
+          dotMsg = '（略過紅點寫入：請重新整理本頁後再按一次🚀）';
+        } else {
+          await setDoc(doc(_prodDb, 'config', 'updateLog'), updateLog, { merge: true });
+          dotMsg = '🔴 紅點：部位 ' + changed.parts.length + '、題目 ' + changed.qs.length + '、維度 ' + changed.dims.length +
+            (changed.parts.length ? '\n變動部位：' + changed.parts.join('、') : '') +
+            (changed.dims.length ? '\n變動維度：' + changed.dims.join('、') : '');
+        }
       } else {
         dotMsg = '內容與正式站相同，無新紅點。';
       }
