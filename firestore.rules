@@ -40,5 +40,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    // LINE Bot 的內部狀態（webhook 去重、待確認操作）。
+    // 只有 Cloud Functions 的 Admin SDK 會碰，Admin SDK 不受規則限制，
+    // 所以這裡對所有 client 一律關死。
+    match /linebotEvents/{eventId} {
+      allow read, write: if false;
+    }
+    match /linebotPending/{userId} {
+      allow read, write: if false;
+    }
   }
 }

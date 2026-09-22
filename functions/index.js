@@ -1090,3 +1090,50 @@ exports.getStudentData = onRequest(
     }
   },
 );
+
+// ============================================================
+// LINE Bot：戲劇通告管理
+// 實作放在 ./linebot/，這裡只負責綁 secrets 和進入點。
+// 設定與部署步驟見 functions/linebot/README.md
+// ============================================================
+
+const lineChannelSecret = defineSecret("LINE_CHANNEL_SECRET");
+const lineChannelAccessToken = defineSecret("LINE_CHANNEL_ACCESS_TOKEN");
+const lineAllowedUserIds = defineSecret("LINE_ALLOWED_USER_IDS");
+const notionToken = defineSecret("NOTION_TOKEN");
+
+/**
+ * 「通告總表」的 data source ID（不是 database ID）。
+ * Notion 2025-09-03 之後查詢與新增都吃這個；兩個 ID 混用會 404。
+ */
+const NOTICE_DATA_SOURCE_ID = "9c4165a0-b198-42e1-8389-3578a8b76f10";
+
+exports.lineWebhook = onRequest(
+  {
+    maxInstances: 3,
+    // reply token 大約一分鐘內有效，超時就會 fallback 到 push
+    timeoutSeconds: 120,
+    secrets: [
+      lineChannelSecret,
+      lineChannelAccessToken,
+      lineAllowedUserIds,
+      notionToken,
+      claudeApiKey,
+    ],
+    invoker: "public",
+  },
+  async (req, res) => {
+    const {handleWebhook} = require("./linebot/webhook");
+
+    await handleWebhook(req, res, {
+      channelSecret: lineChannelSecret.value(),
+      accessToken: lineChannelAccessToken.value(),
+      allowedUserIds: lineAllowedUserIds.value(),
+      notionToken: notionToken.value(),
+      dataSourceId: NOTICE_DATA_SOURCE_ID,
+      anthropicKey: claudeApiKey.value(),
+      db: getFirestore(),
+      logger,
+    });
+  },
+);
